@@ -25,6 +25,7 @@
 *:com.intellij.webSymbols.WebSymbol
 - com.intellij.model.Symbol
 - com.intellij.navigation.NavigatableSymbol
+- com.intellij.webSymbols.WebSymbolsPrioritizedScope
 - com.intellij.webSymbols.WebSymbolsScope
 - *sf:Companion:com.intellij.webSymbols.WebSymbol$Companion
 - sf:KIND_CSS_CLASSES:java.lang.String
@@ -297,6 +298,8 @@
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+*:com.intellij.webSymbols.WebSymbolsPrioritizedScope
+- a:getPriority():com.intellij.webSymbols.WebSymbol$Priority
 *:com.intellij.webSymbols.WebSymbolsScope
 - com.intellij.openapi.util.ModificationTracker
 - a:createPointer():com.intellij.model.Pointer
@@ -1453,6 +1456,17 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - getVirtualSymbols():Z
 - hashCode():I
 - toString():java.lang.String
+*a:com.intellij.webSymbols.query.WebSymbolsCompoundScope
+- com.intellij.webSymbols.WebSymbolsScope
+- <init>():V
+- pa:build(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,kotlin.jvm.functions.Function1):V
+- a:createPointer():com.intellij.model.Pointer
+- f:getCodeCompletions(com.intellij.webSymbols.WebSymbolQualifiedName,com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
+- f:getMatchingSymbols(com.intellij.webSymbols.WebSymbolQualifiedName,com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
+- f:getModificationCount():J
+- f:getScopes(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):java.util.List
+- f:getSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind,com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
+- f:isExclusiveFor(com.intellij.webSymbols.WebSymbolQualifiedKind):Z
 *f:com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 - com.intellij.webSymbols.query.WebSymbolsQueryParams
 - <init>(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,Z):V

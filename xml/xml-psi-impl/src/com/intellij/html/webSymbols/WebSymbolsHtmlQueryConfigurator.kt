@@ -2,26 +2,30 @@
 package com.intellij.html.webSymbols
 
 import com.intellij.documentation.mdn.*
+import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
+import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlAttribute
+import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
-import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
-import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.query.WebSymbolsQueryConfigurator
+import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.match
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
@@ -30,10 +34,57 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
                         location: PsiElement?,
                         context: WebSymbolsContext,
                         allowResolve: Boolean): List<WebSymbolsScope> =
-    ((location as? XmlAttribute)?.parent ?: location as? XmlTag)?.let {
-      listOf(StandardHtmlSymbolsScope(it))
+    if (location is XmlAttributeValue || location is XmlAttribute || location is XmlTag) {
+      listOfNotNull(
+        location.takeIf { it is XmlAttributeValue || it is XmlAttribute }?.parent?.let { HtmlContextualWebSymbolsScope(it) },
+        location.parentOfType<XmlTag>(withSelf = true)?.let { StandardHtmlSymbolsScope(it) },
+      )
     }
-    ?: emptyList()
+    else emptyList()
+
+  @ApiStatus.Internal
+  class HtmlContextualWebSymbolsScope(private val location: PsiElement)
+    : WebSymbolsCompoundScope(), WebSymbolsPrioritizedScope {
+
+    init {
+      assert(location is XmlTag || location is XmlAttribute) {
+        "HtmlContextualWebSymbolsScope needs to be created on XmlTag or XmlAttribute"
+      }
+    }
+
+    override val priority: WebSymbol.Priority
+      get() = WebSymbol.Priority.HIGHEST
+
+    override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (WebSymbolsScope) -> Unit) {
+      val element = (location as? XmlTag) ?: (location as? XmlAttribute)?.parent ?: return
+      val elementScope = element.takeIf { queryExecutor.allowResolve }
+                           ?.descriptor?.asSafely<WebSymbolElementDescriptor>()?.symbol?.let { listOf(it) }
+                         ?: queryExecutor.runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, element.name)
+
+      elementScope.forEach(consumer)
+
+      val attribute = location as? XmlAttribute ?: return
+      attribute.takeIf { queryExecutor.allowResolve }
+        ?.descriptor?.asSafely<WebSymbolAttributeDescriptor>()?.symbol?.let(consumer)
+      ?: queryExecutor.runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTES,
+                                         attribute.name, additionalScope = elementScope)
+        .forEach(consumer)
+    }
+
+    override fun createPointer(): Pointer<out WebSymbolsCompoundScope> {
+      val attributePtr = location.createSmartPointer()
+      return Pointer {
+        attributePtr.dereference()?.let { HtmlContextualWebSymbolsScope(location) }
+      }
+    }
+
+    override fun equals(other: Any?): Boolean =
+      other === this ||
+      other is HtmlContextualWebSymbolsScope && other.location == location
+
+    override fun hashCode(): Int =
+      location.hashCode()
+  }
 
   class HtmlSymbolsCodeCompletionItemCustomizer : WebSymbolCodeCompletionItemCustomizer {
     override fun customize(item: WebSymbolCodeCompletionItem,

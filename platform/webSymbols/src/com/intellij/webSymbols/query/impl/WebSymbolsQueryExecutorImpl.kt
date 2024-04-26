@@ -20,11 +20,13 @@ import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
-internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbolsScope>,
+internal class WebSymbolsQueryExecutorImpl(rootScope: List<WebSymbolsScope>,
                                            override val namesProvider: WebSymbolNamesProvider,
                                            override val resultsCustomizer: WebSymbolsQueryResultsCustomizer,
                                            override val context: WebSymbolsContext,
                                            override val allowResolve: Boolean) : WebSymbolsQueryExecutor {
+
+  private val rootScope: List<WebSymbolsScope> = initializeCompoundScopes(rootScope)
 
   override fun hashCode(): Int =
     Objects.hash(rootScope, context, namesProvider, resultsCustomizer)
@@ -89,14 +91,35 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
       WebSymbolsQueryExecutorImpl(rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
 
   override fun hasExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind, scope: List<WebSymbolsScope>): Boolean {
+    return buildQueryScope(scope).any { it.isExclusiveFor(qualifiedKind) }
+  }
+
+  private fun initializeCompoundScopes(rootScope: List<WebSymbolsScope>): List<WebSymbolsScope> {
+    if (rootScope.any { it is WebSymbolsCompoundScope }) {
+      val compoundScopeQueryExecutor = WebSymbolsQueryExecutorImpl(
+        rootScope.filter { it !is WebSymbolsCompoundScope },
+        namesProvider, resultsCustomizer, context, allowResolve
+      )
+      return rootScope.flatMap {
+        if (it is WebSymbolsCompoundScope) {
+          it.getScopes(compoundScopeQueryExecutor)
+        } else {
+          listOf(it)
+        }
+      }
+    } else return rootScope
+  }
+
+  private fun buildQueryScope(additionalScope: List<WebSymbolsScope>): MutableSet<WebSymbolsScope> {
     val finalScope = rootScope.toMutableSet()
-    scope.flatMapTo(finalScope) {
-      if (it is WebSymbol)
-        it.queryScope
-      else
-        listOf(it)
+    additionalScope.flatMapTo(finalScope) {
+      when (it) {
+        is WebSymbolsCompoundScope -> it.getScopes(this)
+        is WebSymbol -> it.queryScope
+        else -> listOf(it)
+      }
     }
-    return finalScope.any { it.isExclusiveFor(qualifiedKind) }
+    return finalScope
   }
 
   private fun runNameMatchQuery(path: List<WebSymbolQualifiedName>,
@@ -231,9 +254,11 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
       while (i < path.size - 1) {
         val qName = path[i++]
         if (qName.name.isEmpty()) return@doPreventingRecursion emptyList()
-        val scopeSymbols = scope.flatMap {
-          it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
-        }
+        val scopeSymbols = scope
+          .takeLastUntilExclusiveScopeFor(qName.qualifiedKind)
+          .flatMap {
+            it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
+          }
         scopeSymbols.flatMapTo(scope) {
           it.queryScope
         }
@@ -242,7 +267,12 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
       finalProcessor(scope, lastSection, params)
     } ?: run {
       thisLogger().warn("Recursive Web Symbols query: ${path.joinToString("/")} with virtualSymbols=${params.virtualSymbols}.\n" +
-                        "Context: " + initialScope.filterIsInstance<WebSymbol>().map { it.kind + "/" + it.name })
+                        "Root scope: " + rootScope.map {
+        it.asSafely<WebSymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
+      } + "\n" +
+                        "Additional scope: " + additionalScope.map {
+        it.asSafely<WebSymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
+      })
       emptyList()
     }
   }
