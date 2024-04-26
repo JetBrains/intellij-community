@@ -138,7 +138,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   @RequiresBackgroundThread
   fun newScanningTokenOnProjectOpen(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
-    val token = if (heavyScanningOnProjectOpen || issuedScanningTokens.contains(RequestHeavyScanningOnThisOrNextStartToken)) {
+    val token = if (heavyScanningOnProjectOpen || issuedScanningTokens.contains(RequestFullHeavyScanningToken)) {
       thisLogger().info("Heavy scanning on startup because of incomplete scanning from previous IDE session")
       heavyScanningOnProjectOpen = false
       WriteOnlyScanningRequestTokenImpl(appCurrent)
@@ -147,7 +147,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       ReadWriteScanningRequestTokenImpl(appCurrent)
     }
     registerIssuedToken(token)
-    completeTokenOrFutureToken(RequestHeavyScanningOnThisOrNextStartToken, null, true)
+    completeTokenOrFutureToken(RequestFullHeavyScanningToken, null, true)
     return token
   }
 
@@ -170,14 +170,14 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
 
   fun completeToken(token: ScanningRequestToken, isFullScanning: Boolean) {
     if (token.isSuccessful() && isFullScanning) {
-      completeTokenOrFutureToken(RequestHeavyScanningOnNextStartToken, null, true)
+      completeTokenOrFutureToken(RequestFullHeavyScanningToken, null, true)
     }
     completeTokenOrFutureToken(token, token.appIndexingRequestId, token.isSuccessful())
   }
 
   private fun completeTokenOrFutureToken(token: Any, lastAppIndexingRequestId: AppIndexingDependenciesToken?, successful: Boolean) {
     if (!successful) {
-      registerIssuedToken(RequestHeavyScanningOnNextStartToken)
+      registerIssuedToken(RequestFullHeavyScanningToken)
     }
     synchronized(issuedScanningTokens) {
       // ignore repeated "complete" calls
@@ -193,7 +193,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
 
   fun requestHeavyScanningOnProjectOpen(debugReason: String) {
     thisLogger().info("Requesting heavy scanning on project open. Reason: $debugReason")
-    registerIssuedToken(RequestHeavyScanningOnThisOrNextStartToken)
+    registerIssuedToken(RequestFullHeavyScanningToken)
   }
 
   override fun dispose() {
