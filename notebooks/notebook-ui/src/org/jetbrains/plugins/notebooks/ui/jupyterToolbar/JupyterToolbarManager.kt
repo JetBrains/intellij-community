@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.notebooks.ui.jupyterToolbar
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
 import java.awt.MouseInfo
 import java.awt.Point
@@ -16,9 +18,14 @@ class JupyterToolbarManager(
   private val editor: EditorImpl,
   private val panel: JPanel,
   private val actionGroupId: String
-) {  // See PY-66455
+): Disposable {  // See PY-66455
   private var toolbar: JupyterToolbar? = null
   private var hideToolbarTimer = Timer(TOOLBAR_HIDE_DELAY) { conditionallyHideToolBar() }
+
+  private var panelMouseListener: MouseAdapter? = null
+  private var panelComponentListener: ComponentAdapter? = null
+  private var editorKeyListener: KeyAdapter? = null
+  private var editorComponentListener: ComponentAdapter? = null
 
   init {
     initPanelMouseListeners()
@@ -28,7 +35,7 @@ class JupyterToolbarManager(
   }
 
   private fun initPanelMouseListeners() {
-    val mouseAdapter = object : MouseAdapter() {
+    panelMouseListener = object : MouseAdapter() {
       override fun mouseEntered(e: MouseEvent) {
         hideToolbarTimer.stop()
         showToolbar()
@@ -37,11 +44,11 @@ class JupyterToolbarManager(
       override fun mouseExited(e: MouseEvent) = hideToolbarTimer.restart()
     }
 
-    panel.addMouseListener(mouseAdapter)
+    panel.addMouseListener(panelMouseListener)
   }
 
   private fun addPanelComponentListener() {
-    val componentListener = object : ComponentAdapter() {
+    panelComponentListener = object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         super.componentResized(e)
         toolbar?.let {
@@ -60,22 +67,23 @@ class JupyterToolbarManager(
         }
       }
     }
-    panel.addComponentListener(componentListener)
+    panel.addComponentListener(panelComponentListener)
   }
 
   private fun addEditorKeyListener() {
-    val keyAdapter = object : KeyAdapter() {
+    editorKeyListener = object : KeyAdapter() {
       override fun keyTyped(e: KeyEvent) = hideToolBar()
       override fun keyPressed(e: KeyEvent) = hideToolBar()
     }
 
-    editor.contentComponent.addKeyListener(keyAdapter)
+    editor.contentComponent.addKeyListener(editorKeyListener)
   }
 
   private fun addEditorComponentListener() {
-    editor.contentComponent.addComponentListener(object : ComponentAdapter() {
+    editorComponentListener = object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) = hideToolBar()
-    })
+    }
+    editor.contentComponent.addComponentListener(editorComponentListener)
   }
 
   /**
@@ -149,6 +157,20 @@ class JupyterToolbarManager(
       val xCoordinate = panelLocationInEditor.x + xOffset
       val yCoordinate = panelLocationInEditor.y + yOffset
       return Rectangle(xCoordinate, yCoordinate, toolbarWidth, toolbarHeight)
+    }
+  }
+
+  @RequiresEdt
+  override fun dispose() {
+    hideToolbarTimer.stop()
+    panel.removeMouseListener(panelMouseListener)
+    panel.removeComponentListener(panelComponentListener)
+    editor.contentComponent.removeKeyListener(editorKeyListener)
+    editor.contentComponent.removeComponentListener(editorComponentListener)
+
+    toolbar?.let { tb ->
+      editor.contentComponent.remove(tb)
+      toolbar = null
     }
   }
 }
