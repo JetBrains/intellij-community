@@ -28,18 +28,21 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
   }
 
   public void testAddMissingProperty() {
-    doTest("""
-             {
-               "properties": {
-                 "a": {
-                   "default": "q"
-                 }
-               },
-               "required": ["a", "b"]
-             }""", "<warning>c: 5</warning>", "Add missing properties 'a', 'b'", """
-             a: q
-             b:
-             c: 5""");
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "a": {
+            "default": "q"
+          }
+        },
+        "required": ["a", "b"]
+      }""";
+    String text = "<warning>c: 5</warning>";
+    String expectedAfterFix = """
+      c: 5
+      a: q
+      b:""";
+    doTest(schema, text, "Add missing properties 'a', 'b'", expectedAfterFix);
   }
 
   public void testRemoveProhibitedProperty() {
@@ -94,35 +97,55 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
   }
 
   public void testEmptyObjectMultipleProps() {
-    doTest("""
-             {
-               "type": "object",
-
-               "properties": {
-                 "versionAsStringArray": {
-                   "type": "object",
-                   "properties": {
-                     "xxx": {
-                       "type": "number"
-                     },
-                     "yyy": {
-                       "type": "string"
-                     },
-                     "zzz": {
-                       "type": "number"
-                     }
-                   },
-                   "required": ["xxx", "yyy", "zzz"]
-                 }
-               },
-               "required": ["versionAsStringArray"]
-             }""", "versionAsStringArray:\n" +
-                   "<warning>  <caret></warning>", "Add missing properties 'xxx', 'yyy', 'zzz'", """
-             versionAsStringArray:
-               xxx: 0
-               yyy:
-               zzz: 0""");
+    String text = """
+      xyzObject:
+      <warning>  <caret></warning>""";
+    String afterFix = """
+      xyzObject:
+        xxx: 0
+        yyy:
+        zzz: 0""";
+    doTest(SCHEMA_WITH_NESTED_XYZ, text, "Add missing properties 'xxx', 'yyy', 'zzz'", afterFix);
   }
+
+  public void testAddMultiplePropsToNestedObject() {
+    String text = """
+      xyzObject:
+        <warning>yyy: value<caret></warning>
+      """;
+    String afterFix = """
+      xyzObject:
+        yyy: value
+        xxx: 0
+        zzz: 0
+      """;
+    doTest(SCHEMA_WITH_NESTED_XYZ, text, "Add missing properties 'xxx', 'zzz'", afterFix);
+  }
+
+  @Language("JSON") private static final String SCHEMA_WITH_NESTED_XYZ = """
+    {
+      "type": "object",
+
+      "properties": {
+        "xyzObject": {
+          "type": "object",
+          "properties": {
+            "xxx": {
+              "type": "number"
+            },
+            "yyy": {
+              "type": "string"
+            },
+            "zzz": {
+              "type": "number"
+            }
+          },
+          "required": ["xxx", "yyy", "zzz"]
+        }
+      },
+      "required": ["xyzObject"]
+    }
+    """;
 
   public void testAddMissingPropertyAfterComment() {
     doTest(SCHEMA_WITH_NESTING, "image: #aaa\n" +
