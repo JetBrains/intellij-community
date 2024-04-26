@@ -12,6 +12,8 @@ internal class IjentNioFileStore(
   override fun name(): String =
     ijentFsApi.id.toString()
 
+  // TODO: uncomment appropriate part of the test com.intellij.platform.ijent.functional.fs.UnixLikeFileSystemTest.test file store
+
   override fun type(): String? {
     TODO("Not yet implemented")
   }
