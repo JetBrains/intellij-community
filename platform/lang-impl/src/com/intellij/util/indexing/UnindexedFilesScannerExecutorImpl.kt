@@ -47,6 +47,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
    */
   override val startedOrStoppedEvent: MutableStateFlow<Int> = MutableStateFlow(0)
 
+  // Use from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet
   private val scanningTask = MutableStateFlow<UnindexedFilesScanner?>(null)
   private val scanningEnabled = MutableStateFlow(true)
 
@@ -66,7 +67,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           isRunning.value = true
           startedOrStoppedEvent.getAndUpdate(Int::inc)
 
-          val task = scanningTask.getAndUpdate { null } ?: continue
+          // Use from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet
+          val task = synchronized(scanningTask) {
+            scanningTask.getAndUpdate { null }
+          } ?: continue
           try {
             LOG.info("Running task: $task")
             LOG.assertTrue(runningTask == null, "Task is already running (will be cancelled)")
@@ -137,7 +141,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   private fun cancelAllTasks(debugReason: String) {
     scanningEnabled.value = false
     try {
-      scanningTask.getAndUpdate { null }?.close()
+      // Use from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet
+      synchronized(scanningTask) {
+        scanningTask.getAndUpdate { null }?.close()
+      }
       runningTask?.cancel(debugReason)
     }
     finally {
@@ -167,11 +174,13 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   }
 
   private fun startTaskInSmartMode(task: UnindexedFilesScanner) {
-    do {
+    // Use from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet
+    synchronized(scanningTask) {
       val old = scanningTask.value
       val merged = old?.tryMergeWith(task)
       val new = merged ?: task
       val updated = scanningTask.compareAndSet(old, new)
+      LOG.assertTrue(updated, "Use scanningTask from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet")
       if (updated) {
         old?.close()
         if (new != task) task.close() else Unit
@@ -180,7 +189,6 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
         merged?.close()
       }
     }
-    while (!updated)
   }
 
   private fun startTaskInDumbMode(task: UnindexedFilesScanner) {
@@ -212,7 +220,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   }
 
   override fun dispose() {
-    scanningTask.getAndUpdate { null }?.close()
+    // Use from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet
+    synchronized(scanningTask) {
+      scanningTask.getAndUpdate { null }?.close()
+    }
     runningTask?.cancel()
   }
 

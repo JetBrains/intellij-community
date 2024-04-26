@@ -146,6 +146,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     return predefinedIndexableFilesIterators == null
   }
 
+  // TODO: Must not change state. We want to allow this method in CAS re-computations
   fun tryMergeWith(oldTask: FilesScanningTask): UnindexedFilesScanner {
     oldTask as UnindexedFilesScanner
 
@@ -162,8 +163,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
     LOG.debug("Merged $this task")
 
-    oldTask.myFutureScanningRequestToken.markSuccessful()
-    myFutureScanningRequestToken.markSuccessful()
+    oldTask.myFutureScanningRequestToken.markSuccessful() // fixme: non-idempotent
+    myFutureScanningRequestToken.markSuccessful()         // fixme: non-idempotent
     LOG.assertTrue(!(startCondition != null && oldTask.startCondition != null), "Merge of two start conditions is not implemented")
     val mergedHideProgress: Boolean?
     if (shouldHideProgressInSmartMode == null) {
@@ -178,8 +179,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
 
     val mergedScanningHistoryFuture = SettableFuture.create<ProjectScanningHistory>()
-    futureScanningHistory.setFuture(mergedScanningHistoryFuture)
-    oldTask.futureScanningHistory.setFuture(mergedScanningHistoryFuture)
+    futureScanningHistory.setFuture(mergedScanningHistoryFuture)         // fixme: non-idempotent
+    oldTask.futureScanningHistory.setFuture(mergedScanningHistoryFuture) // fixme: non-idempotent
 
     val triggerA = forceReindexingTrigger
     val triggerB = oldTask.forceReindexingTrigger
