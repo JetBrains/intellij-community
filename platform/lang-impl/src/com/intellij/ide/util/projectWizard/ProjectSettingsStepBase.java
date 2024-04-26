@@ -26,7 +26,6 @@ import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -45,6 +44,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
@@ -209,7 +209,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     field.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        listener.consume(e);
+        listener.accept(e);
       }
     });
   }
