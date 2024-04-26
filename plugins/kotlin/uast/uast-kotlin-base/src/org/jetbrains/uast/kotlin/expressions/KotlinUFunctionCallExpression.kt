@@ -12,9 +12,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
-import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.internal.TypedResolveResult
-import org.jetbrains.uast.visitor.UastVisitor
 
 @ApiStatus.Internal
 class KotlinUFunctionCallExpression(
@@ -266,16 +264,6 @@ class KotlinUFunctionCallExpression(
 
     override fun resolve(): PsiMethod? =
         baseResolveProviderService.resolveCall(sourcePsi)
-
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitCallExpression(this)) return
-        uAnnotations.acceptList(visitor)
-        methodIdentifier?.accept(visitor)
-        classReference.accept(visitor)
-        valueArguments.acceptList(visitor)
-
-        visitor.afterVisitCallExpression(this)
-    }
 
     override fun convertParent(): UElement? = super.convertParent().let { result ->
         when (result) {
