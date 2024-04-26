@@ -159,7 +159,7 @@ public class InvokeIntention extends ActionOnFile {
         for (ModCommand modCommand : commands) {
           String error = myPolicy.validateCommand(modCommand);
           if (error != null) {
-            return null;
+            return error;
           }
         }
         return null;
