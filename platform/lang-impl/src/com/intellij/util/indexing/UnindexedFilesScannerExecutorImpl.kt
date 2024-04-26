@@ -2,6 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -64,7 +65,12 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           // first set isRunning, otherwise we can find ourselves in a situation
           // isRunning=false, hasScheduledTask=false, but in fact we do have a scheduled task
           // which is about to be running.
-          isRunning.value = true
+
+          // write action is needed, because otherwise we may get "Constraint inSmartMode cannot be satisfied" in NBRA
+          writeAction {
+            isRunning.value = true
+          }
+
           startedOrStoppedEvent.getAndUpdate(Int::inc)
 
           // Use from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet
@@ -102,6 +108,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           LOG.error("Unexpected exception during scanning (ignored)", t)
         }
         finally {
+          // We don't care about finishing scanning without a write action. This looks harmless at the moment
           isRunning.value = false
           startedOrStoppedEvent.getAndUpdate(Int::inc)
         }
