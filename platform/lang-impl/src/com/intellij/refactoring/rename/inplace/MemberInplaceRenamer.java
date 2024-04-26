@@ -223,7 +223,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   protected void performRefactoringRename(String newName, StartMarkAction markAction) {
     try {
       startDumbIfPossible();
-      rollBack();
+      tryRollback();
       final PsiNamedElement variable = getVariable();
       if (variable != null && !newName.equals(myOldName)) {
         if (isIdentifier(newName, variable.getLanguage())) {

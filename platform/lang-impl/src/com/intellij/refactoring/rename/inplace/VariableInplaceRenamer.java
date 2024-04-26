@@ -281,6 +281,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   protected void performOnInvalidIdentifier(final String newName, final LinkedHashSet<String> nameSuggestions) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      tryRollback();
       return;
     }
     JBPopupFactory.getInstance()
@@ -289,7 +290,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                           () -> {
                             startDumbIfPossible();
                             try {
-                              rollBack();
+                              tryRollback();
                               final PsiNamedElement variable = getVariable();
                               if (variable != null) {
                                 createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
@@ -299,7 +300,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                               stopDumbLaterIfPossible();
                             }
                           },
-                          () -> rollBack(), 0).showInBestPositionFor(myEditor);
+                          () -> tryRollback(), 0).showInBestPositionFor(myEditor);
   }
 
   /**
@@ -364,7 +365,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             }
             startDumbIfPossible();
             try {
-              rollBack();
+              tryRollback();
               PsiNamedElement var = getVariable();
               if (var != null) {
                 createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
@@ -379,7 +380,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  final void rollBack() {
+  final void tryRollback() {
+    if (myRevertCommand == null) return;
     Document document = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getDocument();
     PsiFile psiFile = Objects.requireNonNull(PsiDocumentManager.getInstance(myProject).getPsiFile(document));
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
@@ -556,6 +558,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     else {
       stopDumbLaterIfPossible();
     }
+  }
+
+  @Override
+  protected void performCleanup() {
+    tryRollback();
   }
 
   private static @NotNull ModUpdateFileText getRevertModCommand(@NotNull Editor editor, String oldName) {

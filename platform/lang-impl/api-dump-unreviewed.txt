@@ -27104,7 +27104,6 @@ c:com.intellij.refactoring.rename.inplace.MemberInplaceRenamer
 - p:performRefactoringRename(java.lang.String,com.intellij.openapi.command.impl.StartMarkAction):V
 - p:performRenameInner(com.intellij.psi.PsiElement,java.lang.String):V
 - p:restoreCaretOffsetAfterRename():V
-- p:revertStateOnFinish():V
 - p:shouldCreateSnapshot():Z
 - p:showDialogAdvertisement(java.lang.String):V
 pc:com.intellij.refactoring.rename.inplace.MemberInplaceRenamer$MyRenameProcessor
@@ -27204,6 +27203,7 @@ c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:getCommandName():java.lang.String
 - p:getRefactoringId():java.lang.String
 - p:isRenamerFactoryApplicable(com.intellij.refactoring.rename.naming.AutomaticRenamerFactory,com.intellij.psi.PsiNamedElement):Z
+- p:performCleanup():V
 - performInplaceRename():Z
 - performInplaceRename(java.util.Collection):Z
 - p:performOnInvalidIdentifier(java.lang.String,java.util.LinkedHashSet):V
