@@ -12,7 +12,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JPanel
 
-class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayout()) {
+class NotebookBelowLastCellPanel(val editor: EditorImpl) : JPanel(GridBagLayout()) {
   private var toolbar: JupyterToolbar? = null
   private val actionGroup = createActionGroup()
 
