@@ -45,6 +45,8 @@ public class GitHubAlertBlockRenderer(
         block: CustomBlock,
         blockRenderer: MarkdownBlockRenderer,
         inlineRenderer: InlineMarkdownRenderer,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
     ) {
         // Smart cast doesn't work in this case, and then the detection for redundant suppression is
         // also borked
@@ -52,17 +54,23 @@ public class GitHubAlertBlockRenderer(
         val alert = block as? Alert
 
         when (alert) {
-            is Caution -> Alert(alert, styling.caution, blockRenderer)
-            is Important -> Alert(alert, styling.important, blockRenderer)
-            is Note -> Alert(alert, styling.note, blockRenderer)
-            is Tip -> Alert(alert, styling.tip, blockRenderer)
-            is Warning -> Alert(alert, styling.warning, blockRenderer)
+            is Caution -> Alert(alert, styling.caution, blockRenderer, onUrlClick, onTextClick)
+            is Important -> Alert(alert, styling.important, blockRenderer, onUrlClick, onTextClick)
+            is Note -> Alert(alert, styling.note, blockRenderer, onUrlClick, onTextClick)
+            is Tip -> Alert(alert, styling.tip, blockRenderer, onUrlClick, onTextClick)
+            is Warning -> Alert(alert, styling.warning, blockRenderer, onUrlClick, onTextClick)
             else -> error("Unsupported block of type ${block.javaClass.name} cannot be rendered")
         }
     }
 
     @Composable
-    private fun Alert(block: Alert, styling: BaseAlertStyling, blockRenderer: MarkdownBlockRenderer) {
+    private fun Alert(
+        block: Alert,
+        styling: BaseAlertStyling,
+        blockRenderer: MarkdownBlockRenderer,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    ) {
         Column(
             Modifier.drawBehind {
                 val isLtr = layoutDirection == Ltr
@@ -118,7 +126,7 @@ public class GitHubAlertBlockRenderer(
             CompositionLocalProvider(
                 LocalContentColor provides styling.textColor.takeOrElse { LocalContentColor.current },
             ) {
-                blockRenderer.render(block.content)
+                blockRenderer.render(block.content, onUrlClick, onTextClick)
             }
         }
     }

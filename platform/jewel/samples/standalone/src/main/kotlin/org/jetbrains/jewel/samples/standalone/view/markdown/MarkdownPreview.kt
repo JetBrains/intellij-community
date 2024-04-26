@@ -1,16 +1,12 @@
 package org.jetbrains.jewel.samples.standalone.view.markdown
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.markdown.ProvideMarkdownStyling
 import org.jetbrains.jewel.intui.markdown.dark
 import org.jetbrains.jewel.intui.markdown.light
 import org.jetbrains.jewel.intui.markdown.styling.dark
@@ -32,6 +29,7 @@ import org.jetbrains.jewel.intui.markdown.styling.extension.github.alerts.light
 import org.jetbrains.jewel.intui.markdown.styling.light
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extension.autolink.AutolinkProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.LazyMarkdown
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertRendererExtension
@@ -71,14 +69,12 @@ internal fun MarkdownPreview(
                     styling = markdownStyling,
                     rendererExtensions = listOf(GitHubAlertRendererExtension(AlertStyling.dark(), markdownStyling)),
                     inlineRenderer = InlineMarkdownRenderer.default(extensions),
-                    onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
                 )
             } else {
                 MarkdownBlockRenderer.light(
                     styling = markdownStyling,
                     rendererExtensions = listOf(GitHubAlertRendererExtension(AlertStyling.light(), markdownStyling)),
                     inlineRenderer = InlineMarkdownRenderer.default(extensions),
-                    onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
                 )
             }
         }
@@ -86,21 +82,22 @@ internal fun MarkdownPreview(
     // Using the values from the GitHub rendering to ensure contrast
     val background = remember(isDark) { if (isDark) Color(0xff0d1117) else Color.White }
 
-    Box(modifier.background(background)) {
-        val scrollState = rememberLazyListState()
-        SelectionContainer {
-            LazyColumn(
+    ProvideMarkdownStyling(markdownStyling, blockRenderer) {
+        Box(modifier.background(background)) {
+            val lazyListState = rememberLazyListState()
+            LazyMarkdown(
+                markdownBlocks = markdownBlocks,
+                modifier = modifier.background(background),
                 contentPadding = PaddingValues(16.dp),
-                state = scrollState,
-                verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
-            ) {
-                items(markdownBlocks) { blockRenderer.render(it) }
-            }
-        }
+                state = lazyListState,
+                isSelectable = true,
+                onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
+            )
 
-        VerticalScrollbar(
-            rememberScrollbarAdapter(scrollState),
-            Modifier.align(Alignment.TopEnd).fillMaxHeight().padding(2.dp),
-        )
+            VerticalScrollbar(
+                rememberScrollbarAdapter(lazyListState),
+                Modifier.align(Alignment.TopEnd).fillMaxHeight().padding(2.dp),
+            )
+        }
     }
 }

@@ -24,5 +24,7 @@ public interface MarkdownBlockRendererExtension {
         block: CustomBlock,
         blockRenderer: MarkdownBlockRenderer,
         inlineRenderer: InlineMarkdownRenderer,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
     )
 }

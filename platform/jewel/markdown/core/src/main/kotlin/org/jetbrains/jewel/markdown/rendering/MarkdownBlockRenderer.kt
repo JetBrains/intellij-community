@@ -12,39 +12,87 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListItem
+import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 
 @ExperimentalJewelApi
 public interface MarkdownBlockRenderer {
 
     @Composable
-    public fun render(blocks: List<MarkdownBlock>)
+    public fun render(
+        blocks: List<MarkdownBlock>,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
-    public fun render(block: MarkdownBlock)
+    public fun render(
+        block: MarkdownBlock,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
-    public fun render(block: MarkdownBlock.Paragraph, styling: MarkdownStyling.Paragraph)
+    public fun render(
+        block: Paragraph,
+        styling: MarkdownStyling.Paragraph,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
-    public fun render(block: MarkdownBlock.Heading, styling: MarkdownStyling.Heading)
+    public fun render(
+        block: MarkdownBlock.Heading,
+        styling: MarkdownStyling.Heading,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
-    public fun render(block: MarkdownBlock.Heading, styling: MarkdownStyling.Heading.HN)
+    public fun render(
+        block: MarkdownBlock.Heading,
+        styling: MarkdownStyling.Heading.HN,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
-    public fun render(block: BlockQuote, styling: MarkdownStyling.BlockQuote)
+    public fun render(
+        block: BlockQuote,
+        styling: MarkdownStyling.BlockQuote,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
-    public fun render(block: ListBlock, styling: MarkdownStyling.List)
+    public fun render(
+        block: ListBlock,
+        styling: MarkdownStyling.List,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
-    public fun render(block: OrderedList, styling: MarkdownStyling.List.Ordered)
+    public fun render(
+        block: OrderedList,
+        styling: MarkdownStyling.List.Ordered,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
-    public fun render(block: UnorderedList, styling: MarkdownStyling.List.Unordered)
+    public fun render(
+        block: UnorderedList,
+        styling: MarkdownStyling.List.Unordered,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
-    public fun render(block: ListItem)
+    public fun render(
+        block: ListItem,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+    )
 
     @Composable
     public fun render(block: CodeBlock, styling: MarkdownStyling.Code)
