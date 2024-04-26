@@ -266,15 +266,24 @@ com.intellij.platform.ijent.IjentWindowsInfo
 com.intellij.platform.ijent.IjentWindowsInfo$User
 - com.intellij.platform.ijent.IjentInfo$User
 com.intellij.platform.ijent.fs.IjentFileInfo
+- a:getCreationTime():java.time.ZonedDateTime
+- a:getLastAccessTime():java.time.ZonedDateTime
+- a:getLastModifiedTime():java.time.ZonedDateTime
 - a:getPath():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- a:getPermissions():com.intellij.platform.ijent.fs.IjentFileInfo$Permissions
 - a:getType():com.intellij.platform.ijent.fs.IjentFileInfo$Type
+com.intellij.platform.ijent.fs.IjentFileInfo$Permissions
 com.intellij.platform.ijent.fs.IjentFileInfo$Type
 com.intellij.platform.ijent.fs.IjentFileInfo$Type$Directory
 - com.intellij.platform.ijent.fs.IjentFileInfo$Type
+- com.intellij.platform.ijent.fs.IjentPosixFileInfo$Type
 com.intellij.platform.ijent.fs.IjentFileInfo$Type$Other
 - com.intellij.platform.ijent.fs.IjentFileInfo$Type
+- com.intellij.platform.ijent.fs.IjentPosixFileInfo$Type
 com.intellij.platform.ijent.fs.IjentFileInfo$Type$Regular
 - com.intellij.platform.ijent.fs.IjentFileInfo$Type
+- com.intellij.platform.ijent.fs.IjentPosixFileInfo$Type
+- a:getSize():J
 *:com.intellij.platform.ijent.fs.IjentFileSystemApi
 - a:canonicalize(com.intellij.platform.ijent.fs.IjentPath$Absolute,kotlin.coroutines.Continuation):java.lang.Object
 - a:fileReader(com.intellij.platform.ijent.fs.IjentPath$Absolute,kotlin.coroutines.Continuation):java.lang.Object
@@ -692,6 +701,24 @@ f:com.intellij.platform.ijent.fs.IjentPathKt
 - toString():java.lang.String
 com.intellij.platform.ijent.fs.IjentPosixFileInfo
 - com.intellij.platform.ijent.fs.IjentFileInfo
+- a:getPermissions():com.intellij.platform.ijent.fs.IjentPosixFileInfo$Permissions
+- a:getType():com.intellij.platform.ijent.fs.IjentPosixFileInfo$Type
+com.intellij.platform.ijent.fs.IjentPosixFileInfo$Permissions
+- com.intellij.platform.ijent.fs.IjentFileInfo$Permissions
+- a:getGroup():I
+- a:getGroupCanExecute():Z
+- a:getGroupCanRead():Z
+- a:getGroupCanWrite():Z
+- a:getOtherCanExecute():Z
+- a:getOtherCanRead():Z
+- a:getOtherCanWrite():Z
+- a:getOwner():I
+- a:getOwnerCanExecute():Z
+- a:getOwnerCanRead():Z
+- a:getOwnerCanWrite():Z
+- a:getSetGid():Z
+- a:getSetUid():Z
+- a:getStickyBit():Z
 com.intellij.platform.ijent.fs.IjentPosixFileInfo$Type
 - com.intellij.platform.ijent.fs.IjentFileInfo$Type
 com.intellij.platform.ijent.fs.IjentPosixFileInfo$Type$Symlink
@@ -703,3 +730,10 @@ com.intellij.platform.ijent.fs.IjentPosixFileInfo$Type$Symlink$Unresolved
 - com.intellij.platform.ijent.fs.IjentPosixFileInfo$Type$Symlink
 com.intellij.platform.ijent.fs.IjentWindowsFileInfo
 - com.intellij.platform.ijent.fs.IjentFileInfo
+- a:getPermissions():com.intellij.platform.ijent.fs.IjentWindowsFileInfo$Permissions
+com.intellij.platform.ijent.fs.IjentWindowsFileInfo$Permissions
+- com.intellij.platform.ijent.fs.IjentFileInfo$Permissions
+- a:isArchive():Z
+- a:isHidden():Z
+- a:isReadOnly():Z
+- a:isSystem():Z
