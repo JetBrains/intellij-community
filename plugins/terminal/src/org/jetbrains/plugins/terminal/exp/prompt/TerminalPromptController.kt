@@ -9,11 +9,12 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
-import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryManager
@@ -49,8 +50,10 @@ internal class TerminalPromptController(
 
     val shellCommandExecutor = ShellCommandExecutorImpl(session)
     editor.putUserData(ShellCommandExecutor.KEY, shellCommandExecutor)
-    val runtimeDataProvider = IJShellRuntimeDataProvider(session, shellCommandExecutor)
-    editor.putUserData(IJShellRuntimeDataProvider.KEY, runtimeDataProvider)
+    val shellRuntimeContextProvider = IJShellRuntimeContextProvider()
+    editor.putUserData(IJShellRuntimeContextProvider.KEY, shellRuntimeContextProvider)
+    val shellGeneratorsExecutor = IJShellGeneratorsExecutor()
+    editor.putUserData(IJShellGeneratorsExecutor.KEY, shellGeneratorsExecutor)
 
     commandHistoryManager = CommandHistoryManager(session)
 
@@ -58,6 +61,7 @@ internal class TerminalPromptController(
     session.addCommandListener(object : ShellCommandListener {
       override fun promptStateUpdated(newState: TerminalPromptState) {
         model.updatePrompt(newState)
+        shellRuntimeContextProvider.updateCurrentDirectory(newState.currentDirectory)
       }
     })
 

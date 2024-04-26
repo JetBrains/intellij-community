@@ -4,73 +4,67 @@ package org.jetbrains.plugins.terminal.exp.completion
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.UnknownFileType
-import com.intellij.terminal.block.completion.ShellArgumentSuggestion
+import com.intellij.terminal.block.completion.ShellDataGeneratorsExecutor
+import com.intellij.terminal.block.completion.spec.*
+import com.intellij.terminal.block.completion.spec.ShellSuggestionType.*
 import org.jetbrains.plugins.terminal.TerminalIcons
-import org.jetbrains.terminal.completion.BaseSuggestion
-import org.jetbrains.terminal.completion.ShellArgument
-import org.jetbrains.terminal.completion.ShellCommand
-import org.jetbrains.terminal.completion.ShellOption
-import java.io.File
 import javax.swing.Icon
 
 internal object TerminalCompletionUtil {
-  fun getNextSuggestionsString(suggestion: BaseSuggestion): String {
+  suspend fun getNextSuggestionsString(
+    suggestion: ShellCompletionSuggestion,
+    context: ShellRuntimeContext,
+    generatorsExecutor: ShellDataGeneratorsExecutor
+  ): String {
     val result = when (suggestion) {
-      is ShellCommand -> getNextOptionsAndArgumentsString(suggestion)
-      is ShellOption -> getNextArgumentsString(suggestion.args)
+      is ShellCommandSpec -> getNextOptionsAndArgumentsString(suggestion, context, generatorsExecutor)
+      is ShellOptionSpec -> getNextArgumentsString(suggestion.arguments)
       else -> ""
     }
     return if (result.isNotEmpty()) " $result" else ""
   }
 
   /** Returns required options and all arguments */
-  private fun getNextOptionsAndArgumentsString(command: ShellCommand): String {
-    val nextOptions = command.options.filter { it.isRequired }
+  private suspend fun getNextOptionsAndArgumentsString(
+    spec: ShellCommandSpec,
+    context: ShellRuntimeContext,
+    generatorsExecutor: ShellDataGeneratorsExecutor
+  ): String {
+    val nextOptions = generatorsExecutor.execute(context, spec.optionsGenerator).filter { it.isRequired }
+    val nextArguments = generatorsExecutor.execute(context, spec.argumentsGenerator)
     return buildString {
       for (option in nextOptions) {
         append(option.names.first())
-        val arguments = getNextArgumentsString(option.args)
+        val arguments = getNextArgumentsString(option.arguments)
         if (arguments.isNotEmpty()) {
           append(' ')
           append(arguments)
         }
         append(' ')
       }
-      append(getNextArgumentsString(command.args))
+      append(getNextArgumentsString(nextArguments))
     }.trim()
   }
 
-  private fun getNextArgumentsString(args: List<ShellArgument>): String {
+  private fun getNextArgumentsString(args: List<ShellArgumentSpec>): String {
     val argStrings = args.mapIndexed { index, arg -> arg.asSuggestionString(index) }
     return argStrings.joinToString(" ")
   }
 
-  private fun ShellArgument.asSuggestionString(index: Int): String {
+  private fun ShellArgumentSpec.asSuggestionString(index: Int): String {
     val name = displayName ?: "arg${index + 1}"
     return if (isOptional) "[$name]" else "<$name>"
   }
 
-  fun findIconForSuggestion(suggestion: BaseSuggestion): Icon? {
-    return when (suggestion) {
-      is ShellCommand -> TerminalIcons.Command
-      is ShellOption -> TerminalIcons.Option
-      is ShellArgumentSuggestion -> suggestion.findIcon()
+  fun findIconForSuggestion(name: String, type: ShellSuggestionType): Icon? {
+    return when (type) {
+      COMMAND -> TerminalIcons.Command
+      OPTION -> TerminalIcons.Option
+      FOLDER -> AllIcons.Nodes.Folder
+      FILE -> getFileIcon(name)
+      ARGUMENT -> TerminalIcons.Other
       else -> null
     }
-  }
-
-  private fun ShellArgumentSuggestion.findIcon(): Icon {
-    return if (argument.isFilePath() || argument.isFolder()) {
-      getFileOrFolderIcon(names.first())
-    }
-    else TerminalIcons.Other
-  }
-
-  private fun getFileOrFolderIcon(fileName: String): Icon {
-    return if (fileName.endsWith(File.separatorChar) || fileName == "~" || fileName == "-") {
-      AllIcons.Nodes.Folder
-    }
-    else getFileIcon(fileName)
   }
 
   fun getFileIcon(fileName: String): Icon {
