@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiLiteralUtil
 import com.intellij.psi.util.startOffset
 import com.intellij.util.text.CharArrayUtil
 
-class AdjustWhitespaceLineTextBlockProcessor : PostFormatProcessor {
+class AdjustWhitespaceLineTextBlockReformatPostProcessor : PostFormatProcessor {
   override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {
     processFile(source.containingFile, source.textRange, settings)
     return source
@@ -20,7 +20,7 @@ class AdjustWhitespaceLineTextBlockProcessor : PostFormatProcessor {
     return processFile(source, rangeToReformat, settings)
   }
 
-  private fun processFile(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings) : TextRange {
+  private fun processFile(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange {
     val documentManager = PsiDocumentManager.getInstance(source.project)
     val document = documentManager.getDocument(source) ?: return rangeToReformat
 
