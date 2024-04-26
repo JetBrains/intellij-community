@@ -318,3 +318,7 @@ fun KtSimpleNameExpression.isPartOfQualifiedExpression(): Boolean {
     }
     return false
 }
+
+fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {
+    return (this?.typeElement as? KtUserType)?.typeArguments.orEmpty()
+}

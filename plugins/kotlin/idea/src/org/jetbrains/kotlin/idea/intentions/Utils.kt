@@ -250,7 +250,3 @@ private val rangeTypes = setOf(
 fun ClassDescriptor.isRange(): Boolean {
     return rangeTypes.any { this.fqNameUnsafe.asString() == it }
 }
-
-fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {
-    return (this?.typeElement as? KtUserType)?.typeArguments.orEmpty()
-}
