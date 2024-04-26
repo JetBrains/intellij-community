@@ -2518,7 +2518,7 @@ public class JavaDocInfoGenerator {
       PsiTypeParameter typeParameter = typeParameters[i];
       String presentableName = generateOneTypeParameterPresentableName(typeParameter);
       DocTagLocator<PsiDocTag> tagLocator = typeParameterLocator(i);
-      ParamInfo parmTag = findDocTag(localTags, typeParameter.getName(), presentableName, method, tagLocator);
+      ParamInfo parmTag = findDocTag(localTags, "<" + typeParameter.getName() + ">", presentableName, method, tagLocator);
       if (parmTag != null) {
         collectedTags.add(parmTag);
       }
