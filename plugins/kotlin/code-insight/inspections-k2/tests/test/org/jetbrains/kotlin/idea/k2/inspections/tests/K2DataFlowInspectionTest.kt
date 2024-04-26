@@ -38,6 +38,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testCastGenericMethodReturn() = doTest()
     fun testClassRef() = doTest()
     fun testCollectionConstructors() = doTest()
+    fun testCompareInLoop() = doTest()
     fun testComparison() = doTest()
     fun testComparisonNoValues() = doTest(false)
     fun testConstantWithDifferentType() = doTest()
