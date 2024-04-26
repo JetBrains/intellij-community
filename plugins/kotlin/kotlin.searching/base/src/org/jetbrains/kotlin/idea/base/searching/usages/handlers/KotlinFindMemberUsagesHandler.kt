@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
@@ -168,18 +169,20 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
         private fun getPrimaryElementsUnderProgress(element: KtParameter): Array<PsiElement> {
             val function = element.ownerFunction
             if (function != null && function.isOverridable()) {
-                function.toLightMethods().singleOrNull()?.let { method ->
-                    if (OverridingMethodsSearch.search(method).any()) {
-                        val parametersCount = method.parameterList.parametersCount
-                        val parameterIndex = element.parameterIndex()
-
-                        assert(parameterIndex < parametersCount)
-                        return super.getPrimaryElements() + OverridingMethodsSearch.search(method, true)
-                            .filter { it.parameterList.parametersCount == parametersCount }
-                            .mapNotNull { it.parameterList.parameters[parameterIndex].unwrapped }
-                            .toTypedArray()
+                val parameterIndex = element.parameterIndex()
+                val offset = if ((function as? KtFunction)?.receiverTypeReference != null) 1 else 0
+                return super.getPrimaryElements() + KotlinFindUsagesSupport.searchOverriders(function, function.useScope)
+                    .mapNotNull { overrider ->
+                        when (overrider) {
+                            is KtNamedFunction -> overrider.valueParameters[parameterIndex]
+                            is PsiMethod -> {
+                                overrider.parameterList.takeIf { it.parametersCount > parameterIndex + offset }?.getParameter(parameterIndex + offset)
+                            }
+                            else -> null
+                        }
                     }
-                }
+                    .toList()
+                    .toTypedArray()
             }
             return super.getPrimaryElements()
         }
