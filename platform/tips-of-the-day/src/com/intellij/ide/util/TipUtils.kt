@@ -4,7 +4,6 @@
 package com.intellij.ide.util
 
 import com.intellij.CommonBundle
-import com.intellij.DynamicBundle
 import com.intellij.featureStatistics.FeatureDescriptor
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.ide.IdeBundle
@@ -16,13 +15,14 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.ui.icons.loadImageByClassLoader
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil.scale
 import com.intellij.util.ImageLoader.loadFromUrl
+import com.intellij.util.LocalizationUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ui.JBImageIcon
 import org.jetbrains.annotations.Nls
@@ -39,6 +39,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.text.StyleConstants
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<TipUtils>()
 
@@ -176,37 +177,43 @@ private data class TipRetrieversInfo(val imagesTipRetriever: TipRetriever,
 private val productCodeTipMap = mapOf(Pair("iu", "ij"),
                                       Pair("pc", "py_ce"),
                                       Pair("ds", "py_ds"))
+private const val tipDirectory = "tips"
+
 
 private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
-  val fallbackLoader = TipUtils::class.java.classLoader
   // descriptor can be null if the provided tip is not registered as an extension
   // such tips are not present in the tips of the day list, but shown in the productivity guide
-  val pluginDescriptor: PluginDescriptor? = tip.pluginDescriptor
-  val langBundle = DynamicBundle.findLanguageBundle()
+  val defaultLoader = tip.pluginDescriptor?.pluginClassLoader ?: TipUtils::class.java.classLoader
 
-  //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
-  var tipLoader: ClassLoader? = null
-  if (langBundle != null) {
-    val langBundleLoader = langBundle.pluginDescriptor
-    if (langBundleLoader != null) tipLoader = langBundleLoader.pluginClassLoader
-  }
-  val pluginClassLoader = pluginDescriptor?.pluginClassLoader
-
-  if (tipLoader == null && pluginClassLoader != null) {
-    tipLoader = pluginClassLoader
-  }
-  if (tipLoader == null) tipLoader = fallbackLoader
-  var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
-  //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
-  if (ideCode.contains("ic")) ideCode = "iu"
-  //So the primary loader is determined. Now we're constructing retrievers that use a pair of path/loaders to try to get the tips.
-  val fallbackIdeCode = productCodeTipMap.getOrDefault(ideCode, ideCode)
   val retrievers: MutableList<TipRetriever> = ArrayList()
+  val localizationPluginLoader: ClassLoader? = LocalizationUtil.getPluginClassLoader()
+  if (localizationPluginLoader != null) {
+    var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
+    //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
+    if (ideCode.contains("ic")) ideCode = "iu"
+    //So the primary loader is determined. Now we're constructing retrievers that use a pair of path/loaders to try to get the tips.
+    val fallbackIdeCode = productCodeTipMap.getOrDefault(ideCode, ideCode)
+    //tips from language plugin
+    listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc").forEach { retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, it)) }
+    //tips from locally placed localization
+    retrievers.addAll(getLocalizationTipRetrievers(defaultLoader))
+    retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, ""))
+  }
+  val defaultRetriever = TipRetriever(defaultLoader, tipDirectory, "")
+  retrievers.add(defaultRetriever)
+  return TipRetrieversInfo(defaultRetriever, retrievers)
+}
 
-  listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc", "").forEach { retrievers.add(TipRetriever(tipLoader, "tips", it)) }
-  val fallbackRetriever = TipRetriever(if (pluginClassLoader == null) fallbackLoader else pluginClassLoader, "tips", "")
-  retrievers.add(fallbackRetriever)
-  return TipRetrieversInfo(fallbackRetriever, retrievers)
+private fun getLocalizationTipRetrievers(loader: ClassLoader): List<TipRetriever> {
+  val result = mutableListOf<TipRetriever>()
+  val folderPaths = LocalizationUtil.getFolderLocalizedPaths(Path.of(tipDirectory)).map { it.invariantSeparatorsPathString }
+  val suffixes = LocalizationUtil.getLocalizationSuffixes()
+  //folder paths and suffix paths should have the same size, because their elements depend on locale (if it contains a region or not)
+  for (i in folderPaths.indices) {
+    folderPaths.getOrNull(i)?.let {result.add(TipRetriever(loader, it, ""))}
+    suffixes.getOrNull(i)?.let {result.add(TipRetriever(loader, tipDirectory, "", it))}
+  }
+  return result
 }
 
 //Because images are not localized, we're always loading them from main classloader, but some of the images might not be present there
@@ -323,7 +330,7 @@ private class TipEntity(private val name: String, private val value: String) {
   }
 }
 
-private class TipRetriever(@JvmField val loader: ClassLoader?, @JvmField val path: String, @JvmField val subPath: String) {
+private class TipRetriever(@JvmField val loader: ClassLoader?, @JvmField val path: String, @JvmField val subPath: String, val suffix: String = "") {
   fun getTipContent(tipName: String?): String? {
     if (tipName == null) {
       return null
@@ -340,13 +347,21 @@ private class TipRetriever(@JvmField val loader: ClassLoader?, @JvmField val pat
 
   fun getTipUrl(tipName: String): URL? {
     val tipLocation = "/$path/${if (subPath.isNotEmpty()) "$subPath/" else ""}"
-    val tipUrl = ResourceUtil.getResource(loader!!, tipLocation, tipName)
+    val fileName = addSuffixToFileName(tipName, suffix)
+    val tipUrl = ResourceUtil.getResource(loader!!, tipLocation, fileName)
     // tip is not found, but if its name starts with prefix, try without as a safety measure
     @Suppress("SpellCheckingInspection")
     if (tipUrl == null && tipName.startsWith("neue-")) {
-      return ResourceUtil.getResource(loader, tipLocation, tipName.substring(5))
+      return ResourceUtil.getResource(loader, tipLocation, fileName.substring(5))
     }
     return tipUrl
+  }
+
+  private fun addSuffixToFileName(filename: String, suffix: String): String {
+    if (suffix.isEmpty()) return filename
+    val nameWithoutExtension = FileUtilRt.getNameWithoutExtension(filename)
+    val extension = FileUtilRt.getExtension(filename)
+    return "$nameWithoutExtension$suffix.$extension"
   }
 }
 

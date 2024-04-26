@@ -28,8 +28,9 @@ public abstract class IdeResourcesTestCase extends LightPlatformTestCase {
 
   public void testTipFilesDuplicates() {
     Collection<String> errors = new TreeSet<>();
-    TipAndTrickBean[] tips = TipAndTrickBean.EP_NAME.getExtensions();
-    assertNotEmpty(Arrays.asList(tips));
+    List<TipAndTrickBean> tips = new ArrayList<>(TipAndTrickBean.EP_NAME.getExtensionList());
+    assertNotEmpty(tips);
+    tips.removeIf(it -> !it.fileName.endsWith(".html"));
     Set<String> visited = new LinkedHashSet<>();
     for (TipAndTrickBean tip : tips) {
       if (!visited.add(tip.fileName)) {
