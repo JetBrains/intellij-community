@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.FrameWrapper
+import com.intellij.openapi.ui.getPreferredFocusedComponent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
@@ -40,10 +41,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
@@ -136,6 +139,14 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
         activityList.updateEmptyText(false)
       }
     }, this)
+
+    isFocusCycleRoot = true
+    focusTraversalPolicy = object: ComponentsListFocusTraversalPolicy() {
+      override fun getOrderedComponents(): List<Component> {
+        return listOfNotNull(activityList, changesBrowser?.preferredFocusedComponent, searchField?.textArea,
+                             frameDiffPreview?.preferredFocusedComponent)
+      }
+    }
   }
 
   override fun getData(dataId: String): Any? {
