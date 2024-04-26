@@ -92,7 +92,6 @@ open class KotlinUMethod(
         get() = uastAnchorPart.getOrBuild {
             val identifierSourcePsi = when (val sourcePsi = sourcePsi) {
                 is PsiNameIdentifierOwner -> sourcePsi.nameIdentifier
-                is KtObjectDeclaration -> sourcePsi.getObjectKeyword()
                 is KtPropertyAccessor -> sourcePsi.namePlaceholder
                 else -> sourcePsi?.navigationElement
             }
