@@ -303,7 +303,12 @@ private data class CommitRevisionComparison(val headRevision: Hash?, val baseRev
   companion object {
     fun create(repository: GitRepository, headBranch: GitBranch, baseBranch: GitRemoteBranch): CommitRevisionComparison {
       val info = repository.info
-      val headRevision = info.localBranchesWithHashes[headBranch]
+      val headRevision = if (headBranch.isRemote) {
+        info.remoteBranchesWithHashes[headBranch]
+      }
+      else {
+        info.localBranchesWithHashes[headBranch]
+      }
       val baseRevision = info.remoteBranchesWithHashes[baseBranch]
       return CommitRevisionComparison(headRevision, baseRevision)
     }
