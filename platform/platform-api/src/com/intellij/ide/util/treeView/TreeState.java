@@ -202,13 +202,15 @@ public final class TreeState implements JDOMExternalizable {
     String iconPath;
     String iconPlugin;
     String iconModule;
+    boolean isLeaf = true;
 
     @SuppressWarnings("unused")
     CachedPresentationDataImpl() { }
 
     CachedPresentationDataImpl(
       @NotNull String text,
-      @Nullable CachedIconPresentation iconPresentation
+      @Nullable CachedIconPresentation iconPresentation,
+      boolean isLeaf
     ) {
       this.text = text;
       if (iconPresentation != null) {
@@ -216,6 +218,7 @@ public final class TreeState implements JDOMExternalizable {
         this.iconPlugin = iconPresentation.getPlugin();
         this.iconModule = iconPresentation.getModule();
       }
+      this.isLeaf = isLeaf;
     }
 
     boolean isValid() {
@@ -272,6 +275,17 @@ public final class TreeState implements JDOMExternalizable {
     public CachedIconPresentation getIconData() {
       if (iconPath == null || iconPlugin == null) return null;
       return new CachedIconPresentation(iconPath, iconPlugin, iconModule);
+    }
+
+    @Override
+    @Attribute("isLeaf")
+    public boolean isLeaf() {
+      return isLeaf;
+    }
+
+    @Attribute("isLeaf")
+    public void setLeaf(boolean leaf) {
+      isLeaf = leaf;
     }
 
     @Override
@@ -344,6 +358,9 @@ public final class TreeState implements JDOMExternalizable {
     var data = new CachedTreePresentationData(item, presentationData, attributes, children);
     for (Element child : element.getChildren(PRESENTATION_TAG)) {
       readExternalPresentation(child, children);
+    }
+    if (!children.isEmpty()) { // Just in case isLeaf is incorrect in the XML.
+      presentationData.setLeaf(false);
     }
     result.add(data);
   }

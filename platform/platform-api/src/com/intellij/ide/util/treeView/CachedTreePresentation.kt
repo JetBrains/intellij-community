@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.TreeState.CachedPresentationDataImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.treeStructure.CachingTreePath
+import com.intellij.util.containers.nullize
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
@@ -51,9 +52,10 @@ class CachedTreePresentationData(
         val children = mutableListOf<CachedTreePresentationData>()
         val iconData = getIconData(presentation.getIcon(false))
         val extraAttrs = (userObject as? TreeNodeWithCacheableAttributes)?.getCacheableAttributes()
+        val isLeaf = model.isLeaf(node)
         val result = CachedTreePresentationData(
           TreeState.PathElement(TreeState.calcId(userObject), TreeState.calcType(userObject), 0, null),
-          CachedPresentationDataImpl(presentation.presentableText ?: "", iconData),
+          CachedPresentationDataImpl(presentation.presentableText ?: "", iconData, isLeaf),
           extraAttrs,
           children
         )
@@ -90,6 +92,7 @@ interface CachedPresentationData {
   val text: String
   val iconData: CachedIconPresentation?
   val icon: Icon? get() = getLoadingIcon(iconData)
+  val isLeaf: Boolean
 }
 
 @Internal
@@ -103,6 +106,9 @@ data class CachedIconPresentation(
 class CachedTreePresentationNode(
   val data: CachedTreePresentationData,
 ) : PresentableNodeDescriptor<CachedTreePresentationData>(null, null), PathElementIdProvider {
+
+  val isLeaf: Boolean
+    get() = data.presentation.isLeaf
 
   var isExpanded = data.children.isNotEmpty()
 
@@ -154,7 +160,9 @@ class CachedTreePresentation(rootPresentation: CachedTreePresentationData) {
 
   fun getRoot(): Any = cachedRoot
 
-  fun getChildren(parent: Any): List<Any>? = getCachedChildren(parent)
+  fun isLeaf(node: Any): Boolean = getCachedNode(node)?.isLeaf == true
+
+  fun getChildren(parent: Any): List<Any>? = getCachedChildren(parent)?.nullize()
 
   private fun getCachedChildren(parent: Any): List<CachedTreePresentationNode>? {
     val cachedParent = getCachedNode(parent) ?: return null
