@@ -9,9 +9,6 @@ import kotlin.io.path.nameWithoutExtension
 interface KMPTest {
     val testPlatform: KMPTestPlatform
 
-    fun setUp() {
-    }
-
     companion object {
         fun withPlatformExtension(file: Path, platform: KMPTestPlatform): Path {
             if (platform == KMPTestPlatform.Unspecified) return file

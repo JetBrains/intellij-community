@@ -109,11 +109,6 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
     override val testPlatform: KMPTestPlatform
         get() = KMPTestPlatform.Unspecified
 
-    override fun setUp() {
-        super<KotlinLightCodeInsightFixtureTestCase>.setUp()
-        super<KMPTest>.setUp()
-    }
-
     companion object {
         enum class FindUsageTestType(val isFir: Boolean, val isCri: Boolean) {
             DEFAULT(isFir = false, isCri = false),

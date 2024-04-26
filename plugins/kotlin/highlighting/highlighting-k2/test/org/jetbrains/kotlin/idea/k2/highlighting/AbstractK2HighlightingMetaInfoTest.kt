@@ -40,11 +40,6 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
     override val testPlatform: KMPTestPlatform
         get() = KMPTestPlatform.Unspecified
 
-    override fun setUp() {
-        super<AbstractHighlightingMetaInfoTest>.setUp()
-        super<KMPTest>.setUp()
-    }
-
     override fun highlightingFileNameSuffix(testKtFile: File): String {
         val fileContent = testKtFile.readText()
 
