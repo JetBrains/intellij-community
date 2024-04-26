@@ -16,7 +16,6 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (println))
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                     UPolyadicExpression (operator = +)
                         ULiteralExpression (value = "Hello, world!")
         UMethod (name = getProperty)

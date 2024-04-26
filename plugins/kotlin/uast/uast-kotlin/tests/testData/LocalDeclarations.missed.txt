@@ -6,10 +6,8 @@ com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Boole
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Local)) <- UClass (name = Local) <- UDeclarationsExpression <- UBlockExpression <- UMethod (name = foo)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (bar)) <- ULambdaExpression <- UVariable (name = bar) <- UDeclarationsExpression <- UBlockExpression
 org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- ULambdaExpression <- UVariable (name = bar)
-org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Local) <- UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) <- UReturnExpression <- UBlockExpression <- ULambdaExpression
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (baz)) <- ULocalVariable (name = baz) <- UDeclarationsExpression <- UBlockExpression <- UMethod (name = foo)
 org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- ULambdaExpression <- ULocalVariable (name = baz)
-org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Local) <- UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) <- UBlockExpression <- ULambdaExpression <- ULocalVariable (name = baz)
 org.jetbrains.kotlin.psi.KtTypeReference: UTypeReferenceExpression (name = int) <- ULambdaExpression <- UVariable (name = someLocalFun) <- UDeclarationsExpression <- UBlockExpression
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Int) <- UTypeReferenceExpression (name = int) <- ULambdaExpression <- UVariable (name = someLocalFun) <- UDeclarationsExpression
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Int)) <- USimpleNameReferenceExpression (identifier = Int) <- UTypeReferenceExpression (name = int) <- ULambdaExpression <- UVariable (name = someLocalFun)
@@ -22,4 +20,3 @@ com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (Strin
 org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = bar) <- UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) <- UBinaryExpression (operator = ==) <- UReturnExpression <- UBlockExpression
 org.jetbrains.kotlin.psi.KtOperationReferenceExpression: USimpleNameReferenceExpression (identifier = ==) <- UBinaryExpression (operator = ==) <- UReturnExpression <- UBlockExpression <- UMethod (name = foo)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (==)) <- USimpleNameReferenceExpression (identifier = ==) <- UBinaryExpression (operator = ==) <- UReturnExpression <- UBlockExpression
-org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = Local) <- UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) <- UBinaryExpression (operator = ==) <- UReturnExpression <- UBlockExpression

@@ -8,7 +8,6 @@ UFile (package = )
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (process))
-                        USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null)
                         USimpleNameReferenceExpression (identifier = t)
         UMethod (name = functionWithVararg)
             UParameter (name = i)

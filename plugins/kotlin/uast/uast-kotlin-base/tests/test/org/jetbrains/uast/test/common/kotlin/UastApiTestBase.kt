@@ -457,7 +457,7 @@ interface UastApiTestBase : UastPluginSelection {
         TestCase.assertNotNull(localFunctionResolved)
         val classReference = localFunction.classReference ?: kfail("classReference expected")
         TestCase.assertEquals(
-            "USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Local)",
+            "USimpleNameReferenceExpression (identifier = Local, resolvesTo = PsiClass: Local)",
             classReference.asLogString()
         )
         val localClass = classReference.resolve().toUElement() ?: kfail("UElement expected")
@@ -615,7 +615,7 @@ interface UastApiTestBase : UastPluginSelection {
         })
         TestCase.assertEquals(
             """
-                <init>() -> typeArguments: [PsiType:T]
+                TypeBase() -> typeArguments: [PsiType:T]
                 getGenericSuperclass() -> typeArguments: []
                 getActualTypeArguments() -> typeArguments: []
                 first() -> typeArguments: []

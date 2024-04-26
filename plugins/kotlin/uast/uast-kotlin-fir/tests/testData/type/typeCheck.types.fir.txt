@@ -13,5 +13,4 @@ UFile (package = ) [public final class TypeCheckKt {...]
                             USimpleNameReferenceExpression (identifier = x) [x] : <ErrorType>
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : java.lang.String
                                 UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                                USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : java.lang.String
                         USimpleNameReferenceExpression (identifier = x) [x] : <ErrorType>

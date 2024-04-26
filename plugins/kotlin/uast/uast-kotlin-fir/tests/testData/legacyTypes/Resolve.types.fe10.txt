@@ -2,70 +2,61 @@ UFile (package = ) [public final class ResolveKt {...]
     UClass (name = ResolveKt) [public final class ResolveKt {...}]
         UMethod (name = bar) [public static final fun bar() : void {...}]
             UBlockExpression [{...}] : kotlin.ranges.IntRange
-                UQualifiedReferenceExpression [<init>().foo()] : kotlin.Unit
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : A
+                UQualifiedReferenceExpression [A().foo()] : kotlin.Unit
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [A()] : A
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : A
+                        USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : kotlin.Unit
                         UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                        USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : kotlin.Unit
-                UQualifiedReferenceExpression [<init>().inlineFoo()] : kotlin.Unit
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : A
+                UQualifiedReferenceExpression [A().inlineFoo()] : kotlin.Unit
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [A()] : A
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : A
+                        USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [inlineFoo()] : kotlin.Unit
                         UIdentifier (Identifier (inlineFoo)) [UIdentifier (Identifier (inlineFoo))]
-                        USimpleNameReferenceExpression (identifier = inlineFoo, resolvesTo = null) [inlineFoo] : kotlin.Unit
-                UQualifiedReferenceExpression [listOf(<init>()).forEach({ var it: A ->...})] : kotlin.Unit
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(<init>())] : java.util.List<? extends A>
+                UQualifiedReferenceExpression [listOf(A()).forEach({ var it: A ->...})] : kotlin.Unit
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(A())] : java.util.List<? extends A>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends A>
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : A
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [A()] : A
                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : A
+                            USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [forEach({ var it: A ->...})] : kotlin.Unit
                         UIdentifier (Identifier (forEach)) [UIdentifier (Identifier (forEach))]
-                        USimpleNameReferenceExpression (identifier = forEach, resolvesTo = null) [forEach] : kotlin.Unit
                         ULambdaExpression [{ var it: A ->...}] : kotlin.jvm.functions.Function1<? super A, ? extends kotlin.Unit>
                             UParameter (name = it) [var it: A]
                             UBlockExpression [{...}]
                                 UReturnExpression [return println(it)]
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(it)] : kotlin.Unit
                                         UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : kotlin.Unit
                                         USimpleNameReferenceExpression (identifier = it) [it] : A
                 UQualifiedReferenceExpression [listOf("").joinToString()] : java.lang.String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : java.util.List<? extends java.lang.String>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.String>
                         UPolyadicExpression (operator = +) [""] : java.lang.String
                             ULiteralExpression (value = "") [""] : java.lang.String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [joinToString()] : java.lang.String
                         UIdentifier (Identifier (joinToString)) [UIdentifier (Identifier (joinToString))]
-                        USimpleNameReferenceExpression (identifier = joinToString, resolvesTo = null) [joinToString] : java.lang.String
                 UQualifiedReferenceExpression [listOf("").size] : int
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : java.util.List<? extends java.lang.String>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.String>
                         UPolyadicExpression (operator = +) [""] : java.lang.String
                             ULiteralExpression (value = "") [""] : java.lang.String
                     USimpleNameReferenceExpression (identifier = size) [size] : int
                 UQualifiedReferenceExpression [listOf("").indices] : kotlin.ranges.IntRange
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : java.util.List<? extends java.lang.String>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.String>
                         UPolyadicExpression (operator = +) [""] : java.lang.String
                             ULiteralExpression (value = "") [""] : java.lang.String
                     USimpleNameReferenceExpression (identifier = indices) [indices] : kotlin.ranges.IntRange
-                UDeclarationsExpression [var date: java.util.Date = java.util.<init>()]
-                    ULocalVariable (name = date) [var date: java.util.Date = java.util.<init>()]
-                        UQualifiedReferenceExpression [java.util.<init>()] : java.util.Date
+                UDeclarationsExpression [var date: java.util.Date = java.util.Date()]
+                    ULocalVariable (name = date) [var date: java.util.Date = java.util.Date()]
+                        UQualifiedReferenceExpression [java.util.Date()] : java.util.Date
                             UQualifiedReferenceExpression [java.util]
                                 USimpleNameReferenceExpression (identifier = java) [java]
                                 USimpleNameReferenceExpression (identifier = util) [util]
-                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : java.util.Date
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Date()] : java.util.Date
                                 UIdentifier (Identifier (Date)) [UIdentifier (Identifier (Date))]
-                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Date) [<init>] : java.util.Date
+                                USimpleNameReferenceExpression (identifier = Date, resolvesTo = PsiClass: Date) [Date]
                 UBinaryExpression (operator = =) [date.time = 1000] : kotlin.Unit
                     UQualifiedReferenceExpression [date.time] : long
                         USimpleNameReferenceExpression (identifier = date) [date] : java.util.Date
@@ -77,18 +68,15 @@ UFile (package = ) [public final class ResolveKt {...]
                 UQualifiedReferenceExpression [listOf("").last()] : java.lang.String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf("")] : java.util.List<? extends java.lang.String>
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : java.util.List<? extends java.lang.String>
                         UPolyadicExpression (operator = +) [""] : java.lang.String
                             ULiteralExpression (value = "") [""] : java.lang.String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [last()] : java.lang.String
                         UIdentifier (Identifier (last)) [UIdentifier (Identifier (last))]
-                        USimpleNameReferenceExpression (identifier = last, resolvesTo = null) [last] : java.lang.String
                 UQualifiedReferenceExpression [mutableMapOf(1 <other> "1").entries.first().setValue("123")] : java.lang.String
                     UQualifiedReferenceExpression [mutableMapOf(1 <other> "1").entries.first()] : java.util.Map.Entry<java.lang.Integer, java.lang.String>
                         UQualifiedReferenceExpression [mutableMapOf(1 <other> "1").entries] : java.util.Set<java.util.Map.Entry<java.lang.Integer, java.lang.String>>
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [mutableMapOf(1 <other> "1")] : java.util.Map<java.lang.Integer, java.lang.String>
                                 UIdentifier (Identifier (mutableMapOf)) [UIdentifier (Identifier (mutableMapOf))]
-                                USimpleNameReferenceExpression (identifier = mutableMapOf, resolvesTo = null) [mutableMapOf] : java.util.Map<java.lang.Integer, java.lang.String>
                                 UBinaryExpression (operator = <other>) [1 <other> "1"] : kotlin.Pair<? extends java.lang.Integer, ? extends java.lang.String>
                                     ULiteralExpression (value = 1) [1] : int
                                     UPolyadicExpression (operator = +) ["1"] : java.lang.String
@@ -96,10 +84,8 @@ UFile (package = ) [public final class ResolveKt {...]
                             USimpleNameReferenceExpression (identifier = entries) [entries] : java.util.Set<java.util.Map.Entry<java.lang.Integer, java.lang.String>>
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [first()] : java.util.Map.Entry<java.lang.Integer, java.lang.String>
                             UIdentifier (Identifier (first)) [UIdentifier (Identifier (first))]
-                            USimpleNameReferenceExpression (identifier = first, resolvesTo = null) [first] : java.util.Map.Entry<java.lang.Integer, java.lang.String>
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [setValue("123")] : java.lang.String
                         UIdentifier (Identifier (setValue)) [UIdentifier (Identifier (setValue))]
-                        USimpleNameReferenceExpression (identifier = setValue, resolvesTo = null) [setValue] : java.lang.String
                         UPolyadicExpression (operator = +) ["123"] : java.lang.String
                             ULiteralExpression (value = "123") ["123"] : java.lang.String
                 UDeclarationsExpression [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3]
@@ -111,13 +97,12 @@ UFile (package = ) [public final class ResolveKt {...]
                     USimpleNameReferenceExpression (identifier = intRange) [intRange] : kotlin.ranges.ClosedRange<java.lang.Long>
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [contains(2 as int)] : boolean
                         UIdentifier (Identifier (contains)) [UIdentifier (Identifier (contains))]
-                        USimpleNameReferenceExpression (identifier = contains, resolvesTo = null) [contains] : boolean
                         UBinaryExpressionWithType [2 as int] : int
                             ULiteralExpression (value = 2) [2] : int
                             UTypeReferenceExpression (name = int) [int]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, 2)] : kotlin.ranges.IntRange
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [IntRange(1, 2)] : kotlin.ranges.IntRange
                     UIdentifier (Identifier (IntRange)) [UIdentifier (Identifier (IntRange))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: IntRange) [<init>] : kotlin.ranges.IntRange
+                    USimpleNameReferenceExpression (identifier = IntRange, resolvesTo = PsiClass: IntRange) [IntRange]
                     ULiteralExpression (value = 1) [1] : int
                     ULiteralExpression (value = 2) [2] : int
         UMethod (name = barT) [public static final fun barT(@org.jetbrains.annotations.NotNull t: T) : void {...}]
@@ -128,7 +113,6 @@ UFile (package = ) [public final class ResolveKt {...]
                     USimpleNameReferenceExpression (identifier = t) [t] : T
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : kotlin.Unit
                         UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                        USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : kotlin.Unit
         UMethod (name = barTL) [public static final fun barTL(@org.jetbrains.annotations.NotNull listT: T) : void {...}]
             UParameter (name = listT) [@org.jetbrains.annotations.NotNull var listT: T]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -137,7 +121,6 @@ UFile (package = ) [public final class ResolveKt {...]
                     USimpleNameReferenceExpression (identifier = listT) [listT] : T
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isEmpty()] : boolean
                         UIdentifier (Identifier (isEmpty)) [UIdentifier (Identifier (isEmpty))]
-                        USimpleNameReferenceExpression (identifier = isEmpty, resolvesTo = null) [isEmpty] : boolean
                 UForEachExpression [for (a : listT) {...}]
                     USimpleNameReferenceExpression (identifier = listT) [listT] : T
                     UBlockExpression [{...}] : kotlin.Unit
@@ -145,7 +128,6 @@ UFile (package = ) [public final class ResolveKt {...]
                             USimpleNameReferenceExpression (identifier = a) [a] : A
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : kotlin.Unit
                                 UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                                USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : kotlin.Unit
     UClass (name = A) [public class A {...}]
         UMethod (name = foo) [public final fun foo() : void {...}]
             UBlockExpression [{...}] : void

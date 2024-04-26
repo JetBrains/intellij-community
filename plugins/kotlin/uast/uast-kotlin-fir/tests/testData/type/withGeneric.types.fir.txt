@@ -33,7 +33,6 @@ UFile (package = ) [public final class WithGenericKt {...]
                     UBinaryExpression (operator = !=) [test1() != null] : boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [test1()] : int
                             UIdentifier (Identifier (test1)) [UIdentifier (Identifier (test1))]
-                            USimpleNameReferenceExpression (identifier = test1, resolvesTo = null) [test1] : int
                         ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
                     UReturnExpression [return "fail: test1"] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UPolyadicExpression (operator = +) ["fail: test1"] : java.lang.String
@@ -42,7 +41,6 @@ UFile (package = ) [public final class WithGenericKt {...]
                     UBinaryExpression (operator = !=) [test2() != null] : boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [test2()] : int
                             UIdentifier (Identifier (test2)) [UIdentifier (Identifier (test2))]
-                            USimpleNameReferenceExpression (identifier = test2, resolvesTo = null) [test2] : int
                         ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
                     UReturnExpression [return "fail: test2"] : @org.jetbrains.annotations.NotNull() java.lang.Void
                         UPolyadicExpression (operator = +) ["fail: test2"] : java.lang.String
@@ -55,7 +53,6 @@ UFile (package = ) [public final class WithGenericKt {...]
                     UBlockExpression [{...}] : int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [test3()] : int
                             UIdentifier (Identifier (test3)) [UIdentifier (Identifier (test3))]
-                            USimpleNameReferenceExpression (identifier = test3, resolvesTo = null) [test3] : int
                     UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull var e: java.lang.NullPointerException) {...}]
                         UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.NullPointerException]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -76,7 +73,6 @@ UFile (package = ) [public final class WithGenericKt {...]
                     UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [castToString(null)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UIdentifier (Identifier (castToString)) [UIdentifier (Identifier (castToString))]
-                            USimpleNameReferenceExpression (identifier = castToString, resolvesTo = null) [castToString] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
                     UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull var e: java.lang.Exception) {...}]
                         UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.Exception]

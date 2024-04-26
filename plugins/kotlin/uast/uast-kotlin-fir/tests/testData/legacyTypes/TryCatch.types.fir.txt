@@ -6,18 +6,15 @@ UFile (package = ) [public final class TryCatch {...]
                     UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [body()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UIdentifier (Identifier (body)) [UIdentifier (Identifier (body))]
-                            USimpleNameReferenceExpression (identifier = body, resolvesTo = null) [body] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull var e: java.lang.Throwable) {...}]
                         UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.Throwable]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [catcher()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UIdentifier (Identifier (catcher)) [UIdentifier (Identifier (catcher))]
-                                USimpleNameReferenceExpression (identifier = catcher, resolvesTo = null) [catcher] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [finalizer()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UIdentifier (Identifier (finalizer)) [UIdentifier (Identifier (finalizer))]
-                            USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null) [finalizer] : @org.jetbrains.annotations.NotNull() kotlin.Unit
         UMethod (name = body) [public final fun body() : void {...}]
             UBlockExpression [{...}] : void
         UMethod (name = catcher) [public final fun catcher() : void {...}]
@@ -36,7 +33,6 @@ UFile (package = ) [public final class TryCatch {...]
                     UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [body()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UIdentifier (Identifier (body)) [UIdentifier (Identifier (body))]
-                            USimpleNameReferenceExpression (identifier = body, resolvesTo = null) [body] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull @java.lang.SuppressWarnings(value = "Something") var e: java.lang.Throwable) {...}]
                         UParameter (name = e) [@org.jetbrains.annotations.NotNull @java.lang.SuppressWarnings(value = "Something") var e: java.lang.Throwable]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -47,11 +43,9 @@ UFile (package = ) [public final class TryCatch {...]
                         UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [catcher()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UIdentifier (Identifier (catcher)) [UIdentifier (Identifier (catcher))]
-                                USimpleNameReferenceExpression (identifier = catcher, resolvesTo = null) [catcher] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [finalizer()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UIdentifier (Identifier (finalizer)) [UIdentifier (Identifier (finalizer))]
-                            USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null) [finalizer] : @org.jetbrains.annotations.NotNull() kotlin.Unit
         UMethod (name = body) [public final fun body() : void {...}]
             UBlockExpression [{...}] : void
         UMethod (name = catcher) [public final fun catcher() : void {...}]

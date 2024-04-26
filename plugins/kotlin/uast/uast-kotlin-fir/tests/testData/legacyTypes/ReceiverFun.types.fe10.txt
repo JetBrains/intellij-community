@@ -20,7 +20,6 @@ UFile (package = ) [public final class ReceiverFunKt {...]
                 UReturnExpression [return toRegex()] : java.lang.Void
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toRegex()] : kotlin.text.Regex
                         UIdentifier (Identifier (toRegex)) [UIdentifier (Identifier (toRegex))]
-                        USimpleNameReferenceExpression (identifier = toRegex, resolvesTo = null) [toRegex] : kotlin.text.Regex
     UClass (name = MyReceiverAnnotation) [public abstract annotation MyReceiverAnnotation {...}]
         UAnnotationMethod (name = name) [public abstract fun name() : java.lang.String = UastEmptyExpression]
             UPolyadicExpression (operator = +) [""] : java.lang.String

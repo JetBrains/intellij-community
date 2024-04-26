@@ -49,12 +49,20 @@ class KotlinUFunctionCallExpression(
             return methodNamePart as String?
         }
 
-    override val classReference: UReferenceExpression
+    override val classReference: UReferenceExpression?
         get() {
             if (classReferencePart == UNINITIALIZED_UAST_PART) {
-                classReferencePart = KotlinClassViaConstructorUSimpleReferenceExpression(sourcePsi, methodName.orAnonymous("class"), this)
+                val resolvedClass = baseResolveProviderService.resolveToClassIfConstructorCall(sourcePsi, this)
+                classReferencePart = if (resolvedClass != null) {
+                    KotlinClassViaConstructorUSimpleReferenceExpression(
+                        sourcePsi.calleeExpression,
+                        resolvedClass.name.orAnonymous("class"),
+                        resolvedClass,
+                        this
+                    )
+                } else null
             }
-            return classReferencePart as UReferenceExpression
+            return classReferencePart as UReferenceExpression?
         }
 
     override val methodIdentifier: UIdentifier?

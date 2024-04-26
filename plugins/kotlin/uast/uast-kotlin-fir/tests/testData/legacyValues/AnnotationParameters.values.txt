@@ -5,7 +5,6 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                 UNamedExpression (name = anyOf) [anyOf = intArrayOf(1, 2, 3)] = Undetermined
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [intArrayOf(1, 2, 3)] = external intArrayOf(1, 2, 3)(1, 2, 3)
                         UIdentifier (Identifier (intArrayOf)) [UIdentifier (Identifier (intArrayOf))]
-                        USimpleNameReferenceExpression (identifier = intArrayOf, resolvesTo = null) [intArrayOf] = external intArrayOf(1, 2, 3)(1, 2, 3)
                         ULiteralExpression (value = 1) [1] = 1
                         ULiteralExpression (value = 2) [2] = 2
                         ULiteralExpression (value = 3) [3] = 3

@@ -5,7 +5,6 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                     UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                    USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                 UDeclarationsExpression [@kotlin.Suppress var a: int = 1]
                     ULocalVariable (name = a) [@kotlin.Suppress var a: int = 1]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
@@ -54,7 +53,6 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                     USimpleNameReferenceExpression (identifier = str) [str] : java.lang.String
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isBlank()] : boolean
                                         UIdentifier (Identifier (isBlank)) [UIdentifier (Identifier (isBlank))]
-                                        USimpleNameReferenceExpression (identifier = isBlank, resolvesTo = null) [isBlank] : boolean
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield null]
                                         ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
@@ -64,7 +62,6 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                         USimpleNameReferenceExpression (identifier = str) [str] : java.lang.String
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isNotEmpty()] : boolean
                                             UIdentifier (Identifier (isNotEmpty)) [UIdentifier (Identifier (isNotEmpty))]
-                                            USimpleNameReferenceExpression (identifier = isNotEmpty, resolvesTo = null) [isNotEmpty] : boolean
                                     ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield null]

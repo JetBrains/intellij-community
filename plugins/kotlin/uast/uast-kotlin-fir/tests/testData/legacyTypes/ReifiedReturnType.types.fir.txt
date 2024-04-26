@@ -149,4 +149,3 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : @org.jetbrains.annotations.NotNull() java.lang.Void

@@ -9,10 +9,10 @@ UFile (package = ) [import java.lang.reflect.ParameterizedType...]
                         UObjectLiteralExpression [anonymous object : TypeBase<T>() {}] = Undetermined
                             UClass (name = null) [final class null : TypeBase<T> {...}]
                                 UMethod (name = ) [private fun () {...}]
-                                    UBlockExpression [{...}] = external <init>()()
-                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                                    UBlockExpression [{...}] = external TypeBase()()
+                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [TypeBase()] = external TypeBase()()
                                             UIdentifier (Identifier (TypeBase)) [UIdentifier (Identifier (TypeBase))]
-                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: TypeBase) [<init>] = external <init>()()
+                                            USimpleNameReferenceExpression (identifier = TypeBase, resolvesTo = PsiClass: TypeBase) [TypeBase] = external TypeBase()
                 UDeclarationsExpression [var superType: java.lang.reflect.Type = TypeBase<T>.java.genericSuperclass!!] = Undetermined
                     ULocalVariable (name = superType) [var superType: java.lang.reflect.Type = TypeBase<T>.java.genericSuperclass!!]
                         UPostfixExpression (operator = !!) [TypeBase<T>.java.genericSuperclass!!] = Undetermined
@@ -37,7 +37,6 @@ UFile (package = ) [import java.lang.reflect.ParameterizedType...]
                                         UIdentifier (Identifier (actualTypeArguments)) [UIdentifier (Identifier (actualTypeArguments))]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [first()] = external first()()
                                 UIdentifier (Identifier (first)) [UIdentifier (Identifier (first))]
-                                USimpleNameReferenceExpression (identifier = first, resolvesTo = null) [first] = external first()()
     UClass (name = TypeBase) [public class TypeBase {...}]
         UAnnotation (fqName = kotlin.PublishedApi) [@kotlin.PublishedApi]
         UMethod (name = TypeBase) [public fun TypeBase() = UastEmptyExpression]

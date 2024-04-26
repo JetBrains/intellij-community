@@ -21,7 +21,6 @@ UFile (package = ) [public final class ElvisKt {...]
                                         ULocalVariable (name = varc4aef569) [var varc4aef569: java.lang.String = foo("Lorem ipsum")]
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo("Lorem ipsum")] : java.lang.String
                                                 UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                                                USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : java.lang.String
                                                 UPolyadicExpression (operator = +) ["Lorem ipsum"] : java.lang.String
                                                     ULiteralExpression (value = "Lorem ipsum") ["Lorem ipsum"] : java.lang.String
                                     UIfExpression [if (varc4aef569 != null) varc4aef569 else foo("dolor sit amet")]
@@ -31,7 +30,6 @@ UFile (package = ) [public final class ElvisKt {...]
                                         USimpleNameReferenceExpression (identifier = varc4aef569) [varc4aef569]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo("dolor sit amet")] : java.lang.String
                                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : java.lang.String
                                             UPolyadicExpression (operator = +) ["dolor sit amet"] : java.lang.String
                                                 ULiteralExpression (value = "dolor sit amet") ["dolor sit amet"] : java.lang.String
                         UIfExpression [if (var243c51a0 != null) var243c51a0 else bar().toString()]
@@ -42,7 +40,5 @@ UFile (package = ) [public final class ElvisKt {...]
                             UQualifiedReferenceExpression [bar().toString()] : java.lang.String
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [bar()] : int
                                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : int
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : java.lang.String
                                     UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                                    USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : java.lang.String

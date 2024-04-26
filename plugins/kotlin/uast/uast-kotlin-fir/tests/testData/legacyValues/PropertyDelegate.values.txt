@@ -6,9 +6,6 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
     return "/sdcard"
 })(Undetermined)
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
-                USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] = external lazy({
-    return "/sdcard"
-})(Undetermined)
                 ULambdaExpression [{ ...}] = Undetermined
                     UBlockExpression [{...}] = Nothing
                         UReturnExpression [return "/sdcard"] = Nothing
@@ -21,9 +18,6 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
     return 1 + 1
 })(Undetermined)
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
-                USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] = external lazy({
-    return 1 + 1
-})(Undetermined)
                 ULambdaExpression [{ ...}] = Undetermined
                     UBlockExpression [{...}] = Nothing
                         UReturnExpression [return 1 + 1] = Nothing
@@ -39,9 +33,6 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
     return "/sdcard"
 })(Undetermined)
                             UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
-                            USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] = external lazy({
-    return "/sdcard"
-})(Undetermined)
                             ULambdaExpression [{ ...}] = Undetermined
                                 UBlockExpression [{...}] = Nothing
                                     UReturnExpression [return "/sdcard"] = Nothing

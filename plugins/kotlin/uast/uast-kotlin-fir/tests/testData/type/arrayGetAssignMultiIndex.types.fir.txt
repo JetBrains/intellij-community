@@ -37,7 +37,6 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                     ULocalVariable (name = s) [var s: java.lang.String[] = <init>(1, { var it: int ->...})]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, { var it: int ->...})] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                             UIdentifier (Identifier (Array)) [UIdentifier (Identifier (Array))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                             ULiteralExpression (value = 1) [1] : int
                             ULambdaExpression [{ var it: int ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() java.lang.Integer, ? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                 UParameter (name = it) [var it: int]

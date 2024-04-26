@@ -17,7 +17,7 @@ public final class Foo {
         }
     }
     public fun Foo(@org.jetbrains.annotations.NotNull i: int) {
-        <init>(i)
+        Foo(i)
         println("Foo 2nd ctor")
     }
 }

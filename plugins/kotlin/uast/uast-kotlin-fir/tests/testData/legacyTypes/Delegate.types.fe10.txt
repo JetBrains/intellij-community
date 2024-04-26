@@ -21,13 +21,12 @@ UFile (package = ) [public final class MyColor {...]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : kotlin.Lazy<? extends MyColor>
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
-                USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] : kotlin.Lazy<? extends MyColor>
                 ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends MyColor>
                     UBlockExpression [{...}]
-                        UReturnExpression [return <init>(18, 2, 3)]
-                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(18, 2, 3)] : MyColor
+                        UReturnExpression [return MyColor(18, 2, 3)]
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [MyColor(18, 2, 3)] : MyColor
                                 UIdentifier (Identifier (MyColor)) [UIdentifier (Identifier (MyColor))]
-                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: MyColor) [<init>] : MyColor
+                                USimpleNameReferenceExpression (identifier = MyColor, resolvesTo = PsiClass: MyColor) [MyColor]
                                 ULiteralExpression (value = 18) [18] : int
                                 ULiteralExpression (value = 2) [2] : int
                                 ULiteralExpression (value = 3) [3] : int
@@ -35,21 +34,20 @@ UFile (package = ) [public final class MyColor {...]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : kotlin.Lazy<? extends MyColor>
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
-                USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] : kotlin.Lazy<? extends MyColor>
                 ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends MyColor>
                     UBlockExpression [{...}]
-                        UReturnExpression [return <init>(1, 2, 3)]
-                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] : MyColor
+                        UReturnExpression [return MyColor(1, 2, 3)]
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [MyColor(1, 2, 3)] : MyColor
                                 UIdentifier (Identifier (MyColor)) [UIdentifier (Identifier (MyColor))]
-                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: MyColor) [<init>] : MyColor
+                                USimpleNameReferenceExpression (identifier = MyColor, resolvesTo = PsiClass: MyColor) [MyColor]
                                 ULiteralExpression (value = 1) [1] : int
                                 ULiteralExpression (value = 2) [2] : int
                                 ULiteralExpression (value = 3) [3] : int
-        UField (name = nonLazy) [@org.jetbrains.annotations.NotNull private final var nonLazy: MyColor = <init>(1, 2, 3)]
+        UField (name = nonLazy) [@org.jetbrains.annotations.NotNull private final var nonLazy: MyColor = MyColor(1, 2, 3)]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] : MyColor
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [MyColor(1, 2, 3)] : MyColor
                 UIdentifier (Identifier (MyColor)) [UIdentifier (Identifier (MyColor))]
-                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: MyColor) [<init>] : MyColor
+                USimpleNameReferenceExpression (identifier = MyColor, resolvesTo = PsiClass: MyColor) [MyColor]
                 ULiteralExpression (value = 1) [1] : int
                 ULiteralExpression (value = 2) [2] : int
                 ULiteralExpression (value = 3) [3] : int
