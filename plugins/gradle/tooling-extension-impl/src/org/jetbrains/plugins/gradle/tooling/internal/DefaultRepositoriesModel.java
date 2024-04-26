@@ -5,21 +5,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
 import org.jetbrains.plugins.gradle.model.RepositoryModels;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 public class DefaultRepositoriesModel implements RepositoryModels {
 
-  private final @NotNull Set<MavenRepositoryModel> myRepositories;
+  private final @NotNull List<MavenRepositoryModel> myRepositories;
 
-  public DefaultRepositoriesModel(@NotNull Collection<MavenRepositoryModel> repositories) {
-    myRepositories = Collections.unmodifiableSet(new HashSet<>(repositories));
+  public DefaultRepositoriesModel(@NotNull List<MavenRepositoryModel> repositories) {
+    myRepositories = Collections.unmodifiableList(repositories);
   }
 
   @Override
-  public @NotNull Collection<MavenRepositoryModel> getRepositories() {
+  public @NotNull List<MavenRepositoryModel> getRepositories() {
     return myRepositories;
   }
 

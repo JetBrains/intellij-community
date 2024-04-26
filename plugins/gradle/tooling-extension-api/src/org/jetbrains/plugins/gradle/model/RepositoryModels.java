@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.model;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Container for Maven repositories of a given project
@@ -12,5 +12,5 @@ import java.util.Collection;
 public interface RepositoryModels extends Serializable {
 
   @NotNull
-  Collection<MavenRepositoryModel> getRepositories();
+  List<MavenRepositoryModel> getRepositories();
 }

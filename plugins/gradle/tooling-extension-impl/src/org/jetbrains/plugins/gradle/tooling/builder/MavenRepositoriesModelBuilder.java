@@ -13,8 +13,8 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoriesModel;
 import org.jetbrains.plugins.gradle.tooling.internal.MavenRepositoryModelImpl;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MavenRepositoriesModelBuilder implements ModelBuilderService {
   @Override
@@ -24,7 +24,7 @@ public class MavenRepositoriesModelBuilder implements ModelBuilderService {
 
   @Override
   public Object buildAll(String modelName, Project project) {
-    Set<MavenRepositoryModel> repositories = new HashSet<>();
+    List<MavenRepositoryModel> repositories = new ArrayList<>();
     for (MavenArtifactRepository artifactRepository : project.getRepositories().withType(MavenArtifactRepository.class)) {
       final MavenRepositoryModel model = new MavenRepositoryModelImpl(artifactRepository.getName(), artifactRepository.getUrl().toString());
       repositories.add(model);

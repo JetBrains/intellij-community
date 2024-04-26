@@ -107,7 +107,7 @@ class MavenRepositoriesProjectResolverTest {
     override fun getUrl(): String = myUrl
   }
 
-  private class TestRepositoriesModel(private val myRepositories: Collection<MavenRepositoryModel>) : RepositoryModels {
-    override fun getRepositories(): Collection<MavenRepositoryModel> = myRepositories
+  private class TestRepositoriesModel(private val myRepositories: List<MavenRepositoryModel>) : RepositoryModels {
+    override fun getRepositories(): List<MavenRepositoryModel> = myRepositories
   }
 }
