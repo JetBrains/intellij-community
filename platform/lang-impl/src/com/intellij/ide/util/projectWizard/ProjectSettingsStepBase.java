@@ -192,26 +192,20 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   protected void registerValidators() {
-    DocumentListener documentAdapter = new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull DocumentEvent e) {
-        checkValid();
-      }
-    };
-    myLocationField.getTextField().getDocument().addDocumentListener(documentAdapter);
-    Disposer.register(this, () -> myLocationField.getTextField().getDocument().removeDocumentListener(documentAdapter));
+    addLocationChangeListener(event -> checkValid());
     checkWebProjectValid();
   }
 
   protected void addLocationChangeListener(@NotNull Consumer<? super DocumentEvent> listener) {
-    final TextFieldWithBrowseButton field = myLocationField;
-    if (field == null) return;
-    field.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+    if (myLocationField == null) return;
+    DocumentListener documentAdapter = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         listener.accept(e);
       }
-    });
+    };
+    myLocationField.getTextField().getDocument().addDocumentListener(documentAdapter);
+    Disposer.register(this, () -> myLocationField.getTextField().getDocument().removeDocumentListener(documentAdapter));
   }
 
   private void checkWebProjectValid() {
