@@ -21,7 +21,7 @@ abstract class WebSymbolsCompoundScope : WebSymbolsScope {
   protected abstract fun build(queryExecutor: WebSymbolsQueryExecutor,
                                consumer: (WebSymbolsScope) -> Unit)
 
-  internal fun getScopes(queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolsScope> {
+  fun getScopes(queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolsScope> {
     val list = mutableListOf<WebSymbolsScope>()
     build(queryExecutor) {
       if (it is WebSymbolsCompoundScope)
