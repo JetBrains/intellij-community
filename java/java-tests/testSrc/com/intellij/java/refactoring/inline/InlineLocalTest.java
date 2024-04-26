@@ -381,6 +381,10 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
       JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS = initialSetting;
     }
   }
+  
+  public void testInLambda() {
+    doTest(LanguageLevel.JDK_1_8);
+  }
 
   private void doTest() {
     doTest(LanguageLevel.JDK_1_7);
