@@ -30,6 +30,8 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   }
 
   override fun loadActivityList(scope: ActivityScope, scopeFilter: String?): List<ActivityItem> {
+    gateway.registerUnsavedDocuments(facade)
+
     val projectId = project.locationHash
     if (scope is ActivityScope.File) {
       return loadFileActivityList(projectId, scope, scopeFilter)
@@ -40,7 +42,6 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: String?): List<ActivityItem> {
     val result = mutableListOf<ActivityItem>()
     val path = gateway.getPathOrUrl(scope.file)
-    gateway.registerUnsavedDocuments(facade)
     var lastLabel: ChangeSet? = null
     facade.collectChanges(projectId, path, scopeFilter) { changeSet ->
       if (changeSet.isSystemLabelOnly) return@collectChanges
