@@ -2,7 +2,6 @@
 package com.intellij.util.indexing
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -66,7 +65,7 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
 
           withBackgroundProgress(project, progressTitle, cancellable = false) {
             reportRawProgress { reporter ->
-              async(Dispatchers.EDT) {
+              async {
                 pauseReason.collect { paused ->
                   reporter.text(
                     if (paused != null) IdeBundle.message("dumb.service.indexing.paused.due.to", paused)
@@ -74,12 +73,12 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
                   )
                 }
               }
-              async(Dispatchers.EDT) {
+              async {
                 progressReporter.subTaskTexts.collect {
                   reporter.details(it.firstOrNull())
                 }
               }
-              async(Dispatchers.EDT) {
+              async {
                 progressReporter.subTasksFinished.collect {
                   val subTasksCount = progressReporter.subTasksCount
                   if (subTasksCount > 0) {
