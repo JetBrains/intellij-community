@@ -82,7 +82,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addRunBeforeLambda", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addSemicolonBeforeLambdaExpression", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addSpreadOperatorForArrayAsVarargAfterSam", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/addStarProjections", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/addStarProjections", pattern = pattern)
             model("$idea/quickfix/addSuspend", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addTypeAnnotationToValueParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addUnsafeVarianceAnnotation", pattern = pattern, isIgnored = true)

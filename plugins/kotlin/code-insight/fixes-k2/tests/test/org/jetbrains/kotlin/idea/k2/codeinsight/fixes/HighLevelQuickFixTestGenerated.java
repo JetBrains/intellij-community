@@ -4910,7 +4910,284 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addStarProjections")
+    public abstract static class AddStarProjections extends AbstractHighLevelQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/addStarProjections/cast")
+        public static class Cast extends AbstractHighLevelQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
+            @TestMetadata("changeFunctionalToStarProjection.kt")
+            public void testChangeFunctionalToStarProjection() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/changeFunctionalToStarProjection.kt");
+            }
+
+            @TestMetadata("changeToStarProjection.kt")
+            public void testChangeToStarProjection() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/changeToStarProjection.kt");
+            }
+
+            @TestMetadata("changeToStarProjectionNullable.kt")
+            public void testChangeToStarProjectionNullable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/changeToStarProjectionNullable.kt");
+            }
+
+            @TestMetadata("extensionReceiver.kt")
+            public void testExtensionReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/extensionReceiver.kt");
+            }
+
+            @TestMetadata("extensionReceiver2.kt")
+            public void testExtensionReceiver2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/extensionReceiver2.kt");
+            }
+
+            @TestMetadata("extensionReceiver3.kt")
+            public void testExtensionReceiver3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/extensionReceiver3.kt");
+            }
+
+            @TestMetadata("extensionReceiver4.kt")
+            public void testExtensionReceiver4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/extensionReceiver4.kt");
+            }
+
+            @TestMetadata("extensionReceiver5.kt")
+            public void testExtensionReceiver5() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/extensionReceiver5.kt");
+            }
+
+            @TestMetadata("genericTypeParameter.kt")
+            public void testGenericTypeParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/genericTypeParameter.kt");
+            }
+
+            @TestMetadata("genericTypeParameter2.kt")
+            public void testGenericTypeParameter2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/genericTypeParameter2.kt");
+            }
+
+            @TestMetadata("genericTypeParameter3.kt")
+            public void testGenericTypeParameter3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/genericTypeParameter3.kt");
+            }
+
+            @TestMetadata("genericTypeParameter4.kt")
+            public void testGenericTypeParameter4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/genericTypeParameter4.kt");
+            }
+
+            @TestMetadata("genericTypeParameter5.kt")
+            public void testGenericTypeParameter5() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/genericTypeParameter5.kt");
+            }
+
+            @TestMetadata("genericTypeParameter6.kt")
+            public void testGenericTypeParameter6() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/genericTypeParameter6.kt");
+            }
+
+            @TestMetadata("genericTypeParameter7.kt")
+            public void testGenericTypeParameter7() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/genericTypeParameter7.kt");
+            }
+
+            @TestMetadata("uncheckedCastOnTypeParameter.kt")
+            public void testUncheckedCastOnTypeParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/uncheckedCastOnTypeParameter.kt");
+            }
+
+            @TestMetadata("valueArgument.kt")
+            public void testValueArgument() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/valueArgument.kt");
+            }
+
+            @TestMetadata("valueArgument2.kt")
+            public void testValueArgument2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/valueArgument2.kt");
+            }
+
+            @TestMetadata("valueArgument3.kt")
+            public void testValueArgument3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/valueArgument3.kt");
+            }
+
+            @TestMetadata("valueArgument4.kt")
+            public void testValueArgument4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/valueArgument4.kt");
+            }
+
+            @TestMetadata("valueArgument5.kt")
+            public void testValueArgument5() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/valueArgument5.kt");
+            }
+
+            @TestMetadata("valueArgument6.kt")
+            public void testValueArgument6() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/cast/valueArgument6.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/addStarProjections/checkType")
+        public static class CheckType extends AbstractHighLevelQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/array.kt");
+            }
+
+            @TestMetadata("arrayInWhen.kt")
+            public void testArrayInWhen() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/arrayInWhen.kt");
+            }
+
+            @TestMetadata("changeToStarProjectionMultipleParameters.kt")
+            public void testChangeToStarProjectionMultipleParameters() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/changeToStarProjectionMultipleParameters.kt");
+            }
+
+            @TestMetadata("changeToStarProjectionNullable.kt")
+            public void testChangeToStarProjectionNullable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/changeToStarProjectionNullable.kt");
+            }
+
+            @TestMetadata("changeToStarProjectionSingleParameter.kt")
+            public void testChangeToStarProjectionSingleParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/checkType/changeToStarProjectionSingleParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/addStarProjections/inner")
+        public static class Inner extends AbstractHighLevelQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inner1.kt")
+            public void testInner1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/inner1.kt");
+            }
+
+            @TestMetadata("inner2.kt")
+            public void testInner2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/inner2.kt");
+            }
+
+            @TestMetadata("inner3.kt")
+            public void testInner3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/inner3.kt");
+            }
+
+            @TestMetadata("inner4.kt")
+            public void testInner4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/inner4.kt");
+            }
+
+            @TestMetadata("inner5.kt")
+            public void testInner5() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/inner5.kt");
+            }
+
+            @TestMetadata("inner6.kt")
+            public void testInner6() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/inner6.kt");
+            }
+
+            @TestMetadata("inner7.kt")
+            public void testInner7() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/inner7.kt");
+            }
+
+            @TestMetadata("inner8.kt")
+            public void testInner8() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/inner/inner8.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/addStarProjections")
+        public static class Uncategorized extends AbstractHighLevelQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("qualifiedArrayList.kt")
+            public void testQualifiedArrayList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/qualifiedArrayList.kt");
+            }
+
+            @TestMetadata("qualifiedList.kt")
+            public void testQualifiedList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/qualifiedList.kt");
+            }
+
+            @TestMetadata("qualifiedMap.kt")
+            public void testQualifiedMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/qualifiedMap.kt");
+            }
+
+            @TestMetadata("unqualifiedList.kt")
+            public void testUnqualifiedList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/unqualifiedList.kt");
+            }
+
+            @TestMetadata("unqualifiedMap.kt")
+            public void testUnqualifiedMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/unqualifiedMap.kt");
+            }
+
+            @TestMetadata("unqualifiedMapOneArg.kt")
+            public void testUnqualifiedMapOneArg() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/unqualifiedMapOneArg.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/addStarProjections/when")
+        public static class When extends AbstractHighLevelQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("qualifiedArrayList.kt")
+            public void testQualifiedArrayList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/when/qualifiedArrayList.kt");
+            }
+
+            @TestMetadata("qualifiedList.kt")
+            public void testQualifiedList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/when/qualifiedList.kt");
+            }
+
+            @TestMetadata("qualifiedMap.kt")
+            public void testQualifiedMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/when/qualifiedMap.kt");
+            }
+
+            @TestMetadata("unqualifiedList.kt")
+            public void testUnqualifiedList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/when/unqualifiedList.kt");
+            }
+
+            @TestMetadata("unqualifiedMap.kt")
+            public void testUnqualifiedMap() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/when/unqualifiedMap.kt");
+            }
+
+            @TestMetadata("unqualifiedMapOneArg.kt")
+            public void testUnqualifiedMapOneArg() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/addStarProjections/when/unqualifiedMapOneArg.kt");
+            }
+        }
+    }
 
 
 
