@@ -413,8 +413,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {
         val classNameProvider = ClassNameProvider(
-            debugProcess.project,
-            debugProcess.searchScope,
             ClassNameProvider.Configuration.DEFAULT.copy(alwaysReturnLambdaParentClass = false)
         )
 
@@ -569,11 +567,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     @RequiresReadLock
-    private fun getCandidates(sourcePosition: SourcePosition): List<ClassNameProvider.ClassNameCandidateInfo> {
-        val configuration = ClassNameProvider.Configuration.DEFAULT.copy(findInlineUseSites = false)
-        val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope, configuration)
-        return classNameProvider.getCandidatesInfo(sourcePosition)
-    }
+    private fun getCandidates(sourcePosition: SourcePosition): List<ClassNameProvider.ClassNameCandidateInfo> =
+        ClassNameProvider().getCandidatesInfo(sourcePosition)
 
     private fun List<ClassNameProvider.ClassNameCandidateInfo>.getReferenceTypesCandidates(sourcePosition: SourcePosition): CandidatesSet {
         val classes = flatMap { (className, _) -> debugProcess.virtualMachineProxy.classesByName(className) }
