@@ -9,10 +9,12 @@ import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -38,7 +40,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestTimelineErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -162,7 +163,14 @@ internal object GitLabMergeRequestTimelineComponentFactory {
             PopupHandler.installPopupMenu(timelinePanel, timelineActionGroup, ActionPlaces.POPUP)
           },
           onFailure = { exception ->
-            val errorPresenter = GitLabMergeRequestTimelineErrorStatusPresenter(timelineVm)
+            val errorPresenter = ErrorStatusPresenter.simple<Throwable>(
+              GitLabBundle.message("merge.request.timeline.error"),
+              actionProvider = {
+                swingAction(GitLabBundle.message("merge.request.reload")) {
+                  timelineVm.reloadData()
+                }
+              }
+            )
             val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(exception), errorPresenter)
 
             timelineOrErrorPanel.setContent(CollaborationToolsUIUtil.moveToCenter(errorPanel))

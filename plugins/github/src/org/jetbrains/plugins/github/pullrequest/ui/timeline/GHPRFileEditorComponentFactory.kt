@@ -68,7 +68,14 @@ internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimeli
 
     val progressAndErrorPanel = JPanel(ListLayout.vertical(0, ListLayout.Alignment.CENTER)).apply {
       isOpaque = false
-      val errorPanel = ErrorStatusPanelFactory.create(cs, timelineVm.loadingError, ErrorPresenter())
+      val errorPanel = ErrorStatusPanelFactory.create(cs, timelineVm.loadingError, ErrorStatusPresenter.simple(
+        GithubBundle.message("pull.request.timeline.cannot.load"),
+        descriptionProvider = { error ->
+          if (error is GithubAuthenticationException) GithubBundle.message("pull.request.list.error.authorization")
+          else GHHtmlErrorPanel.getLoadingErrorText(error)
+        },
+        actionProvider = timelineVm.loadingErrorHandler::getActionForError
+      ))
 
       val loadingIcon = JLabel(AnimatedIcon.Default()).apply {
         border = CodeReviewTimelineUIUtil.ITEM_BORDER
@@ -210,13 +217,4 @@ internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimeli
       .wrapWith("i")
       .toString()
   }
-
-  private fun ErrorPresenter(): ErrorStatusPresenter.Text<Throwable> = ErrorStatusPresenter.simple(
-    GithubBundle.message("pull.request.timeline.cannot.load"),
-    descriptionProvider = { error ->
-      if (error is GithubAuthenticationException) GithubBundle.message("pull.request.list.error.authorization")
-      else GHHtmlErrorPanel.getLoadingErrorText(error)
-    },
-    actionProvider = timelineVm.loadingErrorHandler::getActionForError
-  )
 }
