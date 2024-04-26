@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.actions.createKotlinFileFromTemplate
  * Command to add Kotlin file to project
  * Example: %createKotlinFile fileName, dstDir, fileType - data, file, enum, interface, sealed, annotation, script, worksheet, object]
  */
-class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
     companion object {
         const val NAME = "createKotlinFile"

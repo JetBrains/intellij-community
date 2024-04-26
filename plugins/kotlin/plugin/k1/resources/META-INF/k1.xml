@@ -108,5 +108,7 @@
     <module name="kotlin.code-insight.k1"/>
 
     <module name="kotlin.compiler-reference-index"/>
+
+    <module name="kotlin.performanceExtendedPlugin"/>
   </content>
 </idea-plugin>

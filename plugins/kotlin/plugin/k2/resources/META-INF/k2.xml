@@ -269,5 +269,7 @@
 
     <module name="kotlin.injection.k2"/>
     <module name="kotlin.base.injection"/>
+
+    <module name="kotlin.performanceExtendedPlugin"/>
   </content>
 </idea-plugin>
