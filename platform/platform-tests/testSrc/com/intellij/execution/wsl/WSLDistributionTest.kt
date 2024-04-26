@@ -506,7 +506,7 @@ enum class WslTestStrategy { Legacy, Ijent }
 private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentApi {
   override val id: IjentId get() = throw UnsupportedOperationException()
 
-  override val platform: IjentExecFileProvider.SupportedPlatform get() = throw UnsupportedOperationException()
+  override val platform: IjentPlatform get() = throw UnsupportedOperationException()
 
   override val isRunning: Boolean get() = true
 

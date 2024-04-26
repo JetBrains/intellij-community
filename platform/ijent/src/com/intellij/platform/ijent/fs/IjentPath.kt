@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.fs
 
-import com.intellij.platform.ijent.IjentExecFileProvider
+import com.intellij.platform.ijent.IjentPlatform
 import com.intellij.platform.ijent.fs.IjentPath.Absolute.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
@@ -233,8 +233,8 @@ fun <P : IjentPath> IjentPathResult<P>.getOrThrow(): P =
     is IjentPathResult.Err -> throw InvalidPathException(raw, reason)
   }
 
-val IjentExecFileProvider.SupportedPlatform.pathOs: OS
+val IjentPlatform.pathOs: OS
   get() = when (this) {
-    is IjentExecFileProvider.SupportedPlatform.Posix -> OS.UNIX
-    is IjentExecFileProvider.SupportedPlatform.Windows -> OS.WINDOWS
+    is IjentPlatform.Posix -> OS.UNIX
+    is IjentPlatform.Windows -> OS.WINDOWS
   }
