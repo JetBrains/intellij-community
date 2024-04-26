@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -70,3 +72,31 @@ fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
     return functionCall is KaSimpleFunctionCall && functionCall.isImplicitInvoke
 }
 
+/**
+ * Returns containing class symbol, if [reference] is a short reference to a companion object. Otherwise, returns null.
+ * For example:
+ * ```
+ * class A {
+ *      companion object {
+ *           fun foo() {}
+ *      }
+ * }
+ *
+ * fun main() {
+ *      A.foo() // symbol for `A`, and not for `A.Companion`, is returned
+ * }
+ * ```
+ */
+context(KaSession)
+fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): KaNamedClassOrObjectSymbol? {
+    if (this !is KtSimpleNameReference) return null
+
+    val symbol = this.resolveToSymbol()
+    if (symbol !is KaClassOrObjectSymbol || symbol.classKind != KaClassKind.COMPANION_OBJECT) return null
+
+    // class name reference resolves to companion
+    if (expression.name == symbol.name?.asString()) return null
+
+    val containingSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol
+    return containingSymbol?.takeIf { it.companionObject == symbol }
+}
