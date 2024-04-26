@@ -11,7 +11,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class ShellCommandSpecCompletion(
   private val commandSpecManager: ShellCommandSpecsManager,
-  private val generatorsExecutor: ShellDataGeneratorsExecutor
+  private val generatorsExecutor: ShellDataGeneratorsExecutor,
+  private val contextProvider: ShellRuntimeContextProvider
 ) {
 
   /**
@@ -32,9 +33,11 @@ class ShellCommandSpecCompletion(
 
     val completeArguments = arguments.subList(0, arguments.size - 1)
     val lastArgument = arguments.last()
-    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(generatorsExecutor)
-    val rootNode: ShellCommandNode = ShellCommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
+    val rootNode: ShellCommandNode = ShellCommandTreeBuilder.build(contextProvider, generatorsExecutor, commandSpecManager,
                                                                    command, commandSpec, completeArguments)
+    val commandText = command + " " + arguments.joinToString(" ")
+    val context = contextProvider.getContext(commandText, lastArgument)
+    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(context, generatorsExecutor)
     return computeSuggestions(suggestionsProvider, rootNode, lastArgument)
   }
 

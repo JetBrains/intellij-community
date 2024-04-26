@@ -2,13 +2,13 @@
 package com.intellij.terminal.block.completion.engine
 
 import com.intellij.terminal.block.completion.ShellDataGeneratorsExecutor
-import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
-import com.intellij.terminal.block.completion.spec.ShellCommandSpec
-import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.block.completion.spec.ShellOptionSpec
+import com.intellij.terminal.block.completion.spec.*
 import java.io.File
 
-internal class ShellCommandTreeSuggestionsProvider(private val generatorsExecutor: ShellDataGeneratorsExecutor) {
+internal class ShellCommandTreeSuggestionsProvider(
+  private val context: ShellRuntimeContext,
+  private val generatorsExecutor: ShellDataGeneratorsExecutor
+) {
   suspend fun getSuggestionsOfNext(node: ShellCommandTreeNode<*>, nextNodeText: String): List<ShellCompletionSuggestion> {
     return when (node) {
       is ShellCommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
@@ -124,21 +124,21 @@ internal class ShellCommandTreeSuggestionsProvider(private val generatorsExecuto
   private suspend fun getArgumentSuggestions(arg: ShellArgumentSpec): List<ShellCompletionSuggestion> {
     val suggestions = mutableListOf<ShellCompletionSuggestion>()
     for (generator in arg.generators) {
-      val result = generatorsExecutor.execute(generator)
+      val result = generatorsExecutor.execute(context, generator)
       suggestions.addAll(result)
     }
     return suggestions
   }
 
   private suspend fun ShellCommandSpec.getSubcommands(): List<ShellCommandSpec> {
-    return generatorsExecutor.execute(subcommandsGenerator)
+    return generatorsExecutor.execute(context, subcommandsGenerator)
   }
 
   private suspend fun ShellCommandSpec.getOptions(): List<ShellOptionSpec> {
-    return generatorsExecutor.execute(optionsGenerator)
+    return generatorsExecutor.execute(context, optionsGenerator)
   }
 
   private suspend fun ShellCommandSpec.getArguments(): List<ShellArgumentSpec> {
-    return generatorsExecutor.execute(argumentsGenerator)
+    return generatorsExecutor.execute(context, argumentsGenerator)
   }
 }

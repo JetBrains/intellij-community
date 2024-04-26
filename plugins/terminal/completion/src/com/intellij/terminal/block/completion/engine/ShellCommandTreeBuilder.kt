@@ -3,23 +3,30 @@ package com.intellij.terminal.block.completion.engine
 
 import com.intellij.terminal.block.completion.ShellArgumentSuggestion
 import com.intellij.terminal.block.completion.ShellCommandSpecsManager
+import com.intellij.terminal.block.completion.ShellDataGeneratorsExecutor
+import com.intellij.terminal.block.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.block.completion.spec.ShellCommandSpec
 import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.block.completion.spec.ShellOptionSpec
 import java.io.File
 
 internal class ShellCommandTreeBuilder private constructor(
-  private val suggestionsProvider: ShellCommandTreeSuggestionsProvider,
+  command: String,
+  private val contextProvider: ShellRuntimeContextProvider,
+  private val generatorsExecutor: ShellDataGeneratorsExecutor,
   private val commandSpecManager: ShellCommandSpecsManager,
   private val arguments: List<String>
 ) {
   companion object {
-    suspend fun build(suggestionsProvider: ShellCommandTreeSuggestionsProvider,
-                      commandSpecManager: ShellCommandSpecsManager,
-                      command: String,
-                      commandSpec: ShellCommandSpec,
-                      arguments: List<String>): ShellCommandNode {
-      val builder = ShellCommandTreeBuilder(suggestionsProvider, commandSpecManager, arguments)
+    suspend fun build(
+      contextProvider: ShellRuntimeContextProvider,
+      generatorsExecutor: ShellDataGeneratorsExecutor,
+      commandSpecManager: ShellCommandSpecsManager,
+      command: String,
+      commandSpec: ShellCommandSpec,
+      arguments: List<String>
+    ): ShellCommandNode {
+      val builder = ShellCommandTreeBuilder(command, contextProvider, generatorsExecutor, commandSpecManager, arguments)
       val root = builder.createSubcommandNode(command, commandSpec, null)
       builder.buildSubcommandTree(root)
       return root
@@ -27,10 +34,13 @@ internal class ShellCommandTreeBuilder private constructor(
   }
 
   private var curIndex = 0
+  private var commandText: String = command
 
   private suspend fun buildSubcommandTree(root: ShellCommandNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
+      commandText += " $name"
+      val suggestionsProvider = createSuggestionsProvider(name)
       val suggestions = suggestionsProvider.getSuggestionsOfNext(root, name)
       var suggestion = suggestions.find { it.names.contains(name) }
       if (suggestion == null && name.contains(File.separatorChar)) {
@@ -64,6 +74,8 @@ internal class ShellCommandTreeBuilder private constructor(
   private suspend fun buildOptionTree(root: ShellOptionNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
+      commandText += " $name"
+      val suggestionsProvider = createSuggestionsProvider(name)
       val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root)
       val suggestion = suggestions.find { it.names.contains(name) }
       val node = if (suggestion == null) {
@@ -130,5 +142,10 @@ internal class ShellCommandTreeBuilder private constructor(
   private suspend fun createSubcommandNode(name: String, subcommand: ShellCommandSpec, parent: ShellCommandTreeNode<*>?): ShellCommandNode {
     val spec = commandSpecManager.getFullCommandSpec(subcommand)
     return ShellCommandNode(name, spec, parent)
+  }
+
+  private fun createSuggestionsProvider(typedPrefix: String): ShellCommandTreeSuggestionsProvider {
+    val context = contextProvider.getContext(commandText, typedPrefix)
+    return ShellCommandTreeSuggestionsProvider(context, generatorsExecutor)
   }
 }
