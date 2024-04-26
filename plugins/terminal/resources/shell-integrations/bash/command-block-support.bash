@@ -215,7 +215,8 @@ __jetbrains_intellij_collect_shell_info() {
 function __jetbrains_intellij_fix_prompt_command_order() {
   function cleanup_command() {
     builtin local command="$1"
-    command="${command//@(__bp_precmd_invoke_cmd|__bp_interactive_mode)/}"
+    command="${command//__bp_precmd_invoke_cmd/}"
+    command="${command//__bp_interactive_mode/}"
     command="${command//$'\n':$'\n'/$'\n'}"
     # it is the function from the Bash-preexec
     __bp_sanitize_string command "$command"
