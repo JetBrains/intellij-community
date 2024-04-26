@@ -19,6 +19,7 @@ com.intellij.codeHighlighting.MainHighlightingPassFactory
 - a:createMainHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor):com.intellij.codeHighlighting.TextEditorHighlightingPass
 com.intellij.codeHighlighting.Pass
 - sf:EXTERNAL_TOOLS:I
+- sf:INJECTED_GENERAL_HIGHLIGHTINGS:I
 - sf:LAST_PASS:I
 - sf:LINE_MARKERS:I
 - sf:LOCAL_INSPECTIONS:I
