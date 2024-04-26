@@ -70,7 +70,7 @@ class EditorCellView(
 
   val size: Dimension get() = _size
 
-  private var output: EditorCellOutput? = null
+  private var outputs: EditorCellOutputs? = null
 
   private var selected = false
 
@@ -84,13 +84,13 @@ class EditorCellView(
   private fun updateBoundaries() {
     val y = input.location.y
     _location = Point(0, y)
-    val currentOutput = output
+    val currentOutputs = outputs
     _size = Dimension(
       editor.contentSize.width,
-      if (currentOutput == null)
+      if (currentOutputs == null)
         input.size.height
       else
-        currentOutput.size.height + currentOutput.location.y - y
+        currentOutputs.size.height + currentOutputs.location.y - y
     )
   }
 
@@ -99,7 +99,7 @@ class EditorCellView(
       disposeController(controller)
     }
     input.dispose()
-    output?.dispose()
+    outputs?.dispose()
     removeCellHighlight()
   }
 
@@ -134,10 +134,10 @@ class EditorCellView(
       }
     }
     input.update()
-    output?.dispose()
+    outputs?.dispose()
     val outputController = controllers.filterIsInstance<NotebookOutputInlayController>().firstOrNull()
     if (outputController != null) {
-      output = EditorCellOutput(editor, outputController)
+      outputs = EditorCellOutputs(editor, outputController)
       updateCellHighlight()
       updateFolding()
     }
@@ -165,12 +165,12 @@ class EditorCellView(
 
   fun updatePositions() {
     input.updatePositions()
-    output?.updatePositions()
+    outputs?.updatePositions()
   }
 
   fun onViewportChanges() {
     input.onViewportChange()
-    output?.onViewportChange()
+    outputs?.onViewportChange()
   }
 
   fun setGutterAction(action: AnAction) {
@@ -255,14 +255,14 @@ class EditorCellView(
 
   private fun updateFolding() {
     input.updateSelection(selected)
-    output?.updateSelection(selected)
+    outputs?.updateSelection(selected)
     if (mouseOver || selected) {
       input.showFolding()
-      output?.showFolding()
+      outputs?.showFolding()
     }
     else {
       input.hideFolding()
-      output?.hideFolding()
+      outputs?.hideFolding()
     }
   }
 
