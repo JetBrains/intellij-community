@@ -582,7 +582,7 @@ public final class JavaFormatterUtil {
       int end = StringUtil.indexOf(text, '\n', start);
       if (end == -1) end = text.length();
       if (start + indent < end && !shouldTreatWholeLine) start += indent;
-      if (start != end) linesRanges.add(new TextRange(start, end));
+      if (start != end || shouldTreatWholeLine) linesRanges.add(new TextRange(start, end));
       start = end + 1;
     }
 
