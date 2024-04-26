@@ -47,7 +47,7 @@ inline fun x5() {
 fun main() {
     val m = -1
     bar()
-    foo {
+    foo { a ->
         val x8 = 8
 		//Breakpoint!
 		println()

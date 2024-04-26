@@ -29,7 +29,7 @@ nestedInlineFunctions6.kt:53
 Compile bytecode for x8 + m
 InlineStackFrame lambda 'foo' in 'main' (nestedInlineFunctions6.kt:53)
     JavaValue[local] m: int = -1 (nestedInlineFunctions6.kt:48)
-    JavaValue[local] it: int = 8
+    JavaValue[local] a: int = 8 (nestedInlineFunctions6.kt:50)
     JavaValue[local] x8: int = 8 (nestedInlineFunctions6.kt:51)
 InlineStackFrame foo (nestedInlineFunctions6.kt:5)
     JavaValue[local] x6: int = 6

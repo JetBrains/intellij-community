@@ -218,6 +218,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
           AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
           AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
           AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
+          AbstractInlineScopesAndK1IdeK2CodeEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
                 model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
