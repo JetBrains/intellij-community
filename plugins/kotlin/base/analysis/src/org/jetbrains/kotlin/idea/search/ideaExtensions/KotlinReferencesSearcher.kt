@@ -15,7 +15,6 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.nullize
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightClassMethods
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightClassPropertyMethods
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightFieldForCompanionObject
@@ -43,7 +42,6 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.fi
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.getClassNameForCompanionObject
 import org.jetbrains.kotlin.idea.search.effectiveSearchScope
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.Empty
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.calculateEffectiveScope
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.DestructuringDeclarationReferenceSearcher
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReferenceSearcher
@@ -72,21 +70,6 @@ data class KotlinReferencesSearchOptions(
     companion object {
         val Empty = KotlinReferencesSearchOptions()
 
-        internal fun calculateEffectiveScope(
-            elementToSearch: PsiNamedElement,
-            parameters: ReferencesSearch.SearchParameters
-        ): SearchScope {
-            val kotlinOptions = (parameters as? KotlinAwareReferencesSearchParameters)?.kotlinOptions ?: Empty
-            val elements = if (elementToSearch is KtDeclaration && !isOnlyKotlinSearch(parameters.scopeDeterminedByUser)) {
-                elementToSearch.toLightElements().filterDataClassComponentsIfDisabled(kotlinOptions).nullize()
-            } else {
-                null
-            } ?: listOf(elementToSearch)
-
-            return elements.fold(parameters.effectiveSearchScope) { scope, e ->
-                scope.union(parameters.effectiveSearchScope(e))
-            }
-        }
     }
 }
 
@@ -121,7 +104,8 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
             val unwrappedElement = element.namedUnwrappedElement ?: return@Callable null
             val name = unwrappedElement.name
             if (name == null || StringUtil.isEmptyOrSpaces(name)) return@Callable null
-            val effectiveSearchScope = calculateEffectiveScope(unwrappedElement, parameters)
+
+            val effectiveSearchScope = parameters.effectiveSearchScope(unwrappedElement)
 
             val collector = parameters.optimizer
             val session = collector.searchSession
@@ -200,7 +184,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                         null
                     } ?: unwrappedElement
 
-                val effectiveSearchScope = calculateEffectiveScope(elementToSearch, queryParameters)
+                val effectiveSearchScope = queryParameters.effectiveSearchScope(elementToSearch)
 
                 element = SmartPointerManager.createPointer(psiElement)
                 classNameForCompanionObject = elementToSearch.getClassNameForCompanionObject()
