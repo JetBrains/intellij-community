@@ -35,7 +35,13 @@ class KotlinClassViaConstructorUSimpleReferenceExpression(
         }
 
     override fun accept(visitor: UastVisitor) {
-        super<KotlinAbstractUExpression>.accept(visitor)
+        // Not exactly same as
+        //   super<USimpleNameReferenceExpression>.accept(visitor)
+        // since we intentionally drop
+        //   uAnnotations.acceptList(visitor)
+        // which belong to, and thus will be visited by, the given parent: UCallExpression.
+        if (visitor.visitSimpleNameReferenceExpression(this)) return
+        visitor.afterVisitSimpleNameReferenceExpression(this)
     }
 
     override fun resolve(): PsiElement? = resolved
