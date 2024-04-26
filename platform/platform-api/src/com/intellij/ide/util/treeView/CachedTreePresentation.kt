@@ -19,9 +19,16 @@ interface CachedTreePresentationSupport {
 }
 
 @Internal
+interface TreeNodeWithCacheableAttributes {
+  @Internal
+  fun getCacheableAttributes(): Map<String, String>?
+}
+
+@Internal
 class CachedTreePresentationData(
   val pathElement: CachedTreePathElement,
   val presentation: CachedPresentationData,
+  val extraAttributes: Map<String, String>?,
   val children: List<CachedTreePresentationData>,
 ) {
   companion object {
@@ -43,9 +50,11 @@ class CachedTreePresentationData(
         val presentation = userObject.presentation
         val children = mutableListOf<CachedTreePresentationData>()
         val iconData = getIconData(presentation.getIcon(false))
+        val extraAttrs = (userObject as? TreeNodeWithCacheableAttributes)?.getCacheableAttributes()
         val result = CachedTreePresentationData(
           TreeState.PathElement(TreeState.calcId(userObject), TreeState.calcType(userObject), 0, null),
           CachedPresentationDataImpl(presentation.presentableText ?: "", iconData),
+          extraAttrs,
           children
         )
         val nodePath = if (parentPath == null) CachingTreePath(node) else parentPath.pathByAddingChild(node)
@@ -90,7 +99,8 @@ data class CachedIconPresentation(
   val module: String?,
 )
 
-private class CachedTreePresentationNode(
+@Internal
+class CachedTreePresentationNode(
   val data: CachedTreePresentationData,
 ) : PresentableNodeDescriptor<CachedTreePresentationData>(null, null), PathElementIdProvider {
 

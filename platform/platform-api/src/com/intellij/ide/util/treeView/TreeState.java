@@ -3,6 +3,7 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
@@ -21,6 +22,7 @@ import com.intellij.util.containers.Interner;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
@@ -38,6 +40,7 @@ import javax.swing.tree.TreePath;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.util.treeView.CachedTreePresentationData.createFromTree;
@@ -59,9 +62,7 @@ public final class TreeState implements JDOMExternalizable {
   private static final @NotNull String EXPAND_TAG = "expand";
   private static final @NotNull String SELECT_TAG = "select";
   private static final @NotNull String PRESENTATION_TAG = "presentation";
-  private static final @NotNull String PRESENTATION_DATA_TAG = "data";
   private static final @NotNull String PATH_TAG = "path";
-  private static final @NotNull String PATH_ELEMENT_TAG = "item";
 
   private enum Match {OBJECT, ID_TYPE}
 
@@ -131,6 +132,70 @@ public final class TreeState implements JDOMExternalizable {
     }
   }
 
+  @Tag("presentation")
+  static final class SerializableCachedPresentation {
+    PathElement item;
+    CachedPresentationDataImpl data;
+    Map<String, String> attributes;
+
+    SerializableCachedPresentation() {
+      item = new PathElement();
+      data = new CachedPresentationDataImpl();
+    }
+
+    SerializableCachedPresentation(@NotNull CachedTreePresentationData data) {
+      this.item = (PathElement)data.getPathElement();
+      this.data = (CachedPresentationDataImpl)data.getPresentation();
+      this.attributes = data.getExtraAttributes();
+    }
+
+    boolean isValid() {
+      return item != null && data != null && data.isValid();
+    }
+
+    @NotNull
+    @Property(surroundWithTag = false)
+    public PathElement getItem() {
+      return item;
+    }
+
+    @Property(surroundWithTag = false)
+    public void setItem(@NotNull PathElement item) {
+      this.item = item;
+    }
+
+    @NotNull
+    @Property(surroundWithTag = false)
+    public CachedPresentationDataImpl getData() {
+      return data;
+    }
+
+    @Property(surroundWithTag = false)
+    public void setData(@NotNull CachedPresentationDataImpl data) {
+      this.data = data;
+    }
+
+    @Nullable
+    @XCollection(style = XCollection.Style.v2)
+    public Map<String, String> getAttributes() {
+      return attributes;
+    }
+
+    @XCollection(style = XCollection.Style.v2)
+    public void setAttributes(@Nullable Map<String, String> attributes) {
+      this.attributes = attributes;
+    }
+
+    @Override
+    public String toString() {
+      return "SerializableCachedPresentation{" +
+             "item=" + item +
+             ", data=" + data +
+             ", attributes=" + attributes +
+             '}';
+    }
+  }
+
   @Tag("data")
   static final class CachedPresentationDataImpl implements CachedPresentationData {
     String text;
@@ -151,6 +216,10 @@ public final class TreeState implements JDOMExternalizable {
         this.iconPlugin = iconPresentation.getPlugin();
         this.iconModule = iconPresentation.getModule();
       }
+    }
+
+    boolean isValid() {
+      return text != null;
     }
 
     @NotNull
@@ -237,7 +306,14 @@ public final class TreeState implements JDOMExternalizable {
   public void readExternal(Element element) throws InvalidDataException {
     readExternal(element, myExpandedPaths, EXPAND_TAG);
     readExternal(element, mySelectedPaths, SELECT_TAG);
-    myPresentationData = readExternalPresentation(element);
+    try {
+      myPresentationData = readExternalPresentation(element);
+    }
+    catch (ProcessCanceledException | CancellationException ignored) {
+    }
+    catch (Exception e) {
+      LOG.warn("An error occurred while trying to read a cached tree presentation", e);
+    }
   }
 
   private static void readExternal(@NotNull Element root, List<PathElement[]> list, @NotNull String name) {
@@ -259,14 +335,13 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   private static void readExternalPresentation(Element element, List<CachedTreePresentationData> result) {
-    var pathChildren = element.getChildren(PATH_ELEMENT_TAG);
-    if (pathChildren.size() != 1) return;
-    var path = XmlSerializer.deserialize(pathChildren.get(0), PathElement.class);
-    var presentationChildren = element.getChildren(PRESENTATION_DATA_TAG);
-    if (presentationChildren.size() != 1) return;
-    var presentation = XmlSerializer.deserialize(presentationChildren.get(0), CachedPresentationDataImpl.class);
+    var deserialized = XmlSerializer.deserialize(element, SerializableCachedPresentation.class);
+    if (!deserialized.isValid()) return;
+    var item = deserialized.getItem();
+    var presentationData = deserialized.getData();
+    var attributes = deserialized.getAttributes();
     var children = new SmartList<CachedTreePresentationData>();
-    var data = new CachedTreePresentationData(path, presentation, children);
+    var data = new CachedTreePresentationData(item, presentationData, attributes, children);
     for (Element child : element.getChildren(PRESENTATION_TAG)) {
       readExternalPresentation(child, children);
     }
@@ -335,9 +410,7 @@ public final class TreeState implements JDOMExternalizable {
 
   private static void writeExternal(Element element, @Nullable CachedTreePresentationData data) {
     if (data == null) return;
-    Element root = new Element(PRESENTATION_TAG);
-    root.addContent(XmlSerializer.serialize(data.getPathElement()));
-    root.addContent(XmlSerializer.serialize(data.getPresentation()));
+    Element root = XmlSerializer.serialize(new SerializableCachedPresentation(data));
     for (CachedTreePresentationData child : data.getChildren()) {
       writeExternal(root, child);
     }
