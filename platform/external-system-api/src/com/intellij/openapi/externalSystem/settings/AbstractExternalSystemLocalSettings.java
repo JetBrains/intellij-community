@@ -146,6 +146,14 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     pruneOutdatedEntries();
   }
 
+  public void invalidateCaches() {
+    state.recentTasks.clear();
+    state.availableProjects.clear();
+    state.modificationStamps.clear();
+    state.projectBuildClasspath.clear();
+    state.projectSyncType.clear();
+  }
+
   private void pruneOutdatedEntries() {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = getManager(myExternalSystemId);
     assert manager != null;
