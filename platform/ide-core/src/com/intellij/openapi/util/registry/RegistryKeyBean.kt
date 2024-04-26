@@ -30,8 +30,6 @@ class RegistryKeyBean private constructor() {
     @NonNls
     private val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
 
-    private val pendingRemovalKeys = HashSet<String>()
-
     @ApiStatus.Internal
     const val KEY_CONFLICT_LOG_CATEGORY: String = "com.intellij.openapi.util.registry.overrides"
 
@@ -60,24 +58,17 @@ class RegistryKeyBean private constructor() {
         }
       }, false, null)
 
-      point.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean> {
-        override fun extensionRemoved(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
-          pendingRemovalKeys.add(extension.key)
-        }
-      }, false, null)
-
       ApplicationManager.getApplication().messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
         override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
           Registry.mutateContributedKeys { oldMap ->
-            val newMap = HashMap<String, RegistryKeyDescriptor>(oldMap.size - pendingRemovalKeys.size)
+            val newMap = HashMap<String, RegistryKeyDescriptor>(oldMap.size)
             for (entry in oldMap) {
-              if (!pendingRemovalKeys.contains(entry.key)) {
+              if (entry.value.pluginId != pluginDescriptor.pluginId.idString) {
                 newMap.put(entry.key, entry.value)
               }
             }
             java.util.Map.copyOf(newMap)
           }
-          pendingRemovalKeys.clear()
         }
       })
     }

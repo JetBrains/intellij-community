@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.RegistryKeyDescriptor
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.Ksuid
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -40,7 +41,7 @@ class RegistryKeyBeanPluginTest {
   @JvmField
   val disposableRule = DisposableRule()
 
-  private val disposable: Disposable
+  private val testDisposable: Disposable
     get() = disposableRule.disposable
 
   @Test
@@ -50,7 +51,7 @@ class RegistryKeyBeanPluginTest {
       .id("plugin1")
       .extensions(registryKey(key, defaultValue = true))
 
-    loadPlugins(plugin1)
+    loadPlugins(testDisposable, plugin1)
 
     assertTrue(Registry.get(key).asBoolean())
   }
@@ -86,7 +87,7 @@ class RegistryKeyBeanPluginTest {
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = true, overrides = true))
     val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
-      loadPlugins(plugin1, plugin2)
+      loadPlugins(testDisposable, plugin1, plugin2)
     }
     ex.message.shouldBe("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
   }
@@ -131,7 +132,7 @@ class RegistryKeyBeanPluginTest {
       .extensions(registryKey("my.key", defaultValue = false))
 
     val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
-      loadPlugins(plugin1, plugin2)
+      loadPlugins(testDisposable, plugin1, plugin2)
     }
     ex.message.shouldBe("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
     Registry.get("my.key").asBoolean().shouldBe(false)
@@ -158,6 +159,52 @@ class RegistryKeyBeanPluginTest {
     registry["my.key"].shouldNotBeNull().defaultValue.shouldBe("1")
   }
 
+  @Test
+  fun `a key should be deregistered after the owner plugin is unloaded`() {
+    val plugin1 = PluginBuilder()
+      .id("plugin1")
+      .extensions(registryKey("my.key", defaultValue = "1"))
+
+    val nestedDisposable = Disposer.newDisposable()
+    try {
+      loadPlugins(nestedDisposable, plugin1)
+      val key = getContributedKeyDescriptor("my.key")
+      key.shouldNotBeNull().pluginId.shouldNotBeNull().shouldBe("plugin1")
+    } finally {
+      Disposer.dispose(nestedDisposable)
+    }
+
+    getContributedKeyDescriptor("my.key").shouldBeNull()
+  }
+
+  @Test
+  fun `a key should not be deregistered after the owner plugin wasn't actually owning it`() {
+    val plugin1 = PluginBuilder()
+      .id("plugin1")
+      .extensions(registryKey("my.key", defaultValue = "1"))
+    val plugin2 = PluginBuilder()
+      .id("plugin2")
+      .extensions(registryKey("my.key", defaultValue = "2", overrides = true))
+
+    loadPlugins(testDisposable, plugin1)
+
+    val nestedDisposable = Disposer.newDisposable()
+    try {
+      val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
+        loadPlugins(nestedDisposable, plugin2)
+      }
+      ex.message.shouldBe("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
+
+      val key = getContributedKeyDescriptor("my.key")
+      key.shouldNotBeNull().pluginId.shouldNotBeNull().shouldBe("plugin1")
+    } finally {
+      Disposer.dispose(nestedDisposable)
+    }
+
+    getContributedKeyDescriptor("my.key").shouldNotBeNull()
+      .pluginId.shouldNotBeNull().shouldBe("plugin1")
+  }
+
   /**
    * "Static" means a Registry loading as if the plugins were loaded during the startup, i.e., not dynamically.
    */
@@ -169,7 +216,7 @@ class RegistryKeyBeanPluginTest {
       override fun extensionAdded(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
         beans.add(extension to pluginDescriptor)
       }
-    }, false, disposable)
+    }, false, testDisposable)
 
     LoggedErrorProcessor.executeWith<Nothing>(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): MutableSet<Action> {
@@ -177,7 +224,7 @@ class RegistryKeyBeanPluginTest {
         return super.processError(category, message, details, t)
       }
     }) {
-      loadPlugins(*plugins)
+      loadPlugins(testDisposable, *plugins)
     }
 
     val registryMock = mutableMapOf<String, RegistryKeyDescriptor>()
@@ -188,7 +235,7 @@ class RegistryKeyBeanPluginTest {
     return registryMock
   }
 
-  private fun loadPlugins(vararg plugins: PluginBuilder) {
+  private fun loadPlugins(disposable: Disposable, vararg plugins: PluginBuilder) {
     for (plugin in plugins) {
       val pluginDisposable = loadPluginWithText(plugin, rootPath.resolve(Ksuid.generate()))
       Disposer.register(disposable, pluginDisposable)
@@ -198,3 +245,12 @@ class RegistryKeyBeanPluginTest {
 
 private fun registryKey(name: String, defaultValue: Any, overrides: Boolean = false) =
   """<registryKey key="$name" defaultValue="$defaultValue" ${if (overrides) "overrides=\"true\"" else ""} />"""
+
+private fun getContributedKeyDescriptor(@Suppress("SameParameterValue") name: String): RegistryKeyDescriptor? {
+  var descriptor: RegistryKeyDescriptor? = null
+  Registry.mutateContributedKeys { keys ->
+    descriptor = keys[name]
+    keys
+  }
+  return descriptor
+}

@@ -45,7 +45,7 @@ public final class RegistryKeyDescriptor {
   }
 
   @Nullable
-  String getPluginId() {
+  public String getPluginId() {
     return myPluginId;
   }
 }
