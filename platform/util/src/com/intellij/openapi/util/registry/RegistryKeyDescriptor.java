@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class RegistryKeyDescriptor {
+@ApiStatus.Internal
+public final class RegistryKeyDescriptor {
   private final @NotNull String myName;
   private final @NotNull String myDefaultValue;
   private final @NotNull String myDescription;

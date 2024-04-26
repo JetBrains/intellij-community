@@ -6,7 +6,7 @@ package com.intellij.openapi.util.registry
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointPriorityListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -33,6 +33,9 @@ class RegistryKeyBean private constructor() {
     private val pendingRemovalKeys = HashSet<String>()
 
     @ApiStatus.Internal
+    const val KEY_CONFLICT_LOG_CATEGORY: String = "com.intellij.openapi.util.registry.overrides"
+
+    @ApiStatus.Internal
     @JvmStatic
     fun addKeysFromPlugins() {
       val point = (ApplicationManager.getApplication().extensionArea)
@@ -40,7 +43,7 @@ class RegistryKeyBean private constructor() {
       Registry.setKeys(HashMap<String, RegistryKeyDescriptor>().let { mutator ->
         point.processUnsortedWithPluginDescriptor { bean, pluginDescriptor ->
           val descriptor = createRegistryKeyDescriptor(bean, pluginDescriptor)
-          putNewDescriptorConsideringOverrides(mutator, descriptor)
+          putNewDescriptorConsideringOverrides(mutator, descriptor, false)
         }
         java.util.Map.copyOf(mutator)
       })
@@ -51,7 +54,7 @@ class RegistryKeyBean private constructor() {
           Registry.mutateContributedKeys { oldMap ->
             val newMap = HashMap<String, RegistryKeyDescriptor>(oldMap.size + 1)
             newMap.putAll(oldMap)
-            putNewDescriptorConsideringOverrides(newMap, descriptor)
+            putNewDescriptorConsideringOverrides(newMap, descriptor, isDynamic = true)
             java.util.Map.copyOf(newMap)
           }
         }
@@ -63,7 +66,6 @@ class RegistryKeyBean private constructor() {
         }
       }, false, null)
 
-      // TODO: Process key removal properly: if override is removed then the overridden value should be re-instantiated
       ApplicationManager.getApplication().messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
         override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
           Registry.mutateContributedKeys { oldMap ->
@@ -80,7 +82,8 @@ class RegistryKeyBean private constructor() {
       })
     }
 
-    private fun createRegistryKeyDescriptor(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor): RegistryKeyDescriptor {
+    @ApiStatus.Internal
+    fun createRegistryKeyDescriptor(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor): RegistryKeyDescriptor {
       val pluginId = pluginDescriptor.pluginId.idString
       return RegistryKeyDescriptor(extension.key,
                                    StringUtil.unescapeStringCharacters(extension.description.replace(CONSECUTIVE_SPACES_REGEX, " ")),
@@ -89,7 +92,12 @@ class RegistryKeyBean private constructor() {
                                    pluginId)
     }
 
-    private fun putNewDescriptorConsideringOverrides(map: MutableMap<String, RegistryKeyDescriptor>, newDescriptor: RegistryKeyDescriptor) {
+    @ApiStatus.Internal
+    fun putNewDescriptorConsideringOverrides(
+      map: MutableMap<String, RegistryKeyDescriptor>,
+      newDescriptor: RegistryKeyDescriptor,
+      isDynamic: Boolean
+    ) {
       val oldDescriptor = map[newDescriptor.name]
       if (oldDescriptor == null) {
         // no override
@@ -97,32 +105,41 @@ class RegistryKeyBean private constructor() {
         return
       }
 
+      val logger = Logger.getInstance(KEY_CONFLICT_LOG_CATEGORY)
+
       when (oldDescriptor.isOverrides to newDescriptor.isOverrides) {
-        false to true -> { // a normal override, just allow it
-          // TODO: Check dependencies?
-          map.put(newDescriptor.name, newDescriptor)
-          // TODO: Check loading order if the descriptor requires restart?
-          // TODO: ↑ this should only be a concern for dynamically-loaded plugins;
-          //       the others we can process in one batch and don't allow anybody to see changes in the registry keys that require restart
+        false to true -> { // a normal override, allow it for non-dynamic usages
+          if (isDynamic) {
+            logger.error(
+              "A dynamically-loaded plugin ${newDescriptor.pluginId} is forbidden to override" +
+              " the registry key ${newDescriptor.name} introduced by ${oldDescriptor.pluginId}."
+            )
+          } else {
+            val overrider = newDescriptor.pluginId
+            val overridden = oldDescriptor.pluginId
+            logger.info("Plugin $overrider overrides the registry key ${newDescriptor.name} declared by plugin $overridden.")
+            map.put(newDescriptor.name, newDescriptor)
+          }
         }
         true to false -> {
-          // TODO: Check dependencies?
           // The overriding plugin was loaded first, so no action is required.
         }
         false to false -> {
           // For now, preserve the legacy behavior but report an error.
           map.put(newDescriptor.name, newDescriptor)
-          logger<RegistryKeyBean>().error(
+          logger.error(
             "Conflicting registry key definition for key ${oldDescriptor.name}:" +
             " it was defined by plugin ${oldDescriptor.pluginId}" +
             " but redefined by plugin ${newDescriptor.pluginId}."
           )
         }
         true to true -> {
-          logger<RegistryKeyBean>().error(
-            "Incorrect registry key override for key ${oldDescriptor.name}:" +
-            " both plugins ${oldDescriptor.pluginId} and ${newDescriptor.pluginId} claim to override it."
-          )
+          if (oldDescriptor.defaultValue != newDescriptor.defaultValue) {
+            logger.error(
+              "Incorrect registry key override for key ${oldDescriptor.name}:" +
+              " both plugins ${oldDescriptor.pluginId} and ${newDescriptor.pluginId} claim to override it to different defaults."
+            )
+          }
         }
       }
     }
@@ -147,7 +164,9 @@ class RegistryKeyBean private constructor() {
   /**
    * Whether this property overrides a property defined somewhere else with the same key.
    *
-   * Note we only support **one override** for each registry property. Several conflicting overrides for same key are not supported.
+   * Note we only support **one override** for each registry property. Several conflicting overrides for the same key are not supported.
+   *
+   * Registry override in a dynamically loaded plugin will have no effect.
    */
   @Attribute("overrides")
   @JvmField var overrides: Boolean = false
