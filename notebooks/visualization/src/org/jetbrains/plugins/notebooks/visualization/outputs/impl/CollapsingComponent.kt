@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
@@ -102,6 +103,10 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
       else -> mainComponent.preferredSize
     }
     result.height += insets.run { top + bottom }
+    val map = editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength)
+      .filter { it.renderer.asSafely<JComponent>()!!.getComponent(0) is SurroundingComponent }
+
+    println("$result ${isSeen} ${editor.preferredSize} ${editor.contentComponent.height} ${map.joinToString { it.heightInPixels.toString() }}")
     return result
   }
 

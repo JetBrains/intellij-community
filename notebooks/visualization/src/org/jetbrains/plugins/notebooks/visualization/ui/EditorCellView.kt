@@ -22,6 +22,7 @@ import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayController
 import java.awt.*
 import javax.swing.JComponent
+import kotlin.reflect.KClass
 
 class EditorCellView(
   private val editor: EditorEx,
@@ -30,7 +31,7 @@ class EditorCellView(
 ) {
 
   private var _controllers: List<NotebookCellInlayController> = emptyList()
-  val controllers: List<NotebookCellInlayController>
+  private val controllers: List<NotebookCellInlayController>
     get() = _controllers + ((input.component as? ControllerEditorCellViewComponent)?.controller?.let { listOf(it) } ?: emptyList())
 
   private val interval get() = intervalPointer.get() ?: error("Invalid interval")
@@ -70,7 +71,10 @@ class EditorCellView(
 
   val size: Dimension get() = _size
 
-  private var outputs: EditorCellOutputs? = null
+  private var _outputs: EditorCellOutputs? = null
+
+  val outputs: EditorCellOutputs?
+    get() = _outputs
 
   private var selected = false
 
@@ -137,7 +141,7 @@ class EditorCellView(
     outputs?.dispose()
     val outputController = controllers.filterIsInstance<NotebookOutputInlayController>().firstOrNull()
     if (outputController != null) {
-      outputs = EditorCellOutputs(editor, outputController)
+      _outputs = EditorCellOutputs(editor, outputController)
       updateCellHighlight()
       updateFolding()
     }
@@ -185,6 +189,15 @@ class EditorCellView(
   fun mouseEntered() {
     mouseOver = true
     updateFolding()
+  }
+
+  inline fun <reified T : Any> getExtension(): T? {
+    return getExtension(T::class)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T : Any> getExtension(type: KClass<T>): T? {
+    return controllers.firstOrNull { type.isInstance(it) } as? T
   }
 
   private fun removeCellHighlight() {
@@ -285,13 +298,11 @@ class EditorCellView(
       }
     }
 
-    fun paintBackground(editor: EditorImpl,
-                        g: Graphics,
-                        r: Rectangle,
-                        interval: NotebookCellLines.Interval) {
-      val notebookCellInlayManager = NotebookCellInlayManager.get(editor) ?: throw AssertionError("Register inlay manager first")
-
-      for (controller: NotebookCellInlayController in notebookCellInlayManager.inlaysForInterval(interval)) {
+    private fun paintBackground(editor: EditorImpl,
+                                g: Graphics,
+                                r: Rectangle,
+                                interval: NotebookCellLines.Interval) {
+      for (controller: NotebookCellInlayController in controllers) {
         controller.paintGutter(editor, g, r, interval)
       }
     }

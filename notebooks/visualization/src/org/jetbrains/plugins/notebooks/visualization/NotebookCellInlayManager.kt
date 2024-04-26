@@ -62,8 +62,8 @@ class NotebookCellInlayManager private constructor(
 
   private val cellEventListeners = EventDispatcher.create(EditorCellEventListener::class.java)
 
-  fun inlaysForInterval(interval: NotebookCellLines.Interval): Iterable<NotebookCellInlayController> =
-    _cells[interval.ordinal].view?.controllers ?: emptyList()
+  fun getCellForInterval(interval: NotebookCellLines.Interval): EditorCell =
+    _cells[interval.ordinal]
 
   /** It's public, but think twice before using it. Called many times in a row, it can freeze UI. Consider using [update] instead. */
   fun updateImmediately(lines: IntRange) {
@@ -405,6 +405,10 @@ class NotebookCellInlayManager private constructor(
 
   fun addCellEventsListener(editorCellEventListener: EditorCellEventListener, disposable: Disposable) {
     cellEventListeners.addListener(editorCellEventListener, disposable)
+  }
+
+  fun getCell(index: Int): EditorCell {
+    return cells[index]
   }
 }
 
