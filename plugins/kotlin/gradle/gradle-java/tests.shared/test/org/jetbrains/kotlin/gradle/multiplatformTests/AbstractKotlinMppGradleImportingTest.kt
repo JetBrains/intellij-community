@@ -208,8 +208,6 @@ abstract class AbstractKotlinMppGradleImportingTest(private val pluginKind: Kotl
         super.setUp()
 
         checkPluginIsCorrect(pluginKind.isK2)
-        // KMP support in non-JVM modules should be explicitly enabled ATM
-        if (pluginKind.isK2) Registry.get("kotlin.k2.kmp.enabled").setValue(true)
 
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()

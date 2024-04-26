@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.base.facet.JvmOnlyProjectChecker
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
@@ -20,6 +21,10 @@ internal class MultiplatformSupportAvailability : KotlinSupportAvailability {
     override fun name(): String = KotlinCodeInsightBundle.message("kmp.support.availability.name")
 
     override fun isSupported(ktElement: KtElement): Boolean {
+        if (isUnitTestMode()) {
+            // we want to test KMP in our unit tests
+            return true
+        }
         if (Registry.`is`("kotlin.k2.kmp.enabled", true) || JvmOnlyProjectChecker.getInstance(ktElement.project).value()) return true
         return when (ktElement) {
             is KtFile -> {
