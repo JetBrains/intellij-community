@@ -22,7 +22,8 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     fun toLoadPath(relativePath: String, base: String?): String {
       return when {
         relativePath[0] == '/' -> relativePath.substring(1)
-        relativePath.startsWith("intellij.") -> relativePath
+        relativePath.startsWith("intellij.")
+        || relativePath.startsWith("kotlin.") -> relativePath
         base == null -> "META-INF/$relativePath"
         else -> "$base/$relativePath"
       }

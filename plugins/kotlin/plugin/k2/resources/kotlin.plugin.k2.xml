@@ -1,13 +1,10 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <depends optional="true" config-file="gradle.xml">com.intellij.gradle</depends>
-  <depends optional="true" config-file="dep-groovy.xml">org.intellij.groovy</depends>
-  <depends optional="true" config-file="maven-common.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="dep-maven.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="dep-jvm-decompiler.xml">org.jetbrains.java.decompiler</depends>
 
-  <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.java</depends>
-  <depends>com.intellij.modules.java-capable</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+    <plugin id="com.intellij.modules.java"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
 
   <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/> <!-- comes from the Kotlin compiler -->
 
