@@ -5,22 +5,22 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.quickfix.StarProjectionUtils.starProjectionFixFamilyName
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
-import org.jetbrains.kotlin.types.expressions.TypeReconstructionUtil
-import org.jetbrains.kotlin.utils.sure
 
 object AddStarProjectionsFixFactory : KotlinSingleIntentionActionFactory() {
     public override fun createAction(diagnostic: Diagnostic): IntentionAction? {
@@ -31,30 +31,22 @@ object AddStarProjectionsFixFactory : KotlinSingleIntentionActionFactory() {
             return AddStartProjectionsForInnerClass(typeReference)
         else {
             val typeElement = typeReference.typeElement ?: return null
-            val unwrappedType =
-                generateSequence(typeElement) { (it as? KtNullableType)?.innerType }.lastOrNull() as? KtUserType ?: return null
+            val unwrappedType = StarProjectionUtils.getUnwrappedType(typeElement) ?: return null
             return AddStarProjectionsFix(unwrappedType, diagnosticWithParameters.a)
         }
     }
 }
 
-@Nls
-private val starProjectionFixFamilyName = KotlinBundle.message("fix.add.star.projection.family")
-
 class AddStarProjectionsFix(element: KtUserType, private val argumentCount: Int) : KotlinQuickFixAction<KtUserType>(element) {
 
     override fun getFamilyName() = starProjectionFixFamilyName
 
-    override fun getText() =
-        KotlinBundle.message("fix.add.star.projection.text", TypeReconstructionUtil.getTypeNameAndStarProjectionsString("", argumentCount))
+    override fun getText() = StarProjectionUtils.addStarProjectionsActionName(argumentCount)
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         assert(element.typeArguments.isEmpty())
-
-        val typeString = TypeReconstructionUtil.getTypeNameAndStarProjectionsString(element.text, argumentCount)
-        val replacement = KtPsiFactory(project).createType(typeString).typeElement.sure { "No type element after parsing $typeString" }
-        element.replace(replacement)
+        StarProjectionUtils.addStarProjections(project, element, argumentCount)
     }
 }
 
@@ -94,7 +86,7 @@ class AddStartProjectionsForInnerClass(element: KtTypeReference) : KotlinQuickFi
             val name = c.name.asString()
             val last = targetClasses.getOrNull(index - 1)
             val size = if (index == 0 || last?.isInner == true) c.declaredTypeParameters.size else 0
-            if (size == 0) name else TypeReconstructionUtil.getTypeNameAndStarProjectionsString(name, size)
+            if (size == 0) name else StarProjectionUtils.getTypeNameAndStarProjectionsString(name, size)
         }.reversed().joinToString(".")
     }
 }
