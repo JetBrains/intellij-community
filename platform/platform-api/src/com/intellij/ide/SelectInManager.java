@@ -27,6 +27,7 @@ public final class SelectInManager  {
 
   public @NotNull List<SelectInTarget> getTargetList() {
     List<SelectInTarget> targets = new ArrayList<>(DumbService.getDumbAwareExtensions(myProject, SelectInTarget.EP_NAME));
+    targets.removeIf(target -> !target.isAvailable());
     targets.sort(SelectInTargetComparator.INSTANCE);
     return targets;
   }

@@ -14,8 +14,12 @@ public interface SelectInTarget extends PossiblyDumbAware {
   @Nls
   String toString();
 
+  default boolean isAvailable() {
+    return true;
+  }
+
   /**
-   * This should be called in an read action
+   * This should be called in a read action
    */
   boolean canSelect(SelectInContext context);
 
