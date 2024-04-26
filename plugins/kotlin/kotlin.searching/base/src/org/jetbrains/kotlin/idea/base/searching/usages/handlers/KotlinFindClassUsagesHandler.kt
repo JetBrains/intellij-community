@@ -15,6 +15,7 @@ import com.intellij.util.FilteredQuery
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindClassUsagesDialog
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.usagesSearch.buildProcessDelegationCallKotlinConstructorUsagesTask
+import org.jetbrains.kotlin.load.kotlin.internalName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.effectiveDeclarations
@@ -151,13 +153,17 @@ class KotlinFindClassUsagesHandler(
     }
 
     override fun getStringsToSearch(element: PsiElement): Collection<String> {
-        val psiClass = when (element) {
-            is PsiClass -> element
-            is KtClassOrObject -> getElement().toLightClass()
+        return when (element) {
+            is KtClassOrObject -> element.classIdIfNonLocal?.let { classId ->
+                buildList {
+                    add(classId.asFqNameString())
+                    if (classId.isNestedClass) {
+                        add(classId.packageFqName.asString() + "." + classId.relativeClassName.pathSegments().joinToString("$"))
+                    }
+                }
+            }
             else -> null
-        } ?: return Collections.emptyList()
-
-        return JavaFindUsagesHelper.getElementNames(psiClass)
+        } ?: emptyList()
     }
 
     override fun isSearchForTextOccurrencesAvailable(psiElement: PsiElement, isSingleFile: Boolean): Boolean {
