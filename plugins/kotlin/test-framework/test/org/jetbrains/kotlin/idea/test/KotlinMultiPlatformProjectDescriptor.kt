@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -23,7 +24,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 /**
  * The project is created with three modules: Common, Jvm -> Common, Js -> Common.
  *
- * Currently, no libraries are added.
+ * Standard library dependency is added to all modules.
  */
 object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
     enum class PlatformDescriptor(
@@ -32,6 +33,7 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
         val targetPlatform: TargetPlatform,
         val isKotlinSdkUsed: Boolean = true,
         val refinementDependencies: List<PlatformDescriptor> = emptyList(),
+        val dependencyCoordinates: List<String> = emptyList(),
     ) {
         COMMON(
             moduleName = "Common",
@@ -42,6 +44,9 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
                     JsPlatforms.defaultJsPlatform.single()
                 )
             ),
+            dependencyCoordinates = listOf(
+                "org.jetbrains.kotlin:kotlin-stdlib-common:1.9.23", // TODO (KTIJ-29725): make stdlib version dynamic
+            ),
         ),
         JVM(
             moduleName = "Jvm",
@@ -49,12 +54,18 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
             targetPlatform = JvmPlatforms.jvm8,
             isKotlinSdkUsed = false,
             refinementDependencies = listOf(COMMON),
+            dependencyCoordinates = listOf(
+                "org.jetbrains.kotlin:kotlin-stdlib:1.9.23",
+            ),
         ),
         JS(
             moduleName = "Js",
             sourceRootName = "src_js",
             targetPlatform = JsPlatforms.defaultJsPlatform,
             refinementDependencies = listOf(COMMON),
+            dependencyCoordinates = listOf(
+                "org.jetbrains.kotlin:kotlin-stdlib-js:1.9.23",
+            ),
         );
 
         fun sourceRoot(): VirtualFile? = findRoot(sourceRootName)
@@ -96,6 +107,21 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
             model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
         }
 
+        setUpSdk(module, model, descriptor)
+
+        module.createMultiplatformFacetM3(
+            platformKind = descriptor.targetPlatform,
+            useProjectSettings = false,
+            dependsOnModuleNames = descriptor.refinementDependencies.map(PlatformDescriptor::moduleName),
+            pureKotlinSourceFolders = listOf(descriptor.sourceRoot()!!.path),
+        )
+
+        for (libraryCoordinates in descriptor.dependencyCoordinates) {
+            MavenDependencyUtil.addFromMaven(model, libraryCoordinates)
+        }
+    }
+
+    private fun setUpSdk(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {
         if (descriptor.isKotlinSdkUsed) {
             KotlinSdkType.setUpIfNeeded(module)
             ConfigLibraryUtil.configureSdk(
@@ -106,13 +132,6 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
         } else {
             model.sdk = sdk
         }
-
-        module.createMultiplatformFacetM3(
-            platformKind = descriptor.targetPlatform,
-            useProjectSettings = false,
-            dependsOnModuleNames = descriptor.refinementDependencies.map(PlatformDescriptor::moduleName),
-            pureKotlinSourceFolders = listOf(descriptor.sourceRoot()!!.path),
-        )
     }
 
     fun cleanupSourceRoots() = runWriteAction {

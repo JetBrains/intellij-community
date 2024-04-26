@@ -12,7 +12,6 @@ import com.intellij.usageView.UsageViewLongNameLocation
 import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.nio.file.Paths
 
@@ -20,7 +19,7 @@ abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightM
     override fun isFirPlugin(): Boolean = true
 
     fun doTestKotlinClass(path: String) {
-        val virtualFile = configureModuleStructure(path)
+        val virtualFile = configureModuleStructure(path).second
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)
@@ -41,7 +40,7 @@ abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightM
 
 
     fun doTestCallable(path: String) {
-        val virtualFile = configureModuleStructure(path)
+        val virtualFile = configureModuleStructure(path).second
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)

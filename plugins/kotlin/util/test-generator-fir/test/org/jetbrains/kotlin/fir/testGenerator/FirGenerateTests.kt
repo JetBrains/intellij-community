@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.fir.folding.AbstractFirFoldingTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AutoImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
+import org.jetbrains.kotlin.idea.fir.kmp.AbstractK2KmpLightFixtureHighlightingTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
 import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoDeclarationTest
 import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoRelatedSymbolMultiModuleTest
@@ -61,7 +62,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
-fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
+fun main(@Suppress("UNUSED_PARAMETER", "unused") args: Array<String>) {
     generateK2Tests()
 }
 
@@ -422,6 +423,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractK2MultiModuleHighlightingTest> {
             model("resolve/anchors", isRecursive = false, pattern = Patterns.forRegex("^([^\\._]+)$"))
+        }
+
+        testClass<AbstractK2KmpLightFixtureHighlightingTest> {
+            model("kmp/highlighting", pattern = KT_WITHOUT_DOTS)
         }
     }
 

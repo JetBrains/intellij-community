@@ -32,11 +32,12 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
      *
      * Each file is added to the test project's platform module.
      *
-     * Returns file which was marked as `MAIN` or null
+     * Returns a list of all files and a file which was marked as `MAIN` or `null` if it's absent.
      */
-    fun configureModuleStructure(abstractFilePath: String): VirtualFile? {
+    fun configureModuleStructure(abstractFilePath: String): Pair<List<VirtualFile>, VirtualFile?> {
         val map = ModuleStructureSplitter.splitPerModule(File(abstractFilePath))
         var mainFile: VirtualFile? = null
+        val allFiles: MutableList<VirtualFile> = mutableListOf()
         map.forEach { (platform, files) ->
             val platformDescriptor = when (platform) {
                 "Common" -> KotlinMultiPlatformProjectDescriptor.PlatformDescriptor.COMMON
@@ -47,6 +48,7 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
             if (platformDescriptor != null) {
                 for (testFile in files) {
                     val virtualFile = VfsTestUtil.createFile(platformDescriptor.sourceRoot()!!, testFile.relativePath, testFile.text)
+                    allFiles.add(virtualFile)
                     if (testFile.isMain) {
                         mainFile = virtualFile
                     }
@@ -54,7 +56,7 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
                 }
             }
         }
-        return mainFile
+        return allFiles to mainFile
     }
 
     override fun setUp() {
