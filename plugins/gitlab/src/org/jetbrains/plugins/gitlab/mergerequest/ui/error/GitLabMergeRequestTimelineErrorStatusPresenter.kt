@@ -3,21 +3,16 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.error
 
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.swingAction
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
-import javax.swing.Action
 
-class GitLabMergeRequestTimelineErrorStatusPresenter(
-  private val mr: GitLabMergeRequestTimelineViewModel
-) : ErrorStatusPresenter.Text<Throwable> {
-  override fun getErrorTitle(error: Throwable): @Nls String = GitLabBundle.message("merge.request.timeline.error")
-
-  override fun getErrorDescription(error: Throwable): @Nls String? =
-    error.localizedMessage
-
-  override fun getErrorAction(error: Throwable): Action =
+fun GitLabMergeRequestTimelineErrorStatusPresenter(
+  mr: GitLabMergeRequestTimelineViewModel
+): ErrorStatusPresenter.Text<Throwable> = ErrorStatusPresenter.simple(
+  GitLabBundle.message("merge.request.timeline.error"),
+  actionProvider = {
     swingAction(GitLabBundle.message("merge.request.reload")) {
       mr.reloadData()
     }
-}
+  }
+)

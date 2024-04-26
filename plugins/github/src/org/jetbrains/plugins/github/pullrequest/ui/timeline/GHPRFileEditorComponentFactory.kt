@@ -43,7 +43,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
-import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -212,13 +211,12 @@ internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimeli
       .toString()
   }
 
-  private inner class ErrorPresenter : ErrorStatusPresenter.Text<Throwable> {
-    override fun getErrorTitle(error: Throwable): String = GithubBundle.message("pull.request.timeline.cannot.load")
-
-    override fun getErrorDescription(error: Throwable): String =
+  private fun ErrorPresenter(): ErrorStatusPresenter.Text<Throwable> = ErrorStatusPresenter.simple(
+    GithubBundle.message("pull.request.timeline.cannot.load"),
+    descriptionProvider = { error ->
       if (error is GithubAuthenticationException) GithubBundle.message("pull.request.list.error.authorization")
       else GHHtmlErrorPanel.getLoadingErrorText(error)
-
-    override fun getErrorAction(error: Throwable): Action? = timelineVm.loadingErrorHandler.getActionForError(error)
-  }
+    },
+    actionProvider = timelineVm.loadingErrorHandler::getActionForError
+  )
 }

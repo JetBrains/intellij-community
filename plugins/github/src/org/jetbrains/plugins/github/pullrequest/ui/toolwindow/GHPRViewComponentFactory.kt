@@ -14,11 +14,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
@@ -34,7 +29,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsLoad
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRChangesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
-import javax.swing.Action
 import javax.swing.JComponent
 
 internal class GHPRViewComponentFactory(actionManager: ActionManager,
@@ -82,11 +76,10 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
   }
 
   private fun CoroutineScope.createInfoErrorComponent(error: Throwable): JComponent {
-    val errorPresenter = object : ErrorStatusPresenter.Text<Throwable> {
-      override fun getErrorTitle(error: Throwable): String = GithubBundle.message("cannot.load.details")
-      override fun getErrorDescription(error: Throwable): String? = error.localizedMessage
-      override fun getErrorAction(error: Throwable): Action = vm.detailsLoadingErrorHandler.getActionForError(error)
-    }
+    val errorPresenter = ErrorStatusPresenter.simple(
+      GithubBundle.message("cannot.load.details"),
+      actionProvider = vm.detailsLoadingErrorHandler::getActionForError
+    )
     val errorPanel = ErrorStatusPanelFactory.create(this, flowOf(error), errorPresenter)
     return CollaborationToolsUIUtil.moveToCenter(errorPanel)
   }
@@ -132,11 +125,10 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
   }
 
   private fun CoroutineScope.createChangesErrorComponent(changesVm: GHPRChangesViewModel, error: Throwable): JComponent {
-    val errorPresenter = object : ErrorStatusPresenter.Text<Throwable> {
-      override fun getErrorTitle(error: Throwable): String = GithubBundle.message("cannot.load.changes")
-      override fun getErrorDescription(error: Throwable): String? = error.localizedMessage
-      override fun getErrorAction(error: Throwable): Action = changesVm.changesLoadingErrorHandler.getActionForError(error)
-    }
+    val errorPresenter = ErrorStatusPresenter.simple(
+      GithubBundle.message("cannot.load.changes"),
+      actionProvider = changesVm.changesLoadingErrorHandler::getActionForError
+    )
     val errorPanel = ErrorStatusPanelFactory.create(this, flowOf(error), errorPresenter)
     return CollaborationToolsUIUtil.moveToCenter(errorPanel)
   }
