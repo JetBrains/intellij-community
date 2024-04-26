@@ -354,6 +354,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         else if (node instanceof Navigatable) {
           navigatables.add((Navigatable)node);
         }
+        else if (userObject instanceof CachedTreePresentationNode cached) {
+          navigatables.add(new CachedNodeNavigatable(myProject, cached));
+        }
       }
       return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
     }
