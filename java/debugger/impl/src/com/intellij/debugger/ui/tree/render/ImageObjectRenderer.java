@@ -1,19 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.CommonBundle;
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.ClassLoadingUtils;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.debugger.ImageSerializer;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.Method;
 import com.sun.jdi.StringReference;
 import com.sun.jdi.Value;
 import org.intellij.images.editor.impl.ImageEditorManagerImpl;
@@ -70,7 +65,7 @@ final class ImageObjectRenderer extends CompoundRendererProvider {
   }
 
   @Nullable
-  static ImageIcon getIcon(EvaluationContext evaluationContext, Value obj, String methodName) {
+  static ImageIcon getIcon(EvaluationContextImpl evaluationContext, Value obj, String methodName) {
     try {
       byte[] data = getImageBytes(evaluationContext, obj, methodName);
       if (data != null) {
@@ -83,20 +78,13 @@ final class ImageObjectRenderer extends CompoundRendererProvider {
     return null;
   }
 
-  private static byte @Nullable [] getImageBytes(EvaluationContext evaluationContext, Value obj, String methodName)
+  private static byte @Nullable [] getImageBytes(EvaluationContextImpl evaluationContext, Value obj, String methodName)
     throws EvaluateException {
-    DebugProcess process = evaluationContext.getDebugProcess();
-    EvaluationContext copyContext = evaluationContext.createEvaluationContext(obj);
-    ClassType helperClass = ClassLoadingUtils.getHelperClass(ImageSerializer.class, copyContext);
-
-    if (helperClass != null) {
-      Method method = DebuggerUtils.findMethod(helperClass, methodName, null);
-      if (method != null) {
-        StringReference bytes = (StringReference)process.invokeMethod(copyContext, helperClass, method, Collections.singletonList(obj));
-        if (bytes != null) {
-          return bytes.value().getBytes(StandardCharsets.ISO_8859_1);
-        }
-      }
+    EvaluationContextImpl copyContext = evaluationContext.createEvaluationContext(obj);
+    StringReference bytes =
+      (StringReference)DebuggerUtilsImpl.invokeHelperMethod(copyContext, ImageSerializer.class, methodName, Collections.singletonList(obj));
+    if (bytes != null) {
+      return bytes.value().getBytes(StandardCharsets.ISO_8859_1);
     }
     return null;
   }

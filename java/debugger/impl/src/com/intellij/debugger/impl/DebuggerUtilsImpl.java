@@ -6,10 +6,7 @@ import com.intellij.debugger.DebuggerGlobalSearchScope;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.*;
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
@@ -34,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.rt.debugger.ExceptionDebugHelper;
 import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
@@ -47,6 +45,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.jetbrains.jdi.LocalVariableImpl;
+import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -58,10 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -229,18 +225,26 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   }
 
   public static void logError(@NotNull Throwable e) {
-    logError(e.getMessage(), e, false);
+    logIfNeeded(e, false, LOG::error);
   }
 
   public static void logError(String message, Throwable e) {
-    logError(message, e, false);
+    logIfNeeded(e, false, t -> LOG.error(message, t));
+  }
+
+  public static void logError(String message, @Nullable Throwable e, String @NotNull ... details) {
+    logIfNeeded(e, false, t -> LOG.error(message, t, details));
   }
 
   static void logError(String message, Throwable e, boolean wrapIntoThrowable) {
+    logIfNeeded(e, wrapIntoThrowable, t -> LOG.error(message, t));
+  }
+
+  private static void logIfNeeded(Throwable e, boolean wrapIntoThrowable, Consumer<Throwable> action) {
     if (e instanceof VMDisconnectedException || e instanceof ProcessCanceledException) {
       throw (RuntimeException)e;
     }
-    LOG.error(message, wrapIntoThrowable ? new Throwable(e) : e);
+    action.accept(wrapIntoThrowable ? new Throwable(e) : e);
   }
 
   public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
@@ -507,5 +511,29 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   public static Range<Location> getLocalVariableBorders(@NotNull LocalVariable variable) {
     if (!(variable instanceof LocalVariableImpl variableImpl)) return null;
     return new Range<>(variableImpl.getScopeStart(), variableImpl.getScopeEnd());
+  }
+
+  public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext, Class<?> cls, String methodName, List<Value> arguments)
+    throws EvaluateException {
+    ClassType helperClass = ClassLoadingUtils.getHelperClass(cls, evaluationContext);
+    if (helperClass != null) {
+      Method method = findMethod(helperClass, methodName, null);
+      if (method != null) {
+        DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+        return evaluationContext.computeAndKeep(
+          () -> debugProcess.invokeMethod(evaluationContext, helperClass, method, arguments, MethodImpl.SKIP_ASSIGNABLE_CHECK, true));
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getExceptionText(EvaluationContextImpl evaluationContext, @NotNull ObjectReference exceptionObject)
+    throws EvaluateException {
+    Value value = invokeHelperMethod(evaluationContext,
+                                     ExceptionDebugHelper.class,
+                                     "getThrowableText",
+                                     Collections.singletonList(exceptionObject));
+    return value != null ? ((StringReference)value).value() : null;
   }
 }
