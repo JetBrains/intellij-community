@@ -9,6 +9,7 @@ interface ShellRuntimeContext {
   val currentDirectory: String
   val commandText: String
   val typedPrefix: String
+  val shellName: ShellName
 
   suspend fun runShellCommand(@Language("ShellScript") command: String): ShellCommandResult
 }
