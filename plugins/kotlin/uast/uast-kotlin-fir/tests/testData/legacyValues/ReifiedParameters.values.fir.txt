@@ -8,7 +8,6 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
                 UReturnExpression [return invoke(t)] = Nothing
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [invoke(t)] = external invoke(t)(Undetermined)
                         UIdentifier (Identifier (process)) [UIdentifier (Identifier (process))]
-                        USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] = external invoke(t)(Undetermined)
                         USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
         UMethod (name = functionWithVararg) [public static final fun functionWithVararg(@org.jetbrains.annotations.Nullable i: java.lang.Integer, t: T...) : T {...}]
             UParameter (name = i) [@org.jetbrains.annotations.Nullable var i: java.lang.Integer]

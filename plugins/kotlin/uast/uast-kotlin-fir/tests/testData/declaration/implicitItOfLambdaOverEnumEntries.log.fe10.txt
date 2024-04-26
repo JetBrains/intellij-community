@@ -8,7 +8,6 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (oneParam))
-                    USimpleNameReferenceExpression (identifier = oneParam, resolvesTo = null)
                     ULambdaExpression
                         UParameter (name = it)
                         UBlockExpression
@@ -22,7 +21,6 @@ UFile (package = )
                         USimpleNameReferenceExpression (identifier = entries)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (map))
-                        USimpleNameReferenceExpression (identifier = map, resolvesTo = null)
                         ULambdaExpression
                             UParameter (name = it)
                             UBlockExpression

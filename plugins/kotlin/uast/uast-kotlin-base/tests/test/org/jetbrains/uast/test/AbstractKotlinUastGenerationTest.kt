@@ -189,7 +189,6 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
         TestCase.assertEquals("""
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                 UIdentifier (Identifier (f))
-                USimpleNameReferenceExpression (identifier = f, resolvesTo = null)
                 USimpleNameReferenceExpression (identifier = b)
         """.trimIndent(), updated.asRecursiveLogString().trim())
     }
@@ -214,7 +213,6 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
                     ULiteralExpression (value = "10")
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
                     UIdentifier (Identifier (substring))
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                     ULiteralExpression (value = $param1)
                     ULiteralExpression (value = $param2)
         """.trimIndent(), methodCall.uastParent?.asRecursiveLogString()?.trim()
@@ -323,11 +321,9 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (println))
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                     USimpleNameReferenceExpression (identifier = it)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (println))
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                     ULiteralExpression (value = 2)
                 UReturnExpression
                     UPolyadicExpression (operator = +)
@@ -438,11 +434,9 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
                             ULiteralExpression (value = "exit")
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (println))
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                     USimpleNameReferenceExpression (identifier = it)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (println))
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                     ULiteralExpression (value = 2)
                 UReturnExpression
                     UPolyadicExpression (operator = +)

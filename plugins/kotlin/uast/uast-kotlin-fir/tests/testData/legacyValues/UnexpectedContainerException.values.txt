@@ -10,10 +10,10 @@ UFile (package = ) [public abstract interface Callback {...]
             UParameter (name = factory) [@org.jetbrains.annotations.NotNull var factory: kotlin.jvm.functions.Function0<? extends T>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
-                UThrowExpression [throw <init>()] = Nothing
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                UThrowExpression [throw UnsupportedOperationException()] = Nothing
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [UnsupportedOperationException()] = external UnsupportedOperationException()()
                         UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] = external <init>()()
+                        USimpleNameReferenceExpression (identifier = UnsupportedOperationException, resolvesTo = PsiClass: UnsupportedOperationException) [UnsupportedOperationException] = external UnsupportedOperationException()
         UMethod (name = Model) [public fun Model() {...}]
             UBlockExpression [{...}] = external crashMe(Callback.java, {
     return anonymous object : Callback {
@@ -37,13 +37,6 @@ UFile (package = ) [public abstract interface Callback {...]
                 }
 })(external java(), Undetermined)
                         UIdentifier (Identifier (crashMe)) [UIdentifier (Identifier (crashMe))]
-                        USimpleNameReferenceExpression (identifier = crashMe, resolvesTo = null) [crashMe] = external crashMe(Callback.java, {
-    return anonymous object : Callback {
-                    override fun onError(throwable: Throwable) {
-                        throw UnsupportedOperationException("")
-                    }
-                }
-})(external java(), Undetermined)
                         UQualifiedReferenceExpression [Callback.java] = external java()
                             UClassLiteralExpression [Callback] = Callback
                                 USimpleNameReferenceExpression (identifier = Callback) [Callback] = external Callback()
@@ -57,10 +50,10 @@ UFile (package = ) [public abstract interface Callback {...]
                                                 UParameter (name = throwable) [@org.jetbrains.annotations.NotNull var throwable: java.lang.Throwable]
                                                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                                 UBlockExpression [{...}] = Nothing
-                                                    UThrowExpression [throw <init>("")] = Nothing
-                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("")] = external <init>("")("")
+                                                    UThrowExpression [throw UnsupportedOperationException("")] = Nothing
+                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [UnsupportedOperationException("")] = external UnsupportedOperationException("")("")
                                                             UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] = external <init>("")("")
+                                                            USimpleNameReferenceExpression (identifier = UnsupportedOperationException, resolvesTo = PsiClass: UnsupportedOperationException) [UnsupportedOperationException] = external UnsupportedOperationException()
                                                             UPolyadicExpression (operator = +) [""] = ""
                                                                 ULiteralExpression (value = "") [""] = ""
                                             UMethod (name = ) [private fun () = UastEmptyExpression]

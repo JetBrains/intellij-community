@@ -23,7 +23,7 @@ public final class RunnableManager {
     }
     public final fun runAll() : void {
         for (t : tasks) {
-            <init>(t).start()
+            Thread(t).start()
         }
     }
     private fun RunnableManager() = UastEmptyExpression

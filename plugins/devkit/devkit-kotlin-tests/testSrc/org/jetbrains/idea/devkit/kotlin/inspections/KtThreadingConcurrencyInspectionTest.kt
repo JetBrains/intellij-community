@@ -61,7 +61,7 @@ class KtThreadingConcurrencyInspectionTest : ThreadingConcurrencyInspectionTestB
         
         
         // CTOR --------------------
-        val dummy = <error descr="Unannotated method calls method annotated with '@RequiresEdt'">Dummy(false)</error>
+        val dummy = <error descr="Unannotated method calls method annotated with '@RequiresEdt'">Dummy</error>(false)
       }
       
       private class Dummy @RequiresEdt constructor(val dummy : Boolean)

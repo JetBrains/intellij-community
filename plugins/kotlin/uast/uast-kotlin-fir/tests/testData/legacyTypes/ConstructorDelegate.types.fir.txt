@@ -4,10 +4,10 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                UReturnExpression [return <init>(i)] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i)] : @org.jetbrains.annotations.NotNull() BaseImpl
+                UReturnExpression [return BaseImpl(i)] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [BaseImpl(i)] : @org.jetbrains.annotations.NotNull() BaseImpl
                         UIdentifier (Identifier (BaseImpl)) [UIdentifier (Identifier (BaseImpl))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: BaseImpl) [<init>] : @org.jetbrains.annotations.NotNull() BaseImpl
+                        USimpleNameReferenceExpression (identifier = BaseImpl, resolvesTo = PsiClass: BaseImpl) [BaseImpl]
                         USimpleNameReferenceExpression (identifier = i) [i] : int
     UClass (name = Base) [public abstract interface Base {...}]
         UMethod (name = print) [public abstract fun print() : void = UastEmptyExpression]
@@ -18,7 +18,6 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
             UBlockExpression [{...}] : void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [print(x)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (print)) [UIdentifier (Identifier (print))]
-                    USimpleNameReferenceExpression (identifier = print, resolvesTo = null) [print] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     USimpleNameReferenceExpression (identifier = x) [x] : int
         UMethod (name = getX) [public final fun getX() : int = UastEmptyExpression]
         UMethod (name = BaseImpl) [public fun BaseImpl(@org.jetbrains.annotations.NotNull x: int) = UastEmptyExpression]
@@ -29,7 +28,6 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
             UTypeReferenceExpression (name = Base) [Base]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [createBase(10)] : @org.jetbrains.annotations.NotNull() Base
                 UIdentifier (Identifier (createBase)) [UIdentifier (Identifier (createBase))]
-                USimpleNameReferenceExpression (identifier = createBase, resolvesTo = null) [createBase] : @org.jetbrains.annotations.NotNull() Base
                 ULiteralExpression (value = 10) [10] : int
         UExpressionList (super_delegation) [super_delegation java.lang.CharSequence : "abc"]
             UTypeReferenceExpression (name = java.lang.CharSequence) [java.lang.CharSequence]

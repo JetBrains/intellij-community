@@ -147,4 +147,3 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}] = external TODO()()
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] = external TODO()()
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] = external TODO()()

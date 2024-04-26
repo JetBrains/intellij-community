@@ -19,7 +19,6 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
                     UIdentifier (Identifier (with))
-                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null)
                     USimpleNameReferenceExpression (identifier = other)
                     ULambdaExpression
                         UBlockExpression
@@ -28,14 +27,12 @@ UFile (package = )
                                     USuperExpression (label = Foo)
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                         UIdentifier (Identifier (foo))
-                                        USimpleNameReferenceExpression (identifier = foo, resolvesTo = null)
         UMethod (name = baz)
             UParameter (name = other)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
                     UIdentifier (Identifier (with))
-                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null)
                     USimpleNameReferenceExpression (identifier = other)
                     ULambdaExpression
                         UBlockExpression
@@ -47,4 +44,4 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                     UIdentifier (Identifier (Base))
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Base)
+                    USimpleNameReferenceExpression (identifier = Base, resolvesTo = PsiClass: Base)

@@ -7,7 +7,6 @@ UFile (package = test.pkg)
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (getSystemService))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
                                 USimpleNameReferenceExpression (identifier = String)
@@ -19,7 +18,6 @@ UFile (package = test.pkg)
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (getSystemService))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
                                 USimpleNameReferenceExpression (identifier = T)
@@ -30,7 +28,6 @@ UFile (package = test.pkg)
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (getSystemService))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
                                 USimpleNameReferenceExpression (identifier = String)
@@ -41,7 +38,6 @@ UFile (package = test.pkg)
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (getSystemService))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
                                 USimpleNameReferenceExpression (identifier = T)

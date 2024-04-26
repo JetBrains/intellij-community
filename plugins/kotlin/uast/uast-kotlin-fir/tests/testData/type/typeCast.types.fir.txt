@@ -27,7 +27,6 @@ UFile (package = ) [import java.lang.Runnable...]
                         UBinaryExpressionWithType [stringConsumer("Hi") as java.lang.Object] : @org.jetbrains.annotations.NotNull() java.lang.Object
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi")] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UIdentifier (Identifier (stringConsumer)) [UIdentifier (Identifier (stringConsumer))]
-                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UPolyadicExpression (operator = +) ["Hi"] : java.lang.String
                                     ULiteralExpression (value = "Hi") ["Hi"] : java.lang.String
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
@@ -44,7 +43,6 @@ UFile (package = ) [import java.lang.Runnable...]
                         UBinaryExpressionWithType [stringConsumer("Hi, again") as java.lang.Object] : @org.jetbrains.annotations.NotNull() java.lang.Object
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [stringConsumer("Hi, again")] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UIdentifier (Identifier (stringConsumer)) [UIdentifier (Identifier (stringConsumer))]
-                                USimpleNameReferenceExpression (identifier = stringConsumer, resolvesTo = null) [stringConsumer] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UPolyadicExpression (operator = +) ["Hi, again"] : java.lang.String
                                     ULiteralExpression (value = "Hi, again") ["Hi, again"] : java.lang.String
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
@@ -67,7 +65,6 @@ UFile (package = ) [import java.lang.Runnable...]
                     UBinaryExpression (operator = !==) [foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression] : boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, true)] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
                             USimpleNameReferenceExpression (identifier = r) [r] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                             ULiteralExpression (value = true) [true] : boolean
                         UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : <ErrorType>
@@ -81,7 +78,6 @@ UFile (package = ) [import java.lang.Runnable...]
                     UBinaryExpression (operator = !==) [foo(r, false) !== UastEmptyExpression <other> UastEmptyExpression] : boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, false)] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : @org.jetbrains.annotations.Nullable() java.lang.Runnable
                             USimpleNameReferenceExpression (identifier = r) [r] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                             ULiteralExpression (value = false) [false] : boolean
                         UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : <ErrorType>
