@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import org.jetbrains.kotlin.idea.base.test.ModuleStructureSplitter
@@ -56,10 +57,16 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
         return mainFile
     }
 
+    override fun setUp() {
+        super.setUp()
+        Registry.get("kotlin.k2.kmp.enabled").setValue(true)
+    }
+
     override fun tearDown() {
         runAll(
             { KotlinMultiPlatformProjectDescriptor.cleanupSourceRoots() },
             { KotlinSdkType.removeKotlinSdkInTests() },
+            { Registry.get("kotlin.k2.kmp.enabled").setValue(false) },
             { super.tearDown() },
         )
     }
