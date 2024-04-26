@@ -120,32 +120,21 @@ public final class AsmCodeGenerator {
       return;
     }
 
-    FileInputStream fis;
     try {
       byte[] patchedData;
-      fis = new FileInputStream(classFile);
-      try {
+      try (FileInputStream fis = new FileInputStream(classFile)) {
         patchedData = patchClass(fis);
         if (patchedData == null) {
           return;
         }
       }
-      finally {
-        fis.close();
+     
+      try (FileOutputStream fos = new FileOutputStream(classFile)) {
+         fos.write(patchedData);
       }
-
-      FileOutputStream fos = new FileOutputStream(classFile);
-      try {
-        fos.write(patchedData);
-      }
-      finally {
-        fos.close();
-      }
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       myErrors.add(new FormErrorInfo(null, "Cannot read or write class file " + classFile.getPath() + ": " + e.toString()));
-    }
-    catch(IllegalStateException e) {
+    } catch(IllegalStateException e) {
       myErrors.add(new FormErrorInfo(null, "Unexpected data in form file when patching class " + classFile.getPath() + ": " + e.toString()));
     }
   }
