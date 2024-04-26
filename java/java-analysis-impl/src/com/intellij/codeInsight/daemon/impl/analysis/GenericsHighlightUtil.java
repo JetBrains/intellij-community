@@ -1122,13 +1122,22 @@ public final class GenericsHighlightUtil {
     }
     try {
       MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
-      if (superMethod != null && method.getContainingClass().isInterface()) {
-        PsiMethod psiMethod = superMethod.getMethod();
-        PsiClass containingClass = psiMethod.getContainingClass();
-        if (containingClass != null &&
-            CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
-            psiMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
-          superMethod = null;
+      PsiClass psiClass = method.getContainingClass();
+      if (psiClass != null) {
+        if (superMethod != null && psiClass.isInterface()) {
+          PsiMethod psiMethod = superMethod.getMethod();
+          PsiClass superClass = psiMethod.getContainingClass();
+          if (superClass != null &&
+              CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()) &&
+              psiMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
+            superMethod = null;
+          }
+        } else if (superMethod == null) {
+          for (PsiClassType type : psiClass.getSuperTypes()) {
+            // There's an unresolvable superclass: likely the error on @Override is induced.
+            // Do not show an error on override, as it's reasonable to fix hierarchy first.
+            if (type.resolve() == null) return null;
+          }
         }
       }
       if (superMethod == null) {
