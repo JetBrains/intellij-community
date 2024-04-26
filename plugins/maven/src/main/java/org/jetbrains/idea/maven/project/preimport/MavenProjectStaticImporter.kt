@@ -282,6 +282,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       if (project.mavenModel.build.finalName == null) {
         project.mavenModel.build.finalName = StringUtil.nullize(parentInterpolated.mavenModel.build.finalName)
       }
+      project.declaredDependencies.addAll(parentInterpolated.declaredDependencies)
       project.resolvedDependencyManagement.putAll(parentInterpolated.resolvedDependencyManagement)
       parentInterpolated.plugins.forEach { (id, plugin) ->
         project.plugins.putIfAbsent(id, plugin)
