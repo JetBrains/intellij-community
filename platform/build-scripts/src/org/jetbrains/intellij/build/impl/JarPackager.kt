@@ -294,14 +294,9 @@ class JarPackager private constructor(
     }
 
     // check content
-    val file = context.findFileInModuleSources(layout.mainModule, "META-INF/plugin.xml") ?: return
-    readXmlAsModel(file).getChild("content")?.let { content ->
-      for (module in content.children("module")) {
-        val moduleName = module.attributes.get("name")
-        if (moduleName == null || moduleName.contains('/') || !addedModules.add(moduleName)) {
-          continue
-        }
-
+    readPluginDependenciesFromXml(context, context.findRequiredModule(layout.mainModule))
+      .filterNot { d -> !addedModules.add(d) }
+      .forEach { moduleName ->
         val descriptor = readXmlAsModel(context.findFileInModuleSources(moduleName, "$moduleName.xml")!!)
 
         computeSourcesForModule(
@@ -316,7 +311,6 @@ class JarPackager private constructor(
           jarsWithSearchableOptions = jarsWithSearchableOptions,
         )
       }
-    }
 
     // check verifier in all included modules
     val effectiveIncludedNonMainModules = LinkedHashSet<String>(layout.includedModules.size + addedModules.size)
