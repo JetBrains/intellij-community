@@ -279,16 +279,6 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     }
   }
 
-  public static String getNewParameterNameByOldIndex(int oldIndex, final ParameterInfoImpl[] parametersInfo) {
-    if (parametersInfo == null) return null;
-    for (ParameterInfoImpl info : parametersInfo) {
-      if (info.oldParameterIndex == oldIndex) {
-        return info.getName();
-      }
-    }
-    return null;
-  }
-
   protected ParameterInfoImpl @Nullable [] getNewParametersInfo(PsiExpression[] expressions,
                                                                 PsiMethod targetMethod,
                                                                 PsiSubstitutor substitutor) {
