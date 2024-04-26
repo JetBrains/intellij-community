@@ -49,7 +49,7 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
+interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrioritizedScope {
 
   /**
    * Specifies where this symbol comes from. Besides descriptive information like
@@ -198,7 +198,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
    * Symbols with higher priority will have precedence over those with lower priority,
    * when matching is performed. Symbols with higher priority will also show higher on the completion list.
    */
-  val priority: Priority?
+  override val priority: Priority?
     get() = null
 
   /**
