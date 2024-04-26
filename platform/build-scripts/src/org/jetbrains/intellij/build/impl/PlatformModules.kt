@@ -273,7 +273,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
 
   val explicitModuleNames = explicit.map { it.moduleName }.toList()
 
-  val productPluginContentModules = getProductPluginContentModules(
+  val productPluginContentModules = processAndGetProductPluginContentModules(
     context = context,
     layout = layout,
     includedPlatformModulesPartialList = (layout.includedModules.asSequence().map { it.moduleName } + computeImplicitRequiredModules(
@@ -490,13 +490,25 @@ private fun computeTransitive(
 }
 
 // result _must be_ consistent, do not use Set.of or HashSet here
-private suspend fun getProductPluginContentModules(
+private suspend fun processAndGetProductPluginContentModules(
   context: BuildContext,
   productPluginSourceModuleName: String,
   layout: PlatformLayout,
   includedPlatformModulesPartialList: List<String>,
 ): Set<ModuleItem> {
-  val xIncludePathResolver = object : XIncludePathResolver {
+  val xIncludePathResolver = createXIncludePathResolver(includedPlatformModulesPartialList, context)
+  return withContext(Dispatchers.IO) {
+    val file = requireNotNull(
+      context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
+      ?: context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
+    ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
+
+    processProductXmlDescriptor(file = file, moduleName = productPluginSourceModuleName, withPatch = layout::withPatch, xIncludePathResolver = xIncludePathResolver, context = context)
+  }
+}
+
+fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>, context: BuildContext): XIncludePathResolver {
+  return object : XIncludePathResolver {
     override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean): Path? {
       if (isOptional) {
         // It isn't safe to resolve includes at build time if they're optional.
@@ -507,7 +519,14 @@ private suspend fun getProductPluginContentModules(
 
       val loadPath = toLoadPath(relativePath)
       if (base != null) {
-        base.resolveSibling(loadPath).takeIf { Files.exists(it) }?.let {
+        val parent = base.parent
+        val file = if (parent.endsWith("META-INF") && loadPath.startsWith("META-INF/")) {
+          parent.parent.resolve(loadPath)
+        }
+        else {
+          parent.resolve(loadPath)
+        }
+        file.takeIf { Files.exists(it) }?.let {
           return it
         }
       }
@@ -520,21 +539,12 @@ private suspend fun getProductPluginContentModules(
       return null
     }
   }
-
-  return withContext(Dispatchers.IO) {
-    val file = requireNotNull(
-      context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
-      ?: context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
-    ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
-
-    processProductXmlDescriptor(file = file, moduleName = productPluginSourceModuleName, layout = layout, xIncludePathResolver = xIncludePathResolver, context = context)
-  }
 }
 
-private fun processProductXmlDescriptor(
+suspend fun processProductXmlDescriptor(
   file: Path,
   moduleName: String,
-  layout: PlatformLayout,
+  withPatch: suspend(patcher: suspend (ModuleOutputPatcher, PlatformLayout, BuildContext) -> Unit) -> Unit,
   xIncludePathResolver: XIncludePathResolver,
   context: BuildContext,
 ): Set<ModuleItem> {
@@ -542,8 +552,9 @@ private fun processProductXmlDescriptor(
   resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
   val result = collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
   val data = JDOMUtil.write(xml)
-  layout.withPatch { moduleOutputPatcher, _ ->
-    moduleOutputPatcher.patchModuleOutput(moduleName, "META-INF/${file.fileName}", data)
+  val fileName = file.fileName.toString()
+  withPatch { moduleOutputPatcher, _, _ ->
+    moduleOutputPatcher.patchModuleOutput(moduleName, "META-INF/$fileName", data)
   }
   return result
 }

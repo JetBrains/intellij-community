@@ -87,11 +87,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
       return
     }
 
-    if (checkModuleDependencies
-        && !descriptor.isBundled
-        && descriptor.packagePrefix == null
-        && !hasModuleDependencies(descriptor)
-        && descriptor.pluginId.idString != "DevKit") {
+    if (checkModuleDependencies && isCheckingForImplicitDependencyNeeded(descriptor)) {
       addIncompletePlugin(descriptor, PluginLoadingError(
         plugin = descriptor,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
@@ -157,7 +153,20 @@ data class PluginManagerState internal constructor(
   @JvmField val pluginIdsToEnable: Set<PluginId>,
 )
 
-internal fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
+// skip our plugins as expected to be up to date whether bundled or not
+internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescriptorImpl): Boolean {
+  return !descriptor.isBundled &&
+         descriptor.packagePrefix == null &&
+         !descriptor.implementationDetail &&
+         descriptor.content.modules.isEmpty() &&
+         descriptor.dependencies.modules.isEmpty() &&
+         descriptor.dependencies.plugins.isEmpty() &&
+         descriptor.pluginId != PluginManagerCore.CORE_ID &&
+         descriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
+         !hasModuleDependencies(descriptor)
+}
+
+private fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
   for (dependency in descriptor.pluginDependencies) {
     val dependencyPluginId = dependency.pluginId
     if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||

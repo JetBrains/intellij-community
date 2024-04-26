@@ -116,12 +116,16 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withProjectLibrary(libraryName, jarName)
   }
 
-  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+  fun withPatch(patcher: LayoutPatcher) {
     layout.withPatch(patcher)
+  }
+
+  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+    layout.withPatch { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
   }
 
   @Obsolete
   fun withSyncPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
-    layout.withPatch(patcher::accept)
+    layout.withPatch { moduleOutputPatcher, _, buildContext -> patcher.accept(moduleOutputPatcher, buildContext) }
   }
 }

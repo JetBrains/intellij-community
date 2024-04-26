@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -999,7 +1001,7 @@ suspend fun layoutDistribution(
       if (!patchers.isEmpty()) {
         spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope {
           for (patcher in patchers) {
-            patcher(moduleOutputPatcher, context)
+            patcher(moduleOutputPatcher, platformLayout, context)
           }
         }
       }
