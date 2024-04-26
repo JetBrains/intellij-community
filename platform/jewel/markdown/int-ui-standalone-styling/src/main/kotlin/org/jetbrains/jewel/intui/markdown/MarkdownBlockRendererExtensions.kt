@@ -13,11 +13,15 @@ public fun MarkdownBlockRenderer.Companion.light(
     rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
     inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.default(),
     onUrlClick: (String) -> Unit = {},
-): MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer, onUrlClick)
+    onTextClick: () -> Unit = {},
+): MarkdownBlockRenderer =
+    DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer, onUrlClick, onTextClick)
 
 public fun MarkdownBlockRenderer.Companion.dark(
     styling: MarkdownStyling = MarkdownStyling.dark(),
     rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
     inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.default(),
     onUrlClick: (String) -> Unit = {},
-): MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer, onUrlClick)
+    onTextClick: () -> Unit = {},
+): MarkdownBlockRenderer =
+    DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer, onUrlClick, onTextClick)

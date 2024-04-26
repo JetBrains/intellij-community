@@ -71,17 +71,15 @@ internal fun MarkdownPreview(
                     styling = markdownStyling,
                     rendererExtensions = listOf(GitHubAlertRendererExtension(AlertStyling.dark(), markdownStyling)),
                     inlineRenderer = InlineMarkdownRenderer.default(extensions),
-                ) { url ->
-                    Desktop.getDesktop().browse(URI.create(url))
-                }
+                    onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
+                )
             } else {
                 MarkdownBlockRenderer.light(
                     styling = markdownStyling,
                     rendererExtensions = listOf(GitHubAlertRendererExtension(AlertStyling.light(), markdownStyling)),
                     inlineRenderer = InlineMarkdownRenderer.default(extensions),
-                ) { url ->
-                    Desktop.getDesktop().browse(URI.create(url))
-                }
+                    onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
+                )
             }
         }
 

@@ -33,9 +33,8 @@ internal fun MarkdownPreview(@Language("Markdown") rawMarkdown: String, modifier
             MarkdownBlockRenderer.create(
                 styling = markdownStyling,
                 inlineRenderer = InlineMarkdownRenderer.default(),
-            ) { url ->
-                Desktop.getDesktop().browse(URI.create(url))
-            }
+                onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
+            )
         }
 
     SelectionContainer(modifier) {

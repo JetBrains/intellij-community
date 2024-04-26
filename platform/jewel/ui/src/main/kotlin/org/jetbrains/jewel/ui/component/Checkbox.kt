@@ -73,6 +73,7 @@ public fun Checkbox(
         state = state,
         onClick = { onCheckedChange.invoke(!checked) },
         modifier = modifier,
+        contentModifier = Modifier,
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -103,6 +104,7 @@ public fun TriStateCheckbox(
         state = state,
         onClick = onClick,
         modifier = modifier,
+        contentModifier = Modifier,
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -121,6 +123,7 @@ public fun TriStateCheckboxRow(
     state: ToggleableState,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    textModifier: Modifier = Modifier,
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -134,6 +137,7 @@ public fun TriStateCheckboxRow(
         state = state,
         onClick = onClick,
         modifier = modifier,
+        contentModifier = textModifier,
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -151,8 +155,9 @@ public fun TriStateCheckboxRow(
 public fun CheckboxRow(
     text: String,
     checked: Boolean,
-    onCheckedChange: ((Boolean) -> Unit)?,
+    onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    textModifier: Modifier = Modifier,
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -166,8 +171,9 @@ public fun CheckboxRow(
 
     CheckboxImpl(
         state = state,
-        onClick = { onCheckedChange?.invoke(!checked) },
+        onClick = { onCheckedChange(!checked) },
         modifier = modifier,
+        contentModifier = textModifier,
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -184,7 +190,7 @@ public fun CheckboxRow(
 @Composable
 public fun CheckboxRow(
     checked: Boolean,
-    onCheckedChange: ((Boolean) -> Unit)?,
+    onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     outline: Outline = Outline.None,
@@ -198,8 +204,9 @@ public fun CheckboxRow(
 ) {
     CheckboxImpl(
         state = ToggleableState(checked),
-        onClick = { onCheckedChange?.invoke(!checked) },
+        onClick = { onCheckedChange(!checked) },
         modifier = modifier,
+        contentModifier = Modifier,
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -231,6 +238,7 @@ public fun TriStateCheckboxRow(
         state = state,
         onClick = onClick,
         modifier = modifier,
+        contentModifier = Modifier,
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -251,6 +259,7 @@ private fun CheckboxImpl(
     metrics: CheckboxMetrics,
     icons: CheckboxIcons,
     modifier: Modifier,
+    contentModifier: Modifier,
     enabled: Boolean,
     outline: Outline,
     interactionSource: MutableInteractionSource,
@@ -315,7 +324,7 @@ private fun CheckboxImpl(
     val checkboxBoxModifier = Modifier.size(metrics.checkboxSize)
 
     if (content == null) {
-        Box(checkboxBoxModifier, contentAlignment = Alignment.TopStart) {
+        Box(wrapperModifier.then(checkboxBoxModifier), contentAlignment = Alignment.TopStart) {
             CheckBoxImage(checkboxPainter)
             Box(outlineModifier.align(Alignment.Center))
         }
@@ -335,7 +344,9 @@ private fun CheckboxImpl(
                 LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
                 LocalContentColor provides contentColor.takeOrElse { LocalContentColor.current },
             ) {
-                content()
+                Row(contentModifier) {
+                    content()
+                }
             }
         }
     }

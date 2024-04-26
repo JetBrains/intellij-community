@@ -12,4 +12,6 @@ public fun MarkdownBlockRenderer.Companion.create(
     rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
     inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.default(),
     onUrlClick: (String) -> Unit = {},
-): MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer, onUrlClick)
+    onTextClick: () -> Unit = {},
+): MarkdownBlockRenderer =
+    DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer, onUrlClick, onTextClick)

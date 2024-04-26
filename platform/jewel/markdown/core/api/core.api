@@ -444,7 +444,7 @@ public final class org/jetbrains/jewel/markdown/rendering/DefaultInlineMarkdownR
 
 public class org/jetbrains/jewel/markdown/rendering/DefaultMarkdownBlockRenderer : org/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer {
 	public static final field $stable I
-	public fun <init> (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Ljava/util/List;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;Lkotlin/jvm/functions/Function1;)V
+	public fun <init> (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Ljava/util/List;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
 	public fun render (Ljava/util/List;Landroidx/compose/runtime/Composer;I)V
 	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$BlockQuote;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$BlockQuote;Landroidx/compose/runtime/Composer;I)V
 	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$FencedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced;Landroidx/compose/runtime/Composer;I)V

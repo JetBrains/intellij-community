@@ -77,6 +77,7 @@ public open class DefaultMarkdownBlockRenderer(
     private val rendererExtensions: List<MarkdownRendererExtension>,
     private val inlineRenderer: InlineMarkdownRenderer,
     private val onUrlClick: (String) -> Unit,
+    private val onTextClick: () -> Unit,
 ) : MarkdownBlockRenderer {
 
     @Composable
@@ -115,6 +116,7 @@ public open class DefaultMarkdownBlockRenderer(
             text = renderedContent,
             textStyle = styling.inlinesStyling.textStyle,
             color = styling.inlinesStyling.textStyle.color.takeOrElse { LocalContentColor.current },
+            onUnhandledClick = onTextClick,
         )
     }
 
@@ -158,6 +160,7 @@ public open class DefaultMarkdownBlockRenderer(
                 text = renderedContent,
                 textStyle = textStyle,
                 color = textStyle.color.takeOrElse { LocalContentColor.current },
+                onUnhandledClick = onTextClick,
             )
 
             if (underlineWidth > 0.dp && underlineColor.isSpecified) {
@@ -380,6 +383,7 @@ public open class DefaultMarkdownBlockRenderer(
         textStyle: TextStyle,
         modifier: Modifier = Modifier,
         color: Color = Color.Unspecified,
+        onUnhandledClick: () -> Unit,
     ) {
         var pointerIcon by remember { mutableStateOf(PointerIcon.Default) }
 
@@ -400,8 +404,12 @@ public open class DefaultMarkdownBlockRenderer(
                     }
             },
         ) { offset ->
-            val span = text.getUrlAnnotations(offset, offset).firstOrNull() ?: return@ClickableText
-            onUrlClick(span.item.url)
+            val span = text.getUrlAnnotations(offset, offset).firstOrNull()
+            if (span != null) {
+                onUrlClick(span.item.url)
+            } else {
+                onUnhandledClick()
+            }
         }
     }
 
