@@ -40,24 +40,22 @@ object ErrorStatusPanelFactory {
     }
 
     var action: Action? = null
-    htmlEditorPane.apply {
-      addHyperlinkListener(object : HyperlinkAdapter() {
-        override fun hyperlinkActivated(event: HyperlinkEvent) {
-          if (event.description == ErrorStatusPresenter.ERROR_ACTION_HREF) {
-            val actionEvent = ActionEvent(htmlEditorPane, ActionEvent.ACTION_PERFORMED, "perform")
-            action?.actionPerformed(actionEvent)
-          }
-          else {
-            BrowserUtil.browse(event.description)
-          }
+    htmlEditorPane.addHyperlinkListener(object : HyperlinkAdapter() {
+      override fun hyperlinkActivated(event: HyperlinkEvent) {
+        if (event.description == ErrorStatusPresenter.ERROR_ACTION_HREF) {
+          val actionEvent = ActionEvent(htmlEditorPane, ActionEvent.ACTION_PERFORMED, "perform")
+          action?.actionPerformed(actionEvent)
         }
-      })
-      registerKeyboardAction(
-        ActionListener { action?.actionPerformed(it) },
-        KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-        JComponent.WHEN_FOCUSED
-      )
-    }
+        else {
+          BrowserUtil.browse(event.description)
+        }
+      }
+    })
+    htmlEditorPane.registerKeyboardAction(
+      ActionListener { action?.actionPerformed(it) },
+      KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+      JComponent.WHEN_FOCUSED
+    )
 
     scope.launch {
       errorState.collect { error ->
