@@ -1,13 +1,12 @@
 package com.intellij.tools.launch
 
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.launch.Launcher.affixIO
+import com.intellij.tools.launch.docker.cli.DockerCli
 import com.intellij.util.SystemProperties
 import com.sun.security.auth.module.UnixSystem
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.nio.file.Files
-import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 import kotlin.math.pow
 
@@ -43,7 +42,9 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
   }
 
-  fun assertCanRun() = dockerInfo()
+  private val dockerCli = DockerCli(workDir = paths.tempFolder, options.redirectOutputIntoParentProcess, paths.logFolder)
+
+  fun assertCanRun() = dockerCli.info()
 
 
   private val uid = UnixSystem().uid.toString()
@@ -214,7 +215,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     logger.info("Container ID=$containerId")
 
     fun isInDockerPs() =
-      runCmd(1, TimeUnit.MINUTES, true, paths.tempFolder, true, "docker", "ps")
+      dockerCli.listContainers()
         .count { it.contains(containerName) } > 0
 
     for (i in 1..5) {
@@ -231,49 +232,5 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     }
 
     return dockerRun to containerId
-  }
-
-  private fun dockerInfo() = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder, false, "docker", "info")
-  private fun dockerKill(containerId: String) = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder, false, "docker", "kill", containerId)
-
-  private fun runCmd(timeout: Long,
-                     unit: TimeUnit,
-                     assertSuccess: Boolean,
-                     workDir: File,
-                     captureOutput: Boolean = false,
-                     vararg cmd: String): List<String> {
-    if (!SystemInfo.isLinux)
-      error("We are heavily relaying on paths being the same everywhere and may use networks, so only Linux can be used as a host system.")
-
-    val processBuilder = ProcessBuilder(*cmd)
-    processBuilder.directory(workDir)
-
-    val stdoutFile = File.createTempFile(cmd[0], "out")
-    @Suppress("SSBasedInspection")
-    stdoutFile.deleteOnExit()
-
-    if (!captureOutput)
-      processBuilder.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
-    else {
-      processBuilder.redirectOutput(stdoutFile)
-      processBuilder.redirectError(stdoutFile)
-    }
-
-    val readableCmd = cmd.joinToString(" ", prefix = "'", postfix = "'")
-    logger.info(readableCmd)
-    val process = processBuilder.start()
-    try {
-      if (!process.waitFor(timeout, unit))
-        error("${cmd[0]} failed to exit under required timeout of $timeout $unit, will destroy it")
-
-      if (assertSuccess)
-        if (process.exitValue() != 0)
-          error("${cmd[0]} exited with non-zero exit code ${process.exitValue()}. Full commandline: ${cmd.joinToString(" ")}")
-    }
-    finally {
-      process.destroy()
-    }
-
-    return stdoutFile.readLines()
   }
 }
