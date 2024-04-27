@@ -4,7 +4,6 @@ package com.intellij.platform.util.io.storages.durablemap.dev;
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors;
 import com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLogOverMMappedFile;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapTestBase;
-import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.platform.util.io.storages.StorageFactory;
@@ -13,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
@@ -33,38 +30,6 @@ public class DurableMapWithAppendableValuesTest
       values.add(i * substrate);
     }
     return Map.entry(key, values);
-  };
-
-  public static final KeyDescriptorEx<Integer> INT_DESCRIPTOR = new KeyDescriptorEx<>() {
-    @Override
-    public int getHashCode(Integer value) {
-      return value.hashCode();
-    }
-
-    @Override
-    public boolean isEqual(Integer key1, Integer key2) {
-      return key1.equals(key2);
-    }
-
-    @Override
-    public Integer read(@NotNull ByteBuffer input) throws IOException {
-      return input.getInt();
-    }
-
-    @Override
-    public KnownSizeRecordWriter writerFor(@NotNull Integer value) throws IOException {
-      return new KnownSizeRecordWriter() {
-        @Override
-        public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
-          return data.putInt(value);
-        }
-
-        @Override
-        public int recordSize() {
-          return Integer.BYTES;
-        }
-      };
-    }
   };
 
   @Override
