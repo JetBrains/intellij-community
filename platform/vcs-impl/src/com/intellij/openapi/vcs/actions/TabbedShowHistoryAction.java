@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,13 +49,13 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
     Project project = context.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;
 
-    List<FilePath> selectedFiles = VcsContextUtil.selectedFilePathsIterable(context)
+    List<FilePath> selectedFiles = getSelectedPaths(context)
       .take(MANY_CHANGES_THRESHOLD)
       .toList();
 
     if (selectedFiles.isEmpty()) return false;
 
-    List<FilePath> symlinkedPaths = getContextSymlinkedPaths(project, context);
+    List<FilePath> symlinkedPaths = getContextSymlinkedPaths(project, getSelectedFile(context));
     if (symlinkedPaths != null && canShowNewFileHistory(project, symlinkedPaths)) {
       return true;
     }
@@ -97,8 +99,7 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static List<FilePath> getContextSymlinkedPaths(@NotNull Project project, @NotNull DataContext context) {
-    VirtualFile file = VcsContextUtil.selectedFile(context);
+  private static List<FilePath> getContextSymlinkedPaths(@NotNull Project project, @Nullable VirtualFile file) {
     VirtualFile vcsFile = VcsUtil.resolveSymlink(project, file);
     return vcsFile != null ? Collections.singletonList(VcsUtil.getFilePath(vcsFile)) : null;
   }
@@ -107,13 +108,13 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = Objects.requireNonNull(e.getProject());
 
-    List<FilePath> symlinkedPaths = getContextSymlinkedPaths(project, e.getDataContext());
+    List<FilePath> symlinkedPaths = getContextSymlinkedPaths(project, getSelectedFile(e.getDataContext()));
     if (symlinkedPaths != null && canShowNewFileHistory(project, symlinkedPaths)) {
       showNewFileHistory(project, symlinkedPaths);
       return;
     }
 
-    List<FilePath> selectedFiles = VcsContextUtil.selectedFilePaths(e.getDataContext());
+    List<FilePath> selectedFiles = getSelectedPaths(e.getDataContext()).toList();
     if (canShowNewFileHistory(project, selectedFiles)) {
       showNewFileHistory(project, selectedFiles);
       return;
@@ -134,5 +135,29 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
   private static void showOldFileHistory(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull FilePath path) {
     VcsHistoryProvider provider = Objects.requireNonNull(vcs.getVcsHistoryProvider());
     AbstractVcsHelper.getInstance(project).showFileHistory(provider, vcs.getAnnotationProvider(), path, vcs);
+  }
+
+  private static @NotNull JBIterable<FilePath> getSelectedPaths(@NotNull DataContext context) {
+    JBIterable<FilePath> paths = VcsContextUtil.selectedFilePathsIterable(context);
+    if (paths.isNotEmpty()) return paths;
+    VirtualFile file = getEditorFile(context);
+    if (file != null) return JBIterable.of(VcsUtil.getFilePath(file));
+    return JBIterable.empty();
+  }
+
+  private static @Nullable VirtualFile getSelectedFile(@NotNull DataContext context) {
+    VirtualFile file = VcsContextUtil.selectedFile(context);
+    if (file != null) return file;
+    return getEditorFile(context);
+  }
+
+  private static @Nullable VirtualFile getEditorFile(@NotNull DataContext context) {
+    Project project = context.getData(CommonDataKeys.PROJECT);
+    if (project == null) return null;
+    VirtualFile[] selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles();
+    if (selectedFiles.length == 0) return null;
+    VirtualFile selectedFile = selectedFiles[0];
+    if (!selectedFile.isInLocalFileSystem()) return null;
+    return selectedFile;
   }
 }
