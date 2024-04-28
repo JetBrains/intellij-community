@@ -19,6 +19,25 @@ class JavaRenameVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
     super.visitJavaFile(file)
   }
 
+  override fun visitMethod(method: PsiMethod) {
+    val token = createCodeToken(method, TypeProperty.METHOD)
+    if (token != null)
+      codeFragment?.addChild(token)
+    super.visitMethod(method)
+  }
+  override fun visitVariable(variable: PsiVariable) {
+    val token = createCodeToken(variable, TypeProperty.VARIABLE)
+    if (token != null)
+      codeFragment?.addChild(token)
+    super.visitVariable(variable)
+  }
+
+  override fun visitClass(aClass: PsiClass) {
+    val token = createCodeToken(aClass, TypeProperty.CLASS)
+    if (token != null)
+      codeFragment?.addChild(token)
+    super.visitClass(aClass)
+  }
   override fun visitLocalVariable(variable: PsiLocalVariable) {
     val token = createCodeToken(variable, TypeProperty.LOCAL_VARIABLE)
     if (token != null)
