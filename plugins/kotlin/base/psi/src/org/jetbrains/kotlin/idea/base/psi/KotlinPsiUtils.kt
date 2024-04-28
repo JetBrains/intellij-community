@@ -333,3 +333,10 @@ fun KtNamedDeclaration.getReturnTypeReferences(): List<KtTypeReference> {
         else -> throw AssertionError("Unexpected declaration kind: $text")
     }
 }
+
+fun KtSimpleNameExpression.canBeUsedInImport(): Boolean {
+    if (this is KtEnumEntrySuperclassReferenceExpression) return false
+    if (parent is KtThisExpression || parent is KtSuperExpression) return false
+
+    return true
+}

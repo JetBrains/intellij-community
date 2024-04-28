@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.canBeUsedInImport
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.references.KtConstructorDelegationReference
@@ -131,12 +132,12 @@ sealed class K2MoveRenameUsageInfo(
         @OptIn(KaAllowAnalysisOnEdt::class)
         override fun isUpdatable(movedElements: List<KtNamedDeclaration>): Boolean = allowAnalysisOnEdt {
             val refExpr = element as KtSimpleNameExpression
-            if (refExpr.isSuperOrThisExpr()) return false
+            if (!refExpr.canBeUsedInImport()) return false
             if (refExpr.parentOfType<KtImportDirective>(withSelf = false) != null) return true
             if (refExpr.isUnqualifiable()) return true
             val refChain = (refExpr.getTopmostParentQualifiedExpressionForReceiver() ?: refExpr)
                 .collectDescendantsOfType<KtSimpleNameExpression>()
-                .filter { !it.isSuperOrThisExpr() }
+                .filter { it.canBeUsedInImport() }
             return if (isInternal) {
                 // for internal usages, update the first name determinant in the call chain
                 refChain.firstOrNull { simpleNameExpr -> simpleNameExpr.isNameDeterminantInQualifiedChain() } == refExpr
@@ -150,10 +151,6 @@ sealed class K2MoveRenameUsageInfo(
             return generateSequence<KtExpression>(this) {
                 it.parent as? KtQualifiedExpression ?: it.parent as? KtCallExpression
             }.lastOrNull()
-        }
-
-        private fun KtSimpleNameExpression.isSuperOrThisExpr(): Boolean {
-            return this is KtEnumEntrySuperclassReferenceExpression || parent is KtThisExpression || parent is KtSuperExpression
         }
 
         @OptIn(KaAllowAnalysisOnEdt::class)
