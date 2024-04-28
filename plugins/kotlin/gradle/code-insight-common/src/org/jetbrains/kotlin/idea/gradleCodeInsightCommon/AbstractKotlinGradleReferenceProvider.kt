@@ -19,14 +19,14 @@ abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider 
         protected val GRADLE_DSL_PACKAGE: FqName = FqName("org.gradle.kotlin.dsl")
     }
 
-    protected fun getTextFromLiteralEntry(element: PsiElement) : String? {
+    protected fun getTextFromLiteralEntry(element: PsiElement?) : String? {
         return (element as? KtLiteralStringTemplateEntry)
             ?.takeIf { it.containingKtFile.isScript() }
             ?.text
     }
     
-    protected fun analyzeSurroundingCallExpression(element: PsiElement) : CallableId? {
-        val callExpression = element.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java) ?: return null
+    protected fun analyzeSurroundingCallExpression(element: PsiElement?) : CallableId? {
+        val callExpression = element?.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java) ?: return null
         return analyze(callExpression) {
             val singleFunctionCallOrNull = callExpression.resolveCall()?.singleFunctionCallOrNull()
             singleFunctionCallOrNull?.symbol?.callableIdIfNonLocal
