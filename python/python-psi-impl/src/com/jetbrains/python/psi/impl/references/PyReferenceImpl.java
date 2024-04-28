@@ -254,7 +254,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
               }
               int adjustedRate = r.getRate() == RatedResolveResult.RATE_PY_FILE_OVERLOAD ?
                                  RatedResolveResult.RATE_LIFTED_PY_FILE_OVERLOAD : r.getRate();
-              return StreamEx.of(PyiUtil.getOverloads(pyFunction, typeEvalContext))
+              List<PyFunction> overloads = PyiUtil.getOverloads(pyFunction, typeEvalContext);
+              if (overloads.isEmpty()) {
+                return StreamEx.of(r);
+              }
+              return StreamEx.of(overloads)
                 .map(overload -> new RatedResolveResult(getRate(overload, typeEvalContext), overload))
                 .prepend(StreamEx.ofNullable(
                   PyiUtil.isInsideStub(myElement) ? null : new RatedResolveResult(adjustedRate, pyFunction)
