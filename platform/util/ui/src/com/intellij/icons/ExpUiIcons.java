@@ -16,7 +16,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Actions {
-    /** 16x16 */ public static final @NotNull Icon AddFile = load("expui/actions/addFile.svg", 184315993, 2);
+    /** 16x16 */ public static final @NotNull Icon AddFile = load("expui/actions/addFile.svg", 796641725, 2);
     /** 16x16 */ public static final @NotNull Icon BuildAutoReloadChanges = load("expui/actions/buildAutoReloadChanges.svg", -1677381169, 2);
     /** 16x16 */ public static final @NotNull Icon ClearCash = load("expui/actions/clearCash.svg", 1918690860, 2);
     /** 16x16 */ public static final @NotNull Icon Deploy = load("expui/actions/deploy.svg", -1442797042, 2);
@@ -218,7 +218,7 @@ public final class ExpUiIcons {
 
   public static final class FileTypes {
     /** 16x16 */ public static final @NotNull Icon ActionScript = load("expui/fileTypes/actionScript.svg", 268585626, 2);
-    /** 16x16 */ public static final @NotNull Icon AddAny = load("expui/fileTypes/addAny.svg", 1483508531, 2);
+    /** 16x16 */ public static final @NotNull Icon AddAny = load("expui/fileTypes/addAny.svg", 598669348, 2);
     /** 16x16 */ public static final @NotNull Icon AngularJS = load("expui/fileTypes/angularJS.svg", -1837706255, 0);
     /** 16x16 */ public static final @NotNull Icon AnyType = load("expui/fileTypes/anyType.svg", 292179966, 2);
     /** 16x16 */ public static final @NotNull Icon Archive = load("expui/fileTypes/archive.svg", 501192247, 2);
