@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * Analog of {@link com.intellij.util.io.DataExternalizer}, but with {@link ByteBuffer} instead of
+ * Analog of {@link DataExternalizer}, but with {@link ByteBuffer} instead of
  * {@link java.io.InputStream} and {@link java.io.OutputStream}
  */
 public interface DataExternalizerEx<T> {

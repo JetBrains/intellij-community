@@ -1,25 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.durablemap;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
-import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.DataExternalizerEx.KnownSizeRecordWriter;
-import com.intellij.platform.util.io.storages.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
+import com.intellij.platform.util.io.storages.durablemap.EntryExternalizer.Entry;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
@@ -56,62 +54,43 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   // .keyValuesLog first, and only after that remove the hash from .keyHashToIdMap -- so the remove survives potential crash.
   //
 
-  //Append-only-log records format: <keySize:int32><keyBytes><valueBytes>
-  //  keySize sign bit is used for marking 'deleted'/value=null records: keySize<0 means record is deleted
-
-  //TODO RC: replace .slice() with .position().limit() -- significant economy
-  //         Don't forget to do it everywhere and bump the version, since .slice()-ed buffer have byteOrder=BIG_ENDIAN,
-  //         while .position().limit() keeps the original byte order (which is likely native in my case)
-
   //TODO RC: use .fixedSize()
 
   private final AppendOnlyLog keyValuesLog;
   private final DurableIntToMultiIntMap keyHashToIdMap;
 
-  private final KeyDescriptorEx<K> keyDescriptor;
-  /**
-   * If it implements {@link KeyDescriptorEx} => we'll use it to compare values to skip storing duplicates
-   */
-  private final DataExternalizerEx<V> valueDescriptor;
+  private final EqualityPolicy<? super K> keyEquality;
+  /** If not-null => we'll use it to compare values to skip storing duplicates */
+  private final @Nullable EqualityPolicy<? super V> valueEquality;
 
-  private final boolean valueIsComparable;
+  private final EntryExternalizer<K, V> entryExternalizer;
 
   /** Ctor is for internal use mostly, use {@link DurableMapFactory} to configure and create the map */
   public DurableMapOverAppendOnlyLog(@NotNull AppendOnlyLog keyValuesLog,
                                      @NotNull DurableIntToMultiIntMap keyHashToIdMap,
-                                     @NotNull KeyDescriptorEx<K> keyDescriptor,
-                                     @NotNull DataExternalizerEx<V> valueDescriptor) {
+                                     @NotNull EqualityPolicy<? super K> keyEquality,
+                                     @Nullable EqualityPolicy<? super V> valueEquality,
+                                     @NotNull EntryExternalizer<K, V> entryExternalizer) {
     this.keyValuesLog = keyValuesLog;
     this.keyHashToIdMap = keyHashToIdMap;
 
-    this.keyDescriptor = keyDescriptor;
-    this.valueDescriptor = valueDescriptor;
+    this.keyEquality = keyEquality;
+    this.valueEquality = valueEquality;
 
-    valueIsComparable = valueDescriptor instanceof KeyDescriptorEx<V>;
+    this.entryExternalizer = entryExternalizer;
   }
 
   @Override
   public boolean containsMapping(@NotNull K key) throws IOException {
-    int keyHash = keyDescriptor.getHashCode(key);
+    int keyHash = keyEquality.getHashCode(key);
     int adjustedHash = HashUtils.adjustHash(keyHash);
 
     int foundRecordId = keyHashToIdMap.lookup(adjustedHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
       return keyValuesLog.read(logRecordId, recordBuffer -> {
-        int header = readHeader(recordBuffer);
-        if (isValueVoid(header)) {
-          return false;
-        }
-
-        int keyRecordSize = keySize(header);
-        ByteBuffer keyRecordSlice = recordBuffer.slice(Integer.BYTES, keyRecordSize);
-        K candidateKey = keyDescriptor.read(keyRecordSlice);
-        if (keyDescriptor.isEqual(key, candidateKey)) {
-          return true;
-        }
-        else {
-          return false;
-        }
+        //TODO RC: in this case we don't need to read value at all -- regardless of key matching
+        Entry<K, V> entry = entryExternalizer.readIfKeyMatch(recordBuffer, key);
+        return entry != null;
       });
     });
 
@@ -120,13 +99,13 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public V get(@NotNull K key) throws IOException {
-    int keyHash = keyDescriptor.getHashCode(key);
+    int keyHash = keyEquality.getHashCode(key);
     int adjustedHash = HashUtils.adjustHash(keyHash);
 
-    Ref<Pair<K, V>> resultRef = new Ref<>();
+    Ref<Entry<K, V>> resultRef = new Ref<>();
     keyHashToIdMap.lookup(adjustedHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
-      Pair<K, V> entry = readEntryIfKeyMatch(logRecordId, key);
+      Entry<K, V> entry = readEntryIfKeyMatch(logRecordId, key);
       if (entry != null) {
         resultRef.set(entry);
         return true;
@@ -136,33 +115,33 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
       }
     });
 
-    Pair<K, V> entry = resultRef.get();
+    Entry<K, V> entry = resultRef.get();
     if (entry == null) {
       return null;
     }
     else {
-      return entry.second;
+      return entry.value();
     }
   }
 
   @Override
   public void put(@NotNull K key,
                   @Nullable V value) throws IOException {
-    int keyHash = keyDescriptor.getHashCode(key);
+    int keyHash = keyEquality.getHashCode(key);
     int adjustedHash = HashUtils.adjustHash(keyHash);
     //Abstraction break: synchronize on keyHashToIdMap because we know keyHashToIdMap uses this-monitor to synchronize
     //    itself
     synchronized (keyHashToIdMap) {
-      Ref<Pair<K, V>> resultRef = new Ref<>();
+      Ref<Entry<K, V>> resultRef = new Ref<>();
       int foundRecordId = keyHashToIdMap.lookup(
         adjustedHash,
         candidateRecordId -> {
           long logRecordId = convertStoredIdToLogId(candidateRecordId);
-          Pair<K, V> entry = readEntryIfKeyMatch(logRecordId, key);
+          Entry<K, V> entry = readEntryIfKeyMatch(logRecordId, key);
           if (entry == null) {
             return false; // [record.key != key] => hash collision => look further
           }
-          if (nullSafeEquals(value, entry.second)) {
+          if (nullSafeEquals(value, entry.value())) {
             //record with key existed, and with the same value
             // => just return, don't store entry ref -- we already know both key & value
             return true;
@@ -227,10 +206,10 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   public boolean forEachEntry(@NotNull BiPredicate<? super K, ? super V> processor) throws IOException {
     return keyHashToIdMap.forEach((keyHash, recordId) -> {
-      Pair<K, V> entry = readEntry(convertStoredIdToLogId(recordId));
-      K key = entry.first;
-      V value = entry.second;
-      if (value != null) {
+      Entry<K, V> entry = readEntry(convertStoredIdToLogId(recordId));
+      K key = entry.key();
+      if (!entry.isValueVoid()) {
+        V value = entry.value();
         return processor.test(key, value);
       }
       return true;
@@ -283,9 +262,9 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
       compactedMapFactory.compute(),
       compactedMap -> {
         keyHashToIdMap.forEach((keyHash, recordId) -> {
-          Pair<K, V> entry = readEntry(convertStoredIdToLogId(recordId));
-          if (entry.second != null) {
-            compactedMap.put(entry.first, entry.second);
+          Entry<K, V> entry = readEntry(convertStoredIdToLogId(recordId));
+          if (!entry.isValueVoid()) {
+            compactedMap.put(entry.key(), entry.value());
           }
           return true;
         });
@@ -354,11 +333,11 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
     if ((anotherValue == null && value == null)) {
       return true;
     }
-    if (!valueIsComparable) {
+    if (valueEquality == null) {
       return false;
     }
     if ((anotherValue != null && value != null)
-        && ((KeyDescriptorEx<V>)valueDescriptor).isEqual(value, anotherValue)) {
+        && valueEquality.isEqual(value, anotherValue)) {
       return true;
     }
     return false;
@@ -368,110 +347,20 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
    * @return [key, value] pair by logRecordId, if key==expectedKey, null if the record contains key!=expectedKey
    * I.e. it is just short-circuit version of {@link #readEntry(long)} and check entry.key.equals(expectedKey)
    */
-  private Pair<K, V> readEntryIfKeyMatch(long logRecordId,
-                                         @NotNull K expectedKey) throws IOException {
+  private Entry<K, V> readEntryIfKeyMatch(long logRecordId,
+                                          @NotNull K expectedKey) throws IOException {
     return keyValuesLog.read(logRecordId, recordBuffer -> {
-      int header = readHeader(recordBuffer);
-      int keyRecordSize = keySize(header);
-      boolean valueIsNull = isValueVoid(header);
-
-      ByteBuffer keyRecordSlice = recordBuffer.slice(Integer.BYTES, keyRecordSize);
-      K candidateKey = keyDescriptor.read(keyRecordSlice);
-      if (!keyDescriptor.isEqual(expectedKey, candidateKey)) {
-        return null;
-      }
-
-      if (valueIsNull) {
-        return Pair.pair(expectedKey, null);
-      }
-
-      int valueLength = recordBuffer.remaining() - keyRecordSize - Integer.BYTES;
-      ByteBuffer valueRecordSlice = recordBuffer.slice(Integer.BYTES + keyRecordSize, valueLength);
-      V candidateValue = valueDescriptor.read(valueRecordSlice);
-      return Pair.pair(expectedKey, candidateValue);
+      return entryExternalizer.readIfKeyMatch(recordBuffer, expectedKey);
     });
   }
 
-  private Pair<K, V> readEntry(long logRecordId) throws IOException {
-    return keyValuesLog.read(logRecordId, recordBuffer -> {
-      int header = readHeader(recordBuffer);
-      int keyRecordSize = keySize(header);
-      boolean valueIsNull = isValueVoid(header);
-
-      ByteBuffer keyRecordSlice = recordBuffer.slice(Integer.BYTES, keyRecordSize);
-      K key = keyDescriptor.read(keyRecordSlice);
-
-      if (valueIsNull) {
-        return Pair.pair(key, null);
-      }
-
-      int valueLength = recordBuffer.remaining() - keyRecordSize - Integer.BYTES;
-      ByteBuffer valueRecordSlice = recordBuffer.slice(Integer.BYTES + keyRecordSize, valueLength);
-      V candidateValue = valueDescriptor.read(valueRecordSlice);
-      return Pair.pair(key, candidateValue);
-    });
+  private Entry<K, V> readEntry(long logRecordId) throws IOException {
+    return keyValuesLog.read(logRecordId, entryExternalizer::read);
   }
 
   private long appendEntry(@NotNull K key,
                            @Nullable V value) throws IOException {
-    KnownSizeRecordWriter keyWriter = keyDescriptor.writerFor(key);
-    int keySize = keyWriter.recordSize();
-    if (keySize < 0) {
-      throw new AssertionError("keySize(" + key + ")=" + keySize + ": must be strictly positive");
-    }
-
-    if (value == null) {
-      int recordSize = Integer.BYTES + keySize;
-      return keyValuesLog.append(buffer -> {
-        putHeader(buffer, keySize, /* deleted: */ true);
-        keyWriter.write(buffer.slice(Integer.BYTES, keySize));
-        buffer.position(recordSize);
-        return buffer;
-      }, recordSize);
-    }
-    else {
-      KnownSizeRecordWriter valueWriter = valueDescriptor.writerFor(value);
-      int valueSize = valueWriter.recordSize();
-      int recordSize = Integer.BYTES + keySize + valueSize;
-      return keyValuesLog.append(buffer -> {
-        putHeader(buffer, keySize, /* deleted: */ false);
-        keyWriter.write(buffer.slice(Integer.BYTES, keySize));
-        valueWriter.write(buffer.slice(Integer.BYTES + keySize, valueSize));
-        buffer.position(recordSize);
-        return buffer;
-      }, recordSize);
-    }
-  }
-
-  private static int readHeader(@NotNull ByteBuffer keyBuffer) {
-    return keyBuffer.getInt(0);
-  }
-
-  private static void putHeader(@NotNull ByteBuffer keyBuffer,
-                                int keySize,
-                                boolean valueEmpty) {
-    if (keySize < 0) {
-      throw new IllegalArgumentException("keySize(=" + keySize + ") must have highest bit 0");
-    }
-    if (valueEmpty) {
-      int highestBitMask = 0b1000_0000_0000_0000;
-      keyBuffer.putInt(0, keySize | highestBitMask);
-    }
-    else {
-      //MAYBE RC: use varint DataInputOutputUtil.writeINT(buffer, keySize)?
-      //          -- but this makes record size computation more difficult
-      keyBuffer.putInt(0, keySize);
-    }
-  }
-
-  private static int keySize(int header) {
-    int highestBitMask = 0b1000_0000_0000_0000;
-    return header & ~highestBitMask;
-  }
-
-  /** @return value is void -- null/deleted (we don't differentiate those two cases in this map impl) */
-  private static boolean isValueVoid(int header) {
-    int highestBitMask = 0b1000_0000_0000_0000;
-    return (header & highestBitMask) != 0;
+    KnownSizeRecordWriter entryWriter = entryExternalizer.writerFor(new Entry<>(key, value));
+    return keyValuesLog.append(entryWriter, entryWriter.recordSize());
   }
 }
