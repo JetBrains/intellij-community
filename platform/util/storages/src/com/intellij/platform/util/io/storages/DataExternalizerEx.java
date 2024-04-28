@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages;
+
 import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,12 @@ public interface DataExternalizerEx<T> {
   T read(@NotNull ByteBuffer input) throws IOException;
 
   KnownSizeRecordWriter writerFor(@NotNull T value) throws IOException;
+
+  /** if positive => {@link KnownSizeRecordWriter} must always return same record size, regardless of the value */
+  default int fixedSize() {
+    return -1;
+  }
+
 
   /**
    * Adapts old-school {@link KeyDescriptor} to new {@link KeyDescriptorEx}.
@@ -83,6 +90,7 @@ public interface DataExternalizerEx<T> {
   //MAYBE RC: append marker-interface, like ByteArrayExposingWriter,
   //          so implementation could use appendOnlyLog.append(byte[])
   //          method for such writers, which is slightly faster/cheaper
+
   /** Simplest implementation: writer over the record already serialized into a byte[] */
   class ByteArrayWriter implements KnownSizeRecordWriter {
     private final byte[] bytes;
@@ -102,7 +110,7 @@ public interface DataExternalizerEx<T> {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
       return "ByteArrayWriter[" + IOUtil.toHexString(bytes) + "]";
     }
   }

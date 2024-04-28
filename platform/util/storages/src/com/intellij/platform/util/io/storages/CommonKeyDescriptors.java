@@ -51,6 +51,11 @@ public final class CommonKeyDescriptors {
     }
 
     @Override
+    public int fixedSize() {
+      return Integer.BYTES;
+    }
+
+    @Override
     public String toString() {
       return "KeyDescriptorEx[Int32]";
     }

@@ -59,6 +59,12 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   //Append-only-log records format: <keySize:int32><keyBytes><valueBytes>
   //  keySize sign bit is used for marking 'deleted'/value=null records: keySize<0 means record is deleted
 
+  //TODO RC: replace .slice() with .position().limit() -- significant economy
+  //         Don't forget to do it everywhere and bump the version, since .slice()-ed buffer have byteOrder=BIG_ENDIAN,
+  //         while .position().limit() keeps the original byte order (which is likely native in my case)
+
+  //TODO RC: use .fixedSize()
+
   private final AppendOnlyLog keyValuesLog;
   private final DurableIntToMultiIntMap keyHashToIdMap;
 
@@ -345,11 +351,11 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   /** valueDescriptor is expected to NOT process null values, so we compare null values separately */
   private boolean nullSafeEquals(@Nullable V value,
                                  @Nullable V anotherValue) {
-    if (!valueIsComparable) {
-      return false;
-    }
     if ((anotherValue == null && value == null)) {
       return true;
+    }
+    if (!valueIsComparable) {
+      return false;
     }
     if ((anotherValue != null && value != null)
         && ((KeyDescriptorEx<V>)valueDescriptor).isEqual(value, anotherValue)) {
