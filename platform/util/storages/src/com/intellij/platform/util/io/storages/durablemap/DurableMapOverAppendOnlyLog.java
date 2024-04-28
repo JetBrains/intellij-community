@@ -360,7 +360,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   private long appendEntry(@NotNull K key,
                            @Nullable V value) throws IOException {
-    KnownSizeRecordWriter entryWriter = entryExternalizer.writerFor(new Entry<>(key, value));
+    KnownSizeRecordWriter entryWriter = entryExternalizer.writerFor(key, value);
     return keyValuesLog.append(entryWriter, entryWriter.recordSize());
   }
 }

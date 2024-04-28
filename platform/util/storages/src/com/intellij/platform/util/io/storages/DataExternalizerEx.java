@@ -19,8 +19,16 @@ public interface DataExternalizerEx<T> {
 
   KnownSizeRecordWriter writerFor(@NotNull T value) throws IOException;
 
-  /** if positive => {@link KnownSizeRecordWriter} must always return same record size, regardless of the value */
-  default int fixedSize() {
+  /** @return true if all the values are serialized into the same number of bytes */
+  default boolean isRecordSizeConstant() {
+    return recordSizeIfConstant() > 0;
+  }
+
+  /**
+   * if positive => all the values are serialized into the same number of bytes.
+   * Apt {@link KnownSizeRecordWriter} must always return the same record size, regardless of the value
+   */
+  default int recordSizeIfConstant() {
     return -1;
   }
 

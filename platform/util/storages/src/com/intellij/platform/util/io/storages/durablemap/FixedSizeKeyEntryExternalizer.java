@@ -10,18 +10,24 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * Record format: [keySize:int32][keyBytes][valueBytes]
- * keySize sign-bit is used for marking 'deleted'/value=null records: keySize<0 means record is deleted
+ * Record format: [header:int8][keyBytes][valueBytes]
+ * header is used for marking 'deleted'/value=null records: header=0 means record is deleted
  */
-public class DefaultEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
+public class FixedSizeKeyEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
 
-  private static final int HEADER_SIZE = Integer.BYTES;
+  private static final int HEADER_SIZE = 1;
 
   private final @NotNull KeyDescriptorEx<K> keyDescriptor;
   private final @NotNull DataExternalizerEx<V> valueExternalizer;
 
-  public DefaultEntryExternalizer(@NotNull KeyDescriptorEx<K> keyDescriptor,
-                                  @NotNull DataExternalizerEx<V> valueExternalizer) {
+  private final int keyRecordSize;
+
+  public FixedSizeKeyEntryExternalizer(@NotNull KeyDescriptorEx<K> keyDescriptor,
+                                       @NotNull DataExternalizerEx<V> valueExternalizer) {
+    if (!keyDescriptor.isRecordSizeConstant()) {
+      throw new IllegalArgumentException("Keys must be fixed-size");
+    }
+    this.keyRecordSize = keyDescriptor.recordSizeIfConstant();
     this.keyDescriptor = keyDescriptor;
     this.valueExternalizer = valueExternalizer;
   }
@@ -30,11 +36,9 @@ public class DefaultEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
   public KnownSizeRecordWriter writerFor(@NotNull K key,
                                          @Nullable V value) throws IOException {
     KnownSizeRecordWriter keyWriter = keyDescriptor.writerFor(key);
-    int keySize = keyWriter.recordSize();
-    if (keySize < 0) {
-      throw new AssertionError("keySize(" + key + ")=" + keySize + ": must be strictly positive");
+    if (keyWriter.recordSize() != keyRecordSize) {
+      throw new AssertionError("fixedRecordSize(=" + keyRecordSize + ") != keyWriter.recordSize(=" + keyWriter.recordSize() + ")");
     }
-
     if (value == null) {
       return new NullValueEntryWriter(keyWriter);
     }
@@ -46,8 +50,7 @@ public class DefaultEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
 
   @Override
   public @NotNull Entry<K, V> read(@NotNull ByteBuffer input) throws IOException {
-    int header = readHeader(input);
-    int keyRecordSize = keySize(header);
+    byte header = readHeader(input);
     boolean valueIsNull = isValueVoid(header);
 
     int recordSize = input.remaining();
@@ -71,8 +74,7 @@ public class DefaultEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
   @Override
   public @Nullable Entry<K, V> readIfKeyMatch(@NotNull ByteBuffer input,
                                               @NotNull K expectedKey) throws IOException {
-    int header = readHeader(input);
-    int keyRecordSize = keySize(header);
+    byte header = readHeader(input);
     boolean valueIsNull = isValueVoid(header);
 
     int recordSize = input.remaining();
@@ -96,36 +98,20 @@ public class DefaultEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
     return new Entry<>(expectedKey, candidateValue);
   }
 
-  private static int readHeader(@NotNull ByteBuffer keyBuffer) {
-    return keyBuffer.getInt(0);
+
+  private static byte readHeader(@NotNull ByteBuffer keyBuffer) {
+    return keyBuffer.get(0);
   }
 
   private static void putHeader(@NotNull ByteBuffer keyBuffer,
-                                int keySize,
                                 boolean valueEmpty) {
-    if (keySize < 0) {
-      throw new IllegalArgumentException("keySize(=" + keySize + ") must have highest bit 0");
-    }
-    if (valueEmpty) {
-      int highestBitMask = 0b1000_0000_0000_0000;
-      keyBuffer.putInt(0, keySize | highestBitMask);
-    }
-    else {
-      //MAYBE RC: use varint DataInputOutputUtil.writeINT(buffer, keySize)?
-      //          -- but this makes record size computation more difficult
-      keyBuffer.putInt(0, keySize);
-    }
-  }
-
-  private static int keySize(int header) {
-    int highestBitMask = 0b1000_0000_0000_0000;
-    return header & ~highestBitMask;
+    byte header = (byte)(valueEmpty ? 0 : 1);
+    keyBuffer.put(0, header);
   }
 
   /** @return value is void -- null/deleted (we don't differentiate those two cases in this map impl) */
-  private static boolean isValueVoid(int header) {
-    int highestBitMask = 0b1000_0000_0000_0000;
-    return (header & highestBitMask) != 0;
+  private static boolean isValueVoid(byte header) {
+    return header == 0;
   }
 
   private record NullValueEntryWriter(@NotNull KnownSizeRecordWriter keyWriter,
@@ -137,7 +123,7 @@ public class DefaultEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
 
     @Override
     public ByteBuffer write(@NotNull ByteBuffer buffer) throws IOException {
-      putHeader(buffer, keySize, /* deleted: */ true);
+      putHeader(buffer, /* deleted: */ true);
       keyWriter.write(
         buffer.position(HEADER_SIZE).limit(HEADER_SIZE + keySize)
       );
@@ -166,7 +152,7 @@ public class DefaultEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
 
     @Override
     public ByteBuffer write(@NotNull ByteBuffer buffer) throws IOException {
-      putHeader(buffer, keySize, /* deleted: */ false);
+      putHeader(buffer, /* deleted: */ false);
       keyWriter.write(buffer.position(HEADER_SIZE).limit(HEADER_SIZE + keySize));
       valueWriter.write(buffer.position(HEADER_SIZE + keySize).limit(HEADER_SIZE + keySize + valueSize));
       return buffer;

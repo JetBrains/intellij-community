@@ -66,7 +66,7 @@ public class DurableMapFactory<K, V> implements StorageFactory<DurableMapOverApp
     return new DurableMapFactory<>(
       DEFAULT_VALUES_LOG_FACTORY, DEFAULT_MAP_FACTORY,
       keyDescriptor, valueDescriptor,
-      new DefaultEntryExternalizer<>(keyDescriptor, valueDescriptor)
+      entryExternalizerFor(keyDescriptor, valueDescriptor)
     );
   }
 
@@ -75,7 +75,7 @@ public class DurableMapFactory<K, V> implements StorageFactory<DurableMapOverApp
     return new DurableMapFactory<>(
       DEFAULT_VALUES_LOG_FACTORY, DEFAULT_MAP_FACTORY,
       keyDescriptor, /*valueEquality: */ null,
-      new DefaultEntryExternalizer<>(keyDescriptor, valueExternalizer)
+      entryExternalizerFor(keyDescriptor, valueExternalizer)
     );
   }
 
@@ -118,5 +118,15 @@ public class DurableMapFactory<K, V> implements StorageFactory<DurableMapOverApp
         )
       )
     );
+  }
+
+  private static <K, V> @NotNull EntryExternalizer<K, V> entryExternalizerFor(@NotNull KeyDescriptorEx<K> keyDescriptor,
+                                                                              @NotNull DataExternalizerEx<V> valueExternalizer) {
+    if (keyDescriptor.isRecordSizeConstant()) {
+      return new FixedSizeKeyEntryExternalizer<>(keyDescriptor, valueExternalizer);
+    }
+    else {
+      return new DefaultEntryExternalizer<>(keyDescriptor, valueExternalizer);
+    }
   }
 }

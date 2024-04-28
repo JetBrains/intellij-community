@@ -9,16 +9,17 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- *
+ * Customizes (key,value) entry serialization in {@link DurableMap}
  */
 public interface EntryExternalizer<K, V> extends DataExternalizerEx<EntryExternalizer.Entry<K, V>> {
 
-  /** @inheritDocs */
   @Override
-  int fixedSize();
+  default KnownSizeRecordWriter writerFor(@NotNull Entry<K, V> entry) throws IOException {
+    return writerFor(entry.key(), entry.value());
+  }
 
-  @Override
-  KnownSizeRecordWriter writerFor(@NotNull Entry<K, V> value) throws IOException;
+  KnownSizeRecordWriter writerFor(@NotNull K key,
+                                  @Nullable V value) throws IOException;
 
   @Override
   @NotNull
@@ -32,6 +33,8 @@ public interface EntryExternalizer<K, V> extends DataExternalizerEx<EntryExterna
   @Nullable
   Entry<K, V> readIfKeyMatch(@NotNull ByteBuffer input,
                              @NotNull K expectedKey) throws IOException;
+
+  //TODO boolean isKeyMatch(@NotNull K expectedKey) throws IOException;
 
 
   record Entry<K, V>(@NotNull K key,

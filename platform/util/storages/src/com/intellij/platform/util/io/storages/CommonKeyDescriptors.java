@@ -51,7 +51,7 @@ public final class CommonKeyDescriptors {
     }
 
     @Override
-    public int fixedSize() {
+    public int recordSizeIfConstant() {
       return Integer.BYTES;
     }
 
