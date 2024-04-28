@@ -1,74 +1,22 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.graph.impl.print.elements
 
-package com.intellij.vcs.log.graph.impl.print.elements;
+import com.intellij.vcs.log.graph.PrintElement
+import com.intellij.vcs.log.graph.api.elements.GraphElement
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 
-import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager;
-import org.jetbrains.annotations.NotNull;
+abstract class PrintElementWithGraphElement protected constructor(override val rowIndex: Int,
+                                                                  override val positionInCurrentRow: Int,
+                                                                  val graphElement: GraphElement,
+                                                                  protected val presentationManager: PrintElementPresentationManager) : PrintElement {
+  override val colorId get() = presentationManager.getColorId(graphElement)
+  override val isSelected get() = presentationManager.isSelected(this)
 
-public abstract class PrintElementWithGraphElement implements PrintElement {
-
-  protected final int myRowIndex;
-  protected final int myPositionInCurrentRow;
-
-  @NotNull protected final GraphElement myGraphElement;
-  @NotNull protected final PrintElementPresentationManager myPresentationManager;
-
-  protected PrintElementWithGraphElement(int rowIndex,
-                                         int positionInCurrentRow,
-                                         @NotNull GraphElement graphElement,
-                                         @NotNull PrintElementPresentationManager presentationManager) {
-    myRowIndex = rowIndex;
-    myPositionInCurrentRow = positionInCurrentRow;
-    myGraphElement = graphElement;
-    myPresentationManager = presentationManager;
-  }
-
-  @NotNull
-  public GraphElement getGraphElement() {
-    return myGraphElement;
-  }
-
-  @Override
-  public int getRowIndex() {
-    return myRowIndex;
-  }
-
-  @Override
-  public int getPositionInCurrentRow() {
-    return myPositionInCurrentRow;
-  }
-
-  @Override
-  public int getColorId() {
-    return myPresentationManager.getColorId(myGraphElement);
-  }
-
-  @Override
-  public boolean isSelected() {
-    return myPresentationManager.isSelected(this);
-  }
-
-  @NotNull
-  public static PrintElementWithGraphElement converted(@NotNull PrintElementWithGraphElement element,
-                                                       @NotNull GraphElement convertedGraphElement) {
-    return new PrintElementWithGraphElement(element.getRowIndex(), element.getPositionInCurrentRow(), convertedGraphElement,
-                                            element.myPresentationManager) {
-    };
+  companion object {
+    fun converted(element: PrintElementWithGraphElement, convertedGraphElement: GraphElement): PrintElementWithGraphElement {
+      return object : PrintElementWithGraphElement(element.rowIndex, element.positionInCurrentRow, convertedGraphElement,
+                                                   element.presentationManager) {
+      }
+    }
   }
 }

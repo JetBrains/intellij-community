@@ -1,99 +1,50 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.graph.impl.print.elements
 
-package com.intellij.vcs.log.graph.impl.print.elements;
+import com.intellij.vcs.log.graph.EdgePrintElement
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 
-import com.intellij.vcs.log.graph.EdgePrintElement;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager;
-import org.jetbrains.annotations.NotNull;
+open class EdgePrintElementImpl(rowIndex: Int, positionInCurrentRow: Int, override val positionInOtherRow: Int,
+                                override val type: EdgePrintElement.Type, graphEdge: GraphEdge,
+                                private val hasArrow: Boolean,
+                                presentationManager: PrintElementPresentationManager) : PrintElementWithGraphElement(rowIndex,
+                                                                                                                     positionInCurrentRow,
+                                                                                                                     graphEdge,
+                                                                                                                     presentationManager), EdgePrintElement {
+  override val lineStyle = convertToLineStyle(graphEdge.type)
 
-public class EdgePrintElementImpl extends PrintElementWithGraphElement implements EdgePrintElement {
+  override fun hasArrow(): Boolean = hasArrow
 
-  @NotNull
-  public static EdgePrintElement.LineStyle convertToLineStyle(@NotNull GraphEdgeType edgeType) {
-    return switch (edgeType) {
-      case USUAL, NOT_LOAD_COMMIT -> LineStyle.SOLID;
-      case DOTTED, DOTTED_ARROW_UP, DOTTED_ARROW_DOWN -> LineStyle.DASHED;
-    };
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o !is EdgePrintElement) return false
+
+    if (positionInCurrentRow != o.positionInCurrentRow) return false
+    if (positionInOtherRow != o.positionInOtherRow) return false
+    if (rowIndex != o.rowIndex) return false
+    if (type != o.type) return false
+    if (hasArrow != o.hasArrow()) return false
+
+    return true
   }
 
-  @NotNull private final Type myType;
-  @NotNull private final LineStyle myLineStyle;
-  private final int myPositionInOtherRow;
-  private final boolean myHasArrow;
-
-  public EdgePrintElementImpl(int rowIndex,
-                              int positionInCurrentRow,
-                              int positionInOtherRow,
-                              @NotNull Type type,
-                              @NotNull GraphEdge graphEdge,
-                              boolean hasArrow,
-                              @NotNull PrintElementPresentationManager presentationManager) {
-    super(rowIndex, positionInCurrentRow, graphEdge, presentationManager);
-    myType = type;
-    myLineStyle = convertToLineStyle(graphEdge.getType());
-    myPositionInOtherRow = positionInOtherRow;
-    myHasArrow = hasArrow;
+  override fun hashCode(): Int {
+    var result: Int = rowIndex
+    result = 31 * result + positionInCurrentRow
+    result = 31 * result + positionInOtherRow
+    result = 37 * result + type.hashCode()
+    result = 31 * result + (if (hasArrow) 1 else 0)
+    return result
   }
 
-  @Override
-  public int getPositionInOtherRow() {
-    return myPositionInOtherRow;
-  }
-
-  @NotNull
-  @Override
-  public Type getType() {
-    return myType;
-  }
-
-  @NotNull
-  @Override
-  public LineStyle getLineStyle() {
-    return myLineStyle;
-  }
-
-  @Override
-  public boolean hasArrow() {
-    return myHasArrow;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof EdgePrintElement that)) return false;
-
-    if (myPositionInCurrentRow != that.getPositionInCurrentRow()) return false;
-    if (myPositionInOtherRow != that.getPositionInOtherRow()) return false;
-    if (myRowIndex != that.getRowIndex()) return false;
-    if (myType != that.getType()) return false;
-    if (myHasArrow != that.hasArrow()) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myRowIndex;
-    result = 31 * result + myPositionInCurrentRow;
-    result = 31 * result + myPositionInOtherRow;
-    result = 37 * result + myType.hashCode();
-    result = 31 * result + (myHasArrow ? 1 : 0);
-    return result;
+  companion object {
+    fun convertToLineStyle(edgeType: GraphEdgeType): EdgePrintElement.LineStyle {
+      return when (edgeType) {
+        GraphEdgeType.USUAL, GraphEdgeType.NOT_LOAD_COMMIT -> EdgePrintElement.LineStyle.SOLID
+        GraphEdgeType.DOTTED, GraphEdgeType.DOTTED_ARROW_UP, GraphEdgeType.DOTTED_ARROW_DOWN -> EdgePrintElement.LineStyle.DASHED
+      }
+    }
   }
 }
