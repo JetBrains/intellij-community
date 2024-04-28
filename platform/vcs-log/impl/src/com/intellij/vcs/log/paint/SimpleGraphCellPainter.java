@@ -195,13 +195,12 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.setStroke(select ? getSelectedDashedStroke(length) : getDashedStroke(length));
   }
 
-  private @NotNull Color getColor(@NotNull PrintElement printElement) {
+  private @NotNull Color getColor(@NotNull PrintElement printElement, boolean isSelected) {
+    if (isSelected) return MARK_COLOR;
     return myColorGenerator.getColor(printElement.getColorId());
   }
 
-  private static boolean isUsual(@NotNull PrintElement printElement) {
-    if (!(printElement instanceof EdgePrintElement)) return true;
-    EdgePrintElement.LineStyle lineStyle = ((EdgePrintElement)printElement).getLineStyle();
+  private static boolean isUsual(@NotNull EdgePrintElement.LineStyle lineStyle) {
     return lineStyle == EdgePrintElement.LineStyle.SOLID;
   }
 
@@ -230,38 +229,26 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   protected void drawElement(@NotNull Graphics2D g2, @NotNull PrintElement printElement, boolean isSelected) {
-    if (printElement instanceof EdgePrintElement) {
-      if (isSelected) {
-        printEdge(g2, MARK_COLOR, true, (EdgePrintElement)printElement);
-      }
-      else {
-        printEdge(g2, getColor(printElement), false, (EdgePrintElement)printElement);
-      }
+    if (printElement instanceof EdgePrintElement edgePrintElement) {
+      printEdge(g2, getColor(printElement, isSelected), isSelected, edgePrintElement);
     }
 
     if (printElement instanceof NodePrintElement) {
-      int position = printElement.getPositionInCurrentRow();
-      if (isSelected) {
-        paintCircle(g2, position, MARK_COLOR, true);
-      }
-      else {
-        paintCircle(g2, position, getColor(printElement), false);
-      }
+      paintCircle(g2, printElement.getPositionInCurrentRow(), getColor(printElement, isSelected), isSelected);
     }
   }
 
   private void printEdge(@NotNull Graphics2D g2, @NotNull Color color, boolean isSelected, @NotNull EdgePrintElement edgePrintElement) {
     int from = edgePrintElement.getPositionInCurrentRow();
     int to = edgePrintElement.getPositionInOtherRow();
-    boolean isUsual = isUsual(edgePrintElement);
-
+    boolean isUsual = isUsual(edgePrintElement.getLineStyle());
+    boolean isTerminal = edgePrintElement instanceof TerminalEdgePrintElement;
+    
     if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-      paintDownLine(g2, color, from, to, edgePrintElement.hasArrow(), isUsual, isSelected,
-                    edgePrintElement instanceof TerminalEdgePrintElement);
+      paintDownLine(g2, color, from, to, edgePrintElement.hasArrow(), isUsual, isSelected, isTerminal);
     }
     else {
-      paintUpLine(g2, color, from, to, edgePrintElement.hasArrow(), isUsual, isSelected,
-                  edgePrintElement instanceof TerminalEdgePrintElement);
+      paintUpLine(g2, color, from, to, edgePrintElement.hasArrow(), isUsual, isSelected, isTerminal);
     }
   }
 
