@@ -2,12 +2,15 @@
 package com.intellij.openapi.editor.impl.stickyLines
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.project.Project
 
-internal class StickyLinesSettingsDisableAction : AnAction() {
+internal class StickyLinesSettingsDisableAction : StickyLinesAbstractAction() {
 
   override fun update(e: AnActionEvent) {
     val settings = EditorSettingsExternalizable.getInstance()
@@ -19,14 +22,22 @@ internal class StickyLinesSettingsDisableAction : AnAction() {
     if (settings.areStickyLinesShown()) {
       settings.setStickyLinesShown(false)
       UISettings.getInstance().fireUISettingsChanged()
+      stickyLinesDisabledNotification(e.project).notify(e.project)
     }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
-
-  override fun isDumbAware(): Boolean {
-    return true
+  private fun stickyLinesDisabledNotification(project: Project?): Notification {
+    @Suppress("DialogTitleCapitalization")
+    return Notification(
+      "Sticky Lines",
+      ApplicationBundle.message("settings.editor.sticky.lines.disabled.title"),
+      ApplicationBundle.message("settings.editor.sticky.lines.disabled.text"),
+      NotificationType.INFORMATION
+    ).addAction(NotificationAction.createSimpleExpiring(
+      ApplicationBundle.message("settings.editor.general.appearance"),
+      Runnable {
+        showStickyLinesSettingsDialog(project)
+      }
+    ))
   }
 }
