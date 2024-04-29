@@ -4,10 +4,14 @@ package com.intellij.internal.statistic.service.fus.collectors;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -22,9 +26,28 @@ import java.util.regex.Pattern;
 @ApiStatus.Internal
 public abstract class FeatureUsagesCollector {
   @NonNls private static final String GROUP_ID_PATTERN = "([a-zA-Z]*\\.)*[a-zA-Z]*";
+  @Nullable private String fileName = null;
+
+  /**
+   * Set environment variable FUS_COLLECTOR_FILENAME_ENABLED to true to get collector's file name in a generated scheme.
+   * This property is true for StatisticsEventSchemeGeneration build.
+   */
+  public FeatureUsagesCollector() {
+    if (Boolean.parseBoolean(System.getenv("FUS_COLLECTOR_FILENAME_ENABLED"))) {
+      StackTraceElement[] stackTraceElements = (new Exception()).getStackTrace();
+      Optional<StackTraceElement>
+        collectorStackTraceElement =
+        Arrays.stream(stackTraceElements).filter(x -> Strings.areSameInstance(x.getClassName(), this.getClass().getName())).findFirst();
+      collectorStackTraceElement.ifPresent(element -> fileName = element.getFileName());
+    }
+  }
 
   public final boolean isValid() {
     return Pattern.compile(GROUP_ID_PATTERN).matcher(getGroupId()).matches();
+  }
+
+  public @Nullable String getFileName() {
+    return fileName;
   }
 
   /**

@@ -148,7 +148,7 @@ object EventsSchemeBuilder {
         }
         .toSet()
       result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name, group.recorder,
-                                         PluginSchemeDescriptor(plugin.id), group.description)
+                                         PluginSchemeDescriptor(plugin.id), group.description, collector.fileName)
     }
     return result.values
   }

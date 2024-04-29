@@ -38,4 +38,5 @@ data class GroupDescriptor(val id: String,
                            val className: String,
                            val recorder: String,
                            val plugin: PluginSchemeDescriptor,
-                           val description: String? = null)
+                           val description: String? = null,
+                           val fileName: String? = null)
