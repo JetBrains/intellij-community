@@ -309,6 +309,20 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       
         record GeneticRecord<T extends Long>(int i) {
         }
+      
+        record GeneticRecord2<T extends Number>(T i) {
+        }
+      
+        public static boolean test2() {
+            GeneticRecord2 i = new GeneticRecord2(0L);
+            return i instanceof GeneticRecord2(<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.Number'">String a</error>);
+        }
+    
+        public static boolean test3() {
+            GeneticRecord2 i = new GeneticRecord2(0L);
+            return i instanceof GeneticRecord2(Long a);
+        }
+      
       }""");
     myFixture.checkHighlighting();
   }
