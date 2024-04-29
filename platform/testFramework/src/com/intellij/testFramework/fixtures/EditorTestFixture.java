@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
@@ -292,9 +293,12 @@ public class EditorTestFixture {
     }
 
     if (element == null) {
-      fail("element not found in file " + myFile.getName() +
-           " at caret position offset " + myEditor.getCaretModel().getOffset() + "," +
-           " psi structure:\n" + DebugUtil.psiToString(getFile(), false, true));
+      PsiFile psiFile = getFile();
+      int offset = myEditor.getCaretModel().getOffset();
+      int expectedCaretOffset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : offset;
+      fail("element not found in file " + myFile + "(" + myFile.getClass() + ", " + psiFile.getViewProvider() + ")" +
+           " at caret position offset " + offset + (offset == expectedCaretOffset ? "" : ", expected caret offset: "+expectedCaretOffset)+
+           ", psi structure:\n" + DebugUtil.psiToString(psiFile, true, true));
     }
     return element;
   }
