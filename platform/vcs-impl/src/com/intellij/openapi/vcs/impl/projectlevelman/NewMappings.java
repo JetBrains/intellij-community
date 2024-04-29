@@ -42,6 +42,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -49,6 +50,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class NewMappings implements Disposable {
   private static final Comparator<MappedRoot> ROOT_COMPARATOR = Comparator.comparing(it -> it.root.getPath());
   private static final Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
@@ -211,6 +213,10 @@ public final class NewMappings implements Disposable {
   }
 
   private void updateVcsMappings(@NotNull List<VcsDirectoryMapping> mappings) {
+    updateVcsMappings(mappings, true);
+  }
+
+  private void updateVcsMappings(@NotNull List<VcsDirectoryMapping> mappings, boolean updateRootsImmediately) {
     myRootUpdateQueue.cancelAllUpdates();
 
     List<VcsDirectoryMapping> newMappings = List.copyOf(ContainerUtil.sorted(removeDuplicates(mappings), MAPPINGS_COMPARATOR));
@@ -223,19 +229,27 @@ public final class NewMappings implements Disposable {
       dumpMappingsToLog();
     }
 
-    updateActiveVcses(false);
+    boolean isActivated = updateActiveVcses(false);
 
-    boolean fireMappingsChangedEvent = false;
-    if (ApplicationManager.getApplication().isDispatchThread() &&
-        ContainerUtil.exists(newMappings, it -> it.isDefaultMapping())) {
-      updateMappedRootsFast(fireMappingsChangedEvent);
-      scheduleMappedRootsUpdateWithoutDelay();
+    if (updateRootsImmediately) {
+      boolean fireMappingsChangedEvent = false;
+      if (ApplicationManager.getApplication().isDispatchThread() &&
+          ContainerUtil.exists(newMappings, it -> it.isDefaultMapping())) {
+        updateMappedRootsFast(fireMappingsChangedEvent);
+        scheduleMappedRootsUpdateWithoutDelay();
+      }
+      else {
+        updateMappedRoots(fireMappingsChangedEvent);
+      }
     }
     else {
-      updateMappedRoots(fireMappingsChangedEvent);
+      scheduleMappedRootsUpdateWithoutDelay();
     }
 
-    notifyMappingsChanged();
+    // do not fire event from ProjectLevelVcsManager service initialization
+    if (updateRootsImmediately || isActivated) {
+      notifyMappingsChanged();
+    }
   }
 
   private void updateMappedRoots(boolean fireMappingsChangedEvent) {
@@ -573,6 +587,14 @@ public final class NewMappings implements Disposable {
         LOG.info(String.format("Detected mapped Root: [%s] - [%s]", root.vcs, root.root.getPath()));
       }
     }
+  }
+
+  public void setDirectoryMappingsFromConfig(@NotNull List<VcsDirectoryMapping> items) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("setDirectoryMappingsFromConfig, size: " + items.size(), new Throwable());
+    }
+
+    updateVcsMappings(items, false);
   }
 
   public void setDirectoryMappings(@NotNull List<VcsDirectoryMapping> items) {

@@ -553,7 +553,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     if (haveNonEmptyMappings || !defaultProject) {
       myMappingsLoaded = true;
     }
-    myMappings.setDirectoryMappings(mappingsList);
+    myMappings.setDirectoryMappingsFromConfig(mappingsList);
   }
 
   @Override
