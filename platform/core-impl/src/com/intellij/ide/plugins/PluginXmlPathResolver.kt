@@ -19,14 +19,14 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       return if (end == -1) "" else path.substring(0, end)
     }
 
-    fun toLoadPath(relativePath: String, base: String?): String {
-      return when {
-        relativePath[0] == '/' -> relativePath.substring(1)
-        relativePath.startsWith("intellij.")
-        || relativePath.startsWith("kotlin.") -> relativePath
-        base == null -> "META-INF/$relativePath"
-        else -> "$base/$relativePath"
-      }
+    fun toLoadPath(
+      relativePath: String,
+      base: String? = null,
+    ): String = when {
+      relativePath[0] == '/' -> relativePath.substring(1)
+      relativePath.startsWith("intellij.")
+      || relativePath.startsWith("kotlin.") -> relativePath
+      else -> (base ?: "META-INF") + '/' + relativePath
     }
 
     internal fun getChildBase(base: String?, relativePath: String): String? {
@@ -101,7 +101,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     relativePath: String,
     readInto: RawPluginDescriptor?,
   ): RawPluginDescriptor? {
-    val path = toLoadPath(relativePath = relativePath, base = null)
+    val path = toLoadPath(relativePath)
     dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let {
       return readModuleDescriptor(
         input = it,
