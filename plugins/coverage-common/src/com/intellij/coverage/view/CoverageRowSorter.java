@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.CoverageLogger;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ui.components.JBTreeTable;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,6 +56,7 @@ public class CoverageRowSorter extends RowSorter<TableModel> {
     if (keys == null || keys.isEmpty()) return;
     final SortKey key = keys.get(0);
     if (key.getSortOrder() == SortOrder.UNSORTED) return;
+    CoverageLogger.logColumnSortChanged(myModel.getColumnName(key.getColumn()), key.getSortOrder());
     mySortKey = key;
     final ColumnInfo columnInfo = myModel.getColumnInfos()[key.getColumn()];
     final Comparator<? super NodeDescriptor<?>> comparator = columnInfo.getComparator();

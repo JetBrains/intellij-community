@@ -15,18 +15,22 @@ import com.intellij.openapi.vfs.VirtualFile
 
 @Service(Service.Level.PROJECT)
 class ExternalReportImportManager(private val project: Project) {
+  enum class Source {
+    DIALOG, ACTION, EMPTY_TOOLWINDOW, UNKNOWN
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ExternalReportImportManager = project.service()
   }
   
-  fun chooseAndOpenSuites() {
+  fun chooseAndOpenSuites(source: Source) {
     val suites = chooseAndImportCoverageReportsFromDisc()
     if (suites.isEmpty()) return
-    openSuites(suites, false)
+    openSuites(suites, false, source)
   }
 
-  fun openSuites(suites: List<CoverageSuite>, closeCurrentlyOpened: Boolean) {
+  fun openSuites(suites: List<CoverageSuite>, closeCurrentlyOpened: Boolean, source: Source) {
     val suitesByEngine = suites.groupBy { it.coverageEngine }
 
     if (closeCurrentlyOpened) {
@@ -35,7 +39,7 @@ class ExternalReportImportManager(private val project: Project) {
 
     for (engineSuites in suitesByEngine.values) {
       val bundle = CoverageSuitesBundle(engineSuites.toTypedArray<CoverageSuite>())
-      logSuiteImport(project, bundle)
+      logSuiteImport(project, bundle, source)
       CoverageDataManager.getInstance(project).chooseSuitesBundle(bundle)
     }
 
