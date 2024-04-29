@@ -98,6 +98,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.equals("Remove 'while' statement") ||
                                       intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") ||//remove methods in batch
                                       intentionText.startsWith("Suppress with 'NON-NLS' comment") ||
+                                      intentionText.startsWith("Suppress for ") || // Suppressions often modify comments 
                                       intentionText.startsWith("Move comment to separate line") ||//merge comments on same line
                                       intentionText.startsWith("Remove redundant arguments to call") ||//removes arg with all comments inside
                                       intentionText.startsWith("Convert to 'enum'") ||//removes constructor with javadoc?
