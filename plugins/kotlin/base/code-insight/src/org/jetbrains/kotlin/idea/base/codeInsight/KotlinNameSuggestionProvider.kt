@@ -33,7 +33,7 @@ abstract class KotlinNameSuggestionProvider : NameSuggestionProvider {
         if (element is KtCallableDeclaration) {
             val validator = KotlinNameValidatorProvider.getInstance()
                 .createNameValidator(
-                    container = (nameSuggestionContext ?: element.parent) as KtElement,
+                    container = nameSuggestionContext ?: element.parent,
                     target = getValidatorTarget(element),
                     anchor = element,
                     excludedDeclarations = listOf(element),

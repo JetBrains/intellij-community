@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
 
 typealias KotlinNameValidator = (@NonNls String) -> Boolean
 
@@ -19,7 +18,7 @@ interface KotlinNameValidatorProvider {
     }
 
     fun createNameValidator(
-        container: KtElement,
+        container: PsiElement,
         target: KotlinNameSuggestionProvider.ValidatorTarget, // todo move here
         anchor: PsiElement? = null,
         excludedDeclarations: List<KtDeclaration> = emptyList(),

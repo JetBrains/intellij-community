@@ -7,13 +7,12 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
 
 // todo move to kotlin.code-insight.k2
 internal class Fe10KotlinNameValidatorProviderImpl : KotlinNameValidatorProvider {
 
     override fun createNameValidator(
-        container: KtElement,
+        container: PsiElement,
         target: KotlinNameSuggestionProvider.ValidatorTarget,
         anchor: PsiElement?,
         excludedDeclarations: List<KtDeclaration>,

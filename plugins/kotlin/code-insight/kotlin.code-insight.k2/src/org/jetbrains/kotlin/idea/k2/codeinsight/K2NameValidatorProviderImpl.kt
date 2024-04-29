@@ -9,22 +9,28 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 internal class K2NameValidatorProviderImpl : KotlinNameValidatorProvider {
 
     override fun createNameValidator(
-        container: KtElement,
+        container: PsiElement,
         target: KotlinNameSuggestionProvider.ValidatorTarget,
         anchor: PsiElement?,
         excludedDeclarations: List<KtDeclaration>,
     ): KotlinNameValidator = { name ->
+        val context = (anchor ?: container)
+            .parentsWithSelf
+            .filterIsInstance<KtElement>()
+            .first()
+
         val validator = KotlinDeclarationNameValidator(
-            visibleDeclarationsContext = container,
+            visibleDeclarationsContext = context,
             checkVisibleDeclarationsContext = anchor != null,
             target = target,
         )
 
-        analyze(container) {
+        analyze(context) {
             validator.validate(name)
         }
     }
