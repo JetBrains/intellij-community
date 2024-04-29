@@ -12,7 +12,7 @@ import com.jetbrains.rd.util.trace
 import com.jetbrains.rd.util.warn
 import com.sun.jna.platform.win32.WinDef
 
-val logger = getLogger<WinBringProcessWindowToForegroundSupport>()
+private val logger = getLogger<WinBringProcessWindowToForegroundSupport>()
 
 class WinBringProcessWindowToForegroundSupport : BringProcessWindowToForegroundSupport {
   override fun bring(pid: Int): Boolean {

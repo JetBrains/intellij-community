@@ -3,7 +3,8 @@ package com.intellij.xdebugger.impl.util
 
 import com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupport
 import com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupportApplicable
-import com.intellij.execution.process.window.to.foreground.WinBringProcessWindowToForegroundSupport
+import com.intellij.execution.process.window.to.foreground.tryBringTerminalWindow
+import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.*
@@ -14,7 +15,6 @@ import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebugProcessDebuggeeInForegroundSupport
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import kotlin.jvm.optionals.getOrNull
 
 class BringDebuggeeIntoForegroundImpl(val support: BringProcessWindowToForegroundSupport) {
   companion object {
@@ -65,9 +65,6 @@ class BringDebuggeeIntoForegroundImpl(val support: BringProcessWindowToForegroun
         is BringProcessWindowToForegroundSupportApplicable -> support.isApplicable()
         else -> true
       }
-
-    private val TerminalPIDKey = Key<Int?>("TerminalPIDKey")
-    private val TerminalBroughtSuccessfullyKey = Key<Boolean>("TerminalBroughtSuccessfullyKey")
   }
 
   val dataHolder = UserDataHolderBase()
@@ -80,71 +77,6 @@ class BringDebuggeeIntoForegroundImpl(val support: BringProcessWindowToForegroun
 
     logger.trace { "Bringing terminal window into foreground if it exists" }
 
-    tryBringTerminalWindow(logger, pid).also { logger.trace { "Bringing cmd process to foreground : ${if (it) "succeeded" else "failed"}" } }
-  }
-
-  private fun tryBringTerminalWindow(logger: Logger, pid: Int): Boolean {
-    if (dataHolder.getUserData(TerminalBroughtSuccessfullyKey) == false)
-      return false
-
-    val result = if (SystemInfo.isWindows)
-      // on windows WindowsTerminal.exe process is not a parent of the debuggee, so we have to find the terminal windows associated with the debuggee first
-      return tryBringWindowsTerminalInForeground(logger, pid)
-    else
-      when (val terminalPid = dataHolder.getOrCreateUserData(TerminalPIDKey) {
-        (tryFindParentProcess(logger, pid, listOf("MacOS/Terminal", "gnome-terminal")) ?: run {
-          logger.trace { "Could find neither main window of $pid process, nor parent cmd process. Exiting" };
-          return@getOrCreateUserData null
-        }
-        ).pid().toInt()
-      }) {
-        null -> false
-        else -> support.bring(terminalPid)
-      }
-
-    return result.also { dataHolder.putUserDataIfAbsent(TerminalBroughtSuccessfullyKey, it) }
-  }
-
-  private fun tryFindParentProcess(logger: Logger, pid: Int, parentProcessesWeLookingFor: List<String>): ProcessHandle? {
-    val debuggeeProcess = ProcessHandle.allProcesses().filter { it.pid() == pid.toLong() }.findFirst().getOrNull()
-                          ?: run { logger.trace { "Can't find the process with pid $pid" }; return null }
-
-    val ideProcess = ProcessHandle.current()
-
-    var parentProcess = debuggeeProcess.parent().getOrNull()
-
-    while (parentProcess != null && parentProcess != ideProcess) {
-      val command = parentProcess.info().command().getOrNull()
-      if (command != null && parentProcessesWeLookingFor.any { command.contains(it) })
-        return parentProcess
-
-      parentProcess = parentProcess.parent().getOrNull()
-    }
-
-    return null
-  }
-
-  private fun tryBringWindowsTerminalInForeground(logger: Logger, pid: Int): Boolean {
-    if (tryFindParentProcess(logger, pid, listOf("cmd.exe")) == null) {
-      logger.trace { "The process hasn't been launched under cmd.exe" }
-      return false
-    }
-
-    // On windows only 1 instance of terminal can be launched
-    val windowsTerminalPid = dataHolder.getOrCreateUserData(TerminalPIDKey) {
-      ProcessHandle.allProcesses()
-        .filter {
-          val command = it.info().command().getOrNull() ?: return@filter false
-          command.contains("Program Files\\WindowsApps\\Microsoft.WindowsTerminal") && command.endsWith("WindowsTerminal.exe")
-        }
-        .findFirst()
-        .getOrNull()
-        ?.pid()
-        ?.toInt()
-    } ?: return false
-
-    // if there are more than 1 Debugger.Worker.exe window, we will bring none of them
-    return (support as WinBringProcessWindowToForegroundSupport)
-      .bringWindowWithName(windowsTerminalPid, dataHolder, "Debugger.Worker.exe")
+    support.tryBringTerminalWindow(dataHolder, pid).also { logger.trace { "Bringing cmd process to foreground : ${if (it) "succeeded" else "failed"}" } }
   }
 }

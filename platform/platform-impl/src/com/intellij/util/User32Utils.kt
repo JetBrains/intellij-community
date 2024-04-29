@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
-import com.intellij.execution.process.window.to.foreground.logger
 import com.jetbrains.rd.util.error
+import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.trace
 import com.sun.jna.platform.win32.WinDef
 import com.sun.jna.ptr.IntByReference
+
+private val logger = getLogger<User32Ex>()
 
 // Implemented according to System.Diagnostics.MainWindowFinder.IsMainWindow implementation from .NET 8
 fun User32Ex.findWindowsWithText(pid: Int, windowName: String): List<WinDef.HWND> {

@@ -3,8 +3,11 @@ package com.intellij.execution.process.window.to.foreground
 
 import com.intellij.openapi.wm.impl.X11UiUtil
 import com.intellij.util.ui.StartupUiUtil
+import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.info
 import com.jetbrains.rd.util.trace
+
+private val logger = getLogger<X11BringProcessWindowToForegroundSupport>()
 
 class X11BringProcessWindowToForegroundSupport : BringProcessWindowToForegroundSupportApplicable() {
   override fun isApplicable(): Boolean {
