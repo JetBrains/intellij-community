@@ -611,6 +611,9 @@ private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
   "intellij.platform.vcs.dvcs.impl", listOf(
     "intellij.platform.vcs.dvcs"
   ),
+  "intellij.rider", listOf(
+    "intellij.platform.debugger.modulesView"
+  ),
 )
 
 internal object ModuleIncludeReasons {
