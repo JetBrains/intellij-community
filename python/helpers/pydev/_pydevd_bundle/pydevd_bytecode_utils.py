@@ -12,7 +12,7 @@ def find_last_func_call_order(frame, start_line):
     """Find the call order of the last function call between ``start_line``
     and last executed instruction.
 
-    :param frame: A frame inside which we are looking the function call.
+    :param frame: A frame inside which we are looking for the function call.
     :type frame: :py:class:`types.FrameType`
     :param start_line:
     :return: call order or -1 if we fail to find the call order for some
