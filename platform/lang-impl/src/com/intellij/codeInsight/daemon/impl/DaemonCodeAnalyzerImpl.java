@@ -1280,6 +1280,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (old != null && !old.isCanceled()) {
       old.cancel();
     }
+    else if (PassExecutorService.LOG.isDebugEnabled()) {
+      PassExecutorService.LOG.debug("Old indicator is " + (old == null ? "null" : "already cancelled"));
+    }
     return progress;
   }
 
