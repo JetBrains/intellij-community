@@ -61,6 +61,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testJavaType() = doTest()
     fun testLambda() = doTest()
     fun testLanguageConstructs() = doTest()
+    fun testLetNonLocalReturn() = doTest()
     fun testList() = doTest()
     fun testListApply() = doTest()
     fun testMapEmpty() = doTest()

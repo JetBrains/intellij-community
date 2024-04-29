@@ -27,6 +27,8 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import com.siyeh.ig.psiutils.TypeUtils
@@ -792,29 +794,59 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processReturnExpression(expr: KtReturnExpression) {
         val returnedExpression = expr.returnedExpression
         processExpression(returnedExpression)
-        if (expr.labeledExpression != null) {
-            val targetFunction = expr.getReturnTargetSymbol()?.psi
-            if (targetFunction != null && PsiTreeUtil.isAncestor(context, targetFunction, true)) {
-                val transfer: InstructionTransfer
-                if (returnedExpression != null) {
-                    val retVar = flow.createTempVariable(returnedExpression.getKotlinType().toDfType())
-                    addInstruction(JvmAssignmentInstruction(null, retVar))
-                    transfer = createTransfer(targetFunction, targetFunction, retVar)
-                } else {
-                    transfer = createTransfer(targetFunction, targetFunction, factory.unknown)
-                }
-                addInstruction(
-                    ControlTransferInstruction(
-                        factory.controlTransfer(
-                            transfer,
-                            trapTracker.getTrapsInsideElement(targetFunction)
-                        )
+        val targetFunction = when {
+          expr.labeledExpression != null -> expr.getReturnTargetSymbol()?.psi as? KtFunctionLiteral
+          else -> findEffectiveTargetSymbol(expr)
+        }
+        if (targetFunction != null && PsiTreeUtil.isAncestor(context, targetFunction, true)) {
+            val transfer: InstructionTransfer
+            if (returnedExpression != null) {
+                val retVar = flow.createTempVariable(returnedExpression.getKotlinType().toDfType())
+                addInstruction(JvmAssignmentInstruction(null, retVar))
+                transfer = createTransfer(targetFunction, targetFunction, retVar)
+            } else {
+                transfer = createTransfer(targetFunction, targetFunction, factory.unknown)
+            }
+            addInstruction(
+                ControlTransferInstruction(
+                    factory.controlTransfer(
+                        transfer,
+                        trapTracker.getTrapsInsideElement(targetFunction)
                     )
                 )
-                return
-            }
+            )
+            return
         }
         addInstruction(ReturnInstruction(factory, trapTracker.trapStack(), expr))
+    }
+
+    /**
+     * For code like `return x.let { return y }`, we assume that `return y` returns from
+     * the `let`, rather than from the parent method instead.
+     * This is semantically equivalent and allows to get rid of some noise warnings.
+     */
+    context(KtAnalysisSession)
+    private fun findEffectiveTargetSymbol(expression: KtReturnExpression): KtFunctionLiteral? {
+        val parentFunctionLiteral = expression.parentOfType<KtFunctionLiteral>()
+        if (parentFunctionLiteral == null || !context.isAncestor(parentFunctionLiteral)) return null
+        val lambda = parentFunctionLiteral.parent as? KtLambdaExpression ?: return null
+        val lambdaArg = lambda.parent as? KtValueArgument ?: return null
+        val call = lambdaArg.parent as? KtCallExpression ?: return null
+        val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+        val functionName = target.name.asString()
+        if (functionName != "let" && functionName != "run") return null
+        if (StandardNames.BUILT_INS_PACKAGE_FQ_NAME != target.callableIdIfNonLocal?.packageName) return null
+        var outerExpr: KtExpression = call.parent as? KtQualifiedExpression ?: return null
+        var outerExprParent = outerExpr.parent
+        while (outerExprParent is KtBinaryExpression && ANDOR_TOKENS.contains(outerExprParent.operationToken) && 
+            outerExprParent.right == outerExpr) {
+            outerExpr = outerExprParent
+            outerExprParent = outerExpr.parent
+        }
+        if (outerExprParent is KtNamedFunction) return parentFunctionLiteral
+        if (outerExprParent is KtReturnExpression && outerExprParent.labeledExpression == null) return parentFunctionLiteral
+        return null
     }
 
     context(KtAnalysisSession)
@@ -1876,6 +1908,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         private val LOG = logger<KtControlFlowBuilder>()
         private val ASSIGNMENT_TOKENS =
             TokenSet.create(KtTokens.EQ, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ)
+        private val ANDOR_TOKENS = TokenSet.create(KtTokens.ANDAND, KtTokens.OROR)
         private val unsupported = ConcurrentHashMap.newKeySet<String>()
     }
 }
