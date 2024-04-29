@@ -1529,7 +1529,7 @@ internal fun copyInspectScript(context: BuildContext, distBinDir: Path) {
   }
 }
 
-private fun getLocalizationDir(context: BuildContext): Path? {
+internal fun getLocalizationDir(context: BuildContext): Path? {
   val localizationDir = context.paths.communityHomeDir.parent.resolve("localization")
   if (!Files.exists(localizationDir)) {
     Span.current().addEvent("unable to find 'localization' directory, skip localization bundling")
