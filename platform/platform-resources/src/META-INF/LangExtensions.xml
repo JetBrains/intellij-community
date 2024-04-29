@@ -1682,6 +1682,8 @@
                        key="notification.group.automatic.indent.detection"/>
     <notificationGroup id="Incorrect Formatting" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="inspection.incorrect.formatting.notification.group"/>
+    <notificationGroup id="Sticky Lines" displayType="BALLOON" bundle="messages.ApplicationBundle"
+                       key="settings.editor.sticky.lines.disabled.title" />
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
     <platform.backend.documentation.inlineDocumentationProvider order="last"
