@@ -229,7 +229,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
       pathOnlyHeader.selected = newValue
       headerWithToolbar.selected = newValue
       stickyHeader.selected = newValue
-      updateBorder(updateStickyHeaderBottomBorder = false)
+      updateBorder(updateStickyHeaderBottomBorder = stickyHeaderComponent.roundedBottom)
     }
   }
 
@@ -237,7 +237,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
     pathOnlyHeader.focused = state
     headerWithToolbar.focused = state
     stickyHeader.focused = state
-    updateBorder(updateStickyHeaderBottomBorder = false)
+    updateBorder(updateStickyHeaderBottomBorder = stickyHeaderComponent.roundedBottom)
   }
 
   override fun updateBorder(updateStickyHeaderBottomBorder: Boolean) {
