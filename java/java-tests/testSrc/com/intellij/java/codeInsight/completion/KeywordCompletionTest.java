@@ -270,6 +270,16 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertContainsItems("package");
   }
 
+  public void testPackageKeywordNotInClass() {
+    configureFromFileText("Test.java", """
+      class Test {
+        <caret>
+      }
+      """);
+    complete();
+    assertNotContainItems("package");
+  }
+
   private void doTest() {
     configureByTestName();
     checkResultByTestName();
