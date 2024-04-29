@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -29,7 +29,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +43,10 @@ import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
-import org.gradle.tooling.*;
+import org.gradle.tooling.BuildActionFailureException;
+import org.gradle.tooling.CancellationTokenSource;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -57,9 +63,9 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
-import org.jetbrains.plugins.gradle.service.syncAction.*;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.syncAction.*;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -153,7 +159,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @NotNull DefaultProjectResolverContext resolverContext
   ) {
     final long activityId = resolverContext.getExternalSystemTaskId().getId();
-    ExternalSystemSyncActionsCollector.logSyncStarted(resolverContext.getExternalSystemTaskId().findProject(), activityId);
+    GradleExecutionSettings settings = resolverContext.getSettings();
+    ExternalSystemSyncActionsCollector.logSyncStarted(resolverContext.getExternalSystemTaskId().findProject(), activityId,
+                                                      settings != null && settings.isParallelModelFetch());
 
     Span gradleExecutionSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleExecution")

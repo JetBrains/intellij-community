@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.featureStatistics.fusCollectors.EventsRateThrottle
@@ -31,23 +31,25 @@ enum class Phase { GRADLE_CALL, PROJECT_RESOLVERS, DATA_SERVICES, WORKSPACE_MODE
 object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP = EventLogGroup("build.gradle.import", 8)
+  val GROUP = EventLogGroup("build.gradle.import", 9)
 
   private val activityIdField = EventFields.Long("ide_activity_id")
   private val importPhaseField = EventFields.Enum<Phase>("phase")
 
   val syncStartedEvent = GROUP.registerEvent("gradle.sync.started", activityIdField)
-  val syncFinishedEvent = GROUP.registerEvent("gradle.sync.finished", activityIdField, DurationMs, Boolean("sync_successful"))
+
+  private val isParallelModelFetch = Boolean("parallel_model_fetch")
+  private val isSyncSuccessful = Boolean("sync_successful")
+
+  val syncFinishedEvent = GROUP.registerVarargEvent("gradle.sync.finished", activityIdField, DurationMs,
+                                                    isParallelModelFetch, isSyncSuccessful)
   private val phaseStartedEvent = GROUP.registerEvent("phase.started", activityIdField, importPhaseField)
-  val phaseFinishedEvent = GROUP.registerVarargEvent("phase.finished",
-                                                             activityIdField,
-                                                             importPhaseField,
-                                                             DurationMs,
-                                                             Int("error_count"))
+
 
   private val errorField = EventFields.Class("error")
   private val severityField = EventFields.String("severity", listOf("fatal", "warning"))
   private val errorHashField = Int("error_hash")
+  private val errorCountField = Int("error_count")
   private val tooManyErrorsField = Boolean("too_many_errors")
 
   private val errorEvent = GROUP.registerVarargEvent("error",
@@ -58,31 +60,42 @@ object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
                                                      EventFields.PluginInfo,
                                                      tooManyErrorsField)
 
+  val phaseFinishedEvent = GROUP.registerVarargEvent("phase.finished",
+                                                     activityIdField,
+                                                     importPhaseField,
+                                                     DurationMs,
+                                                     errorCountField)
+
   private val ourErrorsRateThrottle = EventsRateThrottle(100, 5L * 60 * 1000) // 100 errors per 5 minutes
 
+  data class GradleSyncDetails(val timestamp: Long, val parallelModelFetchEnabled: Boolean)
   private const val tsCacheCapasity = 100
-  private val idToStartTS = object: LinkedHashMap<Long, Long>(tsCacheCapasity) {
-    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Long>?): Boolean {
+  private val idToStartTS = object: LinkedHashMap<Long, GradleSyncDetails>(tsCacheCapasity) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, GradleSyncDetails>?): Boolean {
       return size > tsCacheCapasity
     }
   }
 
   @JvmStatic
-  fun logSyncStarted(project: Project?, activityId: Long) {
-    idToStartTS[activityId] = System.currentTimeMillis()
+  fun logSyncStarted(project: Project?, activityId: Long, parallelModelFetchEnabled: Boolean) {
+    idToStartTS[activityId] = GradleSyncDetails(System.currentTimeMillis(), parallelModelFetchEnabled)
     syncStartedEvent.log(project, activityId)
   }
 
   @JvmStatic
   fun logSyncFinished(project: Project?, activityId: Long, success: Boolean) {
     val nowTS = System.currentTimeMillis()
-    val startTS = idToStartTS[activityId]
-    val duration = if (startTS == null) {
-      -1
-    } else {
-      nowTS - startTS
-    }
-    syncFinishedEvent.log(project, activityId, duration, success)
+
+    val (duration, parallelModelFetchEnabled) =
+      idToStartTS[activityId]
+        ?.let { Pair(nowTS - it.timestamp, it.parallelModelFetchEnabled) }
+      ?: Pair(-1L, false)
+
+    syncFinishedEvent.log(project,
+                          activityIdField.with(activityId),
+                          DurationMs.with(duration),
+                          isParallelModelFetch.with(parallelModelFetchEnabled),
+                          isSyncSuccessful.with(success))
   }
 
   @JvmStatic
@@ -92,7 +105,7 @@ object ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   @JvmOverloads
   fun logPhaseFinished(project: Project?, activityId: Long, phase: Phase, durationMs: Long, errorCount: Int = 0) =
     phaseFinishedEvent.log(project, activityIdField.with(activityId), importPhaseField.with(phase), DurationMs.with(durationMs),
-                           EventPair(Int("error_count"), errorCount))
+                           EventPair(errorCountField, errorCount))
 
   @JvmStatic
   fun logError(project: Project?, activityId: Long, throwable: Throwable) {
