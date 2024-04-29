@@ -190,6 +190,9 @@ class ApiIndex {
             ApiFlags(memberSignature.access.access, memberSignature.annotations.isExperimental() || companionAnnotations.isExperimental),
           )
         }
+      if (members.isEmpty() && signature.isNotUsedWhenEmpty) {
+        continue
+      }
       result += ApiClass(
         className,
         flags = ApiFlags(signature.access.access, signature.annotations.isExperimental()),
