@@ -9,7 +9,7 @@ import kotlin.math.sqrt
 
 // Equivalent to splitting by the following regexp: "(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])"
 fun splitIdentifierIntoTokens(identifier: String, lowercase: Boolean = true): String {
-  val result = buildString {
+  val result = buildString(capacity = identifier.length + 10) {
     var isPrevUppercase = false
     var isPrevLetter = false
     for (index in identifier.indices) {
