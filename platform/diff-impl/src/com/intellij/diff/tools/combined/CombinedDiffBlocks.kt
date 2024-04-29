@@ -245,6 +245,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
     val borderColor = CombinedDiffUI.getBlockBorderColor(blockSelected, isFocused)
     stickyHeaderComponent.borderColor = borderColor
     stickyHeaderComponent.bottomBorderColor = if (updateStickyHeaderBottomBorder) borderColor else CombinedDiffUI.EDITOR_BORDER_COLOR
+    stickyHeaderComponent.roundedBottom = updateStickyHeaderBottomBorder
     component.borderColor = borderColor
   }
 

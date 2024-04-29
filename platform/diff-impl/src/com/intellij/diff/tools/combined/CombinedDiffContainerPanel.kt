@@ -14,7 +14,7 @@ import kotlin.properties.Delegates
  * A very special panel that does optimized painting for rounded combined diff panels
  */
 internal class CombinedDiffContainerPanel(
-  layout: LayoutManager?, private val roundedBottom: Boolean
+  layout: LayoutManager?, var roundedBottom: Boolean
 ) : JPanel(layout) {
   private val arcRadius: Int = CombinedDiffUI.BLOCK_ARC
 
