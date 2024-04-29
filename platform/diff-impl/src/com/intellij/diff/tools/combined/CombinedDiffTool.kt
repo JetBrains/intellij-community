@@ -5,7 +5,6 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffTool
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.openapi.diff.DiffBundle
-import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 
 internal interface CombinedDiffTool : DiffTool
 
@@ -13,7 +12,6 @@ internal interface CombinedDiffTool : DiffTool
  * This tool intended only for persistence purpose.
  * Combined diff viewer will be created by the corresponding [CombinedDiffComponentProcessor].
  */
-@InternalIgnoreDependencyViolation
 private class CombinedSideBySideDiffTool : CombinedDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
 
@@ -24,7 +22,6 @@ private class CombinedSideBySideDiffTool : CombinedDiffTool {
  * This tool intended only for persistence purpose.
  * Combined diff viewer will be created by the corresponding [CombinedDiffComponentProcessor].
  */
-@InternalIgnoreDependencyViolation
 internal class CombinedUnifiedDiffTool : CombinedDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
 
