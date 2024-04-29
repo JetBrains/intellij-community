@@ -87,7 +87,10 @@ class KotlinFindClassUsagesHandler(
                     addTask { ReferencesSearch.search(constructor, options.searchScope).forEach(referenceProcessor) }
                     addTask(
                         constructor.buildProcessDelegationCallKotlinConstructorUsagesTask(options.searchScope) { callElement ->
-                            callElement.calleeExpression?.let { referenceProcessor.process(it.mainReference) } != false
+                            callElement.calleeExpression?.let { callee ->
+                                val reference = callee.mainReference
+                                reference == null || referenceProcessor.process(reference)
+                            } != false
                         }
                     )
                 }
