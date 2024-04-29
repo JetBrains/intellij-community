@@ -39,7 +39,7 @@ class MultiLineFileReportGenerator(
     listOf(
       "${(evaluate(CharFScore()) * 100).roundToInt()}%",
       "${(evaluate(EditSimilarity()) * 100).roundToInt()}%",
-      "${(evaluate(TotalLatencyMetric()) / 1000).format()}s"
+      "${formatDouble((evaluate(TotalLatencyMetric()) / 1000))}s"
     ).joinToString("  ", transform = { it.padEnd(4) }) to color()
   }
 

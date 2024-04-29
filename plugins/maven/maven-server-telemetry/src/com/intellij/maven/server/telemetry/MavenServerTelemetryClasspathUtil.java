@@ -6,7 +6,6 @@ import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.exporter.internal.marshal.MarshalerWithSize;
 import io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler;
-import io.opentelemetry.extension.incubator.trace.ExtendedSpan;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.common.Clock;
 import io.opentelemetry.sdk.logs.SdkLoggerProvider;
@@ -19,7 +18,6 @@ import java.util.Collection;
 public final class MavenServerTelemetryClasspathUtil {
   public static final Collection<Class<?>> TELEMETRY_CLASSES = Arrays.asList(
     SpanExporter.class,
-    ExtendedSpan.class,
     TextMapPropagator.class,
     OpenTelemetry.class,
     OpenTelemetrySdk.class,

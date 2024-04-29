@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("FunctionName")
 
 package com.intellij.util.io
@@ -7,11 +7,11 @@ import com.intellij.util.io.DigestUtil.updateContentHash
 import java.io.IOException
 import java.io.InputStream
 import java.math.BigInteger
+import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.Provider
 import java.security.SecureRandom
-import kotlin.io.path.inputStream
 
 object DigestUtil {
   @JvmStatic
@@ -45,10 +45,13 @@ object DigestUtil {
   fun sha1Hex(input: ByteArray): String = hashToHexString(input, sha1())
 
   @JvmStatic
+  fun sha1Hex(input: String): String = hashToHexString(input, sha1())
+
+  @JvmStatic
   @JvmOverloads
   fun updateContentHash(digest: MessageDigest, file: Path, buffer: ByteArray = ByteArray(512 * 1024)) {
     try {
-      file.inputStream().use {
+      Files.newInputStream(file).use {
         updateContentHash(digest, it, buffer)
       }
     }
@@ -79,7 +82,7 @@ fun sha256Hex(file: Path): String {
   try {
     val digest = cloneDigest(sha2_256)
     val buffer = ByteArray(512 * 1024)
-    file.inputStream().use {
+    Files.newInputStream(file).use {
       updateContentHash(digest, it, buffer)
     }
     return bytesToHex(digest.digest())

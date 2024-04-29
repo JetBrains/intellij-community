@@ -5,27 +5,19 @@
         <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.26.1/commons-compress-1.26.1.jar">
           <sha256sum>27bb5d40f37c3bb7205b4a0540247df057715e9f6cbbd97d626ab8b50318bb04</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.16.1/commons-codec-1.16.1.jar">
-          <sha256sum>ec87bfb55f22cbd1b21e2190eeda28b2b312ed2a431ee49fbdcc01812d04a5e4</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/commons-io/commons-io/2.15.1/commons-io-2.15.1.jar">
-          <sha256sum>a58af12ee1b68cfd2ebb0c27caef164f084381a00ec81a48cc275fd7ea54e154</sha256sum>
-        </artifact>
       </verification>
       <exclude>
+        <dependency maven-id="commons-codec:commons-codec" />
+        <dependency maven-id="commons-io:commons-io" />
         <dependency maven-id="org.apache.commons:commons-lang3" />
       </exclude>
     </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.26.1/commons-compress-1.26.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.16.1/commons-codec-1.16.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.15.1/commons-io-2.15.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.26.1/commons-compress-1.26.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/commons-codec/commons-codec/1.16.1/commons-codec-1.16.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.15.1/commons-io-2.15.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

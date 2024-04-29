@@ -104,7 +104,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
               span(statsClass) {
                 button(classes = "stats-value") {
                   onClick = "invertRows(event, '$statsClass')"
-                  +((it.value * 100).format() + "%")
+                  +(formatDouble((it.value * 100)) + "%")
                 }
               }
             }
