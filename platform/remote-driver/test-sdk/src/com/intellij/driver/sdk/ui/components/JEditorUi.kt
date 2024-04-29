@@ -14,6 +14,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
 import java.awt.Point
+import java.awt.event.KeyEvent
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
@@ -100,6 +101,13 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     if (it.size < line) "" else it[line - 1]
   }
 
+  fun hide() {
+    this.click()
+    keyboard {
+      pressing(KeyEvent.VK_SHIFT) { key(KeyEvent.VK_ESCAPE) }
+    }
+  }
+
   fun <T> interact(block: Editor.() -> T): T {
     return driver.withContext(OnDispatcher.EDT) {
       block.invoke(editor)
@@ -157,22 +165,6 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 
 class InlayHint(val offset: Int, val text: String)
 
-//driver.cast(element.getRenderer(), DeclarativeInlayRenderer::class).getPresentationList().getEntries()[0].getText()
-
-
-//fun List<InlayHint>.hasHint(text: String): Boolean {
-//  return this.find { it.text.equals(text) } != null
-//}
-
-//fun List<InlayHint>.getHint(text: String): InlayHint {
-//  val foundHint = this.find { it.text.equals(text) }
-//  if (foundHint == null) {
-//    throw NoSuchElementException("cannot find hint: $text in ${this.joinToString(separator = "\n") { it.text }}")
-//  }
-//  return foundHint
-//}
-
-//driver.cast(element.getRenderer(), DeclarativeInlayRenderer::class).getPresentationList().getEntries()[0].getText()
 fun List<InlayHint>.getHint(offset: Int): InlayHint {
   val foundHint = this.find { it.offset.equals(offset) }
   if (foundHint == null) {
