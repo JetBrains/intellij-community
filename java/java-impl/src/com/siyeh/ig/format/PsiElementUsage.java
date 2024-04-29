@@ -8,10 +8,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class DefUsage implements PsiUsage {
+/**
+ * A class, which represents a PsiUsage, based on concrete PsiElement.
+ * @see PsiUsage
+ */
+public class PsiElementUsage implements PsiUsage {
   private final @NotNull PsiElement myArg;
 
-  public DefUsage(@NotNull PsiElement arg) {
+  public PsiElementUsage(@NotNull PsiElement arg) {
     myArg = arg;
   }
 

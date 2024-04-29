@@ -36,9 +36,15 @@ fun getLogArgumentReferences(uExpression: UExpression): List<PsiSymbolReference>
     }
   }.flatten()
 
-  return getAlignedPlaceholderCount(loggerReferenceList, context)
+  return getAdjustedPlaceholderList(loggerReferenceList, context)
 }
 
+/**
+ * Retrieves the context of a placeholder in a logger statement.
+ *
+ * @param uExpression The UExpression representing the placeholder.
+ * @return The PlaceholderContext object if the placeholder context is found, otherwise null.
+ */
 internal fun getContext(uExpression: UExpression): PlaceholderContext? {
   val uCallExpression = uExpression.getParentOfType<UCallExpression>() ?: return null
   val logMethod = detectLoggerMethod(uCallExpression) ?: return null
@@ -48,7 +54,15 @@ internal fun getContext(uExpression: UExpression): PlaceholderContext? {
   return context
 }
 
-internal fun <T> getAlignedPlaceholderCount(placeholderList: List<T>, context: PlaceholderContext): List<T>? {
+/**
+ * Retrieves a list of placeholders, for which there is a resolve argument exists.
+ * This list might be different from initial input, because, for example, the number of arguments is less,
+ * than the number of placeholders or last argument could be an exception.
+ * @param placeholderList The list of placeholders. It might be a text ranges or
+ * @param context The placeholder context.
+ * @return The adjusted list of placeholders, or null if the logger type is not supported.
+ */
+internal fun <T> getAdjustedPlaceholderList(placeholderList: List<T>, context: PlaceholderContext): List<T>? {
   val placeholderParametersSize = context.placeholderParameters.size
   return when (context.loggerType) {
     SLF4J -> {
@@ -69,6 +83,14 @@ internal fun <T> getAlignedPlaceholderCount(placeholderList: List<T>, context: P
   }
 }
 
+/**
+ * Retrieves a list of placeholder ranges from the given `context`.
+ *
+ * @param context The [PlaceholderContext] object containing the necessary data for retrieving placeholder ranges.
+ * @return A list of PlaceholderRanges or null if the logStringArgument is null or the number of placeholders is not exact.
+ * @see PlaceholderContext
+ * @see PlaceholderRanges
+ */
 internal fun getPlaceholderRanges(context: PlaceholderContext): List<PlaceholderRanges>? {
   val logStringText = context.logStringArgument.sourcePsi?.text ?: return null
   val type = if (isKotlinMultilineString(context.logStringArgument, logStringText)) {
