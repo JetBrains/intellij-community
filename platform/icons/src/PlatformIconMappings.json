@@ -125,7 +125,7 @@
       "cwmScreenInBrowserOn.svg": "codeWithMe/cwmScreenInBrowserOn.svg",
       "cwmScreenOff.svg": "codeWithMe/cwmScreenOff.svg",
       "cwmScreenOn.svg": "codeWithMe/cwmScreenOn.svg",
-      "cwmUsers.svg": "users.svg",
+      "cwmUsers.svg": "codeWithMe/users.svg",
       "cwmVerified.svg": "codeWithMe/cwmVerified.svg"
     },
     "debugger": {
