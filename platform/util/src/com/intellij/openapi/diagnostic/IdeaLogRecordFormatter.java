@@ -2,17 +2,21 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 public class IdeaLogRecordFormatter extends Formatter {
-  private static final String FORMAT_WITH_DATE_TIME = "%1$tF %1$tT,%1$tL [%2$7s] %3$6s - %4$s - %5$s%6$s";
-  private static final String FORMAT_WITHOUT_DATE_TIME = "[%2$7s] %3$6s - %4$s - %5$s%6$s";
   private static final String LINE_SEPARATOR = System.lineSeparator();
+  private static final DateTimeFormatter timestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   private final long logCreation;
   private final boolean withDateTime;
@@ -27,7 +31,7 @@ public class IdeaLogRecordFormatter extends Formatter {
 
   public IdeaLogRecordFormatter(boolean withDateTime, @Nullable IdeaLogRecordFormatter copyFrom) {
     this.withDateTime = withDateTime;
-    logCreation = copyFrom != null ? copyFrom.getStartedMillis() : System.currentTimeMillis();
+    logCreation = copyFrom == null ? System.currentTimeMillis() : copyFrom.getStartedMillis();
   }
 
   protected long getStartedMillis() {
@@ -41,20 +45,42 @@ public class IdeaLogRecordFormatter extends Formatter {
       loggerName = smartAbbreviate(loggerName);
     }
     long startedMillis = getStartedMillis();
-    String relativeToStartedMillis = (startedMillis == 0) ? "-------" : String.valueOf(record.getMillis() - startedMillis);
-    String result = String.format(
-      withDateTime ? FORMAT_WITH_DATE_TIME : FORMAT_WITHOUT_DATE_TIME,
-      record.getMillis(),
-      relativeToStartedMillis,
-      LogLevel.getPrettyLevelName(record.getLevel()),
-      loggerName,
-      formatMessage(record),
-      LINE_SEPARATOR
-    );
-    if (record.getThrown() != null) {
-      return result + formatThrowable(record.getThrown());
+    long recordMillis = record.getMillis();
+    LocalDateTime date = LocalDateTime.ofInstant(Instant.ofEpochMilli(recordMillis), ZoneId.systemDefault());
+    String relativeToStartedMillis = (startedMillis == 0) ? "-------" : String.valueOf(recordMillis - startedMillis);
+    String prettyLevelName = LogLevel.getPrettyLevelName(record.getLevel());
+    StringBuilder sb = new StringBuilder();
+    if (withDateTime) {
+      timestampFormat.formatTo(date, sb);
+      sb.append(',');
+      pad(Long.toString(recordMillis % 1000), sb, 3, '0');
+      pad(relativeToStartedMillis, sb, 7, '0');
+      sb.append(' ');
     }
-    return result;
+
+    sb.append("[");
+    pad(relativeToStartedMillis, sb, 7, ' ');
+    sb.append("] ");
+
+    pad(prettyLevelName, sb, 6, ' ');
+    sb.append(" - ")
+      .append(loggerName)
+      .append(" - ")
+      .append(formatMessage(record))
+      .append(LINE_SEPARATOR);
+
+    if (record.getThrown() != null) {
+      appendThrowable(record.getThrown(), sb);
+    }
+    return sb.toString();
+  }
+
+  private static void pad(String s, StringBuilder sb, int width, char pad) {
+    int paddingNeeded = width - s.length();
+    for (int i = 0; i < paddingNeeded; i++) {
+      sb.append(pad);
+    }
+    sb.append(s);
   }
 
   private static String smartAbbreviate(String loggerName) {
@@ -80,11 +106,16 @@ public class IdeaLogRecordFormatter extends Formatter {
     }
   }
 
-  public static String formatThrowable(Throwable thrown) {
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    thrown.printStackTrace(pw);
-    String[] lines = StringUtil.splitByLines(sw.toString());
+  public static @NotNull String formatThrowable(@NotNull Throwable thrown) {
+    StringBuilder sb = new StringBuilder();
+    appendThrowable(thrown, sb);
+    return sb.toString();
+  }
+
+  private static void appendThrowable(@NotNull Throwable thrown, @NotNull StringBuilder sb) {
+    StringWriter stringWriter = new StringWriter();
+    thrown.printStackTrace(new PrintWriter(stringWriter));
+    String[] lines = StringUtil.splitByLines(stringWriter.toString());
     int maxStackSize = 1024;
     int maxExtraSize = 256;
     if (lines.length > maxStackSize + maxExtraSize) {
@@ -92,8 +123,15 @@ public class IdeaLogRecordFormatter extends Formatter {
       System.arraycopy(lines, 0, res, 0, maxStackSize);
       res[maxStackSize] = "\t...";
       System.arraycopy(lines, lines.length - maxExtraSize, res, maxStackSize + 1, maxExtraSize);
-      return StringUtil.join(res, LINE_SEPARATOR);
+      for (int i = 0; i < res.length; i++) {
+        if (i > 0) {
+          sb.append(LINE_SEPARATOR);
+        }
+        sb.append(res[i]);
+      }
     }
-    return sw.toString();
+    else {
+      sb.append(stringWriter.getBuffer());
+    }
   }
 }
