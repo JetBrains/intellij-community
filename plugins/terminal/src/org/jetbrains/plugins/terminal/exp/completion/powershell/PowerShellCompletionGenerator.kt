@@ -1,8 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion.powershell
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.block.completion.spec.isPowerShell
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -12,38 +13,28 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
-import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
-import org.jetbrains.plugins.terminal.exp.completion.DataProviderCommand
-import org.jetbrains.plugins.terminal.util.ShellType
 
-internal class GetShellCompletionsCommand(command: String, caretPosition: Int) : DataProviderCommand<CompletionResult?> {
-  override val functionName: String = "__JetBrainsIntellijGetCompletions"
-  override val parameters: List<String> = listOf(command, caretPosition.toString())
-  override val defaultResult: CompletionResult? = null
+internal fun powerShellCompletionGenerator(command: String, caretOffset: Int): ShellRuntimeDataGenerator<CompletionResult> {
+  return ShellRuntimeDataGenerator { context ->
+    assert(context.shellName.isPowerShell())
 
-  override fun isAvailable(session: BlockTerminalSession): Boolean {
-    return session.shellIntegration.shellType == ShellType.POWERSHELL
-  }
-
-  override fun parseResult(result: String): CompletionResult? {
-    if (result.isEmpty()) {
-      return null
+    val commandResult = context.runShellCommand("""__JetBrainsIntellijGetCompletions "$command" $caretOffset""")
+    if (commandResult.exitCode != 0) {
+      logger<PowerShellCompletionContributor>().error("PowerShell completion generator for command '$command' at offset $caretOffset failed with exit code ${commandResult.exitCode}, output: ${commandResult.output}")
+      return@ShellRuntimeDataGenerator emptyCompletionResult()
     }
     val json = Json { ignoreUnknownKeys = true }
-    val completionResult = try {
-      json.decodeFromString<CompletionResult>(result)
+    try {
+      json.decodeFromString<CompletionResult>(commandResult.output)
     }
     catch (t: Throwable) {
-      LOG.error("Failed to parse completions: $result", t)
-      return null
+      logger<PowerShellCompletionContributor>().error("Failed to parse completions for command '$command' at offset $caretOffset: $commandResult", t)
+      emptyCompletionResult()
     }
-    return completionResult
-  }
-
-  companion object {
-    private val LOG: Logger = logger<GetShellCompletionsCommand>()
   }
 }
+
+private fun emptyCompletionResult(): CompletionResult = CompletionResult(0, 0, emptyList())
 
 // https://learn.microsoft.com/en-us/dotnet/api/system.management.automation.commandcompletion
 @Serializable
