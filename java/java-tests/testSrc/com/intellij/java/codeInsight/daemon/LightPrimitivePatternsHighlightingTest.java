@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public class LightPrimitivePatternsHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingPatterns";
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingPatternsWithPrimitives";
   }
 
   @NotNull
@@ -30,6 +30,20 @@ public class LightPrimitivePatternsHighlightingTest extends LightJavaCodeInsight
   public void testSimplePrimitiveInstanceOfPattern() {
     doTest();
   }
+
+  public void testSwitchConstantPrimitiveAllowed() { doTest(); }
+
+  public void testSwitchConstantPrimitiveSimilar() { doTest(); }
+
+  public void testSwitchPrimitivePatternList() { doTest(); }
+
+  public void testSwitchPrimitivePatternApplicable() { doTest(); }
+
+  public void testSwitchPrimitivePatternDominated() { doTest(); }
+
+  public void testSwitchPrimitiveCompleteness() { doTest(); }
+
+  public void testSwitchRecordPrimitive() { doTest(); }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");

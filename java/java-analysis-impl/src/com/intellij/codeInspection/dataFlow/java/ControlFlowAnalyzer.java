@@ -1215,6 +1215,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                          @Nullable DfaAnchor instanceofAnchor,
                          @NotNull PsiType checkType,
                          @Nullable PsiType patternType) {
+    checkType = TypeConversionUtil.erasure(checkType);
     if (patternType == null ||
         (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context) &&
         (checkType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType)) ||

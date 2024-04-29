@@ -209,7 +209,7 @@ public final class HighlightUtil {
     boolean operandIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(operandType);
     boolean checkIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(checkType);
     boolean convertible = TypeConversionUtil.areTypesConvertible(operandType, checkType);
-    boolean primitiveInPatternsEnabled = JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(PsiUtil.getLanguageLevel(expression));
+    boolean primitiveInPatternsEnabled = PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, expression);
     if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) || !convertible) {
       String message = JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
         .formatType(checkType));

@@ -205,34 +205,39 @@ public final class JavaPsiPatternUtil {
   }
 
   @Contract("null,_,_ -> false")
-  public static boolean isUnconditionalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean forDomination) {
+  public static boolean isUnconditionalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean forDominationOfDeconstructionPatternType) {
     PsiPrimaryPattern unconditionalPattern = findUnconditionalPattern(pattern);
     if (unconditionalPattern == null) return false;
     PsiType patternType = getPatternType(unconditionalPattern);
     if (unconditionalPattern instanceof PsiDeconstructionPattern) {
-      return forDomination && dominates(patternType, type);
+      return forDominationOfDeconstructionPatternType && dominates(patternType, type);
     }
     else if ((unconditionalPattern instanceof PsiTypeTestPattern ||
-              unconditionalPattern instanceof PsiUnnamedPattern) &&
-             JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(PsiUtil.getLanguageLevel(pattern))) {
-      if (type instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) {
-        if (type.equals(patternType)) return true;
-        if (type instanceof PsiPrimitiveType && patternType instanceof PsiPrimitiveType) {
-          return isExactPrimitiveWideningConversion(type, patternType);
-        }
-        else if (!(type instanceof PsiPrimitiveType)) {
-          return false;
-        }
-        else {
-          PsiClassType boxedType = ((PsiPrimitiveType)type).getBoxedType(pattern);
-          return dominates(boxedType, type);
-        }
-      }
-      else {
-        return dominates(patternType, type);
-      }
+              unconditionalPattern instanceof PsiUnnamedPattern)) {
+      return isUnconditionallyExactForType(pattern, type, patternType);
     }
     return false;
+  }
+
+  public static boolean isUnconditionallyExactForType(@NotNull PsiElement context, @NotNull PsiType type, PsiType patternType) {
+    type = TypeConversionUtil.erasure(type);
+    if ((type instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
+        PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context)) {
+      if (type.equals(patternType)) return true;
+      if (type instanceof PsiPrimitiveType && patternType instanceof PsiPrimitiveType) {
+        return isExactPrimitiveWideningConversion(type, patternType);
+      }
+      else if (!(type instanceof PsiPrimitiveType)) {
+        return false;
+      }
+      else {
+        PsiClassType boxedType = ((PsiPrimitiveType)type).getBoxedType(context);
+        return dominates(patternType, boxedType);
+      }
+    }
+    else {
+      return dominates(patternType, type);
+    }
   }
 
   /**
@@ -336,7 +341,7 @@ public final class JavaPsiPatternUtil {
     return true;
   }
 
-  public static boolean dominates(@Nullable PsiType who, @Nullable PsiType overWhom) {
+  private static boolean dominates(@Nullable PsiType who, @Nullable PsiType overWhom) {
     if (who == null || overWhom == null) return false;
     if (who.getCanonicalText().equals(overWhom.getCanonicalText())) return true;
     overWhom = TypeConversionUtil.erasure(overWhom);
