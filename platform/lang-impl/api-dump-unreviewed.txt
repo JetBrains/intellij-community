@@ -17325,6 +17325,7 @@ c:com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode
 - getName():java.lang.String
 - getNavigateActionText(Z):java.lang.String
 - getTestPresentation():java.lang.String
+- isAlwaysShowPlus():Z
 - navigate(Z):V
 - update(com.intellij.ide.projectView.PresentationData):V
 f:com.intellij.ide.projectView.impl.nodes.NestingTreeNode
