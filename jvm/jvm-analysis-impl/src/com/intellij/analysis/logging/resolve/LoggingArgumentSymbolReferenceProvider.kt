@@ -72,15 +72,11 @@ internal fun <T> getAlignedPlaceholderCount(placeholderList: List<T>, context: P
 internal fun getPlaceholderRanges(context: PlaceholderContext): List<PlaceholderRanges>? {
   val logStringText = context.logStringArgument.sourcePsi?.text ?: return null
   val type = if (isKotlinMultilineString(context.logStringArgument, logStringText)) {
-    KOTLIN_MULTILINE_RAW_STRING
+    PlaceholderEscapeSymbolStrategy.KOTLIN_RAW_MULTILINE_STRING
   }
-  else if (isKotlinString(context.logStringArgument)) {
-    KOTLIN_RAW_STRING
+  else {
+    PlaceholderEscapeSymbolStrategy.RAW_STRING
   }
-  else if (isJavaString(context.logStringArgument)) {
-    JAVA_RAW_STRING
-  }
-  else return null
 
   val partHolders = listOf(
     LoggingStringPartEvaluator.PartHolder(
@@ -96,10 +92,6 @@ internal fun getPlaceholderRanges(context: PlaceholderContext): List<Placeholder
 
 private fun isKotlinString(logString: UExpression): Boolean {
   return logString is UPolyadicExpression
-}
-
-private fun isJavaString(logString: UExpression): Boolean {
-  return logString is ULiteralExpression
 }
 
 private fun isKotlinMultilineString(logString: UExpression, text: String): Boolean {
