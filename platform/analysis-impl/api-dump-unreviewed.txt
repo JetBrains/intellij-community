@@ -842,6 +842,7 @@ a:com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass
 - f:doApplyInformationToEditor():V
 - f:doCollectInformation(com.intellij.openapi.progress.ProgressIndicator):V
 - p:getEditor():com.intellij.openapi.editor.Editor
+- p:getHighlightingSession():com.intellij.codeInsight.daemon.impl.HighlightingSession
 - p:getPresentableName():java.lang.String
 - getProgress():D
 - isFinished():Z

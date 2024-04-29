@@ -60,7 +60,6 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   // toolId -> suppressed elements (for which tool.isSuppressedFor(element) == true)
   private final Map<String, Set<PsiElement>> mySuppressedElements = new ConcurrentHashMap<>();
   private final boolean myInspectInjectedPsi;
-  private final HighlightingSessionImpl myHighlightingSession;
 
   LocalInspectionsPass(@NotNull PsiFile file,
                        @NotNull Document document,
@@ -82,8 +81,6 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
     myProfileWrapper = custom == null ? new InspectionProfileWrapper(profileToUse) : custom.apply(profileToUse);
     assert myProfileWrapper != null;
     myInspectInjectedPsi = inspectInjectedPsi;
-
-    myHighlightingSession = (HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file);
   }
 
   private @NotNull PsiFile getFile() {
@@ -121,7 +118,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
           }
         }
         myHighlightInfoUpdater.psiElementVisited(shortName, visitingPsiElement, ContainerUtil.notNullize(result), getDocument(), holder.getFile(),
-                                                 myProject, myHighlightingSession);
+                                                 myProject, getHighlightingSession());
         if (result != null) {
           fileInfos.addAll(result);
         }
@@ -141,7 +138,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
         new InspectionRunner(getFile(), myRestrictRange, myPriorityRange, myInspectInjectedPsi, true, progress, myIgnoreSuppressed,
                              myProfileWrapper, mySuppressedElements);
       resultContexts = runner.inspect(toolWrappers,
-                                      myHighlightingSession.getMinimumSeverity(),
+                                      ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity(),
                                       true,
                                       applyIncrementallyCallback,
                                       contextFinishedCallback,
@@ -150,8 +147,8 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
       injectedFragments = runner.getInjectedFragments();
     }
     Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-    HighlightInfoUpdaterImpl.removeHighlightsForObsoleteTools(getFile(), getDocument(), injectedFragments, pairs, myHighlightingSession);
-    HighlightInfoUpdaterImpl.removeWarningsInsideErrors(injectedFragments, getDocument(), myHighlightingSession);  // must be the last
+    HighlightInfoUpdaterImpl.removeHighlightsForObsoleteTools(getFile(), getDocument(), injectedFragments, pairs, getHighlightingSession());
+    HighlightInfoUpdaterImpl.removeWarningsInsideErrors(injectedFragments, getDocument(), getHighlightingSession());  // must be the last
   }
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes(){
@@ -239,7 +236,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
 
   @Override
   protected void applyInformationWithProgress() {
-    myHighlightingSession.applyFileLevelHighlightsRequests();
+    ((HighlightingSessionImpl)getHighlightingSession()).applyFileLevelHighlightsRequests();
   }
 
   private void createHighlightsForDescriptor(@NotNull Set<? super Pair<TextRange, String>> emptyActionRegistered,

@@ -420,9 +420,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
   // TODO very dirty method which throws all incrementality away, but we'd need to rewrite too many inspections to get rid of it
   static void removeWarningsInsideErrors(@NotNull List<? extends PsiFile> injectedFragments,
                                          @NotNull Document hostDocument,
-                                         @NotNull HighlightingSessionImpl session) {
+                                         @NotNull HighlightingSession highlightingSession) {
     HighlightersRecycler recycler = new HighlightersRecycler();
-    for (PsiFile psiFile: ContainerUtil.append(injectedFragments, session.getPsiFile())) {
+    for (PsiFile psiFile: ContainerUtil.append(injectedFragments, highlightingSession.getPsiFile())) {
       Map<Object, ToolHighlights> map = getData(psiFile, hostDocument);
       if (map.isEmpty()) {
         continue;
@@ -434,7 +434,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         .sorted(UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS)
         .toList();
       SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(sorted, processor);
-      SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(session.getProject());
+      SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(highlightingSession.getProject());
       SweepProcessor.sweep(generator, (__, info, atStart, overlappingIntervals) -> {
         if (!atStart) {
           return true;
@@ -474,7 +474,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     if (LOG.isDebugEnabled() && !warns.isEmpty()) {
       LOG.debug("removeWarningsInsideErrors: found " + warns);
     }
-    UpdateHighlightersUtil.incinerateObsoleteHighlighters(recycler, session);
+    UpdateHighlightersUtil.incinerateObsoleteHighlighters(recycler, highlightingSession);
   }
 
   /**

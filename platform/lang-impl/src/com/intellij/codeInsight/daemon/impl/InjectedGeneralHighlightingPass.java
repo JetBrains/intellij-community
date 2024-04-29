@@ -92,7 +92,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, injected,
                             (injectedPsi, places) -> {
       runAnnotatorsAndVisitorsOnInjectedPsi(injectedLanguageManager, injectedPsi, places, fragmentKey, (toolId, psiElement, infos) -> {
-        myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, infos, getDocument(), injectedPsi, myProject, myHighlightingSession);
+        myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, infos, getDocument(), injectedPsi, myProject, getHighlightingSession());
         if (!infos.isEmpty()) {
           synchronized (myHighlights) {
             myHighlights.addAll(infos);
@@ -103,7 +103,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
 
     synchronized (myHighlights) {
       // injections were re-calculated, remove highlights stuck in highlightInfoUpdater from the previous invalid injection fragments
-      myHighlightInfoUpdater.removeInfosForInjectedFilesOtherThan(myFile, myRestrictRange, myHighlightingSession, injected);
+      myHighlightInfoUpdater.removeInfosForInjectedFilesOtherThan(myFile, myRestrictRange, getHighlightingSession(), injected);
     }
   }
 
@@ -190,7 +190,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     highlightInjectedBackground(injectedPsi, places, attributesKey, resultSink);
 
     AnnotationSession session = AnnotationSessionImpl.create(injectedPsi);
-    GeneralHighlightingPass.setupAnnotationSession(session, myFile, myPriorityRange);
+    GeneralHighlightingPass.setupAnnotationSession(session, myPriorityRange, getHighlightingSession());
 
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(injectedPsi, false, session) : null;
     Divider.divideInsideAndOutsideAllRoots(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), GeneralHighlightingPass.SHOULD_HIGHLIGHT_FILTER, dividedElements -> {

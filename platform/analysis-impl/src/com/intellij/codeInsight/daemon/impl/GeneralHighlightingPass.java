@@ -173,14 +173,14 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
       for (Divider.DividedElements notVisitable : notVisitableElements) {
         for (PsiElement element : ContainerUtil.concat(notVisitable.inside(), notVisitable.outside())) {
           for (HighlightVisitor visitor : filteredVisitors) {
-            myHighlightInfoUpdater.psiElementVisited(visitor.getClass(), element, List.of(), getDocument(), getFile(), myProject, myHighlightingSession);
+            myHighlightInfoUpdater.psiElementVisited(visitor.getClass(), element, List.of(), getDocument(), getFile(), myProject, getHighlightingSession());
           }
         }
       }
 
       boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
                                           forceHighlightParents, (toolId, psiElement, newInfos) -> {
-          myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, myHighlightingSession);
+          myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, getHighlightingSession());
           myHighlights.addAll(newInfos);
           if (psiElement instanceof PsiErrorElement) {
             myHasErrorElement = true;
@@ -209,7 +209,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
 
   @Override
   protected void applyInformationWithProgress() {
-    ((HighlightingSessionImpl)myHighlightingSession).applyFileLevelHighlightsRequests();
+    ((HighlightingSessionImpl)getHighlightingSession()).applyFileLevelHighlightsRequests();
     getFile().putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
   }
 
@@ -231,7 +231,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
     BooleanSupplier runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
                                                                           myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
-    setupAnnotationSession(session, getFile(), myPriorityRange);
+    setupAnnotationSession(session, myPriorityRange, getHighlightingSession());
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(getFile(), false, session) : null;
     return annotatorRunner == null ? runnable.getAsBoolean() : annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
   }
@@ -298,14 +298,13 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
         return added;
       }
     };
-    setupAnnotationSession(holder.getAnnotationSession(), file, myPriorityRange);
+    setupAnnotationSession(holder.getAnnotationSession(), myPriorityRange, getHighlightingSession());
     return holder;
   }
 
   static void setupAnnotationSession(@NotNull AnnotationSession annotationSession,
-                                     @NotNull PsiFile psiFile,
-                                     @NotNull ProperTextRange priorityRange) {
-    HighlightSeverity minimumSeverity = ((HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(psiFile)).getMinimumSeverity();
+                                     @NotNull ProperTextRange priorityRange, @NotNull HighlightingSession highlightingSession) {
+    HighlightSeverity minimumSeverity = ((HighlightingSessionImpl)highlightingSession).getMinimumSeverity();
     ((AnnotationSessionImpl)annotationSession).setMinimumSeverity(minimumSeverity);
     ((AnnotationSessionImpl)annotationSession).setVR(priorityRange);
   }

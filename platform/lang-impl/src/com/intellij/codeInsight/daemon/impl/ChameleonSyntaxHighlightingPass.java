@@ -46,8 +46,7 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       TextRange restrict = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL);
       if (restrict == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, editor.getDocument());
       ProperTextRange priority = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
-      return new ChameleonSyntaxHighlightingPass(file, editor.getDocument(), ProperTextRange.create(restrict),
-                                                 priority, editor);
+      return new ChameleonSyntaxHighlightingPass(file, editor.getDocument(), ProperTextRange.create(restrict), priority, editor);
     }
 
     @Override
@@ -93,14 +92,14 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       inside.add(holderInside.get(i));
     }
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(), myProject, true);
-    BackgroundUpdateHighlightersUtil.setHighlightersInRange(myPriorityRange, inside, markupModel, getId(), myHighlightingSession);
+    BackgroundUpdateHighlightersUtil.setHighlightersInRange(myPriorityRange, inside, markupModel, getId(), getHighlightingSession());
     for (PsiElement e : lazyOutside) {
       collectHighlights(e, holderInside, holderOutside, myPriorityRange);
     }
     for (int i=0; i<holderOutside.size();i++) {
       outside.add(holderOutside.get(i));
     }
-    BackgroundUpdateHighlightersUtil.setHighlightersOutsideRange(outside, myRestrictRange, myPriorityRange, getId(), myHighlightingSession);
+    BackgroundUpdateHighlightersUtil.setHighlightersOutsideRange(outside, myRestrictRange, myPriorityRange, getId(), getHighlightingSession());
     myHighlights.addAll(inside);
     myHighlights.addAll(outside);
     setProgressLimit(1);
