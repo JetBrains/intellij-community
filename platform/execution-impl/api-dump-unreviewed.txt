@@ -1424,8 +1424,8 @@ f:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
 - <init>():V
 - getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 - s:logProcessFinished(com.intellij.internal.statistic.StructuredIdeActivity,com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationFinishType):V
-- s:trigger(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration,Z,Z):com.intellij.internal.statistic.StructuredIdeActivity
-- s:triggerWithParent(com.intellij.internal.statistic.StructuredIdeActivity,com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration,Z,Z):com.intellij.internal.statistic.StructuredIdeActivity
+- s:trigger(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration,Z,Z,Z):com.intellij.internal.statistic.StructuredIdeActivity
+- s:triggerWithParent(com.intellij.internal.statistic.StructuredIdeActivity,com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration,Z,Z,Z):com.intellij.internal.statistic.StructuredIdeActivity
 f:com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator
 - com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 - com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule

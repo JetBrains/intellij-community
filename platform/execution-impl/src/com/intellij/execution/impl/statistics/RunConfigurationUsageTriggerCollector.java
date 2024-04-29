@@ -4,7 +4,6 @@ package com.intellij.execution.impl.statistics;
 import com.intellij.execution.EnvFilesOptions;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.target.*;
@@ -33,13 +32,15 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 74);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 75);
+
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
                                                                                            RunConfigurationExecutorUtilValidator.class);
   private static final BooleanEventField IS_RERUN = EventFields.Boolean("is_rerun");
   private static final BooleanEventField IS_RUNNING_CURRENT_FILE = EventFields.Boolean("is_running_current_file");
+  private static final BooleanEventField IS_DUMB_MODE = EventFields.Boolean("dumb");
 
   /**
    * The type of the target the run configuration is being executed with. {@code null} stands for the local machine target.
@@ -54,18 +55,23 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
     EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
-  private static final IdeActivityDefinition ACTIVITY_GROUP = GROUP.registerIdeActivity(null,
-                                                                                        new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
-                                                                                          IS_RERUN,
-                                                                                          IS_RUNNING_CURRENT_FILE,
-                                                                                          TARGET,
-                                                                                          RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
-                                                                                          RunConfigurationTypeUsagesCollector.ID_FIELD,
-                                                                                          EventFields.PluginInfo,
-                                                                                          ENV_FILES_COUNT},
-                                                                                        new EventField<?>[]{FINISH_TYPE},
-                                                                                        null,
-                                                                                        true);
+  private static final IdeActivityDefinition ACTIVITY_GROUP = GROUP.registerIdeActivity(
+    null,
+    new EventField<?>[]{
+      ADDITIONAL_FIELD,
+      EXECUTOR,
+      IS_RERUN,
+      IS_RUNNING_CURRENT_FILE,
+      TARGET,
+      RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
+      RunConfigurationTypeUsagesCollector.ID_FIELD,
+      EventFields.PluginInfo,
+      ENV_FILES_COUNT,
+      IS_DUMB_MODE
+    },
+    new EventField<?>[]{FINISH_TYPE},
+    null,
+    true);
 
   public static final VarargEventId UI_SHOWN_STAGE = ACTIVITY_GROUP.registerStage("ui.shown");
 
@@ -79,10 +85,11 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                        @NotNull Executor executor,
                                                        @Nullable RunConfiguration runConfiguration,
                                                        boolean isRerun,
-                                                       boolean isRunningCurrentFile) {
+                                                       boolean isRunningCurrentFile,
+                                                       boolean isDumb) {
     return ACTIVITY_GROUP
       .startedAsync(project, () -> ReadAction.nonBlocking(
-          () -> buildContext(project, factory, executor, runConfiguration, isRerun, isRunningCurrentFile)
+          () -> buildContext(project, factory, executor, runConfiguration, isRerun, isRunningCurrentFile, isDumb)
         )
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance()));
@@ -94,10 +101,11 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                                  @NotNull Executor executor,
                                                                  @Nullable RunConfiguration runConfiguration,
                                                                  boolean isRerun,
-                                                                 boolean isRunningCurrentFile) {
+                                                                 boolean isRunningCurrentFile,
+                                                                 boolean isDumb) {
     return ACTIVITY_GROUP
       .startedAsyncWithParent(project, parentActivity, () -> ReadAction.nonBlocking(
-          () -> buildContext(project, factory, executor, runConfiguration, isRerun, isRunningCurrentFile)
+          () -> buildContext(project, factory, executor, runConfiguration, isRerun, isRunningCurrentFile, isDumb)
         )
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance()));
@@ -108,13 +116,15 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                                           @NotNull Executor executor,
                                                           @Nullable RunConfiguration runConfiguration,
                                                           boolean isRerun,
-                                                          boolean isRunningCurrentFile) {
-    final ConfigurationType configurationType = factory.getType();
-    List<EventPair<?>> eventPairs = createFeatureUsageData(configurationType, factory);
+                                                          boolean isRunningCurrentFile,
+                                                          boolean isDumb) {
+    List<EventPair<?>> eventPairs = createFeatureUsageData(factory.getType(), factory);
     ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
     eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
     eventPairs.add(IS_RERUN.with(isRerun));
     eventPairs.add(IS_RUNNING_CURRENT_FILE.with(isRunningCurrentFile));
+    eventPairs.add(IS_DUMB_MODE.with(isDumb));
+
     if (runConfiguration instanceof FusAwareRunConfiguration) {
       List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
       ObjectEventData objectEventData = new ObjectEventData(additionalData);
@@ -163,7 +173,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
 
     @Override
     protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
+      for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
         if (StringUtil.equals(executor.getId(), data)) {
           final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(executor.getClass());
           return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
