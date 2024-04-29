@@ -17,11 +17,9 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.psi.PyAssignmentStatement;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PySubscriptionExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import junit.framework.Assert;
 
 import java.util.List;
@@ -140,7 +138,7 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
       Assert.assertTrue(src instanceof PyExpression);
       srcs[i] = src;
     }
-    PyAssignmentStatement stmt = (PyAssignmentStatement)srcs[0].getParent().getParent().getParent(); // tuple expr -> assignment
+    PyAssignmentStatement stmt = PsiTreeUtil.getParentOfType(srcs[0], PyAssignmentStatement.class);
     List<Pair<PyExpression, PyExpression>> mapping = stmt.getTargetsToValuesMapping();
     Assert.assertEquals(PAIR_NUM, mapping.size());
     for (int i=0; i<PAIR_NUM; i+=1) {

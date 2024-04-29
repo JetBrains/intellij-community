@@ -112,7 +112,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       if (constituents != null && constituents.length > 1) {
         PyExpression rhs = constituents[constituents.length - 1]; // last
         List<PyExpression> lhses = Lists.newArrayList(constituents);
-        if (lhses.size()>0) lhses.remove(lhses.size()-1); // copy all but last; most often it's one element.
+        if (!lhses.isEmpty()) lhses.remove(lhses.size() - 1); // copy all but last; most often it's one element.
         for (PyExpression lhs : lhses) mapToValues(lhs, rhs, ret);
       }
     }
@@ -123,19 +123,13 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     // cast for convenience
     PySequenceExpression lhs_tuple = null;
     PyExpression lhs_one = null;
-    if (lhs instanceof PySequenceExpression) lhs_tuple = (PySequenceExpression)lhs;
+    if (PyPsiUtils.flattenParens(lhs) instanceof PySequenceExpression tupleExpr) lhs_tuple = tupleExpr;
     else if (lhs != null) lhs_one = lhs;
 
     PySequenceExpression rhs_tuple = null;
     PyExpression rhs_one = null;
-    if (rhs instanceof PyParenthesizedExpression) {
-      PyExpression exp = ((PyParenthesizedExpression)rhs).getContainedExpression();
-      if (exp instanceof PyTupleExpression)
-        rhs_tuple = (PySequenceExpression)exp;
-      else
-        rhs_one = rhs;
-    }
-    else if (rhs instanceof PySequenceExpression) rhs_tuple = (PySequenceExpression)rhs;
+
+    if (PyPsiUtils.flattenParens(rhs) instanceof PySequenceExpression tupleExpr) rhs_tuple = tupleExpr;
     else if (rhs != null) rhs_one = rhs;
     //
     if (lhs_one != null) { // single LHS, single RHS (direct mapping) or multiple RHS (packing)
