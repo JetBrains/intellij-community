@@ -1601,6 +1601,7 @@
     </group>
 
     <group id="EditorStickyLinesSettings" popup="true" searchable="false">
+      <action id="EditorStickyConfigure" class="com.intellij.openapi.editor.impl.stickyLines.StickyLinesConfigureAction"/>
       <action id="EditorStickyLinesDisable" class="com.intellij.openapi.editor.impl.stickyLines.StickyLinesSettingsDisableAction"/>
     </group>
 
