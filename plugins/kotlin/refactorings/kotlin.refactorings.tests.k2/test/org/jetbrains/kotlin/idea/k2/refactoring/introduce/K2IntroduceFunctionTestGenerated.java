@@ -1772,6 +1772,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/qualifiedTypeRef.kt");
             }
 
+            @TestMetadata("receiverWithFunctionalLiteral.kt")
+            public void testReceiverWithFunctionalLiteral() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/receiverWithFunctionalLiteral.kt");
+            }
+
             @TestMetadata("reducedParameterList.kt")
             public void testReducedParameterList() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/reducedParameterList.kt");

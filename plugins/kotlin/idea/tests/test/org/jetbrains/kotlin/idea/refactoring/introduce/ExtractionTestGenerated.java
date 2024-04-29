@@ -2604,6 +2604,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeRef.kt");
                 }
 
+                @TestMetadata("receiverWithFunctionalLiteral.kt")
+                public void testReceiverWithFunctionalLiteral() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/receiverWithFunctionalLiteral.kt");
+                }
+
                 @TestMetadata("reducedParameterList.kt")
                 public void testReducedParameterList() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/reducedParameterList.kt");
