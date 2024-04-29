@@ -1478,6 +1478,9 @@ f:com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary
 - f:getCalledOnViewDispose():java.lang.Runnable
 - f:getPopupActions():java.util.List
 - f:getToolbarActions():java.util.List
+com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
+- sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getCommitMessage(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.openapi.project.Project):java.lang.String
 com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 - a:createHandler(com.intellij.openapi.vcs.CheckinProjectPanel,com.intellij.openapi.vcs.changes.CommitContext):com.intellij.openapi.vcs.checkin.CheckinHandler
 - a:createSystemReadyHandler(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler

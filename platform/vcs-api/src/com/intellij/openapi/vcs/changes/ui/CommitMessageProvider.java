@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -8,14 +8,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Allows customizing initial commit message for specific commits.
- * If several providers are available, first non-null commit message value will be used.
+ * Allows customizing an initial commit message for specific commits.
+ * If several providers are available, the first non-null commit message value will be used.
  *
  * @see com.intellij.vcs.commit.DelayedCommitMessageProvider
  */
 public interface CommitMessageProvider {
-
-  ExtensionPointName<CommitMessageProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.vcs.commitMessageProvider");
+  ExtensionPointName<CommitMessageProvider> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.vcs.commitMessageProvider");
 
   /**
    * Returns initial commit message when committing changes from the given change list.
