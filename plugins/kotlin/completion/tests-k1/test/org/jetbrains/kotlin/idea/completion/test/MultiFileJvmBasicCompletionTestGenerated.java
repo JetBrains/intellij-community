@@ -388,6 +388,16 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/ParameterNameAndTypeNestedClasses/");
     }
 
+    @TestMetadata("PreferKotlinClasses")
+    public void testPreferKotlinClasses() throws Exception {
+        runTest("../testData/basic/multifile/PreferKotlinClasses/");
+    }
+
+    @TestMetadata("PreferKotlinx")
+    public void testPreferKotlinx() throws Exception {
+        runTest("../testData/basic/multifile/PreferKotlinx/");
+    }
+
     @TestMetadata("PreferMemberToExtension")
     public void testPreferMemberToExtension() throws Exception {
         runTest("../testData/basic/multifile/PreferMemberToExtension/");

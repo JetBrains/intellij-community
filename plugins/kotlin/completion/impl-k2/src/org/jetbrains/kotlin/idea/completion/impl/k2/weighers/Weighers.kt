@@ -27,17 +27,14 @@ import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
+import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
 import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
 import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal class WeighingContext private constructor(
@@ -240,6 +237,7 @@ internal object Weighers {
             .weighAfter(
                 PlatformWeighersIds.PROXIMITY,
                 ByNameAlphabeticalWeigher.Weigher,
+                PreferKotlinClassesWeigher.Weigher,
                 PreferFewerParametersWeigher.Weigher,
             )
             .weighBefore(getBeforeIdForContextualCallablesWeigher(positionContext), PreferContextualCallablesWeigher.Weigher)
