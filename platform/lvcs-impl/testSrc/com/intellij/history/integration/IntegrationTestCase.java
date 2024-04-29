@@ -112,6 +112,14 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     setContent(f, content, f.getTimeStamp() + TIMESTAMP_INCREMENT);
   }
 
+  protected final void setContent(@NotNull VirtualFile f, int content) {
+    setContent(f, (byte)content);
+  }
+
+  protected final void setContent(@NotNull VirtualFile f, byte content) {
+    setBinaryContent(f, new byte[]{content}, -1, f.getTimeStamp() + TIMESTAMP_INCREMENT, this);
+  }
+
   protected final void setContent(VirtualFile f, String content, long timestamp) {
     setBinaryContent(f, content.getBytes(StandardCharsets.UTF_8), -1, timestamp, this);
   }

@@ -1,143 +1,162 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.revertion;
 
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryException;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class RevertToLabelTest extends IntegrationTestCase {
 
   public void testFileCreation() throws Exception {
-    createChildData(myRoot, "first.txt");
-    final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    createChildData(myRoot, "foo.txt");
-    revertToLabel(testLabel, myRoot);
-    assertNull(myRoot.findChild("foo.txt"));
-    assertNotNull(myRoot.findChild("first.txt"));
-  }
+    String fileBeforeLabel = "first.txt";
+    String fileAfterLabel = "second.txt";
 
-  private void revertToLabel(Label testLabel, VirtualFile root) throws LocalHistoryException {
-    testLabel.revert(myProject, root);
+    createChildData(myRoot, fileBeforeLabel);
+    Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
+    createChildData(myRoot, fileAfterLabel);
+
+    testLabel.revert(myProject, myRoot);
+
+    assertNull(myRoot.findChild(fileAfterLabel));
+    assertNotNull(myRoot.findChild(fileBeforeLabel));
   }
 
   public void testFileCreationAsFirstAction() throws Exception {
-    final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    createChildData(myRoot, "foo.txt");
-    revertToLabel(testLabel, myRoot);
-    assertNull(myRoot.findChild("foo.txt"));
+    Label beforeFileCreated = LocalHistory.getInstance().putSystemLabel(myProject, "beforeFileCreated");
+
+    String fileName = "foo.txt";
+    createChildData(myRoot, fileName);
+
+    beforeFileCreated.revert(myProject, myRoot);
+
+    assertNull(myRoot.findChild(fileName));
   }
 
   public void testPutLabelAndRevertInstantly() throws Exception {
-    VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{123}, -1, 4000, this);
-    final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    revertToLabel(testLabel, myRoot);
-    f = myRoot.findChild("foo.txt");
-    assertNotNull(f);
-    assertEquals(123, f.contentsToByteArray()[0]);
+    String fileName = "foo.txt";
+    byte content = 123;
+    createFile(fileName, content);
+
+    Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
+    testLabel.revert(myProject, myRoot);
+
+    VirtualFile file = myRoot.findChild(fileName);
+    assertNotNull(file);
+    assertEquals(content, file.contentsToByteArray()[0]);
   }
 
   public void testFileDeletion() throws Exception {
-    VirtualFile f = createChildData(myRoot, "foo.txt");
-    setBinaryContent(f, new byte[]{123}, -1, 4000, this);
-    final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    delete(f);
-    revertToLabel(testLabel, myRoot);
-    f = myRoot.findChild("foo.txt");
-    assertNotNull(f);
-    assertEquals(123, f.contentsToByteArray()[0]);
+    String fileName = "foo.txt";
+    byte content = 123;
+    VirtualFile file = createFile(fileName, content);
+
+    Label beforeDeletion = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
+    delete(file);
+    beforeDeletion.revert(myProject, myRoot);
+
+    file = myRoot.findChild(fileName);
+    assertNotNull(file);
+    assertEquals(123, file.contentsToByteArray()[0]);
   }
 
   public void testFileDeletionWithContent() throws Exception {
-    VirtualFile f = createChildData(myRoot, "foo.txt");
-    final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    setBinaryContent(f, new byte[]{123}, -1, 4000, this);
-    delete(f);
-    revertToLabel(testLabel, myRoot);
-    f = myRoot.findChild("foo.txt");
-    assertNotNull(f);
-    assertEquals(0, f.contentsToByteArray().length);
+    String fileName = "foo.txt";
+    VirtualFile file = createChildData(myRoot, fileName);
+
+    Label beforeContentChange = LocalHistory.getInstance().putSystemLabel(myProject, "beforeContentChange");
+    setContent(file, 123);
+    delete(file);
+    beforeContentChange.revert(myProject, myRoot);
+
+    file = myRoot.findChild(fileName);
+    assertNotNull(file);
+    assertEquals(0, file.contentsToByteArray().length);
   }
 
   public void testParentAndChildRename() throws Exception {
-    VirtualFile dir = createChildDirectory(myRoot, "dir");
-    VirtualFile f = createChildData(dir, "foo.txt");
-    int modificationStamp = -1;
-    setBinaryContent(f, new byte[]{123}, modificationStamp, 4000, this);
-    final LocalHistory localHistory = LocalHistory.getInstance();
-    final Label testLabel1 = localHistory.putSystemLabel(myProject, "testLabel");
-    rename(dir, "dir2");
-    final Label testLabel2 = localHistory.putSystemLabel(myProject, "testLabel");
-    rename(f, "bar.txt");
+    String oldDirName = "dir";
+    String oldFileName = "foo.txt";
+    byte content = 123;
+    VirtualFile dir = createChildDirectory(myRoot, oldDirName);
+    VirtualFile file = createChildData(dir, oldFileName);
+    setContent(file, content);
 
-    revertToLabel(testLabel2, f);
+    String newDirName = "dir2";
+    String newFileName = "bar.txt";
 
-    assertNotNull(myRoot.findChild("dir2"));
-    dir = myRoot.findChild("dir2");
+    LocalHistory localHistory = LocalHistory.getInstance();
+    Label beforeDirRename = localHistory.putSystemLabel(myProject, "beforeDirRename");
+    rename(dir, newDirName);
+    Label beforeFileRename = localHistory.putSystemLabel(myProject, "beforeFileRename");
+    rename(file, newFileName);
 
-    assert dir != null;
-    assertNull(dir.findChild("bar.txt"));
-    f = dir.findChild("foo.txt");
-    assertNotNull(f);
-    assertEquals(123, f.contentsToByteArray()[0]);
+    beforeFileRename.revert(myProject, file);
 
-    revertToLabel(testLabel1, myRoot);
-    assertNull(myRoot.findChild("dir2"));
-    dir = myRoot.findChild("dir");
+    dir = myRoot.findChild(newDirName);
+    assertNotNull(dir);
 
-    assert dir != null;
-    assertNull(dir.findChild("bar.txt"));
-    f = dir.findChild("foo.txt");
-    assertNotNull(f);
-    assertEquals(123, f.contentsToByteArray()[0]);
+    assertNull(dir.findChild(newFileName));
+    file = dir.findChild(oldFileName);
+    assertNotNull(file);
+    assertEquals(content, file.contentsToByteArray()[0]);
+
+    beforeDirRename.revert(myProject, myRoot);
+
+    assertNull(myRoot.findChild(newDirName));
+    dir = myRoot.findChild(oldDirName);
+    assertNotNull(dir);
+    assertNull(dir.findChild(newFileName));
+
+    file = dir.findChild(oldFileName);
+    assertNotNull(file);
+    assertEquals(content, file.contentsToByteArray()[0]);
   }
 
   public void testRevertContentChange() throws Exception {
-    VirtualFile f = createChildData(myRoot, "foo.txt");
-    int modificationStamp1 = -1;
-    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
-    final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    int modificationStamp = -1;
-    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
-    setBinaryContent(f, new byte[]{3}, modificationStamp, 3000, this);
-    revertToLabel(testLabel, myRoot);
-    f = myRoot.findChild("foo.txt");
-    assertNotNull(f);
-    assertEquals(1, f.contentsToByteArray()[0]);
+    String fileName = "foo.txt";
+    byte initialContent = 1;
+    VirtualFile file = createFile(fileName, initialContent);
+
+    Label beforeFileModified = LocalHistory.getInstance().putSystemLabel(myProject, "initialFileContent");
+    for (byte content : new byte[]{2, 3, 4}) {
+      setContent(file, content);
+    }
+    beforeFileModified.revert(myProject, myRoot);
+
+    file = myRoot.findChild(fileName);
+    assertNotNull(file);
+    assertEquals(initialContent, file.contentsToByteArray()[0]);
   }
 
   public void testRevertContentChangeOnlyForFile() throws Exception {
-    VirtualFile f = createChildData(myRoot, "foo.txt");
-    int modificationStamp1 = -1;
-    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
-    VirtualFile f2 = createChildData(myRoot, "foo2.txt");
-    setBinaryContent(f, new byte[]{1}, modificationStamp1, 1000, this);
-    final Label testLabel = LocalHistory.getInstance().putSystemLabel(myProject, "testLabel");
-    int modificationStamp = -1;
-    setBinaryContent(f, new byte[]{2}, modificationStamp, 2000, this);
-    setBinaryContent(f2, new byte[]{3}, modificationStamp, 3000, this);
-    revertToLabel(testLabel, f);
-    f = myRoot.findChild("foo.txt");
-    assertNotNull(f);
-    assertEquals(1, f.contentsToByteArray()[0]);
-    f2 = myRoot.findChild("foo2.txt");
-    assertNotNull(f2);
-    assertEquals(3, f2.contentsToByteArray()[0]);
+    String fileName1 = "foo.txt";
+    String fileName2 = "foo2.txt";
+    byte initialContent = 1;
+    VirtualFile file1 = createFile(fileName1, initialContent);
+    VirtualFile file2 = createFile(fileName2, initialContent);
+
+    Label beforeModifications = LocalHistory.getInstance().putSystemLabel(myProject, "beforeModifications");
+    byte lastContent = 10;
+    for (byte content : new byte[]{2, 3, 4, lastContent}) {
+      setContent(file1, content);
+      setContent(file2, content);
+    }
+    beforeModifications.revert(myProject, file1);
+
+    file1 = myRoot.findChild(fileName1);
+    assertNotNull(file1);
+    assertEquals(initialContent, file1.contentsToByteArray()[0]);
+
+    file2 = myRoot.findChild(fileName2);
+    assertNotNull(file2);
+    assertEquals(lastContent, file2.contentsToByteArray()[0]);
+  }
+
+  private @NotNull VirtualFile createFile(@NotNull String fileName, byte content) {
+    VirtualFile file = createChildData(myRoot, fileName);
+    setContent(file, content);
+    return file;
   }
 }
