@@ -2158,6 +2158,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkers.kt");
             }
 
+            @TestMetadata("filterPropagatingMarkersImplicitUsage.kt")
+            public void testFilterPropagatingMarkersImplicitUsage() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkersImplicitUsage.kt");
+            }
+
             @TestMetadata("filterPropagatingMarkersWitArgs.kt")
             public void testFilterPropagatingMarkersWitArgs() throws Exception {
                 runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkersWitArgs.kt");
