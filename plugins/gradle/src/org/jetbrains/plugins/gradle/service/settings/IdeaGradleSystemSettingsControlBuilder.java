@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.icons.AllIcons;
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gradle.execution.target.TargetPathFieldWithBrowseBu
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
@@ -203,6 +204,9 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       settings.setStoreProjectFilesExternally(!myGenerateImlFilesCheckBox.isSelected());
     }
     if (myParallelModelFetchCheckBox != null) {
+      if (settings.isParallelModelFetch() != myParallelModelFetchCheckBox.isSelected()) {
+        GradleActionsUsagesCollector.TOGGLE_PARALLEL_FETCH.log(settings.getProject(), myParallelModelFetchCheckBox.isSelected());
+      }
       settings.setParallelModelFetch(myParallelModelFetchCheckBox.isSelected());
     }
     myDefaultProjectSettingsControl.apply();
