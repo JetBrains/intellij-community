@@ -16,7 +16,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.ExceptionDebugHelper
-import com.intellij.rt.debugger.coroutines.ContinuationExtractorHelper
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -184,7 +183,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             (continuationIdValue as? LongValue)?.value()?.let { if (it != -1L) return CoroutineIdFilter(setOf(it)) }
             thisLogger().warn("[coroutine filter]: Could not extract continuation ID, location = ${context.frameProxy?.location()}")
         }
-        val rootContinuation = callMethodFromHelper(ContinuationExtractorHelper::class.java, context, "getRootContinuation", listOf(currentContinuation))
+        val rootContinuation = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getRootContinuation", listOf(currentContinuation))
         if (rootContinuation == null) thisLogger().warn("[coroutine filter]: Could not extract continuation instance")
         return rootContinuation?.let { ContinuationObjectFilter(it as ObjectReference) }
     }

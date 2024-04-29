@@ -46,6 +46,11 @@ public final class CoroutinesDebugHelper {
     return (parentFrame != null) ? getCoroutineOwner(parentFrame) : stackFrame;
   }
 
+  public static Object getRootContinuation(Object continuation) throws ReflectiveOperationException {
+    Object parentFrame = invoke(continuation, GET_CALLER_FRAME_METHOD);
+    return (parentFrame != null) ? getRootContinuation(parentFrame) : continuation;
+  }
+
   private static Object getField(Object object, String fieldName) throws ReflectiveOperationException {
     return object.getClass().getField(fieldName).get(object);
   }
