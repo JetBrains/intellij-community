@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.impl.projectStructureMapping
@@ -160,28 +160,28 @@ private fun writeModuleItem(writer: JsonGenerator, entry: ModuleOutputEntry) {
   }
 }
 
-private fun writeModuleLibraries(fileEntries: List<DistributionFileEntry>,
-                                 moduleName: String,
-                                 writer: JsonGenerator,
-                                 buildPaths: BuildPaths) {
-  var opened = false
-  for (entry in fileEntries) {
-    if (entry !is ModuleLibraryFileEntry || entry.moduleName != moduleName) {
-      continue
-    }
+private fun writeModuleLibraries(fileEntries: List<DistributionFileEntry>, moduleName: String, writer: JsonGenerator, buildPaths: BuildPaths) {
+  val entriesGroupedByLibraryName = fileEntries.asSequence()
+    .filterIsInstance<ModuleLibraryFileEntry>()
+    .filter { it.moduleName == moduleName }
+    .groupBy { it.libraryName }
 
-    if (!opened) {
-      writer.writeArrayFieldStart("libraries")
-      opened = true
-    }
-    writer.writeStartObject()
-    writer.writeStringField("name", shortenAndNormalizePath(entry.libraryFile!!, buildPaths))
-    writer.writeNumberField("size", entry.size)
-    writer.writeEndObject()
+  if (entriesGroupedByLibraryName.isEmpty()) {
+    return
   }
-  if (opened) {
+
+  writer.writeObjectFieldStart("libraries")
+  for ((libName, entries) in entriesGroupedByLibraryName) {
+    writer.writeArrayFieldStart(libName)
+    for (entry in entries) {
+      writer.writeStartObject()
+      writer.writeStringField("name", shortenAndNormalizePath(entry.libraryFile!!, buildPaths))
+      writer.writeNumberField("size", entry.size)
+      writer.writeEndObject()
+    }
     writer.writeEndArray()
   }
+  writer.writeEndObject()
 }
 
 private fun writeProjectLibs(entries: List<DistributionFileEntry>, writer: JsonGenerator, buildPaths: BuildPaths) {
