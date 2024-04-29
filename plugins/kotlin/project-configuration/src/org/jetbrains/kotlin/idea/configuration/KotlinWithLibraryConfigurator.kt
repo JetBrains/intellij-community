@@ -323,6 +323,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         state: LanguageFeature.State,
         forTests: Boolean
     ) {
+        // prevents this side effect from being actually run from quickfix previews (e.g. in Fleet)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
         val sinceVersion = feature.sinceApiVersion
 
         if (state != LanguageFeature.State.DISABLED &&
@@ -357,6 +360,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         requiredStdlibVersion: ApiVersion,
         forTests: Boolean
     ) {
+        // prevents this side effect from being actually run from quickfix previews (e.g. in Fleet)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
         val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.apiVersion?.let { runtimeVersion ->
             runtimeVersion < requiredStdlibVersion
         } ?: false
@@ -393,6 +399,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         libraryJarDescriptor: LibraryJarDescriptor,
         scope: DependencyScope
     ) {
+        // prevents this side effect from being actually run from quickfix previews (e.g. in Fleet)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
         val project = module.project
 
         var foundLibrary: Library? = null

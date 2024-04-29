@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -75,6 +76,9 @@ class KotlinProjectConfigurationService(private val project: Project, private va
      * Otherwise, waits for the current sync to finish and schedules a new sync.
      */
     fun queueSync() {
+        // prevents this side effect from being actually run from quickfix previews (e.g. in Fleet)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
         if (syncInProgress) {
             syncQueued = true
         } else {
