@@ -28,6 +28,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -44,6 +45,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private final Invoker invoker;
   private final @NotNull Structure structure;
   private volatile Comparator<? super Node> comparator;
+  private final ThreadLocal<Reference<FreshChildrenSet>> freshChildrenSet = ThreadLocal.withInitial(Reference::new);
 
   public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent) {
     this(structure, null, parent);
@@ -341,11 +343,23 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   @Override
   public final List<TreeNode> getChildren(Object object) {
-    Node node = getNode(object, true);
-    List<Node> list = node == null ? null : node.children.get();
-    if (list == null || list.isEmpty()) return emptyList();
-    list.forEach(Node::update);
-    return unmodifiableList(list);
+    var freshChildren = acquireFreshChildrenSet();
+    try {
+      Node node = getNode(object, true);
+      List<Node> list = node == null ? null : node.children.get();
+      if (list == null || list.isEmpty()) return emptyList();
+      for (Node child : list) {
+        // Freshly created children are updated on creation,
+        // and update may be expensive, so don't update twice.
+        if (!freshChildren.isFresh(child)) {
+          child.update();
+        }
+      }
+      return unmodifiableList(list);
+    }
+    finally {
+      freshChildren.release();
+    }
   }
 
   @Override
@@ -411,10 +425,15 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     if (elements.length == 0) return null;
 
     List<Node> list = new ArrayList<>(elements.length);
+    var freshChildren = freshChildrenSet.get().get();
     for (Object element : elements) {
       ProgressManager.checkCanceled();
       if (isValid(structure, element)) {
-        list.add(new Node(structure, element, descriptor)); // an exception may be thrown while getting children
+        Node newChild = new Node(structure, element, descriptor);
+        if (freshChildren != null) {
+          freshChildren.add(newChild);
+        }
+        list.add(newChild); // an exception may be thrown while getting children
       }
     }
     Comparator<? super Node> comparator = this.comparator;
@@ -444,6 +463,42 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       }
     }
     return list;
+  }
+
+  private @NotNull FreshChildrenSet acquireFreshChildrenSet() {
+    var ref = freshChildrenSet.get();
+    var result = ref.get();
+    if (result == null) {
+      result = new FreshChildrenSet();
+      ref.set(result);
+    }
+    else {
+      result.acquire();
+    }
+    return result;
+  }
+
+  private class FreshChildrenSet {
+    private final AtomicInteger depth = new AtomicInteger(1);
+    private final IdentityHashMap<Node, Boolean> set = new IdentityHashMap<>();
+
+    void acquire() {
+      depth.incrementAndGet();
+    }
+
+    void release() {
+      if (depth.decrementAndGet() == 0) {
+        freshChildrenSet.get().set(null);
+      }
+    }
+
+    void add(@NotNull Node child) {
+      set.put(child, Boolean.TRUE);
+    }
+
+    boolean isFresh(@NotNull Node child) {
+      return set.containsKey(child);
+    }
   }
 
   private static final class Node extends DefaultMutableTreeNode implements LeafState.Supplier {
