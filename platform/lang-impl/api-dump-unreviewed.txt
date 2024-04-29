@@ -17380,6 +17380,7 @@ c:com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
 - p:createModuleGroupNode(com.intellij.ide.projectView.impl.ModuleGroup):com.intellij.ide.util.treeView.AbstractTreeNode
 - p:createUnloadedModuleNode(com.intellij.openapi.module.UnloadedModuleDescription):com.intellij.ide.util.treeView.AbstractTreeNode
 - getChildren():java.util.Collection
+- isAlwaysShowPlus():Z
 f:com.intellij.ide.projectView.impl.nodes.ProjectViewUnloadedModuleNode
 - com.intellij.ide.projectView.ProjectViewNode
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.module.UnloadedModuleDescription,com.intellij.ide.projectView.ViewSettings):V
