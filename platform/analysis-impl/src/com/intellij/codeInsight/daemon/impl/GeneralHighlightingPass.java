@@ -65,7 +65,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
   private volatile boolean myOldErrorFound;
   private final boolean myRunAnnotators;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
-  final HighlightVisitorRunner myHighlightVisitorRunner;
+  private final HighlightVisitorRunner myHighlightVisitorRunner;
 
   GeneralHighlightingPass(@NotNull PsiFile psiFile,
                           @NotNull Document document,

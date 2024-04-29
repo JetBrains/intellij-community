@@ -150,10 +150,8 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
       injectedFragments = runner.getInjectedFragments();
     }
     Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-    if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
-      impl.removeHighlightsForObsoleteTools(getFile(), getDocument(), injectedFragments, pairs, myHighlightingSession);
-      impl.removeWarningsInsideErrors(injectedFragments, getDocument(), myHighlightingSession);  // must be the last
-    }
+    HighlightInfoUpdaterImpl.removeHighlightsForObsoleteTools(getFile(), getDocument(), injectedFragments, pairs, myHighlightingSession);
+    HighlightInfoUpdaterImpl.removeWarningsInsideErrors(injectedFragments, getDocument(), myHighlightingSession);  // must be the last
   }
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes(){

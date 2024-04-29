@@ -28,7 +28,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   protected final PsiFile myFile;
   private final @Nullable Editor myEditor;
   final @NotNull TextRange myRestrictRange;
-  final @NotNull HighlightInfoProcessor myHighlightInfoProcessor;
   HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
@@ -38,13 +37,13 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
                                                    @Nullable Editor editor,
                                                    @NotNull TextRange restrictRange,
                                                    boolean runIntentionPassAfter,
-                                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+                                                   @Deprecated
+                                                   @Nullable("do not use") HighlightInfoProcessor highlightInfoProcessor) {
     super(project, document, runIntentionPassAfter);
     myPresentableName = presentableName;
     myFile = file;
     myEditor = editor;
     myRestrictRange = restrictRange;
-    myHighlightInfoProcessor = highlightInfoProcessor;
     if (file != null) {
       if (file.getProject() != project) {
         throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is from an alien project (" + file.getProject()+") but expected: "+project);

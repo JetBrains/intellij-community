@@ -804,7 +804,6 @@ com.intellij.codeInsight.daemon.impl.HighlightVisitor
 - a:suitableForFile(com.intellij.psi.PsiFile):Z
 - a:visit(com.intellij.psi.PsiElement):V
 com.intellij.codeInsight.daemon.impl.HighlightingSession
-- a:addFileLevelHighlight(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.editor.ex.RangeHighlighterEx):V
 - a:getColorsScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - a:getDocument():com.intellij.openapi.editor.Document
 - a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
@@ -813,8 +812,6 @@ com.intellij.codeInsight.daemon.impl.HighlightingSession
 - a:getVisibleRange():com.intellij.openapi.util.ProperTextRange
 - a:isCanceled():Z
 - a:isEssentialHighlightingOnly():Z
-- a:removeFileLevelHighlight(com.intellij.codeInsight.daemon.impl.HighlightInfo):V
-- a:updateFileLevelHighlights(java.util.List,I,Z):V
 f:com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
 - com.intellij.codeInsight.daemon.impl.HighlightingSession
 - addFileLevelHighlight(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.editor.ex.RangeHighlighterEx):V
@@ -827,9 +824,7 @@ f:com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
 - getVisibleRange():com.intellij.openapi.util.ProperTextRange
 - isCanceled():Z
 - isEssentialHighlightingOnly():Z
-- removeFileLevelHighlight(com.intellij.codeInsight.daemon.impl.HighlightInfo):V
 - toString():java.lang.String
-- updateFileLevelHighlights(java.util.List,I,Z):V
 f:com.intellij.codeInsight.daemon.impl.IdentifierUtil
 - <init>():V
 - s:getNameIdentifier(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement

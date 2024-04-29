@@ -299,8 +299,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return myDaemonCancelEventCount.intValue() != myDaemonInitialCancelEventCount;
   }
 
-  @Override
-  public void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights, int group, boolean cleanOldHighlights) {
+  void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights, int group, boolean cleanOldHighlights) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     PsiFile psiFile = getPsiFile();
@@ -319,8 +318,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
   }
 
-  @Override
-  public void removeFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo) {
+  void removeFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {
@@ -330,7 +328,6 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
   }
-  @Override
   public void addFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo, @Nullable RangeHighlighterEx toReuse) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);

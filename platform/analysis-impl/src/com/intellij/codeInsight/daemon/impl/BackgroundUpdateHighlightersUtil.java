@@ -178,7 +178,7 @@ public final class BackgroundUpdateHighlightersUtil {
         createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, (MarkupModelEx)markup, toReuse, range2markerCache, severityRegistrar);
       }
       boolean shouldClean = restrictedRange.getStartOffset() == 0 && restrictedRange.getEndOffset() == document.getTextLength();
-      session.updateFileLevelHighlights(fileLevelHighlights, group, shouldClean);
+      ((HighlightingSessionImpl)session).updateFileLevelHighlights(fileLevelHighlights, group, shouldClean);
       changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(toReuse, session);
     }
     finally {
@@ -263,7 +263,7 @@ public final class BackgroundUpdateHighlightersUtil {
       for (HighlightInfo info : infosToCreateHighlightersFor) {
         createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, toReuse, range2markerCache, severityRegistrar);
       }
-      session.updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()));
+      ((HighlightingSessionImpl)session).updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()));
       changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(toReuse, session);
     }
     finally {

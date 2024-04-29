@@ -1238,7 +1238,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       return;
     }
     // remove obsolete infos for invalid psi elements as soon as possible, before highlighting passes start
-    ReadAction.run(() -> ((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(myProject)).removeInvalidPsiElements(psiFile, this, session));
+    ReadAction.run(() -> HighlightInfoUpdaterImpl.removeInvalidPsiElements(psiFile, this, session));
     if (backgroundEditorHighlighter == null) {
       return;
     }

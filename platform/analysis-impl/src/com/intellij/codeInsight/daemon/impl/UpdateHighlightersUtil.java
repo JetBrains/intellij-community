@@ -239,7 +239,7 @@ public final class UpdateHighlightersUtil {
         highlighter.dispose();
         changed = true;
         if (info != null && info.isFileLevelAnnotation()) {
-          session.removeFileLevelHighlight(info);
+          ((HighlightingSessionImpl)session).removeFileLevelHighlight(info);
         }
       }
     }
