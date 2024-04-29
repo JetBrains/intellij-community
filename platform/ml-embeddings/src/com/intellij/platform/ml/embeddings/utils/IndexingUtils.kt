@@ -24,11 +24,12 @@ fun splitIdentifierIntoTokens(identifier: String, lowercase: Boolean = true): St
       }
       isPrevUppercase = identifier[index].isUpperCase()
       isPrevLetter = identifier[index].isLetter()
-      if ((identifier[index].isLetterOrDigit() || identifier[index] == ' ') &&
-          !(identifier[index] == ' ' && lastOrNull() == ' ')) {
+      if (identifier[index].isLetterOrDigit() ||
+          (identifier[index] == ' ' && lastOrNull() != null && lastOrNull() != ' ')) {
         append(identifier[index])
       }
     }
+    if (lastOrNull() == ' ') deleteAt(length - 1)
   }
   return if (lowercase) result.lowercase() else result
 }
