@@ -41,7 +41,7 @@ public class NestedFilesInProjectViewTest extends BasePlatformTestCase {
                                      "-Project\n" +
                                      " -PsiDirectory: src\n" +
                                      expectedTree +
-                                     " External Libraries\n", true);
+                                     " +External Libraries\n", true);
     projectView.removeProjectPane(pane);
   }
 

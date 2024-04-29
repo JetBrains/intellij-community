@@ -17243,6 +17243,7 @@ c:com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode
 - contains(com.intellij.openapi.vfs.VirtualFile):Z
 - getChildren():java.util.Collection
 - getSortOrder(com.intellij.ide.projectView.NodeSortSettings):com.intellij.ide.projectView.NodeSortOrder
+- isAlwaysShowPlus():Z
 - isIncludedInExpandAll():Z
 - p:update(com.intellij.ide.projectView.PresentationData):V
 c:com.intellij.ide.projectView.impl.nodes.ExternalLibrariesWorkspaceModelNode
