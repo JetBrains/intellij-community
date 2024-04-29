@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.JavaVarTypeUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
@@ -26,12 +27,25 @@ import java.util.function.Consumer;
 
 public final class JavaPatternCompletionUtil {
 
+  private static final List<PsiType> PRIMITIVE_TYPES = List.of(
+    PsiTypes.booleanType(),
+    PsiTypes.byteType(),
+    PsiTypes.charType(),
+    PsiTypes.shortType(),
+    PsiTypes.intType(),
+    PsiTypes.floatType(),
+    PsiTypes.doubleType(),
+    PsiTypes.longType()
+  );
 
   public static boolean insideDeconstructionList(@NotNull PsiElement element) {
     if (!PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, element)) return false;
     return element.getParent() instanceof PsiJavaCodeReferenceElement ref &&
            ref.getParent() instanceof PsiTypeElement typeElement &&
-           typeElement.getParent() instanceof PsiDeconstructionList;
+           (typeElement.getParent() instanceof PsiDeconstructionList ||
+            (typeElement.getParent() instanceof PsiPatternVariable patternVariable &&
+             patternVariable.getParent() instanceof PsiTypeTestPattern typeTestPattern &&
+             typeTestPattern.getParent() instanceof PsiDeconstructionList));
   }
 
   /**
@@ -83,9 +97,14 @@ public final class JavaPatternCompletionUtil {
     PsiRecordComponent component = getRecordComponentForDeconstructionComponent(currentPosition);
     if (component == null) return;
     PsiType type = component.getType();
-    if (type instanceof PsiPrimitiveType) {
-      LookupElement lookupItem = BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, type.getCanonicalText());
-      result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.insertSpaceType()));
+    if (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, currentPosition)) {
+      if (type instanceof PsiPrimitiveType) {
+        LookupElement lookupItem = BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, type.getCanonicalText());
+        result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+      }
+    }
+    else {
+      suggestPrimitiveTypesForPattern(currentPosition, type, result);
     }
   }
 
@@ -117,6 +136,20 @@ public final class JavaPatternCompletionUtil {
     PsiRecordComponent[] recordComponents = psiRecord.getRecordComponents();
     if (recordComponents.length < indexOfPattern) return null;
     return recordComponents[indexOfPattern];
+  }
+
+  static void suggestPrimitiveTypesForPattern(@NotNull PsiElement currentPosition,
+                                              @Nullable PsiType fromType,
+                                              @NotNull Consumer<? super LookupElement> result) {
+    if (fromType == null) return;
+    if (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, currentPosition)) return;
+    for (PsiType primitiveType : PRIMITIVE_TYPES) {
+      if (TypeConversionUtil.areTypesConvertible(fromType, primitiveType)) {
+        LookupElement lookupItem =
+          BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, primitiveType.getCanonicalText());
+        result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+      }
+    }
   }
 
   /**
