@@ -215,8 +215,15 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
       spec.withProjectLibrary("okhttp")
     },
-    pluginAuto(listOf("intellij.performanceTesting", "intellij.driver.model", "intellij.driver.impl", "intellij.driver.client"))
-  )
+    pluginAuto(
+      listOf(
+        "intellij.performanceTesting",
+        "intellij.tools.ide.starter.bus",
+        "intellij.driver.model",
+        "intellij.driver.impl",
+        "intellij.driver.client"
+      )
+    ))
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
     pluginAuto("intellij.errorProne") { spec ->
@@ -794,7 +801,14 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
     buildJar(targetFile = antTargetFile, sources = sources)
 
     sources.map { source ->
-      ProjectLibraryEntry(path = antTargetFile, data = libraryData, libraryFile = source.file, hash = source.hash, size = source.size, relativeOutputFile = "dist/ant.jar")
+      ProjectLibraryEntry(
+        path = antTargetFile,
+        data = libraryData,
+        libraryFile = source.file,
+        hash = source.hash,
+        size = source.size,
+        relativeOutputFile = "dist/ant.jar",
+      )
     }
   }
 }
