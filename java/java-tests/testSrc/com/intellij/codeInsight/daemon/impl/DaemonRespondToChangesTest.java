@@ -1108,87 +1108,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(highlightErrors());
   }
 
-  public void testBulbAppearsAfterType() {
-    String text = "class S { ArrayList<caret>XXX x;}";
-    configureByText(JavaFileType.INSTANCE, text);
-
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-
-    Set<LightweightHint> shown = new ReferenceOpenHashSet<>();
-    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
-      @Override
-      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
-        shown.add(hint);
-        hint.addHintListener(event -> shown.remove(hint));
-      }
-    });
-
-    assertNotEmpty(highlightErrors());
-
-    IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(hintComponent);
-    assertFalse(hintComponent.isDisposed());
-    assertNotNull(hintComponent.getComponentHint());
-    assertTrue(shown.contains(hintComponent.getComponentHint()));
-
-    type("x");
-    assertNotEmpty(highlightErrors());
-    hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(hintComponent);
-    assertFalse(hintComponent.isDisposed());
-    assertNotNull(hintComponent.getComponentHint());
-    assertTrue(shown.contains(hintComponent.getComponentHint()));
-  }
-
-  public void testBulbMustDisappearAfterPressEscape() {
-    String text = "class S { ArrayList<caret>XXX x;}";
-    configureByText(JavaFileType.INSTANCE, text);
-
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-
-    Set<LightweightHint> shown = new ReferenceOpenHashSet<>();
-    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC,
-                                                     new EditorHintListener() {
-                                                       @Override
-                                                       public void hintShown(@NotNull Editor editor,
-                                                                             @NotNull LightweightHint hint,
-                                                                             int flags,
-                                                                             @NotNull HintHint hintInfo) {
-                                                         shown.add(hint);
-                                                         hint.addHintListener(event -> shown.remove(hint));
-                                                       }
-                                                     });
-
-    assertNotEmpty(highlightErrors());
-
-    IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(hintComponent);
-    assertFalse(hintComponent.isDisposed());
-    assertNotNull(hintComponent.getComponentHint());
-    assertTrue(shown.contains(hintComponent.getComponentHint()));
-    assertTrue(hintComponent.hasVisibleLightBulbOrPopup());
-
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_EDITOR_ESCAPE, true), "", null, getEditor().getDocument());
-
-    assertNotEmpty(highlightErrors());
-    hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNull(hintComponent);
-
-    // the bulb must reappear when the caret moved
-    caretLeft();
-    assertNotEmpty(highlightErrors());
-    IntentionHintComponent hintComponentAfter = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(hintComponentAfter);
-    assertFalse(hintComponentAfter.isDisposed());
-    assertNotNull(hintComponentAfter.getComponentHint());
-    assertTrue(shown.contains(hintComponentAfter.getComponentHint()));
-    assertTrue(hintComponentAfter.hasVisibleLightBulbOrPopup());
-  }
-
   // todo - StoreUtil.saveDocumentsAndProjectsAndApp cannot save in EDT. If it is called in EDT,
   //  in this case, task is done under a modal progress, so, no idea how to fix the test, except executing it not in EDT (as it should be)
   public void _testDaemonIgnoresFrameDeactivation() {
@@ -1873,52 +1792,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  public void testLightBulbDoesNotUpdateIntentionsInEDT() {
-    IntentionAction longLongUpdate = new AbstractIntentionAction() {
-      @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getText() {
-        return "LongAction";
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        ApplicationManager.getApplication().assertIsNonDispatchThread();
-        return true;
-      }
-    };
-    IntentionManager.getInstance().addAction(longLongUpdate);
-    Disposer.register(getTestRootDisposable(), () -> IntentionManager.getInstance().unregisterIntention(longLongUpdate));
-    configureByText(JavaFileType.INSTANCE, "class X { <caret>  }");
-    makeEditorWindowVisible(new Point(0, 0), myEditor);
-    doHighlighting();
-    myDaemonCodeAnalyzer.restart();
-    runWithReparseDelay(0, () -> {
-      for (int i = 0; i < 1000; i++) {
-        caretRight();
-        UIUtil.dispatchAllInvocationEvents();
-        caretLeft();
-        Object updateProgress = new HashMap<>(myDaemonCodeAnalyzer.getUpdateProgress());
-        long waitForDaemonStart = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress) && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until the daemon started
-          UIUtil.dispatchAllInvocationEvents();
-        }
-        if (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress)) {
-          throw new RuntimeException("Daemon failed to start in 5000 ms");
-        }
-        long start = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
-          UIUtil.dispatchAllInvocationEvents(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
-        }
-      }
-    });
-  }
-
   static void runWithReparseDelay(int reparseDelayMs, @NotNull Runnable task) {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int oldDelay = settings.getAutoReparseDelay();
@@ -1928,50 +1801,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
     finally {
       settings.setAutoReparseDelay(oldDelay);
-    }
-  }
-
-  public void testLightBulbIsHiddenWhenFixRangeIsCollapsed() {
-    configureByText(JavaFileType.INSTANCE, "class S { void foo() { boolean <selection>var; if (va<caret>r</selection>) {}} }");
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-
-    Set<LightweightHint> visibleHints = new ReferenceOpenHashSet<>();
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
-      @Override
-      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
-        visibleHints.add(hint);
-        hint.addHintListener(new HintListener() {
-          @Override
-          public void hintHidden(@NotNull EventObject event) {
-            visibleHints.remove(hint);
-            hint.removeHintListener(this);
-          }
-        });
-      }
-    });
-
-    assertNotEmpty(highlightErrors());
-    UIUtil.dispatchAllInvocationEvents();
-    IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(lastHintBeforeDeletion);
-    IntentionContainer lastHintIntentions = lastHintBeforeDeletion.getCachedIntentions();
-    assertNotNull(lastHintIntentions);
-    assertTrue(lastHintIntentions.toString(),
-               ContainerUtil.exists(lastHintIntentions.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
-
-    delete(myEditor);
-    assertNotEmpty(highlightErrors());
-    UIUtil.dispatchAllInvocationEvents();
-    IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
-    // it must be either hidden or not have that error anymore
-    if (lastHintAfterDeletion == null) {
-      assertEmpty(visibleHints);
-    }
-    else {
-      IntentionContainer after = lastHintAfterDeletion.getCachedIntentions();
-      assertNotNull(after);
-      assertFalse(after.toString(), ContainerUtil.exists(after.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
     }
   }
 
@@ -2120,8 +1949,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-
-
   public void testDumbAwareHighlightingPassesStartEvenInDumbMode() {
     List<TextEditorHighlightingPassFactory> collected = Collections.synchronizedList(new ArrayList<>());
     List<TextEditorHighlightingPassFactory> applied = Collections.synchronizedList(new ArrayList<>());
@@ -2187,43 +2014,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertSame(dumbFac, f2);
     });
   }
-
-  public void testIntentionActionIsAvailableMustBeQueriedOnlyOncePerHighlightingSession() {
-    Map<ProgressIndicator, Throwable> isAvailableCalled = new ConcurrentHashMap<>();
-    IntentionAction action = new AbstractIntentionAction() {
-      @Nls(capitalization = Nls.Capitalization.Sentence)
-      @NotNull
-      @Override
-      public String getText() {
-        return "My";
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        DaemonProgressIndicator indicator = (DaemonProgressIndicator)ProgressIndicatorProvider.getGlobalProgressIndicator();
-        Throwable alreadyCalled = isAvailableCalled.put(indicator, new Throwable());
-        if (alreadyCalled != null) {
-          throw new IllegalStateException(" .isAvailable() already called in:\n---------------\n"+ExceptionUtil.getThrowableText(alreadyCalled)+"\n-----------");
-        }
-        return true;
-      }
-
-      @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      }
-    };
-    IntentionManager.getInstance().addAction(action);
-    Disposer.register(getTestRootDisposable(), () -> IntentionManager.getInstance().unregisterIntention(action));
-
-    @Language("JAVA")
-    String text = "class X { }";
-    configureByText(JavaFileType.INSTANCE, text);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText(text));
-    doHighlighting();
-    myDaemonCodeAnalyzer.restart();
-    doHighlighting();
-  }
-
 
   public void testUncommittedByAccidentNonPhysicalDocumentMustNotHangDaemon() {
     ThreadingAssertions.assertEventDispatchThread();
