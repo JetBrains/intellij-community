@@ -25,7 +25,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 object GradleDependencySourceDownloader {
@@ -35,9 +35,10 @@ object GradleDependencySourceDownloader {
   private const val INIT_SCRIPT_FILE_PREFIX = "ijDownloadSources"
 
   @JvmStatic
-  fun downloadSources(project: Project, executionName: @Nls String, sourceArtifactNotation: String, externalProjectPath: Path)
+  fun downloadSources(project: Project, executionName: @Nls String, sourceArtifactNotation: String, externalProjectPath: String)
     : CompletableFuture<File> {
-    var sourcesLocationFile: File
+    val sourcesLocationFile: File
+    val projectPath = Path.of(externalProjectPath)
     try {
       sourcesLocationFile = File(FileUtil.createTempDirectory("sources", "loc"), "path.tmp")
       Runtime.getRuntime().addShutdownHook(Thread({ FileUtil.delete(sourcesLocationFile) }, "GradleAttachSourcesProvider cleanup"))
@@ -49,12 +50,12 @@ object GradleDependencySourceDownloader {
     val taskName = "ijDownloadSources" + UUID.randomUUID().toString().substring(0, 12)
     val settings = ExternalSystemTaskExecutionSettings().also {
       it.executionName = executionName
-      it.externalProjectPath = externalProjectPath.toCanonicalPath()
+      it.externalProjectPath = projectPath.toCanonicalPath()
       it.taskNames = listOf(taskName)
       it.vmOptions = GradleSettings.getInstance(project).getGradleVmOptions()
       it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     }
-    val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFile.toPath(), externalProjectPath)
+    val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFile.toPath(), projectPath)
     val resultWrapper = CompletableFuture<File>()
     val callback = object : TaskCallback {
       override fun onSuccess() {

@@ -82,7 +82,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         val project = psiFile.project
         val sourceArtifactNotation = "$productCoordinates:${libraryCoordinates.version}:sources"
 
-        GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, Path(externalProjectPath)).whenComplete { path, error ->
+        GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, externalProjectPath).whenComplete { path, error ->
           if (error != null) {
             executionResult.setRejected()
           }
