@@ -2,13 +2,11 @@ f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 - com.intellij.DynamicBundle
 - sf:INSTANCE:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 - f:message(java.lang.String,java.lang.Object[]):java.lang.String
-f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundleKt
 f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingDialog
 - com.intellij.openapi.ui.DialogWrapper
 - sf:Companion:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingDialog$Companion
 - <init>(com.intellij.openapi.project.Project):V
 f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingDialog$Companion
-f:com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStartupActivityKt
 f:com.intellij.platform.ide.newUiOnboarding.steps.MainMenuStep
 - <init>():V
 - isAvailable():Z

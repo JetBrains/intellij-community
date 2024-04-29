@@ -154,7 +154,6 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - f:removeExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener):V
 f:com.intellij.openapi.extensions.ExtensionPointName$Companion
 - f:create(java.lang.String):com.intellij.openapi.extensions.ExtensionPointName
-f:com.intellij.openapi.extensions.ExtensionPointNameKt
 com.intellij.openapi.extensions.ExtensionPointPriorityListener
 f:com.intellij.openapi.extensions.ExtensionPointUtil
 - <init>():V
@@ -236,9 +235,6 @@ f:com.intellij.openapi.extensions.ProjectExtensionPointName
 f:com.intellij.openapi.extensions.SortingException
 - java.lang.RuntimeException
 - getConflictingElements():com.intellij.openapi.extensions.LoadingOrder$Orderable[]
-f:com.intellij.openapi.extensions.impl.ExtensionPointImplKt
-f:com.intellij.openapi.extensions.impl.ExtensionsAreaImplKt
-f:com.intellij.openapi.extensions.impl.XmlExtensionAdapterKt
 com.intellij.util.KeyedLazyInstance
 - a:getInstance():java.lang.Object
 - a:getKey():java.lang.String

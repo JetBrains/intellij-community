@@ -1,4 +1,3 @@
-f:com.intellij.application.options.codeStyle.cache.CodeStyleCachedValueProviderKt
 f:com.intellij.application.options.codeStyle.cache.CodeStyleCachingServiceImpl
 - com.intellij.openapi.Disposable
 - sf:MAX_CACHE_SIZE:I

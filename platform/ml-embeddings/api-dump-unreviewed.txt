@@ -83,7 +83,6 @@ com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
 - a:setLimit(java.lang.Integer,kotlin.coroutines.Continuation):java.lang.Object
 - a:streamFindClose(ai.grazie.emb.FloatTextEmbedding,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
 - bs:streamFindClose$default(com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex,ai.grazie.emb.FloatTextEmbedding,java.lang.Double,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-f:com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndexKt
 com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
 - sf:Companion:com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider$Companion
 - a:extractIndexableClasses(com.intellij.psi.PsiFile):java.util.List
@@ -294,7 +293,6 @@ f:com.intellij.platform.ml.embeddings.search.utils.SuspendingReadWriteLock
 - <init>():V
 - f:read(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - f:write(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.platform.ml.embeddings.search.utils.TracingUtilsKt
 f:com.intellij.platform.ml.embeddings.services.CustomRootDataLoader
 - ai.grazie.utils.mpp.RootDataLoader
 - ai.grazie.utils.mpp.RootStreamDataLoader

@@ -357,7 +357,6 @@ com.intellij.ide.plugins.IdeaPluginDescriptor
 *f:com.intellij.ide.plugins.IdeaPluginOsRequirement$Companion
 - f:fromModuleId(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - f:getHostOsModuleIds():java.util.List
-f:com.intellij.ide.plugins.IdeaPluginOsRequirementKt
 com.intellij.ide.plugins.PluginUtil
 - a:findPluginId(java.lang.Throwable):com.intellij.openapi.extensions.PluginId
 - a:findPluginName(com.intellij.openapi.extensions.PluginId):java.lang.String
@@ -1559,7 +1558,6 @@ f:com.intellij.openapi.application.RunResult
 - run():com.intellij.openapi.application.RunResult
 - setThrowable(java.lang.Exception):V
 - throwException():com.intellij.openapi.application.RunResult
-f:com.intellij.openapi.application.RuntimeFlagsKt
 com.intellij.openapi.application.ThreadingSupport
 - a:acquireReadActionLock():com.intellij.openapi.application.AccessToken
 - a:acquireWriteActionLock(java.lang.Class):com.intellij.openapi.application.AccessToken
@@ -1619,7 +1617,6 @@ com.intellij.openapi.application.WriteActionListener
 - *s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - *s:run(com.intellij.util.ThrowableRunnable):V
 - *s:run(java.lang.Runnable):V
-f:com.intellij.openapi.client.ClientSessionsManagerKt
 f:com.intellij.openapi.client.ClientSessionsUtil
 - sf:forEachSession(com.intellij.openapi.application.Application,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V
 - sf:forEachSession(com.intellij.openapi.project.Project,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V
@@ -2735,7 +2732,6 @@ a:com.intellij.openapi.project.ProjectLocator
 f:com.intellij.openapi.project.ProjectLocator$Companion
 - f:getInstance():com.intellij.openapi.project.ProjectLocator
 - f:getPreferredProject(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.project.Project
-f:com.intellij.openapi.project.ProjectLocatorKt
 com.intellij.openapi.project.RootsChangeRescanningInfo
 - sf:NO_RESCAN_NEEDED:com.intellij.openapi.project.RootsChangeRescanningInfo
 - sf:RESCAN_DEPENDENCIES_IF_NEEDED:com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -2923,7 +2919,6 @@ c:com.intellij.openapi.util.SimpleModificationTracker
 - <init>():V
 - getModificationCount():J
 - incModificationCount():V
-f:com.intellij.openapi.util.registry.EarlyAccessRegistryManagerKt
 com.intellij.openapi.util.registry.RegistryManager
 - sf:Companion:com.intellij.openapi.util.registry.RegistryManager$Companion
 - a:get(java.lang.String):com.intellij.openapi.util.registry.RegistryValue
@@ -2936,7 +2931,6 @@ com.intellij.openapi.util.registry.RegistryManager
 f:com.intellij.openapi.util.registry.RegistryManager$Companion
 - f:getInstance():com.intellij.openapi.util.registry.RegistryManager
 - f:getInstanceAsync(kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.openapi.util.registry.RegistryManagerKt
 com.intellij.openapi.vfs.AsyncFileListener
 - a:prepareChange(java.util.List):com.intellij.openapi.vfs.AsyncFileListener$ChangeApplier
 com.intellij.openapi.vfs.AsyncFileListener$ChangeApplier
@@ -6414,10 +6408,8 @@ a:com.intellij.util.messages.MessageBusFactory
 com.intellij.util.messages.MessageBusListener
 - a:getListener():java.lang.Object
 - a:getTopic():com.intellij.util.messages.Topic
-f:com.intellij.util.messages.impl.CompositeMessageBusKt
 f:com.intellij.util.messages.impl.MessageBusCoroutinesKt
 - sf:subscribeAsFlow(com.intellij.util.messages.MessageBus,com.intellij.util.messages.Topic,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
-f:com.intellij.util.messages.impl.MessageBusImplKt
 f:com.intellij.util.messages.impl.MessageListenerList
 - <init>(com.intellij.util.messages.MessageBus,com.intellij.util.messages.Topic):V
 - add(java.lang.Object):V

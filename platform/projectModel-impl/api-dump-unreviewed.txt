@@ -69,7 +69,6 @@ f:com.intellij.configurationStore.BundledSchemeEP
 - <init>():V
 - f:getPath():java.lang.String
 - f:setPath(java.lang.String):V
-f:com.intellij.configurationStore.DefaultStateSerializerKt
 f:com.intellij.configurationStore.InitializedSchemeWrapper
 - com.intellij.configurationStore.SchemeWrapper
 - <init>(com.intellij.openapi.options.Scheme,kotlin.jvm.functions.Function1):V
@@ -96,7 +95,6 @@ f:com.intellij.configurationStore.JbXmlOutputter$Companion
 - f:collapseMacrosAndWrite(org.jdom.Element,com.intellij.openapi.components.ComponentManager,java.io.Writer):V
 - f:createOutputter(com.intellij.openapi.components.ComponentManager):com.intellij.configurationStore.JbXmlOutputter
 - f:escapeElementEntities(java.lang.String):java.lang.String
-f:com.intellij.configurationStore.JbXmlOutputterKt
 a:com.intellij.configurationStore.LazySchemeProcessor
 - com.intellij.openapi.options.SchemeProcessor
 - <init>():V
@@ -136,7 +134,6 @@ f:com.intellij.configurationStore.SchemeManagerIprProvider
 - read(java.lang.String,com.intellij.openapi.components.RoamingType,kotlin.jvm.functions.Function1):Z
 - write(java.lang.String,B[],com.intellij.openapi.components.RoamingType):V
 - f:writeState(org.jdom.Element):V
-f:com.intellij.configurationStore.SchemeManagerIprProviderKt
 a:com.intellij.configurationStore.SchemeWrapper
 - com.intellij.openapi.options.ExternalizableSchemeAdapter
 - com.intellij.configurationStore.SerializableScheme
@@ -153,7 +150,6 @@ f:com.intellij.configurationStore.Scheme_implKt
 com.intellij.configurationStore.SerializableScheme
 - getSchemeState():com.intellij.openapi.options.SchemeState
 - a:writeScheme():org.jdom.Element
-f:com.intellij.configurationStore.StateStorageManagerKt
 f:com.intellij.ide.projectView.impl.ProjectRootsUtil
 - s:findExcludeFolder(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.ExcludeFolder
 - s:findUnloadedModuleByContentRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.String
@@ -208,7 +204,6 @@ com.intellij.openapi.components.PathMacroSubstitutor
 - collapsePathsRecursively(org.jdom.Element):V
 - a:expandPath(java.lang.String):java.lang.String
 - a:expandPaths(org.jdom.Element):V
-f:com.intellij.openapi.components.ServiceKt
 com.intellij.openapi.components.TrackingPathMacroSubstitutor
 - com.intellij.openapi.components.PathMacroSubstitutor
 - a:addUnknownMacros(java.lang.String,java.util.Collection):V
@@ -229,7 +224,6 @@ c:com.intellij.openapi.components.impl.ProjectPathMacroManager
 - p:computeReplacePathMap():com.intellij.application.options.ReplacePathToMacroMap
 - s:createInstance(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier):com.intellij.openapi.components.impl.ProjectPathMacroManager
 - getExpandMacroMap():com.intellij.openapi.components.ExpandMacroToPathMap
-f:com.intellij.openapi.components.impl.stores.ComponentStorageUtilKt
 com.intellij.openapi.components.impl.stores.IProjectStore
 - sf:COMPONENT_STORE_LOADING_ENABLED:com.intellij.openapi.util.Key
 - a:clearStorages():V
@@ -692,7 +686,6 @@ c:com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 f:com.intellij.openapi.roots.impl.ProjectRootManagerImpl$Companion
 - f:extractLocalPath(java.lang.String):java.lang.String
 - f:getInstanceImpl(com.intellij.openapi.project.Project):com.intellij.openapi.roots.impl.ProjectRootManagerImpl
-f:com.intellij.openapi.roots.impl.ProjectRootManagerImplKt
 a:com.intellij.openapi.roots.impl.SdkFinder
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -958,7 +951,6 @@ f:com.intellij.workspaceModel.ide.impl.EntityTracingLogger
 - f:printInfoAboutTracedEntity(com.intellij.platform.workspace.storage.EntityStorage,java.lang.String):V
 - f:subscribe(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 f:com.intellij.workspaceModel.ide.impl.EntityTracingLogger$Companion
-f:com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelKt
 f:com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener
 - com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 - <init>(com.intellij.openapi.project.Project):V
@@ -966,7 +958,6 @@ f:com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSynchronizerListener
 f:com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 - com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 - <init>():V
-f:com.intellij.workspaceModel.ide.impl.JpsMetricsKt
 f:com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 - com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 - <init>():V
@@ -989,7 +980,6 @@ f:com.intellij.workspaceModel.ide.impl.OrphanService
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:start():V
 f:com.intellij.workspaceModel.ide.impl.OrphanService$Companion
-f:com.intellij.workspaceModel.ide.impl.OrphanageKt
 f:com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 - com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 - com.intellij.openapi.vfs.pointers.VirtualFilePointer
@@ -1035,7 +1025,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalAndCustomLibra
 - <init>():V
 - initializeBridges(com.intellij.openapi.project.Project,java.util.Map,com.intellij.platform.workspace.storage.MutableEntityStorage):V
 - isEnabled():Z
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalAndCustomLibraryTableBridgeInitializerKt
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.roots.libraries.LibraryTable
@@ -1059,7 +1048,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBr
 - removeLibrary(com.intellij.openapi.roots.libraries.Library):V
 - removeListener(com.intellij.openapi.roots.libraries.LibraryTable$Listener):V
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl$Companion
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableDelegateKt
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
 - <init>(java.lang.String):V
@@ -1123,12 +1111,10 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableB
 - f:findLibraryEntity(com.intellij.platform.workspace.storage.EntityStorage,com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge):com.intellij.platform.workspace.jps.entities.LibraryEntity
 - f:getLibraryMap(com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.storage.ExternalEntityMapping
 - f:getMutableLibraryMap(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.MutableExternalEntityMapping
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImplKt
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeInitializer
 - <init>():V
 - initializeBridges(com.intellij.openapi.project.Project,java.util.Map,com.intellij.platform.workspace.storage.MutableEntityStorage):V
 - isEnabled():Z
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModifiableModuleModelBridgeImplKt
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeUtils
 - sf:findModuleEntity(com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.jps.entities.ModuleEntity
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl
@@ -1148,7 +1134,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndex
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils
 - sf:findModule(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 - sf:getModuleLevelLibraries(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):kotlin.sequences.Sequence
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImplKt
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer
 - <init>():V
 - initializeBridges(com.intellij.openapi.project.Project,java.util.Map,com.intellij.platform.workspace.storage.MutableEntityStorage):V
@@ -1163,7 +1148,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.UnloadedModuleDescrip
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.UnloadedModuleDescriptionBridge$Companion
 - f:createDescription(com.intellij.platform.workspace.jps.entities.ModuleEntity):com.intellij.openapi.module.UnloadedModuleDescription
 - f:createDescriptions(java.util.List):java.util.List
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableContentEntryBridgeKt
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableRootModelBridgeImpl
 - com.intellij.openapi.roots.ModifiableRootModel
 - com.intellij.openapi.roots.ModuleRootModel
@@ -1232,7 +1216,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableRootM
 - setInvalidSdk(java.lang.String,java.lang.String):V
 - setSdk(com.intellij.openapi.projectRoots.Sdk):V
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableRootModelBridgeImpl$Companion
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableRootModelBridgeImplKt
 com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
 - com.intellij.openapi.roots.libraries.LibraryTable
 - a:getModule():com.intellij.openapi.module.Module
@@ -1325,7 +1308,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkModificatorBridgeImpl
 - setSdkAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData):V
 - setVersionString(java.lang.String):V
 - toString():java.lang.String
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkModificatorBridgeImplKt
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
 - <init>(java.util.List,java.util.List):V
 - f:findByUrl(java.lang.String):com.intellij.openapi.vfs.pointers.VirtualFilePointer

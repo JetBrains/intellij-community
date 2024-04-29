@@ -116,7 +116,6 @@ a:com.intellij.openapi.components.BaseState
 - toString():java.lang.String
 - pf:treeSet():com.intellij.openapi.components.StoredPropertyBase
 f:com.intellij.openapi.components.BaseState$Companion
-f:com.intellij.openapi.components.BaseStateKt
 e:com.intellij.openapi.components.JsonSchemaType
 - java.lang.Enum
 - sf:ARRAY:com.intellij.openapi.components.JsonSchemaType

@@ -8,7 +8,6 @@ f:com.intellij.execution.wsl.WslProxy
 - <init>(com.intellij.execution.wsl.AbstractWslDistribution,I):V
 - dispose():V
 - f:getWslIngressPort():I
-f:com.intellij.execution.wsl.WslToolsKt
 f:com.intellij.execution.wsl.sync.FilePathRelativeToDir
 - <init>(java.lang.String):V
 - equals(java.lang.Object):Z
@@ -45,7 +44,6 @@ f:com.intellij.execution.wsl.sync.LinuxFileStorage
 - removeTempFile(java.lang.String):V
 - tarAndCopyTo(java.util.Collection,java.nio.file.Path):V
 - unTar(java.lang.String):V
-f:com.intellij.execution.wsl.sync.LinuxFileStorageKt
 f:com.intellij.execution.wsl.sync.WindowsFileStorage
 - com.intellij.execution.wsl.sync.FileStorage
 - <init>(java.nio.file.Path,com.intellij.execution.wsl.AbstractWslDistribution):V
@@ -59,7 +57,6 @@ f:com.intellij.execution.wsl.sync.WindowsFileStorage
 - removeTempFile(java.nio.file.Path):V
 - tarAndCopyTo(java.util.Collection,java.lang.String):V
 - unTar(java.nio.file.Path):V
-f:com.intellij.execution.wsl.sync.WindowsFileStorageKt
 a:com.intellij.execution.wsl.sync.WslHashFilter
 - p:<init>(com.intellij.execution.wsl.sync.WslHashOperator,com.intellij.execution.wsl.sync.WslHashMatcher):V
 - f:matches(java.lang.String):Z
@@ -133,5 +130,3 @@ f:com.intellij.execution.wsl.sync.WslSyncData
 - f:getStubs():java.util.Set
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.execution.wsl.sync.WslSyncKt
-f:com.intellij.execution.wsl.sync.WslSyncSharedKt

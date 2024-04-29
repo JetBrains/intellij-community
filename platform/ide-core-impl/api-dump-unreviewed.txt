@@ -245,7 +245,6 @@ f:com.intellij.ide.impl.OpenProjectTaskBuilder
 - f:setShowWelcomeScreen(Z):V
 - f:setUseDefaultProjectAsTemplate(java.lang.Boolean):V
 - f:withBeforeOpenCallback(java.util.function.Predicate):V
-f:com.intellij.ide.impl.OpenProjectTaskKt
 f:com.intellij.ide.impl.ProjectUtilCore
 - <init>():V
 - s:getOpenProjects():com.intellij.openapi.project.Project[]
@@ -338,7 +337,6 @@ f:com.intellij.notification.impl.NotificationGroupManagerImpl
 - getRegisteredNotificationGroups():java.util.Collection
 - isGroupRegistered(java.lang.String):Z
 - isRegisteredNotificationId(java.lang.String):Z
-f:com.intellij.notification.impl.NotificationGroupManagerImplKt
 f:com.intellij.notification.impl.NotificationParentGroupBean
 - id:java.lang.String
 - parentId:java.lang.String
@@ -987,7 +985,6 @@ f:com.intellij.openapi.vfs.newvfs.VfsImplUtil$PathFromRoot
 - root():com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - f:toString():java.lang.String
 com.intellij.openapi.wm.impl.FloatingDecoratorMarker
-f:com.intellij.ui.icons.CoreIconManagerKt
 f:com.intellij.util.FlushingDaemon
 - sf:INSTANCE:com.intellij.util.FlushingDaemon
 - sf:NAME:java.lang.String

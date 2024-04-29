@@ -31,7 +31,6 @@ f:com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope$$ser
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope$Companion
 - f:serializer():kotlinx.serialization.KSerializer
-f:com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporterKt
 f:com.intellij.platform.diagnostic.telemetry.exporters.KeyValue
 - sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.KeyValue$Companion
 - f:key:java.lang.String
@@ -60,7 +59,6 @@ e:com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExpo
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter$Protocol
 - s:values():com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter$Protocol[]
-f:com.intellij.platform.diagnostic.telemetry.exporters.ReentrantMutexKt
 f:com.intellij.platform.diagnostic.telemetry.exporters.Resource
 - sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.Resource$Companion
 - f:attributes:java.util.List
@@ -167,5 +165,3 @@ f:com.intellij.platform.diagnostic.telemetry.exporters.TracesData$$serializer
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.diagnostic.telemetry.exporters.TracesData$Companion
 - f:serializer():kotlinx.serialization.KSerializer
-f:com.intellij.platform.diagnostic.telemetry.exporters.meters.CsvMetricsExporterKt
-f:com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporterKt

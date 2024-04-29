@@ -65,7 +65,6 @@
 - a:deserializeCache-IoAF18A(java.nio.file.Path):java.lang.Object
 - a:getSerializerDataFormatVersion():java.lang.String
 - a:serializeCache(java.nio.file.Path,com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.SerializationResult
-*f:com.intellij.platform.workspace.storage.EntityTreeUtilKt
 *a:com.intellij.platform.workspace.storage.EntityType
 - <init>():V
 - <init>(com.intellij.platform.workspace.storage.EntityType):V
@@ -170,7 +169,6 @@
 - java.lang.annotation.Annotation
 @:com.intellij.platform.workspace.storage.annotations.Open
 - java.lang.annotation.Annotation
-f:com.intellij.platform.workspace.storage.impl.ClassToIntConverterKt
 f:com.intellij.platform.workspace.storage.impl.ConnectionId
 - sf:Companion:com.intellij.platform.workspace.storage.impl.ConnectionId$Companion
 - f:canRemoveParent():Z
@@ -193,7 +191,6 @@ e:com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType
 - s:values():com.intellij.platform.workspace.storage.impl.ConnectionId$ConnectionType[]
-f:com.intellij.platform.workspace.storage.impl.ConsistencyCheckerKt
 e:com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
 - java.lang.Enum
 - sf:DISABLED:com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
@@ -203,8 +200,6 @@ e:com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
 - s:values():com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode[]
 com.intellij.platform.workspace.storage.impl.ConsistencyCheckingModeProvider
 - a:getMode():com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
-f:com.intellij.platform.workspace.storage.impl.EntitiesKt
-f:com.intellij.platform.workspace.storage.impl.EntityIdKt
 f:com.intellij.platform.workspace.storage.impl.EntityLink
 - <init>(Z,com.intellij.platform.workspace.storage.impl.ConnectionId):V
 - f:component1():Z
@@ -275,14 +270,11 @@ a:com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 - f:updateReferenceToEntity(java.lang.Class,Z,java.util.List):V
 f:com.intellij.platform.workspace.storage.impl.RefsTableKt
 - sf:isOneToOne(com.intellij.platform.workspace.storage.impl.ConnectionId):Z
-f:com.intellij.platform.workspace.storage.impl.ReplaceBySourceAsTreeKt
 com.intellij.platform.workspace.storage.impl.SoftLinkable
 - a:getLinks():java.util.Set
 - a:index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
 - a:updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - a:updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-f:com.intellij.platform.workspace.storage.impl.UtilsKt
-f:com.intellij.platform.workspace.storage.impl.WorkspaceBuilderChangeLogKt
 a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 - com.intellij.platform.workspace.storage.WorkspaceEntity
 - snapshot:com.intellij.platform.workspace.storage.EntityStorage
@@ -328,7 +320,6 @@ a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 c:com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegate
 - <init>():V
 - getValue(com.intellij.platform.workspace.storage.WorkspaceEntity,kotlin.reflect.KProperty):java.lang.Object
-f:com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegateKt
 f:com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegateMutable
 - <init>(java.lang.Class):V
 - f:getValue(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,kotlin.reflect.KProperty):java.lang.Object
@@ -364,7 +355,6 @@ f:com.intellij.platform.workspace.storage.impl.cache.ChangeOnVersionedChange
 - getSize():I
 f:com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheKt
 - sf:cache():com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
-f:com.intellij.platform.workspace.storage.impl.containers.ContainerExtensionsKt
 f:com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceCollectionsKt
 - sf:toMutableWorkspaceList(java.util.Collection):com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 - sf:toMutableWorkspaceSet(java.util.Collection):com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
@@ -410,8 +400,6 @@ f:com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExist
 - java.lang.RuntimeException
 - <init>(com.intellij.platform.workspace.storage.SymbolicEntityId):V
 - f:getId():com.intellij.platform.workspace.storage.SymbolicEntityId
-f:com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndexKt
-f:com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndexKt
 c:com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 - com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 - findEntitiesByUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):kotlin.sequences.Sequence
@@ -427,7 +415,6 @@ f:com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex$MutableV
 - setVfu2EntityId(it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap):V
 - f:toImmutable():com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 f:com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex$MutableVirtualFileIndex$Companion
-f:com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndexKt
 com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 - a:index(com.intellij.platform.workspace.storage.impl.WorkspaceEntityData,java.lang.Object):V
 - a:remove(com.intellij.platform.workspace.storage.impl.WorkspaceEntityData,java.lang.Object):V
@@ -448,9 +435,6 @@ e:com.intellij.platform.workspace.storage.impl.query.Operation
 - s:values():com.intellij.platform.workspace.storage.impl.query.Operation[]
 f:com.intellij.platform.workspace.storage.impl.query.QueryId
 - <init>():V
-f:com.intellij.platform.workspace.storage.impl.query.TokenKt
-f:com.intellij.platform.workspace.storage.impl.references.OneToAbstractManyContainerKt
-f:com.intellij.platform.workspace.storage.impl.serialization.CacheMetadataKt
 f:com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 - com.intellij.platform.workspace.storage.EntityStorageSerializer
 - sf:Companion:com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl$Companion
@@ -463,13 +447,9 @@ f:com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerial
 - serializeCache(java.nio.file.Path,com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.SerializationResult
 - setSerializerDataFormatVersion(java.lang.String):V
 f:com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl$Companion
-f:com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImplKt
-f:com.intellij.platform.workspace.storage.impl.serialization.TypeInfoKt
 f:com.intellij.platform.workspace.storage.impl.serialization.UnsupportedEntitiesVersionException
 - java.lang.Exception
 - <init>():V
-f:com.intellij.platform.workspace.storage.impl.serialization.registration.EntitiesRegistrarKt
-f:com.intellij.platform.workspace.storage.impl.serialization.registration.SerializerRegistrarKt
 f:com.intellij.platform.workspace.storage.impl.serialization.serializer.UnsupportedClassException
 - java.lang.Exception
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
@@ -519,7 +499,6 @@ com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumenta
 - a:resolveReference(com.intellij.platform.workspace.storage.EntityPointer):com.intellij.platform.workspace.storage.WorkspaceEntity
 @:com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 - java.lang.annotation.Annotation
-f:com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationKt
 com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 - com.intellij.platform.workspace.storage.ImmutableEntityStorage
 - com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
@@ -531,7 +510,6 @@ com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInst
 - a:getOneChildBuilder(com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - a:getParentBuilder(com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - a:replaceChildren(com.intellij.platform.workspace.storage.impl.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.util.List):V
-f:com.intellij.platform.workspace.storage.metadata.ApiCodeKt
 com.intellij.platform.workspace.storage.metadata.MetadataStorage
 - getMetadataByTypeFqn(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 - a:getMetadataByTypeFqnOrNull(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
@@ -548,9 +526,6 @@ a:com.intellij.platform.workspace.storage.metadata.MetadataStorageBridge
 com.intellij.platform.workspace.storage.metadata.StorageMetadata
 f:com.intellij.platform.workspace.storage.metadata.diff.ComparisonUtil
 - sf:INSTANCE:com.intellij.platform.workspace.storage.metadata.diff.ComparisonUtil
-f:com.intellij.platform.workspace.storage.metadata.diff.ComparisonsBuilderKt
-f:com.intellij.platform.workspace.storage.metadata.diff.MetadataComparatorKt
-f:com.intellij.platform.workspace.storage.metadata.exceptions.MetadataExceptionKt
 a:com.intellij.platform.workspace.storage.metadata.exceptions.MissingMetadataException
 - java.lang.Exception
 - <init>(java.lang.String):V
@@ -563,7 +538,6 @@ f:com.intellij.platform.workspace.storage.metadata.exceptions.MissingTypeMetadat
 f:com.intellij.platform.workspace.storage.metadata.exceptions.MissingTypeMetadataHashException
 - com.intellij.platform.workspace.storage.metadata.exceptions.MissingMetadataException
 - <init>(java.lang.String):V
-f:com.intellij.platform.workspace.storage.metadata.extensions.MetadataTypeExtensionsKt
 a:com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
 - com.intellij.platform.workspace.storage.metadata.MetadataStorage
 - <init>():V
@@ -785,10 +759,8 @@ f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$Simpl
 - hashCode():I
 - isNullable():Z
 - toString():java.lang.String
-f:com.intellij.platform.workspace.storage.metadata.resolver.MetadataStorageResolverKt
 f:com.intellij.platform.workspace.storage.metadata.utils.ConstructorsGeneratorKt
 - bs:main(java.lang.String[]):V
-f:com.intellij.platform.workspace.storage.metadata.utils.TypesCollectorKt
 f:com.intellij.platform.workspace.storage.query.APIKt
 - sf:entities(kotlin.reflect.KClass):com.intellij.platform.workspace.storage.query.CollectionQuery
 - sf:entitiesByExternalMapping(java.lang.String,java.lang.Object):com.intellij.platform.workspace.storage.query.CollectionQuery
@@ -827,9 +799,7 @@ f:com.intellij.platform.workspace.storage.query.CollectionQuery$TrackDiff
 - <init>(com.intellij.platform.workspace.storage.impl.query.QueryId,com.intellij.platform.workspace.storage.query.CollectionQuery):V
 - f:getFrom():com.intellij.platform.workspace.storage.query.CollectionQuery
 - getQueryId():com.intellij.platform.workspace.storage.impl.query.QueryId
-f:com.intellij.platform.workspace.storage.query.QueriesKt
 com.intellij.platform.workspace.storage.query.StorageQuery
-f:com.intellij.platform.workspace.storage.trace.TracingKt
 com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 - com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 - a:index(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V

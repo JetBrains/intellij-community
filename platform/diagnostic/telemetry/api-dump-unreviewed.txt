@@ -1,4 +1,3 @@
-f:com.intellij.platform.diagnostic.telemetry.AggregatedMetricExporterKt
 f:com.intellij.platform.diagnostic.telemetry.MetricsExtensionsKt
 - sf:belongsToScope(io.opentelemetry.sdk.metrics.data.MetricData,com.intellij.platform.diagnostic.telemetry.Scope):Z
 f:com.intellij.platform.diagnostic.telemetry.NoopTelemetryManager
@@ -22,7 +21,6 @@ f:com.intellij.platform.diagnostic.telemetry.PlatformScopesKt
 - sf:Storage:com.intellij.platform.diagnostic.telemetry.Scope
 - sf:VFS:com.intellij.platform.diagnostic.telemetry.Scope
 - sf:WorkspaceModel:com.intellij.platform.diagnostic.telemetry.Scope
-f:com.intellij.platform.diagnostic.telemetry.TelemetryManagerKt
 e:com.intellij.platform.diagnostic.telemetry.TracerLevel
 - java.lang.Enum
 - sf:DEFAULT:com.intellij.platform.diagnostic.telemetry.TracerLevel

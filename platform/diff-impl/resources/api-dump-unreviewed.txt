@@ -245,7 +245,6 @@ f:com.intellij.diff.actions.ShowBlankDiffWindowAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-f:com.intellij.diff.actions.ShowBlankDiffWindowActionKt
 f:com.intellij.diff.actions.ShowBlankDiffWindowDiffExtension
 - com.intellij.diff.DiffExtension
 - <init>():V
@@ -344,7 +343,6 @@ f:com.intellij.diff.actions.impl.MutableDiffRequestChain$Helper
 - f:setContent(com.intellij.diff.contents.DiffContent,java.lang.String,com.intellij.diff.util.Side):V
 - f:setContent(com.intellij.diff.contents.DiffContent,java.lang.String,com.intellij.diff.util.ThreeSide):V
 - toString():java.lang.String
-f:com.intellij.diff.actions.impl.MutableDiffRequestChainKt
 a:com.intellij.diff.actions.impl.NextChangeAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -542,7 +540,6 @@ f:com.intellij.diff.editor.DefaultDiffFileEditorCustomizer
 - com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer
 - <init>():V
 - customize(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.FileEditor,com.intellij.diff.DiffContext):V
-f:com.intellij.diff.editor.DefaultDiffFileEditorCustomizerKt
 f:com.intellij.diff.editor.DefaultDiffTabFilesManager
 - com.intellij.diff.editor.DiffEditorTabFilesManager
 - <init>(com.intellij.openapi.project.Project):V
@@ -1283,7 +1280,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffActionPromoter
 - com.intellij.openapi.actionSystem.ActionPromoter
 - <init>():V
 - promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
-f:com.intellij.diff.tools.combined.CombinedDiffActionsKt
 f:com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener
 - com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 - <init>():V
@@ -1318,7 +1314,6 @@ com.intellij.diff.tools.combined.CombinedDiffBlockFactory
 com.intellij.diff.tools.combined.CombinedDiffBlockListener
 - java.util.EventListener
 - a:onCollapseStateChanged(com.intellij.diff.tools.combined.CombinedBlockId,Z):V
-f:com.intellij.diff.tools.combined.CombinedDiffBlocksPanelKt
 com.intellij.diff.tools.combined.CombinedDiffCaretNavigation
 - a:moveCaretPageDown():V
 - a:moveCaretPageUp():V
@@ -1349,7 +1344,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffComponentProcessorImpl
 - setState(com.intellij.openapi.fileEditor.FileEditorState):V
 - setToolbarVerticalSizeReferent(javax.swing.JComponent):V
 f:com.intellij.diff.tools.combined.CombinedDiffComponentProcessorImpl$Companion
-f:com.intellij.diff.tools.combined.CombinedDiffComponentProcessorImplKt
 f:com.intellij.diff.tools.combined.CombinedDiffEditorDownHandler
 - com.intellij.diff.tools.combined.CombinedDiffBaseEditorForEachCaretHandler
 - <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
@@ -1358,7 +1352,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffEditorDownWithSelectionHandler
 - com.intellij.diff.tools.combined.CombinedDiffBaseEditorWithSelectionHandler
 - <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
 - doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-f:com.intellij.diff.tools.combined.CombinedDiffEditorHandlersKt
 f:com.intellij.diff.tools.combined.CombinedDiffEditorLeftHandler
 - com.intellij.diff.tools.combined.CombinedDiffBaseEditorForEachCaretHandler
 - <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
@@ -4442,7 +4435,6 @@ f:com.intellij.openapi.vcs.ex.RangeExclusionState$Included
 - f:iterateIncludedDeletionRanges(com.intellij.diff.util.Range,kotlin.jvm.functions.Function1):V
 - toString():java.lang.String
 - f:validate(I,I):V
-f:com.intellij.openapi.vcs.ex.RangeKt
 f:com.intellij.openapi.vcs.ex.RangesBuilder
 - sf:compareLines(com.intellij.diff.util.Range,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,com.intellij.diff.tools.util.text.LineOffsets):com.intellij.diff.comparison.iterables.FairDiffIterable
 - sf:compareLines(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,com.intellij.diff.tools.util.text.LineOffsets):com.intellij.diff.comparison.iterables.FairDiffIterable

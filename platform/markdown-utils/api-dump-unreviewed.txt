@@ -5,8 +5,6 @@ f:com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 - sf:convert(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
 - sf:convert(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language):java.lang.String
 - bs:convert$default(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language,I,java.lang.Object):java.lang.String
-f:com.intellij.markdown.utils.doc.impl.DocFlavourDescriptorKt
-f:com.intellij.markdown.utils.doc.impl.DocGeneratingProvidersKt
 f:com.intellij.markdown.utils.lang.CodeBlockHtmlSyntaxHighlighter
 - com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 - <init>(com.intellij.openapi.project.Project):V

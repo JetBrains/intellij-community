@@ -149,7 +149,6 @@ f:com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator$Companion
 f:com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGeneratorImpl
 - com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
 - <init>(com.intellij.vcs.log.graph.collapsing.CollapsedGraph,com.intellij.vcs.log.graph.collapsing.CollapsedGraph$Modification,I,I):V
-f:com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGeneratorKt
 c:com.intellij.vcs.log.graph.collapsing.EdgeStorage
 - sf:NULL_ID:I
 - <init>():V
@@ -395,7 +394,6 @@ f:com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl
 - getHeadNodeIndex():it.unimi.dsi.fastutil.ints.IntList
 - getLayoutIndex(I):I
 - getOneOfHeadNodeIndex(I):I
-f:com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImplKt
 f:com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl
 - com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 - sf:Companion:com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl$Companion

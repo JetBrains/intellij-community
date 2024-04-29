@@ -160,7 +160,6 @@ f:com.intellij.coverage.CoverageDataSuitesManager
 - f:removeSuite(com.intellij.coverage.CoverageSuite):V
 f:com.intellij.coverage.CoverageDataSuitesManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.CoverageDataSuitesManager
-f:com.intellij.coverage.CoverageDataSuitesManagerKt
 *:com.intellij.coverage.CoverageEditorAnnotator
 - com.intellij.openapi.Disposable
 - a:hideCoverage():V
@@ -265,7 +264,6 @@ c:com.intellij.coverage.CoverageLineMarkerRenderer
 - s:getReport(com.intellij.rt.coverage.data.LineData,I,com.intellij.openapi.editor.Editor,com.intellij.coverage.CoverageSuitesBundle):java.lang.String
 - getTextAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
 - moveToLine(I,com.intellij.openapi.editor.Editor):V
-f:com.intellij.coverage.CoverageLoggerKt
 a:com.intellij.coverage.CoverageOptions
 - com.intellij.openapi.options.UnnamedConfigurable
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -477,7 +475,6 @@ e:com.intellij.coverage.actions.ExternalReportImportManager$Source
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.coverage.actions.ExternalReportImportManager$Source
 - s:values():com.intellij.coverage.actions.ExternalReportImportManager$Source[]
-f:com.intellij.coverage.actions.ExternalReportImportManagerKt
 c:com.intellij.coverage.actions.GenerateCoverageReportAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V

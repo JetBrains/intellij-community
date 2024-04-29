@@ -335,7 +335,6 @@ a:com.intellij.execution.ui.utils.AbstractFragmentBuilder
 - f:withCustomBuilder(com.intellij.execution.ui.utils.AbstractFragmentBuilder,kotlin.jvm.functions.Function1):com.intellij.execution.ui.SettingsEditorFragment
 @:com.intellij.execution.ui.utils.FragmentsDsl
 - java.lang.annotation.Annotation
-f:com.intellij.execution.ui.utils.FragmentsDslBuilderKt
 *f:com.intellij.execution.ui.utils.Group
 - com.intellij.execution.ui.utils.AbstractFragmentBuilder
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.util.List):V
@@ -1261,7 +1260,6 @@ com.intellij.ide.ui.VirtualFileAppearanceListener
 - a:installTheme(javax.swing.UIDefaults):V
 - a:isDark():Z
 - a:isInitialized():Z
-f:com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoKt
 a:com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -1952,7 +1950,6 @@ com.intellij.openapi.actionSystem.Toggleable
 - s:isSelected(javax.swing.JComponent):java.lang.Boolean
 - s:setSelected(com.intellij.openapi.actionSystem.Presentation,Z):V
 - s:setSelected(javax.swing.JComponent,java.lang.Boolean):V
-f:com.intellij.openapi.actionSystem.ex.ActionContextElementKt
 a:com.intellij.openapi.actionSystem.ex.ActionManagerEx
 - com.intellij.openapi.actionSystem.ActionManager
 - sf:Companion:com.intellij.openapi.actionSystem.ex.ActionManagerEx$Companion
@@ -2015,7 +2012,6 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:underModalProgress(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.util.Computable):java.lang.Object
 - sf:wrap(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.AnAction
 - sf:wrap(java.lang.String):com.intellij.openapi.actionSystem.AnAction
-f:com.intellij.openapi.actionSystem.ex.ActionUtilKt
 a:com.intellij.openapi.actionSystem.ex.CheckboxAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -3077,8 +3073,6 @@ f:com.intellij.openapi.observable.util.BindUtil
 - sf:bindStorage(com.intellij.openapi.observable.properties.ObservableMutableProperty,java.lang.String):com.intellij.openapi.observable.properties.ObservableMutableProperty
 - sf:bindVisible(java.awt.Component,com.intellij.openapi.observable.properties.ObservableProperty):java.awt.Component
 - sf:lockOrSkip(java.util.concurrent.atomic.AtomicBoolean,kotlin.jvm.functions.Function0):V
-f:com.intellij.openapi.observable.util.DisposerUtilKt
-f:com.intellij.openapi.observable.util.KotlinUtilKt
 f:com.intellij.openapi.observable.util.ListenerUiUtil
 - sf:onceWhenFocusGained(java.awt.Component,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - bs:onceWhenFocusGained$default(java.awt.Component,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
@@ -3897,7 +3891,6 @@ f:com.intellij.openapi.ui.DialogPanel
 - f:setValidationsOnApply(java.util.Map):V
 - f:setValidationsOnInput(java.util.Map):V
 - f:validateAll():java.util.List
-f:com.intellij.openapi.ui.DialogPanelValidatorKt
 a:com.intellij.openapi.ui.DialogWrapper
 - sf:CANCEL_EXIT_CODE:I
 - sf:CLOSE_EXIT_CODE:I
@@ -4796,7 +4789,6 @@ c:com.intellij.openapi.ui.ThreeComponentsSplitter
 - f:setOrientation(Z):V
 - f:setShowDividerControls(Z):V
 - updateUI():V
-f:com.intellij.openapi.ui.ThreeComponentsSplitterKt
 f:com.intellij.openapi.ui.TitlePanel
 - javax.swing.JPanel
 - <init>(java.lang.String,java.lang.String):V
@@ -7398,7 +7390,6 @@ f:com.intellij.ui.ScrollPaneFactory
 - f:setup(javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent):V
 - bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,com.intellij.ui.Side,javax.swing.JComponent,I,java.lang.Object):V
 - bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent,I,java.lang.Object):V
-f:com.intellij.ui.ScrollableContentBorderKt
 f:com.intellij.ui.ScrollingUtil
 - sf:ROW_PADDING:I
 - <init>():V
@@ -8328,7 +8319,6 @@ c:com.intellij.ui.components.JBOptionButton
 f:com.intellij.ui.components.JBOptionButton$Companion
 - f:getDefaultShowPopupShortcut():com.intellij.openapi.actionSystem.CustomShortcutSet
 - f:getDefaultTooltip():java.lang.String
-f:com.intellij.ui.components.JBOptionButtonKt
 c:com.intellij.ui.components.JBPanelWithEmptyText
 - com.intellij.ui.components.JBPanel
 - com.intellij.util.ui.ComponentWithEmptyText
@@ -8961,7 +8951,6 @@ e:com.intellij.ui.components.panels.HorizontalLayout$Group
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.components.panels.HorizontalLayout$Group
 - s:values():com.intellij.ui.components.panels.HorizontalLayout$Group[]
-f:com.intellij.ui.components.panels.HorizontalLayoutKt
 *f:com.intellij.ui.components.panels.ListLayout
 - java.awt.LayoutManager2
 - *sf:Companion:com.intellij.ui.components.panels.ListLayout$Companion
@@ -9192,7 +9181,6 @@ com.intellij.ui.docking.DragSession
 - a:cancel():V
 - a:getResponse(java.awt.event.MouseEvent):com.intellij.ui.docking.DockContainer$ContentResponse
 - a:process(java.awt.event.MouseEvent):V
-f:com.intellij.ui.dsl.UiDslExceptionKt
 com.intellij.ui.dsl.builder.ButtonsGroup
 - com.intellij.ui.dsl.builder.RowsRange
 - a:bind(com.intellij.ui.dsl.builder.MutableProperty,java.lang.Class):com.intellij.ui.dsl.builder.ButtonsGroup
@@ -9200,7 +9188,6 @@ com.intellij.ui.dsl.builder.ButtonsGroup
 - a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.ButtonsGroup
 - a:visible(Z):com.intellij.ui.dsl.builder.ButtonsGroup
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.ButtonsGroup
-f:com.intellij.ui.dsl.builder.ButtonsGroupKt
 f:com.intellij.ui.dsl.builder.ChangeContext
 - <init>(java.lang.Object,Z):V
 - f:component1():java.lang.Object
@@ -9295,7 +9282,6 @@ com.intellij.ui.dsl.builder.SpacingConfiguration
 - a:getVerticalComponentGap():I
 - a:getVerticalMediumGap():I
 - a:getVerticalSmallGap():I
-f:com.intellij.ui.dsl.builder.SpacingConfigurationKt
 f:com.intellij.ui.dsl.builder.UtilsKt
 - sf:DEFAULT_COMMENT_WIDTH:I
 - sf:MAX_LINE_LENGTH_NO_WRAP:I
@@ -9531,8 +9517,6 @@ f:com.intellij.ui.dsl.gridLayout.VerticalGapsKt
 - bs:subGridBuilder$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 - bs:subGridBuilder$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.Gaps,com.intellij.ui.dsl.gridLayout.Gaps,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 - bs:subGridBuilder$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-f:com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilderKt
-f:com.intellij.ui.dsl.gridLayout.impl.GridImplKt
 f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
@@ -9714,7 +9698,6 @@ com.intellij.ui.jcef.JBCefApp$JBCefCustomSchemeHandlerFactory
 - a:getDomainName():java.lang.String
 - a:getSchemeName():java.lang.String
 - a:registerCustomScheme(org.cef.callback.CefSchemeRegistrar):V
-f:com.intellij.ui.jcef.JBCefAppCacheKt
 com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider
 - sf:Companion:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
 - a:getOptions():java.util.List
@@ -11215,7 +11198,6 @@ f:com.intellij.ui.tabs.impl.JBTabsImpl$Toolbar
 - <init>(com.intellij.ui.tabs.impl.JBTabsImpl,com.intellij.ui.tabs.TabInfo,java.awt.Component,com.intellij.openapi.actionSystem.ActionGroup):V
 - getPreferredSize():java.awt.Dimension
 - f:isEmpty():Z
-f:com.intellij.ui.tabs.impl.JBTabsImplKt
 a:com.intellij.ui.tabs.impl.LayoutPassInfo
 - entryPointRect:java.awt.Rectangle
 - moreRect:java.awt.Rectangle
@@ -12755,7 +12737,6 @@ a:com.intellij.util.ui.Animator
 - resume():V
 - f:suspend():V
 - toString():java.lang.String
-f:com.intellij.util.ui.AnimatorKt
 c:com.intellij.util.ui.AsyncProcessIcon
 - com.intellij.util.ui.AnimatedIcon
 - sf:COUNT:I
@@ -12931,7 +12912,6 @@ f:com.intellij.util.ui.LafIconLookup
 - sf:getIcon(java.lang.String,Z,Z,Z,Z,Z):javax.swing.Icon
 - bs:getIcon$default(java.lang.String,Z,Z,Z,Z,Z,I,java.lang.Object):javax.swing.Icon
 - sf:getSelectedIcon(java.lang.String):javax.swing.Icon
-f:com.intellij.util.ui.LafIconLookupKt
 c:com.intellij.util.ui.ListTableModel
 - com.intellij.util.ui.TableViewModel
 - com.intellij.util.ui.EditableModel
@@ -13272,7 +13252,6 @@ f:com.intellij.util.ui.tree.TreeUtil
 - s:visitVisibleRows(javax.swing.JTree,java.util.function.Function,java.util.function.Consumer):V
 com.intellij.util.ui.tree.TreeUtil$Traverse
 - a:accept(java.lang.Object):Z
-f:com.intellij.util.ui.update.LazyUiDisposableKt
 a:com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider
 - com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 - <init>():V

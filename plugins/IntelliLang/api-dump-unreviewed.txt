@@ -404,7 +404,6 @@ f:org.intellij.plugins.intelliLang.references.LanguageReferenceContributor
 - <init>():V
 - getReferences(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.model.psi.PsiSymbolReferenceHints):java.util.Collection
 - getSearchRequests(com.intellij.openapi.project.Project,com.intellij.model.Symbol):java.util.Collection
-f:org.intellij.plugins.intelliLang.references.LanguageReferenceContributorKt
 f:org.intellij.plugins.intelliLang.references.LanguageWordInCommentCompletionContributor
 - com.intellij.codeInsight.completion.CompletionContributor
 - <init>():V

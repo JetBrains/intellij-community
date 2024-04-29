@@ -1,6 +1,5 @@
 f:com.intellij.configurationStore.ApplicationStoreImplKt
 - sf:APP_CONFIG:java.lang.String
-f:com.intellij.configurationStore.ChooseComponentsToExportDialogKt
 a:com.intellij.configurationStore.ComponentInfo
 - affectedPropertyNames:java.util.List
 - a:getComponent():java.lang.Object
@@ -11,9 +10,6 @@ a:com.intellij.configurationStore.ComponentInfo
 - a:getStateSpec():com.intellij.openapi.components.State
 - a:isModificationTrackingSupported():Z
 - updateModificationCount(J):V
-f:com.intellij.configurationStore.ComponentInfoKt
-f:com.intellij.configurationStore.ComponentReloadingKt
-f:com.intellij.configurationStore.ComponentStoreImplKt
 f:com.intellij.configurationStore.ComponentStoreImplReloadListener
 - com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener
 - <init>():V
@@ -33,7 +29,6 @@ com.intellij.configurationStore.DataWriter
 - a:writeTo(java.io.OutputStream,com.intellij.util.LineSeparator,com.intellij.configurationStore.DataWriterFilter):V
 - writeTo(java.nio.file.Path,java.lang.Object,com.intellij.util.LineSeparator,Z):V
 - bs:writeTo$default(com.intellij.configurationStore.DataWriter,java.io.OutputStream,com.intellij.util.LineSeparator,com.intellij.configurationStore.DataWriterFilter,I,java.lang.Object):V
-f:com.intellij.configurationStore.DefaultProjectElementNormalizerKt
 f:com.intellij.configurationStore.DefaultProjectStoreImplKt
 - sf:PROJECT_DEFAULT_FILE_NAME:java.lang.String
 - sf:PROJECT_DEFAULT_FILE_SPEC:java.lang.String
@@ -69,7 +64,6 @@ pc:com.intellij.configurationStore.FileBasedStorage$FileSaveSessionProducer
 - <init>(com.intellij.configurationStore.StateMap,com.intellij.configurationStore.FileBasedStorage):V
 - pf:isSaveAllowed():Z
 - p:saveLocally(com.intellij.configurationStore.DataWriter,Z,java.util.List):V
-f:com.intellij.configurationStore.FileBasedStorageKt
 c:com.intellij.configurationStore.ImportSettingsAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -82,14 +76,12 @@ c:com.intellij.configurationStore.ImportSettingsAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.configurationStore.ImportSettingsActionKt
 - sf:getPaths(java.io.InputStream):java.util.Set
-f:com.intellij.configurationStore.ModuleStoreImplKt
 f:com.intellij.configurationStore.ProjectStoreBridgeKt
 - sf:getProjectStateStorage(java.lang.String,com.intellij.openapi.components.impl.stores.IProjectStore,com.intellij.openapi.project.Project):com.intellij.configurationStore.StateStorageBase
 a:com.intellij.configurationStore.ProjectStoreFactoryBase
 - com.intellij.openapi.project.impl.ProjectStoreFactory
 - <init>():V
 - f:createDefaultProjectStore(com.intellij.openapi.project.Project):com.intellij.openapi.components.impl.stores.IComponentStore
-f:com.intellij.configurationStore.ProjectStoreImplKt
 a:com.intellij.configurationStore.SaveSessionProducerBase
 - com.intellij.configurationStore.SaveSessionProducer
 - com.intellij.openapi.vfs.LargeFileWriteRequestor
@@ -132,7 +124,6 @@ f:com.intellij.configurationStore.StateMap
 - toString():java.lang.String
 f:com.intellij.configurationStore.StateMap$Companion
 - f:fromMap(java.util.Map):com.intellij.configurationStore.StateMap
-f:com.intellij.configurationStore.StateMapKt
 a:com.intellij.configurationStore.StateStorageBase
 - pf:storageDataRef:java.util.concurrent.atomic.AtomicReference
 - <init>():V
@@ -150,7 +141,6 @@ a:com.intellij.configurationStore.StateStorageBase
 f:com.intellij.configurationStore.StoreReloadManagerImplKt
 - sf:askToRestart(com.intellij.openapi.components.impl.stores.IComponentStore,java.util.Collection,java.util.Set,Z):Z
 - sf:reloadAppStore(java.util.Set):Z
-f:com.intellij.configurationStore.TrackingPathMacroSubstitutorImplKt
 a:com.intellij.configurationStore.XmlElementStorage
 - com.intellij.configurationStore.StateStorageBase
 - f:fileSpec:java.lang.String
@@ -180,10 +170,6 @@ a:com.intellij.configurationStore.XmlElementStorage$XmlElementStorageSaveSession
 - p:isSaveAllowed():Z
 - pa:saveLocally(com.intellij.configurationStore.DataWriter,Z,java.util.List):V
 - setSerializedState(java.lang.String,org.jdom.Element):V
-f:com.intellij.configurationStore.XmlElementStorageKt
-f:com.intellij.configurationStore.schemeManager.SchemeChangeApplicatorKt
-f:com.intellij.configurationStore.schemeManager.SchemeListManagerKt
-f:com.intellij.configurationStore.schemeManager.SchemeLoaderKt
 a:com.intellij.configurationStore.schemeManager.SchemeManagerBase
 - com.intellij.openapi.options.SchemeManager
 - <init>(com.intellij.openapi.options.SchemeProcessor):V
@@ -237,7 +223,6 @@ f:com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 - save():V
 - setSchemes(java.util.List,com.intellij.openapi.options.Scheme,java.util.function.Predicate):V
 - toString():java.lang.String
-f:com.intellij.configurationStore.schemeManager.SchemeManagerUtilKt
 c:com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
 - <init>(Z):V
 - p:logConfig(kotlin.jvm.functions.Function2,com.intellij.openapi.project.Project,java.util.List,I):V
@@ -245,8 +230,6 @@ c:com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPr
 - f:logConfigurationStateChanged(java.lang.String,java.lang.Object,com.intellij.openapi.project.Project):V
 - f:logDefaultConfigurationState(java.lang.String,java.lang.Class,com.intellij.openapi.project.Project):V
 - p:logSettingsChanged(kotlin.jvm.functions.Function2,com.intellij.openapi.project.Project,java.util.List,I):V
-f:com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventSchedulerKt
-f:com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventsKt
 f:com.intellij.configurationStore.statistic.eventLog.SettingsComponentNameValidator
 - com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 - com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule

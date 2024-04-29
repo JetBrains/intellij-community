@@ -132,28 +132,16 @@ f:com.intellij.internal.ml.ngram.VocabularyWithLimit
 - f:toIndicesWithLimit(java.util.List,com.intellij.completion.ngram.slp.modeling.ngram.NGramModel):java.util.List
 - writeExternal(java.io.ObjectOutput):V
 f:com.intellij.internal.ml.ngram.VocabularyWithLimit$Companion
-f:com.intellij.platform.ml.impl.DumbMLTaskKt
-f:com.intellij.platform.ml.impl.MLModelUsageSessionKt
-f:com.intellij.platform.ml.impl.MLTaskKt
-f:com.intellij.platform.ml.impl.UtilKt
 com.intellij.platform.ml.impl.apiPlatform.MLTaskGroupListenerProvider
 - sf:Companion:com.intellij.platform.ml.impl.apiPlatform.MLTaskGroupListenerProvider$Companion
 f:com.intellij.platform.ml.impl.apiPlatform.MLTaskGroupListenerProvider$Companion
 - f:getTOPIC():com.intellij.util.messages.Topic
-f:com.intellij.platform.ml.impl.environment.ExtendedEnvironmentKt
-f:com.intellij.platform.ml.impl.environment.TopologicalSortingResolverKt
-f:com.intellij.platform.ml.impl.logs.CommonKt
-f:com.intellij.platform.ml.impl.logs.MLSessionLoggerKt
-f:com.intellij.platform.ml.impl.logs.SessionAsMultipleEventsLoggingStrategyKt
-f:com.intellij.platform.ml.impl.logs.SessionFinishedKt
-f:com.intellij.platform.ml.impl.model.RegressionModelKt
 a:com.intellij.platform.ml.impl.ngram.model.NGramModel
 - <init>(com.intellij.platform.ml.impl.ngram.model.counter.NGramCounter,I):V
 - f:getAllNGramsWithCount():java.util.Map
 - pf:getNGramCounter():com.intellij.platform.ml.impl.ngram.model.counter.NGramCounter
 - pf:getNgramSize():I
 - a:scoreToken(java.util.List,I):D
-f:com.intellij.platform.ml.impl.ngram.model.NGramModelKt
 com.intellij.platform.ml.impl.ngram.model.NGramToken
 f:com.intellij.platform.ml.impl.ngram.model.NGramToken$EndOfSentence
 - com.intellij.platform.ml.impl.ngram.model.NGramToken
@@ -186,10 +174,6 @@ f:com.intellij.platform.ml.impl.ngram.model.SimpleNGramModel$Companion
 com.intellij.platform.ml.impl.ngram.model.counter.NGramCounter
 - a:getAllNGramsWithCount():java.util.Map
 - a:getFrequencyOf(java.util.List):I
-f:com.intellij.platform.ml.impl.session.SessionStructureCollectorKt
-f:com.intellij.platform.ml.impl.session.SessionTreeKt
-f:com.intellij.platform.ml.impl.session.SessionUsageUtilKt
-f:com.intellij.platform.ml.impl.session.analysis.AnalysersKt
 f:com.intellij.platform.ml.impl.turboComplete.CompletionKind
 - <init>(java.lang.Enum,com.intellij.platform.ml.impl.turboComplete.KindVariety):V
 - f:component1():java.lang.Enum

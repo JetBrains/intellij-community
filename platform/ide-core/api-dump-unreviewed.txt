@@ -256,7 +256,6 @@ e:com.intellij.ide.GeneralSettings$PropertyNames
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ide.GeneralSettings$PropertyNames
 - s:values():com.intellij.ide.GeneralSettings$PropertyNames[]
-f:com.intellij.ide.GeneralSettingsKt
 f:com.intellij.ide.GeneralSettingsState
 - autoSaveFiles:Z
 - autoSaveIfInactive:Z
@@ -1480,7 +1479,6 @@ f:com.intellij.openapi.application.Experiments
 - f:setFeatureEnabled(java.lang.String,Z):V
 f:com.intellij.openapi.application.Experiments$Companion
 - f:getInstance():com.intellij.openapi.application.Experiments
-f:com.intellij.openapi.application.ExperimentsKt
 c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - java.lang.Cloneable
 - <init>(com.intellij.openapi.fileChooser.FileChooserDescriptor):V
@@ -2758,7 +2756,6 @@ com.intellij.ui.EditorTextComponent
 - a:getDocument():com.intellij.openapi.editor.Document
 - a:getText():java.lang.String
 - a:removeDocumentListener(com.intellij.openapi.editor.event.DocumentListener):V
-f:com.intellij.ui.SpinningProgressIconKt
 com.intellij.ui.UserActivityListener
 - java.util.EventListener
 - a:stateChanged():V

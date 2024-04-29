@@ -3,7 +3,6 @@ com.intellij.externalProcessAuthHelper.AuthenticationGate
 - a:getSavedInput(java.lang.String):java.lang.String
 - a:saveInput(java.lang.String,java.lang.String):V
 - a:waitAndCompute(java.util.function.Supplier):java.lang.Object
-f:com.intellij.externalProcessAuthHelper.AuthenticationGatesKt
 e:com.intellij.externalProcessAuthHelper.AuthenticationMode
 - java.lang.Enum
 - sf:FULL:com.intellij.externalProcessAuthHelper.AuthenticationMode

@@ -106,7 +106,6 @@ f:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration
 - f:getMaxFilesToSend():I
 - f:getSessionId():java.lang.String
 f:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration$Companion
-f:com.intellij.internal.statistic.eventLog.FeatureUsageDataKt
 f:com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
 - com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy
 - <init>(java.util.Set):V
@@ -256,7 +255,6 @@ f:com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder$Fea
 - f:getPlugin():com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarterKt
 e:com.intellij.internal.statistic.eventLog.events.scheme.FieldDataType
 - java.lang.Enum
 - sf:ARRAY:com.intellij.internal.statistic.eventLog.events.scheme.FieldDataType

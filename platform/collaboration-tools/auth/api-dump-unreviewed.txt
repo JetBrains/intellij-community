@@ -19,7 +19,6 @@ f:com.intellij.collaboration.auth.OAuthCallbackHandlerBase$AcceptCodeHandleResul
 - com.intellij.collaboration.auth.OAuthCallbackHandlerBase$AcceptCodeHandleResult
 - <init>(com.intellij.util.Url):V
 - f:getUrl():com.intellij.util.Url
-f:com.intellij.collaboration.auth.Space_packagesKt
 f:com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerHttp
 - sf:INSTANCE:com.intellij.collaboration.auth.services.OAuthCredentialsAcquirerHttp
 - f:convertToAcquireCredentialsResult(java.net.http.HttpResponse,kotlin.jvm.functions.Function2):com.intellij.collaboration.auth.services.OAuthCredentialsAcquirer$AcquireCredentialsResult

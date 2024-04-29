@@ -23,7 +23,6 @@ f:com.intellij.dependencytoolwindow.DependencyToolWindowViewModelExtractor
 com.intellij.dependencytoolwindow.HasToolWindowActions
 - a:getGearActions():com.intellij.openapi.actionSystem.ActionGroup
 - a:getTitleActions():java.util.List
-f:com.intellij.dependencytoolwindow.UtilsKt
 f:icons.PlatformDependencyToolwindowIcons
 - sf:ArtifactSmall:javax.swing.Icon
 - <init>():V

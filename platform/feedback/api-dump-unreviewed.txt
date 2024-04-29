@@ -41,7 +41,6 @@ f:com.intellij.platform.feedback.aqua.TestShowAquaOldUserFeedbackAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-f:com.intellij.platform.feedback.aqua.bundle.AquaFeedbackBundleKt
 f:com.intellij.platform.feedback.aqua.dialog.AquaNewUserFeedbackDialog
 - com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 - <init>(com.intellij.openapi.project.Project,Z):V
@@ -181,7 +180,6 @@ f:com.intellij.platform.feedback.demo.action.ShowInIdeDemoFeedbackWithStatsActio
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.platform.feedback.demo.bundle.DemoFeedbackBundleKt
 f:com.intellij.platform.feedback.demo.dialog.DemoFeedbackDialog
 - com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 - <init>(com.intellij.openapi.project.Project,Z):V
@@ -367,7 +365,6 @@ f:com.intellij.platform.feedback.dialog.components.RatingComponent$Companion
 - collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
 - collectBlockTextDescription(java.lang.StringBuilder):V
 - f:doNotRequireAnswer():com.intellij.platform.feedback.dialog.uiBlocks.RatingBlock
-*f:com.intellij.platform.feedback.dialog.uiBlocks.RatingBlockKt
 *f:com.intellij.platform.feedback.dialog.uiBlocks.RatingGroupBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
@@ -429,7 +426,6 @@ f:com.intellij.platform.feedback.eap.EAPApplicationInitializedListenerKt
 - sf:isEAPFeedbackAvailable():Z
 - sf:setEAPFeedbackShown(com.intellij.ide.util.PropertiesComponent):V
 - bs:setEAPFeedbackShown$default(com.intellij.ide.util.PropertiesComponent,I,java.lang.Object):V
-f:com.intellij.platform.feedback.eap.EAPFeedbackBundleKt
 f:com.intellij.platform.feedback.eap.EAPFeedbackToolbarAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -439,8 +435,6 @@ f:com.intellij.platform.feedback.eap.EAPFeedbackToolbarAction
 - displayTextInToolbar():Z
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackBundleKt
-f:com.intellij.platform.feedback.general.general.GeneralFeedbackBundleKt
 f:com.intellij.platform.feedback.impl.FeedbackRequestData
 - com.intellij.platform.feedback.impl.FeedbackRequestDataHolder
 - <init>(java.lang.String,kotlinx.serialization.json.JsonObject):V
@@ -491,7 +485,6 @@ e:com.intellij.platform.feedback.impl.FeedbackRequestType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.feedback.impl.FeedbackRequestType
 - s:values():com.intellij.platform.feedback.impl.FeedbackRequestType[]
-f:com.intellij.platform.feedback.impl.FeedbackSurveyUtilsKt
 f:com.intellij.platform.feedback.impl.GeneralFeedbackSubmitKt
 - sf:DEFAULT_FEEDBACK_CONSENT_ID:java.lang.String
 - sf:FEEDBACK_REPORT_ID_KEY:java.lang.String
@@ -541,7 +534,6 @@ f:com.intellij.platform.feedback.impl.PlatformFeedbackDialogsImpl
 - createGeneralFeedbackDialog(com.intellij.openapi.project.Project):com.intellij.openapi.ui.DialogWrapper
 - getDisableFeedbackDialog(java.lang.String,java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.ui.DialogWrapper
 - getUninstallFeedbackDialog(java.lang.String,java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.ui.DialogWrapper
-f:com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundleKt
 c:com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 - com.intellij.notification.Notification
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
@@ -658,8 +650,6 @@ f:com.intellij.platform.feedback.impl.track.EditorInputEventTracker
 - charTyped(C,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.editorActions.TypedHandlerDelegate$Result
 - mouseClicked(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
-f:com.intellij.platform.feedback.impl.track.EditorInputEventTrackerKt
-f:com.intellij.platform.feedback.localization.bundle.LocalizationFeedbackBundleKt
 f:com.intellij.platform.feedback.localization.dialog.LocalizationFeedbackDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(com.intellij.openapi.project.Project,Z):V
@@ -697,14 +687,12 @@ f:com.intellij.platform.feedback.localization.service.LocalizationFeedbackStartu
 f:com.intellij.platform.feedback.newUi.CancelFeedbackNotification
 - com.intellij.notification.Notification
 - <init>():V
-f:com.intellij.platform.feedback.newUi.NewUIFeedbackBundleKt
 f:com.intellij.platform.feedback.newUi.NewUIFeedbackDialog
 - com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 - <init>(com.intellij.openapi.project.Project,Z):V
 - doCancelAction():V
 - getZendeskFeedbackType():java.lang.String
 - getZendeskTicketTitle():java.lang.String
-f:com.intellij.platform.feedback.newUi.NewUIFeedbackDialogKt
 f:com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData
 - com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 - sf:Companion:com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData$Companion
@@ -776,8 +764,6 @@ f:com.intellij.platform.feedback.newUi.NewUIInfoState$$serializer
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.feedback.newUi.NewUIInfoState$Companion
 - f:serializer():kotlinx.serialization.KSerializer
-f:com.intellij.platform.feedback.pluginPage.PluginPageFeedbackBundleKt
-f:com.intellij.platform.feedback.pluginPage.PluginPageFeedbackDialogKt
 f:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackService
 - com.intellij.openapi.components.PersistentStateComponent
 - sf:Companion:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackService$Companion
@@ -813,7 +799,6 @@ f:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState$$serializer
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState$Companion
 - f:serializer():kotlinx.serialization.KSerializer
-f:com.intellij.platform.feedback.pycharmce.PyCharmFeedbackBundleKt
 f:com.intellij.platform.feedback.startup.IdeStartupFeedbackConfigSurvey
 - com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 - <init>():V
@@ -833,7 +818,6 @@ f:com.intellij.platform.feedback.startup.IdeStartupFeedbackShowAction
 f:com.intellij.platform.feedback.startup.IdeStartupFeedbackSurvey
 - com.intellij.platform.feedback.FeedbackSurvey
 - <init>():V
-f:com.intellij.platform.feedback.startup.bundle.IdeStartupFeedbackMessagesBundleKt
 f:com.intellij.platform.feedback.startup.dialog.CustomCheckBoxGroupBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 - com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
@@ -849,5 +833,3 @@ f:com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog
 - getZendeskFeedbackType():java.lang.String
 - getZendeskTicketTitle():java.lang.String
 f:com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog$Companion
-f:com.intellij.platform.feedback.twnames.TwNamesFeedbackDialogKt
-f:com.intellij.platform.feedback.twnames.TwNamesFeedbackMessagesBundleKt

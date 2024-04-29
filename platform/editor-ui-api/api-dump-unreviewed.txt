@@ -379,7 +379,6 @@ f:com.intellij.ide.ui.NotRoamableUiSettings
 - f:setPresentationModeIdeScale(F):V
 f:com.intellij.ide.ui.NotRoamableUiSettings$Companion
 - f:getInstance():com.intellij.ide.ui.NotRoamableUiSettings
-f:com.intellij.ide.ui.NotRoamableUiSettingsKt
 *:com.intellij.ide.ui.ToolbarSettings
 - com.intellij.openapi.components.PersistentStateComponent
 - *sf:Companion:com.intellij.ide.ui.ToolbarSettings$Companion
@@ -601,7 +600,6 @@ f:com.intellij.ide.ui.UISettings$Companion
 - f:setupEditorAntialiasing(javax.swing.JComponent):V
 - f:setupFractionalMetrics(java.awt.Graphics2D):V
 - f:setupFractionalMetrics(javax.swing.JComponent):V
-f:com.intellij.ide.ui.UISettingsKt
 com.intellij.ide.ui.UISettingsListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic

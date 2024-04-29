@@ -33,7 +33,6 @@ f:com.intellij.BundleBase
 - sf:replaceMnemonicAmpersand(java.lang.String):java.lang.String
 - sf:setTranslationConsumer(java.util.function.BiConsumer):V
 - sf:useDefaultValue(java.util.ResourceBundle,java.lang.String,java.lang.String):java.lang.String
-f:com.intellij.BundleBaseKt
 f:com.intellij.BundleUtil
 - <init>():V
 - s:loadLanguageBundle(java.lang.ClassLoader,java.lang.String):java.util.ResourceBundle
@@ -1363,7 +1362,6 @@ a:com.intellij.openapi.util.VolatileNullableLazyValue
 - com.intellij.openapi.util.NullableLazyValue
 - getValue():java.lang.Object
 - isComputed():Z
-f:com.intellij.openapi.util.WinBuildNumber
 f:com.intellij.openapi.util.WriteExternalException
 - java.lang.RuntimeException
 - <init>(java.lang.String):V
@@ -2196,7 +2194,6 @@ e:com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
 - sf:VALID_UTF8:com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
 - s:valueOf(java.lang.String):com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding
 - s:values():com.intellij.openapi.vfs.CharsetToolkit$GuessedEncoding[]
-f:com.intellij.platform.util.ArgsKt
 f:com.intellij.platform.util.ArgsParser
 - <init>(java.util.List):V
 - f:arg(java.lang.String,java.lang.String):com.intellij.platform.util.ArgsParser$ArgInfo
@@ -2239,7 +2236,6 @@ f:com.intellij.platform.util.ArgsParser$TypedArg
 - f:getInfo():com.intellij.platform.util.ArgsParser$ArgInfo
 - f:getValue():java.lang.Object
 - f:getValue(java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
-f:com.intellij.platform.util.PluginKt
 f:com.intellij.serialization.ClassUtil
 - s:getRawType(java.lang.reflect.Type):java.lang.Class
 - s:isMutableCollection(java.lang.Object):Z
@@ -2466,7 +2462,6 @@ com.intellij.util.Consumer
 - java.util.function.Consumer
 - accept(java.lang.Object):V
 - a:consume(java.lang.Object):V
-f:com.intellij.util.CoroutineScopeKt
 f:com.intellij.util.DefaultBundleService
 - <init>():V
 - compute(java.util.function.Supplier):java.lang.Object
@@ -5117,7 +5112,6 @@ f:com.intellij.util.io.Bits
 - s:putInt(B[],I,I):V
 - s:putLong(B[],I,J):V
 - s:putShort(B[],I,S):V
-f:com.intellij.util.io.BlockingKt
 f:com.intellij.util.io.BooleanDataDescriptor
 - com.intellij.util.io.InlineKeyDescriptor
 - sf:INSTANCE:com.intellij.util.io.BooleanDataDescriptor
@@ -6978,7 +6972,6 @@ f:com.intellij.util.text.minimatch.MinimatchOptions
 - f:setNoglobstar(Z):V
 - f:setNonegate(Z):V
 - toString():java.lang.String
-f:com.intellij.util.text.minimatch.OptionsKt
 com.intellij.util.text.minimatch.PathAdapter
 - a:toArray(java.lang.Object,com.intellij.util.text.minimatch.MinimatchOptions):java.util.List
 f:com.intellij.util.ui.EDT
@@ -7047,7 +7040,6 @@ com.intellij.util.xmlb.Binding
 - a:isBoundTo(java.lang.Object,com.intellij.util.xmlb.DomAdapter):Z
 - a:serialize(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):V
 - a:toJson(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):kotlinx.serialization.json.JsonElement
-f:com.intellij.util.xmlb.CollectionBindingKt
 com.intellij.util.xmlb.Constants
 - sf:ENTRY:java.lang.String
 - sf:KEY:java.lang.String
@@ -7066,9 +7058,6 @@ f:com.intellij.util.xmlb.JDOMXIncluder
 - s:resolve(org.jdom.Element,java.net.URL):java.util.List
 com.intellij.util.xmlb.JDOMXIncluder$PathResolver
 - a:resolvePath(java.lang.String,java.net.URL):java.net.URL
-f:com.intellij.util.xmlb.JsonHelperKt
-f:com.intellij.util.xmlb.KotlinxSerializationBindingKt
-f:com.intellij.util.xmlb.MapBindingKt
 com.intellij.util.xmlb.NestedBinding
 - com.intellij.util.xmlb.Binding
 - a:deserializeToJson(org.jdom.Element):kotlinx.serialization.json.JsonElement
@@ -7115,7 +7104,6 @@ f:com.intellij.util.xmlb.SmartSerializer
 - s:skipEmptySerializer():com.intellij.util.xmlb.SmartSerializer
 - writeExternal(java.lang.Object,org.jdom.Element):V
 - writeExternal(java.lang.Object,org.jdom.Element,Z):V
-f:com.intellij.util.xmlb.TagBindingKt
 f:com.intellij.util.xmlb.XIncludeException
 - java.lang.RuntimeException
 f:com.intellij.util.xmlb.XmlSerializationException

@@ -899,7 +899,6 @@ f:com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - createPassesForEditor():com.intellij.codeHighlighting.TextEditorHighlightingPass[]
 - f:getPasses(I[]):java.util.List
-f:com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighterKt
 f:com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 - com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -1099,7 +1098,6 @@ a:com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 - getIcon(I):javax.swing.Icon
 - a:getIndex():I
 - isShowSubmenu():Z
-f:com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionActionKt
 com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoice
 - com.intellij.codeInsight.intention.IntentionActionWithChoice
 - getAllAsFixes():java.util.List
@@ -2735,7 +2733,6 @@ f:com.intellij.codeInspection.ex.CurrentProfileOptionControllerProvider
 - name():java.lang.String
 com.intellij.codeInspection.ex.DynamicGroupTool
 - a:getChildren():java.util.List
-f:com.intellij.codeInspection.ex.Dynamic_inspectionsKt
 com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection
 - com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool
 - checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.InspectionManager):com.intellij.codeInspection.ProblemDescriptor[]
@@ -2857,7 +2854,6 @@ a:com.intellij.codeInspection.ex.InspectionElementsMergerBase
 - p:transformElement(java.lang.String,org.jdom.Element,org.jdom.Element):org.jdom.Element
 - p:writeMergedContent(org.jdom.Element):Z
 - p:writeOldSettings(java.lang.String):org.jdom.Element
-f:com.intellij.codeInspection.ex.InspectionEventsKt
 f:com.intellij.codeInspection.ex.InspectionMetaInformationService
 - <init>(kotlinx.coroutines.CoroutineScope):V
 - f:getServiceScope():kotlinx.coroutines.CoroutineScope
@@ -3015,7 +3011,6 @@ f:com.intellij.codeInspection.ex.InspectionToolRegistrar
 - sf:getInstance():com.intellij.codeInspection.ex.InspectionToolRegistrar
 f:com.intellij.codeInspection.ex.InspectionToolRegistrar$Companion
 - f:getInstance():com.intellij.codeInspection.ex.InspectionToolRegistrar
-f:com.intellij.codeInspection.ex.InspectionToolRegistrarKt
 a:com.intellij.codeInspection.ex.InspectionToolsSupplier
 - com.intellij.openapi.Disposable
 - pf:listeners:com.intellij.util.containers.DisposableWrapperList

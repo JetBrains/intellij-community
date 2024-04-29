@@ -201,7 +201,6 @@ f:com.intellij.ui.LayeredIcon$Companion
 - f:create(javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
 - f:layeredIcon(java.util.function.Supplier):com.intellij.ui.LayeredIcon
 - f:layeredIcon(javax.swing.Icon[]):com.intellij.ui.LayeredIcon
-f:com.intellij.ui.LayeredIconKt
 f:com.intellij.ui.OffsetIcon
 - com.intellij.util.ui.JBCachingScalableIcon
 - sf:REGULAR_OFFSET:I
@@ -377,7 +376,6 @@ a:com.intellij.ui.TreeUIHelper
 - a:installToolTipHandler(javax.swing.JTree):V
 - a:installTreeSpeedSearch(javax.swing.JTree):V
 - a:installTreeSpeedSearch(javax.swing.JTree,com.intellij.util.containers.Convertor,Z):V
-f:com.intellij.ui.icons.CustomIconUtilKt
 a:com.intellij.ui.icons.IconWithOverlay
 - com.intellij.ui.LayeredIcon
 - <init>(javax.swing.Icon,javax.swing.Icon):V
@@ -495,7 +493,6 @@ f:com.intellij.util.IconUtil
 - sf:toImage(javax.swing.Icon,com.intellij.ui.scale.ScaleContext):java.awt.Image
 - bs:toImage$default(javax.swing.Icon,com.intellij.ui.scale.ScaleContext,I,java.lang.Object):java.awt.Image
 - sf:toSize(javax.swing.Icon,I,I):javax.swing.Icon
-f:com.intellij.util.IconUtilKt
 com.intellij.util.PlatformIcons
 - sf:ABSTRACT_CLASS_ICON:javax.swing.Icon
 - sf:ABSTRACT_METHOD_ICON:javax.swing.Icon

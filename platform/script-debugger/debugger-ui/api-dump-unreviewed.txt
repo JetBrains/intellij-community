@@ -259,7 +259,6 @@ a:org.jetbrains.debugger.SuspendContextView
 - f:resumeCurrentThread():V
 - f:setActiveThread(com.intellij.xdebugger.frame.XStackFrame):Z
 - f:setActiveVm(org.jetbrains.debugger.Vm):V
-f:org.jetbrains.debugger.SuspendContextViewKt
 org.jetbrains.debugger.VariableContext
 - a:getEvaluateContext():org.jetbrains.debugger.EvaluateContext
 - getMemberFilter():org.jetbrains.concurrency.Promise
@@ -312,7 +311,6 @@ f:org.jetbrains.debugger.VariableViewKt
 - sf:getObjectValueDescription(org.jetbrains.debugger.values.ObjectValue):java.lang.String
 - sf:isPrototypeVariable(java.lang.String):Z
 - sf:trimFunctionDescription(java.lang.String):java.lang.String
-f:org.jetbrains.debugger.VariablesGroupKt
 f:org.jetbrains.debugger.VariablesKt
 - sf:createVariablesList(java.util.List,I,I,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.MemberFilter):com.intellij.xdebugger.frame.XValueChildrenList
 - sf:createVariablesList(java.util.List,org.jetbrains.debugger.VariableContext):com.intellij.xdebugger.frame.XValueChildrenList

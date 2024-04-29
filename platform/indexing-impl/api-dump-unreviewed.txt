@@ -152,7 +152,6 @@ f:com.intellij.psi.impl.search.LowLevelSearchUtil
 - <init>():V
 - s:processElementsContainingWordInElement(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.PsiElement,com.intellij.util.text.StringSearcher,Z,com.intellij.openapi.progress.ProgressIndicator):Z
 - s:processTexts(java.lang.CharSequence,I,I,com.intellij.util.text.StringSearcher,java.util.function.IntPredicate):Z
-f:com.intellij.psi.impl.search.LowLevelSearchUtilKt
 c:com.intellij.psi.impl.search.PsiSearchHelperImpl
 - com.intellij.psi.search.PsiSearchHelper
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
@@ -532,8 +531,6 @@ f:com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor$S
 - <init>(I,java.util.Map):V
 - differentiate(java.util.Map,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.RemovedKeyProcessor):Z
 - getKeys():java.util.Collection
-f:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt
-f:com.intellij.util.indexing.impl.storage.IndexLayoutPersistentSettingsKt
 f:com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
 - sf:INSTANCE:com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
 - sf:getCustomLayoutId():java.lang.String

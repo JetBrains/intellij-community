@@ -2140,7 +2140,6 @@ f:com.intellij.openapi.vcs.update.UpdatedFiles
 - toString():java.lang.String
 f:com.intellij.openapi.vcs.update.UpdatedFiles$Companion
 - f:create():com.intellij.openapi.vcs.update.UpdatedFiles
-f:com.intellij.openapi.vcs.update.UpdatedFilesKt
 c:com.intellij.openapi.vcs.update.UpdatedFilesReverseSide
 - <init>(com.intellij.openapi.vcs.update.UpdatedFiles):V
 - accumulateFiles(com.intellij.openapi.vcs.update.UpdatedFiles,com.intellij.openapi.vcs.update.UpdatedFilesReverseSide$DuplicateLevel):V

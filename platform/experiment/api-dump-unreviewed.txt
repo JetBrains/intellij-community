@@ -1,4 +1,3 @@
-f:com.intellij.platform.experiment.ab.impl.bundle.ABExperimentBundleKt
 f:com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 - sf:Companion:com.intellij.platform.experiment.ab.impl.experiment.ABExperiment$Companion
 - <init>():V

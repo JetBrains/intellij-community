@@ -1011,7 +1011,6 @@ c:com.intellij.codeInsight.hint.LanguageImplementationTextSelectioner
 - f:setImplementationClass(java.lang.String):V
 - f:setLanguage(java.lang.String):V
 - f:setSettingsKeyId(java.lang.String):V
-*f:com.intellij.codeInsight.hints.InlayHintsProviderExtensionKt
 *:com.intellij.codeInsight.hints.InlayHintsProviderFactory
 - com.intellij.openapi.project.PossiblyDumbAware
 - *sf:Companion:com.intellij.codeInsight.hints.InlayHintsProviderFactory$Companion
@@ -1191,7 +1190,6 @@ c:com.intellij.codeInsight.hint.LanguageImplementationTextSelectioner
 - a:isSuppressedFor(com.intellij.psi.PsiFile,com.intellij.codeInsight.hints.InlayInfo):Z
 *f:com.intellij.codeInsight.hints.ParameterNameHintsSuppressor$All
 - f:isSuppressedFor(com.intellij.psi.PsiFile,com.intellij.codeInsight.hints.InlayInfo):Z
-*f:com.intellij.codeInsight.hints.ParameterNameHintsSuppressorKt
 *:com.intellij.codeInsight.hints.PresentationContainerRenderer
 - com.intellij.codeInsight.hints.presentation.InputHandler
 - com.intellij.openapi.editor.EditorCustomElementRenderer
@@ -1556,7 +1554,6 @@ f:com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 - f:setOption(java.lang.String,java.lang.Boolean):V
 f:com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings$Companion
 - f:getInstance():com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
-f:com.intellij.codeInsight.hints.settings.ParameterNameHintsSettingsKt
 a:com.intellij.codeInsight.intention.AbstractIntentionAction
 - com.intellij.codeInsight.intention.IntentionAction
 - <init>():V
@@ -2825,7 +2822,6 @@ com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
 - isAvailable(com.intellij.openapi.project.Project):Z
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
-f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResultKt
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 - a:canToggleEverywhere():Z
 - a:isEverywhere():Z
@@ -2936,7 +2932,6 @@ e:com.intellij.ide.bookmark.BookmarkType
 - s:values():com.intellij.ide.bookmark.BookmarkType[]
 f:com.intellij.ide.bookmark.BookmarkType$Companion
 - f:get(C):com.intellij.ide.bookmark.BookmarkType
-f:com.intellij.ide.bookmark.BookmarkTypeKt
 com.intellij.ide.bookmark.BookmarksListProvider
 - sf:EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - a:canDelete(java.util.List):Z
@@ -3375,7 +3370,6 @@ f:com.intellij.lang.injection.MultiHostRegistrarPlaceholderHelper
 - f:doneInjecting():V
 - f:startInjecting(com.intellij.lang.Language):com.intellij.lang.injection.MultiHostRegistrarPlaceholderHelper
 - f:startInjecting(com.intellij.lang.Language,java.lang.String):com.intellij.lang.injection.MultiHostRegistrarPlaceholderHelper
-f:com.intellij.lang.injection.MultiHostRegistrarPlaceholderHelperKt
 com.intellij.lang.parameterInfo.CreateParameterInfoContext
 - com.intellij.lang.parameterInfo.ParameterInfoContext
 - a:getHighlightedElement():com.intellij.psi.PsiElement
@@ -4503,7 +4497,6 @@ c:com.intellij.psi.util.PsiEditorUtilBase
 - com.intellij.psi.util.PsiEditorUtil
 - <init>():V
 - findEditorByPsiElement(com.intellij.psi.PsiElement):com.intellij.openapi.editor.Editor
-f:com.intellij.psi.util.PsiEditorUtilBaseKt
 c:com.intellij.psi.util.PsiFilter
 - sf:EMPTY:com.intellij.psi.util.PsiFilter[]
 - <init>(java.lang.Class):V
@@ -4646,7 +4639,6 @@ com.intellij.refactoring.classMembers.MemberInfoModel
 com.intellij.refactoring.lang.ElementsHandler
 - com.intellij.refactoring.RefactoringActionHandler
 - a:isEnabledOnElements(com.intellij.psi.PsiElement[]):Z
-f:com.intellij.refactoring.suggested.MaximumWeightIncreasingSubsequenceKt
 f:com.intellij.refactoring.suggested.SignatureChangePresentationModel
 - <init>(java.util.List,java.util.List):V
 - f:getNewSignature():java.util.List
@@ -4714,7 +4706,6 @@ a:com.intellij.refactoring.suggested.SignaturePresentationBuilder
 - pf:getSignature():com.intellij.refactoring.suggested.SuggestedRefactoringSupport$Signature
 - pf:isOldSignature():Z
 - pf:leaf(java.lang.String,java.lang.String):com.intellij.refactoring.suggested.SignatureChangePresentationModel$TextFragment$Leaf
-f:com.intellij.refactoring.suggested.SignaturePresentationBuilderKt
 f:com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 - com.intellij.refactoring.suggested.SuggestedRefactoringData
 - sf:Companion:com.intellij.refactoring.suggested.SuggestedChangeSignatureData$Companion
@@ -4858,7 +4849,6 @@ f:com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges$RenameOnly
 - signature(com.intellij.psi.PsiElement,com.intellij.refactoring.suggested.SuggestedRefactoringState):com.intellij.refactoring.suggested.SuggestedRefactoringSupport$Signature
 f:com.intellij.refactoring.suggested.SuggestedRefactoringStateChangesKt
 - sf:parameterMarkers(com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges,com.intellij.psi.PsiElement,com.intellij.refactoring.suggested.SuggestedRefactoringSupport$Signature):java.util.List
-f:com.intellij.refactoring.suggested.SuggestedRefactoringStateKt
 com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 - sf:Companion:com.intellij.refactoring.suggested.SuggestedRefactoringSupport$Companion
 - a:getAvailability():com.intellij.refactoring.suggested.SuggestedRefactoringAvailability

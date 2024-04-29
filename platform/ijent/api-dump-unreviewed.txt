@@ -13,7 +13,6 @@
 f:com.intellij.platform.ijent.IjentBundle
 - sf:INSTANCE:com.intellij.platform.ijent.IjentBundle
 - f:message(java.lang.String,java.lang.Object[]):java.lang.String
-f:com.intellij.platform.ijent.IjentBundleKt
 *:com.intellij.platform.ijent.IjentChildProcess
 - a:getExitCode():kotlinx.coroutines.Deferred
 - a:getPid():com.intellij.platform.ijent.IjentApi$Pid
@@ -179,7 +178,6 @@ com.intellij.platform.ijent.IjentPosixInfo$User
 f:com.intellij.platform.ijent.IjentProcessUtil
 - *sf:getIjentGrpcArgv(java.lang.String,java.util.Map,Z,java.lang.String):java.util.List
 - *bs:getIjentGrpcArgv$default(java.lang.String,java.util.Map,Z,java.lang.String,I,java.lang.Object):java.util.List
-f:com.intellij.platform.ijent.IjentSessionMediatorKt
 f:com.intellij.platform.ijent.IjentSessionProviderKt
 - *sf:bindToScope(com.intellij.platform.ijent.IjentApi,kotlinx.coroutines.CoroutineScope):V
 - *sf:bootstrapOverShellSession(java.lang.String,java.lang.Process,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object

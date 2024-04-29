@@ -1,13 +1,6 @@
 f:com.intellij.configurationStore.XmlSerializerKt
 - sf:clearBindingCache():V
 - sf:deserializeBaseStateWithCustomNameFilter(com.intellij.openapi.components.BaseState,java.util.Collection):org.jdom.Element
-f:com.intellij.serialization.BeanBindingKt
-f:com.intellij.serialization.BindingKt
-f:com.intellij.serialization.CollectionBindingKt
-f:com.intellij.serialization.ContextKt
-f:com.intellij.serialization.IonBindingProducerKt
-f:com.intellij.serialization.IonKt
-f:com.intellij.serialization.IonObjectSerializerKt
 f:com.intellij.serialization.NonDefaultConstructorInfo
 - f:constructor:java.lang.reflect.Constructor
 - f:names:java.util.List
@@ -54,7 +47,6 @@ f:com.intellij.serialization.ObjectSerializer$Companion
 - f:getInstance():com.intellij.serialization.ObjectSerializer
 f:com.intellij.serialization.ObjectSerializerKt
 - sf:getDefaultReadConfiguration():com.intellij.serialization.ReadConfiguration
-f:com.intellij.serialization.PrimitiveBindingsKt
 f:com.intellij.serialization.ReadConfiguration
 - f:allowAnySubTypes:Z
 - f:beanConstructed:kotlin.jvm.functions.Function1
@@ -107,7 +99,6 @@ f:com.intellij.serialization.VersionedFile
 - f:writeList(java.util.Collection,java.lang.Class):V
 - f:writeList(java.util.Collection,java.lang.Class,com.intellij.serialization.WriteConfiguration):V
 - bs:writeList$default(com.intellij.serialization.VersionedFile,java.util.Collection,java.lang.Class,com.intellij.serialization.WriteConfiguration,I,java.lang.Object):V
-f:com.intellij.serialization.VersionedFileKt
 f:com.intellij.serialization.WriteConfiguration
 - f:allowAnySubTypes:Z
 - f:binary:Z
@@ -148,9 +139,6 @@ f:com.intellij.serialization.stateProperties.EnumStoredProperty
 - isEqualToDefault():Z
 - parseAndSetValue(java.lang.String):V
 - setValue(com.intellij.openapi.components.BaseState,java.lang.Enum):V
-f:com.intellij.serialization.stateProperties.FloatStoredPropertyKt
-f:com.intellij.serialization.stateProperties.IntStoredPropertyKt
-f:com.intellij.serialization.stateProperties.LongStoredPropertyKt
 f:com.intellij.serialization.stateProperties.MapStoredProperty
 - com.intellij.openapi.components.StoredPropertyBase
 - <init>(java.util.Map):V
@@ -176,4 +164,3 @@ a:com.intellij.serialization.stateProperties.ObjectStateStoredPropertyBase
 - setValue(com.intellij.openapi.components.StoredProperty):Z
 - pf:setValue(java.lang.Object):V
 - toString():java.lang.String
-f:com.intellij.serialization.xml.KotlinAwareBeanBindingKt

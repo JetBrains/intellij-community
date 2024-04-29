@@ -526,8 +526,6 @@ f:com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier$Buil
 - f:build(java.util.concurrent.Executor):com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 - f:coalesceBy(java.lang.Object[]):com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier$Builder
 - f:shouldKeepTasksAsynchronous(kotlin.jvm.functions.Function0):com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier$Builder
-f:com.intellij.openapi.externalSystem.autolink.CoroutineUtilKt
-f:com.intellij.openapi.externalSystem.autolink.ExtensionPointUtilKt
 f:com.intellij.openapi.externalSystem.autolink.UnlinkedProjectSettings
 - com.intellij.openapi.components.SimplePersistentStateComponent
 - com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectSettings
@@ -545,8 +543,6 @@ f:com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
 - <init>():V
 - execute(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity$Companion
-f:com.intellij.openapi.externalSystem.configurationStore.ExternalSystemStorageKt
-f:com.intellij.openapi.externalSystem.configurationStore.PersistentMapManagerKt
 a:com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerAction
 - <init>():V
@@ -612,8 +608,6 @@ a:com.intellij.openapi.externalSystem.dependency.analyzer.ExternalSystemDependen
 - <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 - getConfigFile(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.vfs.VirtualFile
 - a:getExternalProjectPath(com.intellij.openapi.actionSystem.AnActionEvent):java.lang.String
-f:com.intellij.openapi.externalSystem.dependency.analyzer.util.DependencyUiUtilKt
-f:com.intellij.openapi.externalSystem.dependency.analyzer.util.UiUtilsKt
 f:com.intellij.openapi.externalSystem.diagnostic.ExternalSystemObservabilityScopesKt
 - sf:ExternalSystem:com.intellij.platform.diagnostic.telemetry.Scope
 - sf:forSystem(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.platform.diagnostic.telemetry.Scope
@@ -1773,13 +1767,11 @@ f:com.intellij.openapi.externalSystem.service.project.settings.EncodingConfigura
 - com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 - <init>():V
 - onSuccessImport(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.externalSystem.service.project.IdeModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-f:com.intellij.openapi.externalSystem.service.project.settings.EncodingConfigurationHandlerKt
 f:com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationHandler
 - com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 - <init>():V
 - apply(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
 - apply(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-f:com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationHandlerKt
 f:com.intellij.openapi.externalSystem.service.project.settings.InspectionsProfileConfigurationHandler
 - com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 - <init>():V
@@ -1792,7 +1784,6 @@ f:com.intellij.openapi.externalSystem.service.project.settings.PackagePrefixConf
 - com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 - <init>():V
 - apply(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-f:com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationHandlerKt
 f:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 - sf:INSTANCE:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 - sf:confirmLinkingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.nio.file.Path):Z
@@ -2057,7 +2048,6 @@ f:com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfig
 - com.intellij.openapi.options.BoundSearchableConfigurable
 - <init>(com.intellij.openapi.project.Project):V
 - createPanel():com.intellij.openapi.ui.DialogPanel
-f:com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurableKt
 a:com.intellij.openapi.externalSystem.service.task.ui.AbstractExternalSystemToolWindowFactory
 - com.intellij.openapi.project.DumbAware
 - com.intellij.openapi.wm.ToolWindowFactory

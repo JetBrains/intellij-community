@@ -1,4 +1,3 @@
-*f:com.intellij.webSymbols.AliasesKt
 *:com.intellij.webSymbols.CompositeWebSymbol
 - com.intellij.webSymbols.WebSymbol
 - a:getNameSegments():java.util.List
@@ -1627,7 +1626,6 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - pf:unresolvedSymbol(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String):com.intellij.webSymbols.query.WebSymbolMatch
 *f:com.intellij.webSymbols.references.WebSymbolReferenceProvider$Companion
 - f:startOffsetIn(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
-*f:com.intellij.webSymbols.references.WebSymbolReferenceProviderKt
 *f:com.intellij.webSymbols.search.PsiSourcedWebSymbolReference
 - com.intellij.psi.PsiReference
 - <init>(com.intellij.webSymbols.WebSymbol,com.intellij.psi.PsiElement,com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.openapi.util.TextRange):V
@@ -1728,7 +1726,6 @@ f:com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi$PsiNavigatableWebSymbolNa
 - createPointer():com.intellij.model.Pointer
 - f:getNavigationItem():com.intellij.navigation.NavigationItem
 - navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
-f:com.intellij.webSymbols.utils.WebSymbolDeclaredInPsiKt
 f:com.intellij.webSymbols.utils.WebSymbolUtils
 - sf:applyIfNotNull(java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function2):java.lang.Object
 - sf:asSingleSymbol(java.util.List,Z):com.intellij.webSymbols.WebSymbol
@@ -1770,7 +1767,6 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.webSymbols.webTypes.WebTypesEmbeddedDefinitionsLoader
 - f:getPackagesEnabledByDefault(com.intellij.openapi.project.Project):java.util.Map
 - f:getWebTypesEnabledPackages(com.intellij.openapi.project.Project):java.util.Set
-*f:com.intellij.webSymbols.webTypes.WebTypesLoadUtilKt
 *c:com.intellij.webSymbols.webTypes.WebTypesSymbolBase
 - com.intellij.webSymbols.PsiSourcedWebSymbol
 - p:queryExecutor:com.intellij.webSymbols.query.WebSymbolsQueryExecutor

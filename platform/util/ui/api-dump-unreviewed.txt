@@ -1458,7 +1458,6 @@ c:com.intellij.openapi.util.IconLoader$CachedImageIcon
 - com.intellij.ui.icons.CopyableIcon
 - com.intellij.ui.icons.DarkIconProvider
 - com.intellij.ui.icons.IconWithToolTip
-f:com.intellij.openapi.util.IconLoaderKt
 f:com.intellij.openapi.util.text.TextWithMnemonic
 - sf:EMPTY:com.intellij.openapi.util.text.TextWithMnemonic
 - sf:MNEMONIC:java.util.regex.Pattern
@@ -2864,7 +2863,6 @@ c:com.intellij.ui.border.CustomLineBorder
 - p:getColor():java.awt.Color
 - isBorderOpaque():Z
 - paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
-f:com.intellij.ui.border.NamedBorderKt
 f:com.intellij.ui.components.JBFontScaler
 - <init>(java.awt.Font):V
 - f:scaledFont():java.awt.Font
@@ -2899,16 +2897,9 @@ com.intellij.ui.icons.CopyableIcon
 - javax.swing.Icon
 - a:copy():javax.swing.Icon
 - deepCopy():javax.swing.Icon
-f:com.intellij.ui.icons.FilteredIconKt
-f:com.intellij.ui.icons.IconTransformKt
-f:com.intellij.ui.icons.IconUtilKt
 com.intellij.ui.icons.IconWithToolTip
 - javax.swing.Icon
 - a:getToolTip(Z):java.lang.String
-f:com.intellij.ui.icons.ImageCacheKt
-f:com.intellij.ui.icons.ImageDataByPathLoaderKt
-f:com.intellij.ui.icons.ImageDataByUrlLoaderKt
-f:com.intellij.ui.icons.ImageDescriptorKt
 e:com.intellij.ui.icons.ImageType
 - java.lang.Enum
 - sf:IMG:com.intellij.ui.icons.ImageType
@@ -2917,8 +2908,6 @@ e:com.intellij.ui.icons.ImageType
 - s:values():com.intellij.ui.icons.ImageType[]
 com.intellij.ui.icons.MenuBarIconProvider
 - a:getMenuBarIcon(Z):javax.swing.Icon
-f:com.intellij.ui.icons.RasterizedImageDataLoaderKt
-f:com.intellij.ui.icons.ScaledIconCacheKt
 f:com.intellij.ui.icons.StrokeKt
 - sf:toStrokeIcon(javax.swing.Icon,java.awt.Color):javax.swing.Icon
 com.intellij.ui.icons.UpdatableIcon
@@ -3307,7 +3296,6 @@ f:com.intellij.ui.scale.JBUIScale
 - sf:sysScale(java.awt.Component):F
 - sf:sysScale(java.awt.Graphics2D):F
 - sf:sysScale(java.awt.GraphicsConfiguration):F
-f:com.intellij.ui.scale.JBUIScaleKt
 f:com.intellij.ui.scale.ScaleContext
 - com.intellij.ui.scale.UserScaleContext
 - sf:Companion:com.intellij.ui.scale.ScaleContext$Companion
@@ -3352,7 +3340,6 @@ c:com.intellij.ui.scale.ScaleContextCache
 c:com.intellij.ui.scale.ScaleContextSupport
 - com.intellij.ui.scale.AbstractScaleContextAware
 - <init>():V
-f:com.intellij.ui.scale.ScaleKt
 e:com.intellij.ui.scale.ScaleType
 - java.lang.Enum
 - sf:OBJ_SCALE:com.intellij.ui.scale.ScaleType
@@ -3404,11 +3391,8 @@ c:com.intellij.ui.scale.UserScaleContext
 - p:updateAll(com.intellij.ui.scale.UserScaleContext):Z
 com.intellij.ui.scale.UserScaleContext$UpdateListener
 - a:contextUpdated():V
-f:com.intellij.ui.svg.JSvgDocumentFactoryKt
-f:com.intellij.ui.svg.JsvgKt
 com.intellij.ui.svg.SvgAttributePatcher
 - patchColors(java.util.Map):V
-f:com.intellij.ui.svg.SvgCacheManagerKt
 f:com.intellij.ui.svg.SvgKt
 - sf:ATTR_FILL:java.lang.String
 - sf:ATTR_FILL_OPACITY:java.lang.String
@@ -3465,15 +3449,12 @@ f:com.intellij.util.ImageLoader$Dimension2DDouble
 - f:setSize(D,D):V
 - f:setSize(com.intellij.util.ImageLoader$Dimension2DDouble):V
 - f:setWidth(D):V
-f:com.intellij.util.InsecureHashBuilderKt
-f:com.intellij.util.JavaXmlDocumentKt
 f:com.intellij.util.RetinaImage
 - <init>():V
 - s:create(java.awt.GraphicsConfiguration,D,D,I,com.intellij.ui.paint.PaintUtil$RoundingMode):java.awt.image.BufferedImage
 - s:createFrom(java.awt.Image):java.awt.Image
 - s:createFrom(java.awt.Image,D,java.awt.image.ImageObserver):java.awt.Image
 - s:createFrom(java.awt.Image,I,java.awt.image.ImageObserver):java.awt.Image
-f:com.intellij.util.SVGLoaderKt
 f:com.intellij.util.ui.AATextInfo
 - f:aaHint:java.lang.Object
 - f:lcdContrastHint:java.lang.Integer

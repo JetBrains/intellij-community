@@ -114,7 +114,6 @@ f:com.intellij.codeInspection.inspectionProfile.DefaultSeverityGroupProvider
 - com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
 - <init>():V
 - findGroup(java.lang.String):com.intellij.codeInspection.inspectionProfile.YamlInspectionGroup
-f:com.intellij.codeInspection.inspectionProfile.DefaultSeverityGroupProviderKt
 f:com.intellij.codeInspection.inspectionProfile.InspectionBasicGroupProvider
 - com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
 - <init>():V
@@ -223,7 +222,6 @@ f:com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl$Compan
 - f:loadFrom(com.intellij.openapi.project.Project,java.lang.String,com.intellij.codeInspection.ex.InspectionToolsSupplier,com.intellij.profile.codeInspection.BaseInspectionProfileManager):com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl
 - f:loadFrom(java.io.Reader,kotlin.jvm.functions.Function1,com.intellij.codeInspection.ex.InspectionToolsSupplier,com.intellij.profile.codeInspection.BaseInspectionProfileManager):com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl
 - bs:loadFrom$default(com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl$Companion,com.intellij.openapi.project.Project,java.lang.String,com.intellij.codeInspection.ex.InspectionToolsSupplier,com.intellij.profile.codeInspection.BaseInspectionProfileManager,I,java.lang.Object):com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImpl
-f:com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileImplKt
 f:com.intellij.codeInspection.inspectionProfile.YamlInspectionProfileRaw
 - <init>():V
 - <init>(java.lang.String,java.lang.String,java.util.List,java.util.List):V

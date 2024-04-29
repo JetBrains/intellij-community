@@ -139,7 +139,6 @@ f:com.intellij.util.ResourceUtil
 - a:getInitialized():java.lang.Object
 - a:getValue(kotlin.coroutines.Continuation):java.lang.Object
 - a:isInitialized():Z
-f:com.intellij.util.SuspendingLazyImplKt
 c:com.intellij.util.containers.HashMap
 - java.util.HashMap
 - <init>():V
@@ -195,7 +194,6 @@ f:com.intellij.util.io.Ksuid
 - <init>():V
 - s:generate():java.lang.String
 - s:generateCustom(I,java.util.Random):java.nio.ByteBuffer
-f:com.intellij.util.io.Lz4Kt
 f:com.intellij.util.io.PathKt
 - sf:basicAttributesIfExists(java.nio.file.Path):java.nio.file.attribute.BasicFileAttributes
 - sf:copy(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
@@ -239,7 +237,6 @@ f:com.intellij.util.io.PathKt
 - sf:write(java.nio.file.Path,B[],I,I):java.nio.file.Path
 - bs:write$default(java.nio.file.Path,java.lang.CharSequence,java.nio.charset.Charset,Z,I,java.lang.Object):java.nio.file.Path
 - sf:writeChild(java.nio.file.Path,java.lang.String,java.lang.String):java.nio.file.Path
-f:com.intellij.util.io.mvstore.MvStoreHelperKt
 *f:com.intellij.util.text.TextRangeUtils
 - sf:splitLineRanges(java.lang.CharSequence):kotlin.sequences.Sequence
 - sf:splitToTextRanges(java.lang.CharSequence,java.lang.String,Z):kotlin.sequences.Sequence

@@ -127,7 +127,6 @@ a:com.intellij.usages.impl.UsageContextPanelBase
 - f:updateLayout(java.util.List,com.intellij.usages.UsageView):V
 - pa:updateLayoutLater(java.util.List):V
 - p:updateLayoutLater(java.util.List,com.intellij.usages.UsageView):V
-f:com.intellij.usages.impl.UsageFilteringRuleActions
 c:com.intellij.usages.impl.UsageGroupingRuleProviderImpl
 - com.intellij.usages.rules.UsageGroupingRuleProviderEx
 - <init>():V
@@ -385,7 +384,6 @@ f:com.intellij.usages.impl.rules.ReadAccessFilteringRule
 - sf:INSTANCE:com.intellij.usages.impl.rules.ReadAccessFilteringRule
 - getActionId():java.lang.String
 - isVisible(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
-f:com.intellij.usages.impl.rules.UsageFilteringRules
 a:com.intellij.usages.impl.rules.UsageGroupBase
 - com.intellij.usages.UsageGroup
 - p:<init>(I):V

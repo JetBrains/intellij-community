@@ -2,8 +2,3 @@ f:com.intellij.platform.diagnostic.startUpPerformanceReporter.ExposingCharArrayW
 - java.io.CharArrayWriter
 - <init>():V
 - f:toByteBuffer():java.nio.ByteBuffer
-f:com.intellij.platform.diagnostic.startUpPerformanceReporter.IdeIdeaFormatWriterKt
-f:com.intellij.platform.diagnostic.startUpPerformanceReporter.IdeThreadNameManagerKt
-f:com.intellij.platform.diagnostic.startUpPerformanceReporter.IdeaFormatWriterKt
-f:com.intellij.platform.diagnostic.startUpPerformanceReporter.ServiceReporterKt
-f:com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporterKt

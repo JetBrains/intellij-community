@@ -7,8 +7,6 @@ f:com.intellij.platform.diagnostic.telemetry.impl.OtlpServiceKt
 - sf:computeSpanId(com.intellij.diagnostic.ActivityImpl):B[]
 - sf:computeTraceId(com.intellij.diagnostic.ActivityImpl):B[]
 - sf:getOtlpEndPoint():java.lang.String
-f:com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImplKt
-f:com.intellij.platform.diagnostic.telemetry.impl.TraceWrapperKt
 f:com.intellij.platform.diagnostic.telemetry.impl.TracerKt
 - sf:rootTask():kotlin.coroutines.CoroutineContext
 - sf:span(java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
