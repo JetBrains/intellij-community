@@ -726,6 +726,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/PropertyAccessorAddBlockInner.kt");
             }
 
+            @TestMetadata("propertyBasedQualifier.kt")
+            public void testPropertyBasedQualifier() throws Exception {
+                runTest("testData/refactoring/introduceVariable/propertyBasedQualifier.kt");
+            }
+
             @TestMetadata("qualifier.kt")
             public void testQualifier() throws Exception {
                 runTest("testData/refactoring/introduceVariable/qualifier.kt");
