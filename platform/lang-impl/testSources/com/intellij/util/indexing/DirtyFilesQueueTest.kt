@@ -1,14 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.find.TextSearchService
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -17,14 +19,16 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.writeText
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.*
 import com.intellij.testFramework.TestActionEvent.createTestEvent
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.util.CommonProcessors
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
@@ -43,6 +47,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
+import kotlin.random.Random
 
 /**
  * See also [com.intellij.functionalTests.FunctionalDirtyFilesQueueTest]
@@ -112,15 +117,18 @@ class DirtyFilesQueueTest {
 
   @Test
   fun `test file is indexed after it was edited when project was closed`() {
+    doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount = 5, expectFullScanning = false)
+  }
+
+  private fun doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount: Int, expectFullScanning: Boolean) {
     runBlocking {
       val name = "test_file_is_indexed_after_it_was_edited_when_project_was_closed"
       val projectFile = TemporaryDirectory.generateTemporaryPath("project_${name}")
-      val filetype = FakeFileType()
-      registerFiletype(filetype)
-      val fileName = "A.${filetype.defaultExtension}"
-      val renamedName = "ARenamed.txt"
+      val fileNames = (0 until fileCount).map { "A$it.txt" }
+      val commonPrefix1 = "common_prefix_1_" + (0 until 10).map { Random.nextInt('A'.code, 'Z'.code).toChar() }.joinToString("")
+      val commonPrefix2 = "common_prefix_2_" + (0 until 10).map { Random.nextInt('A'.code, 'Z'.code).toChar() }.joinToString("")
 
-      val file = openProject(name, projectFile, save = true) { project, module ->
+      val files = openProject(name, projectFile, save = true) { project, module ->
         val src = tempDir.createVirtualDir("src")
         writeAction {
           val rootModel = ModuleRootManager.getInstance(module).modifiableModel
@@ -128,39 +136,54 @@ class DirtyFilesQueueTest {
           rootModel.commit()
         }
         IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
-        val file = writeAction { src.createFile(fileName) }
-        smartReadAction(project) {
-          ensureUpToDate(project)
-          val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
-          assertThat(files).contains(file)
+        val files = writeAction {
+          fileNames.map {
+            val file = src.createFile(it)
+            file.writeText("$commonPrefix1 $it")
+            file
+          }
         }
-        file
+        smartReadAction(project) {
+          val foundFiles = findFilesWithText(commonPrefix1, project)
+          assertThat(foundFiles).containsAll(files)
+        }
+        files
       }
-      writeAction { file.rename(this@DirtyFilesQueueTest, renamedName) } // add file to orphan queue
+      writeAction {
+        files.forEach {
+          it.writeText("$commonPrefix2 $it")
+        }
+      } // add files to orphan queue
       restart(skipFullScanning = true) // persist orphan queue
       openProject(name, projectFile, withIndexingHistory = true) { project, _ ->
         smartReadAction(project) {
-          val files = FileTypeIndex.getFiles(PlainTextFileType.INSTANCE, GlobalSearchScope.allScope(project))
-          assertThat(files).contains(file)
+          val foundFiles = findFilesWithText(commonPrefix2, project)
+          assertThat(foundFiles).containsAll(files)
         }
 
         IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
         val scanning = findScanningTriggeredBy(project, "On project open")
-        assertIsFullScanning(scanning, false)
-        assertCameFromOrphanQueue(scanning, renamedName)
+        assertIsFullScanning(scanning, expectFullScanning)
+        if (!expectFullScanning) {
+          assertCameFromOrphanQueue(scanning, fileNames)
+        }
       }
     }
   }
 
-  private fun ensureUpToDate(project: Project) {
-    // index has to depend on content in order for FilesToUpdateCollector to be processed
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project))
+  private fun findFilesWithText(text: String, project: Project): Collection<VirtualFile> {
+    val service = ApplicationManager.getApplication().service<TextSearchService>()
+    val processor = CommonProcessors.CollectProcessor<VirtualFile>()
+    service.processFilesWithText(text, processor, GlobalSearchScope.allScope(project))
+    return processor.results
   }
 
-  private fun assertCameFromOrphanQueue(scanning: JsonIndexingActivityDiagnostic, fileName: String) {
+  private fun assertCameFromOrphanQueue(scanning: JsonIndexingActivityDiagnostic, fileNames: List<String>) {
     val stats = (scanning.projectIndexingActivityHistory as JsonProjectScanningHistory).scanningStatistics
       .first { it.providerName == "dirty files iterator (from orphan queue=true)" }
-    assertThat(stats.scannedFiles).anyMatch { it.path.presentablePath.endsWith("/$fileName") }
+    assertThat(fileNames).allMatch { name ->
+        stats.scannedFiles!!.any { it.path.presentablePath.endsWith("/$name") }
+      }
   }
 
   private fun configureModule(project: Project): Module {
