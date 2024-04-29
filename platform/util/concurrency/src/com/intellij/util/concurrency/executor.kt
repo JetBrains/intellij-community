@@ -40,11 +40,8 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: St
 
   fun schedule(it: Runnable) {
     childScope.launch(ClientId.coroutineContext()) {
-      // `blockingContext` is not used by intention - low-level tasks are expected in such executors
-      try {
+      blockingContext {
         it.run()
-      }
-      catch (_: ProcessCanceledException) {
       }
     }
   }

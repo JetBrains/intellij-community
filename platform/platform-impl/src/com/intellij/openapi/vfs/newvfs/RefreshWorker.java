@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -37,6 +38,7 @@ import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -161,7 +163,7 @@ final class RefreshWorker {
 
       try {
         if (myRoots.contains(file)) {
-          var attributes = fs.getAttributes(file);
+          var attributes = computeAttributesForFile(fs, file);
           if (attributes == null) {
             scheduleDeletion(events, file);
             file.markClean();
@@ -226,7 +228,7 @@ final class RefreshWorker {
     }
     else {
       dirList = new HashMap<>();
-      for (String name : fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir) : fs.list(dir)) {
+      for (String name : fs instanceof LocalFileSystemImpl ? computeListWithCaching((LocalFileSystemImpl)fs, dir, null) : fs.list(dir)) {
         dirList.put(name, null);
       }
     }
@@ -318,7 +320,7 @@ final class RefreshWorker {
     }
     else {
       t = System.nanoTime();
-      String[] rawList = fs instanceof LocalFileSystemImpl ? ((LocalFileSystemImpl)fs).listWithCaching(dir, names) : fs.list(dir);
+      String[] rawList = fs instanceof LocalFileSystemImpl ? computeListWithCaching((LocalFileSystemImpl)fs, dir, names) : fs.list(dir);
       actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(rawList, false);
       myIoTime.addAndGet(System.nanoTime() - t);
     }
@@ -381,10 +383,29 @@ final class RefreshWorker {
     }
     if (attributes == null && !(fs instanceof BatchingFileSystem)) {
       var t = System.nanoTime();
-      attributes = fs.getAttributes(child);
+      attributes = computeAttributesForFile(fs, child);
       myIoTime.addAndGet(System.nanoTime() - t);
     }
     return attributes;
+  }
+
+  /**
+   * If attributes are computed in a cancellable context, then single-thread refresh gets a performance degradation.
+   * The reason is com.intellij.openapi.vfs.DiskQueryRelay#accessDiskWithCheckCanceled(java.lang.Object),
+   * which starts constant exchanging messages with an IO thread.
+   * The non-cancellable section here is merely a reification of the existing implicit assumption on cancellability,
+   * so it does not make anything worse.
+   * In the future, it should be removed in favor of non-blocking or suspending IO.
+   */
+  private static @Nullable FileAttributes computeAttributesForFile(NewVirtualFileSystem fs, VirtualFile file) {
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> fs.getAttributes(file));
+  }
+
+  /**
+   * See documentation for {@link RefreshWorker#computeAttributesForFile(NewVirtualFileSystem, VirtualFile)}
+   */
+  private static String @NotNull [] computeListWithCaching(LocalFileSystemImpl fs, VirtualFile dir, Set<String> filter) {
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> fs.listWithCaching(dir, filter));
   }
 
   private ChildInfo childRecord(NewVirtualFileSystem fs, FakeVirtualFile child, FileAttributes attributes, boolean canonicalize) {
