@@ -2,8 +2,11 @@
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Import members from 'PrivateInFileClass'
+// ACTION: Inline type parameter
 // ACTION: Introduce import alias
+// ACTION: Make 'PrivateInnerClass' 'open'
 // ACTION: Make 'PrivateInnerClass' public
+// ACTION: Remove final upper bound
 
 private class PrivateInFileClass<T : <caret>PrivateInFileClass.PrivateInnerClass> {
     private class PrivateInnerClass

@@ -562,6 +562,7 @@ public final class HighlightMethodUtil {
   private static HighlightInfo.Builder createIncompatibleCallHighlightInfo(@NotNull PsiExpressionList list,
                                                                            @NotNull MethodCandidateInfo candidateInfo,
                                                                            @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+    if (PsiTreeUtil.hasErrorElements(list)) return null;
     PsiMethod resolvedMethod = candidateInfo.getElement();
     PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
     String methodName = HighlightMessageUtil.getSymbolName(resolvedMethod, substitutor);
@@ -936,13 +937,13 @@ public final class HighlightMethodUtil {
   }
 
   static HighlightInfo.Builder checkAmbiguousMethodCallArguments(@NotNull PsiReferenceExpression referenceToMethod,
-                                                         JavaResolveResult @NotNull [] resolveResults,
-                                                         @NotNull PsiExpressionList list,
-                                                         PsiElement element,
-                                                         @NotNull JavaResolveResult resolveResult,
-                                                         @NotNull PsiMethodCallExpression methodCall,
-                                                         @NotNull PsiResolveHelper resolveHelper,
-                                                         @NotNull PsiElement elementToHighlight) {
+                                                                 JavaResolveResult @NotNull [] resolveResults,
+                                                                 @NotNull PsiExpressionList list,
+                                                                 PsiElement element,
+                                                                 @NotNull JavaResolveResult resolveResult,
+                                                                 @NotNull PsiMethodCallExpression methodCall,
+                                                                 @NotNull PsiResolveHelper resolveHelper,
+                                                                 @NotNull PsiElement elementToHighlight) {
     Pair<MethodCandidateInfo, MethodCandidateInfo> pair = findCandidates(resolveResults);
     MethodCandidateInfo methodCandidate1 = pair.first;
     MethodCandidateInfo methodCandidate2 = pair.second;
@@ -976,12 +977,15 @@ public final class HighlightMethodUtil {
       if (element != null && (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect())) {
         return null;
       }
-      String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list, true);
-      description = JavaErrorBundle.message("cannot.resolve.method", methodName);
       if (candidates.length == 0) {
         return null;
       }
+      String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list, true);
+      description = JavaErrorBundle.message("cannot.resolve.method", methodName);
       toolTip = XmlStringUtil.escapeString(description);
+    }
+    if (PsiTreeUtil.hasErrorElements(list)) {
+      return null;
     }
     TextRange fixRange = getFixRange(elementToHighlight);
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).description(description).escapedToolTip(toolTip);

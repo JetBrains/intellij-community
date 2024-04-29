@@ -699,7 +699,7 @@ public class SwitchBlockHighlightingModel {
     @Override
     void checkSwitchSelectorType(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
       if (mySelectorKind == SelectorKind.INT) return;
-      if (mySelectorKind == null) {
+      if (mySelectorKind == null && !PsiTreeUtil.hasErrorElements(myBlock)) {
         HighlightInfo.Builder info = createError(mySelector, JavaErrorBundle.message("switch.invalid.selector.types",
                                                                                      JavaHighlightUtil.formatType(mySelectorType)));
         registerFixesOnInvalidSelector(info);

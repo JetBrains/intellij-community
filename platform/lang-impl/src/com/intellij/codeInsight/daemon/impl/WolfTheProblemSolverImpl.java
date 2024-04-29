@@ -417,7 +417,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
                                     @NotNull Document document,
                                     @NotNull ProperTextRange visibleRange,
                                     @NotNull AtomicReference<? super HighlightInfo> error) {
-      super(psiFile, document, 0, document.getTextLength(), false, visibleRange, null, HighlightInfoProcessor.getEmpty());
+      super(psiFile, document, 0, document.getTextLength(), false, visibleRange, null, true, true, true,
+            HighlightInfoUpdater.EMPTY);
       myError = error;
     }
 
@@ -433,6 +434,16 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
           return super.add(info);
         }
       };
+    }
+
+    @Override
+    protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
+      try {
+        super.collectInformationWithProgress(progress);
+      }
+      catch (Exception ignored) {
+        // could throw PCE now
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 package com.siyeh.igtest.controlflow.switch_statements_without_default;
 
-public class SwitchStatementsWithoutDefault
+class SwitchStatementsWithoutDefault
 {
     private int m_bar;
 

@@ -1,4 +1,3 @@
-// EXPECTED_DUPLICATED_HIGHLIGHTING
 fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">test</symbolName>() {
     <symbolName textAttributesKey="KOTLIN_CONSTRUCTOR">Test</symbolName>("text", "text")() // BUG
 }

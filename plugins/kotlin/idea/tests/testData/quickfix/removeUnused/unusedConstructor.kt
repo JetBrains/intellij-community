@@ -1,6 +1,6 @@
 // K1_ACTION: "Safe delete constructor" "true"
-// K2_ACTION: "Safe delete secondary constructor 'Owner'" "true"
-class Owner(val x: Int) {
+// K2_ACTION: "Safe delete secondary constructor 'Owner95'" "true"
+class Owner95(val x: Int) {
     <caret>constructor(): this(42)
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SafeDeleteFix

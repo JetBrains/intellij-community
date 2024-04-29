@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
+import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtPropertyDeclaration
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.psi.*
@@ -155,7 +156,11 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
                         elementToHighlight.getResolutionFacade()
                     )
                 } else true
-                if (shouldHighlight) {
+                if (shouldHighlight
+                    && (elementToHighlight.parent as? KtProperty)?.nameIdentifier != elementToHighlight
+                    && (elementToHighlight.parent as? KtParameter)?.nameIdentifier != elementToHighlight
+                    && (elementToHighlight.parent as? KtDestructuringDeclarationEntry)?.nameIdentifier != elementToHighlight
+                    ) { // was highlighted in DeclarationHighlightingVisitor
                     highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
                 }
             }
@@ -173,15 +178,19 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
                 }
             }
 
-            if (descriptor is LocalVariableDescriptor && descriptor !is SyntheticFieldDescriptor) {
+            val declaration = elementToHighlight.parent
+            if (descriptor is LocalVariableDescriptor && descriptor !is SyntheticFieldDescriptor && !(
+                                declaration is KtProperty && declaration.nameIdentifier == elementToHighlight && textAttributesForKtPropertyDeclaration(declaration) == KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE
+                                || declaration is KtDestructuringDeclarationEntry && declaration.nameIdentifier == elementToHighlight)) {
+                // local was highlighted in DeclarationHighlightingVisitor
                 highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)
             }
 
-            if (descriptor is ValueParameterDescriptor) {
+            if (descriptor is ValueParameterDescriptor && elementToHighlight.parent !is KtParameter) { // KtParameter was highlighted in DeclarationHighlightingVisitor
                 highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.PARAMETER)
             }
 
-            if (descriptor is PropertyDescriptor && hasCustomPropertyDeclaration(descriptor)) {
+            if (descriptor is PropertyDescriptor && hasCustomPropertyDeclaration(descriptor) && (declaration as? KtProperty)?.nameIdentifier != elementToHighlight) { // KtProperty was highlighted in DeclarationHighlightingVisitor
                 val isStaticDeclaration = DescriptorUtils.isStaticDeclaration(descriptor)
                 highlightName(
                     elementToHighlight,

@@ -5,11 +5,8 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.extensions.Extensions
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -46,39 +43,6 @@ internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindin
         val highlightInfoType = attributesKey ?: attributeKeyByPropertyType(target)
         if (highlightInfoType != null) {
             highlightName(expression, highlightInfoType)
-        }
-    }
-
-    override fun visitProperty(property: KtProperty) {
-        val nameIdentifier = property.nameIdentifier ?: return
-        val propertyDescriptor = bindingContext.get(BindingContext.VARIABLE, property)
-        if (propertyDescriptor is PropertyDescriptor) {
-            highlightPropertyDeclaration(nameIdentifier, propertyDescriptor)
-        }
-
-        super.visitProperty(property)
-    }
-
-    override fun visitParameter(parameter: KtParameter) {
-        val nameIdentifier = parameter.nameIdentifier ?: return
-        val propertyDescriptor = bindingContext.get(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, parameter)
-        if (propertyDescriptor != null) {
-            if (propertyDescriptor.isVar) {
-                highlightName(nameIdentifier, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
-            }
-            highlightPropertyDeclaration(nameIdentifier, propertyDescriptor)
-        }
-
-        super.visitParameter(parameter)
-    }
-
-    private fun highlightPropertyDeclaration(
-        elementToHighlight: PsiElement,
-        descriptor: PropertyDescriptor
-    ) {
-        val highlightInfoType = attributeKeyForDeclarationFromExtensions(elementToHighlight, descriptor) ?: attributeKeyByPropertyType(descriptor)
-        if (highlightInfoType != null) {
-            highlightName(elementToHighlight, highlightInfoType)
         }
     }
 

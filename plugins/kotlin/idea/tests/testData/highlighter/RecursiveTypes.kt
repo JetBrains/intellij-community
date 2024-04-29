@@ -1,5 +1,4 @@
 // IGNORE_K2
-// EXPECTED_DUPLICATED_HIGHLIGHTING
 // ISSUE: KT-42263
 
 interface <symbolName descr="null">TestModule</symbolName>

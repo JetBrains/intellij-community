@@ -142,7 +142,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       long current = myProgressCount.addAndGet(delta);
       if (current >= myNextChunkThreshold.get() &&
           current >= myNextChunkThreshold.updateAndGet(old -> current >= old ? old+Math.max(1, myProgressLimit / 100) : old)) {
-        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), getProgress());
+        DaemonCodeAnalyzerEx.getInstanceEx(myProject).progressIsAdvanced(myHighlightingSession, getEditor(), getProgress());
       }
     }
   }

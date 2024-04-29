@@ -53,23 +53,17 @@ import java.util.function.Consumer;
  * Generates HighlightInfoType.ERROR-only HighlightInfos at PsiClass level.
  */
 public final class HighlightClassUtil {
-
   /**
    * new ref(...) or new ref(..) { ... } where ref is abstract class
    */
   static HighlightInfo.Builder checkAbstractInstantiation(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement parent = ref.getParent();
-    HighlightInfo.Builder highlightInfo = null;
     if (parent instanceof PsiAnonymousClass aClass
         && parent.getParent() instanceof PsiNewExpression
         && !PsiUtilCore.hasErrorElementChild(parent.getParent())) {
-      highlightInfo = checkClassWithAbstractMethods(aClass, ref.getTextRange());
+      return checkClassWithAbstractMethods(aClass, aClass, ref.getTextRange());
     }
-    return highlightInfo;
-  }
-
-  private static HighlightInfo.Builder checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull TextRange range) {
-    return checkClassWithAbstractMethods(aClass, aClass, range);
+    return null;
   }
 
   static HighlightInfo.Builder checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull PsiElement implementsFixElement, @NotNull TextRange range) {
@@ -132,7 +126,7 @@ public final class HighlightClassUtil {
     else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null) {
       return null;
     }
-    return checkClassWithAbstractMethods(aClass, textRange);
+    return checkClassWithAbstractMethods(aClass, aClass, textRange);
   }
 
   static HighlightInfo.Builder checkInstantiationOfAbstractClass(@NotNull PsiClass aClass, @NotNull PsiElement highlightElement) {
@@ -163,7 +157,7 @@ public final class HighlightClassUtil {
     return errorResult;
   }
 
-  static boolean hasEnumConstantsWithInitializer(@NotNull PsiClass aClass) {
+  private static boolean hasEnumConstantsWithInitializer(@NotNull PsiClass aClass) {
     return CachedValuesManager.getCachedValue(aClass, () -> {
       PsiField[] fields = aClass.getFields();
       for (PsiField field : fields) {

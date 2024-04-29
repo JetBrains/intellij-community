@@ -6,6 +6,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -27,22 +28,32 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.longs.LongList;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.BooleanSupplier;
 
 /**
  * Perform injections, run highlight visitors and annotators on discovered injected files
  */
-final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
-
+final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
+  private final boolean myUpdateAll;
+  private final ProperTextRange myPriorityRange;
+  private final @NotNull EditorColorsScheme myGlobalScheme;
+  private final List<HighlightInfo> myHighlights = new ArrayList<>(); // guarded by myHighlights
+  private final HighlightVisitorRunner myHighlightVisitorRunner;
+  private final boolean myRunAnnotators;
+  private final HighlightInfoUpdater myHighlightInfoUpdater;
 
-  InjectedGeneralHighlightingPass(@NotNull PsiFile file,
+  InjectedGeneralHighlightingPass(@NotNull PsiFile psiFile,
                                   @NotNull Document document,
                                   @Nullable List<? extends @NotNull TextRange> reducedRanges,
                                   int startOffset,
@@ -50,21 +61,19 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
                                   boolean updateAll,
                                   @NotNull ProperTextRange priorityRange,
                                   @Nullable Editor editor,
-                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    super(file, document, startOffset, endOffset, updateAll, priorityRange, editor, highlightInfoProcessor);
+                                  boolean runAnnotators, boolean runVisitors, boolean highlightErrorElements, @NotNull HighlightInfoUpdater highlightInfoUpdater) {
+    super(psiFile.getProject(), document, IdeBundle.message("highlighting.pass.injected.presentable.name"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myReducedRanges = reducedRanges;
-  }
-
-  @Override
-  public @NotNull List<HighlightInfo> getInfos() {
-    synchronized (myHighlights) {
-      return ContainerUtil.concat(myHighlights, myAnnotatorHighlights);
+    myUpdateAll = updateAll;
+    myPriorityRange = priorityRange;
+    myGlobalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+    myHighlightVisitorRunner = new HighlightVisitorRunner(psiFile.getProject(), myGlobalScheme);
+    myRunAnnotators = runAnnotators;
+    myHighlightInfoUpdater = highlightInfoUpdater;
+    if (!runVisitors) {
+      // "do not run visitors" here means "reduce the set of visitors down to DefaultHighlightVisitor", because it reports error elements
+      myHighlightVisitorRunner.setHighlightVisitorProducer(__ -> List.of(new DefaultHighlightVisitor(psiFile.getProject(), highlightErrorElements, false)));
     }
-  }
-
-  @Override
-  protected @NotNull String getPresentableName() {
-    return IdeBundle.message("highlighting.pass.injected.presentable.name");
   }
 
   @Override
@@ -72,66 +81,36 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     if (!Registry.is("editor.injected.highlighting.enabled")) return;
 
     List<Divider.DividedElements> allDivided = new ArrayList<>();
-    Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
+    Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, GeneralHighlightingPass.SHOULD_HIGHLIGHT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
 
     List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.inside()));
     List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.outside()));
 
-    List<HighlightInfo> resultInside = new ArrayList<>(100); // guarded by myHighlights
-    List<HighlightInfo> resultOutside = new ArrayList<>(100); // guarded by myHighlights
-    Set<PsiFile> injected = new HashSet<>(); // guarded by myHighlights
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     TextAttributesKey fragmentKey = EditorColors.createInjectedLanguageFragmentKey(myFile.getLanguage());
-    processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, (injectedPsi, places) ->
-      addInjectedPsiHighlights(injectedLanguageManager, injectedPsi, places, fragmentKey, patchedInfo -> {
-        queueInfoToUpdateIncrementally(patchedInfo, getId());
-        synchronized (myHighlights) {
-          if (myRestrictRange.contains(patchedInfo)) {
-            resultInside.add(patchedInfo);
+    Set<@NotNull PsiFile> injected = ConcurrentCollectionFactory.createConcurrentSet();  // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
+    processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, injected,
+                            (injectedPsi, places) -> {
+      runAnnotatorsAndVisitorsOnInjectedPsi(injectedLanguageManager, injectedPsi, places, fragmentKey, (toolId, psiElement, infos) -> {
+        myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, infos, getDocument(), injectedPsi, myProject, myHighlightingSession);
+        if (!infos.isEmpty()) {
+          synchronized (myHighlights) {
+            myHighlights.addAll(infos);
           }
-          else {
-            // non-conditionally apply injected results regardless whether they are in myRestrictRange
-            resultOutside.add(patchedInfo);
-          }
-          injected.add(injectedPsi);
         }
-      }));
+      });
+    });
 
     synchronized (myHighlights) {
       // injections were re-calculated, remove highlights stuck in highlightInfoUpdater from the previous invalid injection fragments
-      HighlightInfoUpdater.getInstance(myProject).removeInjectedFilesOtherThan(myFile, myRestrictRange, myHighlightingSession, injected);
-
-      // all infos for the "injected fragment for the host which is inside" are inside indeed,
-      // but some infos for the "injected fragment for the host which is outside" can be still inside
-      if (resultOutside.isEmpty()) {
-        // apply only the result inside
-        myHighlights.addAll(resultInside);
-        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), myHighlights, myRestrictRange, myRestrictRange, getId());
-      }
-      else {
-        boolean priorityIntersectionHasElements = myPriorityRange.intersectsStrict(myRestrictRange);
-
-        if ((!allInsideElements.isEmpty() || !resultInside.isEmpty()) && priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
-          // clear infos found in visible area to avoid applying them twice
-          myHighlights.addAll(resultInside);
-          myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), resultInside, myPriorityRange, myRestrictRange, getId());
-        }
-        else {
-          for (HighlightInfo info : resultInside) {
-            if (myRestrictRange.contains(info) && !myPriorityRange.contains(info)) {
-              resultOutside.add(info);
-            }
-          }
-        }
-
-        myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), resultOutside, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()), getId());
-      }
+      myHighlightInfoUpdater.removeInfosForInjectedFilesOtherThan(myFile, myRestrictRange, myHighlightingSession, injected);
     }
   }
 
   private void processInjectedPsiFiles(@NotNull List<? extends PsiElement> elements1,
                                        @NotNull List<? extends PsiElement> elements2,
                                        @NotNull ProgressIndicator progress,
+                                       @NotNull Set<? super PsiFile> visitedInjected,
                                        @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -141,7 +120,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
     //rehighlight all injected PSI regardless the range,
-    //since change in one place can lead to invalidation of injected PSI in (completely) other place.
+    //since change in one place can lead to invalidation of injected PSI in the (completely) other place.
     for (DocumentWindow documentRange : cachedInjected) {
       ProgressManager.checkCanceled();
       if (!documentRange.isValid()) continue;
@@ -175,7 +154,6 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     // the most expensive process is running injectors for these hosts, comparing to highlighting the resulting injected fragments,
     // so instead of showing "highlighted 1% of injected fragments", show "ran injectors for 1% of hosts"
     setProgressLimit(hosts.size());
-    Set<PsiElement> visitedInjected = ConcurrentCollectionFactory.createConcurrentSet(); // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
 
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, element -> {
         ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -191,9 +169,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
   }
 
-  private @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi, @NotNull DocumentWindow documentWindow,
-                                                        @NotNull InjectedLanguageManager injectedLanguageManager,
-                                                        @NotNull Consumer<? super HighlightInfo> outInfos) {
+  private @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi) {
     HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensionList().toArray(HighlightInfoFilter.EMPTY_ARRAY);
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(injectedPsi, filters) {
@@ -201,25 +177,59 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
       public @NotNull TextAttributesScheme getColorsScheme() {
         return actualScheme;
       }
-      @Override
-      public boolean add(@Nullable HighlightInfo info) {
-        boolean added = super.add(info);
-        if (info != null && added) {
-          addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, outInfos);
-        }
-        return added;
-      }
     };
   }
 
-  private void addInjectedPsiHighlights(@NotNull InjectedLanguageManager injectedLanguageManager,
-                                        @NotNull PsiFile injectedPsi,
-                                        @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
-                                        @Nullable TextAttributesKey attributesKey,
-                                        @NotNull Consumer<? super HighlightInfo> outInfos) {
+  private void runAnnotatorsAndVisitorsOnInjectedPsi(@NotNull InjectedLanguageManager injectedLanguageManager,
+                                                     @NotNull PsiFile injectedPsi,
+                                                     @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
+                                                     @Nullable TextAttributesKey attributesKey,
+                                                     @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
     DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
     if (documentWindow == null) return;
+    highlightInjectedBackground(injectedPsi, places, attributesKey, resultSink);
+
+    AnnotationSession session = AnnotationSessionImpl.create(injectedPsi);
+    GeneralHighlightingPass.setupAnnotationSession(session, myFile, myPriorityRange);
+
+    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(injectedPsi, false, session) : null;
+    Divider.divideInsideAndOutsideAllRoots(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), GeneralHighlightingPass.SHOULD_HIGHLIGHT_FILTER, dividedElements -> {
+      List<? extends @NotNull PsiElement> inside = dividedElements.inside();
+      LongList insideRanges = dividedElements.insideRanges();
+      BooleanSupplier runnable = () -> {
+        myHighlightVisitorRunner.createHighlightVisitorsFor(injectedPsi, visitors -> {
+          int chunkSize = Math.max(1, inside.size() / 100); // one percent precision is enough
+          myHighlightVisitorRunner.runVisitors(injectedPsi, injectedPsi.getTextRange(), inside,
+                                               insideRanges, List.of(), LongList.of(), visitors, false, chunkSize, true,
+                                               () -> createInfoHolder(injectedPsi), (toolId, psiElement, infos) -> {
+              // convert injected infos to host
+              List<? extends HighlightInfo> hostInfos = infos.isEmpty()
+                                                        ? infos
+                                                        : ContainerUtil.flatMap(infos, info -> createPatchedInfos(info, injectedPsi,
+                                                                                                                  documentWindow,
+                                                                                                                  injectedLanguageManager));
+              resultSink.accept(toolId, psiElement, hostInfos);
+            });
+        });
+        highlightInjectedSyntax(injectedPsi, places, resultSink);
+        return true;
+      };
+      if (annotatorRunner == null) {
+        runnable.getAsBoolean();
+      }
+      else {
+        annotatorRunner.runAnnotatorsAsync(inside, List.of(), runnable, resultSink);
+      }
+      return true;
+    });
+  }
+
+  private static void highlightInjectedBackground(@NotNull PsiFile injectedPsi,
+                                                  @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
+                                                  @Nullable TextAttributesKey attributesKey,
+                                                  @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
     boolean addTooltips = places.size() < 100;
+    List<HighlightInfo> result = new ArrayList<>(places.size());
     for (PsiLanguageInjectionHost.Shred place : places) {
       PsiLanguageInjectionHost host = place.getHost();
       if (host == null) continue;
@@ -235,36 +245,21 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
       }
       HighlightInfo info = builder.createUnconditionally();
       info.markFromInjection();
-      outInfos.accept(info);
+      result.add(info);
     }
-
-    HighlightInfoHolder holder = createInfoHolder(injectedPsi, documentWindow, injectedLanguageManager, outInfos);
-    List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
-
-    AnnotatorRunner annotatorRunner = new AnnotatorRunner(injectedPsi, false, holder, myHighlightingSession);
-    annotatorRunner.runAnnotatorsAsync(elements, List.of(), () -> {
-      runHighlightVisitorsForInjected(injectedPsi, holder, elements);
-      highlightInjectedSyntax(injectedPsi, places, outInfos);
-
-      if (!isDumbMode()) {
-        List<HighlightInfo> todos = new ArrayList<>();
-        highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength(), myPriorityRange, todos, todos);
-        for (HighlightInfo info : todos) {
-          addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, outInfos);
-        }
-      }
-      return true;
-    });
-    myAnnotatorHighlights.addAll(annotatorRunner.getResults());
+    resultSink.accept(INJECTION_BACKGROUND_ID, injectedPsi, result);
   }
 
-  private static void addPatchedInfos(@NotNull HighlightInfo info,
-                                      @NotNull PsiFile injectedPsi,
-                                      @NotNull DocumentWindow documentWindow,
-                                      @NotNull InjectedLanguageManager injectedLanguageManager,
-                                      @NotNull Consumer<? super HighlightInfo> outInfos) {
+  private static final Object INJECTION_BACKGROUND_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_ID");
+  private static final Object INJECTION_SYNTAX_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_ID");
+
+  private static List<HighlightInfo> createPatchedInfos(@NotNull HighlightInfo info,
+                                                        @NotNull PsiFile injectedPsi,
+                                                        @NotNull DocumentWindow documentWindow,
+                                                        @NotNull InjectedLanguageManager injectedLanguageManager) {
     ProperTextRange infoRange = new ProperTextRange(info.startOffset, info.endOffset);
     List<TextRange> editables = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, infoRange);
+    List<HighlightInfo> result = new ArrayList<>(editables.size());
     for (TextRange editable : editables) {
       TextRange hostRange = documentWindow.injectedToHost(editable);
 
@@ -297,60 +292,55 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
         return null;
       });
       patched.markFromInjection();
-      outInfos.accept(patched);
+      result.add(patched);
     }
+    return result;
   }
 
-  private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi, @NotNull HighlightInfoHolder holder, @NotNull List<? extends PsiElement> elements) {
-    HighlightVisitor[] filtered = getHighlightVisitors(injectedPsi);
-    try {
-      for (HighlightVisitor visitor : filtered) {
-        visitor.analyze(injectedPsi, true, holder, () -> {
-          for (PsiElement element : elements) {
-            ProgressManager.checkCanceled();
-            visitor.visit(element);
-          }
-        });
-      }
-    }
-    finally {
-      incVisitorUsageCount(-1);
-    }
+  private void highlightInjectedSyntax(@NotNull PsiFile injectedPsi, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
+                                       @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
+    List<HighlightInfo> result = new ArrayList<>(places.size()*2);
+    InjectedLanguageUtil.processTokens(injectedPsi, places, (@NotNull TextRange hostRange, TextAttributesKey @NotNull [] keys) -> {
+      List<HighlightInfo> infos = addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, keys);
+      result.addAll(infos);
+    });
+    resultSink.accept(INJECTION_SYNTAX_ID, injectedPsi, result);
   }
 
-  private void highlightInjectedSyntax(@NotNull PsiFile injectedPsi, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places, @NotNull Consumer<? super HighlightInfo> outInfos) {
-    InjectedLanguageUtil.processTokens(injectedPsi, places, (@NotNull TextRange hostRange, TextAttributesKey @NotNull [] keys) ->
-      addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, keys, outInfos));
+  @Override
+  public @NotNull List<HighlightInfo> getInfos() {
+    synchronized (myHighlights) {
+      return myHighlights;
+    }
   }
 
   @Override
   protected void applyInformationWithProgress() {
   }
 
-  static void addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
-                                            @NotNull TextRange hostRange,
-                                            TextAttributesKey @NotNull [] keys,
-                                            @NotNull Consumer<? super HighlightInfo> outInfos) {
+  @Contract(pure = true)
+  static List<HighlightInfo> addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
+                                                           @NotNull TextRange hostRange,
+                                                           TextAttributesKey @NotNull [] keys) {
     if (hostRange.isEmpty()) {
-      return;
+      return List.of();
     }
     // erase marker to override hosts colors
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT)
+    HighlightInfo eraseInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT)
       .range(hostRange)
       .textAttributes(TextAttributes.ERASE_MARKER)
       .createUnconditionally();
-    outInfos.accept(info);
 
     LayeredTextAttributes injectedAttributes = LayeredTextAttributes.create(scheme, keys);
     if (injectedAttributes.isEmpty() || keys.length == 1 && keys[0] == HighlighterColors.TEXT) {
       // nothing to add
-      return;
+      return List.of(eraseInfo);
     }
 
     HighlightInfo injectedInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT)
       .range(hostRange)
       .textAttributes(injectedAttributes)
       .createUnconditionally();
-    outInfos.accept(injectedInfo);
+    return List.of(eraseInfo, injectedInfo);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
@@ -72,9 +73,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new HashMap<>();
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
+  // stored "clashing signatures" errors for the method (if the key is a PsiModifierList of the method), or the class (if the key is a PsiModifierList of the class)
+  private final Map<PsiMember, HighlightInfo.Builder> myOverrideEquivalentMethodsErrors = new HashMap<>();
   private final Map<PsiMethod, PsiType> myExpectedReturnTypes = new HashMap<>();
   private final Function<? super PsiElement, ? extends PsiMethod> mySurroundingConstructor = entry -> findSurroundingConstructor(entry);
   private final Map<PsiElement, PsiMethod> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
+  private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   @NotNull
   protected PsiResolveHelper getResolveHelper(@NotNull Project project) {
@@ -86,7 +90,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Contract(pure = true)
   private boolean hasErrorResults() {
-    return myHolder.hasErrorResults();
+    return myHasError;
   }
   @NotNull
   private Project getProject() {
@@ -157,6 +161,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visit(@NotNull PsiElement element) {
+    myHasError = false;
     element.accept(this);
   }
 
@@ -189,6 +194,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myPreviewFeatureVisitor = null;
       myDuplicateMethods.clear();
       myOverrideEquivalentMethodsVisitedClasses.clear();
+      myOverrideEquivalentMethodsErrors.clear();
       myExpectedReturnTypes.clear();
       myInsideConstructorOfClassCache.clear();
     }
@@ -245,7 +251,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private boolean add(@Nullable HighlightInfo.Builder builder) {
     if (builder != null) {
-      return myHolder.add(builder/*.toolId(getClass())*/.create());
+      HighlightInfo info = builder/*.toolId(getClass())*/.create();
+      if (info != null && info.getSeverity().compareTo(HighlightSeverity.ERROR) >= 0) {
+        myHasError = true;
+      }
+      return myHolder.add(info);
     }
     return false;
   }
@@ -400,7 +410,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           add(info);
         }
       }
-      else if (returnErrors != null) {
+      else if (returnErrors != null && !PsiTreeUtil.hasErrorElements(expression)) {
         for (Map.Entry<PsiElement, @Nls String> entry : returnErrors.entrySet()) {
           PsiElement element = entry.getKey();
           HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
@@ -480,7 +490,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(HighlightClassUtil.checkWellFormedRecord(aClass));
     if (!hasErrorResults()) add(HighlightClassUtil.checkSealedClassInheritors(aClass));
     if (!hasErrorResults()) add(HighlightClassUtil.checkSealedSuper(aClass));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParameterOverrideEquivalentMethods(aClass, myLanguageLevel, myErrorSink));
+    if (!hasErrorResults()) GenericsHighlightUtil.checkTypeParameterOverrideEquivalentMethods(aClass, myLanguageLevel, myErrorSink, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
   }
 
   @Override
@@ -990,8 +1000,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           HighlightMethodUtil.checkConstructorCallsBaseClassConstructor(method, getResolveHelper(getProject())));
       }
       if (!hasErrorResults()) add(HighlightMethodUtil.checkStaticMethodOverride(method, myFile));
-      if (!hasErrorResults() && aClass != null && myOverrideEquivalentMethodsVisitedClasses.add(aClass)) {
-        GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass, false, myErrorSink);
+      if (!hasErrorResults() && aClass != null) {
+        GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
+        myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(method));
       }
     }
     else if (parent instanceof PsiClass aClass) {
@@ -1005,8 +1016,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, getResolveHelper(getProject())));
         }
         if (!hasErrorResults()) add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass, myFile, myLanguageLevel));
-        if (!hasErrorResults() && myOverrideEquivalentMethodsVisitedClasses.add(aClass)) {
-          GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass, false, myErrorSink);
+        if (!hasErrorResults()) {
+          GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
+          myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
         }
         if (!hasErrorResults()) add(HighlightClassUtil.checkCyclicInheritance(aClass));
       }
@@ -1179,11 +1191,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (parent instanceof PsiAnonymousClass && ref.equals(((PsiAnonymousClass)parent).getBaseClassReference())) {
-      if (myOverrideEquivalentMethodsVisitedClasses.add((PsiClass)parent)) {
-        PsiClass aClass = (PsiClass)parent;
-        GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass, false, myErrorSink);
-      }
+    if (parent instanceof PsiAnonymousClass psiAnonymousClass && ref.equals(psiAnonymousClass.getBaseClassReference())) {
+      GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(psiAnonymousClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
+      myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(psiAnonymousClass));
       if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericCannotExtendException((PsiAnonymousClass)parent));
     }
 

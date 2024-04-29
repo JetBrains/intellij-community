@@ -54,6 +54,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   private static final Logger LOG = Logger.getInstance(LocalInspectionsPass.class);
   private final TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
+  private final HighlightInfoUpdater myHighlightInfoUpdater;
   private volatile List<? extends HighlightInfo> myInfos = Collections.emptyList(); // updated atomically
   private final InspectionProfileWrapper myProfileWrapper;
   // toolId -> suppressed elements (for which tool.isSuppressedFor(element) == true)
@@ -66,9 +67,10 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
                        @NotNull TextRange restrictRange,
                        @NotNull TextRange priorityRange,
                        boolean ignoreSuppressed,
-                       @NotNull HighlightInfoProcessor highlightInfoProcessor,
+                       @NotNull HighlightInfoUpdater highlightInfoUpdater,
                        boolean inspectInjectedPsi) {
-    super(file.getProject(), document, DaemonBundle.message("pass.inspection"), file, null, restrictRange, true, highlightInfoProcessor);
+    super(file.getProject(), document, DaemonBundle.message("pass.inspection"), file, null, restrictRange, true, HighlightInfoProcessor.getEmpty());
+    myHighlightInfoUpdater = highlightInfoUpdater;
     assert file.isPhysical() : "can't inspect non-physical file: " + file + "; " + file.getVirtualFile();
     myPriorityRange = priorityRange;
     myIgnoreSuppressed = ignoreSuppressed;
@@ -90,7 +92,6 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
 
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
-    HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(getFile().getProject());
     List<HighlightInfo> fileInfos = Collections.synchronizedList(new ArrayList<>());
     List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
     List<? extends InspectionRunner.InspectionContext> resultContexts;
@@ -119,8 +120,8 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
             });
           }
         }
-        highlightInfoUpdater.psiElementVisited(shortName, visitingPsiElement, ContainerUtil.notNullize(result), getDocument(), holder.getFile(),
-                                               myProject, myHighlightingSession);
+        myHighlightInfoUpdater.psiElementVisited(shortName, visitingPsiElement, ContainerUtil.notNullize(result), getDocument(), holder.getFile(),
+                                                 myProject, myHighlightingSession);
         if (result != null) {
           fileInfos.addAll(result);
         }
@@ -149,8 +150,10 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
       injectedFragments = runner.getInjectedFragments();
     }
     Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-    highlightInfoUpdater.removeHighlightsForObsoleteTools(getFile(), getDocument(), injectedFragments, pairs, myHighlightingSession);
-    highlightInfoUpdater.removeWarningsInsideErrors(injectedFragments, getDocument(), myHighlightingSession);  // must be the last
+    if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
+      impl.removeHighlightsForObsoleteTools(getFile(), getDocument(), injectedFragments, pairs, myHighlightingSession);
+      impl.removeWarningsInsideErrors(injectedFragments, getDocument(), myHighlightingSession);  // must be the last
+    }
   }
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes(){

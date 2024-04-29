@@ -30,7 +30,7 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
     if (textRange == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(file, editor.getDocument(), editor, textRange.getStartOffset(), textRange.getEndOffset(), new DefaultHighlightInfoProcessor());
+    return new ExternalToolPass(file, editor.getDocument(), editor, textRange.getStartOffset(), textRange.getEndOffset(), HighlightInfoProcessor.getEmpty());
   }
 
   private static boolean externalAnnotatorsDefined(@NotNull PsiFile file) {

@@ -144,7 +144,7 @@ class Example {
           return 0;
         }
         else {
-          new <error>Runnable</error>(){}<EOLError/>
+          new <error descr="Class 'Anonymous class derived from Runnable' must implement abstract method 'run()' in 'Runnable'">Runnable</error>(){}<EOLError descr="';' expected"></EOLError>
         }
-    <error>}</error>
+    <error descr="Missing return statement">}</error>
 }

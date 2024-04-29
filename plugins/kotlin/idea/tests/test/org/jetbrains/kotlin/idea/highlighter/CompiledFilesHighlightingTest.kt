@@ -38,8 +38,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     fun testKotlinCollectionsGroupingKtKotlinMetadata() {
         doTestWithLibraryFile(
             TestKotlinArtifacts.kotlinStdlibCommon,
-            FileHighlightingSetting.SKIP_INSPECTION,
-            expectedDuplicatedHighlighting = true
+            FileHighlightingSetting.SKIP_INSPECTION
         )
     }
 
@@ -47,8 +46,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     fun testKotlinTimeTimeSourceClass() {
         doTestWithLibraryFile(
             TestKotlinArtifacts.kotlinStdlib,
-            FileHighlightingSetting.SKIP_INSPECTION,
-            expectedDuplicatedHighlighting = true
+            FileHighlightingSetting.SKIP_INSPECTION
         )
     }
 
@@ -56,8 +54,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     fun testKotlinNativeLinkdataPackageKotlinIO0ioKnm() {
         doTestWithLibraryFile(
             TestKotlinArtifacts.kotlinStdlibNative,
-            FileHighlightingSetting.SKIP_INSPECTION,
-            expectedDuplicatedHighlighting = true
+            FileHighlightingSetting.SKIP_INSPECTION
         )
     }
 

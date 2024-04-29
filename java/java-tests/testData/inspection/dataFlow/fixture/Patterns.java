@@ -1,6 +1,6 @@
 class Test {
   int testIncomplete(Object obj) {
-    return switch(obj) {
+    return switch(<error descr="'switch' expression does not cover all possible input values">obj</error>) {
       case String s when<EOLError descr="Expression expected"></EOLError><EOLError descr="':' or '->' expected"></EOLError>
     };
   }

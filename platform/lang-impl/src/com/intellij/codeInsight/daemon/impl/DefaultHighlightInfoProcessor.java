@@ -12,8 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -21,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Alarm;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated use {@link BackgroundUpdateHighlightersUtil} instead
+ */
+@Deprecated
 public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   private volatile TextEditorHighlightingPass myCachedShowAutoImportPass; // cache to avoid re-creating it multiple times
   @Override
@@ -56,7 +57,7 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
           showAutoImportHints(session.getProgressIndicator(), showAutoImportPass);
         }
 
-        repaintErrorStripeAndIcon(editor, project, psiFile);
+        DaemonCodeAnalyzerImpl.repaintErrorStripeAndIcon(editor, project, psiFile);
       }
     });
   }
@@ -89,14 +90,6 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
     return myCachedShowAutoImportPass;
   }
 
-  static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project, @Nullable PsiFile file) {
-    MarkupModel markup = editor.getMarkupModel();
-    if (markup instanceof EditorMarkupModelImpl editorMarkup) {
-      editorMarkup.repaintTrafficLightIcon();
-      ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor, file);
-    }
-  }
-
   @Override
   public void highlightsOutsideVisiblePartAreProduced(@NotNull HighlightingSession session,
                                                       @Nullable Editor editor,
@@ -112,7 +105,7 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
       long modificationStamp = document.getModificationStamp();
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!project.isDisposed() && !editor.isDisposed() && modificationStamp != document.getModificationStamp()) {
-          repaintErrorStripeAndIcon(editor, project, psiFile);
+          DaemonCodeAnalyzerImpl.repaintErrorStripeAndIcon(editor, project, psiFile);
         }
       });
     }
@@ -165,21 +158,6 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
                                  @Nullable Editor editor,
                                  double progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    PsiFile file = highlightingSession.getPsiFile();
-    repaintTrafficIcon(file, editor, progress);
-  }
-
-  private final Alarm repaintIconAlarm = new Alarm();
-  private void repaintTrafficIcon(@NotNull PsiFile file, @Nullable Editor editor, double progress) {
-    if (ApplicationManager.getApplication().isCommandLine()) return;
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (editor != null && (repaintIconAlarm.isEmpty() || progress >= 1)) {
-      repaintIconAlarm.addRequest(() -> {
-        Project myProject = file.getProject();
-        if (!myProject.isDisposed() && !editor.isDisposed()) {
-          repaintErrorStripeAndIcon(editor, myProject, file);
-        }
-      }, 50, null);
-    }
+    DaemonCodeAnalyzerEx.getInstanceEx(highlightingSession.getProject()).progressIsAdvanced(highlightingSession, editor, progress);
   }
 }

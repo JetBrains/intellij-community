@@ -404,31 +404,32 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkOverrideEquivalentMethods(@NotNull PsiClass aClass,
-                                                              boolean returnFirstFoundProblem,
-                                                              @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
-    PsiManager manager = aClass.getManager();
-    Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
-      MethodSignatureUtil.createErasedMethodSignatureMap();
+  static void computeOverrideEquivalentMethodErrors(@NotNull PsiClass aClass,
+                                                    @NotNull Set<? super PsiClass> overrideEquivalentMethodsVisitedClasses,
+                                                    @NotNull Map<PsiMember, HighlightInfo.Builder> overrideEquivalentMethodsErrors) {
+    if (overrideEquivalentMethodsVisitedClasses.add(aClass)) {
+      Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
+      PsiManager manager = aClass.getManager();
+      Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
+        MethodSignatureUtil.createErasedMethodSignatureMap();
 
-    Set<MethodSignature> foundProblems = MethodSignatureUtil.createErasedMethodSignatureSet();
-    for (HierarchicalMethodSignature signature : signaturesWithSupers) {
-      HighlightInfo.Builder info = checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
-      if (info != null && foundProblems.add(signature)) {
-        if (returnFirstFoundProblem) return info;
-        errorSink.accept(info);
-      }
-      if (aClass instanceof PsiTypeParameter) {
-        info = HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, signature.getSuperSignatures(), true, HighlightNamesUtil.getClassDeclarationTextRange(aClass),
-                                                                     null);
-        if (info != null) {
-          if (returnFirstFoundProblem) return info;
-          errorSink.accept(info);
+      Set<MethodSignature> foundProblems = MethodSignatureUtil.createErasedMethodSignatureSet();
+      for (HierarchicalMethodSignature signature : signaturesWithSupers) {
+        Pair<PsiMember, HighlightInfo.Builder> pair = checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
+        if (pair != null && foundProblems.add(signature)) {
+          overrideEquivalentMethodsErrors.put(pair.getFirst(), pair.getSecond());
+        }
+        if (aClass instanceof PsiTypeParameter) {
+          HighlightInfo.Builder info =
+            HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, signature.getSuperSignatures(), true,
+                                                                  HighlightNamesUtil.getClassDeclarationTextRange(aClass),
+                                                                  null);
+          if (info != null) {
+            overrideEquivalentMethodsErrors.put(aClass, info);
+          }
         }
       }
     }
-    return null;
   }
 
   static HighlightInfo.Builder checkDefaultMethodOverridesMemberOfJavaLangObject(@NotNull LanguageLevel languageLevel,
@@ -587,7 +588,7 @@ public final class GenericsHighlightUtil {
   }
 
   static HighlightInfo.Builder checkUnrelatedConcrete(@NotNull PsiClass psiClass,
-                                              @NotNull PsiIdentifier classIdentifier) {
+                                                      @NotNull PsiIdentifier classIdentifier) {
     PsiClass superClass = psiClass.getSuperClass();
     if (superClass != null && superClass.hasTypeParameters()) {
       Collection<HierarchicalMethodSignature> visibleSignatures = superClass.getVisibleSignatures();
@@ -626,40 +627,37 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  private static HighlightInfo.Builder checkSameErasureNotSubSignatureInner(@NotNull HierarchicalMethodSignature signature,
-                                                                    @NotNull PsiManager manager,
-                                                                    @NotNull PsiClass aClass,
-                                                                    @NotNull Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
+  private static Pair<PsiMember, HighlightInfo.Builder> checkSameErasureNotSubSignatureInner(@NotNull HierarchicalMethodSignature signature,
+                                                                                             @NotNull PsiManager manager,
+                                                                                             @NotNull PsiClass aClass,
+                                                                                             @NotNull Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
     PsiMethod method = signature.getMethod();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (!facade.getResolveHelper().isAccessible(method, aClass, null)) return null;
     MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
     MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
-    HighlightInfo.Builder info;
-    if (sameErasure != null) {
-      if (aClass instanceof PsiTypeParameter ||
-          MethodSignatureUtil.findMethodBySuperMethod(aClass, sameErasure.getMethod(), false) != null ||
-          !(InheritanceUtil.isInheritorOrSelf(sameErasure.getMethod().getContainingClass(), method.getContainingClass(), true) ||
-            InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), sameErasure.getMethod().getContainingClass(), true))) {
-        info = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method);
-        if (info != null) return info;
-      }
-    }
-    else {
+    if (sameErasure == null) {
       sameErasureMethods.put(signatureToErase, signature);
+    }
+    else if (aClass instanceof PsiTypeParameter ||
+             MethodSignatureUtil.findMethodBySuperMethod(aClass, sameErasure.getMethod(), false) != null ||
+             !(InheritanceUtil.isInheritorOrSelf(sameErasure.getMethod().getContainingClass(), method.getContainingClass(), true) ||
+               InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), sameErasure.getMethod().getContainingClass(), true))) {
+      Pair<PsiMember, HighlightInfo.Builder> pair = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method);
+      if (pair != null) return pair;
     }
     List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
     for (HierarchicalMethodSignature superSignature : supers) {
-      info = checkSameErasureNotSubSignatureInner(superSignature, manager, aClass, sameErasureMethods);
-      if (info != null) return info;
+      Pair<PsiMember, HighlightInfo.Builder> pair = checkSameErasureNotSubSignatureInner(superSignature, manager, aClass, sameErasureMethods);
+      if (pair != null) return pair;
 
       if (superSignature.isRaw() && !signature.isRaw()) {
         PsiType[] parameterTypes = signature.getParameterTypes();
         PsiType[] erasedTypes = superSignature.getErasedParameterTypes();
         for (int i = 0; i < erasedTypes.length; i++) {
           if (!Comparing.equal(parameterTypes[i], erasedTypes[i])) {
-            return getSameErasureMessage(false, method, superSignature.getMethod(),
-                                         HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+            return Pair.create(aClass, getSameErasureMessage(false, method, superSignature.getMethod(),
+                                         HighlightNamesUtil.getClassDeclarationTextRange(aClass)));
           }
         }
       }
@@ -668,10 +666,10 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  private static HighlightInfo.Builder checkSameErasureNotSubSignatureOrSameClass(@NotNull MethodSignatureBackedByPsiMethod signatureToCheck,
-                                                                          @NotNull HierarchicalMethodSignature superSignature,
-                                                                          @NotNull PsiClass aClass,
-                                                                          @NotNull PsiMethod superMethod) {
+  private static Pair<PsiMember, HighlightInfo.Builder> checkSameErasureNotSubSignatureOrSameClass(@NotNull MethodSignatureBackedByPsiMethod signatureToCheck,
+                                                                                  @NotNull HierarchicalMethodSignature superSignature,
+                                                                                  @NotNull PsiClass aClass,
+                                                                                  @NotNull PsiMethod superMethod) {
     PsiMethod checkMethod = signatureToCheck.getMethod();
     if (superMethod.equals(checkMethod)) return null;
     PsiClass checkContainingClass = checkMethod.getContainingClass();
@@ -728,15 +726,15 @@ public final class GenericsHighlightUtil {
     }
     if (aClass.equals(checkContainingClass)) {
       boolean sameClass = aClass.equals(superContainingClass);
-      return getSameErasureMessage(sameClass, checkMethod, superMethod, HighlightNamesUtil.getMethodDeclarationTextRange(checkMethod));
+      return Pair.create(checkMethod, getSameErasureMessage(sameClass, checkMethod, superMethod, HighlightNamesUtil.getMethodDeclarationTextRange(checkMethod)));
     }
     else {
-      return getSameErasureMessage(false, checkMethod, superMethod, HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+      return Pair.create(aClass, getSameErasureMessage(false, checkMethod, superMethod, HighlightNamesUtil.getClassDeclarationTextRange(aClass)));
     }
   }
 
   private static HighlightInfo.Builder getSameErasureMessage(boolean sameClass, @NotNull PsiMethod method, @NotNull PsiMethod superMethod,
-                                                     @NotNull TextRange textRange) {
+                                                             @NotNull TextRange textRange) {
     @NonNls String key = sameClass ? "generics.methods.have.same.erasure" :
                          method.hasModifierProperty(PsiModifier.STATIC) ?
                          "generics.methods.have.same.erasure.hide" :
@@ -1621,15 +1619,17 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkTypeParameterOverrideEquivalentMethods(@NotNull PsiClass aClass, @NotNull LanguageLevel level,
-                                                                           @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (aClass instanceof PsiTypeParameter && level.isAtLeast(LanguageLevel.JDK_1_7)) {
-      PsiReferenceList extendsList = aClass.getExtendsList();
+  static void checkTypeParameterOverrideEquivalentMethods(@NotNull PsiClass typeParameter, @NotNull LanguageLevel level,
+                                                          @NotNull Consumer<? super HighlightInfo.Builder> errorSink,
+                                                          @NotNull Set<? super PsiClass> overrideEquivalentMethodsVisitedClasses,
+                                                          @NotNull Map<PsiMember, HighlightInfo.Builder> overrideEquivalentMethodsErrors) {
+    if (typeParameter instanceof PsiTypeParameter && level.isAtLeast(LanguageLevel.JDK_1_7)) {
+      PsiReferenceList extendsList = typeParameter.getExtendsList();
       if (extendsList.getReferenceElements().length > 1) {
         //todo suppress erased methods which come from the same class
-        return checkOverrideEquivalentMethods(aClass, true, errorSink);
+        computeOverrideEquivalentMethodErrors(typeParameter, overrideEquivalentMethodsVisitedClasses, overrideEquivalentMethodsErrors);
+        errorSink.accept(overrideEquivalentMethodsErrors.get(typeParameter));
       }
     }
-    return null;
   }
 }

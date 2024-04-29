@@ -1,6 +1,7 @@
 // "Wrap with '?.let { ... }' call" "false"
 // WITH_STDLIB
 // ACTION: Add non-null asserted (toLowerCase()!!) call
+// ACTION: Compiler warning 'DEPRECATION' options
 // ACTION: Introduce import alias
 // ACTION: Introduce local variable
 // ACTION: Replace with safe (this?.) call

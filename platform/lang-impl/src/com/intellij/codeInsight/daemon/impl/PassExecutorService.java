@@ -534,8 +534,8 @@ final class PassExecutorService implements Disposable {
   private void repaintErrorStripeAndIcon(@NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor textEditor) {
       Editor editor = textEditor.getEditor();
-      DefaultHighlightInfoProcessor.repaintErrorStripeAndIcon(editor, myProject,
-                                                              PsiDocumentManager.getInstance(myProject).getCachedPsiFile(editor.getDocument()));
+      DaemonCodeAnalyzerImpl.repaintErrorStripeAndIcon(editor, myProject,
+                                                       PsiDocumentManager.getInstance(myProject).getCachedPsiFile(editor.getDocument()));
     }
   }
 
