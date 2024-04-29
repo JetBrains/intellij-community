@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
@@ -227,11 +228,26 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   override suspend fun updateMavenProjects(spec: MavenSyncSpec,
                                            filesToUpdate: List<VirtualFile>,
                                            filesToDelete: List<VirtualFile>) {
-    importMutex.withLock {
-      withContext(tracer.span("updateMavenProjects")) {
-        MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
-        doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
-        MavenLog.LOG.warn("updateMavenProjects finished: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
+
+    val lockSucceed = importMutex.tryLock()
+    if (MavenLog.LOG.isDebugEnabled) {
+      MavenLog.LOG.debug("Update maven requested. lock=${lockSucceed}, coroutines dump: ${dumpCoroutines()}")
+    }
+    try {
+      if (lockSucceed) {
+        withContext(tracer.span("updateMavenProjects")) {
+          MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
+          doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
+          MavenLog.LOG.warn("updateMavenProjects finished: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
+        }
+      }
+      else {
+        MavenLog.LOG.info("Maven import already is in progress")
+      }
+    }
+    finally {
+      if (lockSucceed) {
+        importMutex.unlock()
       }
     }
   }
