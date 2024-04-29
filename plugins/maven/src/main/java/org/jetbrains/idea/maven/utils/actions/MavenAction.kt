@@ -17,7 +17,7 @@ abstract class MavenAction : AnAction(), DumbAware {
     return MavenActionUtil.hasProject(e.dataContext)
   }
 
-  protected open fun isVisible(e: AnActionEvent): Boolean {
+  open fun isVisible(e: AnActionEvent): Boolean {
     return true
   }
 
