@@ -43,7 +43,6 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
-import com.intellij.xdebugger.impl.util.BringDebuggeeIntoForegroundImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
@@ -52,6 +51,7 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.util.BringDebuggeeInForegroundUtilsKt;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import kotlinx.coroutines.flow.FlowKt;
@@ -312,8 +312,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (myDebugProcess.checkCanInitBreakpoints()) {
       initBreakpoints();
     }
-    if (myDebugProcess instanceof XDebugProcessDebuggeeInForegroundSupport) {
-      BringDebuggeeIntoForegroundImpl.Companion.start(LOG, this, 1000);
+    if (myDebugProcess instanceof XDebugProcessDebuggeeInForeground xDebugProcessDebuggeeInForeground) {
+      BringDebuggeeInForegroundUtilsKt.start(xDebugProcessDebuggeeInForeground.getSupport(), this, 1000);
     }
 
 
