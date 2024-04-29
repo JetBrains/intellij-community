@@ -45,6 +45,8 @@
     <!-- preload only for performance reasons -->
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl" preload="notHeadless"/>
+    <!--suppress LightServiceMigrationXML - see DefaultProjectStoreTest (IDE needs to know correct Storage without service being loaded) -->
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.OptionsAndConfirmationsHolder"/>
     <projectService serviceInterface="com.intellij.vcs.console.VcsConsoleTabService"
                     serviceImplementation="com.intellij.vcs.console.VcsConsoleTabServiceImpl"
                     headlessImplementation="com.intellij.vcs.console.MockVcsConsoleTabService"/>

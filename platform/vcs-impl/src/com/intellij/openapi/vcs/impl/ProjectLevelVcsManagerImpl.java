@@ -7,10 +7,6 @@ import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -50,8 +46,6 @@ import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
 import com.intellij.vcsUtil.VcsImplUtil;
 import kotlin.Pair;
-import org.jdom.Attribute;
-import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -60,12 +54,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-@State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
+public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
-  @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
-
-  private final OptionsAndConfirmations myOptionsAndConfirmations;
 
   private final NewMappings myMappings;
   private final Project myProject;
@@ -78,7 +68,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
   private boolean myMappingsLoaded;
-  private boolean myHaveLegacyVcsConfiguration;
 
   private final @NotNull AtomicInteger myBackgroundOperationCounter = new AtomicInteger();
 
@@ -89,8 +78,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   public ProjectLevelVcsManagerImpl(@NotNull Project project) {
     myProject = project;
     myExcludedIndex = FileIndexFacade.getInstance(project);
-
-    myOptionsAndConfirmations = new OptionsAndConfirmations();
 
     myMappings = new NewMappings(myProject, this);
   }
@@ -307,23 +294,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
 
-  @Override
-  public @NotNull PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
-    return myOptionsAndConfirmations.getOption(option);
-  }
-
-  @Override
-  public @NotNull List<PersistentVcsShowSettingOption> getAllOptions() {
-    return myOptionsAndConfirmations.getAllOptions();
-  }
-
-  @Override
-  public @NotNull VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option, @NotNull AbstractVcs vcs) {
-    final PersistentVcsShowSettingOption options = getOptions(option);
-    options.addApplicableVcs(vcs);
-    return options;
-  }
-
   @RequiresEdt
   @Override
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
@@ -383,7 +353,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       return;
     }
 
-    myHaveLegacyVcsConfiguration = true;
+    OptionsAndConfirmationsHolder.getInstance(myProject).markHasVcsConfiguration();
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
@@ -408,7 +378,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void setDirectoryMappings(@NotNull List<VcsDirectoryMapping> items) {
-    myHaveLegacyVcsConfiguration = true;
+    OptionsAndConfirmationsHolder.getInstance(myProject).markHasVcsConfiguration();
     myMappings.setDirectoryMappings(items);
   }
 
@@ -433,33 +403,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }
 
-  /**
-   * @see #writeDirectoryMappings(Element)
-   */
   @Override
-  public @NotNull Element getState() {
-    Element element = new Element("state");
-    ProjectLevelVcsManagerSerialization.writeExternalUtil(element, myOptionsAndConfirmations);
-    if (myHaveLegacyVcsConfiguration && !myProject.isDefault()) {
-      element.setAttribute(SETTINGS_EDITED_MANUALLY, "true");
-    }
-    return element;
-  }
-
-  /**
-   * @see #readDirectoryMappings(Element)
-   */
-  @Override
-  public void loadState(@NotNull Element state) {
-    ProjectLevelVcsManagerSerialization.readExternalUtil(state, myOptionsAndConfirmations);
-    final Attribute attribute = state.getAttribute(SETTINGS_EDITED_MANUALLY);
-    if (attribute != null) {
-      try {
-        myHaveLegacyVcsConfiguration = attribute.getBooleanValue();
-      }
-      catch (DataConversionException ignored) {
-      }
-    }
+  public @NotNull VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option, @NotNull AbstractVcs vcs) {
+    final PersistentVcsShowSettingOption options = getOptions(option);
+    options.addApplicableVcs(vcs);
+    return options;
   }
 
   @Override
@@ -474,12 +422,26 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public @NotNull List<PersistentVcsShowConfirmationOption> getAllConfirmations() {
-    return myOptionsAndConfirmations.getAllConfirmations();
+    return getOptionsAndConfirmations().getAllConfirmations();
   }
 
   @Override
   public @NotNull PersistentVcsShowConfirmationOption getConfirmation(VcsConfiguration.StandardConfirmation option) {
-    return myOptionsAndConfirmations.getConfirmation(option);
+    return getOptionsAndConfirmations().getConfirmation(option);
+  }
+
+  @Override
+  public @NotNull PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
+    return getOptionsAndConfirmations().getOption(option);
+  }
+
+  @Override
+  public @NotNull List<PersistentVcsShowSettingOption> getAllOptions() {
+    return getOptionsAndConfirmations().getAllOptions();
+  }
+
+  private @NotNull OptionsAndConfirmations getOptionsAndConfirmations() {
+    return OptionsAndConfirmationsHolder.getInstance(myProject).getOptionsAndConfirmations();
   }
 
   @Override
@@ -626,7 +588,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
    * </ul>
    */
   public boolean needAutodetectMappings() {
-    return !myHaveLegacyVcsConfiguration && !myMappingsLoaded;
+    return !myMappingsLoaded &&
+           !OptionsAndConfirmationsHolder.getInstance(myProject).haveLegacyVcsConfiguration();
   }
 
   /**
