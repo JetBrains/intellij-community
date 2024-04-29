@@ -105,7 +105,7 @@
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
       <action id="CompileFile" class="com.intellij.compiler.actions.CompileFileAction" use-shortcut-of="Compile"/>
       <separator/>
-      <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction" icon="com.intellij.icons.ExpUiIcons.Build.Rebuild"/>
+      <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction" icon="com.intellij.icons.AllIcons.Actions.Rebuild"/>
       <separator/>
       <separator/>
       <action id="BuildArtifact" class="com.intellij.compiler.actions.BuildArtifactAction"/>
