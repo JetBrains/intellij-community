@@ -10,16 +10,12 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.text.SmartTextDiffProvider
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
-import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.pom.Navigatable
 
 internal class CombinedNextBlockAction(private val context: DiffContext) : NextChangeAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -179,25 +175,6 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
     }
 
     return actions.toTypedArray()
-  }
-}
-
-internal class CombinedOpenInEditorAction(private val path: FilePath) : OpenInEditorAction() {
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = DiffUtil.canNavigateToFile(e.project, path.virtualFile)
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val navigatable = findNavigatable(project) ?: return
-    openEditor(project, navigatable, null)
-  }
-
-  private fun findNavigatable(project: Project?): Navigatable? {
-    val file = path.virtualFile
-    if (!DiffUtil.canNavigateToFile(project, file)) return null
-
-    return PsiNavigationSupport.getInstance().createNavigatable(project!!, file!!, 0)
   }
 }
 
