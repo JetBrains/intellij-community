@@ -25,7 +25,6 @@ class SpockGradleTestNavigationTest : GradleExecutionTestCase() {
           ${libraries.joinToString(separator = "\n") { it.toString() }}
         """.trimIndent())
 
-      //fail<String>("Temporary fail")
       assertTestViewTree {
         assertNode("SpockTestCase") {
           assertPsiLocation("SpockTestCase")
