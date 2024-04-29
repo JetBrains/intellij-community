@@ -129,27 +129,12 @@ internal enum class PlaceholdersStatus {
  * For SLF4J, logger placeholders might be treated as regular symbols if they are located after '\' character.
  * For example, ```log.info("\{}", id)``` will print "{}" string.
  */
-internal enum class PlaceholderEscapeSymbolStrategy {
-  RAW_STRING {
-    override fun isPlaceholderAfterBackslash(text: String, index: Int): Boolean {
-      val backslashCount = countBackslashes(text, index)
-      return backslashCount == 2
-    }
-  },
-  KOTLIN_RAW_MULTILINE_STRING {
-    override fun isPlaceholderAfterBackslash(text: String, index: Int): Boolean {
-      val backslashCount = countBackslashes(text, index)
-      return backslashCount == 1
-    }
-  },
-  UAST_STRING {
-    override fun isPlaceholderAfterBackslash(text: String, index: Int): Boolean {
-      val backslashCount = countBackslashes(text, index)
-      return backslashCount == 1
-    }
-  };
+internal enum class PlaceholderEscapeSymbolStrategy(private val backslashCount: Int) {
+  RAW_STRING(2),
+  KOTLIN_RAW_MULTILINE_STRING(1),
+  UAST_STRING(1);
 
-  protected fun countBackslashes(text: String, index: Int): Int {
+  private fun countBackslashes(text: String, index: Int): Int {
     var count = 0
     for (i in index downTo 0) {
       if (count > 10) return count
@@ -159,7 +144,10 @@ internal enum class PlaceholderEscapeSymbolStrategy {
     return count
   }
 
-  abstract fun isPlaceholderAfterBackslash(text: String, index: Int): Boolean
+  fun isPlaceholderAfterBackslash(text: String, index: Int): Boolean {
+    val count = countBackslashes(text, index)
+    return count == backslashCount
+  }
 }
 
 internal class LoggerContext(val log4jAsImplementationForSlf4j: Boolean)
@@ -311,7 +299,7 @@ internal fun findAdditionalArguments(node: UCallExpression,
     if (currentCall is UCallExpression) {
       val methodName = currentCall.methodName ?: return null
       if (methodName == ADD_ARGUMENT_METHOD_NAME) {
-        val argument = currentCall.valueArguments.first() ?: return null
+        val argument = currentCall.valueArguments.first()
         uExpressions.add(argument)
         currentCall = currentCall.receiver
         continue
