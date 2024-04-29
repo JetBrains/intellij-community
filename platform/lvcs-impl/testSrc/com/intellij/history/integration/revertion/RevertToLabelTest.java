@@ -21,7 +21,7 @@ import com.intellij.history.LocalHistoryException;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class HistoryReverterToLabelTest extends IntegrationTestCase {
+public class RevertToLabelTest extends IntegrationTestCase {
 
   public void testFileCreation() throws Exception {
     createChildData(myRoot, "first.txt");
