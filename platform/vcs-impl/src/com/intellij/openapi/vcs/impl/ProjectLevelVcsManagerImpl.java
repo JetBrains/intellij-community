@@ -7,6 +7,9 @@ import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -54,7 +57,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements Disposable {
+@State(name = "VcsDirectoryMappings", storages = @Storage("vcs.xml"))
+public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
 
   private final NewMappings myMappings;
@@ -512,7 +516,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     fireDirectoryMappingsChanged();
   }
 
-  void readDirectoryMappings(@NotNull Element element) {
+  @Override
+  public void loadState(@NotNull Element element) {
     final List<VcsDirectoryMapping> mappingsList = new ArrayList<>();
     boolean haveNonEmptyMappings = false;
     for (Element child : element.getChildren(ELEMENT_MAPPING)) {
@@ -551,7 +556,9 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.setDirectoryMappings(mappingsList);
   }
 
-  void writeDirectoryMappings(@NotNull Element element) {
+  @Override
+  public @NotNull Element getState() {
+    Element element = new Element("state");
     if (myProject.isDefault()) {
       element.setAttribute(ATTRIBUTE_DEFAULT_PROJECT, Boolean.TRUE.toString());
     }
@@ -577,6 +584,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       }
       element.addContent(child);
     }
+    return element;
   }
 
   /**
@@ -822,7 +830,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   static final class ActivateVcsesStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      project.getService(VcsDirectoryMappingStorage.class); // read vcs.xml
       getInstanceImpl(project).myMappings.activateActiveVcses();
     }
 
