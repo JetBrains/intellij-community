@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,8 +14,8 @@ public class IdeaLogRecordFormatter extends Formatter {
   private static final String FORMAT_WITHOUT_DATE_TIME = "[%2$7s] %3$6s - %4$s - %5$s%6$s";
   private static final String LINE_SEPARATOR = System.lineSeparator();
 
-  private final long myLogCreation;
-  private final boolean myWithDateTime;
+  private final long logCreation;
+  private final boolean withDateTime;
 
   public IdeaLogRecordFormatter() {
     this(true);
@@ -26,12 +26,12 @@ public class IdeaLogRecordFormatter extends Formatter {
   }
 
   public IdeaLogRecordFormatter(boolean withDateTime, @Nullable IdeaLogRecordFormatter copyFrom) {
-    myWithDateTime = withDateTime;
-    myLogCreation = copyFrom != null ? copyFrom.getStartedMillis() : System.currentTimeMillis();
+    this.withDateTime = withDateTime;
+    logCreation = copyFrom != null ? copyFrom.getStartedMillis() : System.currentTimeMillis();
   }
 
   protected long getStartedMillis() {
-    return myLogCreation;
+    return logCreation;
   }
 
   @Override
@@ -43,7 +43,7 @@ public class IdeaLogRecordFormatter extends Formatter {
     long startedMillis = getStartedMillis();
     String relativeToStartedMillis = (startedMillis == 0) ? "-------" : String.valueOf(record.getMillis() - startedMillis);
     String result = String.format(
-      myWithDateTime ? FORMAT_WITH_DATE_TIME : FORMAT_WITHOUT_DATE_TIME,
+      withDateTime ? FORMAT_WITH_DATE_TIME : FORMAT_WITHOUT_DATE_TIME,
       record.getMillis(),
       relativeToStartedMillis,
       LogLevel.getPrettyLevelName(record.getLevel()),
