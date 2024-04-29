@@ -4,13 +4,11 @@ package org.jetbrains.plugins.gradle.util
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager
-import com.intellij.openapi.externalSystem.service.notification.NotificationCategory
-import com.intellij.openapi.externalSystem.service.notification.NotificationData
-import com.intellij.openapi.externalSystem.service.notification.NotificationSource
-import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
@@ -57,8 +55,8 @@ object GradleDependencySourceDownloader {
     }
     val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFile.toPath(), projectPath)
     val resultWrapper = CompletableFuture<File>()
-    val callback = object : TaskCallback {
-      override fun onSuccess() {
+    val listener = object : ExternalSystemTaskNotificationListener {
+      override fun onSuccess(id: ExternalSystemTaskId) {
         val sourceJar: File
         try {
           val downloadedArtifactPath = Path.of(FileUtil.loadFile(sourcesLocationFile))
@@ -79,17 +77,23 @@ object GradleDependencySourceDownloader {
         resultWrapper.complete(sourceJar)
       }
 
-      override fun onFailure() {
+      override fun onFailure(id: ExternalSystemTaskId, exception: Exception) {
         resultWrapper.completeExceptionally(IllegalStateException("Unable to download sources."))
-        val title = GradleBundle.message("gradle.notifications.sources.download.failed.title")
-        val message = GradleBundle.message("gradle.notifications.sources.download.failed.content", sourceArtifactNotation)
-        val notification = NotificationData(title, message, NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC)
-        notification.setBalloonNotification(true)
-        ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification)
+        GradleDependencySourceDownloaderErrorHandler.handle(project = project,
+                                                            externalProjectPath = externalProjectPath,
+                                                            artifact = sourceArtifactNotation,
+                                                            exception = exception
+        )
       }
     }
-    ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
-                               callback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData)
+    val spec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, settings)
+      .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+      .withListener(listener)
+      .withUserData(userData)
+      .withActivateToolWindowBeforeRun(false)
+      .withActivateToolWindowOnFailure(false)
+      .build()
+    ExternalSystemUtil.runTask(spec)
     return resultWrapper
   }
 
