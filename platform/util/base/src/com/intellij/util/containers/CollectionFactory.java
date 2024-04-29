@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 // ContainerUtil requires trove in classpath
 public final class CollectionFactory {
@@ -45,7 +44,7 @@ public final class CollectionFactory {
    * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding key
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap(@NotNull BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
     return new ConcurrentWeakValueHashMap<>(evictionListener);
   }
 
@@ -54,7 +53,7 @@ public final class CollectionFactory {
    * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding key
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap(@NotNull BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
     return new ConcurrentSoftValueHashMap<>(evictionListener);
   }
 
@@ -376,7 +375,7 @@ public final class CollectionFactory {
    * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding value
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull BiConsumer<? super ConcurrentMap<K,V>, ? super V> evictionListener) {
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
     return new ConcurrentSoftHashMap<>(evictionListener);
   }
 

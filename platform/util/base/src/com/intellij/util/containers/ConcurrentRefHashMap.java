@@ -23,9 +23,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   static final float LOAD_FACTOR = 0.75f;
   static final int DEFAULT_CAPACITY = 16;
   static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(Runtime.getRuntime().availableProcessors(), 4);
-  private final BiConsumer<? super ConcurrentMap<K, V>, ? super V> myEvictionListener;
+  private final BiConsumer<? super @NotNull ConcurrentMap<K, V>, ? super V> myEvictionListener;
 
-  ConcurrentRefHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super V> evictionListener) {
+  ConcurrentRefHashMap(@Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
     myHashingStrategy = this;
     myMap = new ConcurrentHashMap<>(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL);
     myEvictionListener = evictionListener;
