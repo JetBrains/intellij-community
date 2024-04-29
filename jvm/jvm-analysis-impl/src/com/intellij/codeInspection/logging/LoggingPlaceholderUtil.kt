@@ -299,7 +299,7 @@ internal fun findAdditionalArguments(node: UCallExpression,
     if (currentCall is UCallExpression) {
       val methodName = currentCall.methodName ?: return null
       if (methodName == ADD_ARGUMENT_METHOD_NAME) {
-        val argument = currentCall.valueArguments.first()
+        val argument = currentCall.valueArguments.firstOrNull() ?: return null
         uExpressions.add(argument)
         currentCall = currentCall.receiver
         continue
