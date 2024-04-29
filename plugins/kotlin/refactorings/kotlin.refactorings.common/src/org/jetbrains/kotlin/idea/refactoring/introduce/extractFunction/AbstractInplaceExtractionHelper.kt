@@ -79,16 +79,22 @@ interface AbstractInplaceExtractionHelper<KotlinType,
                 return
             }
             val callRange: TextRange = callTextRange.textRange
-            val callIdentifier = findSingleCallExpression(file, callRange)?.calleeExpression ?: throw IllegalStateException()
+            val callIdentifier = findCallExpressionInRange(file, callRange)?.calleeExpression ?: throw IllegalStateException()
             val methodIdentifier = extraction.declaration.nameIdentifier ?: throw IllegalStateException()
             val methodRange = extraction.declaration.textRange
             val methodOffset = extraction.declaration.navigationElement.textRange.endOffset
             val callOffset = callIdentifier.textRange.endOffset
             val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange, callOffset)
             Disposer.register(disposable, preview)
+            val shortcut = KeymapUtil.getPrimaryShortcut("ExtractFunction") ?: throw IllegalStateException("Action is not found")
             val templateField = TemplateField(callIdentifier.textRange, listOf(methodIdentifier.textRange))
                 .withCompletionNames(descriptor.suggestedNames)
-                .withCompletionHint(getDialogAdvertisement())
+                .withCompletionHint(
+                    RefactoringBundle.message(
+                        "inplace.refactoring.advertisement.text",
+                        KeymapUtil.getShortcutText(shortcut)
+                    )
+                )
                 .withValidation { variableRange ->
                     val error = getIdentifierError(file, variableRange)
                     if (error != null) {
@@ -116,12 +122,6 @@ interface AbstractInplaceExtractionHelper<KotlinType,
         }
     }
 
-    @Nls
-    private fun getDialogAdvertisement(): String {
-        val shortcut = KeymapUtil.getPrimaryShortcut("ExtractFunction") ?: throw IllegalStateException("Action is not found")
-        return RefactoringBundle.message("inplace.refactoring.advertisement.text", KeymapUtil.getShortcutText(shortcut))
-    }
-
     fun rangeOf(element: PsiElement): TextRange {
         return (element as? KtExpression)?.extractableSubstringInfo?.contentRange ?: element.textRange
     }
@@ -138,11 +138,11 @@ interface AbstractInplaceExtractionHelper<KotlinType,
     }
 
 
-    fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
+    fun findCallExpressionInRange(file: KtFile, range: TextRange?): KtCallExpression? {
         if (range == null) return null
         val container = PsiTreeUtil.findCommonParent(file.findElementAt(range.startOffset),
                                                      file.findElementAt(min(file.textLength - 1, range.endOffset)))
         val callExpressions = PsiTreeUtil.findChildrenOfType(container, KtCallExpression::class.java)
-        return callExpressions.singleOrNull { it.textRange in range }
+        return callExpressions.firstOrNull { it.textRange in range }
     }
 }
