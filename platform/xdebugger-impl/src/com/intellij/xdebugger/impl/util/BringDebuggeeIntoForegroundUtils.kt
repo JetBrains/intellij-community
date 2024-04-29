@@ -135,7 +135,7 @@ class BringDebuggeeIntoForegroundImpl(val support: BringProcessWindowToForegroun
       ProcessHandle.allProcesses()
         .filter {
           val command = it.info().command().getOrNull() ?: return@filter false
-          command.startsWith("C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal") && command.endsWith("WindowsTerminal.exe")
+          command.contains("Program Files\\WindowsApps\\Microsoft.WindowsTerminal") && command.endsWith("WindowsTerminal.exe")
         }
         .findFirst()
         .getOrNull()
