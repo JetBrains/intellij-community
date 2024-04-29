@@ -512,6 +512,35 @@ class JavaLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRefe
     ))
   }
 
+  fun `test should not resolve with consecutive escape characters in simple string log4j2`() {
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getLogger();
+        void m(int i) {
+          LOG.info("\s\\{<caret>}", 1);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(5, 7) to "1"))
+  }
+
+  fun `test should not resolve with consecutive escape characters in multiline string log4j2`() {
+    val multilineString = "\"\"\"\n" +
+                          "\\s\\\\{<caret>}" +
+                          "\"\"\""
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getLogger();
+        void m(int i) {
+          LOG.info($multilineString, 1);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(8, 10) to "1"))
+  }
+
   fun `test resolve with escape characters in simple string slf4j`() {
     myFixture.configureByText("Logging.java", """
       import org.slf4j.*;
@@ -556,5 +585,34 @@ class JavaLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRefe
       TextRange(31, 33) to "6",
       TextRange(36, 38) to "7",
     ))
+  }
+
+  fun `test should not resolve with consecutive escape characters in simple string slf4j`() {
+    myFixture.configureByText("Logging.java", """
+      import org.slf4j.*;
+      class Logging {
+        private static final Logger LOG = LoggerFactory.getLogger();
+        void m(int i) {
+          LOG.info("\s\\{<caret>}", 1);
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
+
+  fun `test should not resolve with consecutive escape characters in multiline string slf4j`() {
+    val multilineString = "\"\"\"\n" +
+                          "\\s\\\\{<caret>}" +
+                          "\"\"\""
+    myFixture.configureByText("Logging.java", """
+      import org.slf4j.*;
+      class Logging {
+        private static final Logger LOG = LoggerFactory.getLogger();
+        void m(int i) {
+          LOG.info($multilineString, 1);
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
   }
 }
