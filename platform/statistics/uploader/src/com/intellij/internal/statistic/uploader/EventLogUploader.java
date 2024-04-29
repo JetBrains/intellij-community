@@ -30,7 +30,7 @@ public final class EventLogUploader {
     }
     catch (Throwable e) {
       logger.warn("Failed uploading logs", e);
-      eventsLogger.logSendingLogsFinished("EXCEPTION_OCCURRED");
+      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.EXCEPTION_OCCURRED);
     }
   }
 
@@ -43,7 +43,7 @@ public final class EventLogUploader {
     eventsLogger.logSendingLogsStarted();
     if (args.length == 0) {
       logger.warn("No arguments were found");
-      eventsLogger.logSendingLogsFinished("NO_ARGUMENTS");
+      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.NO_ARGUMENTS);
       return;
     }
 
@@ -51,7 +51,7 @@ public final class EventLogUploader {
     EventLogApplicationInfo appInfo = newApplicationInfo(options, logger, eventsLogger);
     if (appInfo == null) {
       logger.warn("Failed creating application info from arguments");
-      eventsLogger.logSendingLogsFinished("NO_APPLICATION_CONFIG");
+      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.NO_APPLICATION_CONFIG);
       return;
     }
 
@@ -62,7 +62,7 @@ public final class EventLogUploader {
 
     if (!waitForIde(logger, options, 20)) {
       logger.warn("Cannot send logs because IDE didn't close during " + (20 * WAIT_FOR_IDE_MS) + "ms");
-      eventsLogger.logSendingLogsFinished("IDE_NOT_CLOSING");
+      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.IDE_NOT_CLOSING);
       return;
     }
 
@@ -121,7 +121,7 @@ public final class EventLogUploader {
     }
     catch (Exception e) {
       logger.warn("[" + recorderId + "] Failed sending files: " + e.getMessage());
-      eventsLogger.logSendingLogsFinished(recorderId, "ERROR_ON_SEND");
+      eventsLogger.logSendingLogsFinished(recorderId, StatisticsResult.ResultCode.ERROR_ON_SEND);
     }
   }
 
