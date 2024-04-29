@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.debugger.coroutines;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +32,7 @@ public final class CoroutinesDebugHelper {
   }
 
   public static long tryGetContinuationId(Object continuation) throws ReflectiveOperationException {
-    Object rootContinuation = getCoroutineOwner(continuation);
+    Object rootContinuation = getCoroutineOwner(continuation, true);
     if (rootContinuation.getClass().getSimpleName().contains(COROUTINE_OWNER_CLASS)) {
       Object debugCoroutineInfo = getField(rootContinuation, DEBUG_COROUTINE_INFO_FIELD);
       return (long) getField(debugCoroutineInfo, SEQUENCE_NUMBER_FIELD);
@@ -40,22 +42,35 @@ public final class CoroutinesDebugHelper {
 
   // This method tries to extract CoroutineOwner as a root coroutine frame,
   // it is invoked when kotlinx-coroutines debug agent is enabled.
-  private static Object getCoroutineOwner(Object stackFrame) throws ReflectiveOperationException {
-    if (stackFrame.getClass().getSimpleName().equals(COROUTINE_OWNER_CLASS)) return stackFrame;
-    Object parentFrame = invoke(stackFrame, GET_CALLER_FRAME_METHOD);
-    return (parentFrame != null) ? getCoroutineOwner(parentFrame) : stackFrame;
+  private static Object getCoroutineOwner(Object continuation, boolean checkForCoroutineOwner) throws ReflectiveOperationException {
+    Method getCallerFrame = Class.forName("kotlin.coroutines.jvm.internal.CoroutineStackFrame", false, continuation.getClass().getClassLoader())
+      .getDeclaredMethod(GET_CALLER_FRAME_METHOD);
+    getCallerFrame.setAccessible(true);
+    Object current = continuation;
+    while (true) {
+      if (checkForCoroutineOwner && current.getClass().getSimpleName().equals(COROUTINE_OWNER_CLASS)) return current;
+      Object parentFrame = getCallerFrame.invoke(current);
+      if ((parentFrame != null)) {
+        current = parentFrame;
+      } else {
+        return current;
+      }
+    }
   }
 
   public static Object getRootContinuation(Object continuation) throws ReflectiveOperationException {
-    Object parentFrame = invoke(continuation, GET_CALLER_FRAME_METHOD);
-    return (parentFrame != null) ? getRootContinuation(parentFrame) : continuation;
+    return getCoroutineOwner(continuation, false);
   }
 
   private static Object getField(Object object, String fieldName) throws ReflectiveOperationException {
-    return object.getClass().getField(fieldName).get(object);
+    Field field = object.getClass().getField(fieldName);
+    field.setAccessible(true);
+    return field.get(object);
   }
 
   private static Object invoke(Object object, String methodName) throws ReflectiveOperationException {
-    return object.getClass().getMethod(methodName).invoke(object);
+    Method method = object.getClass().getMethod(methodName);
+    method.setAccessible(true);
+    return method.invoke(object);
   }
 }
