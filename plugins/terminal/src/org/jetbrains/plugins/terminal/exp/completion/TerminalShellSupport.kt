@@ -40,7 +40,11 @@ interface TerminalShellSupport {
       ExtensionPointName.create("org.jetbrains.plugins.terminal.shellSupport")
 
     fun findByShellType(type: ShellType): TerminalShellSupport? {
-      return EP_NAME.extensionList.find { it.key.lowercase() == type.toString().lowercase() }?.instance
+      return findByShellName(type.toString())
+    }
+
+    fun findByShellName(shellName: String): TerminalShellSupport? {
+      return EP_NAME.extensionList.find { it.key.lowercase() == shellName.lowercase() }?.instance
     }
   }
 }

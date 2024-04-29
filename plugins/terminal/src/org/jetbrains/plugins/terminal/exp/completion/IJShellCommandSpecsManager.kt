@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp.completion
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Scheduler
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -40,6 +41,7 @@ import java.time.Duration
  * Let's call such specs **Light** specs.
  * To get the full version of the spec, [getFullCommandSpec] method should be used.
  */
+@Service
 internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
   /** Cache for all command specs with their providers. Key is the name of the command. */
   private val specsInfoCache: Cache<String, ShellCommandSpecInfo> = Caffeine.newBuilder()
@@ -188,7 +190,7 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
 
   companion object {
     @JvmStatic
-    fun getInstance(): ShellCommandSpecsManager = service()
+    fun getInstance(): IJShellCommandSpecsManager = service()
 
     private val LOG: Logger = logger<IJShellCommandSpecsManager>()
   }

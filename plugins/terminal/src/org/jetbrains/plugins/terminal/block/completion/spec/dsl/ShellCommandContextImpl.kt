@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
 import com.intellij.terminal.block.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.emptyListGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCommandSpecImpl
 
 internal class ShellCommandContextImpl(names: List<String>) : ShellSuggestionContextBase(names), ShellCommandContext {
@@ -49,9 +50,5 @@ internal class ShellCommandContextImpl(names: List<String>) : ShellSuggestionCon
       optionsGenerator = optionsGenerator ?: emptyListGenerator(),
       argumentsGenerator = argumentsGenerator ?: emptyListGenerator()
     )
-  }
-
-  private fun <T> emptyListGenerator(): ShellRuntimeDataGenerator<List<T>> {
-    return ShellRuntimeDataGenerator { emptyList() }
   }
 }

@@ -6,6 +6,8 @@ import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import com.intellij.terminal.block.completion.spec.ShellSuggestionType
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.terminal.completion.ShellArgument
 import java.util.function.Supplier
 
@@ -26,15 +28,31 @@ internal class ShellJsonBasedArgumentSpec(private val data: ShellArgument) : She
     get() = data.isCommand
 
   override val generators: List<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>> by lazy {
-    val generator = ShellRuntimeDataGenerator {
-      // TODO: also add suggestions from templates (files)
-      data.suggestions.flatMap { s ->
-        val description = s.description?.let { Supplier { it } }
-        s.names.map { name ->
-          ShellCompletionSuggestion(name, ShellSuggestionType.ARGUMENT, s.displayName, description, s.insertValue, s.priority)
-        }
+    buildList {
+      if (data.suggestions.isNotEmpty()) {
+        add(ShellRuntimeDataGenerator {
+          data.suggestions.flatMap { s ->
+            val description = s.description?.let { Supplier { it } }
+            s.names.map { name ->
+              ShellCompletionSuggestion(name, ShellSuggestionType.ARGUMENT, s.displayName, description, s.insertValue, s.priority)
+            }
+          }
+        })
+      }
+      if (data.isCommand) {
+        add(availableCommandsGenerator())
+      }
+      if (data.isFilePath() || data.isFolder()) {
+        add(fileSuggestionsGenerator(onlyDirectories = !data.isFilePath()))
       }
     }
-    listOf(generator)
+  }
+
+  fun ShellArgument.isFilePath(): Boolean = isWithTemplate("filepaths")
+
+  fun ShellArgument.isFolder(): Boolean = isWithTemplate("folders")
+
+  private fun ShellArgument.isWithTemplate(template: String): Boolean {
+    return templates.contains(template) || generators.any { it.templates.contains(template) }
   }
 }

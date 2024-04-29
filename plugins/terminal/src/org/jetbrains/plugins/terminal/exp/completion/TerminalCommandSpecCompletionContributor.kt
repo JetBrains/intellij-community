@@ -11,8 +11,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.block.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
@@ -61,20 +64,22 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   }
 
   private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<ShellCompletionSuggestion> {
-    // TODO: get aliases and expand them
-    //val aliases = context.runtimeDataProvider.getShellEnvironment()?.aliases ?: emptyMap()
-    //val expandedTokens = expandAliases(tokens, aliases, context)
-    //if (expandedTokens.isEmpty()) {
-    //  return emptyList()
-    //}
-    val expandedTokens = tokens
+    // aliases generator does not requires broad context
+    val dummyRuntimeContext = context.runtimeContextProvider.getContext("", "")
+    val aliases: Map<String, String> = context.generatorsExecutor.execute(dummyRuntimeContext, aliasesGenerator())
+    val expandedTokens = expandAliases(tokens, aliases, context)
+    if (expandedTokens.isEmpty()) {
+      return emptyList()
+    }
 
+    val runtimeContext = context.runtimeContextProvider.getContext(expandedTokens.joinToString(separator = " "), expandedTokens.last())
     val completion = ShellCommandSpecCompletion(IJShellCommandSpecsManager.getInstance(), context.generatorsExecutor, context.runtimeContextProvider)
     val command = expandedTokens.first()
     val arguments = expandedTokens.subList(1, expandedTokens.size)
     if (arguments.isEmpty()) {
-      // TODO: return command and file suggestions here
-      return emptyList()
+      val commands = context.generatorsExecutor.execute(runtimeContext, availableCommandsGenerator())
+      val files = context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator())
+      return commands + files
     }
     else {
       val commandVariants = if (command.endsWith(".exe")) listOf(command.removeSuffix(".exe"), command) else listOf(command)
@@ -84,8 +89,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
         // Suggest file names if there is nothing to suggest, and completion is invoked manually.
         // But not for PowerShell, here it would be better to fall back to shell-based completion
         !context.parameters.isAutoPopup && context.session.shellIntegration.shellType != ShellType.POWERSHELL -> {
-          // TODO: return file suggestions here
-          emptyList()
+          context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator())
         }
         else -> emptyList()
       }
