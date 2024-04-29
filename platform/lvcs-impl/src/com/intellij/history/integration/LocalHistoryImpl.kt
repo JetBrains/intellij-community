@@ -241,20 +241,21 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
 
     var targetChangeSet: ChangeSet? = null
     var targetChange: Change? = null
+    val targetPaths = mutableSetOf(path)
 
-    facade!!.collectChanges(project.locationHash, path, null) { changeSet ->
+    facade!!.collectChanges(path, ChangeAndPathProcessor(project.locationHash, null, targetPaths::add) { changeSet: ChangeSet ->
       val change = changeSet.changes.firstOrNull { it.id == label.labelChangeId }
       if (change != null) {
         targetChangeSet = changeSet
         targetChange = change
       }
-    }
+    })
 
     if (targetChangeSet == null || targetChange == null) {
       throw LocalHistoryException("Couldn't find label")
     }
 
-    val rootEntry = runReadAction { gateway!!.createTransientRootEntry() }
+    val rootEntry = runReadAction { gateway!!.createTransientRootEntryForPaths(targetPaths, true) }
     val leftEntry = facade!!.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet!!.id), path,
                                        /*do not revert the change itself*/false)
     val rightEntry = rootEntry.findEntry(path)
