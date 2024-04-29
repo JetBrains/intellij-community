@@ -105,7 +105,7 @@ data class CachedIconPresentation(
 @Internal
 class CachedTreePresentationNode(
   val data: CachedTreePresentationData,
-) : PresentableNodeDescriptor<CachedTreePresentationData>(null, null), PathElementIdProvider {
+) : PresentableNodeDescriptor<CachedTreePresentationData>(null, null), PathElementIdProvider, TreeNodeWithCacheableAttributes {
 
   val isLeaf: Boolean
     get() = data.presentation.isLeaf
@@ -123,6 +123,8 @@ class CachedTreePresentationNode(
   override fun getPathElementId(): String = data.pathElement.id ?: ""
 
   override fun getElement(): CachedTreePresentationData = data
+
+  override fun getCacheableAttributes(): Map<String, String>? = data.extraAttributes
 
   override fun update(presentation: PresentationData) {
     presentation.presentableText = data.presentation.text
