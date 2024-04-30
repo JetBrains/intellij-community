@@ -916,21 +916,16 @@
 
     <group id="ProjectView.ToolWindow.SecondaryActions">
       <group id="ProjectView.ToolWindow.Appearance.Actions" popup="true">
-        <action id="ProjectView.ShowModules"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowModules"
-                icon="AllIcons.Actions.GroupByModule"/>
-        <action id="ProjectView.ShowMembers"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowMembers"
-                icon="AllIcons.ObjectBrowser.ShowMembers"/>
-        <action id="ProjectView.ShowExcludedFiles"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowExcludedFiles"/>
-        <action id="ProjectView.ShowVisibilityIcons"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowVisibilityIcons"/>
-        <action id="ProjectView.ShowLibraryContents"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowLibraryContents"
-                icon="AllIcons.ObjectBrowser.ShowLibraryContents"/>
-        <action id="ProjectView.ShowScratchesAndConsoles"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowScratchesAndConsoles"/>
+        <action id="ProjectView.OpenInPreviewTab"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenInPreviewTab"/>
+        <action id="ProjectView.AutoscrollToSource"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollToSource"
+                icon="AllIcons.General.AutoscrollToSource"/>
+        <action id="ProjectView.OpenDirectoriesWithSingleClick"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenDirectoriesWithSingleClick"/>
+        <action id="ProjectView.AutoscrollFromSource"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollFromSource"
+                icon="AllIcons.General.AutoscrollFromSource"/>
         <separator/>
         <action id="ProjectView.FlattenModules"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
@@ -946,37 +941,66 @@
         <action id="ProjectView.CompactDirectories"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
         <separator/>
+        <action id="ProjectView.FileNesting"
+                class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
+      </group>
+      <group id="ProjectView.ToolWindow.Show.Actions" popup="true">
+        <action id="ProjectView.ShowModules"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowModules"
+                icon="AllIcons.Actions.GroupByModule">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowMembers"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowMembers"
+                icon="AllIcons.ObjectBrowser.ShowMembers">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowExcludedFiles"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowExcludedFiles">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowVisibilityIcons"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowVisibilityIcons">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowLibraryContents"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowLibraryContents"
+                icon="AllIcons.ObjectBrowser.ShowLibraryContents">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="ProjectView.ShowScratchesAndConsoles"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowScratchesAndConsoles">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+      </group>
+      <group id="ProjectView.ToolWindow.Sort.Actions" popup="true">
         <action id="ProjectView.ManualOrder"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ManualOrder"
                 icon="AllIcons.ObjectBrowser.Sorted"/>
         <action id="ProjectView.SortByName"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByName"/>
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByName">
+          <override-text place="ToolwindowPopup"/>
+        </action>
         <action id="ProjectView.SortByType"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByType"
-                icon="AllIcons.ObjectBrowser.SortByType"/>
+                icon="AllIcons.ObjectBrowser.SortByType">
+          <override-text place="ToolwindowPopup"/>
+        </action>
         <action id="ProjectView.SortByTimeDescending"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeDescending"/>
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeDescending">
+          <override-text place="ToolwindowPopup"/>
+        </action>
         <action id="ProjectView.SortByTimeAscending"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeAscending"/>
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByTimeAscending">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <separator/>
         <action id="ProjectView.FoldersAlwaysOnTop"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FoldersAlwaysOnTop"/>
       </group>
-      <action id="ProjectView.OpenInPreviewTab"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenInPreviewTab"/>
-      <action id="ProjectView.AutoscrollToSource"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollToSource"
-              icon="AllIcons.General.AutoscrollToSource"/>
-      <action id="ProjectView.OpenDirectoriesWithSingleClick"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenDirectoriesWithSingleClick"/>
-      <action id="ProjectView.AutoscrollFromSource"
-              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollFromSource"
-              icon="AllIcons.General.AutoscrollFromSource"/>
-      <separator/>
       <action id="ScopeView.EditScopes"
               class="com.intellij.ide.scopeView.EditScopesAction"
               icon="AllIcons.Ide.LocalScope"/>
-      <action id="ProjectView.FileNesting"
-              class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
