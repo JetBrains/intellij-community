@@ -98,3 +98,17 @@ class InlineCompletionTextElementManipulator : InlineCompletionElementManipulato
     return InlineCompletionTextElement(element.text.substring(startOffset, endOffset), element.getAttributes)
   }
 }
+
+class InlineCompletionSkipTextElementManipulator : InlineCompletionElementManipulator {
+  override fun isApplicable(element: InlineCompletionElement): Boolean {
+    return element is InlineCompletionSkipTextElement
+  }
+
+  override fun substring(element: InlineCompletionElement, startOffset: Int, endOffset: Int): InlineCompletionElement? {
+    element as InlineCompletionSkipTextElement
+    if (startOffset >= endOffset) {
+      return null
+    }
+    return InlineCompletionSkipTextElement(element.text.substring(startOffset, endOffset))
+  }
+}
