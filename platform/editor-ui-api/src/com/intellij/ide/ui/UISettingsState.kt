@@ -110,6 +110,7 @@ class UISettingsState : BaseState() {
   var hideKnownExtensionInTabs: Boolean by property(false)
   var showTreeIndentGuides: Boolean by property(false)
   var compactTreeIndents: Boolean by property(false)
+  var expandNodesWithSingleClick: Boolean by property(false)
   @get:ReportValue
   @get:OptionTag("UI_DENSITY")
   var uiDensity: UIDensity by enum(UIDensity.DEFAULT)

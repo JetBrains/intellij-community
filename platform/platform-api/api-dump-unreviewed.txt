@@ -11871,6 +11871,7 @@ c:com.intellij.ui.treeStructure.Tree
 - setHorizontalAutoScrollingEnabled(Z):V
 - f:setLineStyleAngled():V
 - setPaintBusy(Z):V
+- setToggleClickCount(I):V
 - setTransferHandler(javax.swing.TransferHandler):V
 - setUI(javax.swing.plaf.TreeUI):V
 - p:shouldShowBusyIconIfNeeded():Z

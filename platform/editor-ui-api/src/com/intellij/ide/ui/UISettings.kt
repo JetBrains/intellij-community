@@ -233,6 +233,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.compactTreeIndents = value
     }
 
+  var expandNodesWithSingleClick: Boolean
+    get() = state.expandNodesWithSingleClick
+    set(value) {
+      state.expandNodesWithSingleClick = value
+    }
+
   var compactMode: Boolean
     get() = uiDensity == UIDensity.COMPACT
     set(value) {

@@ -435,6 +435,7 @@ f:com.intellij.ide.ui.UISettings
 - sf:getEditorFractionalMetricsHint():java.lang.Object
 - f:getEditorTabLimit():I
 - f:getEditorTabPlacement():I
+- f:getExpandNodesWithSingleClick():Z
 - f:getFontFace():java.lang.String
 - f:getFontScale():F
 - f:getFontSize():I
@@ -523,6 +524,7 @@ f:com.intellij.ide.ui.UISettings
 - f:setEditorAAType(com.intellij.ide.ui.AntialiasingType):V
 - f:setEditorTabLimit(I):V
 - f:setEditorTabPlacement(I):V
+- f:setExpandNodesWithSingleClick(Z):V
 - f:setFontFace(java.lang.String):V
 - f:setFontScale(F):V
 - f:setFontSize(I):V
@@ -631,6 +633,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:getEditorTabLimit():I
 - f:getEditorTabPlacement():I
 - f:getEnableAlphaMode():Z
+- f:getExpandNodesWithSingleClick():Z
 - f:getFontFace():java.lang.String
 - f:getFontScale():F
 - f:getFontSize():I
@@ -715,6 +718,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:setEditorTabLimit(I):V
 - f:setEditorTabPlacement(I):V
 - f:setEnableAlphaMode(Z):V
+- f:setExpandNodesWithSingleClick(Z):V
 - f:setFontFace(java.lang.String):V
 - f:setFontScale(F):V
 - f:setFontSize(I):V

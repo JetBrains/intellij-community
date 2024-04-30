@@ -118,6 +118,9 @@ private val cdUseCompactTreeIndents
   get() = CheckboxDescriptor(message("checkbox.compact.tree.indents"), settings::compactTreeIndents, groupName = uiOptionGroupName)
 private val cdShowTreeIndents
   get() = CheckboxDescriptor(message("checkbox.show.tree.indent.guides"), settings::showTreeIndentGuides, groupName = uiOptionGroupName)
+private val cdExpandNodesWithSingleClick
+  get() = CheckboxDescriptor(message("checkbox.expand.node.with.single.click"), settings::expandNodesWithSingleClick,
+                             comment = message("checkbox.expand.node.with.single.click.comment"), groupName = uiOptionGroupName)
 private val cdDnDWithAlt
   get() = CheckboxDescriptor(message("dnd.with.alt.pressed.only"), settings::dndWithPressedAltOnly, groupName = uiOptionGroupName)
 private val cdSeparateMainMenu
@@ -378,6 +381,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         twoColumnsRow(
           { checkBox(cdShowTreeIndents) },
           { checkBox(cdUseCompactTreeIndents) },
+        )
+        twoColumnsRow(
+          { checkBox(cdExpandNodesWithSingleClick) },
         )
       }
 
