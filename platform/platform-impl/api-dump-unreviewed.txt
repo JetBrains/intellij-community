@@ -11008,6 +11008,7 @@ f:com.intellij.internal.PrintModulesAndEntitySources
 f:com.intellij.internal.PrintModulesAndEntitySources$Companion
 - f:getLog():com.intellij.openapi.diagnostic.Logger
 f:com.intellij.internal.SkipWindowDeactivationEventsActionKt
+f:com.intellij.internal.ToggleIncompleteDependenciesModeActionKt
 f:com.intellij.internal.ToolbarDemoAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V

@@ -1236,6 +1236,9 @@
         <synonym text="Exit Dumb Mode"/>
         <synonym text="Enter Dumb Mode"/>
       </action>
+      <action id="ToggleIncompleteMode" internal="true" class="com.intellij.internal.ToggleIncompleteDependenciesModeAction">
+        <synonym text="Exit Incomplete Dependencies Mode"/>
+      </action>
       <action id="DumbModeTremble" class="com.intellij.internal.DumbModeTrembleAction">
         <synonym text="Exit Tremble Dumb Mode"/>
         <synonym text="Enter Tremble Dumb Mode"/>
