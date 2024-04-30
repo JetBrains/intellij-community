@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logs
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.serialization.Serializable
@@ -21,12 +20,9 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
   companion object {
     private val LOG = logger<LogLevelConfigurationManager>()
 
-    private const val LOG_DEBUG_CATEGORIES = "log.debug.categories"
-    private const val LOG_TRACE_CATEGORIES = "log.trace.categories"
-    private const val LOG_ALL_CATEGORIES = "log.all.categories"
-    private const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_DEBUG_CATEGORIES"
-    private const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_TRACE_CATEGORIES"
-    private const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_ALL_CATEGORIES"
+    private const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.log.debug.categories"
+    private const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.log.trace.categories"
+    private const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.log.all.categories"
 
     @JvmStatic
     fun getInstance(): LogLevelConfigurationManager = service()
@@ -111,8 +107,6 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
 
   private fun applyCategoriesFromProperties() {
     val categories = mutableListOf<LogCategory>()
-    categories.addAll(getSavedCategories())
-
     // add categories from system properties (e.g., for tests on CI server)
     categories.addAll(fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG))
     categories.addAll(fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE))
@@ -122,13 +116,6 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
 
   override fun noStateLoaded() {
     applyCategoriesFromProperties()
-  }
-
-  private fun getSavedCategories(): List<LogCategory> {
-    val properties = PropertiesComponent.getInstance()
-    return fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG) +
-           fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE) +
-           fromString(properties.getValue(LOG_ALL_CATEGORIES), DebugLogLevel.ALL)
   }
 
   private fun fromString(text: String?, level: DebugLogLevel): List<LogCategory> {
