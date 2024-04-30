@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.icons.ExpUiIcons
@@ -259,7 +259,7 @@ private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWin
 }
 
 @Service
-@State(name = "SingleStripeButtonsState", storages = [Storage("window.state.xml")])
+@State(name = "SingleStripeButtonsState", storages = [Storage("window.state.xml", roamingType = RoamingType.DISABLED)])
 private class ButtonsStateService: PersistentStateComponent<Element> {
   private val pinnedIds = linkedSetOf("Database", "Project", "Services")
 
