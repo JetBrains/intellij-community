@@ -31,6 +31,11 @@ public class TrackCoverageAction extends ToggleModelAction {
   private TestFrameworkRunningModel myModel;
   private TreeSelectionListener myTreeSelectionListener;
   private Alarm myUpdateCoverageAlarm;
+  /**
+   * State memorization via {@link TestConsoleProperties} is replaced with per-session property,
+   * as this option affects coverage visible data a lot, while it is hard to notice when enabled accidentally.
+   */
+  private boolean myIsActive;
 
   public TrackCoverageAction(TestConsoleProperties properties) {
     super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.description"),
@@ -41,18 +46,18 @@ public class TrackCoverageAction extends ToggleModelAction {
 
   @Override
   public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
-    super.setSelected(e, state);
-    if (!TestConsoleProperties.TRACK_CODE_COVERAGE.value(myProperties)) {
-      restoreMergedCoverage();
+    myIsActive = state;
+    if (state) {
+      selectSubCoverageAsync();
     }
     else {
-      selectSubCoverageAsync();
+      restoreMergedCoverage();
     }
   }
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    return super.isSelected(e) && CoverageDataManager.getInstance(myProperties.getProject()).isSubCoverageActive();
+    return myIsActive;
   }
 
   private void restoreMergedCoverage() {
@@ -149,7 +154,7 @@ public class TrackCoverageAction extends ToggleModelAction {
 
     @Override
     public void valueChanged(final TreeSelectionEvent e) {
-      if (!TestConsoleProperties.TRACK_CODE_COVERAGE.value(myModel.getProperties()) || !isEnabled()) return;
+      if (!myIsActive || !isEnabled()) return;
       selectSubCoverageAsync();
     }
   }
