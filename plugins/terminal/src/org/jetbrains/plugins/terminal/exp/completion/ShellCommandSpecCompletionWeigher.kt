@@ -4,26 +4,23 @@ package org.jetbrains.plugins.terminal.exp.completion
 import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.terminal.block.completion.ShellArgumentSuggestion
-import org.jetbrains.terminal.completion.BaseSuggestion
-import org.jetbrains.terminal.completion.ShellCommand
-import org.jetbrains.terminal.completion.ShellOption
-import org.jetbrains.terminal.completion.ShellSuggestion
+import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.block.completion.spec.ShellSuggestionType
 
 internal class ShellCommandSpecCompletionWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing>? {
-    val suggestion = element.`object` as? BaseSuggestion ?: return null
-    return when (suggestion) {
-      is ShellCommand -> 7
-      is ShellArgumentSuggestion -> {
-        val arg = suggestion.argument
-        if (arg.isFilePath() || arg.isFolder()) {
-          if (element.lookupString.startsWith(".")) 5 else 6  // prioritize file names of not hidden files
-        }
-        else 4
+    val suggestion = element.`object` as? ShellCompletionSuggestion ?: return null
+    return when (suggestion.type) {
+      ShellSuggestionType.COMMAND -> 6
+      ShellSuggestionType.FOLDER, ShellSuggestionType.FILE -> {
+        // prioritize file names of not hidden files
+        if (element.lookupString.startsWith(".")) 4 else 5
       }
-      is ShellSuggestion -> 3
-      is ShellOption -> if (element.lookupString.length <= 2) 2 else 1  // prioritize short options
+      ShellSuggestionType.ARGUMENT -> 3
+      ShellSuggestionType.OPTION -> {
+        // prioritize short options
+        if (element.lookupString.length <= 2) 2 else 1
+      }
       else -> 0
     }
   }
