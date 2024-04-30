@@ -17,7 +17,7 @@
   <!--</content>-->
 
   <extensions defaultExtensionNs="com.intellij">
-    <!--extensions present on the frontend and backend side in remev-->
+    <!--Shared extensions: frontend and backend-->
     <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.settingsSync.YAMLLanguageCodeStyleSettingsProvider"/>
 
     <colorSettingsPage implementation="org.jetbrains.yaml.YAMLColorsPage"/>
@@ -45,6 +45,8 @@
     <statementUpDownMover implementation="org.jetbrains.yaml.smart.YAMLStatementMover" id="yamlStatementMover" order="before line"/>
     <lang.foldingBuilder language="yaml" id="YAMLFoldingBuilder" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
 
+    <!--Remdev backend only-->
+    <virtualFileCustomDataProvider implementation="org.jetbrains.yaml.frontback.YamlCodeStyleSettingsCustomDataSynchronizer"/>
     <!-- YAML -->
     <additionalTextAttributes scheme="Default" file="colorSchemes/YAMLDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/YAMLDarcula.xml"/>

@@ -1,6 +1,1 @@
-<idea-plugin package="org.jetbrains.yaml.frontback">
-  <extensions defaultExtensionNs="com.intellij">
-    <virtualFileCustomDataProvider implementation="org.jetbrains.yaml.frontback.YamlCodeStyleSettingsCustomDataSynchronizer"/>
-    <virtualFileCustomDataConsumer implementation="org.jetbrains.yaml.frontback.YamlCodeStyleSettingsCustomDataSynchronizer"/>
-  </extensions>
-</idea-plugin>
+<idea-plugin package="org.jetbrains.yaml.frontback"/>
