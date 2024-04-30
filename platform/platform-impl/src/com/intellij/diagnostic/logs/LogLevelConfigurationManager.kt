@@ -101,21 +101,22 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
 
   override fun loadState(state: State) {
     super.loadState(state)
-    applyCategories(state.categories.toList())
-    applyCategoriesFromProperties()
+    val categories = state.categories + collectCategoriesFromSystemProperties()
+    applyCategories(categories)
   }
 
-  private fun applyCategoriesFromProperties() {
+  override fun noStateLoaded() {
+    val categories = collectCategoriesFromSystemProperties()
+    applyCategories(categories)
+  }
+
+  private fun collectCategoriesFromSystemProperties(): List<LogCategory> {
     val categories = mutableListOf<LogCategory>()
     // add categories from system properties (e.g., for tests on CI server)
     categories.addAll(fromString(System.getProperty(LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.DEBUG))
     categories.addAll(fromString(System.getProperty(LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.TRACE))
     categories.addAll(fromString(System.getProperty(LOG_ALL_CATEGORIES_SYSTEM_PROPERTY), DebugLogLevel.ALL))
-    applyCategories(categories)
-  }
-
-  override fun noStateLoaded() {
-    applyCategoriesFromProperties()
+    return categories
   }
 
   private fun fromString(text: String?, level: DebugLogLevel): List<LogCategory> {
