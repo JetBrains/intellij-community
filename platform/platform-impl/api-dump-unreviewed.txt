@@ -13004,6 +13004,7 @@ f:com.intellij.openapi.editor.actions.DuplicateLinesAction
 - <init>():V
 f:com.intellij.openapi.editor.actions.EditorActionUtil
 - sf:DELETE_COMMAND_GROUP:java.lang.Object
+- sf:EDIT_COMMAND_GROUP:java.lang.Object
 - s:findFirstNonSpaceColumnOnTheLine(com.intellij.openapi.editor.Editor,I):I
 - s:findFirstNonSpaceOffsetInRange(java.lang.CharSequence,I,I):I
 - s:findFirstNonSpaceOffsetOnTheLine(com.intellij.openapi.editor.Document,I):I
