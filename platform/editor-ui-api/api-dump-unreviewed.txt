@@ -481,7 +481,6 @@ f:com.intellij.ide.ui.UISettings
 - f:getShowIconInQuickNavigation():Z
 - f:getShowIconsInMenus():Z
 - f:getShowInplaceComments():Z
-- f:getShowInplaceCommentsInternal():Z
 - f:getShowMainMenu():Z
 - f:getShowMainToolbar():Z
 - f:getShowMembersInNavigationBar():Z

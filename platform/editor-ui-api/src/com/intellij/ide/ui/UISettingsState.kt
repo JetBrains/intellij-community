@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.SwingConstants
 
 class UISettingsState : BaseState() {
@@ -213,6 +214,10 @@ class UISettingsState : BaseState() {
   var pinFindInPath: Boolean by property(false)
   @get:OptionTag("SHOW_INPLACE_COMMENTS")
   var showInplaceComments: Boolean by property(false)
+  @get:Internal
+  @set:Internal
+  @get:OptionTag("SHOW_INPLACE_COMMENTS_INTERNAL")
+  var showInplaceCommentsInternal: Boolean by property(true)
 
   @get:OptionTag("SHOW_VISUAL_FORMATTING_LAYER")
   var showVisualFormattingLayer: Boolean by property(false)

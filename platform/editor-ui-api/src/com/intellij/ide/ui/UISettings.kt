@@ -21,6 +21,7 @@ import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -502,8 +503,13 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showInplaceComments = value
     }
 
-  val showInplaceCommentsInternal: Boolean
-    get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
+  @get:Internal
+  @set:Internal
+  var showInplaceCommentsInternal: Boolean
+    get() = state.showInplaceCommentsInternal && ApplicationManager.getApplication()?.isInternal ?: false
+    set(value) {
+      state.showInplaceCommentsInternal = value
+    }
 
   var fullPathsInWindowHeader: Boolean
     get() = state.fullPathsInWindowHeader
