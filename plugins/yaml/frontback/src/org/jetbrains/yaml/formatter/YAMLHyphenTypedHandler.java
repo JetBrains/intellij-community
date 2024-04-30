@@ -20,9 +20,12 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLSequence;
 
+import static org.jetbrains.yaml.settingsSync.YamlBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
+
 public class YAMLHyphenTypedHandler extends TypedHandlerDelegate {
   @Override
   public @NotNull Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    if (shouldDoNothingInBackendMode()) return Result.CONTINUE;
     autoIndentHyphen(c, project, editor, file);
     return Result.CONTINUE;
   }

@@ -1,8 +1,6 @@
-package org.jetbrains.yaml.lexer;
+package org.jetbrains.yaml.frontback.lexer;
 
-import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.yaml.YAMLTokenTypes;
 
 /* Auto generated File */
 %%

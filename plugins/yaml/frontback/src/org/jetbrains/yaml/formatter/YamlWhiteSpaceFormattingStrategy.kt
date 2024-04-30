@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.AbstractWhiteSpaceFormattingStrategy
 import com.intellij.util.SmartList
 import org.jetbrains.yaml.YAMLTokenTypes
+import org.jetbrains.yaml.settingsSync.shouldDoNothingInBackendMode
 
 private class YamlWhiteSpaceFormattingStrategy : AbstractWhiteSpaceFormattingStrategy() {
   override fun check(text: CharSequence, start: Int, end: Int): Int = start
@@ -16,6 +17,8 @@ private class YamlWhiteSpaceFormattingStrategy : AbstractWhiteSpaceFormattingStr
                                            endOffset: Int,
                                            codeStyleSettings: CodeStyleSettings?,
                                            nodeAfter: ASTNode?): CharSequence {
+    if (shouldDoNothingInBackendMode()) return whiteSpaceText
+
     if (YAMLTokenTypes.SEQUENCE_MARKER == nodeAfter?.elementType) return whiteSpaceText
     val lineBreaksPositions = whiteSpaceText.indices.filterTo(SmartList()) { whiteSpaceText[it] == '\n' }
       .also { it.add(whiteSpaceText.length) }

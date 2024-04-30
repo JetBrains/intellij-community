@@ -5,6 +5,7 @@ import com.intellij.codeInsight.editorActions.QuoteHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import org.jetbrains.yaml.YAMLElementTypes
+import org.jetbrains.yaml.settingsSync.shouldDoNothingInBackendMode
 
 private class YamlQuoteHandler : QuoteHandler {
 
@@ -17,12 +18,14 @@ private class YamlQuoteHandler : QuoteHandler {
     }
   }
 
-  override fun isClosingQuote(iterator: HighlighterIterator, offset: Int): Boolean = isOneQuote(iterator) && iterator.end == offset
+  override fun isClosingQuote(iterator: HighlighterIterator, offset: Int): Boolean =
+    !shouldDoNothingInBackendMode() && isOneQuote(iterator) && iterator.end == offset
 
   override fun isOpeningQuote(iterator: HighlighterIterator, offset: Int): Boolean =
-    isOneQuote(iterator) && with(iterator) { start == offset || end - start == 1 }
+    !shouldDoNothingInBackendMode() && isOneQuote(iterator) && with(iterator) { start == offset || end - start == 1 }
 
-  override fun hasNonClosedLiteral(editor: Editor, iterator: HighlighterIterator, offset: Int): Boolean = isOneQuote(iterator)
+  override fun hasNonClosedLiteral(editor: Editor, iterator: HighlighterIterator, offset: Int): Boolean =
+    !shouldDoNothingInBackendMode() && isOneQuote (iterator)
 
   override fun isInsideLiteral(iterator: HighlighterIterator): Boolean = false
 }

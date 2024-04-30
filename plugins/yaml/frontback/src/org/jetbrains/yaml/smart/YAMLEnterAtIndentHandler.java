@@ -28,6 +28,9 @@ import org.jetbrains.yaml.psi.YAMLSequenceItem;
 
 import java.util.Objects;
 
+import static org.jetbrains.yaml.settingsSync.YamlBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
+import static org.jetbrains.yaml.smart.YamlIndentPreservationUtilsKt.preserveIndentStateBeforeProcessing;
+
 public class YAMLEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
@@ -36,10 +39,11 @@ public class YAMLEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
                                 @NotNull Ref<Integer> caretAdvance,
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
-    // this call is not related to YAMLEnterAtIndentHandler, but is needed for `YAMLInjectedElementEnterHandler`
+    if (shouldDoNothingInBackendMode()) return Result.Continue;
+      // this call is not related to YAMLEnterAtIndentHandler, but is needed for `YAMLInjectedElementEnterHandler`
     // this call is placed here to avoid creating another `EnterHandlerDelegate` with `order="first"`
-    YAMLInjectedElementEnterHandlerKt.preserveIndentStateBeforeProcessing(file, dataContext);
-    
+    preserveIndentStateBeforeProcessing(file, dataContext);
+
     if (!(file instanceof YAMLFile)) {
       return Result.Continue;
     }

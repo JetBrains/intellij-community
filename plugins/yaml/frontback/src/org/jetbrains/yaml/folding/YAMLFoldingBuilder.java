@@ -24,6 +24,8 @@ import org.jetbrains.yaml.psi.impl.YAMLHashImpl;
 
 import java.util.List;
 
+import static org.jetbrains.yaml.settingsSync.YamlBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
+
 public class YAMLFoldingBuilder extends CustomFoldingBuilder {
 
   private static final int PLACEHOLDER_LEN = 20;
@@ -33,6 +35,8 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
                                           @NotNull PsiElement root,
                                           @NotNull Document document,
                                           boolean quick) {
+    if (shouldDoNothingInBackendMode()) return;
+
     collectDescriptors(root, descriptors);
   }
 

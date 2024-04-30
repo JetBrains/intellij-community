@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
@@ -215,7 +214,7 @@ class GenerationCodeStylePanel extends CodeStyleAbstractPanel {
     super(settings);
     myCommenterForm = new CommenterForm(language);
     myCommenterForm.getCommenterPanel().setBorder(
-      IdeBorderFactory.createTitledBorder(XmlBundle.message("comments"), true, new JBInsets(10, 10, 10, 10)));
+      IdeBorderFactory.createTitledBorder(YAMLBundle.message("settings.comment.label"), true, new JBInsets(10, 10, 10, 10)));
   }
 
   @Override

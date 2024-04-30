@@ -110,7 +110,7 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
         continue;
       }
 
-      if (currentLength > MAX_SCALAR_LENGTH_PREDEFINED &&
+      if (currentLength > YAMLScalarImpl.MAX_SCALAR_LENGTH_PREDEFINED &&
           input.charAt(i) == ' ' && i + 1 < input.length() && YAMLGrammarCharUtil.isNonSpaceChar(input.charAt(i + 1))) {
         result.add(Pair.create(TextRange.from(i, 1), "\n" + indentString));
         currentLength = 0;

@@ -5,6 +5,7 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -18,7 +19,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
-import kotlin.text.StringsKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -298,7 +298,7 @@ class YAMLFormattingContext {
     int lineNumber = document.getLineNumber(nodeTextRange.getStartOffset());
     int lineStartOffset = document.getLineStartOffset(lineNumber);
 
-    if (!StringsKt.isBlank(document.getCharsSequence().subSequence(lineStartOffset, nodeTextRange.getStartOffset()))) return null;
+    if (!StringUtilRt.isEmptyOrSpaces(document.getCharsSequence().subSequence(lineStartOffset, nodeTextRange.getStartOffset()))) return null;
 
     return new IndentImpl(Indent.Type.SPACES, true, nodeTextRange.getStartOffset() - lineStartOffset, false, false);
   }
