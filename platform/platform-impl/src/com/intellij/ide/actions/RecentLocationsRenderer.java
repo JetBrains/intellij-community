@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -202,7 +201,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
       myTitle.setFont(FontUtil.minusOne(StartupUiUtil.getLabelFont()));
     }
     long timeStamp = place.getTimeStamp();
-    if (UISettings.getInstance().getShowInplaceComments() && Registry.is("show.last.visited.timestamps") && timeStamp != -1) {
+    if (Registry.is("show.last.visited.timestamps") && timeStamp != -1) {
       myTitle.append(" " + DateFormatUtil.formatPrettyDateTime(timeStamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
     }
   }
