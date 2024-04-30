@@ -344,8 +344,8 @@ public class DynamicBundle extends AbstractBundle {
       return;
     }
     // TODO: this is a temporary solutions, should be done better in IJPL-148813
-    String i18Locale = System.getProperty("intellij.searchableOptions.i18n.locale");
-    if (!i18Locale.equals(Locale.ENGLISH.toLanguageTag())) {
+    String i18Locale = System.getProperty("intellij.searchableOptions.i18n.locale", Locale.ENGLISH.toLanguageTag());
+    if (!Locale.ENGLISH.toLanguageTag().equals(i18Locale)) {
       ourLangTag = i18Locale;
       ourCache.clear();
     }
