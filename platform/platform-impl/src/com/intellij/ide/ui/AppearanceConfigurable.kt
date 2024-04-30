@@ -383,8 +383,20 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("group.ui.options")) {
         val leftColumnControls = sequence<Row.() -> Unit> {
-          yield { checkBox(cdEnableMenuMnemonics) }
-          yield { checkBox(cdEnableControlsMnemonics) }
+          yield { checkBox(cdFullPathsInTitleBar) }
+          yield { checkBox(cdDnDWithAlt) }
+          yield {
+            checkBox(cdSmoothScrolling)
+              .gap(RightGap.SMALL)
+            contextHelp(message("checkbox.smooth.scrolling.description"))
+          }
+          if (ProjectWindowCustomizerService.getInstance().isAvailable()) {
+            yield {
+              checkBox(cdDifferentiateProjects)
+                .enabledIf(AtomicBooleanProperty(ExperimentalUI.isNewUI()))
+                .comment(cdDifferentiateProjects.comment, 30)
+            }
+          }
           if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
             yield {
               checkBox(cdSeparateMainMenu).apply {
@@ -402,12 +414,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
-          yield {
-            checkBox(cdSmoothScrolling)
-              .gap(RightGap.SMALL)
-            contextHelp(message("checkbox.smooth.scrolling.description"))
-          }
-          yield { checkBox(cdDnDWithAlt) }
+          yield { checkBox(cdEnableControlsMnemonics) }
+          yield { checkBox(cdEnableMenuMnemonics) }
+          yield { checkBox(cdShowMenuIcons) }
           if (SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable || IdeRootPane.hideNativeLinuxTitleAvailable) {
             yield {
               val checkBox = checkBox(cdMergeMainMenuWithWindowTitle)
@@ -423,15 +432,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               else {
                 comment(message("ide.restart.required.comment"))
               }
-            }
-          }
-          yield { checkBox(cdFullPathsInTitleBar) }
-          yield { checkBox(cdShowMenuIcons) }
-          if (ProjectWindowCustomizerService.getInstance().isAvailable()) {
-            yield {
-              checkBox(cdDifferentiateProjects)
-                .enabledIf(AtomicBooleanProperty(ExperimentalUI.isNewUI()))
-                .comment(cdDifferentiateProjects.comment, 30)
             }
           }
         }
