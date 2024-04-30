@@ -32,14 +32,14 @@ class GradleModuleDetector : BuildSystemTypeDetector {
 private fun Module.isConfiguredViaAmperFiles(): Boolean {
     // We can't rely on the presence of the Amper plugin in settings.gradle.kts. Even if the Amper plugin is there, each 
     // subproject can either be pure Gradle or Gradle-based Amper depending on the presence of Amper module files.
-    // That's why we have to check if the module itself has Amper files.
+    // That's why we have to check if the subproject itself has Amper files.
     
     // Not all modules represent Gradle projects, some synthetic modules are generated for Gradle source sets (e.g. my-module.commonMain).
     // This is why we need to get the actual Gradle project path before looking for Amper files.
-    val gradleProjectDir = gradleProjectDir?.let { VfsUtil.findFile(it, false) }
+    val gradleProjectVirtualDir = gradleProjectDir?.let { VfsUtil.findFile(it, false) }
 
     // It doesn't seem possible to detect Gradle-based Amper files without hardcoding the names nor depending on the Amper plugin.
-    return gradleProjectDir?.findChild("module.yaml") != null || gradleProjectDir?.findChild("module.amper") != null
+    return gradleProjectVirtualDir?.findChild("module.yaml") != null || gradleProjectVirtualDir?.findChild("module.amper") != null
 }
 
 /**
