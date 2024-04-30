@@ -42,22 +42,27 @@ private fun getBiggestRow(icon: RowIcon): Icon? =
 private val Icon.size: Int
   get() = min(iconWidth, iconHeight)
 
-internal fun getLoadingIcon(iconData: CachedIconPresentation?): Icon? {
-  if (iconData == null) return null
+private val DEFAULT_ICON = AnimatedIcon.Default.INSTANCE
+
+@get:Internal
+val CachedPresentationData.icon: Icon get() = getLoadingIcon(iconData)
+
+private fun getLoadingIcon(iconData: CachedIconPresentation?): Icon {
+  if (iconData == null) return DEFAULT_ICON
   val iconManager = IconManager.getInstance()
   return iconManager.createDeferredIcon(
-    AnimatedIcon.Default.INSTANCE,
+    DEFAULT_ICON,
     iconData,
   ) {
     val classLoader = iconManager.getClassLoader(iconData.plugin, iconData.module)
     if (classLoader == null) {
-      AnimatedIcon.Default.INSTANCE
+      DEFAULT_ICON
     }
     else try {
       LoadingIcon(iconManager.getIcon(iconData.path, classLoader))
     }
     catch (e: Exception) {
-      AnimatedIcon.Default.INSTANCE
+      DEFAULT_ICON
     }
   }
 }

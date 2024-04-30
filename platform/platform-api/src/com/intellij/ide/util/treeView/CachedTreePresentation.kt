@@ -3,12 +3,10 @@ package com.intellij.ide.util.treeView
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.TreeState.CachedPresentationDataImpl
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus.Internal
-import javax.swing.Icon
 import javax.swing.JTree
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
@@ -91,7 +89,6 @@ interface CachedTreePathElement {
 interface CachedPresentationData {
   val text: String
   val iconData: CachedIconPresentation?
-  val icon: Icon? get() = getLoadingIcon(iconData)
   val isLeaf: Boolean
 }
 
@@ -128,7 +125,7 @@ class CachedTreePresentationNode(
 
   override fun update(presentation: PresentationData) {
     presentation.presentableText = data.presentation.text
-    presentation.setIcon(data.presentation.icon ?: AnimatedIcon.Default.INSTANCE)
+    presentation.setIcon(data.presentation.icon)
   }
 
   override fun toString(): String = "(cached) ${super.toString()}"
