@@ -28,7 +28,7 @@ class CodeGenerationReportGenerator(
     if (session == null || session.lookups.size <= lookupOrder) return HtmlColorClasses.notFoundColor
     val lookup = session.lookups[lookupOrder]
 
-    return if (lookup.additionalInfo.getOrDefault("hasSyntaxErrors", true) as Boolean) HtmlColorClasses.notFoundColor
+    return if (lookup.additionalInfo.getOrDefault("has_syntax_errors", true) as Boolean) HtmlColorClasses.notFoundColor
     else HtmlColorClasses.perfectSortingColor
   }
 }

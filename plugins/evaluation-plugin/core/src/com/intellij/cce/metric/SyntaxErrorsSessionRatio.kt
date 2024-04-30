@@ -18,7 +18,7 @@ class SyntaxErrorsSessionRatio : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        if (it.additionalInfo.getOrDefault("hasSyntaxErrors", true) as Boolean) {
+        if (it.additionalInfo.getOrDefault("has_syntax_errors", true) as Boolean) {
           sample.add(1.0)
           fileSample.add(1.0)
         }
