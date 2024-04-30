@@ -59,6 +59,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
   private final JBCheckBox myCheckBox;
 
   private final SimpleColoredComponent myTitle = new SimpleColoredComponent();
+  private final SimpleColoredComponent myTimestamp = new SimpleColoredComponent();
   private final ConcurrentLinkedDeque<RecentLocationItem> myItemsDeque = new ConcurrentLinkedDeque<>();
   private final Map<RecentLocationItem, Couple<Highlight[]>> myItemHighlights = new ConcurrentHashMap<>();
   private Future<?> myHighlightingFuture;
@@ -79,7 +80,11 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
 
     setLayout(new BorderLayout());
     add(getEditor().getComponent(), BorderLayout.CENTER);
-    add(myTitle, BorderLayout.NORTH);
+    var northPanel = new JPanel();
+    northPanel.setLayout(new BorderLayout());
+    northPanel.add(myTitle, BorderLayout.WEST);
+    northPanel.add(myTimestamp, BorderLayout.EAST);
+    add(northPanel, BorderLayout.NORTH);
   }
 
   @Override
@@ -98,6 +103,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
                                                 boolean selected,
                                                 boolean hasFocus) {
     myTitle.clear();
+    myTimestamp.clear();
     if (myProject.isDisposed() || getEditor().isDisposed()) return myTitle;
     myCurrentValueForPainting = value;
     myCurrentSelectedForPainting = selected;
@@ -202,7 +208,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
     }
     long timeStamp = place.getTimeStamp();
     if (Registry.is("show.last.visited.timestamps") && timeStamp != -1) {
-      myTitle.append(" " + DateFormatUtil.formatPrettyDateTime(timeStamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
+      myTimestamp.append(" " + DateFormatUtil.formatPrettyDateTime(timeStamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
     }
   }
 
