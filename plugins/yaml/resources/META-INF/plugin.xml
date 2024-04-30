@@ -11,11 +11,6 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
-  <!--<xi:include href="intellij.yaml.frontback.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
-  <!--<content>-->
-  <!--  <module name="intellij.yaml.frontback"/>-->
-  <!--</content>-->
-
   <extensions defaultExtensionNs="com.intellij">
     <!--Shared extensions: frontend and backend-->
     <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.settingsSync.YAMLLanguageCodeStyleSettingsProvider"/>
