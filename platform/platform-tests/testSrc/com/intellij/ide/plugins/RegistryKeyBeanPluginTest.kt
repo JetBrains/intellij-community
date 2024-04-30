@@ -15,6 +15,7 @@ import com.intellij.util.io.Ksuid
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -89,7 +90,7 @@ class RegistryKeyBeanPluginTest {
     val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
       loadPlugins(testDisposable, plugin1, plugin2)
     }
-    ex.message.shouldBe("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
+    ex.message.shouldStartWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
   }
 
   @Test
@@ -117,7 +118,7 @@ class RegistryKeyBeanPluginTest {
     val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
       registry = emulateStaticRegistryLoad(plugin1, plugin2)
     }
-    ex.message.shouldBe("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
+    ex.message.shouldStartWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
 
     registry["my.key"].shouldNotBeNull().defaultValue.toBoolean().shouldBe(false)
   }
@@ -134,7 +135,7 @@ class RegistryKeyBeanPluginTest {
     val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
       loadPlugins(testDisposable, plugin1, plugin2)
     }
-    ex.message.shouldBe("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
+    ex.message.shouldStartWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
     Registry.get("my.key").asBoolean().shouldBe(false)
   }
 
@@ -193,7 +194,7 @@ class RegistryKeyBeanPluginTest {
       val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
         loadPlugins(nestedDisposable, plugin2)
       }
-      ex.message.shouldBe("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
+      ex.message.shouldStartWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
 
       val key = getContributedKeyDescriptor("my.key")
       key.shouldNotBeNull().pluginId.shouldNotBeNull().shouldBe("plugin1")

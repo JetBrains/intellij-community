@@ -103,7 +103,9 @@ class RegistryKeyBean private constructor() {
           if (isDynamic) {
             logger.error(
               "A dynamically-loaded plugin ${newDescriptor.pluginId} is forbidden to override" +
-              " the registry key ${newDescriptor.name} introduced by ${oldDescriptor.pluginId}."
+              " the registry key ${newDescriptor.name} introduced by ${oldDescriptor.pluginId}." +
+              " Consider implementing the functionality in another way," +
+              " e.g. declare and implement an extension to customize the required behavior dynamically."
             )
           } else {
             val overrider = newDescriptor.pluginId
@@ -121,7 +123,9 @@ class RegistryKeyBean private constructor() {
           logger.error(
             "Conflicting registry key definition for key ${oldDescriptor.name}:" +
             " it was defined by plugin ${oldDescriptor.pluginId}" +
-            " but redefined by plugin ${newDescriptor.pluginId}."
+            " but redefined by plugin ${newDescriptor.pluginId}." +
+            " Consider adding overrides=\"true\" for one of the plugins," +
+            " see the documentation for com.intellij.openapi.util.registry.RegistryKeyBean.overrides for more details."
           )
         }
         true to true -> {
