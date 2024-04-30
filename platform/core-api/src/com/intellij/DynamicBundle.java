@@ -35,7 +35,7 @@ public class DynamicBundle extends AbstractBundle {
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
 
   private static final ConcurrentMap<String, ResourceBundle> bundles = CollectionFactory.createConcurrentWeakValueMap();
-
+  private boolean isInitializedBeforeL10Plugin;
   /**
    * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
    * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
@@ -45,6 +45,7 @@ public class DynamicBundle extends AbstractBundle {
    */
   public DynamicBundle(@NotNull Class<?> bundleClass, @NotNull String pathToBundle) {
     super(bundleClass, pathToBundle);
+    isInitializedBeforeL10Plugin = !LocalizationUtil.INSTANCE.isL10nPluginInitialized();
   }
 
   /**
@@ -58,6 +59,7 @@ public class DynamicBundle extends AbstractBundle {
   @Obsolete
   protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
+    isInitializedBeforeL10Plugin = !LocalizationUtil.INSTANCE.isL10nPluginInitialized();
   }
 
   // see BundleUtil
@@ -232,6 +234,16 @@ public class DynamicBundle extends AbstractBundle {
       LOG.error(e);
       return null;
     }
+  }
+
+  @Override
+  @ApiStatus.Internal
+  protected ResourceBundle getBundle(boolean isDefault) {
+    if (!isDefault && LocalizationUtil.INSTANCE.isL10nPluginInitialized() && isInitializedBeforeL10Plugin) {
+      isInitializedBeforeL10Plugin = false;
+      return null;
+    }
+    return super.getBundle(isDefault);
   }
 
   /**
