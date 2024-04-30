@@ -303,24 +303,24 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.configureByText("Test.java", """
       class X {
         public static boolean test() {
-            GeneticRecord i = new GeneticRecord(0);
-            return i instanceof GeneticRecord(int a);
+            GenericRecord i = new GenericRecord(0);
+            return i instanceof GenericRecord(int a);
         }
       
-        record GeneticRecord<T extends Long>(int i) {
+        record GenericRecord<T extends Long>(int i) {
         }
       
-        record GeneticRecord2<T extends Number>(T i) {
+        record GenericRecord2<T extends Number>(T i) {
         }
       
         public static boolean test2() {
-            GeneticRecord2 i = new GeneticRecord2(0L);
-            return i instanceof GeneticRecord2(<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.Number'">String a</error>);
+            GenericRecord2 i = new GenericRecord2(0L);
+            return i instanceof GenericRecord2(<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.Number'">String a</error>);
         }
     
         public static boolean test3() {
-            GeneticRecord2 i = new GeneticRecord2(0L);
-            return i instanceof GeneticRecord2(Long a);
+            GenericRecord2 i = new GenericRecord2(0L);
+            return i instanceof GenericRecord2(Long a);
         }
       
       }""");
