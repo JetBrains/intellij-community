@@ -10988,7 +10988,6 @@ c:com.intellij.execution.console.LanguageConsoleImpl
 - com.intellij.openapi.actionSystem.DataProvider
 - <init>(com.intellij.execution.console.LanguageConsoleImpl$Helper):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language):V
-- <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vfs.VirtualFile):V
 - p:addTextRangeToHistory(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.ex.EditorEx,Z):java.lang.String
 - addToHistory(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.ex.EditorEx,Z):java.lang.String
 - p:addToHistoryInner(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.ex.EditorEx,Z,Z):java.lang.String
