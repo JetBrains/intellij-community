@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.json
 
 import com.intellij.terminal.block.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.terminal.completion.ShellCommand
 
 internal class ShellJsonBasedCommandSpec(private val data: ShellCommand) : ShellCommandSpec {

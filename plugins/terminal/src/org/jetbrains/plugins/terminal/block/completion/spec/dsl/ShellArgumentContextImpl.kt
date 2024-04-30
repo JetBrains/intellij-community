@@ -5,6 +5,7 @@ import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
 import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellArgumentSpecImpl
 import java.util.function.Supplier
 

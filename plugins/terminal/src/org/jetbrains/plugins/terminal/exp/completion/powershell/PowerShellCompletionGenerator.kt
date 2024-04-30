@@ -13,6 +13,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 
 internal fun powerShellCompletionGenerator(command: String, caretOffset: Int): ShellRuntimeDataGenerator<CompletionResult> {
   return ShellRuntimeDataGenerator { context ->

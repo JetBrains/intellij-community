@@ -7,6 +7,7 @@ import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
 internal object ShellEnvBasedGenerators {
