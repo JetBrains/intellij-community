@@ -69,12 +69,18 @@ final class PatternHighlightingModel {
       PsiType substitutedRecordComponentType = substitutor.substitute(recordComponentType);
       PsiType deconstructionComponentType = JavaPsiPatternUtil.getPatternType(deconstructionComponent);
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(deconstructionPattern);
-      if (!isApplicable(substitutedRecordComponentType, deconstructionComponentType, languageLevel)) {
+      if (!isApplicableForRecordComponent(substitutedRecordComponentType, deconstructionComponentType, languageLevel)) {
         hasMismatchedPattern = true;
         if (recordComponents.length == deconstructionComponents.length) {
-          HighlightInfo.Builder builder;
-          if ((substitutedRecordComponentType instanceof PsiPrimitiveType || deconstructionComponentType instanceof PsiPrimitiveType) &&
-              JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
+          HighlightInfo.Builder builder = null;
+          if (isApplicableForRecordComponent(substitutedRecordComponentType, deconstructionComponentType,
+                                             JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel())) {
+            builder = HighlightUtil.checkFeature(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, languageLevel,
+                                                 deconstructionComponent.getContainingFile());
+          }
+          else if ((substitutedRecordComponentType instanceof PsiPrimitiveType ||
+                    deconstructionComponentType instanceof PsiPrimitiveType) &&
+                   JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
             String message = JavaErrorBundle.message("inconvertible.type.cast",
                                                      JavaHighlightUtil.formatType(substitutedRecordComponentType), JavaHighlightUtil
                                                        .formatType(deconstructionComponentType));
@@ -82,15 +88,12 @@ final class PatternHighlightingModel {
               .range(deconstructionComponent)
               .descriptionAndTooltip(message);
           }
-          else {
+
+          if (builder == null) {
             builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
                                                                         deconstructionComponent.getTextRange(), 0);
           }
 
-          if (isApplicable(substitutedRecordComponentType, deconstructionComponentType,
-                           JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel())) {
-             HighlightUtil.registerIncreaseLanguageLevelFixes(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, builder);
-          }
           errorSink.accept(builder);
           reported = true;
         }
@@ -140,12 +143,24 @@ final class PatternHighlightingModel {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(message);
   }
 
-  private static boolean isApplicable(@NotNull PsiType recordType, @Nullable PsiType patternType, @NotNull LanguageLevel languageLevel) {
-    if ((recordType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
+  /**
+   * Checks if the given record component type is applicable for the pattern type based on the specified language level.
+   * For example:
+   * <pre><code>
+   *  record SomeClass(RecordComponentType component)
+   *  (a instanceof SomeClass(PatternType obj))
+   * </code></pre>
+   * @param recordComponentType the type of the record component
+   * @param patternType the type of the pattern
+   * @param languageLevel the language level to consider
+   * @return true if the record component type is applicable for the pattern type, false otherwise
+   */
+  private static boolean isApplicableForRecordComponent(@NotNull PsiType recordComponentType, @Nullable PsiType patternType, @NotNull LanguageLevel languageLevel) {
+    if ((recordComponentType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
         !JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
-      return recordType.equals(patternType);
+      return recordComponentType.equals(patternType);
     }
-    return patternType != null && TypeConversionUtil.areTypesConvertible(recordType, patternType);
+    return patternType != null && TypeConversionUtil.areTypesConvertible(recordComponentType, patternType);
   }
 
   @NotNull
