@@ -939,6 +939,9 @@
         <separator/>
         <action id="ProjectView.FileNesting"
                 class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
+        <separator/>
+        <action id="ProjectView.CustomizeTrees"
+                class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
       </group>
       <group id="ProjectView.ToolWindow.Show.Actions" popup="true">
         <action id="ProjectView.ShowModules"
