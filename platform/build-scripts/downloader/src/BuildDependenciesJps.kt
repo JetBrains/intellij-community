@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getChildE
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getComponentElement
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getLibraryElement
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getSingleChildElement
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.tryGetSingleChildElement
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -51,13 +52,15 @@ object BuildDependenciesJps {
     val library = root.getLibraryElement(libraryName, iml)
 
     val properties = library.getSingleChildElement("properties")
+    val mavenId = properties.getAttribute("maven-id")
 
     // every library in Ultimate project must have a sha256 checksum, so all of this data must be present
-    val verification = properties.getSingleChildElement("verification")
-    val artifacts = verification.getChildElements("artifact")
-    val sha256sumMap = artifacts.associate {
+    // in case of referencing '-SNAPSHOT' versions locally, checksums may be missing
+    val verification = properties.tryGetSingleChildElement("verification")
+    val artifacts = verification?.getChildElements("artifact")
+    val sha256sumMap = artifacts?.associate {
       it.getAttribute("url") to it.getSingleChildElement("sha256sum").textContent.trim()
-    }
+    } ?: emptyMap()
 
     val classes = library.getSingleChildElement("CLASSES")
     val roots = classes.getChildElements("root")
@@ -71,8 +74,6 @@ object BuildDependenciesJps {
         val fileUrl = "file://\$MAVEN_REPOSITORY\$/${relativePath}"
         val remoteUrl = mavenRepositoryUrl.trimEnd('/') + "/${relativePath}"
 
-        val expectedSha256Checksum = sha256sumMap[fileUrl] ?: error("SHA256 checksum is missing for $fileUrl:\n${library.asText}")
-
         val localMavenFile = getLocalArtifactRepositoryRoot().resolve(relativePath)
 
         val file = when {
@@ -81,11 +82,14 @@ object BuildDependenciesJps {
           else -> BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(remoteUrl))
         }
 
-        val actualSha256checksum = file.inputStream().use { DigestUtils.sha256Hex(it) }
+        // '-SNAPSHOT' versions could be used only locally to test new locally built dependencies
+        if (!mavenId.endsWith("-SNAPSHOT")) {
+          val actualSha256checksum = file.inputStream().use { DigestUtils.sha256Hex(it) }
 
-        if (expectedSha256Checksum != actualSha256checksum) {
-          file.deleteExisting()
-          error("File $file has wrong checksum. On disk: ${actualSha256checksum}. Expected: ${expectedSha256Checksum}. Library:\n${library.asText}")
+          val expectedSha256Checksum = sha256sumMap[fileUrl] ?: error("SHA256 checksum is missing for $fileUrl:\n${library.asText}")
+          if (expectedSha256Checksum != actualSha256checksum) {
+            error("File $file has wrong checksum. On disk: ${actualSha256checksum}. Expected: ${expectedSha256Checksum}. Library:\n${library.asText}")
+          }
         }
 
         file
