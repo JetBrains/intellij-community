@@ -2,7 +2,8 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.Timer
@@ -20,17 +21,16 @@ class ScrollEditorCommand(text: String, line: Int): PerformanceCommandCoroutineA
     val timer = Timer()
     timer.start(NAME, true)
 
-    val editor = writeAction {
-      checkNotNull(FileEditorManager.getInstance(context.project).selectedTextEditor).also {
-        it.caretModel.currentCaret.moveToLogicalPosition(LogicalPosition(0, 0))
-      }
-    }
-
+    val editor = writeAction { checkNotNull(FileEditorManager.getInstance(context.project).selectedTextEditor) }
     val totalLines = readAction { editor.document.lineCount } - 1
-    while (true) {
-      writeAction { editor.caretModel.moveCaretRelatively(0, 5, false, false, true) }
-      val currentLine = readAction { editor.caretModel.logicalPosition.line }
-      if (currentLine == totalLines) break
+
+    var lineToScrollTo = 0
+    while (lineToScrollTo <= totalLines) {
+      writeAction {
+        val logicalPosition = editor.visualToLogicalPosition(VisualPosition(lineToScrollTo, 0))
+        editor.scrollingModel.scrollTo(logicalPosition, ScrollType.RELATIVE)
+      }
+      lineToScrollTo += 5
       delay(100)
     }
     timer.stop()
