@@ -75,6 +75,8 @@ class KotlinStepOverRequestHint(
 
     private val startLocation = LocationData.create(suspendContext.getLocationCompat())
 
+    private var resumeBreakpointInstalled = false
+
     override fun getNextStepDepth(context: SuspendContextImpl): Int {
         try {
             val frameProxy = context.frameProxy ?: return STOP
@@ -82,13 +84,25 @@ class KotlinStepOverRequestHint(
                 if (frameProxy.isOnSuspensionPoint()) {
                     // Coroutine will sleep now so we can't continue stepping.
                     // Let's put a run-to-cursor breakpoint and resume the debugger.
-                    return if (!installCoroutineResumedBreakpoint(context)) STOP else RESUME
+                    return if (!resumeBreakpointInstalled) {
+                        if (!installCoroutineResumedBreakpoint(context)) {
+                            STOP
+                        } else {
+                            resumeBreakpointInstalled = true
+                            StepRequest.STEP_OVER
+                        }
+                    } else {
+                        StepRequest.STEP_OVER
+                    }
                 }
 
                 val location = frameProxy.safeLocation()
                 val isAcceptable = location != null && filter.locationMatches(context, location)
                 return if (isAcceptable) STOP else StepRequest.STEP_OVER
             } else if (isSteppedOut) {
+                if (resumeBreakpointInstalled) {
+                    return RESUME
+                }
                 val location = frameProxy.safeLocation()
 
                 processSteppingFilters(context, location)?.let { return it }
