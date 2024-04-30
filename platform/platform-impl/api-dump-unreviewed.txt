@@ -18065,6 +18065,29 @@ f:com.intellij.openapi.project.ScanningTracker
 - awaitConfiguration(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - getPresentableName():java.lang.String
 - isInProgress(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.project.configuration.ChannelingProgressIndicator
+- com.intellij.openapi.progress.util.ProgressIndicatorBase
+- <init>(java.lang.String):V
+- setFraction(D):V
+- setIndeterminate(Z):V
+- setText(java.lang.String):V
+- setText2(java.lang.String):V
+f:com.intellij.openapi.project.configuration.EmptyLoggingService
+- com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService
+- <init>():V
+- logEntry(com.intellij.openapi.project.configuration.HeadlessLogging$LogEntry):V
+- loggingFlow():kotlinx.coroutines.flow.SharedFlow
+f:com.intellij.openapi.project.configuration.HeadlessLoggingServiceImpl
+- com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService
+- <init>():V
+- logEntry(com.intellij.openapi.project.configuration.HeadlessLogging$LogEntry):V
+- loggingFlow():kotlinx.coroutines.flow.SharedFlow
+f:com.intellij.openapi.project.configuration.HeadlessProgressListener
+- <init>():V
+- afterTaskFinished(com.intellij.openapi.progress.Task):V
+- beforeTaskStart(com.intellij.openapi.progress.Task,com.intellij.openapi.progress.ProgressIndicator):V
+f:com.intellij.openapi.project.configuration.ProjectConfigurationUtil
+- sf:awaitCompleteProjectConfiguration(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.project.impl.DefaultProjectTimed
 - com.intellij.util.TimedReference
 - dispose():V

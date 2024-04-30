@@ -1,9 +1,10 @@
-@file:JvmName("ProjectConfigurationUtil")
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util
+@file:JvmName("ProjectConfigurationUtil")
 
+package com.intellij.openapi.project.configuration
+
+import com.intellij.configurationStore.StoreUtil.saveSettings
 import com.intellij.configurationStore.saveProjectsAndApp
-import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.Observation
