@@ -1381,13 +1381,6 @@ private suspend fun buildSearchableOptions(
   NioFiles.deleteRecursively(targetDirectory)
 
   val locales = mutableListOf(SearchableOptionLocalization(Locale.ENGLISH.toLanguageTag()))
-  if (!context.isStepSkipped(BuildOptions.LOCALIZE_STEP)) {
-    val localizationDir = getLocalizationDir(context)
-    locales.addAll(
-      localizationDir?.resolve("properties")?.listFiles()?.filter { it.isDirectory }?.map { SearchableOptionLocalization(it.name) }
-      ?: emptyList()
-    )
-  }
 
   // bundled maven is also downloaded during traverseUI execution in an external process,
   // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
