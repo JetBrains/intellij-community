@@ -5,8 +5,10 @@ import com.intellij.ide.navbar.NavBarItem
 import com.intellij.model.Pointer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 
-internal interface NavBarVm {
+@ApiStatus.Internal
+interface NavBarVm {
 
   val items: StateFlow<List<NavBarItemVm>>
 

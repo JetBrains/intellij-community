@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="pty4j" type="repository">
-    <properties maven-id="org.jetbrains.pty4j:pty4j:0.12.25">
+    <properties maven-id="org.jetbrains.pty4j:pty4j:0.12.26">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.25/pty4j-0.12.25.jar">
-          <sha256sum>8901c361476df4f908a20d6990621c12249f7486ee91371906a28fd133c09324</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.26/pty4j-0.12.26.jar">
+          <sha256sum>0a06110f2201f8fe614688b0bcfbee4c779fb975a1d4747edf58a8976cf6e1f9</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1.jar">
           <sha256sum>31c048a86057e07272429aa26e90713edbde96af9747362f27470d8e86a398a3</sha256sum>
@@ -18,12 +18,12 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.25/pty4j-0.12.25.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.26/pty4j-0.12.26.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.25/pty4j-0.12.25-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.26/pty4j-0.12.26-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1-sources.jar!/" />
     </SOURCES>
   </library>

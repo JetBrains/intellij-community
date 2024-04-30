@@ -9,6 +9,7 @@ import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -640,9 +641,11 @@ public final class CompileDriver {
     final CompilerManager manager = CompilerManager.getInstance(myProject);
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     progressIndicator.pushState();
+    final Project project = context.getProject();
     try {
       List<CompileTask> tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTaskList();
       if (!tasks.isEmpty()) {
+        final StructuredIdeActivity activity = BuildUsageCollector.logCompileTasksStarted(project, beforeTasks);
         progressIndicator.setText(
           JavaCompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks")
         );
@@ -662,6 +665,7 @@ public final class CompileDriver {
             );
           }
         }
+        BuildUsageCollector.logCompileTasksCompleted(activity, beforeTasks);
       }
     }
     finally {

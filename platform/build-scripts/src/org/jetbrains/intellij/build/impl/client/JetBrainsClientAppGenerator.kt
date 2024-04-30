@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.getMacZipRoot
 import org.jetbrains.intellij.build.impl.substitutePlaceholdersInInfoPlist
 import org.jetbrains.intellij.build.impl.targetIcnsFileName
+import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
 import java.nio.file.Files
 import java.nio.file.Path
@@ -32,8 +33,8 @@ internal suspend fun generateJetBrainsClientAppBundleForMacOs(mainAppContentsDir
   withContext(Dispatchers.IO) {
     val jetBrainsClientMacCustomizer = jetbrainsClientBuildContext.macDistributionCustomizer!!
     val relativeContentsPath = "Helpers/${getMacZipRoot(jetBrainsClientMacCustomizer, jetbrainsClientBuildContext)}"
-    val contentsDir = mainAppContentsDir / relativeContentsPath 
-    copyFile(mainIdeBuildContext.paths.communityHomeDir / "platform/build-scripts/resources/mac/Contents/Info.plist", contentsDir / "Info.plist")
+    val contentsDir = mainAppContentsDir / relativeContentsPath
+    copyPlistWithResources(mainIdeBuildContext, contentsDir)
     val mainIdeExecutableFileName = mainIdeBuildContext.productProperties.baseFileName
     val shExecutableFileName = "${mainIdeExecutableFileName}.sh"
     val icnsFileName = mainIdeBuildContext.productProperties.targetIcnsFileName
@@ -63,4 +64,9 @@ internal suspend fun generateJetBrainsClientAppBundleForMacOs(mainAppContentsDir
     Files.createDirectories(resourcesDir)
     Files.createSymbolicLink(resourcesDir / icnsFileName, Path("../../../../Resources/$icnsFileName"))
   }
+}
+
+private fun copyPlistWithResources(mainIdeBuildContext: BuildContext, contentsDir: Path) {
+  copyFile(mainIdeBuildContext.paths.communityHomeDir / "platform/build-scripts/resources/mac/Contents/Info.plist", contentsDir / "Info.plist")
+  copyDir(mainIdeBuildContext.paths.communityHomeDir / "platform/build-scripts/resources/mac/Contents/Resources", contentsDir / "Resources")
 }

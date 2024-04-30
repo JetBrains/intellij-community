@@ -80,6 +80,7 @@ public final class ActionsTreeUtil {
                    (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
                    ". Creating its instance");
         }
+        return presentation2;
       }
     }
     return presentation;

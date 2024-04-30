@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -54,6 +53,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     final @NotNull PsiFile psiRoot;
     final @NotNull K collectedInfo;
     volatile V annotationResult;
+    volatile AnnotationHolderImpl annotationHolder;
 
     MyData(@NotNull ExternalAnnotator<K,V> annotator, @NotNull PsiFile psiRoot, @NotNull K collectedInfo) {
       this.annotator = annotator;
@@ -142,39 +142,36 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     }
 
     long modificationStampBefore = myDocument.getModificationStamp();
-    AnnotationSessionImpl.computeWithSession(myFile, false, annotationHolder -> {
-      Update update = new Update(myFile) {
-        @Override
-        public void setRejected() {
-          super.setRejected();
-          if (!myProject.isDisposed()) { // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
-            doFinish(convertToHighlights(annotationHolder));
-          }
+    Update update = new Update(myFile) {
+      @Override
+      public void setRejected() {
+        super.setRejected();
+        if (!myProject.isDisposed()) { // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
+          doFinish();
         }
+      }
 
-        @Override
-        public void run() {
-          if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-            return;
-          }
-          // have to instantiate new indicator because the old one (progress) might have already been canceled
-          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
-          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-            // run annotators outside the read action because they could start OSProcessHandler
-            runChangeAware(myDocument, () -> doAnnotate());
-            ReadAction.run(() -> {
-              ProgressManager.checkCanceled();
-              if (!documentChanged(modificationStampBefore)) {
-                doApply(annotationHolder);
-                doFinish(convertToHighlights(annotationHolder));
-              }
-            });
-          }, indicator);
+      @Override
+      public void run() {
+        if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+          return;
         }
-      };
-      ExternalAnnotatorManager.getInstance().queue(update);
-      return null;
-    });
+        // have to instantiate new indicator because the old one (progress) might have already been canceled
+        DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+          // run annotators outside the read action because they could start OSProcessHandler
+          runChangeAware(myDocument, () -> doAnnotate());
+          ReadAction.run(() -> {
+            ProgressManager.checkCanceled();
+            if (!documentChanged(modificationStampBefore)) {
+              doApply();
+              doFinish();
+            }
+          });
+        }, indicator);
+      }
+    };
+    ExternalAnnotatorManager.getInstance().queue(update);
   }
 
   @Override
@@ -206,24 +203,27 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
 
   private static <K, V> void doAnnotate(@NotNull MyData<K, V> data) {
     try {
-      data.annotationResult = data.annotator.doAnnotate(data.collectedInfo);
+      AnnotationSessionImpl.computeWithSession(data.psiRoot, false, data.annotator, annotationHolder -> {
+        data.annotationHolder = (AnnotationHolderImpl)annotationHolder;
+        data.annotationResult = data.annotator.doAnnotate(data.collectedInfo);
+        return null;
+      });
     }
     catch (Throwable t) {
       processError(t, data.annotator, data.psiRoot);
     }
   }
 
-  private void doApply(@NotNull AnnotationHolderImpl annotationHolder) {
+  private void doApply() {
     for (MyData<?,?> data : myAnnotationData) {
-      doApply(data, annotationHolder);
+      doApply(data);
     }
-    annotationHolder.assertAllAnnotationsCreated();
   }
 
-  private static <K, V> void doApply(@NotNull MyData<K, V> data, @NotNull AnnotationHolderImpl annotationHolder) {
+  private static <K, V> void doApply(@NotNull MyData<K, V> data) {
     if (data.annotationResult != null && data.psiRoot.isValid()) {
       try {
-        annotationHolder.applyExternalAnnotatorWithContext(data.psiRoot, data.annotator, data.annotationResult);
+        data.annotationHolder.applyExternalAnnotatorWithContext(data.psiRoot, data.annotationResult);
       }
       catch (Throwable t) {
         processError(t, data.annotator, data.psiRoot);
@@ -231,11 +231,11 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     }
   }
 
-  private static @NotNull List<HighlightInfo> convertToHighlights(@NotNull AnnotationHolderImpl holder) {
-    return ContainerUtil.map(holder, annotation -> HighlightInfo.fromAnnotation(annotation));
-  }
-
-  private void doFinish(@NotNull List<? extends HighlightInfo> highlights) {
+  private void doFinish() {
+    List<HighlightInfo> highlights = myAnnotationData.stream()
+      .flatMap(data ->
+        ContainerUtil.notNullize(data.annotationHolder).stream().map(annotation -> HighlightInfo.fromAnnotation(data.annotator, annotation)))
+      .toList();
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
     // use the method which doesn't retrieve a HighlightingSession from the indicator, because we likely destroyed the one already
     BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), myHighlightingSession);

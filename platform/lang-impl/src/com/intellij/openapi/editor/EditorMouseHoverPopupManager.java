@@ -223,7 +223,8 @@ public class EditorMouseHoverPopupManager implements Disposable {
   }
 
   private static boolean isAnotherAppInFocus() {
-    return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null;
+    return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null &&
+           !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   // e.g., if documentation popup (opened via keyboard shortcut) is already shown
@@ -350,7 +351,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       return null;
     }
     PsiElement result = findElementForQuickDoc(project, psiFile, offset);
-    if (result instanceof PsiWhiteSpace || result instanceof PsiPlainText) {
+    if (result instanceof PsiWhiteSpace) {
       return null;
     }
     return result;

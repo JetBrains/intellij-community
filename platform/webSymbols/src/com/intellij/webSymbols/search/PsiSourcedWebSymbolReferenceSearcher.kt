@@ -40,7 +40,7 @@ internal class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiRefer
         queryParameters.effectiveSearchScope,
         (UsageSearchContext.IN_CODE + UsageSearchContext.IN_FOREIGN_LANGUAGES + UsageSearchContext.IN_STRINGS).toShort(),
         false, targetElement,
-        PsiSourcedWebSymbolRequestResultProcessor(targetElement, false))
+        PsiSourcedWebSymbolRequestResultProcessor(targetElement, foundSymbols, false))
     }
   }
 

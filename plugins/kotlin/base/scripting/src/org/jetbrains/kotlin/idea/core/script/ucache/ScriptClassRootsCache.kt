@@ -148,8 +148,11 @@ class ScriptClassRootsCache(
     fun getScriptConfiguration(file: VirtualFile): ScriptCompilationConfigurationWrapper? =
         getHeavyScriptInfo(file.path)?.scriptConfiguration
 
+    fun getScriptSdk(path: String): Sdk? =
+        getHeavyScriptInfo(path)?.sdk
+
     fun getScriptSdk(file: VirtualFile): Sdk? =
-        getHeavyScriptInfo(file.path)?.sdk
+        getScriptSdk(file.path)
 
     fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope =
         getHeavyScriptInfo(file.path)?.classFilesScope ?: GlobalSearchScope.EMPTY_SCOPE

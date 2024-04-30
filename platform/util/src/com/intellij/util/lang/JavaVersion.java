@@ -228,6 +228,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
     Map<String, String> trimmingMap = new HashMap<>(); // "substring to detect" to "substring from which to trim"
     trimmingMap.put("Runtime Environment", "(build ");
     trimmingMap.put("OpenJ9", "version ");
+    trimmingMap.put("GraalVM", "Java ");
     for (String keyToDetect : trimmingMap.keySet()) {
       if (str.contains(keyToDetect)) {
         int p = str.indexOf(trimmingMap.get(keyToDetect));

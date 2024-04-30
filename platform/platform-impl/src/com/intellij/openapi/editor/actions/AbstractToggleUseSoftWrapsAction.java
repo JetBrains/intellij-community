@@ -5,7 +5,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
@@ -23,8 +22,7 @@ import java.awt.*;
 /**
  * Provides common functionality for {@code 'toggle soft wraps usage'} actions.
  */
-public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware, LightEditCompatible,
-                                                                                       ActionRemoteBehaviorSpecification.Frontend {
+public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware, LightEditCompatible {
 
   private final SoftWrapAppliancePlaces myAppliancePlace;
   private final boolean myGlobal;

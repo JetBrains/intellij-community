@@ -19,7 +19,10 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   private boolean isPreview;
   private String sourceCompatibility;
   private String targetCompatibility;
+  // The jdkInstallationPath exists only for migration.
+  // Source sets are serialized with the project data nodes.
   private String jdkInstallationPath;
+  private File javaToolchainHome;
   private Collection<File> artifacts;
   private @NotNull Collection<ExternalDependency> dependencies;
   private @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
@@ -34,7 +37,7 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
     name = sourceSet.getName();
     isPreview = sourceSet.isPreview();
-    isPreview = sourceSet.isPreview();
+    javaToolchainHome = sourceSet.getJavaToolchainHome();
     sourceCompatibility = sourceSet.getSourceCompatibility();
     targetCompatibility = sourceSet.getTargetCompatibility();
     artifacts = copyArtifacts(sourceSet.getArtifacts());
@@ -79,12 +82,17 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   }
 
   @Override
-  public @Nullable String getJdkInstallationPath() {
-    return jdkInstallationPath;
+  public @Nullable File getJavaToolchainHome() {
+    if (jdkInstallationPath != null) {
+      javaToolchainHome = new File(jdkInstallationPath);
+      jdkInstallationPath = null;
+    }
+    return javaToolchainHome;
   }
 
-  public void setJdkInstallationPath(@Nullable String jdkInstallationPath) {
-    this.jdkInstallationPath = jdkInstallationPath;
+  public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
+    this.jdkInstallationPath = null;
+    this.javaToolchainHome = javaToolchainHome;
   }
 
   @Override

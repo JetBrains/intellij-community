@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -16,7 +15,6 @@ import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
-import java.awt.Color
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
@@ -55,8 +53,7 @@ class TerminalWidgetImpl(private val project: Project,
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
     view = if (options.shellIntegration?.commandBlockIntegration != null) {
-      val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().getGlobalScheme())
-      val session = BlockTerminalSession(settings, colorPalette, options.shellIntegration)
+      val session = BlockTerminalSession(settings, BlockTerminalColorPalette(), options.shellIntegration)
       Disposer.register(this, session)
       BlockTerminalView(project, session, settings, terminalTitle)
     }
@@ -119,8 +116,8 @@ class TerminalWidgetImpl(private val project: Project,
     private val postponedShellCommands: MutableList<String> = CopyOnWriteArrayList()
 
     override val component: JComponent = object : JPanel() {
-      override fun getBackground(): Color {
-        return TerminalUi.terminalBackground
+      init {
+        background = TerminalUi.defaultBackground()
       }
     }
 

@@ -46,7 +46,7 @@ enum class IdleFeedbackTypes {
   AQUA_NEW_USER_FEEDBACK {
     override val fusFeedbackId: String = "aqua_new_user_feedback"
     override val suitableIdeVersion: String = "" // Not suitable for Aqua, because it is in the permanent Preview version
-    private val lastDayCollectFeedback = LocalDate(2024, 5, 29)
+    private val lastDayCollectFeedback = LocalDate(2024, 8, 29)
     private val maxNumberNotificationShowed = 2
 
     override fun isSuitable(): Boolean {
@@ -109,7 +109,7 @@ enum class IdleFeedbackTypes {
   AQUA_OLD_USER_FEEDBACK {
     override val fusFeedbackId: String = "aqua_old_user_feedback"
     override val suitableIdeVersion: String = "" // Not suitable for Aqua, because it is in the permanent Preview version
-    private val lastDayCollectFeedback = LocalDate(2024, 5, 29)
+    private val lastDayCollectFeedback = LocalDate(2024, 8, 29)
     private val maxNumberNotificationShowed = 2
     private val elapsedMinNumberDaysFromFirstRun = 5
 

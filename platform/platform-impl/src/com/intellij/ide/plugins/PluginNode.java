@@ -26,6 +26,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private @NotNull PluginId id;
   private String name;
   private boolean isPaid = false;
+  private Integer trialPeriod = null;
   private String productCode;
   private Date releaseDate;
   private int releaseVersion;
@@ -114,6 +115,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setIsPaid(boolean isPaid) {
     this.isPaid = isPaid;
+  }
+
+  public @Nullable Integer getTrialPeriod() {
+    return trialPeriod;
+  }
+
+  public void setTrialPeriod(@Nullable Integer trialPeriod) {
+    this.trialPeriod = trialPeriod;
   }
 
   @Override

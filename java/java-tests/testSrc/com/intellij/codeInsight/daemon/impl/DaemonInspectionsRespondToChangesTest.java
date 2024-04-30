@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
+import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.debugger.DebugException;
 import com.intellij.diagnostic.ThreadDumper;
@@ -169,7 +170,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
   }
 
-  private static class MyTrackingInspection extends MyInspectionBase {
+  private abstract static class MyTrackingInspection extends MyInspectionBase {
     private final List<PsiElement> visited = Collections.synchronizedList(new ArrayList<>());
 
     @NotNull
@@ -273,7 +274,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   }
 
   public void testInspectionIsRestartedOnPsiCacheDrop() {
-    MyTrackingInspection tool = registerInspection(new MyTrackingInspection());
+    MyTrackingInspection tool = registerInspection(new MyTrackingInspection(){});
 
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
     DaemonRespondToChangesTest.waitForDaemon(myProject, myEditor.getDocument());
@@ -633,6 +634,8 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     doHighlighting();
     assertNull(expectedVisibleRange); // check the inspection was run
   }
+
+  // add file-level "blah" if there are identifiers containing "XXX"
   private static class MyFileLevelInspection extends MyInspectionBase {
     @NotNull
     @Override
@@ -667,6 +670,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   }
 
   public void testFileLevelWithEverChangingDescriptionMustUpdateOnTyping() {
+    // add file-level "blah" if there are identifiers containing "xxx"
     class XXXIdentifierFileLevelInspection extends MyInspectionBase {
       @NotNull
       @Override
@@ -828,15 +832,17 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
 
   public void testModificationInsideCommentDoesNotAffectNearbyInspectionWarning() {
     enableInspectionTool(new ConstantValueInspection());
-    configureByText(JavaFileType.INSTANCE, """
-      class AClass {
-        public int foo() {
-          //<caret>
-          if (this == null) return 0;
-          return 1;
+    @Language("JAVA")
+    String text = """
+        class AClass {
+          public int foo() {
+            //<caret>
+            if (this == null) return 0;
+            return 1;
+          }
         }
-      }
-    """);
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
 
     assertEmpty(highlightErrors());
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
@@ -856,7 +862,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
 
   public void testThrowingExceptionFromInspectionMustPropagateUpToTheLogger() {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    enableInspectionTool(new MyInspectionBase(){
+    MyInspectionBase throwExceptionInspection = new MyInspectionBase() {
       @Override
       public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
         return new PsiElementVisitor() {
@@ -866,14 +872,16 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
           }
         };
       }
+    };
+    enableInspectionTool(throwExceptionInspection);
+    @Language("JAVA")
+    String text = """
+        class AClass {
+        }
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
 
-    });
-    configureByText(JavaFileType.INSTANCE, """
-      class AClass {
-      }
-    """);
-
-    assertThrows(Exception.class, "MyPreciousException", () -> highlightErrors());
+    assertThrows(Exception.class, new MyException().getMessage(), () -> highlightErrors());
   }
 
   public void testInspectionMustRemoveItsObsoleteHighlightsImmediatelyAfterVisitingPSIElementTheSecondTimeAndFailingToGenerateTheSameWarningAgain() {
@@ -959,5 +967,75 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     }
     assertTrue(fieldIdentifierVisited.get());
     assertTrue(fieldHighlightsUpdated.get());
+  }
+
+  public void testRedundantWarningMustNotBlinkOnTypingInsideParameterModifierList() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    enableInspectionTools(new RedundantSuppressInspection(), new RawUseOfParameterizedTypeInspection());
+    @Language("JAVA")
+    String text = """
+     abstract class Converter<T> {
+       abstract T fromString(String value);
+     }
+     class Base {
+      protected Base(String accessor,
+                     /*caret goes here*/Class<? extends Converter> converter) {
+        System.out.println(accessor + converter);
+      }
+     }
+     """;
+    configureByText(JavaFileType.INSTANCE, text);
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertTrue(infos.toString(), ContainerUtil.exists(infos, info-> new RawUseOfParameterizedTypeInspection().getShortName()
+      .equals(info.getInspectionToolId())));
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("Class<?"));
+    type("@SuppressWarnings(\"rawtypes\")    ") ;
+    assertEmpty(doHighlighting(HighlightSeverity.WARNING));
+    type("\n");
+    assertEmpty(doHighlighting(HighlightSeverity.WARNING));
+  }
+
+  public void testHighlightsForInvalidPSIMustBeRemovedFastForExampleBeforeTheInspectionsStartRunning() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    LocalInspectionTool myTool = new MyInspectionBase() {
+      @Override
+      public @NotNull String getShortName() {
+        return "my own tool xxx";
+      }
+
+      @NotNull
+      @Override
+      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+        return new JavaElementVisitor() {
+          @Override
+          public void visitIdentifier(@NotNull PsiIdentifier identifier) {
+            if (identifier.getText().contains("xxx")) {
+              // by this moment all highlights for invalid PSI must be removed
+
+              List<RangeHighlighter> highlighters = List.of(DocumentMarkupModel.forDocument(getDocument(myFile), myProject, true).getAllHighlighters());
+              assertFalse(ContainerUtil.exists(highlighters, r -> HighlightInfo.fromRangeHighlighter(r) != null && getShortName().equals(HighlightInfo.fromRangeHighlighter(r).getInspectionToolId())));
+
+              holder.registerProblem(identifier, "XXX", ProblemHighlightType.WARNING);
+            }
+            super.visitIdentifier(identifier);
+          }
+        };
+      }
+    };
+
+    enableInspectionTools(myTool);
+
+    @Language("JAVA")
+    String text = """
+     class Base {
+       int xxx;
+     }
+     """;
+    configureByText(JavaFileType.INSTANCE, text);
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertOneElement(ContainerUtil.filter(infos, info-> myTool.getShortName().equals(info.getInspectionToolId())));
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("int xxx;"));
+    type("// ") ;
+    assertEmpty(doHighlighting(HighlightSeverity.WARNING));
   }
 }

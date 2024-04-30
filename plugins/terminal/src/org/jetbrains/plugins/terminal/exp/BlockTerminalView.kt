@@ -6,7 +6,7 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -17,6 +17,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.bindApplicationTitle
 import com.intellij.ui.util.preferredHeight
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
@@ -68,7 +69,7 @@ class BlockTerminalView(
     promptView.controller.addListener(object : PromptStateListener {
       override fun promptVisibilityChanged(visible: Boolean) {
         component.revalidate()
-        invokeLater {
+        invokeLater(getDisposed(), ModalityState.any()) {
           // do not focus the terminal if something outside the terminal is focused now
           // it can be the case when long command is finished and prompt becomes shown
           if (focusModel.isActive) {
@@ -107,7 +108,7 @@ class BlockTerminalView(
 
     session.model.addTerminalListener(object : TerminalModel.TerminalListener {
       override fun onAlternateBufferChanged(enabled: Boolean) {
-        invokeLater {
+        invokeLater(getDisposed(), ModalityState.any()) {
           alternateBufferStateChanged(enabled)
         }
       }
@@ -159,6 +160,7 @@ class BlockTerminalView(
     session.start(ttyConnector)
   }
 
+  @RequiresEdt(generateAssertion = false)
   private fun alternateBufferStateChanged(enabled: Boolean) {
     if (enabled) {
       installAlternateBufferPanel()
@@ -168,8 +170,9 @@ class BlockTerminalView(
       alternateBufferView = null
       installPromptAndOutput()
     }
+    outputView.controller.alternateBufferStateChanged(enabled)
     IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
-    invokeLater {
+    invokeLater(getDisposed(), ModalityState.any()) {
       updateTerminalSize()
     }
   }
@@ -258,9 +261,11 @@ class BlockTerminalView(
 
   override fun dispose() {}
 
+  private fun getDisposed(): () -> Boolean = outputView.controller.outputModel.editor.getDisposed()
+
   private inner class BlockTerminalPanel : JPanel(), DataProvider {
     init {
-      background = TerminalUi.terminalBackground
+      background = TerminalUi.defaultBackground(outputView.controller.outputModel.editor)
     }
 
     override fun getData(dataId: String): Any? {

@@ -2,18 +2,40 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.HighlighterClient
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.tree.IElementType
+import com.intellij.terminal.TerminalColorPalette
+import com.jediterm.terminal.TextStyle
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 
-data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes) {
+data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributesProvider: TextAttributesProvider) {
   init {
     check(startOffset <= endOffset)
   }
   val length: Int
     get() = endOffset - startOffset
+}
+
+interface TextAttributesProvider {
+  fun getTextAttributes(): TextAttributes
+}
+
+object EmptyTextAttributesProvider : TextAttributesProvider {
+  override fun getTextAttributes(): TextAttributes = TextAttributes.ERASE_MARKER
+}
+
+class TextStyleAdapter(private val style: TextStyle,
+                       private val colorPalette: TerminalColorPalette): TextAttributesProvider {
+  override fun getTextAttributes(): TextAttributes = style.toTextAttributes(colorPalette)
+}
+
+class TextAttributesKeyAdapter(private val editor: Editor, private val textAttributesKey: TextAttributesKey) : TextAttributesProvider {
+  override fun getTextAttributes(): TextAttributes = editor.colorsScheme.getAttributes(textAttributesKey)
 }
 
 class TerminalTextHighlighter private constructor(
@@ -42,7 +64,9 @@ class TerminalTextHighlighter private constructor(
 
     override fun getEnd(): Int = highlightings[curInd].endOffset
 
-    override fun getTextAttributes(): TextAttributes = highlightings[curInd].textAttributes
+    override fun getTextAttributes(): TextAttributes {
+      return highlightings[curInd].textAttributesProvider.getTextAttributes()
+    }
 
     override fun getTokenType(): IElementType? = null
 

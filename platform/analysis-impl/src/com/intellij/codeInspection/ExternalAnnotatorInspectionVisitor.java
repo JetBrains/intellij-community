@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
+
+import java.util.List;
 
 public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotatorInspectionVisitor.class);
@@ -53,10 +57,10 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       if (annotationResult == null) {
         return ProblemDescriptor.EMPTY_ARRAY;
       }
-      return ReadAction.compute(() -> AnnotationSessionImpl.computeWithSession(file, true, annotationHolder -> {
-        annotationHolder.applyExternalAnnotatorWithContext(file, annotator, annotationResult);
-        annotationHolder.assertAllAnnotationsCreated();
-        return ProblemDescriptorUtil.convertToProblemDescriptors(annotationHolder, file);
+      return ReadAction.compute(() -> AnnotationSessionImpl.computeWithSession(file, true, annotator, annotationHolder -> {
+        ((AnnotationHolderImpl)annotationHolder).applyExternalAnnotatorWithContext(file, annotationResult);
+        ((AnnotationHolderImpl)annotationHolder).assertAllAnnotationsCreated();
+        return ProblemDescriptorUtil.convertToProblemDescriptors((List<? extends Annotation>)annotationHolder, file);
       }));
     }
     return ProblemDescriptor.EMPTY_ARRAY;

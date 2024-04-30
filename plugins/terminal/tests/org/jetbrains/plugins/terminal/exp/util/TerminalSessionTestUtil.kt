@@ -5,7 +5,6 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -49,8 +48,7 @@ object TerminalSessionTestUtil {
     val process = runner.createProcess(configuredOptions)
     val ttyConnector = runner.createTtyConnector(process)
 
-    val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().globalScheme)
-    val session = BlockTerminalSession(runner.settingsProvider, colorPalette, configuredOptions.shellIntegration!!)
+    val session = BlockTerminalSession(runner.settingsProvider, BlockTerminalColorPalette(), configuredOptions.shellIntegration!!)
     Disposer.register(parentDisposable, session)
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model
@@ -159,6 +157,20 @@ object TerminalSessionTestUtil {
       else -> toPosixShellCommandLine(shellCommand)
     }
     this.sendCommandlineToExecuteWithoutAddingToHistory(commandline)
+  }
+
+  fun List<String>.toCommandLine(session: BlockTerminalSession, preventAddingToHistory: Boolean = true): String {
+    return when (session.shellIntegration.shellType) {
+      ShellType.POWERSHELL -> {
+        // saving command history is disabled for PowerShell in [disableSavingHistory]
+        toPowerShellCommandLine(this)
+      }
+      else -> {
+        val commandLine = toPosixShellCommandLine(this)
+        // prefix with a space to prevent adding it to history for Zsh/Bash/fish (works by default)
+        if (preventAddingToHistory) " $commandLine" else commandLine
+      }
+    }
   }
 
   fun BlockTerminalSession.sendCommandlineToExecuteWithoutAddingToHistory(shellCommandline: String) {

@@ -1,0 +1,12 @@
+CFBundleGetInfoString = "@@bundle_name@@ @@version@@、ビルド @@build@@、Copyright JetBrains s.r.o., (c) 2000-@@year@@";
+
+NSCameraUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのカメラへのアクセス許可をリクエストしています。";
+NSMicrophoneUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのマイクへのアクセスをリクエストしています。";
+NSLocationUsageDescription = "@@bundle_name@@ のアプリケーションがユーザー位置情報へのアクセス許可をリクエストしています。";
+NSDesktopFolderUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのデスクトップフォルダーへのアクセスをリクエストしています。";
+NSDocumentsFolderUsageDescription = "@@bundle_name@@ のアプリケーションがユーザーのドキュメントフォルダーへのアクセス許可をリクエストしています。";
+NSDownloadsFolderUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのダウンロードフォルダーへのアクセスをリクエストしています。";
+NSNetworkVolumesUsageDescription = "@@bundle_name@@ のアプリケーションがボリュームにあるファイルへのアクセスをリクエストしています。";
+NSRemovableVolumesUsageDescription = "@@bundle_name@@ のアプリケーションが取り外し可能なボリュームにあるファイルへのアクセスをリクエストしています。";
+NSBluetoothAlwaysUsageDescription = "@@bundle_name@@ のアプリケーションが Bluetooth へのアクセス許可をリクエストしています。";
+NSAppleEventsUsageDescription = "@@bundle_name@@ のアプリケーションが Apple イベントを送信する機能をリクエストしています。";

@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -35,6 +37,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackSurveyKt;
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
@@ -192,6 +195,11 @@ public final class TerminalSettingsPanel {
       blockTerminalSetting.setValue(myNewUiCheckbox.isSelected());
       TerminalUsageTriggerCollector.triggerBlockTerminalSwitched$intellij_terminal(myProject, myNewUiCheckbox.isSelected(),
                                                                                    BlockTerminalSwitchPlace.SETTINGS);
+      if (!myNewUiCheckbox.isSelected()) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          BlockTerminalFeedbackSurveyKt.showBlockTerminalFeedbackNotification(myProject);
+        }, ModalityState.nonModal());
+      }
     }
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());

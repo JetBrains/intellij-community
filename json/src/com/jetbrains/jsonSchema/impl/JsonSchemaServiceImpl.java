@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
@@ -420,7 +421,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   private @Nullable JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
     String schemaPropertyValue;
-    if (Registry.is("json.schema.object.v2")) {
+    if (file instanceof  LightVirtualFile || Registry.is("json.schema.object.v2")) {
       JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myProject).getComputedSchemaRootOrNull(file);
       if (schemaRootOrNull != null) {
         schemaPropertyValue = schemaRootOrNull.getSchema();

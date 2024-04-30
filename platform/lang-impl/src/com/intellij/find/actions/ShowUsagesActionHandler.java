@@ -5,6 +5,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.psi.search.LocalSearchScope;
@@ -12,6 +13,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageSearchPresentation;
 import com.intellij.usages.UsageSearcher;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +57,10 @@ public interface ShowUsagesActionHandler {
     if (shortcut == null) {
       return null;
     }
-    SearchScope maximalScope = actionHandler.getMaximalScope();
+    SearchScope maximalScope;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-349677, EA-847485")) {
+      maximalScope = actionHandler.getMaximalScope();
+    }
     if (maximalScope instanceof LocalSearchScope) {
       return null;
     }

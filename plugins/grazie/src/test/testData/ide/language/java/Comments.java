@@ -1,17 +1,17 @@
 // Copyright 2000-2020 I are a incorrect comment that the developers can hardly do anything about.
 
 class ForMultiLanguageSupport {
-    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
-    // das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
-    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
+    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
+    // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
+    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
 
   // Cover following cases
   // a) initially missing
   // b) initially missing
 
     // My
-    // <warning descr="COMMA_WHICH">name</warning>
-    //    <warning descr="COMMA_WHICH">which</warning> I occurred is
+    // <GRAMMAR_ERROR descr="COMMA_WHICH">name</GRAMMAR_ERROR>
+    //    <GRAMMAR_ERROR descr="COMMA_WHICH">which</GRAMMAR_ERROR> I occurred is
     // bad
 
 
@@ -50,14 +50,14 @@ class ForMultiLanguageSupport {
 
   // // We have an "hours" value of 42, when...
 
-  // Test various properties of <TYPO>igamma</TYPO> & <TYPO>igammac</TYPO>.  These are normalized
+  // Test various properties of <TYPO descr="Typo: In word 'igamma'">igamma</TYPO> & <TYPO descr="Typo: In word 'igammac'">igammac</TYPO>.  These are normalized
   // gamma integrals where
-  //   <TYPO>igammac</TYPO>(a, x) = Gamma(a, x) / Gamma(a)
-  //   <TYPO>igamma</TYPO>(a, x) = gamma(a, x) / Gamma(a)
+  //   <TYPO descr="Typo: In word 'igammac'">igammac</TYPO>(a, x) = Gamma(a, x) / Gamma(a)
+  //   <TYPO descr="Typo: In word 'igamma'">igamma</TYPO>(a, x) = gamma(a, x) / Gamma(a)
 
   // value between hours and minutes (":" is used by default)
 
-  // Copyright refers to <warning descr="EN_A_VS_AN">an</warning> legal right bla-bla-bla, and we check for errors here.
+  // Copyright refers to <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> legal right bla-bla-bla, and we check for errors here.
 
   // Avoid false positives when chunking is disabled.
   //     Elements are converted to strings as the time goes by.

@@ -12,6 +12,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedActionGroup;
+import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedButtonKt;
+import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.ListListenerCollapsedActionGroupExpander;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -46,6 +49,7 @@ public final class ActionGroupPanelWrapper {
     java.util.List<AnAction> groups = flattenActionGroups(action);
     DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
     JBList<AnAction> list = new JBList<>(model);
+    ListListenerCollapsedActionGroupExpander.expandCollapsableGroupsOnSelection(list, model, parentDisposable);
     for (AnAction group : groups) {
       if (group instanceof Disposable) {
         Disposer.register(parentDisposable, (Disposable)group);
@@ -95,7 +99,30 @@ public final class ActionGroupPanelWrapper {
                            }
 
                            @Override
+                           public Component getListCellRendererComponent(JList<? extends AnAction> list,
+                                                                         AnAction value,
+                                                                         int index,
+                                                                         boolean isSelected,
+                                                                         boolean cellHasFocus) {
+                             var component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                             // Collapsable group should be rendered as collapsable button
+                             if (value instanceof CollapsedActionGroup actionGroup) {
+                               return CollapsedButtonKt.createCollapsedButton(actionGroup, childAction -> {
+                                 // To get an action width we set to the component, render it, and see component width
+                                 // This approach obeys component spacing, font's size e.t.c
+                                 setLabelByAction(childAction);
+                                 return component.getPreferredSize().width;
+                               });
+                             }
+                             return component;
+                           }
+
+                           @Override
                            protected void customizeComponent(JList<? extends AnAction> list, AnAction value, boolean isSelected) {
+                             setLabelByAction(value);
+                           }
+
+                           private void setLabelByAction(@NotNull AnAction value) {
                              if (myTextLabel != null) {
                                myTextLabel.setText(value.getTemplateText());
                                myTextLabel.setIcon(value.getTemplatePresentation().getIcon());
@@ -249,22 +276,39 @@ public final class ActionGroupPanelWrapper {
 
   private static List<AnAction> flattenActionGroups(final @NotNull ActionGroup action) {
     final ArrayList<AnAction> groups = new ArrayList<>();
-    String groupName;
     for (AnAction anAction : action.getChildren(null)) {
-      if (anAction instanceof ActionGroup) {
-        groupName = anAction.getTemplateText();
-        for (AnAction childAction : ((ActionGroup)anAction).getChildren(null)) {
-          if (groupName != null) {
-            setParentGroupName(groupName, childAction);
-          }
-          groups.add(childAction);
+      if (anAction instanceof ActionGroup actionGroup) {
+        var elementsToAdd = getActionChildrenToAddInsteadOfAction(actionGroup);
+        if (elementsToAdd != null) {
+          // Some GroupActions shouldn't be added directly, but children must be added instead
+          groups.addAll(Arrays.asList(elementsToAdd));
+          continue;
         }
       }
-      else {
-        groups.add(anAction);
-      }
+      // Collapse groups and regular actions
+      groups.add(anAction);
     }
     return groups;
+  }
+
+  /**
+   * Action children must have parent name to display group separator.
+   * {@link CollapsedActionGroup} will be substituted with children later, when clicked.
+   * Regular {@link ActionGroup} must be replaced now
+   */
+  @NotNull
+  private static AnAction @Nullable [] getActionChildrenToAddInsteadOfAction(@NotNull ActionGroup actionGroup) {
+    String groupName;
+    AnAction[] children = actionGroup.getChildren(null);
+    groupName = actionGroup.getTemplateText();
+    for (AnAction childAction : children) {
+      if (groupName != null) {
+        setParentGroupName(groupName, childAction);
+      }
+    }
+    return actionGroup instanceof CollapsedActionGroup
+           ? null
+           : children;
   }
 
   private static @NlsContexts.Separator String getParentGroupName(final @NotNull AnAction value) {

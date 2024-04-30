@@ -20,7 +20,7 @@ import java.util.function.Predicate
 class EmailBlock(private val myProject: Project?,
                  private val showFeedbackSystemInfoDialog: () -> Unit) : FeedbackBlock {
   private var myCheckBoxLabel: @NlsContexts.Checkbox String = CommonFeedbackBundle.message("dialog.feedback.email.checkbox.label")
-  private var myProperty: String = LicensingFacade.INSTANCE?.getLicenseeEmail().orEmpty()
+  private var myProperty: String = LicensingFacade.getInstance()?.getLicenseeEmail().orEmpty()
   private var myCheckBoxEmail: JBCheckBox? = null
 
   override fun addToPanel(panel: Panel) {

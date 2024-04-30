@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.TabbedPaneUI;
@@ -91,7 +92,15 @@ public final class ServiceViewUIUtils {
 
   public static @NotNull JComponent wrapServicesAligned(@NotNull ActionToolbar toolbar) {
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarComponent.setBorder(JBUI.Borders.empty());
+    int left = 0;
+    int right = 0;
+    Border border = toolbarComponent.getBorder();
+    if (border != null) {
+      Insets insets = border.getBorderInsets(toolbarComponent);
+      left = insets.left;
+      right = insets.right;
+    }
+    toolbarComponent.setBorder(JBUI.Borders.empty(0, left, 0, right));
     return new NonOpaquePanel(toolbarComponent) {
       @Override
       public Dimension getPreferredSize() {

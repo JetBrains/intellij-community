@@ -51,7 +51,10 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -822,36 +825,44 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public Object getData(@NotNull String dataId) {
-    EditorEx editor = (EditorEx)getEditor();
-    if (editor == null) {
-      return null;
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      EditorEx editor = (EditorEx)getEditor();
+      if (editor == null) return null;
+      EditorHyperlinkSupport hyperlinks = getHyperlinks();
+      return (DataProvider) slowId -> getSlowData(slowId, editor, hyperlinks);
     }
+    else if (CommonDataKeys.EDITOR.is(dataId)) {
+      return getEditor();
+    }
+    else if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
+      return this;
+    }
+    else if (CommonDataKeys.CARET.is(dataId)) {
+      EditorEx editor = (EditorEx)getEditor();
+      return editor == null ? null : editor.getCaretModel().getCurrentCaret();
+    }
+    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      EditorEx editor = (EditorEx)getEditor();
+      return editor == null ? null : editor.getCopyProvider();
+    }
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return myHelpId;
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId,
+                                       @NotNull EditorEx editor,
+                                       @NotNull EditorHyperlinkSupport hyperlinks) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       int offset = editor.getCaretModel().getOffset();
-      HyperlinkInfo info = getHyperlinks().getHyperlinkAt(offset);
+      HyperlinkInfo info = hyperlinks.getHyperlinkAt(offset);
       return info == null ? null : new Navigatable() {
         @Override public void navigate(boolean requestFocus) { info.navigate(myProject); }
         @Override public boolean canNavigate() { return true; }
         @Override public boolean canNavigateToSource() { return true; }
       };
     }
-
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      return editor;
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return myHelpId;
-    }
-    if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
-      return this;
-    }
-    if (CommonDataKeys.CARET.is(dataId)) {
-      return editor.getCaretModel().getCurrentCaret();
-    }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return editor.getCopyProvider();
-    }
-
     return null;
   }
 

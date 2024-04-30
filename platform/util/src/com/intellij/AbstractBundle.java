@@ -145,17 +145,14 @@ public class AbstractBundle {
 
   private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     return resolveResourceBundleWithFallback(
-      () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE),
-      loader, pathToBundle
+      loader, pathToBundle, () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE)
     );
   }
 
   @ApiStatus.Internal
-  protected static @NotNull ResourceBundle resolveResourceBundleWithFallback(
-    @NotNull Supplier<? extends @NotNull ResourceBundle> firstTry,
-    @NotNull ClassLoader loader,
-    @NotNull String pathToBundle
-  ) {
+  protected static @NotNull ResourceBundle resolveResourceBundleWithFallback(@NotNull ClassLoader loader,
+                                                                             @NotNull String pathToBundle,
+                                                                             @NotNull Supplier<? extends @NotNull ResourceBundle> firstTry) {
     try {
       return firstTry.get();
     }

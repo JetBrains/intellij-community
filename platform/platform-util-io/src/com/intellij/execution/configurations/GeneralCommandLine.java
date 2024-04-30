@@ -117,6 +117,7 @@ public class GeneralCommandLine implements UserDataHolder {
     myRedirectErrorStream = original.myRedirectErrorStream;
     myInputFile = original.myInputFile;
     myUserData = null;  // user data should not be copied over
+    myProcessCreator = original.myProcessCreator;
   }
 
   private static Charset defaultCharset() {

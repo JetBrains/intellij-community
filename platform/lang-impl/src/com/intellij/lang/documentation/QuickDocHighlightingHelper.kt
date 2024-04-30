@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.applyIf
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.xml.util.XmlStringUtil
@@ -57,7 +58,8 @@ object QuickDocHighlightingHelper {
   @RequiresReadLock
   fun StringBuilder.appendStyledCodeBlock(project: Project, language: Language?, code: @NlsSafe CharSequence): @NlsSafe StringBuilder =
     append(CODE_BLOCK_PREFIX)
-      .appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code, true)
+      .appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code,
+                             isForRenderedDoc = true, trim = true)
       .append(CODE_BLOCK_SUFFIX)
 
   @JvmStatic
@@ -93,7 +95,7 @@ object QuickDocHighlightingHelper {
     append(INLINE_CODE_PREFIX)
       .appendHighlightedCode(
         project, language, DocumentationSettings.getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING, code,
-        true)
+        isForRenderedDoc = true, trim = false)
       .append(INLINE_CODE_SUFFIX)
 
   /**
@@ -116,7 +118,7 @@ object QuickDocHighlightingHelper {
   @JvmStatic
   @RequiresReadLock
   fun StringBuilder.appendStyledCodeFragment(project: Project, language: Language, @NlsSafe code: String): StringBuilder =
-    appendHighlightedCode(project, language, true, code, false)
+    appendHighlightedCode(project, language, true, code, isForRenderedDoc = false, trim = false)
 
   /**
    * This method should be used when generating links to PsiElements.
@@ -187,7 +189,8 @@ object QuickDocHighlightingHelper {
   @JvmStatic
   @RequiresReadLock
   fun StringBuilder.appendStyledSignatureFragment(project: Project, language: Language?, code: String): StringBuilder =
-    appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), code, false)
+    appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), code,
+                          isForRenderedDoc = false, trim = false)
 
   /**
    * Returns an HTML fragment containing [contents] colored according to [textAttributes].
@@ -273,8 +276,9 @@ object QuickDocHighlightingHelper {
 
   @Internal
   @JvmStatic
-  fun getDefaultFormattingStyles(spacing: Int): List<String> {
+  fun getDefaultFormattingStyles(spacingBefore: Int, spacingAfter: Int): List<String> {
     val fontSize = StartupUiUtil.labelFont.size
+    val paragraphSpacing = """padding: ${spacingBefore}px 0 ${spacingAfter}px 0"""
     return listOf(
       "h6 { font-size: ${fontSize + 1}}",
       "h5 { font-size: ${fontSize + 2}}",
@@ -282,15 +286,15 @@ object QuickDocHighlightingHelper {
       "h3 { font-size: ${fontSize + 4}}",
       "h2 { font-size: ${fontSize + 6}}",
       "h1 { font-size: ${fontSize + 8}}",
-      "h1, h2, h3, h4, h5, h6 {margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
-      "p { margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; line-height: 125%;}",
-      "ul { margin: 0 0 0 ${scale(10)}px; padding: 0 0 ${spacing}px 0;}",
-      "ol { margin: 0 0 0 ${scale(20)}px; padding: 0 0 ${spacing}px 0;}",
+      "h1, h2, h3, h4, h5, h6 {margin: 0 0 0 0; ${paragraphSpacing}; }",
+      "p { margin: 0 0 0 0; ${paragraphSpacing}; line-height: 125%; }",
+      "ul { margin: 0 0 0 ${scale(10)}px; ${paragraphSpacing};}",
+      "ol { margin: 0 0 0 ${scale(20)}px; ${paragraphSpacing};}",
       "li { padding: ${scale(1)}px 0 ${scale(2)}px 0; }",
       "li p { padding-top: 0; padding-bottom: 0; }",
       "th { text-align: left; }",
       "tr, table { margin: 0 0 0 0; padding: 0 0 0 0; }",
-      "td { margin: 0 0 0 0; padding: 0 ${spacing}px ${spacing}px 0; }",
+      "td { margin: 0 0 0 0; padding: ${spacingBefore}px ${spacingBefore + spacingAfter}px ${spacingAfter}px 0; }",
       "td p { padding-top: 0; padding-bottom: 0; }",
       "td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }",
       ".$CLASS_CENTERED { text-align: center}",
@@ -302,7 +306,8 @@ object QuickDocHighlightingHelper {
   fun getDefaultDocCodeStyles(
     colorScheme: EditorColorsScheme,
     editorPaneBackgroundColor: Color,
-    spacing: Int,
+    spacingBefore: Int,
+    spacingAfter: Int,
   ): List<String> = StyleSheetRulesProviderForCodeHighlighting.getRules(
     colorScheme, editorPaneBackgroundColor,
     listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)", ".$CLASS_CONTENT div:not(.$CLASS_TOP)",
@@ -313,19 +318,20 @@ object QuickDocHighlightingHelper {
     && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
     DocumentationSettings.isCodeBackgroundEnabled()
     && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
-    "0 0 ${spacing}px 0"
+    "${spacingBefore}px 0 ${spacingAfter}px 0"
   )
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,
-                                                  code: CharSequence, isForRenderedDoc: Boolean): StringBuilder {
-    val processedCode = code.toString().trim('\n', '\r').replace(' ', ' ').trimEnd()
+                                                  code: CharSequence, isForRenderedDoc: Boolean, trim: Boolean): StringBuilder {
+    val processedCode = code.toString().trim('\n', '\r').replace(' ', ' ')
+      .applyIf(trim) { trimEnd() }
     if (language != null && doHighlighting) {
       HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
         this, project, language, processedCode,
-        DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
+        trim, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
     }
     else {
-      append(XmlStringUtil.escapeString(processedCode.trimIndent()))
+      append(XmlStringUtil.escapeString(processedCode.applyIf(trim) { trimIndent() }))
     }
     return this
   }

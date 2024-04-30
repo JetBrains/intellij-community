@@ -16,7 +16,7 @@ interface PsiSourcedWebSymbolProvider {
     val EP_NAME = ExtensionPointName.create<PsiSourcedWebSymbolProvider>("com.intellij.webSymbols.psiSourcedSymbolProvider")
 
     fun getAllWebSymbols(element: PsiElement): Collection<PsiSourcedWebSymbol> =
-      EP_NAME.extensions.asSequence().flatMap { it.getWebSymbols(element) }.toList()
+      EP_NAME.extensionList.flatMap { it.getWebSymbols(element) }
 
   }
 

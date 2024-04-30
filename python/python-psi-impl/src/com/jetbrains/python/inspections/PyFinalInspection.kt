@@ -294,6 +294,11 @@ class PyFinalInspection : PyInspection() {
         return
       }
 
+      if (qualifierType is PyClassType && qualifierType.isDefinition) {
+        checkClassFinalReassignment(target, qualifierType.pyClass)
+        return
+      }
+
       // TODO: revert back to PyUtil#multiResolveTopPriority when resolve into global statement is implemented
       val resolved = when (target) {
         is PyReferenceOwner -> target.getReference(resolveContext).multiResolve(false).mapNotNull { it.element }
@@ -319,6 +324,14 @@ class PyFinalInspection : PyInspection() {
         if (scopeOwner is PyClass) {
           checkInheritedClassFinalReassignmentOnClassLevel(target, scopeOwner)
         }
+      }
+    }
+
+    private fun checkClassFinalReassignment(target: PyQualifiedExpression, cls: PyClass) {
+      val name = target.name ?: return
+      val classAttribute = cls.findClassAttribute(name, true, myTypeEvalContext)
+      if (classAttribute != null && isFinal(classAttribute)) {
+        registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", name))
       }
     }
 

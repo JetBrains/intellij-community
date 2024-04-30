@@ -67,6 +67,12 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     myResizeManager.updateState(toolbar)
   }
 
+  fun updateNamedState() {
+    if (isVisible && ResizeStripeManager.isShowNames()) {
+      myResizeManager.updateNamedState()
+    }
+  }
+
   open fun createBorder():Border = JBUI.Borders.empty()
   open fun getBorderColor(): Color? = JBUI.CurrentTheme.ToolWindow.borderColor()
 

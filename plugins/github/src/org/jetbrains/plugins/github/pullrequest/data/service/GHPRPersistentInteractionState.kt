@@ -15,6 +15,7 @@ import java.util.*
 class GHPRPersistentInteractionState : SerializablePersistentStateComponent<GHPRPersistentInteractionState.State>(State(listOf())) {
   companion object {
     private const val CLEAR_AFTER_DAYS_KEY = "github.clear.last.seen.state.days"
+    private const val MARGIN_MILLIS_KEY = "github.last.seen.state.margin.millis"
   }
 
   @Serializable
@@ -32,7 +33,7 @@ class GHPRPersistentInteractionState : SerializablePersistentStateComponent<GHPR
     }
 
     val lastSeen = state.prStates.find { it.id == pr.prId }?.lastSeen
-    val isSeen = (lastSeen != null && Date(lastSeen) >= pr.updatedAt)
+    val isSeen = (lastSeen != null && Date(lastSeen + Registry.intValue(MARGIN_MILLIS_KEY)) >= pr.updatedAt)
 
     // TODO: Revise this check when adding a new-in-timeline line.
     // Cleanup state entries for PRs that have updates

@@ -15,8 +15,10 @@ public class PropertyKeyLiteralConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    if (DumbService.isDumb(psiFile.getProject())) return ThreeState.UNSURE;
+
     UInjectionHost injectionHost = UastContextKt.getUastParentOfType(contextElement.getParent(), UInjectionHost.class, false);
-    return injectionHost != null && !DumbService.isDumb(psiFile.getProject()) && JavaI18nUtil.mustBePropertyKey(injectionHost, null)
+    return injectionHost != null && JavaI18nUtil.mustBePropertyKey(injectionHost, null)
            ? ThreeState.NO
            : ThreeState.UNSURE;
   }

@@ -41,6 +41,9 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.markdown" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jupyter.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.grazie.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.grazie" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />

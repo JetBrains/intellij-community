@@ -53,18 +53,17 @@ class GroovyPluginConfigurator : MavenWorkspaceConfigurator {
 
   }
 
-  override fun getAdditionalSourceFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<String> {
-    return getGroovySources(context, isForMain = true)
+  override fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<MavenWorkspaceConfigurator.AdditionalFolder> {
+    return (getGroovySources(context, isForMain = true)
+              .map { MavenWorkspaceConfigurator.AdditionalFolder(it, MavenWorkspaceConfigurator.FolderType.SOURCE) }
+            +
+            getGroovySources(context, isForMain = false)
+              .map { MavenWorkspaceConfigurator.AdditionalFolder(it, MavenWorkspaceConfigurator.FolderType.TEST_SOURCE) }).asStream()
   }
 
-  override fun getAdditionalTestSourceFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<String> {
-    return getGroovySources(context, isForMain = false)
-  }
-
-  private fun getGroovySources(context: MavenWorkspaceConfigurator.FoldersContext, isForMain: Boolean): Stream<String> {
+  private fun getGroovySources(context: MavenWorkspaceConfigurator.FoldersContext, isForMain: Boolean): Sequence<String> {
     return getGroovyPluginsInProject(context)
       .flatMap { collectGroovyFolders(it, isForMain) }
-      .asStream()
   }
 
   override fun getFoldersToExclude(context: MavenWorkspaceConfigurator.FoldersContext): Stream<String> {

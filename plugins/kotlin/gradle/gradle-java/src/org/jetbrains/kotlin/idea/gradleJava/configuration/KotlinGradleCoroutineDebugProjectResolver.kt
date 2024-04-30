@@ -46,7 +46,7 @@ class KotlinGradleCoroutineDebugProjectResolver : AbstractProjectResolverExtensi
                 taskGraph.allTasks.each { Task task ->
                     if (!(task instanceof Test || task instanceof JavaExec)) return
                     $gradleVersionCheck
-                    for (arg in task.getAllJvmArgs() + task.getJvmArgs()) {
+                    for (arg in task.getJvmArgs()) {
                         if (arg == "-D$DEBUG_PROPERTY_NAME=$DEBUG_PROPERTY_VALUE_OFF") {
                             return
                         }

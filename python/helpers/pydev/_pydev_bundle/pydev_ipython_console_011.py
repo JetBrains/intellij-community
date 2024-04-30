@@ -19,6 +19,7 @@ import os
 import sys
 import codeop
 import traceback
+from copy import deepcopy
 
 from IPython.core.error import UsageError
 from IPython.core.interactiveshell import InteractiveShell, InteractiveShellABC
@@ -27,7 +28,7 @@ from IPython.core.formatters import DisplayFormatter
 from IPython.core import release
 
 from IPython.terminal.interactiveshell import TerminalInteractiveShell
-from IPython.terminal.ipapp import load_default_config
+from IPython.terminal.ipapp import TerminalIPythonApp
 from IPython import InteractiveShell
 
 from traitlets import Type
@@ -245,6 +246,24 @@ class PyDebuggerTerminalInteractiveShell(PyDevTerminalInteractiveShell):
 InteractiveShellABC.register(PyDevTerminalInteractiveShell)  # @UndefinedVariable
 InteractiveShellABC.register(PyDebuggerTerminalInteractiveShell)
 
+class PyDevIpythonApp(TerminalIPythonApp):
+    def initialize(self, shell_cls):
+        """Do actions after construct, but before starting the app."""
+        cl_config = deepcopy(self.config)
+        self.init_profile_dir()
+        self.init_config_files()
+        self.load_config_file()
+        self.update_config(cl_config)
+        self.init_path()
+        self.init_shell(shell_cls)
+        self.init_extensions()
+        self.init_code()
+
+    def init_shell(self, shell_cls):
+        self.shell = shell_cls.instance()
+        self.shell.configurables.append(self)
+
+
 #=======================================================================================================================
 # _PyDevIPythonFrontEnd
 #=======================================================================================================================
@@ -256,27 +275,35 @@ class _PyDevIPythonFrontEnd:
         # Create and initialize our IPython instance.
         self.is_jupyter_debugger = is_jupyter_debugger
         if is_jupyter_debugger:
-            if hasattr(PyDebuggerTerminalInteractiveShell, 'new_instance') and PyDebuggerTerminalInteractiveShell.new_instance is not None:
+            if self._has_shell_instance(PyDebuggerTerminalInteractiveShell, 'new_instance'):
                 self.ipython = PyDebuggerTerminalInteractiveShell.new_instance
             else:
                 # if we already have some InteractiveConsole instance (Python Console: Attach Debugger)
-                if hasattr(PyDevTerminalInteractiveShell, '_instance') and PyDevTerminalInteractiveShell._instance is not None:
+                if self._has_shell_instance(PyDevTerminalInteractiveShell, '_instance'):
                     PyDevTerminalInteractiveShell.clear_instance()
 
                 InteractiveShell.clear_instance()
-                self.ipython = PyDebuggerTerminalInteractiveShell.instance(config=load_default_config())
+
+                self.ipython = self._init_ipy_app(PyDebuggerTerminalInteractiveShell).shell
                 PyDebuggerTerminalInteractiveShell.new_instance = PyDebuggerTerminalInteractiveShell._instance
         else:
-            if hasattr(PyDevTerminalInteractiveShell, '_instance') and PyDevTerminalInteractiveShell._instance is not None:
+            if self._has_shell_instance(PyDevTerminalInteractiveShell, '_instance'):
                 self.ipython = PyDevTerminalInteractiveShell._instance
             else:
-                self.ipython = PyDevTerminalInteractiveShell.instance(config=load_default_config())
+                self.ipython = self._init_ipy_app(PyDevTerminalInteractiveShell).shell
 
         self._curr_exec_line = 0
         self._curr_exec_lines = []
 
-    def show_banner(self):
-        self.ipython.show_banner()
+    def _init_ipy_app(self, shell_cls):
+        application = PyDevIpythonApp()
+        application.initialize(shell_cls)
+        return application
+
+
+    def _has_shell_instance(self, shell_cls, instance_str):
+        return getattr(shell_cls, instance_str, None) is not None
+
 
     def update(self, globals, locals):
         ns = self.ipython.user_ns

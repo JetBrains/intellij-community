@@ -396,7 +396,7 @@ private suspend fun computeImplicitRequiredModules(explicit: List<String>,
                                                    productLayout: ProductModulesLayout,
                                                    context: BuildContext): List<Pair<String, PersistentList<String>>> {
   val rootChain = persistentListOf<String>()
-  val rootList = layout.filteredIncludedModuleNames(TEST_FRAMEWORK_JAR)
+  val rootList = layout.filteredIncludedModuleNames(TEST_FRAMEWORK_JAR, includeFromSubdirectories = false)
     .plus(explicit)
     .filter {
       !productLayout.excludedModuleNames.contains(it) &&

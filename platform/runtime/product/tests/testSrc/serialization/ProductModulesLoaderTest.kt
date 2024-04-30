@@ -3,8 +3,11 @@ package com.intellij.platform.runtime.product.serialization
 
 import com.intellij.platform.runtime.product.ModuleImportance
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.platform.runtime.repository.*
+import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.createRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.writePluginXml
+import com.intellij.platform.runtime.repository.xml
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.directoryContent
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -27,7 +30,7 @@ class ProductModulesLoaderTest {
                                       RawRuntimeModuleDescriptor("root", emptyList(), listOf("util")),
                                       RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
     )
-    writePluginXml(tempDirectory.rootPath / "plugin", "<idea-plugin><id>plugin</id></idea-plugin>")
+    writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "<idea-plugin><id>plugin</id></idea-plugin>")
     val xml = generateProductModulesWithPlugins("plugin")
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
@@ -80,15 +83,7 @@ class ProductModulesLoaderTest {
       RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
       RawRuntimeModuleDescriptor("optional", emptyList(), listOf("plugin")),
     )
-    writePluginXml(tempDirectory.rootPath / "plugin", """
-      |<idea-plugin>
-      |  <id>plugin</id>
-      |  <content>
-      |    <module name="optional"/>
-      |    <module name="unknown"/>
-      |  </content>
-      |</idea-plugin>
-      """.trimMargin())
+    writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "optional", "unknown")
 
     val xml = generateProductModulesWithPlugins("plugin")
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
@@ -115,16 +110,7 @@ class ProductModulesLoaderTest {
       RawRuntimeModuleDescriptor("plugin.frontend", emptyList(), listOf("plugin", "intellij.platform.frontend")),
       RawRuntimeModuleDescriptor("plugin.localIde", emptyList(), listOf("plugin", "intellij.platform.localIde")),
     )
-    writePluginXml(tempDirectory.rootPath / "plugin", """
-      |<idea-plugin>
-      |  <id>plugin</id>
-      |  <content>
-      |    <module name="plugin.common"/>
-      |    <module name="plugin.frontend"/>
-      |    <module name="plugin.localIde"/>
-      |  </content>
-      |</idea-plugin>
-      """.trimMargin())
+    writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "plugin.common", "plugin.frontend", "plugin.localIde")
 
     val xml = generateProductModulesWithPlugins("plugin")
     fun checkGroup(productMode: ProductMode, additionalModuleName: String) {
@@ -141,18 +127,66 @@ class ProductModulesLoaderTest {
     checkGroup(ProductMode.FRONTEND, "plugin.frontend")
   }
 
-  private fun generateProductModulesWithPlugins(vararg plugins: String): Path = directoryContent {
-    xml(FILE_NAME, """
+  @Test
+  fun inclusion() {
+    val repository = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor("root", listOf("root"), emptyList()),
+      RawRuntimeModuleDescriptor("common.plugin", listOf("common.plugin"), emptyList()),
+      RawRuntimeModuleDescriptor("additional", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
+    )
+    writePluginXmlWithModules(tempDirectory.rootPath.resolve("common.plugin"), "common")
+    writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin"), "plugin")
+    val rootProductModulesPath = tempDirectory.rootPath.resolve("root/META-INF/root")
+    productModulesWithPlugins("common.plugin").generate(rootProductModulesPath.toFile())
+
+    val xmlPath = directoryContent {
+      xml(FILE_NAME, """
           <product-modules>
+            <include>
+              <from-module>root</from-module>
+            </include>
             <main-root-modules>
-              <module importance="functional">root</module>
+              <module importance="functional">additional</module>
             </main-root-modules>
             <bundled-plugins>
-              ${plugins.joinToString("\n") {
-                 "<module>$it</module>"
-              }}
+              <module>plugin</module>
             </bundled-plugins>  
           </product-modules>
         """.trimIndent())
-  }.generateInTempDir().resolve(FILE_NAME)
+    }.generateInTempDir().resolve(FILE_NAME)
+    val productModules = ProductModulesSerialization.loadProductModules(xmlPath, ProductMode.FRONTEND, repository)
+    val mainModules = productModules.mainModuleGroup.includedModules
+    assertEquals(listOf("additional", "root"), mainModules.map { it.moduleDescriptor.moduleId.stringId })
+    val bundledPlugins = productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.stringId }
+    assertEquals(listOf("plugin", "common.plugin"), bundledPlugins)
+  }
+
+  private fun writePluginXmlWithModules(resourcePath: Path, pluginId: String, vararg contentModules: String) {
+    writePluginXml(resourcePath, """
+        |<idea-plugin>
+        |  <id>$pluginId</id>
+        |  <content>
+        |    ${contentModules.joinToString("\n    ") { "<module name=\"$it\"/>"}}
+        |  </content>
+        |</idea-plugin>
+        """.trimMargin())
+  }
+
+  private fun generateProductModulesWithPlugins(vararg plugins: String): Path = 
+    productModulesWithPlugins(*plugins).generateInTempDir().resolve(FILE_NAME)
+
+  private fun productModulesWithPlugins(vararg plugins: String) = directoryContent {
+      xml(FILE_NAME, """
+            <product-modules>
+              <main-root-modules>
+                <module importance="functional">root</module>
+              </main-root-modules>
+              <bundled-plugins>
+                ${plugins.joinToString("\n") { "<module>$it</module>" }}
+              </bundled-plugins>  
+            </product-modules>
+          """.trimIndent())
+    }
 }

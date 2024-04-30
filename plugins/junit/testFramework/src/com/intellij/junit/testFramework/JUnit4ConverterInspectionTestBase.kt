@@ -11,6 +11,10 @@ import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class JUnit4ConverterInspectionTestBase : JvmInspectionTestBase() {
   override val inspection = JUnit4ConverterInspection()
+  override fun setUp() {
+    super.setUp()
+    enableWarnings()
+  }
 
   protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

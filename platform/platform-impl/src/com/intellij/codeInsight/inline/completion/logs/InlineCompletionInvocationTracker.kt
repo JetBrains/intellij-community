@@ -99,7 +99,7 @@ internal class InlineCompletionInvocationTracker(
       data.add(InvokedEvents.ADDITIONAL.with(ObjectEventData(it)))
     }
 
-    if (application.isEAP && contextFeatures.isNotEmpty()) {
+    if (contextFeatures.isNotEmpty()) {
       data.add(InvokedEvents.CONTEXT_FEATURES.with(ObjectEventData(contextFeatures)))
     }
 

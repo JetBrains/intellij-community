@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -1534,7 +1535,7 @@ public final class HighlightUtil {
   }
 
   public static HighlightInfo.Builder checkFragmentError(PsiFragment fragment) {
-    String text = fragment.getText();
+    String text = InjectedLanguageManager.getInstance(fragment.getProject()).getUnescapedText(fragment);
     if (fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
       final HighlightInfo.Builder info1 = checkTextBlockNewlineAfterOpeningQuotes(fragment, text, null);
       if (info1 != null) return info1;

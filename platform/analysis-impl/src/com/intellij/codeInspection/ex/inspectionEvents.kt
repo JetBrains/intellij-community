@@ -4,14 +4,16 @@ package com.intellij.codeInspection.ex
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.TimeoutUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 
-fun reportWhenInspectionFinished(inspectListener: InspectListener,
-                                 toolWrapper: InspectionToolWrapper<*, *>,
-                                 kind: InspectListener.InspectionKind,
-                                 file: PsiFile?,
-                                 project: Project,
-                                 inspectAction: Callable<Int>) {
+@ApiStatus.Internal
+fun reportToQodanaWhenInspectionFinished(inspectListener: InspectListener,
+                                         toolWrapper: InspectionToolWrapper<*, *>,
+                                         globalSimple : Boolean,
+                                         file: PsiFile?,
+                                         project: Project,
+                                         inspectAction: Callable<Int>) {
   val start = System.nanoTime()
   var problemsCount = -1
   try {
@@ -23,14 +25,15 @@ fun reportWhenInspectionFinished(inspectListener: InspectListener,
   }
   finally {
     inspectListener.inspectionFinished(TimeoutUtil.getDurationMillis(start), Thread.currentThread().id, problemsCount, toolWrapper,
-                                       kind, file, project)
+                                       if (globalSimple) InspectListener.InspectionKind.GLOBAL_SIMPLE else InspectListener.InspectionKind.GLOBAL, file, project)
   }
 }
 
-fun reportWhenActivityFinished(inspectListener: InspectListener,
-                               activityKind: InspectListener.ActivityKind,
-                               project: Project,
-                               activity: Runnable) {
+@ApiStatus.Internal
+fun reportToQodanaWhenActivityFinished(inspectListener: InspectListener,
+                                       activityKind: String,
+                                       project: Project,
+                                       activity: Runnable) {
   val start = System.currentTimeMillis()
   try {
     activity.run()

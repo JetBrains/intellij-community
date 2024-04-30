@@ -67,6 +67,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ForkJoinPool
 import java.util.function.BiFunction
 import kotlin.system.exitProcess
 
@@ -145,7 +146,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
     }
 
     val initConfigurationStoreJob = launch {
-      initConfigurationStore(app)
+      initConfigurationStore(app, args)
     }
 
     val applicationStarter = createAppStarter(args = args, asyncScope = this@span)
@@ -259,7 +260,7 @@ private suspend fun preloadNonHeadlessServices(
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-341318
-    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
+    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "true").toBoolean()) {
       // ActionManager can use UISettings (KeymapManager doesn't use, but just to be sure)
       initLafJob.join()
     }
@@ -363,7 +364,7 @@ private suspend fun initLafManagerAndCss(
   }
 }
 
-suspend fun initConfigurationStore(app: ApplicationImpl) {
+suspend fun initConfigurationStore(app: ApplicationImpl, args: List<String>) {
   val configDir = PathManager.getConfigDir()
 
   coroutineScope {
@@ -375,7 +376,7 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
     span("beforeApplicationLoaded") {
       for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
         extension.useOrLogError {
-          it.beforeApplicationLoaded(app, configDir)
+          it.beforeApplicationLoaded(app, configDir, args)
         }
       }
     }
@@ -397,7 +398,15 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
     else {
       // todo https://youtrack.jetbrains.com/issue/IDEA-298594
       CompletableFuture.runAsync {
-        starter.main(args)
+        ForkJoinPool.managedBlock(object : ForkJoinPool.ManagedBlocker {
+          override fun block(): Boolean {
+            starter.main(args)
+            return true
+          }
+          override fun isReleasable(): Boolean {
+            return false
+          }
+        })
       }
     }
   }

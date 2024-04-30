@@ -3,13 +3,18 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitPopupHandler
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindEnabledIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.ide.plugins.newui.InstallButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JPanel
 
@@ -53,6 +58,14 @@ internal object GitLabMergeRequestSubmitReviewPopup : CodeReviewSubmitPopupHandl
       add(approveButton)
       add(unApproveButton)
       add(submitButton)
+    }
+  }
+
+  override val errorPresenter: ErrorStatusPresenter<Throwable> by lazy {
+    object : ErrorStatusPresenter.Text<Throwable> {
+      override fun getErrorTitle(error: Throwable): String = CollaborationToolsBundle.message("review.submit.failed")
+      override fun getErrorDescription(error: Throwable): String = ExceptionUtil.getPresentableMessage(error)
+      override fun getErrorAction(error: Throwable): Action? = null
     }
   }
 }

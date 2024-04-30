@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.color.scheme.monokai" />
     <orderEntry type="module" module-name="intellij.color.scheme.twilight" />
     <orderEntry type="module" module-name="intellij.color.scheme.warmNeon" />

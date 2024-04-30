@@ -5,16 +5,12 @@ import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.CustomShortcutSet
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -33,6 +29,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI
@@ -153,9 +150,9 @@ object TerminalUiUtils {
 
     Disposer.register(alarm) {
       if (!result.isDone) {
-        ApplicationManager.getApplication().invokeLater({
-                                                          result.completeExceptionally(IllegalStateException("parent disposed"))
-                                                        }, ModalityState.stateForComponent(component))
+        invokeLater(modalityState = ModalityState.stateForComponent(component)) {
+          result.completeExceptionally(IllegalStateException("parent disposed"))
+        }
       }
     }
     result.whenComplete { _, _ ->
@@ -218,7 +215,30 @@ object TerminalUiUtils {
     return AwtTransformers.toAwtColor(color?.let { palette.getBackground(it) } ?: palette.defaultBackground)!!
   }
 
+  fun plainAttributesProvider(foregroundColorIndex: Int, palette: TerminalColorPalette): TextAttributesProvider {
+    return TextStyleAdapter(TextStyle(TerminalColor(foregroundColorIndex), null), palette)
+  }
+
   private val LOG = logger<TerminalUiUtils>()
   private const val TIMEOUT = 2000
   private const val TERMINAL_OUTPUT_CONTEXT_MENU = "Terminal.OutputContextMenu"
+
+  const val GREEN_COLOR_INDEX: Int = 2
+  const val YELLOW_COLOR_INDEX: Int = 3
 }
+
+@RequiresBlockingContext
+fun invokeLater(expired: (() -> Boolean)? = null,
+                modalityState: ModalityState = ModalityState.defaultModalityState(),
+                runnable: Runnable) {
+  if (expired != null) {
+    ApplicationManager.getApplication().invokeLater(runnable, modalityState) {
+      expired()
+    }
+  }
+  else {
+    ApplicationManager.getApplication().invokeLater(runnable, modalityState)
+  }
+}
+
+fun Editor.getDisposed(): () -> Boolean = { this.isDisposed }

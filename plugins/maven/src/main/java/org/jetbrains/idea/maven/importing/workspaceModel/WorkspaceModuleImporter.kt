@@ -30,6 +30,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import org.jetbrains.idea.maven.importing.MavenImportUtil
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
@@ -51,7 +52,8 @@ internal class WorkspaceModuleImporter(
   private val existingEntitySourceNames: FileInDirectorySourceNames,
   private val importingSettings: MavenImportingSettings,
   private val folderImportingContext: WorkspaceFolderImporter.FolderImportingContext,
-  private val stats: WorkspaceImportStats
+  private val stats: WorkspaceImportStats,
+  private val workspaceConfigurators: List<MavenWorkspaceConfigurator>
 ) {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
@@ -61,7 +63,7 @@ internal class WorkspaceModuleImporter(
 
     val moduleLibrarySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource,
                                                                                              existingEntitySourceNames,
-                                                                                 moduleName + ModuleManagerEx.IML_EXTENSION)
+                                                                                             moduleName + ModuleManagerEx.IML_EXTENSION)
 
     val originalModule = storageBeforeImport.resolve(ModuleId(moduleName))
     val dependencies = collectDependencies(moduleName, originalModule, importData.dependencies, moduleLibrarySource)
@@ -93,7 +95,7 @@ internal class WorkspaceModuleImporter(
   private fun configureModuleEntity(importData: MavenModuleImportData,
                                     moduleEntity: ModuleEntity,
                                     folderImportingContext: WorkspaceFolderImporter.FolderImportingContext) {
-    val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext)
+    val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext, workspaceConfigurators)
     val importFolderHolder = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity,
                                                                stats)
 
@@ -136,9 +138,9 @@ internal class WorkspaceModuleImporter(
                                   { reuseOrCreateProjectLibrarySource(dependency.artifact) })
         is ModuleDependency ->
           EntitiesModuleDependency(ModuleId(dependency.artifact),
-                                                           false,
-                                                           toScope(dependency.scope),
-                                                           dependency.isTestJar)
+                                   false,
+                                   toScope(dependency.scope),
+                                   dependency.isTestJar)
         is BaseDependency ->
           createLibraryDependency(dependency.artifact) { reuseOrCreateProjectLibrarySource(dependency.artifact.libraryName) }
         else -> null
@@ -247,12 +249,12 @@ internal class WorkspaceModuleImporter(
       else -> EntitiesDependencyScope.COMPILE
     }
 
-  private fun MavenProject.getManifestAttributes(): Map<String,String> {
+  private fun MavenProject.getManifestAttributes(): Map<String, String> {
     return this.getPluginConfiguration("org.apache.maven.plugins", "maven-jar-plugin")
-      ?.getChild("archive")
-      ?.getChild("manifestEntries")
-      ?.children
-      ?.associate { it.name to it.text } ?: emptyMap()
+             ?.getChild("archive")
+             ?.getChild("manifestEntries")
+             ?.children
+             ?.associate { it.name to it.text } ?: emptyMap()
   }
 
   private fun importJavaSettings(moduleEntity: ModuleEntity,

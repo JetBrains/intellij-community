@@ -12,9 +12,11 @@ import com.intellij.psi.ReferenceRange
 import com.intellij.psi.search.RequestResultProcessor
 import com.intellij.util.Processor
 import com.intellij.webSymbols.PsiSourcedWebSymbol
+import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.references.WebSymbolReference
 
 class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiElement,
+                                                private val targetSymbols: List<WebSymbol>,
                                                 private val includeRegularReferences: Boolean) : RequestResultProcessor() {
   private val mySymbolReferenceService = PsiSymbolReferenceService.getService()
   private val myPsiReferenceService = PsiReferenceService.getService()
@@ -33,8 +35,14 @@ class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiEl
           ProgressManager.checkCanceled()
           val psiSourcedWebSymbols = ref.resolveReference().filterIsInstance<PsiSourcedWebSymbol>()
           if (psiSourcedWebSymbols.isEmpty()) return@forEach
-          val targetSymbol = PsiSymbolService.getInstance().asSymbol(targetElement)
-          val equivalentSymbol = psiSourcedWebSymbols.find { it.isEquivalentTo(targetSymbol) } ?: return@forEach
+          val equivalentSymbol = if (targetSymbols.isEmpty()) {
+            val targetPsiSymbol = PsiSymbolService.getInstance().asSymbol(targetElement)
+            psiSourcedWebSymbols.find { it.isEquivalentTo(targetPsiSymbol) }
+          }
+          else {
+            targetSymbols.find { targetSymbol -> psiSourcedWebSymbols.any { it.isEquivalentTo(targetSymbol) } }
+          }
+          if (equivalentSymbol == null) return@forEach
           if (!consumer.process(
               PsiSourcedWebSymbolReference(equivalentSymbol, targetElement, element, ref.rangeInElement))) {
             return false

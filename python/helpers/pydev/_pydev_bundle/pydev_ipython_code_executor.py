@@ -38,8 +38,6 @@ class IPythonCodeExecutor(BaseCodeExecutor):
         self.show_banner = show_banner
 
     def get_greeting_msg(self):
-        if self.show_banner:
-            self.interpreter.show_banner()
         return self.interpreter.get_greeting_msg()
 
     def do_add_exec(self, code_fragment):

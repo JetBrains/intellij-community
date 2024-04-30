@@ -95,6 +95,41 @@ class Foo {
 '''
   }
 
+  void testNullableStuffTypeUse() {
+    myFixture.addClass("""
+                          package org.jetbrains.annotations;
+                          import java.lang.annotation.ElementType;
+                          import java.lang.annotation.Target;
+                          
+                          @Target(ElementType.TYPE_USE)
+                          public @interface NotNull {}""")
+    myFixture.configureByText("a.java", """
+class Foo {
+    @org.jetbrains.annotations.NotNull
+    private String myName;
+
+    <caret>
+}
+""")
+    generateGetter()
+    generateSetter()
+    myFixture.checkResult("""import org.jetbrains.annotations.NotNull;
+
+class Foo {
+    @org.jetbrains.annotations.NotNull
+    private String myName;
+
+    public void setMyName(@NotNull String myName) {
+        this.myName = myName;
+    }
+
+    public @NotNull String getMyName() {
+        return myName;
+    }
+}
+""")
+  }
+
   void "test builder setter template"() {
     myFixture.configureByText 'a.java', '''
 class X<T extends String> {
@@ -201,7 +236,7 @@ class Foo {
       @NotNull
       @Override
       Collection<EncapsulatableClassMember> fun(PsiClass dom) {
-        final List<EncapsulatableClassMember> result = new ArrayList<>();
+        final List<EncapsulatableClassMember> result = new ArrayList<>()
         def builder = new LightFieldBuilder(PsiManager.getInstance(project), "lombokGenerated", PsiTypes.intType())
         builder.setContainingClass(dom)
         result.add(new PsiFieldMember(builder))

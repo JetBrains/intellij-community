@@ -2,10 +2,10 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -149,11 +149,11 @@ public class KeymapTextContext {
   }
 
   private boolean isNativeMacShortcuts() {
-    return SystemInfo.isMac && !isSimplifiedMacShortcuts();
+    return ClientSystemInfo.isMac() && !isSimplifiedMacShortcuts();
   }
 
   public boolean isSimplifiedMacShortcuts() {
-    return SystemInfo.isMac && AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
+    return ClientSystemInfo.isMac() && AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
   }
 
   private @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers) {

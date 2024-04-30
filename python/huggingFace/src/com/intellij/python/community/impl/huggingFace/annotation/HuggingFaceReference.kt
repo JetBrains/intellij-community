@@ -4,23 +4,18 @@ package com.intellij.python.community.impl.huggingFace.annotation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
+import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
+import org.jetbrains.annotations.ApiStatus
 
-class HuggingFaceModelReference(
+
+@ApiStatus.Internal
+class HuggingFaceReference(
   element: PsiElement,
   textRange: TextRange,
-  private val modelName: String
+  private val identifier: String,
+  private val entityKind: HuggingFaceEntityKind,
 ) : PsiReferenceBase<PsiElement>(element, textRange) {
   override fun resolve(): PsiElement {
-    return HuggingFaceModelPsiElement(myElement, modelName)
-  }
-}
-
-class HuggingFaceDatasetReference(
-  element: PsiElement,
-  textRange: TextRange,
-  private val datasetName: String
-) : PsiReferenceBase<PsiElement>(element, textRange) {
-  override fun resolve(): PsiElement {
-    return HuggingFaceDatasetPsiElement(myElement, datasetName)
+    return HuggingFaceIdentifierPsiElement(myElement, identifier, entityKind)
   }
 }

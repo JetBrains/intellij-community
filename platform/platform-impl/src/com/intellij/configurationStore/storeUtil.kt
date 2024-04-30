@@ -25,8 +25,11 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
@@ -232,14 +235,20 @@ fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
  */
 suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Project? = null) {
   val start = System.nanoTime()
-  saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = forceSavingAllSettings)
-  if (onlyProject == null) {
-    for (project in getOpenedProjects()) {
-      saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
+
+  coroutineScope {
+    val saveAppJob = launch {
+      saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings)
     }
-  }
-  else {
-    saveSettings(onlyProject, forceSavingAllSettings = true)
+    val projects = if (onlyProject != null) sequenceOf(onlyProject) else getOpenedProjects()
+    for (project in projects) {
+      launch {
+        withBackgroundProgress(project, IdeBundle.message("progress.saving.project", project.name)) {
+          saveSettings(project, forceSavingAllSettings)
+          saveAppJob.join()
+        }
+      }
+    }
   }
 
   val duration = (System.nanoTime() - start).nanoseconds.inWholeMilliseconds

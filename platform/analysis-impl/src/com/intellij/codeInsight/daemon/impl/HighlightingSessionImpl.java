@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -47,6 +48,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class HighlightingSessionImpl implements HighlightingSession {
+  private static final Logger LOG = Logger.getInstance(HighlightingSessionImpl.class);
   private final @NotNull PsiFile myPsiFile;
   private final @NotNull ProgressIndicator myProgressIndicator;
   private final EditorColorsScheme myEditorColorsScheme;
@@ -169,10 +171,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
       runnable.accept(session);
     }
     finally {
-      Map<PsiFile, HighlightingSession> map = indicator.getUserData(HIGHLIGHTING_SESSION);
-      if (map != null) {
-        map.remove(file);
-      }
+      clearHighlightingSession(indicator, file);
     }
   }
 
@@ -197,10 +196,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
       runnable.accept(session);
     }
     finally {
-      Map<PsiFile, HighlightingSession> map = indicator.getUserData(HIGHLIGHTING_SESSION);
-      if (map != null) {
-        map.remove(file);
-      }
+      clearHighlightingSession(indicator, file);
     }
   }
 
@@ -254,8 +250,22 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     pendingFileLevelHighlightRequests.removeAll(requests);
   }
 
-  static void clearProgressIndicator(@NotNull DaemonProgressIndicator indicator) {
+  static void clearAllHighlightingSessions(@NotNull DaemonProgressIndicator indicator) {
     indicator.putUserData(HIGHLIGHTING_SESSION, null);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("HighlightingSessionImpl.clearAllHighlightingSessions");
+    }
+  }
+
+  // clear references to psiFile from progressIndicator
+  public static void clearHighlightingSession(@NotNull DaemonProgressIndicator progressIndicator, @NotNull PsiFile psiFile) {
+    Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
+    if (map != null) {
+      boolean removed = map.remove(psiFile) != null;
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("HighlightingSessionImpl.clearHighlightingSession("+psiFile.getVirtualFile()+")="+removed+"; "+map.size()+" remain");
+      }
+    }
   }
 
   @Override

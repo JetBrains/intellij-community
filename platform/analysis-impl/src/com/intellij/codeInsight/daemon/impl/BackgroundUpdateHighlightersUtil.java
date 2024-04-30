@@ -116,7 +116,8 @@ public final class BackgroundUpdateHighlightersUtil {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile psiFile = session.getPsiFile();
     Project project = session.getProject();
-    List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, infos);
+    // ignore annotators/inspections, they are applied via HighlightInfoUpdater
+    List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostAndAdditionalFilter(project, infos, info->!info.isFromAnnotator() && !info.isFromInspection());
     Document document = session.getDocument();
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
 
@@ -126,7 +127,7 @@ public final class BackgroundUpdateHighlightersUtil {
     Set<HighlightInfo> infoSet = new HashSet<>(filteredInfos);
 
     Processor<HighlightInfo> processor = info -> {
-      if (info.getGroup() == group && !info.isFromAnnotator()) { // ignore annotators, they are applied via HighlightInfoUpdater
+      if (info.getGroup() == group && !info.isFromAnnotator() && !info.isFromInspection()) { // ignore annotators/inspections, they are applied via HighlightInfoUpdater
         RangeHighlighterEx highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();

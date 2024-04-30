@@ -73,15 +73,30 @@ public abstract class RootType {
     return null;
   }
 
+  /**
+   * Allow the root type to define the icon used for files located under it.
+   * Return `null` if the platform default for the given file type should be used.
+   */
   public @Nullable Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
+    // If a language was substituted in, we are going to assume it takes precedence over the platform default
+    // or any FileIconProviders that might be registered. If no language was substituted in, use the platform
+    // default.
     Language language = substituteLanguage(project, file);
     FileType fileType = LanguageUtil.getLanguageFileType(language);
-    if (fileType == null) {
+    if (language != null && fileType == null) {
       String extension = file.getExtension();
       fileType = extension == null ? null : FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence());
     }
     return fileType != null && fileType != UnknownFileType.INSTANCE ? fileType.getIcon() : null;
+  }
+
+  /**
+   * Allow the root type to patch any file icons listed under the root.
+   * If no modification is needed, return the `baseIcon` directly.
+   */
+  public @NotNull Icon patchIcon(@NotNull Icon baseIcon, @NotNull VirtualFile file, int flags, @Nullable Project project) {
+    return baseIcon;
   }
 
   public @Nullable @NlsSafe String substituteName(@NotNull Project project, @NotNull VirtualFile file) {

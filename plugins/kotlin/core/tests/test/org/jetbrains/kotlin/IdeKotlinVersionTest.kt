@@ -191,6 +191,25 @@ class IdeKotlinVersionTest {
     }
 
     @Test
+    fun testIdeVersion() {
+        fun test(version: String) = with (IdeKotlinVersion.get(version)) {
+            assertEquals(version, rawVersion)
+            assertEquals(KotlinVersion(2, 0, 0), kotlinVersion)
+            assertIs<IdeKotlinVersion.Kind.ForIde>( kind)
+            assertEquals(LanguageVersion.KOTLIN_2_0, languageVersion)
+            assertEquals(ApiVersion.KOTLIN_2_0, apiVersion)
+            assertEquals("2.0.0", baseVersion)
+            assertFalse(isRelease)
+            assertTrue(isPreRelease)
+            assertFalse(isDev)
+            assertFalse(isSnapshot)
+        }
+
+        test("2.0.0-ij241-287")
+        test("2.0.0-ij241.15989-9")
+    }
+
+    @Test
     fun testStableVersionWithoutBuildNumber() {
         val version = IdeKotlinVersion.parse("1.8.20").getOrThrow()
         assertEquals(version, version.withoutBuildNumber())

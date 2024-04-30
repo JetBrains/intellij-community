@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.review
 import com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,12 +59,22 @@ internal class GHPRSubmitReviewViewModelImpl(parentCs: CoroutineScope,
   override fun submit(event: GHPullRequestReviewEvent) {
     val body = text.value
     taskLauncher.launch {
-      if (pendingReview != null) {
-        dataProvider.submitReview(pendingReview.id, event, body)
+      try {
+        if (pendingReview != null) {
+          dataProvider.submitReview(pendingReview.id, event, body)
+        }
+        else {
+          dataProvider.createReview(event, body)
+        }
       }
-      else {
-        dataProvider.createReview(event, body)
+      catch (ce: CancellationException) {
+        throw ce
       }
+      catch (e: Exception) {
+        _error.value = e
+        return@launch
+      }
+      _error.value = null
       text.value = ""
       onDone()
     }

@@ -14,6 +14,7 @@ import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchTreeStructureProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -21,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore.findFileSystemItem
+ import com.intellij.util.IconUtil
 import javax.swing.Icon
 
 internal val Any.asAbstractTreeNode: AbstractTreeNode<*>?
@@ -46,7 +48,9 @@ internal fun ProjectViewNode<*>.computeScratchPresentation(file: VirtualFile): P
   val root = ScratchTreeStructureProvider.getVirtualFile(type) ?: return null
   return when (root) {
     file -> type.displayName?.let { it to AllIcons.Nodes.Folder }
-    file.parent -> type.substituteName(project, file)?.let { it to type.substituteIcon(project, file) }
+    file.parent -> type.substituteName(project, file)?.let {
+      it to IconUtil.getIcon(file, Iconable.ICON_FLAG_VISIBILITY and Iconable.ICON_FLAG_READ_STATUS, project)
+    }
     else -> null
   }
 }

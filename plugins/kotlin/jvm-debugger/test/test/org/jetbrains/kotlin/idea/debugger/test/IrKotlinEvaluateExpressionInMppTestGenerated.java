@@ -1591,6 +1591,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 runTest("testData/evaluation/singleBreakpoint/multilineExpressionAtBreakpoint.kt");
             }
 
+            @TestMetadata("nestedGenerics.kt")
+            public void testNestedGenerics() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/nestedGenerics.kt");
+            }
+
             @TestMetadata("nestedInlineArguments.kt")
             public void testNestedInlineArguments() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/nestedInlineArguments.kt");
@@ -1651,6 +1656,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 runTest("testData/evaluation/singleBreakpoint/privateFieldInSuperclass.kt");
             }
 
+            @TestMetadata("privateLocalDelegatedProperty.kt")
+            public void testPrivateLocalDelegatedProperty() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateLocalDelegatedProperty.kt");
+            }
+
             @TestMetadata("privateMember.kt")
             public void testPrivateMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
@@ -1669,6 +1679,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
             @TestMetadata("privatePropertyWithNonDefaultAccessor.kt")
             public void testPrivatePropertyWithNonDefaultAccessor() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithNonDefaultAccessor.kt");
+            }
+
+            @TestMetadata("privateToplevelField.kt")
+            public void testPrivateToplevelField() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateToplevelField.kt");
             }
 
             @TestMetadata("privateToplevelProperty.kt")
@@ -1754,6 +1769,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
             @TestMetadata("thisFromStaticLambdaWithUnnamed.kt")
             public void testThisFromStaticLambdaWithUnnamed() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/thisFromStaticLambdaWithUnnamed.kt");
+            }
+
+            @TestMetadata("typeParameterOutOfScope.kt")
+            public void testTypeParameterOutOfScope() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/typeParameterOutOfScope.kt");
             }
 
             @TestMetadata("typeParameterRef.kt")

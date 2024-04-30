@@ -3,6 +3,7 @@ package com.jetbrains.python.configuration
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
@@ -268,7 +269,9 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
       pathEditor.reset(sdkModificator)
       if (dialog.showAndGet() && pathEditor.isModified) {
         pathEditor.apply(sdkModificator)
-        sdkModificator.commitChanges()
+        ApplicationManager.getApplication().runWriteAction {
+          sdkModificator.commitChanges()
+        }
         // now added and excluded paths are updated in `sdk` instance
         pythonPathsModified = true
         reloadSdk(sdk)

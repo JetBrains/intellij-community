@@ -85,7 +85,7 @@ class MLEventsLogger : CounterUsagesCollector() {
   }
 
   internal object Initializer {
-    val GROUP = EventLogGroup("ml", 1)
+    val GROUP = EventLogGroup("ml", 3)
 
     var state: State = State.NonInitialized
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -41,7 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.SYNTAX;
-import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
 @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "SynchronizeOnNonFinalField"})
 public class MavenProject {
@@ -183,9 +182,7 @@ public class MavenProject {
                              boolean keepPreviousProfiles,
                              boolean keepPreviousPlugins) {
     newState.myReadingProblems = readingProblems;
-    newState.myLocalRepository = MavenUtil.resolveLocalRepository(settings.getLocalRepository(),
-                                                                  staticOrBundled(settings.getMavenHomeType()),
-                                                                  settings.getUserSettingsFile());
+    newState.myLocalRepository = settings.getEffectiveLocalRepository();
     newState.myActivatedProfilesIds = activatedProfiles;
 
     newState.myMavenId = model.getMavenId();

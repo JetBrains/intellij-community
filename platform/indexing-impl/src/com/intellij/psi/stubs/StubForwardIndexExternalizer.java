@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
@@ -51,6 +52,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
     HashingStrategy<K> hashingStrategy = StubIndexKeyDescriptorCache.INSTANCE.getKeyHashingStrategy(stubIndexKey);
     Map<K, StubIdList> result = CollectionFactory.createCustomHashingStrategyMap(hashingStrategy);
     while (indexDis.available() > 0) {
+      ProgressManager.checkCanceled();
       K key = keyDescriptor.read(indexDis);
       StubIdList read = StubIdExternalizer.INSTANCE.read(indexDis);
       if (requestedKey == null) {

@@ -106,13 +106,15 @@ internal object ITNProxy {
   }
 
   @JvmRecord
-  internal data class ErrorBean(val event: IdeaLoggingEvent,
-                                val comment: String?,
-                                val pluginId: String?,
-                                val pluginName: String?,
-                                val pluginVersion: String?,
-                                val lastActionId: String?,
-                                val previousException: Int)
+  internal data class ErrorBean(
+    val event: IdeaLoggingEvent,
+    val comment: String?,
+    val pluginId: String?,
+    val pluginName: String?,
+    val pluginVersion: String?,
+    val lastActionId: String?,
+    val previousException: Int
+  )
 
   suspend fun sendError(login: String?, password: String?, error: ErrorBean, newThreadPostUrl: String): Int {
     val useDefault = login.isNullOrBlank()
@@ -123,11 +125,7 @@ internal object ITNProxy {
 
   fun getBrowseUrl(threadId: Int): String {
     val isEAPluginInstalled = PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))
-    if (isEAPluginInstalled) {
-      return NEW_THREAD_VIEW_URL + threadId
-    } else {
-      return OLD_THREAD_VIEW_URL + threadId
-    }
+    return (if (isEAPluginInstalled) NEW_THREAD_VIEW_URL else OLD_THREAD_VIEW_URL) + threadId
   }
 
   private val ourSslContext: SSLContext by lazy { initContext() }
@@ -156,7 +154,7 @@ internal object ITNProxy {
     try {
       return response.trim().toInt()
     }
-    catch (ex: NumberFormatException) {
+    catch (_: NumberFormatException) {
       throw InternalEAPException(DiagnosticBundle.message("error.itn.returns.wrong.data"))
     }
   }
@@ -315,7 +313,7 @@ internal object ITNProxy {
           val ca = certificates[certificates.size - 1]
           if (ca is X509Certificate) {
             val cn = CertificateUtil.getCommonName(ca)
-            val digest = sha1().digest(ca.getEncoded())
+            val digest = sha1().digest(ca.encoded)
             val fp = StringBuilder(2 * digest.size)
             for (b in digest) fp.append(Integer.toHexString(b.toInt() and 0xFF))
             if (JB_CA_CN == cn && JB_CA_FP.contentEquals(fp)) {
@@ -324,10 +322,8 @@ internal object ITNProxy {
           }
         }
       }
-      catch (ignored: SSLPeerUnverifiedException) {
-      }
-      catch (ignored: CertificateEncodingException) {
-      }
+      catch (_: SSLPeerUnverifiedException) { }
+      catch (_: CertificateEncodingException) { }
       return false
     }
   }

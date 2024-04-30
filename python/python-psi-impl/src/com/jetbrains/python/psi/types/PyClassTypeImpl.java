@@ -451,7 +451,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     final Map<PsiElement, PyImportedNameDefiner> results;
 
     if (isDefinition || cls.processInstanceLevelDeclarations(processor, location)) {
-      cls.processClassLevelDeclarations(processor);
+      cls.processClassObjectAttributes(processor, location);
     }
     results = processor.getResults();
 
@@ -624,7 +624,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   private void processMembers(@NotNull PsiScopeProcessor scopeProcessor, @NotNull Runnable afterClassLevelBeforeInstanceLevel) {
-    myClass.processClassLevelDeclarations(scopeProcessor);
+    myClass.processClassObjectAttributes(scopeProcessor, null);
     if (!isDefinition()) {
       afterClassLevelBeforeInstanceLevel.run();
       myClass.processInstanceLevelDeclarations(scopeProcessor, null);

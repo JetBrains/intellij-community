@@ -7,7 +7,7 @@ import com.intellij.find.FindUtil
 import com.intellij.find.SearchSession
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -51,12 +51,18 @@ class BlockTerminalController(
       promptController.reset()
       outputController.insertEmptyLine()
     }
-    else startCommand(command)
+    else {
+      session.commandManager.sendCommandToExecute(command)
+      outputController.doWhenNextBlockCanBeStarted {
+        startCommandBlock(command)
+      }
+    }
     // report event even if it is an empty command, because it will be reported as a separate command type
     TerminalUsageTriggerCollector.triggerCommandExecuted(project, command, isBlockTerminal = true)
   }
 
-  private fun startCommand(command: String) {
+  @RequiresEdt(generateAssertion = false)
+  private fun startCommandBlock(command: String) {
     outputController.startCommandBlock(command, promptController.promptRenderingInfo)
     // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
     // If the command is finished very fast, the prompt will be shown back before repainting.
@@ -68,8 +74,9 @@ class BlockTerminalController(
         Disposer.dispose(disposable)
       }
     }, disposable)
-    session.commandManager.sendCommandToExecute(command)
     session.model.isCommandRunning = true
+
+    TerminalUsageLocalStorage.getInstance().recordCommandExecuted(session.shellIntegration.shellType.toString())
   }
 
   override fun initialized() {
@@ -86,7 +93,7 @@ class BlockTerminalController(
     val model = session.model
     model.isCommandRunning = false
 
-    invokeLater {
+    invokeLater(getDisposed(), ModalityState.any()) {
       promptController.reset()
       promptController.promptIsVisible = true
     }
@@ -138,6 +145,8 @@ class BlockTerminalController(
       Disposer.register(disposable) { listeners.remove(listener) }
     }
   }
+
+  private fun getDisposed(): () -> Boolean = outputController.outputModel.editor.getDisposed()
 
   interface BlockTerminalControllerListener {
     fun searchSessionStarted(session: SearchSession) {}

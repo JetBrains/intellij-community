@@ -15,7 +15,7 @@ class RequirementsVersionCompletionContributor : CompletionContributor() {
     val project = parameters.editor.project ?: return
 
     if (parent is com.jetbrains.python.requirements.psi.VersionStmt) {
-      val name = PsiTreeUtil.getParentOfType(parent, NameReq::class.java)?.simpleName?.text ?: return
+      val name = PsiTreeUtil.getParentOfType(parent, NameReq::class.java)?.name?.text ?: return
       completeVersions(name, project, result, false)
     }
   }

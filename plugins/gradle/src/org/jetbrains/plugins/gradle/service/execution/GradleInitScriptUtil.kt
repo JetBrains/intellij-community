@@ -4,6 +4,7 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -38,16 +39,13 @@ fun createIdeaPluginConfiguratorInitScript() : Path {
   return createInitScript(IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME, initScript)
 }
 
-fun loadDownloadSourcesInitScript(dependencyNotation: String,
-                                  taskName: String,
-                                  downloadTarget: String): String = loadDownloadSourcesInitScript(
-  "/org/jetbrains/plugins/gradle/tooling/internal/init/downloadSources.gradle", dependencyNotation, taskName, downloadTarget)
+fun loadDownloadSourcesInitScript(dependencyNotation: String, taskName: String, downloadTarget: Path, externalProjectPath: Path): String =
+  loadDownloadSourcesInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/downloadSources.gradle", dependencyNotation,
+                                taskName, downloadTarget, externalProjectPath)
 
-fun loadLegacyDownloadSourcesInitScript(dependencyNotation: String,
-                                        taskName: String,
-                                        downloadTarget: String): String = loadDownloadSourcesInitScript(
-  "/org/jetbrains/plugins/gradle/tooling/internal/init/legacyDownloadSources.gradle", dependencyNotation,
-  taskName, downloadTarget)
+fun loadLegacyDownloadSourcesInitScript(dependencyNotation: String, taskName: String, downloadTarget: Path, externalProjectPath: Path): String =
+  loadDownloadSourcesInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/legacyDownloadSources.gradle", dependencyNotation,
+                                taskName, downloadTarget, externalProjectPath)
 
 fun loadTaskInitScript(
   projectPath: String,
@@ -204,10 +202,13 @@ private fun isContentEquals(path: Path, content: ByteArray): Boolean {
          content.contentEquals(path.readBytes())
 }
 
-private fun loadDownloadSourcesInitScript(path: String, dependencyNotation: String, taskName: String, downloadTarget: String): String {
+private fun loadDownloadSourcesInitScript(
+  path: String, dependencyNotation: String, taskName: String, downloadTarget: Path, projectPath: Path
+): String {
   return loadInitScript(path, mapOf(
     "DEPENDENCY_NOTATION" to dependencyNotation.toGroovyStringLiteral(),
-    "TARGET_PATH" to downloadTarget.toGroovyStringLiteral(),
-    "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral()
+    "TARGET_PATH" to downloadTarget.toCanonicalPath().toGroovyStringLiteral(),
+    "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral(),
+    "GRADLE_PROJECT_PATH" to projectPath.toCanonicalPath().toGroovyStringLiteral(),
   ))
 }

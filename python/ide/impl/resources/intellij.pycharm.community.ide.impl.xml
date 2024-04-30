@@ -2,7 +2,6 @@
   <!--Customization code for both Community and Pro PyCharms-->
   <dependencies>
     <module name="intellij.python.community.impl"/>
-    <plugin id="com.intellij.modules.platform"/>
   </dependencies>
 
   <projectListeners>
@@ -77,6 +76,8 @@
       implementationClass="com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector"/>
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
     <newUIConfigurable implementation="com.intellij.pycharm.community.ide.impl.configuration.PyExperimentalUIConfigurable"/>
+
+
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

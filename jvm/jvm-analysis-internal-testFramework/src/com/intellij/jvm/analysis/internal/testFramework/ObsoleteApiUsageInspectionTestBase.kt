@@ -18,6 +18,7 @@ abstract class ObsoleteApiUsageInspectionTestBase : JvmInspectionTestBase() {
         void f() {}
       }""".trimIndent()
     )
+    enableWarnings()
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST, true) { }

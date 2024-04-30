@@ -81,6 +81,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new),
       Map.entry(ChooseCompletionCommand.PREFIX, ChooseCompletionCommand::new),
       Map.entry(AssertFindUsagesCommand.PREFIX, AssertFindUsagesCommand::new),
+      Map.entry(AssertFindUsagesEntryCommand.PREFIX, AssertFindUsagesEntryCommand::new),
       Map.entry(SetBreakpointCommand.PREFIX, SetBreakpointCommand::new),
       Map.entry(DebugRunConfigurationCommand.PREFIX, DebugRunConfigurationCommand::new),
       Map.entry(DebugStepCommand.PREFIX, DebugStepCommand::new),
@@ -107,7 +108,9 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ReplaceBrowser.PREFIX, ReplaceBrowser::new),
       Map.entry(AssertModuleJdkVersionCommand.PREFIX, AssertModuleJdkVersionCommand::new),
       Map.entry(WaitForEDTQueueUnstuckCommand.PREFIX, WaitForEDTQueueUnstuckCommand::new),
-      Map.entry(CreateScratchFile.PREFIX, CreateScratchFile::new)
+      Map.entry(CreateScratchFile.PREFIX, CreateScratchFile::new),
+      Map.entry(AssertCaretPositionCommand.PREFIX, AssertCaretPositionCommand::new),
+      Map.entry(AssertCurrentFileCommand.PREFIX, AssertCurrentFileCommand::new)
     );
   }
 }

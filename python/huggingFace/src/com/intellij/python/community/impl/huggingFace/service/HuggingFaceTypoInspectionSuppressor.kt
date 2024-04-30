@@ -5,7 +5,7 @@ import com.intellij.codeInspection.InspectionSuppressor
 import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceEntityPsiElement.Companion.HUGGING_FACE_ENTITY_NAME_KEY
+import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierPsiElement.Companion.HUGGING_FACE_ENTITY_NAME_KEY
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyPlainStringElementImpl
 

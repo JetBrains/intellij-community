@@ -25,7 +25,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.ast.PyAstFunction.Modifier;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -65,6 +69,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Nullable private volatile List<PyTargetExpression> myInstanceAttributes;
   @Nullable private volatile List<PyTargetExpression> myFallbackInstanceAttributes;
+  // Class attributes initialized in @classmethod-decorated methods
+  @Nullable private volatile List<PyTargetExpression> myClassAttributesFromClassMethods;
 
   private volatile Map<String, Property> myLocalPropertyCache;
 
@@ -1213,6 +1219,50 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
+  public boolean processClassObjectAttributes(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location) {
+    if (!processClassLevelDeclarations(processor)) return false;
+    PyFunction containingMethod = PsiTreeUtil.getStubOrPsiParentOfType(location, PyFunction.class);
+    PyClass containingClass = containingMethod != null ? containingMethod.getContainingClass() : null;
+    boolean isClassMethod = containingMethod != null && containingMethod.getModifier() == Modifier.CLASSMETHOD;
+    List<PyTargetExpression> allClassAttributes = getClassAttributesDefinedInClassMethods();
+    List<PyTargetExpression> prioritizedClassAttrs;
+    if (isClassMethod && containingClass != null && CompletionUtilCoreImpl.getOriginalElement(containingClass) == this) {
+      List<PyTargetExpression> sameMethodClassAttrs = ContainerUtil.filter(allClassAttributes,
+                                                                           attr -> ScopeUtil.getScopeOwner(attr) == containingMethod);
+      List<PyTargetExpression> otherMethodClassAttrs = ContainerUtil.filter(allClassAttributes,
+                                                                            attr -> ScopeUtil.getScopeOwner(attr) != containingMethod);
+      prioritizedClassAttrs = ContainerUtil.concat(sameMethodClassAttrs, otherMethodClassAttrs);
+    }
+    else {
+      prioritizedClassAttrs = allClassAttributes;
+    }
+    for (PyTargetExpression target : prioritizedClassAttrs) {
+      if (!processor.execute(target, ResolveState.initial())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private @NotNull List<PyTargetExpression> getClassAttributesDefinedInClassMethods() {
+    List<PyTargetExpression> classAttrs = myClassAttributesFromClassMethods;
+    if (classAttrs == null) {
+      classAttrs = new ArrayList<>();
+      for (PyFunction method : getMethods()) {
+        if (method.getModifier() == Modifier.CLASSMETHOD) {
+          for (PyTargetExpression target : getTargetExpressions(method)) {
+            if (PyUtil.isInstanceAttribute(target)) {
+              classAttrs.add(target);
+            }
+          }
+        }
+      }
+      myClassAttributesFromClassMethods = classAttrs;
+    }
+    return classAttrs;
+  }
+
+  @Override
   public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location) {
     final PyFunction instanceMethod = PsiTreeUtil.getStubOrPsiParentOfType(location, PyFunction.class);
     final PyClass containingClass = instanceMethod != null ? instanceMethod.getContainingClass() : null;
@@ -1272,6 +1322,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     ControlFlowCache.clear(this);
     myInstanceAttributes = null;
     myFallbackInstanceAttributes = null;
+    myClassAttributesFromClassMethods = null;
     myLocalPropertyCache = null;
   }
 

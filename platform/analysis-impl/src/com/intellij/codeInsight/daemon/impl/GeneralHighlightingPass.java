@@ -7,7 +7,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.RainbowVisitor;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.highlighting.PassRunningAssert;
@@ -137,7 +136,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return highlightVisitors;
   }
 
-  private HighlightVisitor @NotNull [] filterVisitors(@NotNull List<HighlightVisitor> highlightVisitors, @NotNull PsiFile psiFile) {
+  private HighlightVisitor @NotNull [] filterVisitors(@NotNull List<? extends HighlightVisitor> highlightVisitors, @NotNull PsiFile psiFile) {
     List<HighlightVisitor> visitors = new ArrayList<>(highlightVisitors.size());
     for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(highlightVisitors)) {
       if (visitor instanceof RainbowVisitor

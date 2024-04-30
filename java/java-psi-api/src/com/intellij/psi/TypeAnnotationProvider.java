@@ -16,7 +16,7 @@ import java.util.Objects;
 public interface TypeAnnotationProvider {
   TypeAnnotationProvider EMPTY = new TypeAnnotationProvider() {
     @Override
-    public PsiAnnotation @NotNull [] getAnnotations() {
+    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
       return PsiAnnotation.EMPTY_ARRAY;
     }
 
@@ -26,23 +26,23 @@ public interface TypeAnnotationProvider {
     }
   };
 
-  PsiAnnotation @NotNull [] getAnnotations();
+  @NotNull PsiAnnotation @NotNull [] getAnnotations();
 
 
   final class Static implements TypeAnnotationProvider {
-    private final PsiAnnotation[] myAnnotations;
+    private final @NotNull PsiAnnotation @NotNull [] myAnnotations;
 
-    private Static(PsiAnnotation[] annotations) {
+    private Static(@NotNull PsiAnnotation @NotNull [] annotations) {
       myAnnotations = annotations;
     }
 
     @Override
-    public PsiAnnotation @NotNull [] getAnnotations() {
+    public @NotNull PsiAnnotation @NotNull [] getAnnotations() {
       return myAnnotations;
     }
 
     @NotNull
-    public static TypeAnnotationProvider create(PsiAnnotation @NotNull [] annotations) {
+    public static TypeAnnotationProvider create(@NotNull PsiAnnotation @NotNull [] annotations) {
       if (annotations.length == 0) return EMPTY;
       for (PsiAnnotation annotation : annotations) {
         Objects.requireNonNull(annotation);

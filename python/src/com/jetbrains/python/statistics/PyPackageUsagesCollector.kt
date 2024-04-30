@@ -52,7 +52,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
           ProgressManager.checkCanceled()
           val version = req.versionSpecs.firstOrNull()?.version?.trim() ?: "unknown"
           val data = ArrayList(usageData) // Not to calculate interpreter on each call
-          data.add(PACKAGE_FIELD.with(req.name))
+          data.add(PACKAGE_FIELD.with(req.name.lowercase()))
           data.add(PACKAGE_VERSION_FIELD.with(version))
           result.add(PYTHON_PACKAGE_INSTALLED.metric(data))
         }

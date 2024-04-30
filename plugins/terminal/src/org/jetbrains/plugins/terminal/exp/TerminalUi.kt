@@ -1,7 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBUI
 import java.awt.Color
 
 @Suppress("ConstPropertyName")
@@ -26,37 +36,40 @@ object TerminalUi {
 
   const val searchComponentWidth = 500
 
-  // todo: create color keys
-  val terminalBackground: Color
-    get() = JBColor(0xFFFFFF, 0x1E1F22)
-  val blockBackgroundStart: Color
-    get() = JBColor(0xF0F2F5, 0x2B2D30)
-  val blockBackgroundEnd: Color
-    get() = JBColor(0xFAFAFA, 0x212329)
-  val selectedBlockBackground: Color
-    get() = JBColor(0xEDF3FF, 0x25324D)
-  val selectedBlockStrokeColor: Color
-    get() = JBColor(0x4682FA, 0x3574F0)
-  val inactiveSelectedBlockBackground: Color
-    get() = JBColor(0xEBECF0, 0x393B40)
-  val inactiveSelectedBlockStrokeColor: Color
-    get() = JBColor(0xC9CCD6, 0x5A5D63)
-  val errorBlockStrokeColor: Color
-    get() = JBColor(0xED99A1, 0x9C4E4E)
+  fun defaultBackground(editor: Editor? = null): JBColor {
+    return createColorBoundToColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, editor) {
+      it.defaultBackground
+    }
+  }
 
-  val outputForeground: Color
-    get() = JBColor(0x080808, 0xBDC0C9)
-  val commandForeground: Color
-    get() = JBColor(0x000000, 0xFFFFFF)
-  val promptForeground: Color
-    get() = JBColor(0x6C707E, 0x868A91)
+  fun defaultForeground(editor: Editor? = null): JBColor {
+    return createColorBoundToColorKey(BlockTerminalColors.DEFAULT_FOREGROUND, editor) {
+      it.defaultForeground
+    }
+  }
 
-  val searchEntryBackground: Color
-    get() = JBColor(0xFFEA00, 0xFFEA00)
-  val searchEntryForeground: Color
-    get() = JBColor(0x000000, 0x000000)
-  val currentSearchEntryBackground: Color
-    get() = JBColor(0xFF941A, 0xFF941A)
-  val currentSearchEntryForeground: Color
-    get() = JBColor(0x000000, 0x000000)
+  private fun createColorBoundToColorKey(colorKey: ColorKey, editor: Editor? = null, default: (EditorColorsScheme) -> Color): JBColor {
+    return JBColor.lazy {
+      val colorsScheme = editor?.colorsScheme ?: EditorColorsManager.getInstance().globalScheme
+      colorsScheme.getColor(colorKey) ?: default(colorsScheme)
+    }
+  }
+
+  /**
+   * Unfortunately, `editor.backgroundColor = terminalDefaultBackground(editor)` doesn't work when
+   * colors scheme is changed. Because [com.intellij.openapi.editor.impl.EditorImpl.setBackgroundColor]
+   * doesn't save a passed in color if the color is equal to the default one.
+   */
+  fun EditorEx.useTerminalDefaultBackground(parentDisposable: Disposable) {
+    backgroundColor = defaultBackground(this)
+    ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      backgroundColor = defaultBackground(this)
+    })
+  }
+
+  fun promptSeparatorColor(editor: Editor): Color {
+    return createColorBoundToColorKey(BlockTerminalColors.PROMPT_SEPARATOR_COLOR, editor) {
+      JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
+    }
+  }
 }

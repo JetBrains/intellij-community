@@ -13,19 +13,16 @@ import java.awt.Rectangle
 @ApiStatus.Internal
 @ApiStatus.Experimental
 class InlineSuffixRenderer(private val editor: Editor, suffix: String) : EditorCustomElementRenderer {
-  private val font = InlineCompletionFontUtils.font(editor)
-  private val width = editor.contentComponent.getFontMetrics(font).stringWidth(suffix)
 
   val suffix = suffix.formatBeforeRendering(editor)
 
-  override fun calcWidthInPixels(inlay: Inlay<*>): Int = width
-  override fun calcHeightInPixels(inlay: Inlay<*>): Int {
-    return editor.contentComponent.getFontMetrics(font).height
-  }
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int = InlineCompletionFontUtils.fontMetrics(editor).stringWidth(suffix)
+
+  override fun calcHeightInPixels(inlay: Inlay<*>): Int = InlineCompletionFontUtils.fontMetrics(editor).height
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     g.color = InlineCompletionFontUtils.color(editor)
-    g.font = font
+    g.font = InlineCompletionFontUtils.font(editor)
     g.drawString(suffix, targetRegion.x, targetRegion.y + editor.ascent)
   }
 }

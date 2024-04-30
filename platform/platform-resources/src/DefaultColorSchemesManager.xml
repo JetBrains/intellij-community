@@ -81,6 +81,12 @@
       <option name="BLOCK_TERMINAL_DEFAULT_BACKGROUND" value="FFFFFF"/>
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_START" value="F0F2F5"/>
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="FAFAFA"/>
+      <option name="BLOCK_TERMINAL_SELECTED_BLOCK_BACKGROUND" value="EDF3FF"/>
+      <option name="BLOCK_TERMINAL_SELECTED_BLOCK_STROKE_COLOR" value="4682FA"/>
+      <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_BACKGROUND" value="EBECF0"/>
+      <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="C9CCD6"/>
+      <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="ED99A1"/>
+      <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="EBECF0"/>
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
@@ -1180,6 +1186,24 @@
             <option name="BACKGROUND" value="CFEFC6" />
           </value>
         </option>
+        <option name="BLOCK_TERMINAL_COMMAND">
+          <value>
+            <option name="FOREGROUND" value="000000" />
+            <option name="FONT_TYPE" value="1"/>
+          </value>
+        </option>
+        <option name="BLOCK_TERMINAL_SEARCH_ENTRY">
+          <value>
+            <option name="FOREGROUND" value="000000" />
+            <option name="BACKGROUND" value="FFEA00" />
+          </value>
+        </option>
+        <option name="BLOCK_TERMINAL_CURRENT_SEARCH_ENTRY">
+          <value>
+            <option name="FOREGROUND" value="000000"/>
+            <option name="BACKGROUND" value="FF941A"/>
+          </value>
+        </option>
         <option name="BLOCK_TERMINAL_BLACK">
           <value>
             <option name="FOREGROUND" value="0" />
@@ -1528,6 +1552,12 @@
       <option name="BLOCK_TERMINAL_DEFAULT_BACKGROUND" value="1E1F22"/>
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_START" value="2B2D30"/>
       <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="212329"/>
+      <option name="BLOCK_TERMINAL_SELECTED_BLOCK_BACKGROUND" value="25324D"/>
+      <option name="BLOCK_TERMINAL_SELECTED_BLOCK_STROKE_COLOR" value="3574F0"/>
+      <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_BACKGROUND" value="393B40"/>
+      <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="5A5D63"/>
+      <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="9C4E4E"/>
+      <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="393B40"/>
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
@@ -1744,6 +1774,24 @@
       <option name="TERMINAL_COMMAND_TO_RUN_USING_IDE">
         <value>
           <option name="BACKGROUND" value="40503C" />
+        </value>
+      </option>
+      <option name="BLOCK_TERMINAL_COMMAND">
+        <value>
+          <option name="FOREGROUND" value="FFFFFF" />
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="BLOCK_TERMINAL_SEARCH_ENTRY">
+        <value>
+          <option name="FOREGROUND" value="000000" />
+          <option name="BACKGROUND" value="FFEA00" />
+        </value>
+      </option>
+      <option name="BLOCK_TERMINAL_CURRENT_SEARCH_ENTRY">
+        <value>
+          <option name="FOREGROUND" value="000000"/>
+          <option name="BACKGROUND" value="FF941A"/>
         </value>
       </option>
       <option name="BLOCK_TERMINAL_BLACK">

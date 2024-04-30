@@ -470,21 +470,4 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
       }
     }
   }
-
-  private static final class DefaultCutStrategy implements TextCutStrategy {
-
-    private static final int MIN_TEXT_LENGTH = 5;
-
-    @Override
-    public @NotNull String calcShownText(@NotNull String text, @NotNull FontMetrics metrics, int maxWidth) {
-      int width = metrics.stringWidth(text);
-      if (width <= maxWidth) return text;
-
-      while (width > maxWidth && text.length() > MIN_TEXT_LENGTH) {
-        text = text.substring(0, text.length() - 1);
-        width = metrics.stringWidth(text + "...");
-      }
-      return text + "...";
-    }
-  }
 }

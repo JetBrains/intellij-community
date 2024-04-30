@@ -3,6 +3,8 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.scratch.RootType;
+import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -145,6 +147,9 @@ public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
       PsiDirectory containingDirectory = containingFile.getContainingDirectory();
       if (containingDirectory != null) {
         return containingDirectory;
+      }
+      if (containingFile.getVirtualFile() instanceof VirtualFileWindow) {
+        return InjectedLanguageManager.getInstance(psiElement.getProject()).getTopLevelFile(containingFile);
       }
     }
     else if (psiElement instanceof PsiDirectory psiDirectory) {

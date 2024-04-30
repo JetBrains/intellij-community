@@ -14,7 +14,7 @@
                         serviceImplementation="com.intellij.python.community.plugin.impl.run.PyPluginCommonFragmentsBuilder"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.PyBundle">
     <action id="PyManagePackages" class="com.intellij.python.community.plugin.impl.packaging.PyManagePackagesAction">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>

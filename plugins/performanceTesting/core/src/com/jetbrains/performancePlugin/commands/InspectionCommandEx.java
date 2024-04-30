@@ -94,7 +94,8 @@ public class InspectionCommandEx extends AbstractCommand {
     @NotNull Project project = context.getProject();
     InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance(project);
-    InspectionProfileImpl profile = profileManager.getCurrentProfile();
+    InspectionProfileImpl profile = new InspectionProfileImpl("temp profile");
+    profile.copyFrom(profileManager.getCurrentProfile());
 
     if (StringUtil.isNotEmpty(myOptions.toolShortName)) {
       profile.disableAllTools(project);
@@ -199,6 +200,7 @@ public class InspectionCommandEx extends AbstractCommand {
             LOGGER.error(ex);
           }
         }
+
         actionCallback.setDone();
       }
     };

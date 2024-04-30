@@ -532,10 +532,10 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
   private static class ReplaceCollectorFix implements CallChainFix {
     static final CallMapper<ReplaceCollectorFix> COLLECTOR_TO_FIX_MAPPER = new CallMapper<>(
       handler("counting", 0, "count()", false),
-      handler("minBy", 1, "min({0})", true),
-      handler("maxBy", 1, "max({0})", true),
+      returnTypeMatcher(handler("minBy", 1, "min({0})", true)),
+      returnTypeMatcher(handler("maxBy", 1, "max({0})", true)),
       handler("mapping", 2, "map({0}).collect({1})", false),
-      handler("reducing", 1, "reduce({0})", true),
+      returnTypeMatcher(handler("reducing", 1, "reduce({0})", true)),
       handler("reducing", 2, "reduce({0}, {1})", false),
       handler("reducing", 3, "map({1}).reduce({0}, {2})", false),
       handler("summingInt", 1, "mapToInt({0}).sum()", false),
@@ -551,6 +551,19 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
                ? new ReplaceCollectorFix("toList", "toList()", false)
                : null;
       }));
+
+    private static CallHandler<ReplaceCollectorFix> returnTypeMatcher(CallHandler<ReplaceCollectorFix> orig) {
+      return new CallHandler<>(orig.matcher(), call -> {
+        PsiMethodCallExpression collectCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
+        if (collectCall == null) return null;
+        PsiExpression qualifier = collectCall.getMethodExpression().getQualifierExpression();
+        if (qualifier == null) return null;
+        PsiType streamElementType = PsiUtil.substituteTypeParameter(qualifier.getType(), CommonClassNames.JAVA_UTIL_STREAM_STREAM, 0, false);
+        PsiType optionalElementType = PsiUtil.substituteTypeParameter(collectCall.getType(), JAVA_UTIL_OPTIONAL, 0, false);
+        if (streamElementType == null || !streamElementType.equals(optionalElementType)) return null;
+        return orig.apply(call);
+      });
+    }
 
     @Contract("null -> false")
     private static boolean elementTypeMatches(@Nullable PsiMethodCallExpression collect) {
@@ -641,7 +654,9 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
 
     static CallHandler<ReplaceCollectorFix> handler(String collectorName, int parameterCount, String template, boolean changeSemantics) {
       return CallHandler.of(collectorMatcher(collectorName, parameterCount),
-                            call -> new ReplaceCollectorFix(collectorName, template, changeSemantics));
+                            call -> {
+                              return new ReplaceCollectorFix(collectorName, template, changeSemantics);
+                            });
     }
   }
 

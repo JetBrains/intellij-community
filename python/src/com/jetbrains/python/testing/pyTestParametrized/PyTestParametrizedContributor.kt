@@ -15,7 +15,11 @@ private object PyTestReferenceParametrizeProvider : PsiReferenceProvider() {
     val argName = namedParam.name ?: return emptyArray()
     val testFunc = namedParam.parentOfType<PyFunction>() ?: return emptyArray()
     val parametrizeDecorators = testFunc.decoratorList?.decorators?.filter { it.name == PARAMETRIZE } ?: return emptyArray()
-    val argsStrings = parametrizeDecorators.mapNotNull { it.argumentList?.arguments?.get(0) as? PyStringLiteralExpression }
+    val argsStrings = parametrizeDecorators.mapNotNull { decorator ->
+      decorator.argumentList?.arguments?.let {
+        if (it.isNotEmpty()) it[0] as? PyStringLiteralExpression else null
+      }
+    }
 
     // if argument is not found in decorator args, then return an empty array
     val argsString = argsStrings.find { isArgumentInString(it, argName) } ?: return emptyArray()

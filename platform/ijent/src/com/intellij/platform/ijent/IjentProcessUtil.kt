@@ -24,7 +24,7 @@ fun getIjentGrpcArgv(
 
   return listOfNotNull(
     "/usr/bin/env",
-    "RUST_LOG=$debuggingLogLevel,server_handshake=info,h2=info,hyper=info,reserve_capacity=info,tokio_util=info",
+    "RUST_LOG=ijent=$debuggingLogLevel",
     if (backtrace) "RUST_BACKTRACE=1" else null,
     *additionalEnv.entries.map2Array { (k, v) -> "$k=$v" },
     // "gdbserver", "0.0.0.0:12345",  // https://sourceware.org/gdb/onlinedocs/gdb/Connecting.html

@@ -6,6 +6,7 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.actions.NewActionGroup;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Consider using {@link AsyncChangesBrowserBase} to avoid potentially-expensive tree building operations on EDT.
@@ -108,15 +110,15 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myPopupMenuGroup.addAll(createPopupMenuActions());
 
     AnAction groupByAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
-    if (!ActionUtil.recursiveContainsAction(myToolBarGroup, groupByAction)) {
+    if (!NewActionGroup.anyActionFromGroupMatches(myToolBarGroup, true, Predicate.isEqual(groupByAction))) {
       myToolBarGroup.addSeparator();
       myToolBarGroup.add(groupByAction);
     }
 
     if (isVerticalToolbar()) {
       List<AnAction> treeActions = TreeActionsToolbarPanel.createTreeActions(myViewer);
-      boolean hasTreeActions = ContainerUtil.exists(treeActions,
-                                                    action -> ActionUtil.recursiveContainsAction(myToolBarGroup, action));
+      boolean hasTreeActions = ContainerUtil.exists(
+        treeActions, action -> NewActionGroup.anyActionFromGroupMatches(myToolBarGroup, true, Predicate.isEqual(action)));
       if (!hasTreeActions) {
         myToolBarGroup.addSeparator();
         myToolBarGroup.addAll(treeActions);

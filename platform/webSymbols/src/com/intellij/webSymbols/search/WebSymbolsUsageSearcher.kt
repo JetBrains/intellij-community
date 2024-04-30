@@ -50,7 +50,7 @@ object WebSymbolUsageQueries {
       .distinct()
       .map {
         SearchService.getInstance()
-          .searchWord(project, symbol.name)
+          .searchWord(project, it)
           .caseSensitive(false)
           .inContexts(SearchContext.IN_CODE_HOSTS, SearchContext.IN_CODE, SearchContext.IN_PLAIN_TEXT, SearchContext.IN_STRINGS)
           .includeInjections()

@@ -138,6 +138,7 @@
   <technology name="jakarta-jms" root="jakarta.jms"/>
   <technology name="jakarta-jpa" root="jakarta.persistence"/>
   <technology name="jakarta-jsf" root="jakarta.faces"/>
+  <technology name="jakarta-mvc" root="jakarta.mvc"/>
   <technology name="jakarta-nosql" root="jakarta.nosql"/>
   <technology name="jakarta-rs" root="jakarta.ws.rs"/>
   <technology name="jakarta-validation" root="jakarta.validation"/>

@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,24 +51,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   private final @NotNull VcsLogPathsIndex.PathIndexer myPathsIndexer;
 
-  public VcsLogPathsIndex(@NotNull StorageId.Directory storageId,
-                          @NotNull VcsLogStorage storage,
-                          @NotNull Set<VirtualFile> roots,
-                          @Nullable StorageLockContext storageLockContext,
-                          @NotNull VcsLogErrorHandler errorHandler,
-                          @NotNull PersistentHashMap<int[], int[]> renamesMap,
-                          boolean useDurableEnumerator,
-                          @NotNull Disposable disposableParent) throws IOException {
-    super(storageId,
-          PATHS,
-          new PathIndexer(storage, createPathsEnumerator(roots, storageId, storageLockContext, useDurableEnumerator), renamesMap),
-          new ChangeKindListKeyDescriptor(),
-          storageLockContext,
-          errorHandler,
-          disposableParent);
-
-    myPathsIndexer = (PathIndexer)myIndexer;
-    myPathsIndexer.setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
+  VcsLogPathsIndex(@NotNull StorageId.Directory storageId, @Nullable StorageLockContext storageLockContext,
+                   @NotNull PathIndexer pathIndexer, @NotNull VcsLogErrorHandler errorHandler,
+                   @NotNull Disposable disposableParent) throws IOException {
+    super(createMapReduceIndex(PATHS, storageId, pathIndexer, new ChangeKindListKeyDescriptor(), storageLockContext,
+                               null, null, errorHandler), disposableParent);
+    myPathsIndexer = pathIndexer;
   }
 
   private static @NotNull DurableDataEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
@@ -110,38 +99,46 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     myPathsIndexer.myPathsEnumerator.force();
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-    try {
-      myPathsIndexer.myPathsEnumerator.close();
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-  }
-
   @Contract("null,_ -> null; !null,_ -> !null")
   static @Nullable FilePath toFilePath(@Nullable LightFilePath lightFilePath, boolean isDirectory) {
     if (lightFilePath == null) return null;
     return VcsUtil.getFilePath(lightFilePath.getRoot().getPath() + "/" + lightFilePath.getRelativePath(), isDirectory);
   }
 
+  static @NotNull VcsLogPathsIndex create(@NotNull StorageId.Directory storageId, @Nullable StorageLockContext storageLockContext,
+                                          @NotNull VcsLogStorage storage, @NotNull Set<VirtualFile> roots,
+                                          @NotNull PersistentHashMap<int[], int[]> renamesMap,
+                                          boolean useDurableEnumerator, @NotNull VcsLogErrorHandler errorHandler,
+                                          @NotNull Disposable disposableParent) throws IOException {
+    Disposable disposable = Disposer.newDisposable(disposableParent);
+    try {
+      DurableDataEnumerator<LightFilePath> pathsEnumerator = createPathsEnumerator(roots, storageId, storageLockContext,
+                                                                                   useDurableEnumerator);
+      Disposer.register(disposable, () -> catchAndWarn(LOG, pathsEnumerator::close));
+
+      PathIndexer pathsIndex = new PathIndexer(storage, pathsEnumerator, renamesMap,
+                                               e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
+      return new VcsLogPathsIndex(storageId, storageLockContext, pathsIndex, errorHandler, disposable);
+    }
+    catch (Throwable t) {
+      Disposer.dispose(disposable);
+      throw t;
+    }
+  }
+
   static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     private final @NotNull VcsLogStorage myStorage;
     private final @NotNull DurableDataEnumerator<LightFilePath> myPathsEnumerator;
     private final @NotNull PersistentHashMap<int[], int[]> myRenamesMap;
-    private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
+    private final @NotNull Consumer<? super Exception> myFatalErrorConsumer;
 
     private PathIndexer(@NotNull VcsLogStorage storage,
                         @NotNull DurableDataEnumerator<LightFilePath> pathsEnumerator,
-                        @NotNull PersistentHashMap<int[], int[]> renamesMap) {
+                        @NotNull PersistentHashMap<int[], int[]> renamesMap,
+                        @NotNull Consumer<? super Exception> fatalErrorConsumer) {
       myStorage = storage;
       myPathsEnumerator = pathsEnumerator;
       myRenamesMap = renamesMap;
-    }
-
-    public void setFatalErrorConsumer(@NotNull Consumer<? super Exception> fatalErrorConsumer) {
       myFatalErrorConsumer = fatalErrorConsumer;
     }
 

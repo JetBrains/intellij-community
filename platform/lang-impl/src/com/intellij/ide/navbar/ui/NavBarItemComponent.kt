@@ -42,10 +42,14 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager
 
+/**
+ * @param installPopupHandler Disables popup which appears on right click containing nav bar actions
+ */
 internal class NavBarItemComponent(
   cs: CoroutineScope,
   private val vm: NavBarItemVm,
   private val panel: NewNavBarPanel,
+  installPopupHandler: Boolean = true
 ) : SimpleColoredComponent() {
 
   init {
@@ -78,7 +82,10 @@ internal class NavBarItemComponent(
       }
     }
 
-    addMouseListener(ItemPopupHandler())
+    if (installPopupHandler) {
+      addMouseListener(ItemPopupHandler())
+    }
+
     addMouseListener(ItemMouseListener())
   }
 

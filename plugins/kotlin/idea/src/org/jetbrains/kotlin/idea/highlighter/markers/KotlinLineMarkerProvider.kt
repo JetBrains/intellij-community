@@ -25,12 +25,8 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.AbstractKotlinLineMarkerProvider
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.*
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.LineMarkerInfos
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.areMarkersForbidden
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.expectOrActualAnchor
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.markerDeclaration
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
@@ -188,7 +184,8 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
             KotlinBundle.message("highlighter.action.text.go.to.super.method")
         else
             KotlinBundle.message("highlighter.action.text.go.to.super.property"),
-        IdeActions.ACTION_GOTO_SUPER
+        IdeActions.ACTION_GOTO_SUPER,
+        gutter.icon
     )
     result.add(lineMarkerInfo)
 }
@@ -221,7 +218,8 @@ private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfo
             KotlinBundle.message("highlighter.action.text.go.to.implementations")
         else
             KotlinBundle.message("highlighter.action.text.go.to.subclasses"),
-        IdeActions.ACTION_GOTO_IMPLEMENTATION
+        IdeActions.ACTION_GOTO_IMPLEMENTATION,
+        gutter.icon
     )
     result.add(lineMarkerInfo)
 }
@@ -260,7 +258,8 @@ private fun collectOverriddenPropertyAccessors(
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.overridden.properties"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION
+            IdeActions.ACTION_GOTO_IMPLEMENTATION,
+            gutter.icon
         )
 
         result.add(lineMarkerInfo)
@@ -309,7 +308,8 @@ private fun collectActualMarkers(
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
         KotlinBundle.message("highlighter.action.text.go.to.actual.declarations"),
-        IdeActions.ACTION_GOTO_IMPLEMENTATION
+        IdeActions.ACTION_GOTO_IMPLEMENTATION,
+        gutter.icon
     )
     result.add(lineMarkerInfo)
 }
@@ -337,7 +337,8 @@ private fun collectExpectedMarkers(
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
         KotlinBundle.message("highlighter.action.text.go.to.expected.declaration"),
-        null
+        null,
+        gutter.icon
     )
     result.add(lineMarkerInfo)
 }
@@ -378,7 +379,8 @@ private fun collectOverriddenFunctions(functions: Collection<KtNamedFunction>, r
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.overridden.methods"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION
+            IdeActions.ACTION_GOTO_IMPLEMENTATION,
+            gutter.icon
         )
 
         result.add(lineMarkerInfo)

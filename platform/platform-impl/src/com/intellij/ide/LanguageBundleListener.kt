@@ -16,7 +16,13 @@ private class LanguageBundleListener : ApplicationInitializedListener {
     UtilBundle.loadBundleFromPlugin(pluginClassLoader)
     UtilUiBundle.loadBundleFromPlugin(pluginClassLoader)
     DynamicBundle.loadLocale(langBundle)
+    clearBundlesCache()
+    DateTimeFormatManager.getInstance().resetFormats()
+  }
+
+  private fun clearBundlesCache() {
     CoreBundle.clearCache()
     DateTimeFormatManager.getInstance().resetFormats()
+    IdeBundle.clearCache()
   }
 }

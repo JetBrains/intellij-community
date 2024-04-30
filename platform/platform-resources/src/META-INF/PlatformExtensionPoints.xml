@@ -543,6 +543,8 @@
 
     <extensionPoint name="idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>
 
+    <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions"/>
+    
     <extensionPoint name="textEditorInitializer" interface="com.intellij.openapi.fileEditor.impl.text.TextEditorInitializer"/>
 
     <extensionPoint name="toolbarQuickAction" beanClass="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfoBean">
@@ -553,5 +555,7 @@
     <extensionPoint name="uiDslRendererProvider" interface="com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider" dynamic="true"/>
 
     <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
+
+    <extensionPoint name="endUserAgreementUpdater" beanClass="com.intellij.ide.gdpr.EndUserAgreement$PluginAgreementUpdateDescriptor" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -278,10 +278,12 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   public static void setAnswerToDeleteObsoleteModulesQuestion(boolean answer) {
     answerToDeleteObsoleteModulesQuestion = answer;
   }
+
   @TestOnly
   public static Boolean getAnswerToDeleteObsoleteModulesQuestion() {
     return answerToDeleteObsoleteModulesQuestion;
   }
+
   private static Boolean answerToDeleteObsoleteModulesQuestion = null;
 
   private boolean isDeleteObsoleteModules(@NotNull List<Module> obsoleteModules) {
@@ -361,7 +363,8 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
         existingMavenProjectToModuleName.put(projectToModule.getKey().getFile(), module.getName());
       }
     }
-    myMavenProjectToModuleName.putAll(MavenModuleNameMapper.mapModuleNames(myProjectsTree, myAllProjects, existingMavenProjectToModuleName));
+    myMavenProjectToModuleName.putAll(
+      MavenModuleNameMapper.mapModuleNames(myProjectsTree, myAllProjects, existingMavenProjectToModuleName));
     MavenModulePathMapper.resolveModulePaths(myAllProjects,
                                              myMavenProjectToModule,
                                              myMavenProjectToModuleName,
@@ -471,6 +474,15 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   private MavenLegacyModuleImporter.ExtensionImporter createExtensionImporterIfApplicable(@NotNull MavenProject mavenProject,
                                                                                           @NotNull Module module,
                                                                                           @NotNull MavenProjectChanges changes) {
+    List<MavenImporter> importers = MavenImporter.getSuitableImporters(mavenProject, false);
+
+    // We must run all importers when we import into Workspace Model:
+    //  in Workspace model the project is recreated from scratch. But for the importers for which processChangedModulesOnly = true,
+    //  we don't know whether they rely on the fact, that previously imported data is kept in the project model on reimport.
+
+    if (!changes.hasChanges()) {
+      importers = importers.stream().filter(it -> !it.processChangedModulesOnly()).toList();
+    }
     return MavenLegacyModuleImporter.ExtensionImporter.createIfApplicable(
       mavenProject,
       module,
@@ -478,7 +490,7 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
       myProjectsTree,
       changes,
       myMavenProjectToModuleName,
-      false);
+      importers);
   }
 
   private boolean removeUnusedProjectLibraries() {

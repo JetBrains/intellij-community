@@ -64,7 +64,7 @@ import kotlin.io.path.isDirectory
 
 
 internal fun <T> PropertyGraph.booleanProperty(dependency: ObservableProperty<T>, value: T) =
-  lazyProperty { false }.apply { dependsOn(dependency) { dependency.get() == value } }
+  lazyProperty { dependency.get() == value }.apply { dependsOn(dependency) { dependency.get() == value } }
 
 class PythonNewEnvironmentDialogNavigator {
   lateinit var selectionMode: ObservableMutableProperty<PythonInterpreterSelectionMode>
@@ -107,11 +107,15 @@ class PythonNewEnvironmentDialogNavigator {
   }
 
 
-  fun restoreLastState() {
+  /**
+   * Loads all fields from storage ([selectionMode] is only loaded when included into `onlyAllowedSelectionModes`)
+   */
+  internal fun restoreLastState(onlyAllowedSelectionModes: Collection<PythonInterpreterSelectionMode> = PythonInterpreterSelectionMode.entries.toSet()) {
     val properties = PropertiesComponent.getInstance()
 
     val modeString = properties.getValue(FAV_MODE) ?: return
     val mode = PythonInterpreterSelectionMode.valueOf(modeString)
+    if (mode !in onlyAllowedSelectionModes) return
     selectionMode.set(mode)
 
     if (mode == CUSTOM) {

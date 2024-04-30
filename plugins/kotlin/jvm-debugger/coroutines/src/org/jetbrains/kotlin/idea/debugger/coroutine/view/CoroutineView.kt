@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
@@ -90,6 +90,8 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
             panel.tree.setRoot(EmptyNode(), false)
         }
     }
+
+    fun isShowing() = mainPanel.isShowing
 
     fun renewRoot(suspendContext: SuspendContextImpl) {
         panel.tree.setRoot(XCoroutinesRootNode(suspendContext), false)

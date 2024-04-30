@@ -2,17 +2,20 @@
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
@@ -196,12 +199,20 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       return problemHolder.getAllProblems(inspection);
     }
 
-    return AnnotationSessionImpl.computeWithSession(domFileElement.getFile(), false, annotationHolder -> {
+    return AnnotationSessionImpl.computeWithSession(domFileElement.getFile(), false, MyDomElementFakeAnnotator.INSTANCE, annotationHolder -> {
       DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl(onTheFly, domFileElement, annotationHolder);
       inspection.checkFileElement(domFileElement, holder);
       //noinspection unchecked
       return appendProblems(domFileElement, holder, (Class<? extends DomElementsInspection<?>>)inspection.getClass());
     });
+  }
+
+  private static class MyDomElementFakeAnnotator implements Annotator {
+    private static final MyDomElementFakeAnnotator INSTANCE = new MyDomElementFakeAnnotator();
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+
+    }
   }
 
   public List<DomElementsInspection<?>> getSuitableDomInspections(final DomFileElement<?> fileElement, boolean enabledOnly) {

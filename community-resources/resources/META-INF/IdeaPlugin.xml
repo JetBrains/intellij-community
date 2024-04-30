@@ -17,12 +17,10 @@
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.kotlin.onboarding-promoter"/>
     <module name="intellij.platform.experiment"/>
+    <module name="intellij.idea.customization.base"/>
   </content>
   
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls" 
-                        serviceImplementation="com.intellij.idea.customization.base.IntelliJIdeaExternalResourceUrls"
-                        overrides="true"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
                         serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"
                         overrides="true"/>

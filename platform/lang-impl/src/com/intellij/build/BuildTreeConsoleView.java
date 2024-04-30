@@ -1010,7 +1010,9 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       textConsoleToolbarActionGroup.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
         @Override
         protected @Nullable Editor getEditor(@NotNull AnActionEvent e) {
-          return ConsoleViewHandler.this.getEditor();
+          var editor = ConsoleViewHandler.this.getEditor();
+          if (editor == null) return null;
+          return ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
         }
       });
       textConsoleToolbarActionGroup.add(new ScrollEditorToTheEndAction(this));

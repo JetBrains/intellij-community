@@ -33,6 +33,11 @@ public class FirReferenceResolveWithCompiledLibTestGenerated extends AbstractFir
         runTest("../../idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters/");
     }
 
+    @TestMetadata("enumEntryMethods")
+    public void testEnumEntryMethods() throws Exception {
+        runTest("../../idea/tests/testData/resolve/referenceWithLib/enumEntryMethods/");
+    }
+
     @TestMetadata("enumSyntheticMethods")
     public void testEnumSyntheticMethods() throws Exception {
         runTest("../../idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods/");

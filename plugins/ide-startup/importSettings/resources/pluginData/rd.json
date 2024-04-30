@@ -30,6 +30,11 @@
     "ideaId": "AngularJS"
   },
   {
+    "vsCodeId": "astro-build.astro-vscode",
+    "ideaName": "Astro",
+    "ideaId": "org.jetbrains.plugins.astro"
+  },
+  {
     "vsCodeId": "austin.code-gnu-global",
     "ideaName": "C++ Intellisense",
     "builtIn": true
@@ -413,6 +418,11 @@
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue"
+  },
+  {
+    "vsCodeId": "Prisma.prisma",
+    "ideaName": "Prisma ORM",
+    "ideaId": "org.intellij.prisma"
   },
   {
     "vsCodeId": "redhat.vscode-xml",

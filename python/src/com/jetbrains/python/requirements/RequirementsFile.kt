@@ -3,12 +3,53 @@ package com.jetbrains.python.requirements
 
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.FileViewProvider
+import com.jetbrains.python.requirements.psi.Option
+import com.jetbrains.python.requirements.psi.Requirement
 
 
 class RequirementsFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, RequirementsLanguage.INSTANCE) {
   override fun getFileType(): FileType {
     return RequirementsFileType.INSTANCE
+  }
+
+  fun requirements(): List<Requirement> {
+    val requirements = mutableListOf<Requirement>()
+    for (child in this.children) {
+      if (child is Requirement) {
+        requirements.add(child)
+      }
+      else if (child is Option) {
+        val editableReq = child.editableReq
+        val referReq = child.referReq
+        if (editableReq != null) {
+          requirements.add(editableReq)
+        }
+        else if (referReq != null) {
+          requirements.add(referReq)
+        }
+      }
+    }
+
+    return requirements
+  }
+
+  val sdk: Sdk?
+    get() {
+      return getPythonSdk(this)
+    }
+
+  fun enabledRequirements(): List<Requirement> {
+    val sdk = sdk ?: return emptyList()
+    return requirements().filter {
+      it.enabled(getPythonInfo(sdk).map)
+    }
+  }
+
+  fun disabledRequirements(): List<Requirement> {
+    val sdk = sdk ?: return requirements()
+    return requirements().filter { !it.enabled(getPythonInfo(sdk).map) }
   }
 
   override fun toString(): String {

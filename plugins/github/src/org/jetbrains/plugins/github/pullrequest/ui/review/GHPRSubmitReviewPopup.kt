@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitPopupHandler
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -14,7 +16,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import java.awt.event.ActionListener
+import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -81,6 +85,14 @@ internal object GHPRSubmitReviewPopup : CodeReviewSubmitPopupHandler<GHPRSubmitR
     return HorizontalListPanel(TITLE_ACTIONS_GAP).apply {
       add(discardButton)
       add(defaultActions)
+    }
+  }
+
+  override val errorPresenter: ErrorStatusPresenter<Throwable> by lazy {
+    object : ErrorStatusPresenter.Text<Throwable> {
+      override fun getErrorTitle(error: Throwable): String = CollaborationToolsBundle.message("review.submit.failed")
+      override fun getErrorDescription(error: Throwable): String = GHHtmlErrorPanel.getLoadingErrorText(error)
+      override fun getErrorAction(error: Throwable): Action? = null
     }
   }
 }

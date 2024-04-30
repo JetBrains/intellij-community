@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.AnnotationSession;
@@ -23,7 +24,7 @@ public class HighlightInfoHolder {
 
   public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter @NotNull ... filters) {
     myContextFile = contextFile;
-    myAnnotationSession = new AnnotationSessionImpl(contextFile);
+    myAnnotationSession = AnnotationSessionImpl.create(contextFile);
     myFilters = filters;
     myInfos = new ArrayList<>(Math.max(10, contextFile.getTextLength() / 800)); // extrapolated from the most error-packed AbstractTreeUI
   }

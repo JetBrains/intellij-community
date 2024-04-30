@@ -1,20 +1,19 @@
 package com.jetbrains.builtInHelp.mapping
 
-import javax.xml.bind.annotation.XmlAccessType
-import javax.xml.bind.annotation.XmlAccessorType
-import javax.xml.bind.annotation.XmlAttribute
-import javax.xml.bind.annotation.XmlRootElement
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
 
 /**
  * Created by Egor.Malyshev on 20.04.2015.
  */
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "mapID")
+@JacksonXmlRootElement(localName = "mapID")
 class HelpMapId {
-  @XmlAttribute(name = "url")
+  @JacksonXmlProperty(localName = "url", isAttribute = true)
   var url: String = ""
-  @XmlAttribute(name = "target")
+
+  @JacksonXmlProperty(localName = "target", isAttribute = true)
   var target: String = ""
-  @XmlAttribute(name = "default")
+
+  @JacksonXmlProperty(localName = "default", isAttribute = true)
   var isDefault: String = "no"
 }

@@ -3,6 +3,7 @@ package com.intellij.tasks;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.tasks.generic.GenericRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.youtrack.YouTrackRepository;
 import org.jdom.Element;
@@ -27,5 +28,12 @@ public class TaskSettingsTest extends TaskManagerTestCase {
 
   public void testEmptyState() {
     myTaskManager.loadState(new TaskManagerImpl.Config());
+  }
+
+  public void testGenericTestSerialization() {
+    GenericRepositoryType type = new GenericRepositoryType();
+    TaskRepository repository = type.new AsanaRepository().createRepository();
+    myTaskManager.setRepositories(Collections.singletonList(repository));
+    myTaskManager.getState();
   }
 }

@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,26 +38,18 @@ final class InspectopediaExtractor implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(InspectopediaExtractor.class);
   private static final Map<String, ObjectMapper> ASSETS = new HashMap<>();
 
-  static {
+  @Override
+  public void main(@NotNull List<String> args) {
+    if (args.size() != 2) {
+      LOG.error("Usage: %s <output directory>".formatted("inspectopedia-generator"));
+      System.exit(-1);
+    }
+
     JsonMapper jsonMapper = JsonMapper.builder()
       .enable(SerializationFeature.INDENT_OUTPUT)
       .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
       .build();
     ASSETS.put("json", jsonMapper);
-  }
-
-  @Override
-  public @NonNls String getCommandName() {
-    return "inspectopedia-generator";
-  }
-
-  @Override
-  public void main(@NotNull List<String> args) {
-    final int size = args.size();
-    if (size != 2) {
-      LOG.error("Usage: %s <output directory>".formatted(getCommandName()));
-      System.exit(-1);
-    }
 
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
     String IDE_CODE = appInfo.getBuild().getProductCode().toLowerCase(Locale.getDefault());
@@ -100,6 +91,8 @@ final class InspectopediaExtractor implements ApplicationStarter {
       final InspectionMetaInformationService
         service = ApplicationManager.getApplication().getService(InspectionMetaInformationService.class);
 
+      @SuppressWarnings("DataFlowIssue")
+      //In Kotlin, this handles nulls just fine, here it seems to be some weird Java interop issue, still works with null as well.
       final MetaInformationState inspectionsExtraState = service == null ? null : (MetaInformationState)service.getState(null);
 
       for (final ScopeToolState scopeToolState : scopeToolStates) {
@@ -123,7 +116,8 @@ final class InspectopediaExtractor implements ApplicationStarter {
         catch (Throwable t) {
           LOG.info("Cannot create options panel " + wrapper.getShortName(), t);
         }
-        final MetaInformation metaInformation = inspectionsExtraState == null ? null : inspectionsExtraState.getInspections().get(wrapper.getID());
+        final MetaInformation metaInformation =
+          inspectionsExtraState == null ? null : inspectionsExtraState.getInspections().get(wrapper.getID());
         final List<Integer> cweIds = metaInformation == null ? null : metaInformation.getCweIds();
 
         final String language = wrapper.getLanguage();

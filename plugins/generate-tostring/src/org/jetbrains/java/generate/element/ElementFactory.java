@@ -167,7 +167,7 @@ public final class ElementFactory {
     // type names
     element.setTypeName(PsiAdapter.getTypeClassName(type));
     element.setTypeQualifiedName(PsiAdapter.getTypeQualifiedClassName(type));
-    element.setType(type.getCanonicalText());
+    element.setType(type.getCanonicalText(true));
 
     // arrays, collections and maps types
     if (PsiAdapter.isObjectArrayType(type)) {

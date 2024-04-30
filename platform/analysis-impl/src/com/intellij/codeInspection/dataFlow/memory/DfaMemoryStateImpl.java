@@ -1126,7 +1126,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       .allMatch(field -> {
         DfaValue leftValue = field.createValue(myFactory, left);
         DfaValue rightValue = field.createValue(myFactory, right);
-        DfType result = getDfType(leftValue).meet(getDfType(rightValue));
+        DfType leftType = getDfType(leftValue);
+        DfType rightType = getDfType(rightValue);
+        // Values participated in comparison are incompatible, but could be both null
+        if (leftType == DfType.BOTTOM || rightType == DfType.BOTTOM) return true;
+        DfType result = leftType.meet(rightType);
         if (!result.hasNonStandardEquivalence() && !applyRelation(leftValue, rightValue, false)) {
           return false;
         }

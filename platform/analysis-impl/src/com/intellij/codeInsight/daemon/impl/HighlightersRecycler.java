@@ -33,6 +33,9 @@ final class HighlightersRecycler implements HighlighterRecyclerPickup {
     if (highlighter.isValid() && ((UserDataHolderEx)highlighter).replace(BEING_RECYCLED_KEY, null, Boolean.TRUE)) {
       long range = ((RangeMarkerImpl)highlighter).getScalarRange();
       incinerator.computeIfAbsent(range, __ -> new ArrayList<>()).add(highlighter);
+      if (UpdateHighlightersUtil.LOG.isTraceEnabled()) {
+        UpdateHighlightersUtil.LOG.trace("recycleHighlighter "+highlighter);
+      }
       return true;
     }
     return false;

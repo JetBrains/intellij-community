@@ -6,9 +6,9 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.*
@@ -28,7 +28,7 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
       put("PACKAGE_NAME", aPackage)
       if (generateOnboardingTips) {
         val tipsContext = object : KeymapTextContext() {
-          override fun isSimplifiedMacShortcuts(): Boolean = SystemInfo.isMac
+          override fun isSimplifiedMacShortcuts(): Boolean = ClientSystemInfo.isMac()
         }
         if (renderedOnboardingTips) {
           //@formatter:off

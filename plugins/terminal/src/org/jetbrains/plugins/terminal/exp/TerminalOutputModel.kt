@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -35,8 +34,6 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   @RequiresEdt
   fun createBlock(command: String?, prompt: PromptRenderingInfo?): CommandBlock {
-    closeActiveBlock()
-
     if (document.textLength > 0) {
       document.insertString(document.textLength, "\n")
     }
@@ -52,13 +49,10 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun closeActiveBlock() {
-    val activeBlock = getActiveBlock()
+  internal fun finalizeBlock(activeBlock: CommandBlock) {
     // restrict block expansion
-    if (activeBlock != null) {
-      activeBlock.range.isGreedyToRight = false
-      listeners.forEach { it.blockFinalized(activeBlock) }
-    }
+    activeBlock.range.isGreedyToRight = false
+    listeners.forEach { it.blockFinalized(activeBlock) }
   }
 
   @RequiresEdt
@@ -231,7 +225,7 @@ class TerminalOutputModel(val editor: EditorEx) {
         it.endOffset <= deleteRange.startOffset -> it
         it.startOffset >= deleteRange.endOffset -> {
           val newRangeStart = it.startOffset - deleteRange.length
-          HighlightingInfo(newRangeStart, newRangeStart + it.length, it.textAttributes)
+          HighlightingInfo(newRangeStart, newRangeStart + it.length, it.textAttributesProvider)
         }
         else -> {
           val intersectionLength = findIntersectionLength(it, deleteRange)
@@ -239,7 +233,7 @@ class TerminalOutputModel(val editor: EditorEx) {
           val newRangeStart = min(it.startOffset, deleteRange.startOffset)
           val newRangeEnd = newRangeStart + it.length - intersectionLength
           if (newRangeStart != newRangeEnd)
-            HighlightingInfo(newRangeStart, newRangeEnd, it.textAttributes)
+            HighlightingInfo(newRangeStart, newRangeEnd, it.textAttributesProvider)
           else
             null // the whole highlighting is deleted
         }
@@ -283,9 +277,8 @@ internal class AllHighlightingsSnapshot(private val document: Document, highligh
    */
   fun findHighlightingIndex(documentOffset: Int): Int {
     if (documentOffset <= 0) return 0
-    val searchKey = HighlightingInfo(documentOffset, documentOffset, TextAttributes.ERASE_MARKER)
-    val binarySearchInd = Collections.binarySearch(allSortedHighlightings, searchKey) { a, b ->
-      a.startOffset.compareTo(b.startOffset)
+    val binarySearchInd = allSortedHighlightings.binarySearch(0, allSortedHighlightings.size) {
+      it.startOffset.compareTo(documentOffset)
     }
     return if (binarySearchInd >= 0) binarySearchInd
     else {
@@ -313,13 +306,13 @@ private fun buildAndSortHighlightings(document: Document, highlightings: List<Hi
       logger<TerminalOutputModel>().error("Terminal highlightings should not overlap")
     }
     if (startOffset < highlighting.startOffset) {
-      result.add(HighlightingInfo(startOffset, highlighting.startOffset, TextAttributes.ERASE_MARKER))
+      result.add(HighlightingInfo(startOffset, highlighting.startOffset, EmptyTextAttributesProvider))
     }
     result.add(highlighting)
     startOffset = highlighting.endOffset
   }
   if (startOffset < documentLength) {
-    result.add(HighlightingInfo(startOffset, documentLength, TextAttributes.ERASE_MARKER))
+    result.add(HighlightingInfo(startOffset, documentLength, EmptyTextAttributesProvider))
   }
   return result
 }

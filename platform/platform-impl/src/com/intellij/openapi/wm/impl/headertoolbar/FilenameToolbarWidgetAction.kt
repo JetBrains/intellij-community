@@ -14,8 +14,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
-import com.intellij.openapi.fileEditor.impl.EditorWindow
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -26,12 +24,12 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.ui.ColorUtil
@@ -54,14 +52,13 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
     val uiSettings = UISettings.getInstance()
-    if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !(uiSettings.fullPathsInWindowHeader && isIDEA331002Fixed)) return
+    if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !(uiSettings.fullPathsInWindowHeader)) return
     val project = e.project ?: return
     val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return
-    val window = e.getData(EditorWindow.DATA_KEY)
-    updatePresentationFromFile(project, file, e.presentation, window)
+    updatePresentationFromFile(project, file, e.presentation)
   }
 
-  private fun updatePresentationFromFile(project: Project, file: VirtualFile, presentation: Presentation, window: EditorWindow?) {
+  private fun updatePresentationFromFile(project: Project, file: VirtualFile, presentation: Presentation) {
     val status = FileStatusManager.getInstance(project).getStatus(file)
     var fg:Color?
 
@@ -81,14 +78,12 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
 
     @Suppress("HardCodedStringLiteral")
     val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
-    val pathFromProjectRoot = window?.let {
-      (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)?.getFileTooltipText(file, it)
-    } ?: FileUtil.toSystemDependentName(file.path)
+    val path = FrameTitleBuilder.getInstance().getFileTitle(project, file)
     presentation.isEnabledAndVisible = true
     presentation.putClientProperty(FILE_COLOR, fg)
-    presentation.putClientProperty(FILE_FULL_PATH, if (UISettings.getInstance().fullPathsInWindowHeader) file.path else null)
+    presentation.putClientProperty(FILE_FULL_PATH, if (UISettings.getInstance().fullPathsInWindowHeader && path != filename) path else null)
     presentation.text = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
-    presentation.description = pathFromProjectRoot ?: if (filename != presentation.text) filename else null
+    presentation.description = path ?: if (filename != presentation.text) filename else null
     presentation.icon = icon
   }
 
@@ -136,7 +131,6 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
     }
 
     fun update(presentation: Presentation) {
-      @Suppress("HardCodedStringLiteral")
       val path = presentation.getClientProperty(FILE_FULL_PATH)
       isOpaque = false
       leftIcons = listOf(presentation.icon)
@@ -148,10 +142,8 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
         // as the action system goes out of its way to make the action visible until the first update.
         isVisible = false
       }
-      if (path != null && isIDEA331002Fixed) {
-        val htmlColor = ColorUtil.toHtmlColor(JBColor.namedColor("Component.infoForeground", foreground))
-        @Suppress("HardCodedStringLiteral")
-        text = "<html><body>$text <font color='$htmlColor'>[$path]</font></body></html>"
+      if (path != null) {
+        text = "$text [$path]"
       }
     }
 
@@ -199,5 +191,4 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
 
 private val FILE_COLOR: Key<Color> = Key.create("FILENAME_WIDGET_FILE_COLOR")
 private val FILE_FULL_PATH: Key<String?> = Key.create("FILENAME_WIDGET_FILE_PATH")
-private const val isIDEA331002Fixed = false //todo[mikhail.sokolov]
 private val LOG = logger<FilenameToolbarWidgetAction>()

@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
@@ -48,8 +48,10 @@ import java.awt.*
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.*
-import kotlin.math.max
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JPanel
 import kotlin.math.min
 
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
@@ -77,13 +79,15 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
 
 private data object DefaultMainToolbarFlavor : MainToolbarFlavor
 
+private const val layoutGap = 10
+
 @Internal
 class MainToolbar(
   private val coroutineScope: CoroutineScope,
   private val frame: JFrame,
   isOpaque: Boolean = false,
   background: Color? = null,
-) : JPanel(HorizontalLayout(10)) {
+) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
 
   init {
@@ -267,7 +271,7 @@ private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?
 
   toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
   toolbar.targetComponent = null
-  toolbar.layoutStrategy = MainToolbarLayoutStrategy()
+  toolbar.layoutStrategy = CompressingLayoutStrategy()
   val component = toolbar.component
   component.border = JBUI.Borders.empty()
   component.isOpaque = false
@@ -493,58 +497,4 @@ private fun schemaChanged() {
     TouchbarSupport.reloadAllActions()
   }
   CustomActionsListener.fireSchemaChanged()
-}
-
-private class MainToolbarLayoutStrategy(): ToolbarLayoutStrategy {
-
-  private val delegate : ToolbarLayoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
-
-  override fun calculateBounds(toolbar: ActionToolbar): MutableList<Rectangle> {
-    val bounds = delegate.calculateBounds(toolbar)
-    val component = toolbar.component
-    for (i in 0 until bounds.size) {
-      val prevRect = if (i > 0) bounds[i - 1] else null
-      val rect = bounds[i]
-      fitRectangle(prevRect, rect, component.getComponent(i), component.height)
-    }
-
-    return bounds
-  }
-
-  override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
-    val res = Dimension()
-
-    val minButtonSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
-    toolbar.component.components.forEach {
-      val size = it.preferredSize
-      if (!ActionToolbarImpl.isSeparator(it)) {
-        size.width = max(size.width, minButtonSize.width)
-      }
-      size.height = max(size.height, minButtonSize.height)
-
-      res.width += size.width
-      res.height = max(res.height, size.height)
-    }
-
-    JBInsets.addTo(res, toolbar.component.insets)
-    return res
-  }
-
-  override fun calcMinimumSize(toolbar: ActionToolbar): Dimension = delegate.calcMinimumSize(toolbar)
-
-  private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {
-    val minButtonSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
-    if (!ActionToolbarImpl.isSeparator(cmp) && currRect.width != 0) {
-      currRect.width = max(currRect.width, minButtonSize.width)
-    }
-    currRect.height = max(currRect.height, minButtonSize.height)
-
-    if (currRect.x == Int.MAX_VALUE || currRect.y == Int.MAX_VALUE) return
-
-    if (prevRect != null && prevRect.maxX > currRect.minX) {
-      currRect.x = prevRect.maxX.toInt()
-    }
-    currRect.y = (toolbarHeight - currRect.height) / 2
-  }
-
 }

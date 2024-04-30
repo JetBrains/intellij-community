@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import com.intellij.testIntegration.TestFinder
@@ -20,10 +19,10 @@ import com.intellij.testIntegration.TestIntegrationUtils
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.util.regex.Pattern
@@ -124,14 +123,7 @@ abstract class AbstractKotlinTestFinder : TestFinder {
         when(this) {
             is KtClassOrObject -> name
             is PsiClass -> name
-            is KtFile -> {
-                PsiTreeUtil.findChildOfAnyType<KtFileAnnotationList>(this, KtFileAnnotationList::class.java)?.let { annotationList ->
-                    annotationList.children
-                        .firstOrNull { (it as? KtAnnotationEntry)?.shortName?.asString() == JvmFileClassUtil.JVM_NAME_SHORT }
-                        ?.findDescendantOfType<KtStringTemplateEntry>()?.text?.let { return it }
-                }
-                name
-            }
+            is KtFile -> javaFileFacadeFqName.shortName().asString()
             else -> null
         } ?: throw KotlinExceptionWithAttachments("non-anonymous psiElement ${javaClass.name} is expected")
             .withPsiAttachment("element", this)

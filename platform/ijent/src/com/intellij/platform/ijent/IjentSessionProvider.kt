@@ -45,7 +45,7 @@ interface IjentSessionProvider {
     platform: IjentExecFileProvider.SupportedPlatform,
     watcher: IjentProcessWatcher,
   ): IjentApi {
-    watcher.zeroExitCodeIsExpected = true
+    watcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ZERO
     return connect(ijentCoroutineScope, ijentId, platform, watcher.process.inputStream, watcher.process.outputStream)
   }
 
@@ -126,8 +126,18 @@ suspend fun bootstrapOverShellSession(
   val ijentApi = IjentSessionRegistry.instanceAsync().register(ijentName) { ijentCoroutineScope, ijentId ->
     val processWatcher = IjentProcessWatcher.launch(ijentCoroutineScope, shellProcess, ijentId)
 
-    val (path, targetPlatform) = doBootstrapOverShellSession(shellProcess, pathMapper)
-    processWatcher.zeroExitCodeIsExpected = true
+    val (path, targetPlatform) =
+      try {
+        processWatcher.attachStderrOnError {
+          processWatcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ANY
+          doBootstrapOverShellSession(shellProcess, pathMapper)
+        }
+      }
+      catch (err: Throwable) {
+        runCatching { shellProcess.destroyForcibly() }.exceptionOrNull()?.let(err::addSuppressed)
+        throw err
+      }
+    processWatcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ZERO
     remoteIjentPath = path
 
     try {
@@ -173,12 +183,15 @@ private suspend fun doBootstrapOverShellSession(
     while (line != boundary)
 
     readLineWithoutBuffering(shellProcess)
-  }.split(" ")
+  }
+    .split(" ")
+    .filterTo(linkedSetOf(), String::isNotEmpty)
 
   val targetPlatform = when {
+    arch.isEmpty() -> error("Empty output of `uname`")
     "x86_64" in arch -> IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
     "aarch64" in arch -> IjentExecFileProvider.SupportedPlatform.AARCH64__LINUX
-    else -> error("No binary for architecture $arch")  // TODO Some good exception class with an error message in UI.
+    else -> error("No binary for architecture $arch")
   }
 
   val ijentBinaryOnLocalDisk = IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform)

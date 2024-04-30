@@ -2056,6 +2056,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     assertContainsElements(suggested, "something_a", "something_b");
   }
 
+  // PY-17627
+  public void testClassAttributeDefinedInClassMethod() {
+    doTest();
+  }
+
   private void doTestHasattrContributor(String[] inList, String[] notInList) {
     doTestHasattrContributor("hasattrCompletion/" + getTestName(true) + ".py", inList, notInList);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
@@ -43,7 +43,8 @@ internal fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
 
 fun getPluginInfo(className: String): PluginInfo {
   if (className.startsWith("java.") || className.startsWith("javax.") ||
-      className.startsWith("kotlin.") || className.startsWith("groovy.")) {
+      className.startsWith("kotlin.") || className.startsWith("kotlinx.") ||
+      className.startsWith("groovy.")) {
     return jvmCore
   }
 

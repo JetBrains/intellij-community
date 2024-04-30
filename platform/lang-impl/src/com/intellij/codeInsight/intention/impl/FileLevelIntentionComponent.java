@@ -31,10 +31,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.CancellablePromise;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import java.util.List;
 
 public final class FileLevelIntentionComponent extends EditorNotificationPanel {
@@ -49,23 +49,36 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
     ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
     if (intentions != null) {
+      var isActionAvailable = new HashMap<HighlightInfo.IntentionActionDescriptor, Boolean>();
+      Runnable showIntentions = () -> {
+        for (var intention : intentions) {
+          HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
+          if (!isActionAvailable.get(descriptor)) continue;
+          info.intentionsToShow.add(descriptor);
+          IntentionAction action = descriptor.getAction();
+          if (action instanceof EmptyIntentionAction) {
+            continue;
+          }
+          String text = action.getText();
+          createActionLabel(text, () -> {
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
+            ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
+          });
+        }
+      };
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> intention : intentions) {
         HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
         IntentionAction action = descriptor.getAction();
+        // Compute action availability, but only show all of them once everything's computed,
+        // to preserve the order of intentions (because read actions finish in an unpredictable order).
         ReadAction.nonBlocking(() -> action.isAvailable(project, editor, psiFile))
           .expireWith(project)
           .inSmartMode(project)
           .finishOnUiThread(ModalityState.nonModal(), isAvailable -> {
-            if (!isAvailable) return;
-            info.intentionsToShow.add(descriptor);
-            if (action instanceof EmptyIntentionAction) {
-              return;
+            isActionAvailable.put(descriptor, isAvailable);
+            if (isActionAvailable.size() == intentions.size()) {
+              showIntentions.run();
             }
-            String text = action.getText();
-            createActionLabel(text, () -> {
-              PsiDocumentManager.getInstance(project).commitAllDocuments();
-              ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
-            });
           })
           .submit(AppExecutorUtil.getAppExecutorService());
       }

@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -494,19 +493,14 @@ final class PassExecutorService implements Disposable {
         log(updateProgress, pass, " is canceled during apply, sorry");
         return;
       }
-      try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
-        try (AccessToken ignored2 = ThreadContext.installThreadContext(context, true)) {
-          if (UIUtil.isShowing(fileEditor.getComponent())) {
-            pass.applyInformationToEditor();
-            repaintErrorStripeAndIcon(fileEditor);
-            if (pass instanceof TextEditorHighlightingPass text) {
-              FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
-              Document document = text.getDocument();
-              int passId = text.getId();
-              fileStatusMap.markFileUpToDate(document, passId);
-            }
-            log(updateProgress, pass, " Applied");
+      try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor)); AccessToken ignored2 = ThreadContext.installThreadContext(context, true)) {
+        if (UIUtil.isShowing(fileEditor.getComponent())) {
+          pass.applyInformationToEditor();
+          repaintErrorStripeAndIcon(fileEditor);
+          if (pass instanceof TextEditorHighlightingPass text) {
+            text.markUpToDateIfStillValid();
           }
+          log(updateProgress, pass, " Applied");
         }
       }
       catch (ProcessCanceledException e) {
@@ -516,7 +510,7 @@ final class PassExecutorService implements Disposable {
       catch (RuntimeException e) {
         VirtualFile file = fileEditor.getFile();
         FileType fileType = file == null ? null : file.getFileType();
-        String message = "Exception while applying information to " + fileEditor + "("+fileType+")";
+        String message = "Exception while applying information to " + fileEditor + "(" + fileType + ")";
         log(updateProgress, pass, message + e);
         throw new RuntimeException(message, e);
       }

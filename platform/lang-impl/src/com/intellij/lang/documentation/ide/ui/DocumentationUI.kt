@@ -95,9 +95,13 @@ internal class DocumentationUI(
     }
     scrollPane.setViewportView(editorPane, locationLabel)
     trackDocumentationBackgroundChange(this) {
-      scrollPane.viewport.background = it
-      locationLabel.background = it
-      switcherToolbarComponent.background = it
+      // Force update of the background color for scroll pane
+      @Suppress("UseJBColor")
+      val color = Color(it.rgb)
+      editorPane.parent.background = color
+      scrollPane.viewport.background = color
+      locationLabel.background = color
+      switcherToolbarComponent.background = color
     }
 
     browser.ui = this
@@ -193,7 +197,9 @@ internal class DocumentationUI(
   fun updateSwitcherVisibility() {
     val visible = switcher.elements.count() > 1
     switcherToolbarComponent.isVisible = visible
-    scrollPane.border = JBUI.Borders.emptyTop(if (visible) 5 else 10)
+    editorPane.border = JBUI.Borders.emptyTop(
+      if (visible) 5 else 10
+    )
   }
 
   private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent?) {

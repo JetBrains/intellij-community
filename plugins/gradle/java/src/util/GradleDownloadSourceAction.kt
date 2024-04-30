@@ -6,7 +6,6 @@ import com.intellij.codeInsight.AttachSourcesProvider.AttachSourcesAction
 import com.intellij.jarFinder.InternetAttachSourceProvider.attachSourceJar
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -26,6 +25,7 @@ import java.nio.file.Path
 import java.util.EnumSet
 import java.util.function.Predicate
 import java.util.function.Supplier
+import kotlin.io.path.Path
 
 class GradleDownloadSourceAction(
   private val orderEntries: List<LibraryOrderEntry>,
@@ -64,19 +64,17 @@ class GradleDownloadSourceAction(
       return ActionCallback.REJECTED
     }
     val (libraryOrderEntry, module) = gradleModules.entries.first()
-    if (CachedModuleDataFinder.getGradleModuleData(module) == null) {
+    val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module)
+    if (gradleModuleData == null) {
       return ActionCallback.REJECTED
     }
+    val externalProjectPath = gradleModuleData.directoryToRunTask
     val libraryName = libraryOrderEntry.getLibraryName()
     if (libraryName == null) {
       return ActionCallback.REJECTED
     }
     val artifactCoordinates = libraryName.removePrefix("${GradleConstants.SYSTEM_ID.getReadableName()}: ")
     if (libraryName == artifactCoordinates) {
-      return ActionCallback.REJECTED
-    }
-    val externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module)
-    if (externalProjectPath == null) {
       return ActionCallback.REJECTED
     }
     val sourceArtifactNotation = getSourceArtifactNotation(artifactCoordinates) { idCandidate ->
@@ -89,7 +87,7 @@ class GradleDownloadSourceAction(
       return ActionCallback.DONE
     }
     val executionResult = ActionCallback()
-    GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, externalProjectPath)
+    GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, Path(externalProjectPath))
       .whenComplete { path, error ->
         if (error != null) {
           executionResult.setRejected()

@@ -4,11 +4,13 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.AbstractToolbarCombo
+import com.intellij.openapi.wm.impl.DefaultCutStrategy
 import com.intellij.ui.JBColor
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import sun.swing.SwingUtilities2
+import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.beans.PropertyChangeEvent
@@ -128,5 +130,14 @@ open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
       res += icon.iconWidth
     }
     return res
+  }
+
+  override fun getMinimumSize(c: JComponent): Dimension {
+    if (c !is AbstractToolbarCombo) return Dimension()
+    val preferredSize = c.preferredSize
+    val metrics = c.getFontMetrics(c.getFont())
+    val currentTextWidth = metrics.stringWidth(c.text ?: "")
+    val minTextWidth = DefaultCutStrategy().calcMinTextWidth(c.text ?: "", metrics)
+    return Dimension(preferredSize.width - currentTextWidth + minTextWidth, preferredSize.height)
   }
 }

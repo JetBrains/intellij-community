@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.terminal.action.TerminalInterruptCommandAction
+import org.jetbrains.plugins.terminal.exp.TerminalUi.useTerminalDefaultBackground
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -69,6 +69,7 @@ class TerminalOutputView(
     val document = DocumentImpl("", true)
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
     editor.settings.isUseSoftWraps = true
+    editor.useTerminalDefaultBackground(this)
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
     return editor
   }

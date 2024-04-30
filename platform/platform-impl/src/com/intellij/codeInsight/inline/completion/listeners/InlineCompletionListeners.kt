@@ -101,8 +101,16 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
 // ML-1086
 internal class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
+    if (InlineCompletionContext.getOrNull(event.editor)?.containsPoint(event) == true) {
+      return
+    }
     LOG.trace("Valuable mouse pressed event $event")
     hideInlineCompletion(event.editor, FinishType.MOUSE_PRESSED)
+  }
+
+  private fun InlineCompletionContext.containsPoint(event: EditorMouseEvent): Boolean {
+    val point = event.mouseEvent.point
+    return state.elements.any { it.getBounds()?.contains(point) == true }
   }
 
   companion object {

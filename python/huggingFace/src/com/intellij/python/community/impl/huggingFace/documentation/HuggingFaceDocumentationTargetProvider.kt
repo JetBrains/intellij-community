@@ -5,33 +5,32 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 import com.intellij.psi.PsiElement
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
-import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceDatasetPsiElement
-import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceModelPsiElement
+import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierPsiElement
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTargetExpression
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class HuggingFaceDocumentationTargetProvider : PsiDocumentationTargetProvider {
   override fun documentationTargets(element: PsiElement, originalElement: PsiElement?): List<DocumentationTarget> {
     val documentationTargets = mutableListOf<DocumentationTarget>()
 
-    if (element is PyTargetExpression) {
-      val referencedElement = element.findAssignedValue()
-
-      if (referencedElement is PyStringLiteralExpression) {
-        val stringValue = referencedElement.stringValue
-        if (HuggingFaceUtil.isHuggingFaceEntity(stringValue)) {
+    when (element) {
+      is PyTargetExpression -> {
+        val referencedElement = element.findAssignedValue()
+        if (referencedElement is PyStringLiteralExpression
+            && HuggingFaceUtil.isHuggingFaceEntity(referencedElement.stringValue)) {
           documentationTargets.add(HuggingFaceDocumentationTarget(element))
         }
       }
-    } else if (element is HuggingFaceModelPsiElement) {
-      documentationTargets.add(HuggingFaceDocumentationTarget(element))
-    } else if (element is HuggingFaceDatasetPsiElement) {
-      documentationTargets.add(HuggingFaceDocumentationTarget(element))
-    } else if (element is PyStringLiteralExpression) {
-      val stringValue = element.stringValue
-      if (HuggingFaceUtil.isHuggingFaceEntity(stringValue)) {
+      is HuggingFaceIdentifierPsiElement  -> {
         documentationTargets.add(HuggingFaceDocumentationTarget(element))
+      }
+      is PyStringLiteralExpression -> {
+        if (HuggingFaceUtil.isHuggingFaceEntity(element.stringValue)) {
+          documentationTargets.add(HuggingFaceDocumentationTarget(element))
+        }
       }
     }
 

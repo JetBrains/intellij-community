@@ -6,10 +6,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorFontType
 import java.awt.Color
 import java.awt.Font
+import java.awt.FontMetrics
 
 object InlineCompletionFontUtils {
   fun font(editor: Editor): Font {
     return editor.colorsScheme.getFont(EditorFontType.ITALIC)
+  }
+
+  internal fun fontMetrics(editor: Editor): FontMetrics {
+    return editor.contentComponent.getFontMetrics(font(editor))
   }
 
   fun color(editor: Editor): Color {

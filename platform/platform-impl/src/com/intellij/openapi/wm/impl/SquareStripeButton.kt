@@ -43,8 +43,7 @@ internal abstract class AbstractSquareStripeButton(
     setLook(SquareStripeButtonLook(this))
     addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
-        val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, popupBuilder.invoke())
-        popupMenu.component.show(component, x, y)
+        showPopup(popupBuilder, component, x, y)
       }
     })
   }
@@ -55,15 +54,21 @@ internal abstract class AbstractSquareStripeButton(
       JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
     }
 
+    val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
     val rect = Rectangle(areaSize)
-    buttonLook.paintLookBackground(g, rect, JBUI.CurrentTheme.ActionButton.pressedBackground())
+    buttonLook.paintLookBackground(g, rect, color)
     icon.let {
       val x = (areaSize.width - it.iconWidth) / 2
       val y = (areaSize.height - it.iconHeight) / 2
       buttonLook.paintIcon(g, this, it, x, y)
     }
 
-    buttonLook.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.pressedBorder())
+    buttonLook.paintLookBorder(g, rect, color)
+  }
+
+  protected open fun showPopup(popupBuilder: () -> ActionGroup, component: Component, x: Int, y: Int) {
+    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, popupBuilder.invoke())
+    popupMenu.component.show(component, x, y)
   }
 }
 
@@ -188,6 +193,15 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
         }
       }
     })
+  }
+
+  override fun showPopup(popupBuilder: () -> ActionGroup, component: Component, x: Int, y: Int) {
+    if (ResizeStripeManager.enabled()) {
+      ResizeStripeManager.showPopup(popupBuilder.invoke(), component, x, y)
+    }
+    else {
+      super.showPopup(popupBuilder, component, x, y)
+    }
   }
 
   override fun paintButtonLook(g: Graphics?) {

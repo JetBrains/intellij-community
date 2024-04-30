@@ -3,7 +3,10 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.CaretVisualAttributes
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -19,6 +22,7 @@ import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.exp.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
@@ -62,7 +66,7 @@ class TerminalPromptView(
                                          TerminalUi.blockLeftInset + TerminalUi.cornerToBlockInset,
                                          TerminalUi.promptBottomInset,
                                          TerminalUi.blockRightInset + TerminalUi.cornerToBlockInset)
-    val outerBorder = object : CustomLineBorder(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(),
+    val outerBorder = object : CustomLineBorder(TerminalUi.promptSeparatorColor(editor),
                                                 JBInsets(1, 0, 0, 0)) {
       override fun paintBorder(c: Component, g: Graphics?, x: Int, y: Int, w: Int, h: Int) {
         // Paint the border only if the component is not on the top
@@ -73,7 +77,7 @@ class TerminalPromptView(
     }
     component.border = JBUI.Borders.compound(outerBorder, innerBorder)
 
-    component.background = TerminalUi.terminalBackground
+    component.background = TerminalUi.defaultBackground(editor)
     component.layout = ListLayout.vertical(TerminalUi.promptToCommandInset)
     component.add(promptComponent)
     component.add(editorTextField)
@@ -84,6 +88,9 @@ class TerminalPromptView(
         IdeFocusManager.getInstance(project).requestFocus(editor.contentComponent, true)
       }
     })
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      updatePrompt(controller.promptRenderingInfo)
+    })
   }
 
   override fun promptVisibilityChanged(visible: Boolean) {
@@ -91,6 +98,10 @@ class TerminalPromptView(
   }
 
   override fun promptContentUpdated(renderingInfo: PromptRenderingInfo) {
+    updatePrompt(renderingInfo)
+  }
+
+  private fun updatePrompt(renderingInfo: PromptRenderingInfo) {
     val changePrompt = {
       promptComponent.clear()
       promptComponent.setContent(renderingInfo)
@@ -108,7 +119,7 @@ class TerminalPromptView(
         append(textPart)
       }
       val textPart = renderingInfo.text.substring(highlighting.startOffset, highlighting.endOffset)
-      val attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, highlighting.textAttributes.foregroundColor)
+      val attributes = SimpleTextAttributes.fromTextAttributes(highlighting.textAttributesProvider.getTextAttributes())
       append(textPart, attributes)
       curOffset = highlighting.endOffset
     }
@@ -156,7 +167,7 @@ class TerminalPromptView(
     val editor = textField.getEditor(true) as EditorImpl
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.gutterComponentEx.isPaintBackground = false
-    editor.backgroundColor = TerminalUi.terminalBackground
+    editor.useTerminalDefaultBackground(this)
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size
@@ -182,7 +193,8 @@ class TerminalPromptView(
         font = EditorUtil.getEditorFont()
       }
     }
-    component.background = TerminalUi.terminalBackground
+    component.background = TerminalUi.defaultBackground(editor)
+    component.foreground = TerminalUi.defaultForeground(editor)
     component.myBorder = JBUI.Borders.emptyBottom(2)
     component.ipad = JBInsets.emptyInsets()
     return component

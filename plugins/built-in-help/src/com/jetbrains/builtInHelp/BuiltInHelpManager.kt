@@ -10,7 +10,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
-import com.jetbrains.builtInHelp.settings.SettingsPage
+import com.jetbrains.builtInHelp.settings.HelpPluginSettings
+import com.jetbrains.builtInHelp.settings.defaultBaseUrl
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import java.io.IOException
 import java.net.InetAddress
@@ -19,23 +20,26 @@ import java.net.URISyntaxException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+private val LOG = Logger.getInstance(BuiltInHelpManager::class.java)
+
 @Suppress("unused")
 class BuiltInHelpManager : HelpManager() {
-  private val LOG = Logger.getInstance(javaClass)
+
   override fun invokeHelp(helpId: String?) {
     logWillOpenHelpId(helpId)
 
     try {
+
+      val settings = HelpPluginSettings.getInstance()
+
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
         if (helpId != null) URLEncoder.encode(
           helpId, StandardCharsets.UTF_8)
         else "top"
       }"
-      val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
-        SettingsPage.OPEN_HELP_FROM_WEB, "true"))
 
       var online = false
-      if (tryOpenWebSite) {
+      if (settings.openHelpFromWeb) {
         online = try {
           InetAddress.getByName("www.jetbrains.com").isReachable(100)
         }
@@ -61,14 +65,13 @@ class BuiltInHelpManager : HelpManager() {
         val info = ApplicationInfo.getInstance()
         val productVersion = info.majorVersion + "." + info.minorVersion.substringBefore(".")
 
-        var baseUrl = Utils.getStoredValue(SettingsPage.OPEN_HELP_BASE_URL,
-                                           Utils.BASE_HELP_URL)
+        var baseUrl = settings.openHelpBaseUrl
 
         if (!baseUrl.endsWith("/")) baseUrl += "/"
 
         url = "${baseUrl}help/$productWebPath/$productVersion/?$helpId"
 
-        if (PlatformUtils.isJetBrainsProduct() && baseUrl == Utils.BASE_HELP_URL) {
+        if (PlatformUtils.isJetBrainsProduct() && baseUrl == defaultBaseUrl) {
           val productCode = info.build.productCode
           if (!StringUtil.isEmpty(productCode)) {
             url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion"
@@ -76,8 +79,7 @@ class BuiltInHelpManager : HelpManager() {
         }
       }
 
-      val browserName = java.lang.String.valueOf(
-        Utils.getStoredValue(SettingsPage.USE_BROWSER, BuiltInHelpBundle.message("use.default.browser")))
+      val browserName = settings.useBrowser
 
       val browser = WebBrowserManager.getInstance().findBrowserById(browserName)
 

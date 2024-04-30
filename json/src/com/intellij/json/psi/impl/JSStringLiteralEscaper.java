@@ -1,23 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost> extends LiteralTextEscaper<T> {
-  /**
-   * Offset in injected string -> offset in host string
-   * Last element contains imaginary offset for the character after the last one in injected string. It would be host string length.
-   * E.g. for "aa\nbb" it is [0,1,2,4,5,6]
-   */
-  private int[] outSourceOffsets;
+
+  private SourceOffsets mySourceOffsets;
 
   public JSStringLiteralEscaper(T host) {
     super(host);
@@ -27,9 +23,9 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
   public boolean decode(final @NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
     String subText = rangeInsideHost.substring(myHost.getText());
 
-    Ref<int[]> sourceOffsetsRef = new Ref<>();
-    boolean result = parseStringCharacters(subText, outChars, sourceOffsetsRef, isRegExpLiteral(), !isOneLine());
-    outSourceOffsets = sourceOffsetsRef.get();
+    SourceOffsets sourceOffsets = new SourceOffsets();
+    boolean result = parseStringCharacters(subText, outChars, sourceOffsets, isRegExpLiteral(), !isOneLine());
+    mySourceOffsets = sourceOffsets;
     return result;
   }
 
@@ -37,7 +33,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
 
   @Override
   public int getOffsetInHost(int offsetInDecoded, final @NotNull TextRange rangeInsideHost) {
-    int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
+    int result = mySourceOffsets.getOffsetInHost(offsetInDecoded);
     if (result == -1) return -1;
     return Math.min(result, rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();
   }
@@ -47,10 +43,16 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
     return true;
   }
 
-  public static boolean parseStringCharacters(String chars, StringBuilder outChars, Ref<int[]> sourceOffsetsRef, boolean regExp, boolean escapeBacktick) {
+  public static boolean parseStringCharacters(@NotNull String chars,
+                                              @NotNull StringBuilder outChars,
+                                              @Nullable SourceOffsets outSourceOffsets,
+                                              boolean regExp,
+                                              boolean escapeBacktick) {
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);
-      sourceOffsetsRef.set(IntStream.range(0, chars.length() + 1).toArray());
+      if (outSourceOffsets != null) {
+        outSourceOffsets.lengthIfNoShifts = chars.length();
+      }
       return true;
     }
 
@@ -190,7 +192,36 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
 
     sourceOffsets[outChars.length() - outOffset] = chars.length();
 
-    sourceOffsetsRef.set(Arrays.copyOf(sourceOffsets, outChars.length() - outOffset + 1));
+    if (outSourceOffsets != null) {
+      outSourceOffsets.sourceOffsets = Arrays.copyOf(sourceOffsets, outChars.length() - outOffset + 1);
+    }
     return result;
+  }
+
+  public static class SourceOffsets {
+    /**
+     * Offset in injected string -> offset in host string
+     * Last element contains imaginary offset for the character after the last one in injected string. It would be host string length.
+     * E.g. for "aa\nbb" it is [0,1,2,4,5,6]
+     */
+    public int[] sourceOffsets;
+    /**
+     * Optimization for the case when all offsets in injected and host strings are the same.
+     */
+    public int lengthIfNoShifts = -1;
+
+    public int[] toOffsetArray() {
+      int[] offsets = sourceOffsets;
+      return offsets != null ? offsets : IntStream.range(0, lengthIfNoShifts + 1).toArray();
+    }
+
+    public int getOffsetInHost(int offsetInDecoded) {
+      if (lengthIfNoShifts >= 0) {
+        return offsetInDecoded <= lengthIfNoShifts ? offsetInDecoded : -1;
+      }
+      else {
+        return offsetInDecoded < sourceOffsets.length ? sourceOffsets[offsetInDecoded] : -1;
+      }
+    }
   }
 }

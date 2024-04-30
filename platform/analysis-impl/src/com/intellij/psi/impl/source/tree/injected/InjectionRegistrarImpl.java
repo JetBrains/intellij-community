@@ -260,9 +260,9 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
         if (psiFile.getLanguage() == viewProvider.getBaseLanguage()) {
           psiFile = createOrMergeInjectedFile(myHostPsiFile, myDocumentManagerBase, place, documentWindow, psiFile, viewProvider);
           addFileToResults(psiFile);
-        } else {
+        }
+        else {
           cacheEverything(place, documentWindow, viewProvider, psiFile);
-          InjectedLanguageUtilBase.setHighlightTokens(psiFile, InjectedLanguageUtilBase.getHighlightTokens(psiFile));
         }
 
         DocumentWindowImpl retrieved = (DocumentWindowImpl)myDocumentManagerBase.getDocument(psiFile);
@@ -275,38 +275,38 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
                                                             @NotNull PsiDocumentManagerBase documentManager,
                                                             @NotNull Place place,
                                                             @NotNull DocumentWindowImpl documentWindow,
-                                                            @NotNull PsiFile psiFile,
-                                                            @NotNull InjectedFileViewProvider viewProvider) {
-    cacheEverything(place, documentWindow, viewProvider, psiFile);
+                                                            @NotNull PsiFile injectedPsiFile,
+                                                            @NotNull InjectedFileViewProvider injectedViewProvider) {
+    cacheEverything(place, documentWindow, injectedViewProvider, injectedPsiFile);
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(documentWindow);
-    PsiFile cachedPsiFile = ((PsiManagerEx)psiFile.getManager()).getFileManager().findCachedViewProvider(virtualFile).getPsi(psiFile.getLanguage());
-    assert cachedPsiFile == psiFile : "Cached psi :"+ cachedPsiFile +" instead of "+psiFile;
+    PsiFile cachedPsiFile = ((PsiManagerEx)injectedPsiFile.getManager()).getFileManager().findCachedViewProvider(virtualFile).getPsi(injectedPsiFile.getLanguage());
+    assert cachedPsiFile == injectedPsiFile : "Cached psi :"+ cachedPsiFile +" instead of "+injectedPsiFile;
 
     assert place.isValid();
-    assert viewProvider.isValid();
+    assert injectedViewProvider.isValid();
 
-    List<InjectedLanguageUtilBase.TokenInfo> newTokens = InjectedLanguageUtilBase.getHighlightTokens(psiFile);
-    PsiFile newFile = registerDocument(documentWindow, psiFile, place, hostPsiFile, documentManager);
-    boolean mergeHappened = newFile != psiFile;
+    List<? extends InjectedLanguageUtilBase.TokenInfo> newTokens = InjectedLanguageUtilBase.getHighlightTokens(injectedPsiFile);
+    PsiFile newFile = registerDocument(documentWindow, injectedPsiFile, place, hostPsiFile, documentManager);
+    boolean mergeHappened = newFile != injectedPsiFile;
     Place mergedPlace = place;
     if (mergeHappened) {
-      InjectedLanguageUtilBase.clearCaches(psiFile.getProject(), documentWindow);
-      psiFile = newFile;
-      viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
-      documentWindow = viewProvider.getDocument();
-      boolean shredsReused = !cacheEverything(place, documentWindow, viewProvider, psiFile);
+      InjectedLanguageUtilBase.clearCaches(injectedPsiFile.getProject(), documentWindow);
+      injectedPsiFile = newFile;
+      injectedViewProvider = (InjectedFileViewProvider)injectedPsiFile.getViewProvider();
+      documentWindow = injectedViewProvider.getDocument();
+      boolean shredsReused = !cacheEverything(place, documentWindow, injectedViewProvider, injectedPsiFile);
       if (shredsReused) {
         place.dispose();
         mergedPlace = documentWindow.getShreds();
       }
-      InjectedLanguageUtilBase.setHighlightTokens(psiFile, newTokens);
+      InjectedLanguageUtilBase.setHighlightTokens(injectedPsiFile, newTokens);
     }
 
-    assert psiFile.isValid();
+    assert injectedPsiFile.isValid();
     assert mergedPlace.isValid();
-    assert viewProvider.isValid();
-    return psiFile;
+    assert injectedViewProvider.isValid();
+    return injectedPsiFile;
   }
 
   private static class PatchException extends Exception {

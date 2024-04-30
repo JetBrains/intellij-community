@@ -80,6 +80,10 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testMethodWithMethodRef() {
     doTestInplaceRename("bar");
   }
+  
+  public void testRecordImplementsInterface() {
+    doTestInplaceRename("newValue");
+  }
 
   public void testMethodChain() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");

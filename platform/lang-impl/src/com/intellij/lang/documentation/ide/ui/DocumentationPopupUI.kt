@@ -173,6 +173,7 @@ internal class DocumentationPopupUI(
 
   private fun detachUI(): DocumentationUI {
     EDT.assertIsEdt()
+    browser.clearCloseTrigger()
     val ui = ui
     _ui = null
     return ui

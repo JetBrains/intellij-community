@@ -82,7 +82,7 @@ fun Row.projectWizardJdkComboBox(
   cell(combo)
     .columns(COLUMNS_LARGE)
     .apply {
-      val commentCell = comment("")
+      val commentCell = comment(component.comment, 50)
       component.addItemListener {
         commentCell.comment?.let { it.text = component.comment }
       }
@@ -241,7 +241,7 @@ class ProjectWizardJdkComboBox(
                                                 isSelected: Boolean,
                                                 cellHasFocus: Boolean): Component {
         val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-        if (index == -1 && (isLoadingExistingJdks || isLoadingDownloadItem)) {
+        if (index == -1 && (isLoadingExistingJdks || isLoadingDownloadItem) && selectedItem !is DownloadJdk) {
           val panel = object : CellRendererPanel(BorderLayout()) {
             override fun getAccessibleContext(): AccessibleContext = component.accessibleContext
           }
@@ -366,6 +366,10 @@ class ProjectWizardJdkComboBox(
   val comment: String?
     get() = when (selectedItem) {
       is DownloadJdk -> JavaUiBundle.message("jdk.download.comment")
+      is NoJdk -> when {
+        (0 until itemCount).any { getItemAt(it) is DownloadJdk } -> JavaUiBundle.message("jdk.missing.item.comment")
+        else -> JavaUiBundle.message("jdk.missing.item.no.internet.comment")
+      }
       else -> null
     }
 }

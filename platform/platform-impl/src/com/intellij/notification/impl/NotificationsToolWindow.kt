@@ -1195,6 +1195,7 @@ private class NotificationComponent(val project: Project,
 
     val presentation = Presentation()
     presentation.description = IdeBundle.message("tooltip.turn.notification.off")
+    presentation.isPopupGroup = true
     presentation.icon = AllIcons.Actions.More
     presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
 

@@ -73,19 +73,18 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
 
   @Override
   public void visitDocTagValue(@NotNull PsiDocTagValue value) {
-    PsiReference reference = computeIfSmartMode(value.getProject(), () -> value.getReference());
-    if (reference != null) {
-      PsiElement element = computeIfSmartMode(value.getProject(), () -> reference.resolve());
-      TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
-      if (element instanceof PsiMethod) {
-        PsiElement nameElement = ((PsiDocMethodOrFieldRef)value).getNameElement();
-        if (nameElement != null) {
-          myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)element, nameElement, false, colorsScheme));
-        }
+    PsiElement element = computeIfSmartMode(value.getProject(), () -> {
+      PsiReference reference = value.getReference();
+      return reference == null ? null : reference.resolve();
+    });
+    if (element instanceof PsiMethod psiMethod) {
+      PsiElement nameElement = ((PsiDocMethodOrFieldRef)value).getNameElement();
+      if (nameElement != null) {
+        myHolder.add(HighlightNamesUtil.highlightMethodName(psiMethod, nameElement, false, myHolder.getColorsScheme()));
       }
-      else if (element instanceof PsiParameter) {
-        myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)element, value.getNavigationElement(), colorsScheme));
-      }
+    }
+    else if (element instanceof PsiParameter psiParam) {
+      myHolder.add(HighlightNamesUtil.highlightVariableName(psiParam, value.getNavigationElement(), myHolder.getColorsScheme()));
     }
   }
 
@@ -137,16 +136,16 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
         }
       }
       TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
-      if (resolved instanceof PsiClass) {
-        myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, ref, colorsScheme));
+      if (resolved instanceof PsiClass psiClass) {
+        myHolder.add(HighlightNamesUtil.highlightClassName(psiClass, ref, colorsScheme));
       }
       else {
         if (referenceNameElement != null) {
-          if (resolved instanceof PsiVariable) {
-            myHolder.add(HighlightNamesUtil.highlightVariableName((PsiVariable)resolved, referenceNameElement, colorsScheme));
+          if (resolved instanceof PsiVariable psiVariable) {
+            myHolder.add(HighlightNamesUtil.highlightVariableName(psiVariable, referenceNameElement, colorsScheme));
           }
-          else if (resolved instanceof PsiMethod) {
-            myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)resolved, referenceNameElement, false, colorsScheme));
+          else if (resolved instanceof PsiMethod psiMethod) {
+            myHolder.add(HighlightNamesUtil.highlightMethodName(psiMethod, referenceNameElement, false, colorsScheme));
           }
         }
       }
@@ -202,7 +201,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
   private void highlightReferencedMethodOrClassName(@NotNull PsiJavaCodeReferenceElement element, @Nullable PsiElement resolved) {
     PsiElement parent = element.getParent();
     TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
-    DumbService dumbService = DumbService.getInstance(parent.getProject());
+    DumbService dumbService = DumbService.getInstance(myFile.getProject());
     if (parent instanceof PsiMethodCallExpression methodCall) {
       PsiMethod method = dumbService.computeWithAlternativeResolveEnabled(() -> methodCall.resolveMethod());
       PsiElement methodNameElement = element.getReferenceNameElement();
@@ -222,11 +221,11 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
       }
     }
     else if (resolved instanceof PsiPackage) {
-      // highlight package (and following dot) as a class
+      // highlight package (and the following dot) as a class
       myHolder.add(HighlightNamesUtil.highlightPackage(resolved, element, colorsScheme));
     }
-    else if (resolved instanceof PsiClass) {
-      myHolder.add(HighlightNamesUtil.highlightClassName((PsiClass)resolved, element, colorsScheme));
+    else if (resolved instanceof PsiClass psiClass) {
+      myHolder.add(HighlightNamesUtil.highlightClassName(psiClass, element, colorsScheme));
     }
     else if (element.getParent() instanceof PsiAnnotation) {
       myHolder.add(HighlightNamesUtil.highlightClassName(null, element, colorsScheme));
@@ -249,7 +248,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
     JavaResolveResult result;
     JavaResolveResult[] results;
     try {
-      results = computeIfSmartMode(expression.getProject(), () -> expression.multiResolve(true));
+      results = computeIfSmartMode(myFile.getProject(), () -> expression.multiResolve(true));
       result = results != null && results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
     }
     catch (IndexNotReadyException e) {
@@ -258,17 +257,16 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
     PsiElement method = result.getElement();
     if (!(method instanceof PsiJvmMember) || result.isAccessible()) {
       TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
-      if (method instanceof PsiMethod && !expression.isConstructor()) {
+      if (method instanceof PsiMethod psiMethod && !expression.isConstructor()) {
         PsiElement methodNameElement = expression.getReferenceNameElement();
         if (methodNameElement != null) {
-          myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)method, methodNameElement, false, colorsScheme));
+          myHolder.add(HighlightNamesUtil.highlightMethodName(psiMethod, methodNameElement, false, colorsScheme));
         }
       }
     }
   }
 
-  private static <T> T computeIfSmartMode(@NotNull Project project, Supplier<T> operation) {
-    if (DumbService.isDumb(project)) return null;
-    return operation.get();
+  private static <T> T computeIfSmartMode(@NotNull Project project, @NotNull Supplier<T> operation) {
+    return DumbService.isDumb(project) ? null : operation.get();
   }
 }

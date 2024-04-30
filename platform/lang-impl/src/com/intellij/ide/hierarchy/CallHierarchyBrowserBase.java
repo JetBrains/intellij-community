@@ -75,13 +75,15 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public boolean isSelected(@NotNull AnActionEvent event) {
-      return myTypeName.equals(getCurrentViewType());
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+    public boolean isSelected(@NotNull AnActionEvent event) {
+      String currentType = event.getUpdateSession().compute(
+        this, "getCurrentViewType", ActionUpdateThread.EDT, () -> getCurrentViewType());
+      return myTypeName.equals(currentType);
     }
 
     @Override

@@ -73,7 +73,7 @@ public final class History {
   @RequiresEdt
   public void back() {
     int next = findValid(-1);
-    assert next != -1;
+    if (next == -1) return;
     goThere(next);
   }
 
@@ -124,7 +124,7 @@ public final class History {
   @RequiresEdt
   public void forward() {
     int next = findValid(1);
-    assert next != -1;
+    if (next == -1) return;
     goThere(next);
   }
 

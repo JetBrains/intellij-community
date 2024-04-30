@@ -18,10 +18,6 @@ interface Serializer {
   fun getBinding(aClass: Class<*>, type: Type): Binding?
 }
 
-fun interface SerializationFilter {
-  fun accepts(accessor: Accessor, bean: Any): Boolean
-}
-
 interface RootBinding : Binding {
   fun serialize(bean: Any, filter: SerializationFilter?): Element?
 

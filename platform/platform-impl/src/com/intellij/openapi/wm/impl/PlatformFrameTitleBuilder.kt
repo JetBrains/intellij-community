@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
@@ -33,13 +34,14 @@ open class PlatformFrameTitleBuilder : FrameTitleBuilder() {
     return when {
       overriddenTitle != null -> overriddenTitle
       file.parent == null -> file.presentableName
-      UISettings.getInstance().fullPathsInWindowHeader -> {
+      UISettings.getInstance().fullPathsInWindowHeader && !ExperimentalUI.isNewUI()-> {
         displayUrlRelativeToProject(file = file,
                                     url = file.presentableUrl,
                                     project = project,
                                     isIncludeFilePath = true,
                                     moduleOnTheLeft = false)
       }
+      UISettings.getInstance().fullPathsInWindowHeader -> file.presentableUrl
       else -> {
         val fileIndex = ProjectRootManager.getInstance(project).fileIndex
         if (!fileIndex.isInContent(file)) {

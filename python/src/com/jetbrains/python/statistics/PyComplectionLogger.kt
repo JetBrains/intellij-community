@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
+import com.intellij.util.SlowOperations
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
@@ -20,7 +21,9 @@ class PyCompletionStatisticLogger : LookupUsageDescriptor {
       val psiElement = it.psiElement
       psiElement?.containingFile?.let { file ->
         if (file is PyFile) {
-          val qName = QualifiedNameFinder.findCachedShortestImportableName(file, file.virtualFile)
+          val qName = SlowOperations.knownIssue("PY-70370, EA-928705").use {
+            QualifiedNameFinder.findCachedShortestImportableName(file, file.virtualFile)
+          }
           qName?.firstComponent?.let { name ->
             listOf(packageName.with(PyPsiPackageUtil.moduleToPackageName(name)),
                    cacheMiss.with(false))

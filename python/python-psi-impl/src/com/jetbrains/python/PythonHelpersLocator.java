@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +31,9 @@ import java.util.List;
 public final class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
   private static final String PROPERTY_HELPERS_LOCATION = "idea.python.helpers.path";
+  private static final String EXPECTED_PRO_HELPER_PACKAGE = "jupyter_debug";
 
-  private PythonHelpersLocator() {}
+  private PythonHelpersLocator() { }
 
   /**
    * @return the base directory under which various scripts, etc. are stored.
@@ -45,7 +47,16 @@ public final class PythonHelpersLocator {
   }
 
   public static @NotNull Path getHelpersProRoot() {
-    return assertHelpersProLayout(getHelperRoot("intellij.python.helpers.pro", "/../python/helpers-pro")).toPath().normalize();
+    return assertHelpersProLayout(getExpectedHelpersProRootLocation()).toPath().normalize();
+  }
+
+  @ApiStatus.Internal
+  public static boolean hasHelpersPro() {
+    return new File(getExpectedHelpersProRootLocation(), EXPECTED_PRO_HELPER_PACKAGE).exists();
+  }
+
+  private static @NotNull File getExpectedHelpersProRootLocation() {
+    return getHelperRoot("intellij.python.helpers.pro", "/../python/helpers-pro");
   }
 
   private static @NotNull File getHelperRoot(@NotNull String moduleName, @NotNull String relativePath) {
@@ -90,7 +101,8 @@ public final class PythonHelpersLocator {
     final String path = root.getAbsolutePath();
 
     LOG.assertTrue(root.exists(), "Helpers pro root does not exist " + path);
-    LOG.assertTrue(new File(root, "jupyter_debug").exists(), "No 'jupyter_debug' inside " + path);
+    LOG.assertTrue(new File(root, EXPECTED_PRO_HELPER_PACKAGE).exists(),
+                   "No '" + EXPECTED_PRO_HELPER_PACKAGE + "' inside " + path);
 
     return root;
   }
