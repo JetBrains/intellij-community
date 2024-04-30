@@ -1,5 +1,6 @@
 {
   "mainFile": "refactor/copy/test.kt",
   "targetPackage": "refactor.copy2",
-  "withRuntime": "true"
+  "withRuntime": "true",
+  "enabledInK2": "false"//KTIJ-29780
 }

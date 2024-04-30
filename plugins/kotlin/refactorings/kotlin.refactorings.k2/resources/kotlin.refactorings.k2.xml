@@ -2,6 +2,8 @@
   <resource-bundle>messages.KotlinBundle</resource-bundle>
   <dependencies>
     <module name="kotlin.searching.k2"/>
+    <module name="kotlin.refactorings.move.k2"/>
+    <module name="kotlin.refactorings.introduce.k2"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -25,6 +27,13 @@
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlinePropertyHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineFunctionHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionHandler"/>
+
+    <refactoring.copyHandler
+            id="kotlinClass"
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.copy.CopyKotlinDeclarationsHandler"
+            order="first" />
+    <updateAddedFileProcessor implementation="org.jetbrains.kotlin.idea.k2.refactoring.copy.KotlinUpdateAddedFileProcessor" order="first"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

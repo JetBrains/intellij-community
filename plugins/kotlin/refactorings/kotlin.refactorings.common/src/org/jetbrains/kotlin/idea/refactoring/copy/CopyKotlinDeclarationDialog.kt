@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.copy
 
 import com.intellij.ide.util.DirectoryChooser
@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pass
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.HelpID
@@ -27,7 +28,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
@@ -116,7 +116,7 @@ class CopyKotlinDeclarationDialog(
     }
 
     private val qualifiedName: String
-        get() = defaultTargetDirectory?.getPackage()?.qualifiedName ?: ""
+        get() = defaultTargetDirectory?.let { JavaDirectoryService.getInstance()!!.getPackage(it) } ?.qualifiedName ?: ""
 
     val newName: String
         get() = classNameField.text
@@ -181,3 +181,4 @@ class CopyKotlinDeclarationDialog(
         private val RECENTS_KEY = "CopyKotlinDeclarationDialog.RECENTS_KEY"
     }
 }
+
