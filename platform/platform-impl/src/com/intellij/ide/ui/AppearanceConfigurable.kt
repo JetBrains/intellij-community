@@ -452,70 +452,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
 
-      if (Registry.`is`("ide.transparency.mode.for.windows") &&
-          WindowManagerEx.getInstanceEx().isAlphaModeSupported) {
-        val settingsState = settings.state
-        group(message("group.transparency")) {
-          lateinit var checkbox: Cell<JBCheckBox>
-          row {
-            checkbox = checkBox(cdUseTransparentMode)
-          }
-          row(message("label.transparency.delay.ms")) {
-            intTextField()
-              .bindIntText(settingsState::alphaModeDelay)
-              .columns(4)
-          }.enabledIf(checkbox.selected)
-          row(message("label.transparency.ratio")) {
-            slider(0, 100, 10, 50)
-              .labelTable(mapOf(
-                0 to JLabel("0%"),
-                50 to JLabel("50%"),
-                100 to JLabel("100%")))
-              .bindValue({ (settingsState.alphaModeRatio * 100f).toInt() }, { settingsState.alphaModeRatio = it / 100f })
-              .showValueHint()
-          }.enabledIf(checkbox.selected)
-            .layout(RowLayout.INDEPENDENT)
-        }
-      }
-
-      groupRowsRange(message("group.antialiasing.mode")) {
-        twoColumnsRow(
-          {
-            val ideAAOptions =
-              if (!AntialiasingType.canUseSubpixelAAForIDE()) {
-                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
-              }
-              else {
-                AntialiasingType.entries.toTypedArray()
-              }
-            comboBox(DefaultComboBoxModel(ideAAOptions), renderer = AAListCellRenderer(false))
-              .label(message("label.text.antialiasing.scope.ide"))
-              .bindItem(settings::ideAAType.toNullableProperty())
-              .accessibleName(message("label.text.antialiasing.scope.ide"))
-              .onApply {
-                for (w in Window.getWindows()) {
-                  for (c in UIUtil.uiTraverser(w).filter(JComponent::class.java)) {
-                    GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent())
-                  }
-                }
-              }
-          },
-          {
-            val editorAAOptions =
-              if (!AntialiasingType.canUseSubpixelAAForEditor()) {
-                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
-              }
-              else {
-                AntialiasingType.entries.toTypedArray()
-              }
-            comboBox(DefaultComboBoxModel(editorAAOptions), renderer = AAListCellRenderer(true))
-              .label(message("label.text.antialiasing.scope.editor"))
-              .bindItem(settings::editorAAType.toNullableProperty())
-              .accessibleName(message("label.text.antialiasing.scope.editor"))
-          }
-        )
-      }
-
       groupRowsRange(message("group.window.options")) {
         twoColumnsRow(
           { checkBox(cdShowToolWindowBars) },
@@ -585,6 +521,70 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               }
             }
         }
+      }
+
+      if (Registry.`is`("ide.transparency.mode.for.windows") &&
+          WindowManagerEx.getInstanceEx().isAlphaModeSupported) {
+        val settingsState = settings.state
+        group(message("group.transparency")) {
+          lateinit var checkbox: Cell<JBCheckBox>
+          row {
+            checkbox = checkBox(cdUseTransparentMode)
+          }
+          row(message("label.transparency.delay.ms")) {
+            intTextField()
+              .bindIntText(settingsState::alphaModeDelay)
+              .columns(4)
+          }.enabledIf(checkbox.selected)
+          row(message("label.transparency.ratio")) {
+            slider(0, 100, 10, 50)
+              .labelTable(mapOf(
+                0 to JLabel("0%"),
+                50 to JLabel("50%"),
+                100 to JLabel("100%")))
+              .bindValue({ (settingsState.alphaModeRatio * 100f).toInt() }, { settingsState.alphaModeRatio = it / 100f })
+              .showValueHint()
+          }.enabledIf(checkbox.selected)
+            .layout(RowLayout.INDEPENDENT)
+        }
+      }
+
+      groupRowsRange(message("group.antialiasing.mode")) {
+        twoColumnsRow(
+          {
+            val ideAAOptions =
+              if (!AntialiasingType.canUseSubpixelAAForIDE()) {
+                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
+              }
+              else {
+                AntialiasingType.entries.toTypedArray()
+              }
+            comboBox(DefaultComboBoxModel(ideAAOptions), renderer = AAListCellRenderer(false))
+              .label(message("label.text.antialiasing.scope.ide"))
+              .bindItem(settings::ideAAType.toNullableProperty())
+              .accessibleName(message("label.text.antialiasing.scope.ide"))
+              .onApply {
+                for (w in Window.getWindows()) {
+                  for (c in UIUtil.uiTraverser(w).filter(JComponent::class.java)) {
+                    GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent())
+                  }
+                }
+              }
+          },
+          {
+            val editorAAOptions =
+              if (!AntialiasingType.canUseSubpixelAAForEditor()) {
+                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
+              }
+              else {
+                AntialiasingType.entries.toTypedArray()
+              }
+            comboBox(DefaultComboBoxModel(editorAAOptions), renderer = AAListCellRenderer(true))
+              .label(message("label.text.antialiasing.scope.editor"))
+              .bindItem(settings::editorAAType.toNullableProperty())
+              .accessibleName(message("label.text.antialiasing.scope.editor"))
+          }
+        )
       }
     }
   }
