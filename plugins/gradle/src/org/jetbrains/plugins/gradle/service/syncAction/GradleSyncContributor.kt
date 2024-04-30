@@ -16,14 +16,14 @@ interface GradleSyncContributor {
    * Called when Gradle model building phase is completed.
    * Guaranteed that all phases will be handled for the successful execution in the strict order.
    *
-   * @param resolverContext contain all information about the current state of the Gradle sync.
+   * @param context contain all information about the current state of the Gradle sync.
    * Use this context to access to the fetched Gradle models.
    * @param phase current phase of the model fetching action.
    *
    * @see GradleModelFetchPhase
    */
   suspend fun onModelFetchPhaseCompleted(
-    resolverContext: ProjectResolverContext,
+    context: ProjectResolverContext,
     phase: GradleModelFetchPhase
   ) = Unit
 
@@ -31,23 +31,23 @@ interface GradleSyncContributor {
    * Called once Gradle has finished executing everything, including any tasks that might need to be run.
    * The models are obtained separately and in some cases before this method is called.
    *
-   * @param resolverContext contain all information about the current state of the Gradle sync.
+   * @param context contain all information about the current state of the Gradle sync.
    * Use this context to access to the fetched Gradle models.
    */
   suspend fun onModelFetchCompleted(
-    resolverContext: ProjectResolverContext
+    context: ProjectResolverContext
   ) = Unit
 
   /**
    * Called once Gradle has failed to execute everything.
    * The models are obtained separately and in some cases before this method is called.
    *
-   * @param resolverContext contain all information about the current state of the Gradle sync.
+   * @param context contain all information about the current state of the Gradle sync.
    * Use this context to access to the fetched Gradle models.
    * @param exception the exception thrown by Gradle, if everything completes successfully, then this will be null.
    */
   suspend fun onModelFetchFailed(
-    resolverContext: ProjectResolverContext,
+    context: ProjectResolverContext,
     exception: Throwable
   ) = Unit
 
@@ -55,7 +55,7 @@ interface GradleSyncContributor {
    * Called once Gradle has loaded projects but before any task execution.
    * These models do not contain those models that are created when the build finished.
    *
-   * @param resolverContext contain all information about the current state of the Gradle sync.
+   * @param context contain all information about the current state of the Gradle sync.
    * Use this context to access to the fetched Gradle models.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder.projectsLoaded
@@ -63,7 +63,7 @@ interface GradleSyncContributor {
    */
   @ApiStatus.Internal
   suspend fun onProjectLoadedActionCompleted(
-    resolverContext: ProjectResolverContext
+    context: ProjectResolverContext
   ) = Unit
 
   companion object {

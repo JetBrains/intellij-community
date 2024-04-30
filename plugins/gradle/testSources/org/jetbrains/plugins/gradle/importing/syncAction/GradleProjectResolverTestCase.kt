@@ -24,24 +24,31 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
   fun whenPhaseCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override suspend fun onModelFetchPhaseCompleted(resolverContext: ProjectResolverContext, phase: GradleModelFetchPhase) {
-        action(resolverContext, phase)
+      override suspend fun onModelFetchPhaseCompleted(
+        context: ProjectResolverContext,
+        phase: GradleModelFetchPhase
+      ) {
+        action(context, phase)
       }
     }, parentDisposable)
   }
 
   fun whenModelFetchCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override suspend fun onModelFetchCompleted(resolverContext: ProjectResolverContext) {
-        action(resolverContext)
+      override suspend fun onModelFetchCompleted(
+        context: ProjectResolverContext
+      ) {
+        action(context)
       }
     }, parentDisposable)
   }
 
   fun whenProjectLoaded(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override suspend fun onProjectLoadedActionCompleted(resolverContext: ProjectResolverContext) {
-        action(resolverContext)
+      override suspend fun onProjectLoadedActionCompleted(
+        context: ProjectResolverContext
+      ) {
+        action(context)
       }
     }, parentDisposable)
   }
