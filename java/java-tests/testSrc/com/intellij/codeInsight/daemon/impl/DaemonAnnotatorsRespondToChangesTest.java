@@ -123,6 +123,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
 
   @Override
   protected Sdk getTestProjectJdk() {
+    //noinspection removal
     return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
   }
 

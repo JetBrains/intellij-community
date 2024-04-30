@@ -48,6 +48,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   private final DefaultLightProjectDescriptor myDescriptor = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
+      //noinspection removal
       Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
 
