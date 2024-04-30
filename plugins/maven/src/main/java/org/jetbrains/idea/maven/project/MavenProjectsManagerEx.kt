@@ -391,7 +391,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
     logDebug("Reading result: ${readingResult.updated.size}, ${readingResult.deleted.size}; to resolve: ${projectsToResolve.size}")
 
-    val result = importModules(spec, syncActivity, projectsToResolve, modelsProvider)
+    val resolutionResult = resolveMavenProjects(syncActivity, projectsToResolve, spec)
+
+    val result = importModules(syncActivity, resolutionResult, modelsProvider)
 
     withContext(tracer.span("notifyMavenProblems")) {
       MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
@@ -399,29 +401,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return result
   }
 
-  private suspend fun importModules(spec: MavenSyncSpec,
-                                    syncActivity: StructuredIdeActivity,
-                                    projectsToResolve: Collection<MavenProject>,
+  private suspend fun importModules(syncActivity: StructuredIdeActivity,
+                                    resolutionResult: MavenProjectResolutionResult,
                                     modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    logDebug("importModules started: ${projectsToResolve.size}")
-    val resolver = MavenProjectResolver(project)
-    val resolutionResult = withBackgroundProgressTraced(myProject, MavenProjectBundle.message("maven.resolving"), true) {
-      reportRawProgress { reporter ->
-        runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
-          project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionStarted(projectsToResolve)
-          val res = resolver.resolve(spec.resolveIncrementally(),
-                                     projectsToResolve,
-                                     projectsTree,
-                                     generalSettings,
-                                     embeddersManager,
-                                     reporter,
-                                     syncConsole)
-          project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionFinished(
-            res.mavenProjectMap.entries.flatMap { it.value }.map { it.mavenProject })
-          res
-        }
-      }
-    }
 
     val projectsToImport = resolutionResult.mavenProjectMap.entries
       .flatMap { it.value }
@@ -462,6 +444,31 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       importMavenProjects(projectsToImport, modelsProvider, syncActivity)
     }
 
+  }
+
+  private suspend fun MavenProjectsManagerEx.resolveMavenProjects(syncActivity: StructuredIdeActivity,
+                                                                  projectsToResolve: Collection<MavenProject>,
+                                                                  spec: MavenSyncSpec): MavenProjectResolutionResult {
+    logDebug("importModules started: ${projectsToResolve.size}")
+    val resolver = MavenProjectResolver(project)
+    val resolutionResult = withBackgroundProgressTraced(myProject, MavenProjectBundle.message("maven.resolving"), true) {
+      reportRawProgress { reporter ->
+        runMavenImportActivity(project, syncActivity, MavenImportStats.ResolvingTask) {
+          project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionStarted(projectsToResolve)
+          val res = resolver.resolve(spec.resolveIncrementally(),
+                                     projectsToResolve,
+                                     projectsTree,
+                                     generalSettings,
+                                     embeddersManager,
+                                     reporter,
+                                     syncConsole)
+          project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionFinished(
+            res.mavenProjectMap.entries.flatMap { it.value }.map { it.mavenProject })
+          res
+        }
+      }
+    }
+    return resolutionResult
   }
 
   private suspend fun readMavenProjectsActivity(parentActivity: StructuredIdeActivity,
