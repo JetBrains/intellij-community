@@ -146,6 +146,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:QuickfixBulb:javax.swing.Icon
 - sf:QuickfixOffBulb:javax.swing.Icon
 - sf:RealIntentionBulb:javax.swing.Icon
+- sf:Rebuild:javax.swing.Icon
 - sf:Redo:javax.swing.Icon
 - sf:RefactoringBulb:javax.swing.Icon
 - sf:ReformatCode:javax.swing.Icon
