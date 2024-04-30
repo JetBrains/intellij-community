@@ -1,0 +1,151 @@
+{
+  "components": [
+    {
+      "name": "DockerSettings",
+      "scope": "app",
+      "pluginId": "Docker",
+      "classFqn": "com.intellij.docker.DockerSettings",
+      "storage": "docker-tools.xml",
+      "properties": [
+        {
+          "name": "dockerComposePath",
+          "type": "String"
+        },
+        {
+          "name": "dockerPath",
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "EmmetOptions",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.application.options.emmet.EmmetOptions",
+      "storage": "emmet.xml",
+      "properties": [
+        {
+          "name": "addEditPointAtTheEndOfTemplate",
+          "type": "Boolean"
+        },
+        {
+          "name": "bemElementSeparator",
+          "type": "String"
+        },
+        {
+          "name": "bemModifierSeparator",
+          "type": "String"
+        },
+        {
+          "name": "bemShortElementPrefix",
+          "type": "String"
+        },
+        {
+          "name": "emmetEnabled",
+          "type": "Boolean"
+        },
+        {
+          "name": "emmetExpandShortcut",
+          "type": "Integer"
+        },
+        {
+          "name": "filtersEnabledByDefault",
+          "type": "StringSet"
+        },
+        {
+          "name": "hrefAutoDetectEnabled",
+          "type": "Boolean"
+        },
+        {
+          "name": "previewEnabled",
+          "type": "Boolean"
+        }
+      ]
+    },
+    {
+      "name": "HttpConfigurable",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.util.net.HttpConfigurable",
+      "storage": "proxy.settings.xml",
+      "properties": [
+        {
+          "name": "proxy_type_is_socks",
+          "mapTo": "PROXY_TYPE_IS_SOCKS",
+          "type": "Boolean"
+        },
+        {
+          "name": "use_http_proxy",
+          "mapTo": "USE_HTTP_PROXY",
+          "type": "Boolean"
+        },
+        {
+          "name": "use_proxy_pac",
+          "mapTo": "USE_PROXY_PAC",
+          "type": "Boolean"
+        },
+        {
+          "name": "proxy_host",
+          "mapTo": "PROXY_HOST",
+          "type": "String"
+        },
+        {
+          "name": "proxy_port",
+          "mapTo": "PROXY_PORT",
+          "type": "Integer"
+        },
+        {
+          "name": "proxy_authentication",
+          "mapTo": "PROXY_AUTHENTICATION",
+          "type": "Boolean"
+        },
+        {
+          "name": "keep_proxy_password",
+          "mapTo": "KEEP_PROXY_PASSWORD",
+          "type": "Boolean"
+        },
+        {
+          "name": "proxy_exceptions",
+          "mapTo": "PROXY_EXCEPTIONS",
+          "type": "String"
+        },
+        {
+          "name": "use_pac_url",
+          "mapTo": "USE_PAC_URL",
+          "type": "Boolean"
+        },
+        {
+          "name": "pac_url",
+          "mapTo": "PAC_URL",
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "Python",
+      "scope": "app",
+      "pluginId": "Pythonid",
+      "storage": "jdk.table.xml",
+      "properties": [
+        {
+          "name": "homePath",
+          "type": "String",
+          "mapTo": "!ProjectJdkTable:<jdk version=\"2\"><name value=\"Python\"/><type value=\"Python SDK\"/><homePath value=\"${value}\"/><roots><classPath><root type=\"composite\"/></classPath><sourcePath><root type=\"composite\"/></sourcePath></roots></jdk>"
+        }
+      ]
+    },
+    {
+      "name": "PyCondaPackageService",
+      "scope": "app",
+      "pluginId": "Pythonid",
+      "classFqn": "com.jetbrains.python.packaging.PyCondaPackageService",
+      "storage": "conda_packages.xml",
+      "properties": [
+        {
+          "name": "preferredCondaPath",
+          "type": "String"
+        }
+      ]
+    }
+  ]
+}
