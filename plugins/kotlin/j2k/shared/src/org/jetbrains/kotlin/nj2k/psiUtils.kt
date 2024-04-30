@@ -50,42 +50,22 @@ fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
 fun PsiMember.visibility(
     referenceSearcher: ReferenceSearcher,
     assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?
-): JKVisibilityModifierElement {
-    if (parentOfType<PsiClass>()?.isInterface == true) {
-        // interface methods are always public
-        return JKVisibilityModifierElement(Visibility.PUBLIC)
+): JKVisibilityModifierElement = modifierList?.children?.mapNotNull { child ->
+    if (child !is PsiKeyword) return@mapNotNull null
+    when (child.text) {
+        PsiModifier.PACKAGE_LOCAL -> Visibility.INTERNAL
+        PsiModifier.PRIVATE -> Visibility.PRIVATE
+        PsiModifier.PROTECTED -> handleProtectedVisibility(referenceSearcher)
+        PsiModifier.PUBLIC -> Visibility.PUBLIC
+        else -> null
+    }?.let {
+        JKVisibilityModifierElement(it)
+    }?.also { modifier ->
+        assignNonCodeElements?.also { it(modifier, child) }
     }
-    val visibility = modifierList?.children?.mapNotNull { child ->
-        if (child !is PsiKeyword) return@mapNotNull null
-        when (child.text) {
-            PsiModifier.PACKAGE_LOCAL -> Visibility.INTERNAL
-            PsiModifier.PRIVATE -> Visibility.PRIVATE
-            PsiModifier.PROTECTED -> handleProtectedVisibility(referenceSearcher)
-            PsiModifier.PUBLIC -> Visibility.PUBLIC
-            else -> null
-        }?.let {
-            JKVisibilityModifierElement(it)
-        }?.also { modifier ->
-            assignNonCodeElements?.also { it(modifier, child) }
-        }
-    }?.firstOrNull()
-
-    if (visibility != null) return visibility
-    // for Kotlin classes, modifierList.children() returns null
-    // however, modifierList.text still contains the modifiers as a string
-    // parse the string modifiers to get visibility
-    val modifiers = modifierList?.text?.split(" ")
-    return modifiers?.firstNotNullOfOrNull { child ->
-        when (child) {
-            PsiModifier.PACKAGE_LOCAL -> Visibility.INTERNAL
-            PsiModifier.PRIVATE -> Visibility.PRIVATE
-            PsiModifier.PROTECTED -> handleProtectedVisibility(referenceSearcher)
-            PsiModifier.PUBLIC -> Visibility.PUBLIC
-            else -> null
-        }?.let {
-            JKVisibilityModifierElement(it)
-        }
-    } ?: JKVisibilityModifierElement(Visibility.INTERNAL)
+}?.firstOrNull() ?: when {
+    parentOfType<PsiClass>()?.isInterface == true -> JKVisibilityModifierElement(Visibility.PUBLIC)
+    else -> JKVisibilityModifierElement(Visibility.INTERNAL)
 }
 
 fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?): JKModalityModifierElement {

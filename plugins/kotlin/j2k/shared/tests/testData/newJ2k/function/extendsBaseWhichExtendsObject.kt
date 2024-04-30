@@ -1,3 +1,4 @@
+// ERROR: Unresolved reference: finalize
 internal class Test : Base() {
     override fun hashCode(): Int {
         return super.hashCode()

@@ -24,6 +24,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
 import com.intellij.psi.util.TypeConversionUtil.calcTypeForBinaryExpression
 import com.intellij.psi.util.childrenOfType
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
@@ -904,12 +905,50 @@ class JavaToJKTreeBuilder(
                 it.withFormattingFrom(this)
             }
 
+
+        private fun PsiMethod.visibilityForOverride(
+        ): JKVisibilityModifierElement {
+            val visibility = modifierList.children?.mapNotNull { child ->
+                if (child !is PsiKeyword) return@mapNotNull null
+                when (child.text) {
+                    PsiModifier.PACKAGE_LOCAL -> Visibility.INTERNAL
+                    PsiModifier.PRIVATE -> Visibility.PRIVATE
+                    PsiModifier.PROTECTED -> Visibility.PROTECTED
+                    PsiModifier.PUBLIC -> Visibility.PUBLIC
+                    else -> null
+                }?.let {
+                    JKVisibilityModifierElement(it)
+                }
+            }?.firstOrNull()
+
+            if (visibility != null) return visibility
+            // for Kotlin classes, modifierList.children() returns null
+            // however, modifierList.text still contains the modifiers as a string
+            // parse the string modifiers to get visibility
+            val modifiers = modifierList.text?.split(" ")
+            return modifiers?.firstNotNullOfOrNull { child ->
+                when (child) {
+                    PsiModifier.PACKAGE_LOCAL -> Visibility.INTERNAL
+                    PsiModifier.PRIVATE -> Visibility.PRIVATE
+                    PsiModifier.PROTECTED -> Visibility.PROTECTED
+                    PsiModifier.PUBLIC -> Visibility.PUBLIC
+                    else -> null
+                }?.let {
+                    JKVisibilityModifierElement(it)
+                }
+            } ?: when {
+                parentOfType<PsiClass>()?.isInterface == true -> JKVisibilityModifierElement(Visibility.PUBLIC)
+                else -> JKVisibilityModifierElement(Visibility.INTERNAL)
+            }
+        }
+
+
         private fun PsiMethod.isOverrideMethodWithRedundantVisibility(): Boolean {
             val superMethods = findSuperMethods()
             if (superMethods.isEmpty()) return false // Unknown super method
             val methodVisibility = visibility().visibility
             return superMethods.any { superMethod ->
-                superMethod.visibility().visibility == methodVisibility
+                superMethod.visibilityForOverride().visibility == methodVisibility
             }
         }
 
