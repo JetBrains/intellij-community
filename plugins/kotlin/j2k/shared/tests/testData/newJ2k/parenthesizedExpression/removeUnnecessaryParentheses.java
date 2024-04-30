@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // IGNORE_K2
 import java.util.*;
+
+import kotlin.collections.CollectionsKt;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +11,7 @@ class Foo {
     public static final String TEXT1 = "text1.\n" +
                                        "text2\n" +
                                        "text3";
-    void foo(int a, int b, string s1) {
+    void foo(String s1) {
         int a = 0;
         int b = 0;
         int c = 0;
@@ -23,7 +24,7 @@ class Foo {
         a += b = (c);
         a = ((b) += (c));
 
-        char a = (byte) 1;
+        char ch = (byte) 1;
 
         List<String> x = new ArrayList<String>();
         CollectionsKt.filter(x, new Function1<String, Boolean>() {

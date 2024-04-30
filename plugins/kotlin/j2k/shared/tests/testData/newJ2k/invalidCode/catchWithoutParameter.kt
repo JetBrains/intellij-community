@@ -1,3 +1,4 @@
+// error message difference
 internal object Test {
     @JvmStatic
     fun main(args: Array<String>) {

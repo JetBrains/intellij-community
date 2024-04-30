@@ -1,2 +1,2 @@
 // IGNORE_K2
-interface INode {Tag getTag();String toKotlin();}
+interface INode {String getTag();String toKotlin();}

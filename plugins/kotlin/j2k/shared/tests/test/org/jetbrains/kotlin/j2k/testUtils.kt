@@ -20,8 +20,6 @@ val J2K_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
 internal val J2K_FULL_JDK_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
-internal const val ERROR_HEADER: String = "// ERROR"
-
 // TODO: adapted from `org.jetbrains.kotlin.idea.test.TestUtilsKt.dumpTextWithErrors`
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal fun getK2FileTextWithErrors(file: KtFile): String {

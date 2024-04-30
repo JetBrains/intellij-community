@@ -1,5 +1,5 @@
 internal class Foo {
-    fun foo(a: Int, b: Int, s1: string) {
+    fun foo(s1: String) {
         var a = 0
         var b = 0
         var c = 0
@@ -15,24 +15,20 @@ internal class Foo {
         a += b
         a = (c.let { b += it; (b) })
 
-        val a = Char(1.toByte().toUShort())
+        val ch = Char(1.toByte().toUShort())
 
         val x: List<String> = ArrayList()
-        CollectionsKt.filter(x, object : Function1<String?, Boolean?>() {
-            fun invoke(o: String): Boolean {
-                return o == "a"
-            }
-        })
+        x.filter { o: String -> o == "a" }
 
-        if (0 == 1 && a.code > b) return
-        if (0 == 1 &&  /*comment 1*/ /*comment 2*/a.code != b) return
+        if (0 == 1 && a > b) return
+        if (0 == 1 &&  /*comment 1*/ /*comment 2*/a != b) return
 
-        require(!(s1.length() < 3))
+        require(s1.length >= 3)
 
-        bar(s1.toString() + "hello")
+        bar(s1 + "hello")
 
-        s1.length()
-        (s1.toString() + "postfix").length
+        s1.length
+        (s1 + "postfix").length
 
         var z =
             1 +

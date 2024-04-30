@@ -56,10 +56,8 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         val settings = configureSettings(directives)
         val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
         val expectedFile = File(javaFile.path.replace(".java", ".kt"))
-        val shouldCheckForErrors = expectedFile.readText().contains(ERROR_HEADER)
 
-        val actualText = if (prefix == "file" && shouldCheckForErrors) {
-            // Optimization: K2 `getFileTextWithErrors` is expensive
+        val actualText = if (prefix == "file") {
             createKotlinFile(convertedText).getFileTextWithErrors()
         } else {
             convertedText
