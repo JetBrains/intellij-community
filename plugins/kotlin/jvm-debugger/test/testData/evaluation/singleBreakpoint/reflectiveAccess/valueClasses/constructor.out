@@ -1,0 +1,11 @@
+LineBreakpoint created at constructor.kt:20
+Run Java
+Connected to the target VM
+constructor.kt:20
+Compile bytecode for A(42u).x.toInt()
+Compile bytecode for B(IntN(42)).x.x!!
+Compile bytecode for C(OverStr("abacaba")).x.x
+Compile bytecode for D(IntN(42)).x.x!!
+Disconnected from the target VM
+
+Process finished with exit code 0
