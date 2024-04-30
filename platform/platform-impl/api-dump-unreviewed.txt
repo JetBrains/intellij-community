@@ -15128,28 +15128,6 @@ com.intellij.openapi.editor.markup.ErrorStripeRenderer
 - getMaxWidth():java.lang.Integer
 - a:getTextAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
 - paint(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.awt.Rectangle):V
-f:com.intellij.openapi.editor.markup.InspectionsFUS
-- sf:INSTANCE:com.intellij.openapi.editor.markup.InspectionsFUS
-- f:currentFileLevelChanged(com.intellij.openapi.project.Project,I,com.intellij.openapi.editor.markup.InspectionsLevel):V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- f:infoStateDetected(com.intellij.openapi.project.Project,I,com.intellij.openapi.editor.markup.InspectionsState):V
-- f:performAction(com.intellij.openapi.project.Project,I,java.lang.String):V
-- f:setInlayHintsEnabled(com.intellij.openapi.project.Project,I,Z):V
-- f:signal(com.intellij.openapi.project.Project,I,com.intellij.openapi.editor.markup.InspectionsFUS$InspectionsEvent):V
-e:com.intellij.openapi.editor.markup.InspectionsFUS$InspectionsEvent
-- java.lang.Enum
-- sf:SHOW_POPUP:com.intellij.openapi.editor.markup.InspectionsFUS$InspectionsEvent
-- sf:TOGGLE_PROBLEMS_VIEW:com.intellij.openapi.editor.markup.InspectionsFUS$InspectionsEvent
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.openapi.editor.markup.InspectionsFUS$InspectionsEvent
-- s:values():com.intellij.openapi.editor.markup.InspectionsFUS$InspectionsEvent[]
-e:com.intellij.openapi.editor.markup.InspectionsFUS$Navigation
-- java.lang.Enum
-- sf:NEXT:com.intellij.openapi.editor.markup.InspectionsFUS$Navigation
-- sf:PREVIOUS:com.intellij.openapi.editor.markup.InspectionsFUS$Navigation
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.openapi.editor.markup.InspectionsFUS$Navigation
-- s:values():com.intellij.openapi.editor.markup.InspectionsFUS$Navigation[]
 e:com.intellij.openapi.editor.markup.InspectionsState
 - java.lang.Enum
 - sf:ANALYZING:com.intellij.openapi.editor.markup.InspectionsState
@@ -15221,18 +15199,22 @@ f:com.intellij.openapi.editor.markup.StatusItem
 - <init>(java.lang.String):V
 - <init>(java.lang.String,javax.swing.Icon):V
 - <init>(java.lang.String,javax.swing.Icon,java.lang.String):V
-- b:<init>(java.lang.String,javax.swing.Icon,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.editor.markup.StatusItemMetadata):V
+- b:<init>(java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.editor.markup.StatusItemMetadata,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
 - f:component2():javax.swing.Icon
 - f:component3():java.lang.String
-- f:copy(java.lang.String,javax.swing.Icon,java.lang.String):com.intellij.openapi.editor.markup.StatusItem
-- bs:copy$default(com.intellij.openapi.editor.markup.StatusItem,java.lang.String,javax.swing.Icon,java.lang.String,I,java.lang.Object):com.intellij.openapi.editor.markup.StatusItem
+- f:component4():com.intellij.openapi.editor.markup.StatusItemMetadata
+- f:copy(java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.editor.markup.StatusItemMetadata):com.intellij.openapi.editor.markup.StatusItem
+- bs:copy$default(com.intellij.openapi.editor.markup.StatusItem,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.editor.markup.StatusItemMetadata,I,java.lang.Object):com.intellij.openapi.editor.markup.StatusItem
 - equals(java.lang.Object):Z
 - f:getDetailsText():java.lang.String
 - f:getIcon():javax.swing.Icon
+- f:getMetadata():com.intellij.openapi.editor.markup.StatusItemMetadata
 - f:getText():java.lang.String
 - hashCode():I
 - toString():java.lang.String
+com.intellij.openapi.editor.markup.StatusItemMetadata
 f:com.intellij.openapi.editor.textarea.EmptyInlayModel
 - com.intellij.openapi.editor.InlayModel
 - <init>():V

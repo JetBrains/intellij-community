@@ -4021,6 +4021,7 @@ f:com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorPanel
 c:com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler
 - com.intellij.codeInsight.CodeInsightActionHandler
 - <init>(Z):V
+- <init>(Z,com.intellij.lang.annotation.HighlightSeverity):V
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - startInWriteAction():Z
 f:com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor
@@ -4390,6 +4391,11 @@ pc:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$DefaultUIController
 com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createRenderer(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
+f:com.intellij.codeInsight.daemon.impl.TrafficLightStatusItemMetadata
+- com.intellij.openapi.editor.markup.StatusItemMetadata
+- <init>(I,com.intellij.lang.annotation.HighlightSeverity):V
+- f:getCount():I
+- f:getSeverity():com.intellij.lang.annotation.HighlightSeverity
 f:com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl
 - com.intellij.problems.WolfTheProblemSolver
 - com.intellij.openapi.Disposable
@@ -4421,6 +4427,7 @@ c:com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
+- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - p:isValidForLookup():Z
 f:com.intellij.codeInsight.daemon.impl.actions.GotoPrevElementUnderCaretUsageAction
@@ -4435,6 +4442,7 @@ c:com.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
+- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - p:isValidForLookup():Z
 f:com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction

@@ -385,6 +385,7 @@ a:com.intellij.codeInsight.actions.CodeInsightAction
 - p:getCommandName():java.lang.String
 - p:getEditor(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project,Z):com.intellij.openapi.editor.Editor
 - pa:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
+- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:update(com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
@@ -493,6 +494,7 @@ a:com.intellij.codeInsight.completion.NextPrevParameterAction
 - com.intellij.openapi.project.DumbAware
 - p:<init>(Z):V
 - getHandler():com.intellij.codeInsight.CodeInsightActionHandler
+- getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - s:hasSuitablePolicy(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 c:com.intellij.codeInsight.completion.NextPrevParameterAction$Next
