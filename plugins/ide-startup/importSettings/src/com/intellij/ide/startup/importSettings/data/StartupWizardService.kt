@@ -73,6 +73,7 @@ interface ThemeService {
   var currentTheme: Theme
 
   val schemesList: List<WizardScheme>
+  val initialSchemeId: String?
 
   fun onStepEnter(isForwardDirection: Boolean)
   fun updateScheme(schemeId: String)

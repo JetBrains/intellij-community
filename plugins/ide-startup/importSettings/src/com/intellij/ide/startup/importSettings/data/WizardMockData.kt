@@ -72,6 +72,7 @@ class ThemeServiceImpl : ThemeService {
     }
 
   override val schemesList: List<WizardScheme> = map.values.toList()
+  override val initialSchemeId: String? = null
 
   override fun onStepEnter(isForwardDirection: Boolean) {}
 
