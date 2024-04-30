@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.yaml;
+package org.jetbrains.yaml.settingsSync;
 
 import com.intellij.application.options.*;
 import com.intellij.application.options.codeStyle.CommenterForm;
@@ -18,6 +18,8 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLBundle;
+import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
 import javax.swing.*;
