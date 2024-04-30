@@ -422,10 +422,6 @@
       <add-to-group group-id="EditorToggleActions" anchor="after" relative-to-action="EditorToggleShowIndentLines"/>
     </action>
 
-    <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction">
-      <add-to-group group-id="UIToggleActions" anchor="after" relative-to-action="ViewStatusBarWidgetsGroup"/>
-    </action>
-
 
 
     <!-- Go To -->
@@ -972,6 +968,7 @@
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowScratchesAndConsoles">
           <override-text place="ToolwindowPopup"/>
         </action>
+        <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
       </group>
       <group id="ProjectView.ToolWindow.Sort.Actions" popup="true">
         <action id="ProjectView.ManualOrder"
