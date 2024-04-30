@@ -230,10 +230,10 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                            filesToDelete: List<VirtualFile>) {
 
     val lockSucceed = importMutex.tryLock()
-    if (MavenLog.LOG.isDebugEnabled) {
-      MavenLog.LOG.debug("Update maven requested. lock=${lockSucceed}, coroutines dump: ${dumpCoroutines()}")
-    }
     try {
+      if (MavenLog.LOG.isDebugEnabled) {
+        MavenLog.LOG.debug("Update maven requested. lock=${lockSucceed}, coroutines dump: ${dumpCoroutines()}")
+      }
       if (lockSucceed) {
         withContext(tracer.span("updateMavenProjects")) {
           MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
