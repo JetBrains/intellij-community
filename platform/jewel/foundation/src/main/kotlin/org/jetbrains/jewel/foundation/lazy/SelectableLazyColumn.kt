@@ -77,7 +77,15 @@ public fun SelectableLazyColumn(
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
-        modifier = modifier.onFocusChanged { isFocused = it.hasFocus }
+        modifier = modifier
+            .onFocusChanged {
+                isFocused = it.hasFocus
+                with(state) {
+                    if (isFocused && lastActiveItemIndex == null && selectedKeys.isEmpty()) {
+                        keyActions.actions.onSelectFirstItem(keys, this)
+                    }
+                }
+            }
             .focusRequester(focusRequester)
             .focusable(interactionSource = interactionSource)
             .onPreviewKeyEvent { event ->
