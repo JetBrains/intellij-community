@@ -178,6 +178,19 @@ public abstract class K2BindToFqnTestGenerated extends AbstractK2BindToFqnTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToFqn/functionCall")
+    public static class FunctionCall extends AbstractK2BindToFqnTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("Operator.kt")
+        public void testOperator() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToFqn/functionCall/Operator.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/bindToFqn/importReference")
     public static class ImportReference extends AbstractK2BindToFqnTest {
         private void runTest(String testDataFilePath) throws Exception {
