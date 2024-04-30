@@ -3025,7 +3025,7 @@ f:com.intellij.openapi.vcs.changes.actions.diff.lst.UnifiedLocalChangeListDiffVi
 f:com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog
 - sf:INSTANCE:com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog
 - sf:showSettingsDialog(com.intellij.openapi.project.Project):Z
-c:com.intellij.openapi.vcs.changes.committed.CachesHolder
+f:com.intellij.openapi.vcs.changes.committed.CachesHolder
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.committed.RepositoryLocationCache):V
 - clearAllCaches():V
 - getAllCaches():java.util.Collection
@@ -3072,8 +3072,8 @@ c:com.intellij.openapi.vcs.changes.committed.ChangesBunch
 - <init>(java.util.List,Z):V
 - getList():java.util.List
 - isConsistentWithPrevious():Z
-c:com.intellij.openapi.vcs.changes.committed.ChangesCacheFile
-- <init>(com.intellij.openapi.project.Project,java.io.File,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.RepositoryLocation):V
+f:com.intellij.openapi.vcs.changes.committed.ChangesCacheFile
+- <init>(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.RepositoryLocation):V
 - delete():V
 - editChangelist(J,java.lang.String):V
 - getBackBunchedIterator(I):java.util.Iterator
