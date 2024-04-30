@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.bugs.NullArgumentToVariableArgMethodInspection;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -837,7 +838,20 @@ public final class RedundantCastUtil {
             }
           }
           if (opType != null) {
-            addIfNarrowing(cast, opType, null);
+            PsiCodeBlock body = switchBlock.getBody();
+            boolean hasInconvertibleLabel = false;
+            if (body != null) {
+              hasInconvertibleLabel = StreamEx.of(body.getStatements()).select(PsiSwitchLabelStatementBase.class)
+                .map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
+                .nonNull().flatArray(PsiCaseLabelElementList::getElements)
+                .select(PsiExpression.class)
+                .map(PsiExpression::getType)
+                .nonNull()
+                .anyMatch(t -> !t.isConvertibleFrom(opType));
+            }
+            if (!hasInconvertibleLabel) {
+              addIfNarrowing(cast, opType, null);
+            }
           }
         }
       }
