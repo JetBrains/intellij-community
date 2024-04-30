@@ -48,6 +48,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class InvokeCompletion extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance(InvokeCompletion.class);
@@ -199,7 +202,10 @@ public class InvokeCompletion extends ActionOnFile {
                                         p.isStrikeout());
       var prev = presentations.put(info, item);
       if (prev != null && !myPolicy.areDuplicatesOk(prev, item)) {
-        TestCase.fail("Duplicate suggestions: " + p);
+        Function<LookupElement, String> itemInfoFn = it ->
+          it + ";" + Stream.iterate(it, Objects::nonNull, i -> i instanceof LookupElementDecorator<?> dec ? dec.getDelegate() : null)
+            .map(i -> i.getClass().getName()).collect(Collectors.joining("->"));
+        TestCase.fail("Duplicate suggestions: " + p + "(item1: " + itemInfoFn.apply(prev) + "; item2:" + itemInfoFn.apply(item) + ")");
       }
     }
   }
