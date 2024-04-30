@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -20,6 +21,18 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
 
   fun getModuleDependencies(moduleName: String): Sequence<String> {
     return getModuleDependencies(context.findRequiredModule(moduleName)).map { it.moduleReference.moduleName }
+  }
+
+  fun readPluginContentFromDescriptor(context: BuildContext, pluginModule: JpsModule): Sequence<String> {
+    val pluginXml = context.findFileInModuleSources(pluginModule, "META-INF/plugin.xml") ?: return emptySequence()
+    return sequence {
+      for (content in readXmlAsModel(pluginXml).children("content")) {
+        for (module in content.children("module")) {
+          val moduleName = module.attributes.get("name")?.takeIf { !it.contains('/') } ?: continue
+          yield(moduleName)
+        }
+      }
+    }
   }
 
   private fun getModuleDependencies(module: JpsModule): Sequence<JpsModuleDependency> {
@@ -53,9 +66,7 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
   // And it is a plugin that depends on cool.module.core.
   //
   // We should include cool-library only to cool.module.core (same group).
-  fun hasLibraryInDependencyChainOfModuleDependencies(dependentModule: JpsModule,
-                                                      libraryName: String,
-                                                      siblings: Collection<ModuleItem>): Boolean {
+  fun hasLibraryInDependencyChainOfModuleDependencies(dependentModule: JpsModule, libraryName: String, siblings: Collection<ModuleItem>): Boolean {
     val prefix = dependentModule.name.let { it.substring(0, it.lastIndexOf('.') + 1) }
     for (dependency in getModuleDependencies(dependentModule)) {
       val moduleName = dependency.moduleReference.moduleName

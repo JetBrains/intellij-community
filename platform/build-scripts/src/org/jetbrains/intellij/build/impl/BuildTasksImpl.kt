@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -10,7 +12,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
-import com.intellij.util.xml.dom.readXmlAsModel
 import com.jetbrains.plugin.structure.base.utils.toList
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -186,10 +187,11 @@ private suspend fun localizeModules(context: BuildContext, moduleNames: Collecti
 
   val modules = if (moduleNames.isEmpty()) {
     context.project.modules
-  } else {
+  }
+  else {
     moduleNames.asSequence().mapNotNull { context.findModule(it) }
       .flatMap { m ->
-        readPluginDependenciesFromXml(context, m).mapNotNull { context.findModule(it) } + sequenceOf(m)
+        (context as BuildContextImpl).jarPackagerDependencyHelper.readPluginContentFromDescriptor(context, m).mapNotNull { context.findModule(it) } + sequenceOf(m)
       }.flatMap { m ->
         m.dependenciesList.dependencies.asSequence().filterIsInstance<JpsModuleDependency>().mapNotNull { it.module } + sequenceOf(m)
       }.distinctBy { m -> m.name }.toList()
@@ -1447,11 +1449,7 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
 /**
  * @return list of all modules which output is included in the plugin's JARs
  */
-internal fun collectIncludedPluginModules(
-  enabledPluginModules: Collection<String>,
-  product: ProductModulesLayout,
-  result: MutableSet<String>
-) {
+internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>, product: ProductModulesLayout, result: MutableSet<String>) {
   result.addAll(enabledPluginModules)
   val enabledPluginModuleSet = if (enabledPluginModules is Set<String> || enabledPluginModules.size < 2) {
     enabledPluginModules
@@ -1462,24 +1460,6 @@ internal fun collectIncludedPluginModules(
   product.pluginLayouts.asSequence()
     .filter { enabledPluginModuleSet.contains(it.mainModule) }
     .flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
-}
-
-internal fun readPluginDependenciesFromXml(context: BuildContext, module: JpsModule) : Sequence<String> {
-  return sequence {
-    context.findFileInModuleSources(module, "META-INF/plugin.xml")?.let { pluginXml ->
-      readXmlAsModel(pluginXml).children("content").let { contents ->
-        contents.forEach { content ->
-          for (depModule in content.children("module")) {
-            val moduleName = depModule.attributes["name"]
-            if (moduleName == null || moduleName.contains('/')) {
-              continue
-            }
-            yield(moduleName)
-          }
-        }
-      }
-    }
-  }
 }
 
 fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {

@@ -10,7 +10,6 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.lang.ImmutableZipFile
-import com.intellij.util.xml.dom.readXmlAsModel
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
@@ -252,75 +251,19 @@ class JarPackager private constructor(
       return
     }
 
-    // for now, check only direct dependencies of the main plugin module
-    val childPrefix = "${layout.mainModule}."
-    for (name in helper.getModuleDependencies(layout.mainModule)) {
-      if ((!name.startsWith(childPrefix) && name != "intellij.platform.commercial.verifier") || addedModules.contains(name)) {
-        continue
-      }
-
-      val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
-      addedModules.add(name)
-      if (platformLayout!!.includedModules.contains(moduleItem)) {
-        continue
-      }
-
-      computeSourcesForModule(
-        item = moduleItem,
-        moduleOutputPatcher = moduleOutputPatcher,
-        layout = layout,
-        jarsWithSearchableOptions = jarsWithSearchableOptions,
-      )
-    }
-
-    if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter") {
-      // todo PyCharm team why this module is being incorrectly published
-      return
-    }
-
-    // check content
-    readPluginDependenciesFromXml(context, context.findRequiredModule(layout.mainModule))
-      .filterNot { d -> !addedModules.add(d) }
-      .forEach { moduleName ->
-        val descriptor = readXmlAsModel(context.findFileInModuleSources(moduleName, "$moduleName.xml")!!)
-
-        computeSourcesForModule(
-          item = ModuleItem(
-            moduleName = moduleName,
-            // relative path with `/` is always packed by dev-mode, so, we don't need to fix resolving for now and can improve it later
-            relativeOutputFile = if (descriptor.getAttributeValue("package") == null) "modules/$moduleName.jar" else layout.getMainJarName(),
-            reason = "<- ${layout.mainModule} (plugin content)",
-          ),
-          moduleOutputPatcher = moduleOutputPatcher,
-          layout = layout,
-          jarsWithSearchableOptions = jarsWithSearchableOptions,
-        )
-      }
-
-    // check verifier in all included modules
-    val effectiveIncludedNonMainModules = LinkedHashSet<String>(layout.includedModules.size + addedModules.size)
-    layout.includedModules.mapTo(effectiveIncludedNonMainModules) { it.moduleName }
-    effectiveIncludedNonMainModules.remove(layout.mainModule)
-    effectiveIncludedNonMainModules.addAll(addedModules)
-    for (moduleName in effectiveIncludedNonMainModules) {
-      for (name in helper.getModuleDependencies(moduleName)) {
-        if (name != "intellij.platform.commercial.verifier" || addedModules.contains(name)) {
-          continue
-        }
-
-        val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
-        addedModules.add(name)
-        computeSourcesForModule(
-          item = moduleItem,
-          moduleOutputPatcher = moduleOutputPatcher,
-          layout = layout,
-          jarsWithSearchableOptions = jarsWithSearchableOptions,
-        )
-      }
-    }
+    inferModuleSources(
+      layout = layout,
+      platformLayout = platformLayout!!,
+      addedModules = addedModules,
+      helper = helper,
+      moduleOutputPatcher = moduleOutputPatcher,
+      jarsWithSearchableOptions = jarsWithSearchableOptions,
+      jarPackager = this,
+      context = context,
+    )
   }
 
-  private suspend fun computeSourcesForModule(
+  internal suspend fun computeSourcesForModule(
     item: ModuleItem,
     moduleOutputPatcher: ModuleOutputPatcher,
     layout: BaseLayout?,
@@ -431,11 +374,7 @@ class JarPackager private constructor(
             continue
           }
 
-          if (helper.hasLibraryInDependencyChainOfModuleDependencies(
-              dependentModule = module,
-              libraryName = libName,
-              siblings = layout.includedModules,
-            )) {
+          if (helper.hasLibraryInDependencyChainOfModuleDependencies(dependentModule = module, libraryName = libName, siblings = layout.includedModules)) {
             continue
           }
 
