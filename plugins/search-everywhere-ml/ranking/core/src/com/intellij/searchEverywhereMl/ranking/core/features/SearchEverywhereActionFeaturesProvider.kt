@@ -11,7 +11,6 @@ import com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.local.ActionGlobalUsageInfo
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -66,8 +65,8 @@ internal class SearchEverywhereActionFeaturesProvider :
     internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("pluginType", "plugin_type")
     internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", PluginIdRuleValidator::class.java)
 
-    val GLOBAL_STATISTICS_DEFAULT = GlobalStatisticsFields(ActionsGlobalSummaryManager.getDefaultStatisticsVersion())
-    val GLOBAL_STATISTICS_UPDATED = GlobalStatisticsFields(ActionsGlobalSummaryManager.getUpdatedStatisticsVersion())
+    internal val GLOBAL_STATISTICS_DEFAULT = ActionsGlobalStatisticsFields(ActionsGlobalSummaryManager.STATISTICS_VERSION)
+    internal val GLOBAL_STATISTICS_UPDATED = ActionsGlobalStatisticsFields(ActionsGlobalSummaryManager.UPDATED_STATISTICS_VERSION)
 
 
     internal val USAGE = EventFields.Int("usage")
@@ -137,15 +136,15 @@ internal class SearchEverywhereActionFeaturesProvider :
     data.addAll(getLocalUsageStatistics(action, currentTime))
 
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
-    val globalSummary = service<ActionsGlobalSummaryManager>()
+    val globalSummary = ActionsGlobalSummaryManager.getInstance()
 
-    val actionStats = globalSummary.getActionStatistics(actionId)
-    val maxUsageCount = globalSummary.totalSummary.maxUsageCount()
-    data.addAll(GLOBAL_STATISTICS_DEFAULT.getGlobalUsageStatistics(actionStats, maxUsageCount))
+    val actionStats = globalSummary.getStatistics(actionId)
+    val maxUsageCount = globalSummary.eventCountRange.maxEventCount
+    data.addAll(GLOBAL_STATISTICS_DEFAULT.getEventGlobalStatistics(actionStats, maxUsageCount))
 
-    val updatedActionStats = globalSummary.getUpdatedActionStatistics(actionId)
-    val updatedMaxUsageCount = globalSummary.updatedTotalSummary.maxUsageCount()
-    data.addAll(GLOBAL_STATISTICS_UPDATED.getGlobalUsageStatistics(updatedActionStats, updatedMaxUsageCount))
+    val updatedActionStats = globalSummary.getUpdatedStatistics(actionId)
+    val updatedMaxUsageCount = globalSummary.updatedEventCountRange.maxEventCount
+    data.addAll(GLOBAL_STATISTICS_UPDATED.getEventGlobalStatistics(updatedActionStats, updatedMaxUsageCount))
 
 
     val pluginInfo = getPluginInfo(action.javaClass)
@@ -213,28 +212,6 @@ internal class SearchEverywhereActionFeaturesProvider :
       data.addIfTrue(if (isSe) WAS_USED_IN_LAST_HOUR_SE else WAS_USED_IN_LAST_HOUR, timeSinceLastUsage <= Time.HOUR)
       data.addIfTrue(if (isSe) WAS_USED_IN_LAST_DAY_SE else WAS_USED_IN_LAST_DAY, timeSinceLastUsage <= Time.DAY)
       data.addIfTrue(if (isSe) WAS_USED_IN_LAST_MONTH_SE else WAS_USED_IN_LAST_MONTH, timeSinceLastUsage <= (4 * Time.WEEK.toLong()))
-    }
-  }
-
-  internal class GlobalStatisticsFields(version: Int) {
-    private val globalUsage = EventFields.Long("globalUsageV$version")
-    private val globalUsageToMax = EventFields.Double("globalUsageToMaxV$version")
-    private val usersRatio = EventFields.Double("usersRatioV$version")
-    private val usagesPerUserRatio = EventFields.Double("usagesPerUserRatioV$version")
-
-    fun getFieldsDeclaration(): List<EventField<*>> = arrayListOf(globalUsage, globalUsageToMax, usersRatio, usagesPerUserRatio)
-
-    fun getGlobalUsageStatistics(actionGlobalStatistics: ActionGlobalUsageInfo?, maxUsageCount: Long): List<EventPair<*>> {
-      val result = arrayListOf<EventPair<*>>()
-      actionGlobalStatistics?.let {
-        result.add(globalUsage.with(it.usagesCount))
-        if (maxUsageCount != 0L) {
-          result.add(globalUsageToMax.with(roundDouble(it.usagesCount.toDouble() / maxUsageCount)))
-        }
-        result.add(usersRatio.with(roundDouble(it.usersRatio)))
-        result.add(usagesPerUserRatio.with(roundDouble(it.usagesPerUserRatio)))
-      }
-      return result
     }
   }
 }
