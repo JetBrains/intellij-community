@@ -10,22 +10,21 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.VisualPosition
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.notebooks.ui.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.*
-import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayController
 import java.awt.*
 import javax.swing.JComponent
 import kotlin.reflect.KClass
 
 class EditorCellView(
-  private val editor: EditorEx,
+  private val editor: EditorImpl,
   private val intervals: NotebookCellLines,
   internal var intervalPointer: NotebookIntervalPointer
 ) {
@@ -138,16 +137,30 @@ class EditorCellView(
       }
     }
     input.update()
-    outputs?.dispose()
-    val outputController = controllers.filterIsInstance<NotebookOutputInlayController>().firstOrNull()
-    if (outputController != null) {
-      _outputs = EditorCellOutputs(editor, outputController)
-      updateCellHighlight()
-      updateFolding()
-    }
+    updateOutputs()
     updateBoundaries()
     updateCellHighlight()
   }
+
+  private fun updateOutputs() {
+    if (hasOutputs()) {
+      if (_outputs == null) {
+        _outputs = EditorCellOutputs(editor, { interval })
+        updateCellHighlight()
+        updateFolding()
+      }
+      else {
+        outputs?.update()
+      }
+    }
+    else {
+      outputs?.dispose()
+      _outputs = null
+    }
+  }
+
+  private fun hasOutputs() = interval.type == NotebookCellLines.CellType.CODE
+                           && (editor.editorKind != EditorKind.DIFF || Registry.`is`("jupyter.diff.viewer.output"))
 
   private fun getInputFactories(): Sequence<NotebookCellInlayController.Factory> {
     return NotebookCellInlayController.Factory.EP_NAME.extensionList.asSequence()
@@ -308,7 +321,7 @@ class EditorCellView(
     }
   }
 
-  private data class NotebookCellDataProvider(
+  internal data class NotebookCellDataProvider(
     val editor: Editor,
     val component: JComponent,
     val intervalProvider: () -> NotebookCellLines.Interval,

@@ -11,7 +11,7 @@ import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
 class EditorCell(
   private val editor: EditorEx,
   intervalPointer: NotebookIntervalPointer,
-  private val viewFactory: () -> EditorCellView
+  private val viewFactory: (EditorCell) -> EditorCellView
 ) : UserDataHolder by UserDataHolderBase() {
   internal var intervalPointer: NotebookIntervalPointer = intervalPointer
     set(value) {
@@ -49,7 +49,7 @@ class EditorCell(
 
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
 
-  var view: EditorCellView? = viewFactory()
+  var view: EditorCellView? = viewFactory(this)
 
   private var gutterAction: AnAction? = null
 
@@ -62,7 +62,7 @@ class EditorCell(
   fun show() {
     _visible = true
     if (view == null) {
-      view = viewFactory()
+      view = viewFactory(this)
       view?.updateSelection(_selected)
       gutterAction?.let { view?.setGutterAction(it) }
     }

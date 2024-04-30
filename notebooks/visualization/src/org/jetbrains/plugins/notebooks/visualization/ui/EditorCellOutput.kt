@@ -1,10 +1,14 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayShowable
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComponent
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ComponentAdapter
@@ -14,7 +18,7 @@ import javax.swing.SwingUtilities
 
 val NOTEBOOK_CELL_OUTPUT_DATA_KEY = DataKey.create<EditorCellOutput>("NOTEBOOK_CELL_OUTPUT")
 
-class EditorCellOutput internal constructor(private val editor: EditorEx, private val component: CollapsingComponent) {
+class EditorCellOutput internal constructor(private val editor: EditorEx, private val component: CollapsingComponent, private val disposable: Disposable?) {
 
   val location: Point
     get() = SwingUtilities.convertPoint(component.parent, component.location, editor.contentComponent)
@@ -59,9 +63,15 @@ class EditorCellOutput internal constructor(private val editor: EditorEx, privat
 
   fun dispose() {
     folding.dispose()
+    disposable?.let { Disposer.dispose(it) }
   }
 
   fun onViewportChange() {
+      val component = component.mainComponent as? NotebookOutputInlayShowable ?: return
+      if (component !is Component) return
+
+      val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
+      component.shown = editor.scrollPane.viewport.viewRect.intersects(componentRect)
   }
 
   fun hideFolding() {
@@ -75,5 +85,4 @@ class EditorCellOutput internal constructor(private val editor: EditorEx, privat
   fun updateSelection(value: Boolean) {
     folding.updateSelection(value)
   }
-
 }

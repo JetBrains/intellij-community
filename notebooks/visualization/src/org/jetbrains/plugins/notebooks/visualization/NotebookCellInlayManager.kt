@@ -7,7 +7,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.CaretEvent
@@ -21,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
-import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -36,14 +34,12 @@ import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView
 import org.jetbrains.plugins.notebooks.visualization.ui.keepScrollingPositionWhile
 import java.awt.Graphics
 import java.util.*
-import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.math.min
 
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl
 ) : NotebookIntervalPointerFactory.ChangeListener {
-  private val inlays: MutableMap<Inlay<*>, NotebookCellInlayController> = HashMap()
   private val notebookCellLines = NotebookCellLines.get(editor)
   private val viewportQueue = MergingUpdateQueue("NotebookCellInlayManager Viewport Update", 100, true, null, editor.disposable, null, true)
 
@@ -98,13 +94,6 @@ class NotebookCellInlayManager private constructor(
       viewportQueue.queue(object : Update("Viewport change") {
         override fun run() {
           if (editor.isDisposed) return
-          for ((inlay, controller) in inlays) {
-            controller.onViewportChange()
-
-            // ToDo we should not call updateUI on any scroll event. This caused multiple calls to synchronizeBoundsWithInlay.
-            // Many UI instances has overridden getPreferredSize relying on editor dimensions.
-            inlay.renderer?.asSafely<JComponent>()?.updateUI()
-          }
           _cells.forEach {
             it.onViewportChange()
           }
@@ -241,7 +230,7 @@ class NotebookCellInlayManager private constructor(
     inlaysChanged()
   }
 
-  private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, interval) {
+  private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, interval) { cell ->
     EditorCellView(editor, notebookCellLines, interval)
   }
 
@@ -335,9 +324,6 @@ class NotebookCellInlayManager private constructor(
         if (interval.lines.first > logicalLines.last) break
       }
     }
-
-  @TestOnly
-  fun getInlays(): MutableMap<Inlay<*>, NotebookCellInlayController> = inlays
 
   @TestOnly
   fun updateControllers(matchingCells: List<NotebookCellLines.Interval>, logicalLines: IntRange) {

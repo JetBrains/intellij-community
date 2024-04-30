@@ -113,8 +113,4 @@
       interface="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentWrapper"
       dynamic="true"/>
   </extensionPoints>
-  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks">
-    <notebookCellInlayController
-      implementation="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayController$Factory"/>
-  </extensions>
 </idea-plugin>
