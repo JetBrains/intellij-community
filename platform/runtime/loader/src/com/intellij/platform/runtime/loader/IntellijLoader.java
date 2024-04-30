@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Initiates loading of a product based on IntelliJ platform. It loads information about the product modules from {@link RuntimeModuleRepository}
  * and configures the classloader accordingly.
- * <p>It's an experimental way, and it isn't used in production yet.</p>
+ * <p>It's an experimental way, it's currently used for frontend variants of IDEs only.</p>
  */
 public final class IntellijLoader {
   @ApiStatus.Internal
