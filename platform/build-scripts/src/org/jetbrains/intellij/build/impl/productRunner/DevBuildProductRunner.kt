@@ -42,11 +42,7 @@ private class DevBuildProductRunner(
   private val homePath: Path,
   private val classPath: Collection<Path>,
 ) : IntellijProductRunner {
-  override suspend fun runProduct(
-    arguments: List<String>,
-    additionalSystemProperties: Map<String, String>,
-    isLongRunning: Boolean,
-  ) {
+  override suspend fun runProduct(arguments: List<String>, additionalSystemProperties: Map<String, String>, isLongRunning: Boolean) {
     runApplicationStarter(
       context = context,
       ideClasspath = classPath.map { it.toString() },

@@ -273,13 +273,6 @@ class JarPackager private constructor(
     val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
 
-    val searchableOptionsJarDir = if (jarsWithSearchableOptions.contains(item.relativeOutputFile)) {
-      context.paths.searchableOptionDir.resolve(item.relativeOutputFile)
-    }
-    else {
-      null
-    }
-
     val module = context.findRequiredModule(moduleName)
     val moduleOutDir = context.getModuleOutputDir(module)
     val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
@@ -319,8 +312,8 @@ class JarPackager private constructor(
       moduleSources.add(DirSource(dir = dir))
     }
 
-    if (searchableOptionsJarDir != null) {
-      moduleSources.add(DirSource(dir = searchableOptionsJarDir))
+    if (jarsWithSearchableOptions.contains(item.relativeOutputFile)) {
+      moduleSources.add(DirSource(dir = context.paths.searchableOptionDir.resolve(item.relativeOutputFile)))
     }
 
     val excludes = if (extraExcludes.isEmpty()) {

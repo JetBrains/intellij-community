@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
@@ -43,13 +43,13 @@ import java.util.*;
 
 /**
  * Used in installer's "build searchable options" step.
- *
- * In order to run locally, use "TraverseUi" run configuration (pass corresponding "idea.platform.prefix" property via VM options,
+ * <p>
+ * To run locally, use "TraverseUi" run configuration (pass corresponding "idea.platform.prefix" property via VM options,
  * and choose correct main module).
- *
+ * <p>
  * Pass {@code true} as the second parameter to have searchable options split by modules.
  */
-@SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class TraverseUIStarter implements ApplicationStarter {
   private static final @NonNls String OPTIONS = "options";
   private static final @NonNls String CONFIGURABLE = "configurable";
@@ -302,8 +302,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
     return map;
   }
 
-  @NotNull
-  private static Map<String, PluginId> getActionToPluginId() {
+  private static @NotNull Map<String, PluginId> getActionToPluginId() {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     Map<String, PluginId> actionToPluginId = new HashMap<>();
     for (PluginId id : PluginId.getRegisteredIds()) {
@@ -314,13 +313,12 @@ public final class TraverseUIStarter implements ApplicationStarter {
     return actionToPluginId;
   }
 
-  @NotNull
-  private static String getModuleByAction(@NotNull final AnAction rootAction, @NotNull final Map<String, PluginId> actionToPluginId) {
-    final Deque<AnAction> actions = new ArrayDeque<>();
+  private static @NotNull String getModuleByAction(final @NotNull AnAction rootAction, @NotNull Map<String, PluginId> actionToPluginId) {
+    Deque<AnAction> actions = new ArrayDeque<>();
     actions.add(rootAction);
     while (!actions.isEmpty()) {
-      final AnAction action = actions.remove();
-      final String module = getModuleByClass(action.getClass());
+      AnAction action = actions.remove();
+      String module = getModuleByClass(action.getClass());
       if (!ROOT_ACTION_MODULE.equals(module)) {
         return module;
       }
@@ -328,10 +326,11 @@ public final class TraverseUIStarter implements ApplicationStarter {
         Collections.addAll(actions, ((ActionGroup)action).getChildren(null));
       }
     }
-    final ActionManager actionManager = ActionManager.getInstance();
-    final PluginId id = actionToPluginId.get(actionManager.getId(rootAction));
+
+    ActionManager actionManager = ActionManager.getInstance();
+    PluginId id = actionToPluginId.get(actionManager.getId(rootAction));
     if (id != null) {
-      final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
+      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
       if (plugin != null && !plugin.getName().equals(PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.getIdString())) {
         return PathUtil.getFileName(plugin.getPluginPath().toString());
       }
@@ -339,8 +338,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
     return ROOT_ACTION_MODULE;
   }
 
-  @NotNull
-  private static String getModuleByClass(@NotNull final Class<?> aClass) {
+  private static @NotNull String getModuleByClass(final @NotNull Class<?> aClass) {
     return PathUtil.getFileName(PathUtil.getJarPathForClass(aClass));
   }
 

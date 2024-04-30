@@ -1352,25 +1352,14 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
   return classPath
 }
 
-suspend fun buildSearchableOptions(
-  context: BuildContext,
-  systemProperties: Map<String, String> = emptyMap(),
-): Path? {
-  return buildSearchableOptions(
-    productRunner = IntellijProductRunner.createRunner(context),
-    context = context,
-    systemProperties = systemProperties,
-  )
+suspend fun buildSearchableOptions(context: BuildContext, systemProperties: Map<String, String> = emptyMap()): Path? {
+  return buildSearchableOptions(productRunner = IntellijProductRunner.createRunner(context), context = context, systemProperties = systemProperties)
 }
 
 /**
  * Build index which is used to search options in the Settings dialog.
  */
-private suspend fun buildSearchableOptions(
-  productRunner: IntellijProductRunner,
-  context: BuildContext,
-  systemProperties: Map<String, String> = emptyMap(),
-): Path? {
+private suspend fun buildSearchableOptions(productRunner: IntellijProductRunner, context: BuildContext, systemProperties: Map<String, String> = emptyMap()): Path? {
   val span = Span.current()
   if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
     span.addEvent("skip building searchable options index")
@@ -1401,14 +1390,13 @@ private suspend fun buildSearchableOptions(
   }
   val modules = withContext(Dispatchers.IO) {
     coroutineScope {
-      locales.forEach { locale: SearchableOptionLocalization ->
+      for (locale in locales) {
         launch {
           // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
           // It'll process all UI elements in the `Settings` dialog and build an index for them.
           productRunner.runProduct(
             arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
-            additionalSystemProperties = systemProperties +
-                                         locale.systemProperties,
+            additionalSystemProperties = systemProperties + locale.systemProperties,
             isLongRunning = true,
           )
         }
