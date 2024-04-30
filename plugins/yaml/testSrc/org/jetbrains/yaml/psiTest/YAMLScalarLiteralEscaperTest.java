@@ -1,13 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.yaml.psi;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.yaml.psiTest;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.yaml.YAMLParserDefinition;
+import org.jetbrains.yaml.psi.YAMLScalar;
 
-public class YAMLScalarContentTest extends BasePlatformTestCase {
+import java.util.Arrays;
+
+public class YAMLScalarLiteralEscaperTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/psi/data/";
@@ -60,17 +71,6 @@ public class YAMLScalarContentTest extends BasePlatformTestCase {
     doTest();
   }
 
-  // Test scalar value in case of invalid symbols in literal style block scalar header
-  // Now invalid symbols will be ignored in scalar value calculation
-  public void testLiteralStyleHeaderError() {
-    doTest();
-  }
-
-  // Test indentation indicator in literal style block scalar header
-  public void testLiteralStyleExplicitIndent() {
-    doTest();
-  }
-
   // Test strip literal block scalar chomping indicator
   public void testLiteralStyleStrip() {
     doTest();
@@ -78,11 +78,6 @@ public class YAMLScalarContentTest extends BasePlatformTestCase {
 
   // Test keep literal block scalar chomping indicator
   public void testLiteralStyleKeep() {
-    doTest();
-  }
-
-  // Test empty literal style scalar
-  public void testLiteralStyleEmpty() {
     doTest();
   }
 
@@ -106,27 +101,8 @@ public class YAMLScalarContentTest extends BasePlatformTestCase {
     doTest();
   }
 
-  public void testFoldedStyle5() {
-    doTest();
-  }
-
-  public void testFoldedStyle6() {
-    doTest();
-  }
-
   // Test presence of comment in folded style block scalar header
   public void testFoldedStyleCommentInHeader() {
-    doTest();
-  }
-
-  // Test scalar value in case of invalid symbols in literal style block scalar header
-  // Now invalid symbols will be ignored in scalar value calculation
-  public void testFoldedStyleHeaderError() {
-    doTest();
-  }
-
-  // Test indentation indicator in folded style block scalar header
-  public void testFoldedStyleExplicitIndent() {
     doTest();
   }
 
@@ -137,11 +113,6 @@ public class YAMLScalarContentTest extends BasePlatformTestCase {
 
   // Test keep folded block scalar chomping indicator
   public void testFoldedStyleKeep() {
-    doTest();
-  }
-
-  // Test empty folded style scalar
-  public void testFoldedStyleEmpty() {
     doTest();
   }
 
@@ -165,7 +136,7 @@ public class YAMLScalarContentTest extends BasePlatformTestCase {
     doTest();
   }
 
-  public void testDoubleQuote4() {
+  public void testDoubleQuote3() {
     doTest();
   }
 
@@ -181,6 +152,41 @@ public class YAMLScalarContentTest extends BasePlatformTestCase {
     final YAMLScalar scalarElement = PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, YAMLScalar.class);
     assertNotNull(scalarElement);
 
-    assertSameLinesWithFile(getTestDataPath() + getTestName(true) + ".txt", scalarElement.getTextValue(), false);
+    final LiteralTextEscaper<? extends PsiLanguageInjectionHost> elementLiteralEscaper = scalarElement.createLiteralTextEscaper();
+    assertNotNull(elementLiteralEscaper);
+
+    final StringBuilder builder = new StringBuilder();
+    assertTrue(elementLiteralEscaper.decode(ElementManipulators.getValueTextRange(scalarElement), builder));
+
+    int[] offsets = new int[builder.length() + 1];
+    for (int i = 0; i < builder.length() + 1; ++i) {
+      offsets[i] = elementLiteralEscaper.getOffsetInHost(i, TextRange.from(0, scalarElement.getTextLength()));
+    }
+
+    final String elementText = scalarElement.getText();
+    StringBuilder description = new StringBuilder();
+    for (int i = 0; i < builder.length(); ++i) {
+      description.append(StringUtil.escapeLineBreak(Character.toString(builder.charAt(i))))
+        .append("->")
+        .append(StringUtil.escapeLineBreak(elementText.subSequence(offsets[i], offsets[i + 1]).toString()))
+        .append('\n');
+    }
+    assertSameLinesWithFile(getTestDataPath() + getTestName(true) + ".positions.txt",
+                            Arrays.toString(offsets) + "\n" + description,
+                            false);
+
+    String decodedText = builder.toString();
+    YAMLScalar scalar = WriteCommandAction.runWriteCommandAction(
+      getProject(),
+      (Computable<? extends YAMLScalar>)() -> CodeStyleManager.getInstance(getProject())
+        .performActionWithFormatterDisabled(() ->
+        ElementManipulators.handleContentChange(scalarElement, decodedText))
+    );
+    //assertEquals("element text should be the same after re-decoding", elementText, scalar.getText());
+    final StringBuilder decodedOnceAgain = new StringBuilder();
+    assertTrue(scalar.createLiteralTextEscaper().decode(ElementManipulators.getValueTextRange(scalar), decodedOnceAgain));
+    assertEquals("should decode to the same content after content change with previously decoded content",
+                 decodedText,
+                 decodedOnceAgain.toString());
   }
 }

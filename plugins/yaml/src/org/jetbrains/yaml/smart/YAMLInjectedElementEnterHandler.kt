@@ -4,8 +4,6 @@ package org.jetbrains.yaml.smart
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.formatting.FormattingMode
-import com.intellij.injected.editor.InjectionMeta
-import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -16,37 +14,17 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.yaml.YAMLLanguage
 import java.util.*
-
-
-private val INJECTION_RANGE_BEFORE_ENTER = Key.create<RangeMarker>("NEXT_ELEMENT")
-private val INDENT_BEFORE_PROCESSING = Key.create<String>("INDENT_BEFORE_PROCESSING")
-
-fun preserveIndentStateBeforeProcessing(file: PsiFile, dataContext: DataContext) {
-  if (file.virtualFile !is VirtualFileWindow) return
-  val hostEditor = CommonDataKeys.HOST_EDITOR.getData(dataContext) as? EditorEx ?: return
-  val hostFile = PsiManager.getInstance(hostEditor.project ?: return).findFile(hostEditor.virtualFile ?: return) ?: return
-  if (!hostFile.viewProvider.hasLanguage(YAMLLanguage.INSTANCE)) return
-
-  val injectionHost = InjectedLanguageManager.getInstance(file.project).getInjectionHost(file) ?: return
-  val lineIndent = InjectionMeta.INJECTION_INDENT[injectionHost]
-  INDENT_BEFORE_PROCESSING[file] = lineIndent
-  INJECTION_RANGE_BEFORE_ENTER[file] = hostEditor.document.createRangeMarker(injectionHost.textRange)
-}
 
 class YAMLInjectedElementEnterHandler : EnterHandlerDelegateAdapter() {
 
