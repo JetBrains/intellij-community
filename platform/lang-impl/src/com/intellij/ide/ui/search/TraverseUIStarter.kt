@@ -1,361 +1,349 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui.search;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.application.options.OptionsContainingConfigurable;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
-import com.intellij.ide.fileTemplates.impl.BundledFileTemplate;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.application.ApplicationStarter;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.EdtInvocationManager;
-import org.jdom.Element;
-import org.jdom.IllegalDataException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ide.ui.search
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import com.intellij.application.options.OptionsContainingConfigurable
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.ShowSettingsUtilImpl.Companion.getConfigurables
+import com.intellij.ide.fileTemplates.FileTemplate
+import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable
+import com.intellij.ide.fileTemplates.impl.BundledFileTemplate
+import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManagerCore.getPlugin
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.keymap.impl.ui.KeymapPanel
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathUtil
+import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.EdtInvocationManager
+import org.jdom.Element
+import org.jdom.IllegalDataException
+import org.jetbrains.annotations.NonNls
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import kotlin.system.exitProcess
+
+private const val OPTIONS: @NonNls String = "options"
+private const val CONFIGURABLE: @NonNls String = "configurable"
+private const val ID: @NonNls String = "id"
+private const val CONFIGURABLE_NAME: @NonNls String = "configurable_name"
+private const val OPTION: @NonNls String = "option"
+private const val NAME: @NonNls String = "name"
+private const val PATH: @NonNls String = "path"
+private const val HIT: @NonNls String = "hit"
+
+private const val ROOT_ACTION_MODULE = "intellij.platform.ide"
 
 /**
  * Used in installer's "build searchable options" step.
- * <p>
+ *
  * To run locally, use "TraverseUi" run configuration (pass corresponding "idea.platform.prefix" property via VM options,
  * and choose correct main module).
- * <p>
- * Pass {@code true} as the second parameter to have searchable options split by modules.
+ *
+ * Pass `true` as the second parameter to have searchable options split by modules.
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
-public final class TraverseUIStarter implements ApplicationStarter {
-  private static final @NonNls String OPTIONS = "options";
-  private static final @NonNls String CONFIGURABLE = "configurable";
-  private static final @NonNls String ID = "id";
-  private static final @NonNls String CONFIGURABLE_NAME = "configurable_name";
-  private static final @NonNls String OPTION = "option";
-  private static final @NonNls String NAME = "name";
-  private static final @NonNls String PATH = "path";
-  private static final @NonNls String HIT = "hit";
+class TraverseUIStarter : ApplicationStarter {
+  private var OUTPUT_PATH: String? = null
+  private var SPLIT_BY_RESOURCE_PATH = false
+  private var I18N_OPTION = false
 
-  private static final String ROOT_ACTION_MODULE = "intellij.platform.ide";
+  override val requiredModality: Int
+    get() = ApplicationStarter.NOT_IN_EDT
 
-  private String OUTPUT_PATH;
-  private boolean SPLIT_BY_RESOURCE_PATH;
-  private boolean I18N_OPTION;
-
-  @Override
-  public int getRequiredModality() {
-    return NOT_IN_EDT;
+  override fun premain(args: List<String>) {
+    OUTPUT_PATH = args[1]
+    SPLIT_BY_RESOURCE_PATH = args.size > 2 && args[2].toBoolean()
+    I18N_OPTION = java.lang.Boolean.getBoolean("intellij.searchableOptions.i18n.enabled")
   }
 
-  @Override
-  public void premain(@NotNull List<String> args) {
-    OUTPUT_PATH = args.get(1);
-    SPLIT_BY_RESOURCE_PATH = args.size() > 2 && Boolean.parseBoolean(args.get(2));
-    I18N_OPTION = Boolean.getBoolean("intellij.searchableOptions.i18n.enabled");
-  }
-
-  @Override
-  public void main(@NotNull List<String> args) {
+  override fun main(args: List<String>) {
     try {
-      startup(Path.of(OUTPUT_PATH), SPLIT_BY_RESOURCE_PATH, I18N_OPTION);
-      System.out.println("Searchable options index builder completed");
-      System.exit(0);
+      buildSearchableOptions(outputPath = Path.of(OUTPUT_PATH!!), splitByResourcePath = SPLIT_BY_RESOURCE_PATH, i18n = I18N_OPTION)
+      println("Searchable options index builder completed")
+      exitProcess(0)
     }
-    catch (Throwable e) {
+    catch (e: Throwable) {
       try {
-        System.err.println("Searchable options index builder failed: " + e);
-        Logger.getInstance(getClass()).error("Searchable options index builder failed", e);
+        Logger.getInstance(javaClass).error("Searchable options index builder failed", e)
       }
-      catch (Throwable ignored) {
+      catch (ignored: Throwable) {
       }
-      System.exit(-1);
+      exitProcess(-1)
     }
   }
+}
 
-  public static void startup(@NotNull Path outputPath, boolean splitByResourcePath) throws IOException {
-    startup(outputPath, splitByResourcePath, false);
+
+private fun addOptions(configurable: SearchableConfigurable,
+                       options: Map<SearchableConfigurable, Set<OptionDescription>>,
+                       roots: MutableMap<String, Element>,
+                       splitByResourcePath: Boolean) {
+  var configurable = configurable
+  val configurableElement = createConfigurableElement(configurable)
+  writeOptions(configurableElement, options.get(configurable)!!)
+
+  if (configurable is ConfigurableWrapper) {
+    val wrapped = configurable.configurable
+    if (wrapped is SearchableConfigurable) {
+      configurable = wrapped
+    }
   }
-
-  public static void startup(@NotNull Path outputPath, boolean splitByResourcePath, boolean i18n) throws IOException {
-    Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
-    Map<String, Element> roots = new HashMap<>();
-    try {
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
-        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-          extension.beforeStart();
-        }
-
-        SearchUtil.processConfigurables(ShowSettingsUtilImpl.getConfigurables(ProjectManager.getInstance().getDefaultProject(), true, false), options, i18n);
-
-        for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-          extension.afterTraversal(options);
-        }
-      });
-
-      System.out.println("Found " + options.size() + " configurables");
-
-      for (SearchableConfigurable configurable : options.keySet()) {
-        try {
-          addOptions(configurable, options, roots, splitByResourcePath);
-        }
-        catch (IllegalDataException jdomValidationException) {
-          var exception = new IllegalStateException(
-            "Unable to process configurable '" + configurable.getId() +
-            "', please check strings used in class: " + configurable.getOriginalClass().getCanonicalName()
-          );
-          exception.addSuppressed(jdomValidationException);
-          throw exception;
-        }
+  when (configurable) {
+    is KeymapPanel -> {
+      for ((key, value) in processKeymap(splitByResourcePath)) {
+        val entryElement = createConfigurableElement(configurable)
+        writeOptions(entryElement, value)
+        addElement(roots, entryElement, key)
       }
     }
-    finally {
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
-        for (SearchableConfigurable configurable : options.keySet()) {
-          configurable.disposeUIResources();
-        }
-      });
+    is OptionsContainingConfigurable -> {
+      processOptionsContainingConfigurable(configurable as OptionsContainingConfigurable, configurableElement)
     }
-
-    saveResults(outputPath, roots);
-  }
-
-  private static void addOptions(SearchableConfigurable configurable,
-                                 Map<SearchableConfigurable, Set<OptionDescription>> options,
-                                 Map<String, Element> roots,
-                                 boolean splitByResourcePath) {
-    Element configurableElement = createConfigurableElement(configurable);
-    writeOptions(configurableElement, options.get(configurable));
-
-    if (configurable instanceof ConfigurableWrapper) {
-      UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
-      if (wrapped instanceof SearchableConfigurable) {
-        configurable = (SearchableConfigurable)wrapped;
-      }
-    }
-    if (configurable instanceof KeymapPanel) {
-      for (Map.Entry<String, Set<OptionDescription>> entry : processKeymap(splitByResourcePath).entrySet()) {
-        Element entryElement = createConfigurableElement(configurable);
-        writeOptions(entryElement, entry.getValue());
-        addElement(roots, entryElement, entry.getKey());
-      }
-    }
-    else if (configurable instanceof OptionsContainingConfigurable) {
-      processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);
-    }
-    else if (configurable instanceof PluginManagerConfigurable) {
-      TreeSet<OptionDescription> optionDescriptions = new TreeSet<>();
-      wordsToOptionDescriptors(Collections.singleton(IdeBundle.message("plugin.manager.repositories")), null, optionDescriptions);
-      for (OptionDescription description : optionDescriptions) {
+    is PluginManagerConfigurable -> {
+      val optionDescriptions = TreeSet<OptionDescription>()
+      wordsToOptionDescriptors(setOf(IdeBundle.message("plugin.manager.repositories")), null, optionDescriptions)
+      for (description in optionDescriptions) {
         configurableElement.addContent(
-          createOptionElement(null, IdeBundle.message("plugin.manager.repositories"), description.getOption()));
+          createOptionElement(path = null, hit = IdeBundle.message("plugin.manager.repositories"), word = description.option))
       }
     }
-    else if (configurable instanceof AllFileTemplatesConfigurable) {
-      for (Map.Entry<String, Set<OptionDescription>> entry : processFileTemplates(splitByResourcePath).entrySet()) {
-        Element entryElement = createConfigurableElement(configurable);
-        writeOptions(entryElement, entry.getValue());
-        addElement(roots, entryElement, entry.getKey());
-      }
-    }
-
-    String module = splitByResourcePath ? getModuleByClass(configurable.getOriginalClass()) : "";
-    addElement(roots, configurableElement, module);
-  }
-
-  private static void saveResults(@NotNull Path outputPath, Map<String, Element> roots) throws IOException {
-    for (Map.Entry<String, Element> entry : roots.entrySet()) {
-      String module = entry.getKey();
-      Path output;
-      if (module.isEmpty()) {
-        output = outputPath.resolve(SearchableOptionsRegistrar.getSearchableOptionsXmlName());
-      }
-      else {
-        Path moduleDir = outputPath.resolve(module);
-        Files.deleteIfExists(moduleDir.resolve("classpath.index"));
-        output = moduleDir.resolve("search/" + module + '.' + SearchableOptionsRegistrar.getSearchableOptionsXmlName());
-      }
-      JDOMUtil.write(entry.getValue(), output);
-      System.out.println("Output written to " + output);
-    }
-
-    for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-      extension.afterResultsAreSaved();
-    }
-  }
-
-  private static @NotNull Element createConfigurableElement(@NotNull SearchableConfigurable configurable) {
-    Element configurableElement = new Element(CONFIGURABLE);
-    configurableElement.setAttribute(ID, configurable.getId());
-    configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.getDisplayName());
-    return configurableElement;
-  }
-
-  private static void addElement(@NotNull Map<String, Element> roots, @NotNull Element element, @NotNull String module) {
-    roots.computeIfAbsent(module, __ -> new Element(OPTIONS)).addContent(element);
-  }
-
-  private static @NotNull Map<String, Set<OptionDescription>> processFileTemplates(boolean splitByResourcePath) {
-    SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    Map<String, Set<OptionDescription>> options = new HashMap<>();
-    FileTemplateManager fileTemplateManager = FileTemplateManager.getDefaultInstance();
-    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllTemplates(), splitByResourcePath);
-    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllPatterns(), splitByResourcePath);
-    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllCodeTemplates(), splitByResourcePath);
-    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllJ2eeTemplates(), splitByResourcePath);
-    return options;
-  }
-
-  private static void processTemplates(SearchableOptionsRegistrar registrar,
-                                       Map<String, Set<OptionDescription>> options,
-                                       FileTemplate[] templates,
-                                       boolean splitByResourcePath) {
-    for (FileTemplate template : templates) {
-      String module =
-        splitByResourcePath && template instanceof BundledFileTemplate ? getModuleByTemplate((BundledFileTemplate)template) : "";
-      collectOptions(registrar, options.computeIfAbsent(module, __ -> new TreeSet<>()), template.getName(), null);
-    }
-  }
-
-  private static @NotNull String getModuleByTemplate(@NotNull BundledFileTemplate template) {
-    final String url = template.toString();
-    String path = StringUtil.substringBefore(url, "fileTemplates");
-    assert path != null : "Template URL doesn't contain 'fileTemplates' directory.";
-    if (path.startsWith(URLUtil.JAR_PROTOCOL)) {
-      path = StringUtil.trimEnd(path, URLUtil.JAR_SEPARATOR);
-    }
-    return PathUtil.getFileName(path);
-  }
-
-  private static void collectOptions(SearchableOptionsRegistrar registrar, Set<? super OptionDescription> options, @NotNull String text, String path) {
-    for (@NlsSafe String word : registrar.getProcessedWordsWithoutStemming(text)) {
-      options.add(new OptionDescription(word, text, path));
-    }
-  }
-
-  private static void processOptionsContainingConfigurable(OptionsContainingConfigurable configurable, Element configurableElement) {
-    Set<String> optionsPath = configurable.processListOptions();
-    Set<OptionDescription> result = new TreeSet<>();
-    wordsToOptionDescriptors(optionsPath, null, result);
-    Map<String, Set<String>> optionsWithPaths = configurable.processListOptionsWithPaths();
-    for (String path : optionsWithPaths.keySet()) {
-      wordsToOptionDescriptors(optionsWithPaths.get(path), path, result);
-    }
-    writeOptions(configurableElement, result);
-  }
-
-  private static void wordsToOptionDescriptors(@NotNull Set<String> optionsPath,
-                                               @Nullable String path,
-                                               @NotNull Set<? super OptionDescription> result) {
-    SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
-    for (String opt : optionsPath) {
-      for (@NlsSafe String word : registrar.getProcessedWordsWithoutStemming(opt)) {
-        if (word != null) {
-          result.add(new OptionDescription(word, opt, path));
-        }
+    is AllFileTemplatesConfigurable -> {
+      for ((key, value) in processFileTemplates(splitByResourcePath)) {
+        val entryElement = createConfigurableElement(configurable)
+        writeOptions(entryElement, value)
+        addElement(roots, entryElement, key)
       }
     }
   }
 
-  private static @NotNull Map<String, Set<OptionDescription>> processKeymap(boolean splitByResourcePath) {
-    Map<String, Set<OptionDescription>> map = new LinkedHashMap<>();
-    ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
-    Map<String, PluginId> actionToPluginId = splitByResourcePath ? getActionToPluginId() : Collections.emptyMap();
-    String componentName = "ActionManager";
-    SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    for (Iterator<AnAction> iterator = actionManager.actions(false).iterator(); iterator.hasNext(); ) {
-      AnAction action = iterator.next();
-      String module = splitByResourcePath ? getModuleByAction(action, actionToPluginId) : "";
-      Set<OptionDescription> options = map.computeIfAbsent(module, __ -> new TreeSet<>());
-      String text = action.getTemplatePresentation().getText();
-      if (text != null) {
-        collectOptions(searchableOptionsRegistrar, options, text, componentName);
-      }
+  val module = if (splitByResourcePath) getModuleByClass(configurable.originalClass) else ""
+  addElement(roots, configurableElement, module)
+}
 
-      String description = action.getTemplatePresentation().getDescription();
-      if (description != null) {
-        collectOptions(searchableOptionsRegistrar, options, description, componentName);
-      }
+@Throws(IOException::class)
+private fun saveResults(outputPath: Path, roots: Map<String, Element>) {
+  for ((module, value) in roots) {
+    val output = if (module.isEmpty()) {
+      outputPath.resolve(SearchableOptionsRegistrar.getSearchableOptionsXmlName())
     }
-    return map;
+    else {
+      val moduleDir = outputPath.resolve(module)
+      Files.deleteIfExists(moduleDir.resolve("classpath.index"))
+      moduleDir.resolve("search/$module.${SearchableOptionsRegistrar.getSearchableOptionsXmlName()}")
+    }
+    Files.createDirectories(output.parent)
+    JDOMUtil.write(value, output)
+    println("Output written to $output")
   }
 
-  private static @NotNull Map<String, PluginId> getActionToPluginId() {
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    Map<String, PluginId> actionToPluginId = new HashMap<>();
-    for (PluginId id : PluginId.getRegisteredIds()) {
-      for (String action : actionManager.getPluginActions(id)) {
-        actionToPluginId.put(action, id);
+  for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+    extension.afterResultsAreSaved()
+  }
+}
+
+private fun createConfigurableElement(configurable: SearchableConfigurable): Element {
+  val configurableElement = Element(CONFIGURABLE)
+  configurableElement.setAttribute(ID, configurable.id)
+  configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.displayName)
+  return configurableElement
+}
+
+private fun addElement(roots: MutableMap<String, Element>, element: Element, module: String) {
+  roots.computeIfAbsent(module) { Element(OPTIONS) }.addContent(element)
+}
+
+private fun processFileTemplates(splitByResourcePath: Boolean): Map<String, MutableSet<OptionDescription>> {
+  val optionsRegistrar = SearchableOptionsRegistrar.getInstance()
+  val options = HashMap<String, MutableSet<OptionDescription>>()
+  val fileTemplateManager = FileTemplateManager.getDefaultInstance()
+  processTemplates(optionsRegistrar, options, fileTemplateManager.allTemplates, splitByResourcePath)
+  processTemplates(optionsRegistrar, options, fileTemplateManager.allPatterns, splitByResourcePath)
+  processTemplates(optionsRegistrar, options, fileTemplateManager.allCodeTemplates, splitByResourcePath)
+  processTemplates(optionsRegistrar, options, fileTemplateManager.allJ2eeTemplates, splitByResourcePath)
+  return options
+}
+
+private fun processTemplates(registrar: SearchableOptionsRegistrar,
+                             options: MutableMap<String, MutableSet<OptionDescription>>,
+                             templates: Array<FileTemplate>,
+                             splitByResourcePath: Boolean) {
+  for (template in templates) {
+    val module = if (splitByResourcePath && template is BundledFileTemplate) getModuleByTemplate(template) else ""
+    collectOptions(registrar = registrar, options = options.computeIfAbsent(module) { TreeSet() }, text = template.name, path = null)
+  }
+}
+
+private fun getModuleByTemplate(template: BundledFileTemplate): String {
+  val url = template.toString()
+  var path = checkNotNull(StringUtil.substringBefore(url, "fileTemplates")) { "Template URL doesn't contain 'fileTemplates' directory." }
+  if (path.startsWith(URLUtil.JAR_PROTOCOL)) {
+    path = path.removeSuffix(URLUtil.JAR_SEPARATOR)
+  }
+  return PathUtil.getFileName(path)
+}
+
+private fun collectOptions(registrar: SearchableOptionsRegistrar, options: MutableSet<OptionDescription>, text: String, path: String?) {
+  for (word in registrar.getProcessedWordsWithoutStemming(text)) {
+    options.add(OptionDescription(word, text, path))
+  }
+}
+
+private fun processOptionsContainingConfigurable(configurable: OptionsContainingConfigurable, configurableElement: Element) {
+  val optionsPath = configurable.processListOptions()
+  val result = TreeSet<OptionDescription>()
+  wordsToOptionDescriptors(optionsPath = optionsPath, path = null, result = result)
+  val optionsWithPaths = configurable.processListOptionsWithPaths()
+  for (path in optionsWithPaths.keys) {
+    wordsToOptionDescriptors(optionsWithPaths.get(path)!!, path, result)
+  }
+  writeOptions(configurableElement, result)
+}
+
+private fun wordsToOptionDescriptors(optionsPath: Set<String>, path: String?, result: MutableSet<OptionDescription>) {
+  val registrar = SearchableOptionsRegistrar.getInstance()
+  for (opt in optionsPath) {
+    for (word in registrar.getProcessedWordsWithoutStemming(opt)) {
+      if (word != null) {
+        result.add(OptionDescription(word, opt, path))
       }
     }
-    return actionToPluginId;
+  }
+}
+
+private fun processKeymap(splitByResourcePath: Boolean): Map<String, Set<OptionDescription>> {
+  val map = LinkedHashMap<String, MutableSet<OptionDescription>>()
+  val actionManager = ActionManager.getInstance() as ActionManagerImpl
+  val actionToPluginId: Map<String, PluginId> = if (splitByResourcePath) getActionToPluginId() else emptyMap()
+  val componentName = "ActionManager"
+  val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
+  val iterator = actionManager.actions(false).iterator()
+  while (iterator.hasNext()) {
+    val action = iterator.next()
+    val module = if (splitByResourcePath) getModuleByAction(action, actionToPluginId) else ""
+    val options = map.computeIfAbsent(module) { TreeSet() }
+    val text = action.templatePresentation.text
+    if (text != null) {
+      collectOptions(registrar = searchableOptionsRegistrar, options = options, text = text, path = componentName)
+    }
+
+    val description = action.templatePresentation.description
+    if (description != null) {
+      collectOptions(registrar = searchableOptionsRegistrar, options = options, text = description, path = componentName)
+    }
+  }
+  return map
+}
+
+private fun getActionToPluginId(): Map<String, PluginId> {
+  val actionManager = ActionManagerEx.getInstanceEx()
+  val actionToPluginId = HashMap<String, PluginId>()
+  for (id in PluginId.getRegisteredIds()) {
+    for (action in actionManager.getPluginActions(id)) {
+      actionToPluginId.put(action, id)
+    }
+  }
+  return actionToPluginId
+}
+
+private fun getModuleByAction(rootAction: AnAction, actionToPluginId: Map<String, PluginId>): String {
+  val actions = ArrayDeque<AnAction>()
+  actions.add(rootAction)
+  while (!actions.isEmpty()) {
+    val action = actions.remove()
+    val module = getModuleByClass(action.javaClass)
+    if (ROOT_ACTION_MODULE != module) {
+      return module
+    }
+    if (action is ActionGroup) {
+      actions.addAll(action.getChildren(null))
+    }
   }
 
-  private static @NotNull String getModuleByAction(final @NotNull AnAction rootAction, @NotNull Map<String, PluginId> actionToPluginId) {
-    Deque<AnAction> actions = new ArrayDeque<>();
-    actions.add(rootAction);
-    while (!actions.isEmpty()) {
-      AnAction action = actions.remove();
-      String module = getModuleByClass(action.getClass());
-      if (!ROOT_ACTION_MODULE.equals(module)) {
-        return module;
+  val actionManager = ActionManager.getInstance()
+  val id = actionToPluginId[actionManager.getId(rootAction)]
+  if (id != null) {
+    val plugin = getPlugin(id)
+    if (plugin != null && plugin.name != PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.idString) {
+      return PathUtil.getFileName(plugin.pluginPath.toString())
+    }
+  }
+  return ROOT_ACTION_MODULE
+}
+
+private fun getModuleByClass(aClass: Class<*>): String {
+  return PathUtil.getFileName(PathUtil.getJarPathForClass(aClass))
+}
+
+private fun writeOptions(configurableElement: Element, options: Set<OptionDescription>) {
+  for (opt in options) {
+    configurableElement.addContent(createOptionElement(path = opt.path, hit = opt.hit, word = opt.option))
+  }
+}
+
+private fun createOptionElement(path: String?, hit: String?, word: String): Element {
+  val optionElement = Element(OPTION)
+  optionElement.setAttribute(NAME, word)
+  if (path != null) {
+    optionElement.setAttribute(PATH, path)
+  }
+  optionElement.setAttribute(HIT, hit)
+  return optionElement
+}
+
+@JvmOverloads
+fun buildSearchableOptions(outputPath: Path, splitByResourcePath: Boolean, i18n: Boolean = false) {
+  val options = LinkedHashMap<SearchableConfigurable, Set<OptionDescription>>()
+  val roots = HashMap<String, Element>()
+  try {
+    EdtInvocationManager.invokeAndWaitIfNeeded {
+      for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+        extension.beforeStart()
       }
-      if (action instanceof ActionGroup) {
-        Collections.addAll(actions, ((ActionGroup)action).getChildren(null));
+      SearchUtil.processConfigurables(getConfigurables(ProjectManager.getInstance().defaultProject, true, false), options, i18n)
+      for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+        extension.afterTraversal(options)
       }
     }
 
-    ActionManager actionManager = ActionManager.getInstance();
-    PluginId id = actionToPluginId.get(actionManager.getId(rootAction));
-    if (id != null) {
-      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
-      if (plugin != null && !plugin.getName().equals(PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.getIdString())) {
-        return PathUtil.getFileName(plugin.getPluginPath().toString());
+    println("Found ${options.size} configurables")
+
+    for (configurable in options.keys) {
+      try {
+        addOptions(configurable, options, roots, splitByResourcePath)
+      }
+      catch (jdomValidationException: IllegalDataException) {
+        val exception = IllegalStateException(
+          "Unable to process configurable '" + configurable.id +
+          "', please check strings used in class: " + configurable.originalClass.canonicalName
+        )
+        exception.addSuppressed(jdomValidationException)
+        throw exception
       }
     }
-    return ROOT_ACTION_MODULE;
   }
-
-  private static @NotNull String getModuleByClass(final @NotNull Class<?> aClass) {
-    return PathUtil.getFileName(PathUtil.getJarPathForClass(aClass));
-  }
-
-  private static void writeOptions(@NotNull Element configurableElement, @NotNull Set<? extends OptionDescription> options) {
-    for (OptionDescription opt : options) {
-      configurableElement.addContent(createOptionElement(opt.getPath(), opt.getHit(), opt.getOption()));
+  finally {
+    EdtInvocationManager.invokeAndWaitIfNeeded {
+      for (configurable in options.keys) {
+        configurable.disposeUIResources()
+      }
     }
   }
 
-  private static @NotNull Element createOptionElement(String path, String hit, String word) {
-    Element optionElement = new Element(OPTION);
-    optionElement.setAttribute(NAME, word);
-    if (path != null) {
-      optionElement.setAttribute(PATH, path);
-    }
-    optionElement.setAttribute(HIT, hit);
-    return optionElement;
-  }
+  saveResults(outputPath, roots)
 }
