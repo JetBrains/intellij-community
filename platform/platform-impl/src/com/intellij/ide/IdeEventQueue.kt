@@ -835,12 +835,12 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
     }
     eventsPosted.incrementAndGet()
-    if (ClientId.propagateAcrossThreads) {
-      attachClientIdIfNeeded(event)?.let {
-        super.postEvent(it)
-        return true
-      }
+
+    attachClientIdIfNeeded(event)?.let {
+      super.postEvent(it)
+      return true
     }
+
     if (event is KeyEvent) {
       keyboardEventPosted.incrementAndGet()
     }
@@ -852,6 +852,9 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   private fun attachClientIdIfNeeded(event: AWTEvent): AWTEvent? {
+    if (!ClientId.propagateAcrossThreads) {
+      return null
+    }
     // We don't 'attach' current client id to PeerEvent instances for two reasons.
     // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
     // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
