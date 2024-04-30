@@ -2,7 +2,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView
 
-import com.intellij.ui.*
+import com.intellij.icons.AllIcons
+import com.intellij.ui.IconManager
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.ReplaceableIcon
@@ -42,7 +46,7 @@ private fun getBiggestRow(icon: RowIcon): Icon? =
 private val Icon.size: Int
   get() = min(iconWidth, iconHeight)
 
-private val DEFAULT_ICON = AnimatedIcon.Default.INSTANCE
+private val DEFAULT_ICON = AllIcons.FileTypes.Unknown
 
 @get:Internal
 val CachedPresentationData.icon: Icon get() = getLoadingIcon(iconData)
