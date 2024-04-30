@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
+import com.intellij.idea.IJIgnore
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
@@ -21,6 +22,7 @@ class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
     id ('<caret>my-plugin'),
     id ("<caret>my-plugin")
   """)
+  @IJIgnore(issue = "IDEA-352806")
   fun `Groovy Precompiled plugin is navigatable`(gradleVersion: GradleVersion, pluginIdStatement: String) {
     val pluginOnGroovy = "tasks.register('taskFromPlugin') {}"
     val buildScript = """
