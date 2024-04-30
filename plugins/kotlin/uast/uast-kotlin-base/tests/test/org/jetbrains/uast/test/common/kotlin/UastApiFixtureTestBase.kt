@@ -74,6 +74,40 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("a", (arg as? USimpleNameReferenceExpression)?.resolvedName)
     }
 
+    fun checkCallableReferenceWithGeneric(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+               class NonGenericClass
+               val reference1 = NonGenericClass::equals
+
+               class GenericClass<T>
+               val reference2 = GenericClass<String>::equals 
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        val expectedQualifierTypes = listOf(
+            "NonGenericClass",
+            "GenericClass<java.lang.String>",
+        )
+        val expectedQualifiedExpressionKind = listOf(
+            USimpleNameReferenceExpression::class,
+            UCallExpression::class, // Type<TypeArgument> is parsed as KtCallElement
+        )
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
+                    TestCase.assertEquals(expectedQualifierTypes[count], node.qualifierType?.canonicalText)
+                    TestCase.assertTrue(expectedQualifiedExpressionKind[count].isInstance(node.qualifierExpression))
+                    count++
+                    return super.visitCallableReferenceExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(2, count)
+    }
+
     fun checkDivByZero(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """

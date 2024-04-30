@@ -38,6 +38,11 @@ public class FE1UastTypesTestGenerated extends AbstractFE1UastTypesTest {
         runTest("../../uast-kotlin-fir/tests/testData/type/arrayGetAssignMultiIndex.kt");
     }
 
+    @TestMetadata("callableReferenceWithGeneric.kt")
+    public void testCallableReferenceWithGeneric() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/type/callableReferenceWithGeneric.kt");
+    }
+
     @TestMetadata("classLiteral.kt")
     public void testClassLiteral() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/type/classLiteral.kt");

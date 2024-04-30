@@ -25,6 +25,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkArgumentForParameter_smartcast(myFixture)
     }
 
+    fun testCallableReferenceWithGeneric() {
+        checkCallableReferenceWithGeneric(myFixture)
+    }
+
     fun testDivByZero() {
         checkDivByZero(myFixture)
     }

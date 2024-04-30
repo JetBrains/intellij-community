@@ -38,6 +38,11 @@ public class FirUastTypesTestGenerated extends AbstractFirUastTypesTest {
         runTest("testData/type/arrayGetAssignMultiIndex.kt");
     }
 
+    @TestMetadata("callableReferenceWithGeneric.kt")
+    public void testCallableReferenceWithGeneric() throws Exception {
+        runTest("testData/type/callableReferenceWithGeneric.kt");
+    }
+
     @TestMetadata("classLiteral.kt")
     public void testClassLiteral() throws Exception {
         runTest("testData/type/classLiteral.kt");
