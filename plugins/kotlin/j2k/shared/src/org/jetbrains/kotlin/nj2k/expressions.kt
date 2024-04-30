@@ -79,8 +79,8 @@ fun JKExpression.parenthesize(): JKParenthesizedExpression = JKParenthesizedExpr
 
 fun JKBinaryExpression.parenthesizedWithFormatting(): JKParenthesizedExpression =
     JKParenthesizedExpression(
-        JKBinaryExpression(::left.detached(), ::right.detached(), operator).withFormattingFrom(this)
-    )
+        JKBinaryExpression(::left.detached(), ::right.detached(), operator)
+    ).withFormattingFrom(this)
 
 context(KtAnalysisSession)
 fun rangeExpression(
@@ -413,3 +413,32 @@ private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7
 
 val JKAnnotationListOwner.hasAnnotations: Boolean
     get() = annotationList.annotations.isNotEmpty()
+
+/**
+ * For example, return false for expression like `1 + \n 2` and true for one like `5 + 3 \n -2`
+ */
+internal fun JKBinaryExpression.recursivelyContainsNewlineBeforeOperator(): Boolean {
+    fun JKExpression.recursivelyEndsWithNewline(): Boolean {
+        if (hasLineBreakAfter) return true
+        val lastChild = children.lastOrNull()?.safeAs<JKExpression>() ?: return false
+        return lastChild.recursivelyEndsWithNewline()
+    }
+
+    val left = this.left
+    val right = this.right
+    if (left.recursivelyEndsWithNewline()) {
+        return true
+    }
+    if (left is JKBinaryExpression && left.recursivelyContainsNewlineBeforeOperator()) return true
+    if (right is JKBinaryExpression && right.recursivelyContainsNewlineBeforeOperator()) return true
+    return false
+}
+
+fun JKExpression.isAtomic(): Boolean {
+    return this is JKQualifiedExpression ||
+            this is JKKtWhenExpression ||
+            this is JKCallExpression ||
+            this is JKFieldAccessExpression ||
+            this is JKLiteralExpression ||
+            this is JKParenthesizedExpression
+}

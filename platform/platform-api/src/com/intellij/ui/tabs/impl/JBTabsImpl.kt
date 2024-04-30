@@ -1154,7 +1154,7 @@ open class JBTabsImpl(
 
     if (isRequestFocusOnLastFocusedComponent) {
       val lastFocusOwner = info.lastFocusOwner
-      if (lastFocusOwner != null && !isMyChildIsFocusedNow) {
+      if (lastFocusOwner != null && lastFocusOwner.isShowing && !isMyChildIsFocusedNow) {
         LOG.debug { "last focus owner: $lastFocusOwner" }
         return lastFocusOwner
       }

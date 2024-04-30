@@ -237,21 +237,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
         // causes problems if not scheduled on ui thread
         session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
-          runLogged("Close project if it is opened") {
-            ProjectManagerEx.getOpenProjects().forEach {
-              if (!it.isInitialized || it.isDisposed)  {
-                waitProjectInitialisedOrDisposed(it)
-              }
-
-              // (RDCT-960) ModalityState.current() is used here, because
-              // both ModalityState.current() and ModalityState.any() allow to start project closing even under modality,
-              // but project closing is not allowed under ModalityState.any() (see doc for ModalityState.any())
-              withContext(Dispatchers.EDT + ModalityState.current().asContextElement() + NonCancellable) {
-                ProjectManagerEx.getInstanceEx().forceCloseProject(it)
-              }
-            }
-            true
-          }
+          ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
+          ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
         }
         /**
          * Includes closing the project
@@ -259,7 +246,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         session.exitApp.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
           lifetime.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
             LOG.info("Exiting the application...")
-            app.exit(true, true, false)
+            app.exit(/* force = */ false, /* exitConfirmed = */ true, /* restart = */ false)
           }
         }
 

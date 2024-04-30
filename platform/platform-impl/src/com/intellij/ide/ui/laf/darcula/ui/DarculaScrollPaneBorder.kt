@@ -14,6 +14,7 @@ import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
+import javax.swing.UIManager
 import javax.swing.border.Border
 import javax.swing.plaf.UIResource
 
@@ -37,7 +38,7 @@ class DarculaScrollPaneBorder : Border, UIResource, ErrorBorderCapable {
   }
 
   override fun getBorderInsets(c: Component): Insets {
-    val inset = (if (c is JScrollPane) getVisualPadding(c) else 0) + 1
+    val inset = (if (c is JScrollPane) getVisualPadding(c) else 0) + getUnscaledBorderLineWidth()
     return JBInsets(inset)
   }
 
@@ -49,21 +50,44 @@ class DarculaScrollPaneBorder : Border, UIResource, ErrorBorderCapable {
     return if (getTextArea(c) == null) 0 else 2
   }
 
+  private fun getUnscaledBorderLineWidth(): Int {
+    return DarculaUIUtil.LW.unscaled.toInt()
+  }
+
   private fun paintTextAreaBorder(c: JScrollPane, textArea: JTextArea, g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
     val r = Rectangle(x, y, width, height)
     JBInsets.removeFrom(r, getBorderInsets(c))
-    JBInsets.addTo(r, JBUI.insets(1))
+    JBInsets.addTo(r, JBUI.insets(getUnscaledBorderLineWidth()))
 
     // Fill outside part
     val arc = DarculaUIUtil.COMPONENT_ARC.float
     val shape = Area(Rectangle(x, y, width, height))
     shape.subtract(Area(RoundRectangle2D.Float(r.x + 0.5f, r.y + 0.5f, r.width - 1f, r.height - 1f, arc, arc)))
-    g.color = c.parent?.background ?: c.background
+    g.color = getBackground(c)
     g.fill(shape)
 
     // Paint border
     val outline = DarculaUIUtil.getOutline(textArea)
     DarculaNewUIUtil.paintComponentBorder(g, r, outline, textArea.hasFocus(), textArea.isEnabled)
+  }
+
+  private fun getBackground(c: JScrollPane): Color? {
+    if (c.isOpaque) {
+      // Don't use ScrollPane background because it differs from the default panel background and looks inappropriate by default
+      return UIManager.getColor("Panel.background")
+    }
+
+    // For better transparency support, we can implement graphics clipping in JBScrollPane later (when it's really needed)
+    var parent = c.parent
+    while (parent != null) {
+      if (parent.isOpaque) {
+        return parent.background
+      }
+
+      parent = parent.parent
+    }
+
+    return null
   }
 
   private fun getTextArea(c: Component): JTextArea? {

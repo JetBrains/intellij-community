@@ -18,6 +18,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(InspectionCommandEx.PREFIX, InspectionCommandEx::new),
       Map.entry(ReformatCommand.PREFIX, ReformatCommand::new),
       Map.entry(GoToCommand.PREFIX, GoToCommand::new),
+      Map.entry(ScrollEditorCommand.PREFIX, ScrollEditorCommand::new),
       Map.entry(DoLocalInspection.PREFIX, DoLocalInspection::new),
       Map.entry(CompletionCommand.PREFIX, CompletionCommand::new),
       Map.entry(DelayTypeCommand.PREFIX, DelayTypeCommand::new),

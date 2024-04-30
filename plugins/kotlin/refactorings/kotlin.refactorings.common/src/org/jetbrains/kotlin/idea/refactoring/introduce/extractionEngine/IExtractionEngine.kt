@@ -12,12 +12,15 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.event.HyperlinkEvent
 
 abstract class IExtractionEngineHelper<KotlinType,
@@ -31,13 +34,20 @@ abstract class IExtractionEngineHelper<KotlinType,
 
     fun doRefactor(config: Config, onFinish: (Result) -> Unit = {}) {
         val project = config.descriptor.extractionData.project
+        var extracted: SmartPsiElementPointer<KtNamedDeclaration>? = null
         val result = project.executeCommand<Result?>(operationName) {
             var generatedDeclaration: Result? = null
-            ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread("", project, null) {
+            ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(KotlinBundle.message("perform.refactoring"), project, null) {
                 generatedDeclaration = generateDeclaration(config)
+                extracted = generatedDeclaration?.declaration?.createSmartPointer()
             }
             generatedDeclaration
         } ?: return
+
+        extracted?.element?.let {
+            //update declaration after reformat
+            result.declaration = it
+        }
         onFinish(result)
     }
 

@@ -74,8 +74,20 @@ interface JsonLikeSyntaxAdapter {
         }
       }
       else -> {
-        contextForInsertion.addBefore(newProperty, contextForInsertion.lastChild).also {
-          ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(it), it)
+        // In case of an object, we want to insert after the last property and potential comments, but before whatever syntax marks the end
+        // of the object (e.g. a } in JSON, but nothing in YAML). We can't just use 'contextForInsertion.lastChild' because it's actually
+        // the last property itself in YAML (since there is no syntax for closing the object).
+        val objectAdapter = walker?.createValueAdapter(contextForInsertion)?.asObject
+                            ?: error("contextForInsertion must be an object-like element")
+        val lastPropertyElement = objectAdapter.propertyList.lastOrNull()?.delegate
+        val lastElementInsideObject = if (lastPropertyElement != null) {
+          PsiTreeUtil.skipWhitespacesAndCommentsForward(lastPropertyElement)
+        }
+        else {
+          contextForInsertion.lastChild
+        } 
+        contextForInsertion.addBefore(newProperty, lastElementInsideObject).also {
+          ensureComma(lastPropertyElement, it)
         }
       }
     }

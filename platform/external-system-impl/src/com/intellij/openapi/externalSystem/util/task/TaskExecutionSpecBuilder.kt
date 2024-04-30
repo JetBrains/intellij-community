@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.util.task
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
@@ -24,6 +25,9 @@ interface TaskExecutionSpecBuilder {
 
   @CheckReturnValue
   fun withCallback(callback: TaskCallback?): TaskExecutionSpecBuilder
+
+  @CheckReturnValue
+  fun withListener(listener: ExternalSystemTaskNotificationListener?): TaskExecutionSpecBuilder
 
   @CheckReturnValue
   fun withUserData(userData: UserDataHolderBase?): TaskExecutionSpecBuilder

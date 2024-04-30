@@ -500,7 +500,6 @@ f:com.intellij.ide.plugins.IdeaPluginDescriptorImplKt
 - sf:toPluginIdSet(java.lang.Iterable):java.util.Set
 f:com.intellij.ide.plugins.KotlinK2ModeCompatibilityCheckerKt
 f:com.intellij.ide.plugins.ModuleGraphKt
-- sf:getKnownNotFullyMigratedPluginIds():java.util.Set
 com.intellij.ide.plugins.PathResolver
 - isFlat():Z
 - a:loadXIncludeReference(com.intellij.ide.plugins.RawPluginDescriptor,com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.DataLoader,java.lang.String,java.lang.String):Z
@@ -604,6 +603,8 @@ f:com.intellij.ide.plugins.PluginXmlPathResolver
 - resolveModuleFile(com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor):com.intellij.ide.plugins.RawPluginDescriptor
 - resolvePath(com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor):com.intellij.ide.plugins.RawPluginDescriptor
 f:com.intellij.ide.plugins.PluginXmlPathResolver$Companion
+- f:toLoadPath(java.lang.String,java.lang.String):java.lang.String
+f:com.intellij.ide.plugins.ProductLoadingStrategyKt
 com.intellij.ide.plugins.ReadModuleContext
 - a:getInterner():com.intellij.util.xml.dom.XmlInterner
 - isMissingIncludeIgnored():Z

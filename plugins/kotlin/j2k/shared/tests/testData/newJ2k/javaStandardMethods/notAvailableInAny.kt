@@ -13,7 +13,7 @@ class J {
     }
 
     fun withCast(i: Number) {
-        (i as Int as Object).notify()
+        ((i as Int) as Object).notify()
         (i as Object).notifyAll()
         (i as Object).wait()
         (i as Object).wait(42)

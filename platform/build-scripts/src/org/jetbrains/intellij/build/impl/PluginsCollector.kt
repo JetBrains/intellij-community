@@ -8,28 +8,22 @@ import com.intellij.openapi.util.Pair
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jdom.Element
-import org.jdom.Namespace
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import java.io.IOException
-import java.net.URL
 import java.nio.file.Path
-import java.util.*
 
 internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, context: BuildContext, result: MutableSet<PluginLayout>) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
   builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
-  val descriptorMap = collectPluginDescriptors(skipImplementationDetailPlugins = true,
-                                               skipBundledPlugins = true,
-                                               honorCompatiblePluginsToIgnore = true,
-                                               context = context)
-  val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetailPlugins = true,
-                                                          skipBundledPlugins = false,
-                                                          honorCompatiblePluginsToIgnore = true,
-                                                          context = context)
+  val descriptorMap = collectPluginDescriptors(skipImplementationDetailPlugins = true, skipBundledPlugins = true, honorCompatiblePluginsToIgnore = true, context = context)
+  val descriptorMapWithBundled = collectPluginDescriptors(
+    skipImplementationDetailPlugins = true,
+    skipBundledPlugins = false,
+    honorCompatiblePluginsToIgnore = true,
+    context = context
+  )
 
   // While collecting PluginDescriptor maps above, we may have chosen incorrect PluginLayout.
   // Let's check that and substitute incorrectly chosen one with more suitable one or report error.
@@ -49,7 +43,7 @@ internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModules
 
   val errors = ArrayList<List<PluginLayout>>()
   for (descriptor in descriptorMap.values) {
-    if (isPluginCompatible(descriptor, availableModulesAndPlugins, descriptorMapWithBundled)) {
+    if (isPluginCompatible(plugin = descriptor, availableModulesAndPlugins = availableModulesAndPlugins, nonCheckedModules = descriptorMapWithBundled)) {
       val layout = descriptor.pluginLayout
       val suspicious = moreThanOneLayoutMap.values.filter { it.contains(layout) }
       if (suspicious.isNotEmpty()) {
@@ -73,9 +67,11 @@ internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModules
   }
 }
 
-private fun isPluginCompatible(plugin: PluginDescriptor,
-                               availableModulesAndPlugins: MutableSet<String>,
-                               nonCheckedModules: MutableMap<String, PluginDescriptor>): Boolean {
+private fun isPluginCompatible(
+  plugin: PluginDescriptor,
+  availableModulesAndPlugins: MutableSet<String>,
+  nonCheckedModules: MutableMap<String, PluginDescriptor>
+): Boolean {
   nonCheckedModules.remove(plugin.id)
   for (declaredModule in plugin.declaredModules) {
     nonCheckedModules.remove(declaredModule)
@@ -89,6 +85,8 @@ private fun isPluginCompatible(plugin: PluginDescriptor,
     if (requiredPlugin != null && isPluginCompatible(requiredPlugin, availableModulesAndPlugins, nonCheckedModules)) {
       continue
     }
+
+    Span.current().addEvent("${plugin.id} is not compatible because no required dependency is available: $requiredDependency")
     return false
   }
   for (incompatiblePlugin in plugin.incompatiblePlugins) {
@@ -101,10 +99,12 @@ private fun isPluginCompatible(plugin: PluginDescriptor,
   return true
 }
 
-fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
-                             skipBundledPlugins: Boolean,
-                             honorCompatiblePluginsToIgnore: Boolean,
-                             context: BuildContext): MutableMap<String, PluginDescriptor> {
+fun collectPluginDescriptors(
+  skipImplementationDetailPlugins: Boolean,
+  skipBundledPlugins: Boolean,
+  honorCompatiblePluginsToIgnore: Boolean,
+  context: BuildContext
+): MutableMap<String, PluginDescriptor> {
   val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
   val productLayout = context.productProperties.productLayout
   val nonTrivialPlugins = HashMap<String, PluginLayout>(productLayout.pluginLayouts.size)
@@ -134,11 +134,13 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     }
 
     if (skipImplementationDetailPlugins && xml.getAttributeValue("implementation-detail") == "true") {
-      Span.current().addEvent("skip module", Attributes.of(
+      Span.current().addEvent(
+        "skip module", Attributes.of(
         AttributeKey.stringKey("name"), moduleName,
         AttributeKey.stringKey("reason"), "'implementation-detail' == 'true'",
         AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
-      ))
+      )
+      )
       continue
     }
 
@@ -149,26 +151,29 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
           name.startsWith("intellij.platform.vcs.") || name == "intellij.ide.startup.importSettings"
         }
       }) {
-      Span.current().addEvent("skip module", Attributes.of(
-        AttributeKey.stringKey("name"), moduleName,
-        AttributeKey.stringKey("reason"), "product descriptor",
-        AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
-      ))
+      Span.current().addEvent(
+        "skip module",
+        Attributes.of(
+          AttributeKey.stringKey("name"), moduleName,
+          AttributeKey.stringKey("reason"), "product descriptor",
+          AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+        ),
+      )
       continue
     }
 
     val pluginLayout = nonTrivialPlugins.get(moduleName) ?: PluginLayout.pluginAuto(listOf(moduleName))
-    JDOMXIncluder.resolveNonXIncludeElement(original = xml,
-                                            base = pluginXml,
-                                            pathResolver = SourcesBasedXIncludeResolver(pluginLayout = pluginLayout, context = context))
+    resolveNonXIncludeElement(original = xml, base = pluginXml, pathResolver = SourcesBasedXIncludeResolver(pluginLayout = pluginLayout, context = context))
 
     val id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
     if (id.isNullOrEmpty()) {
-      Span.current().addEvent("skip module", Attributes.of(
+      Span.current().addEvent(
+        "skip module", Attributes.of(
         AttributeKey.stringKey("name"), moduleName,
         AttributeKey.stringKey("reason"), "does not contain <id/> element",
         AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
-      ))
+      )
+      )
       continue
     }
 
@@ -194,7 +199,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     val optionalDependencies = ArrayList<Pair<String, String>>()
     for (dependency in xml.getChildren("depends")) {
       if (dependency.getAttributeValue("optional") != "true") {
-        requiredDependencies += dependency.textTrim
+        requiredDependencies.add(dependency.textTrim)
       }
       else {
         optionalDependencies.add(Pair(dependency.textTrim, dependency.getAttributeValue("config-file")))
@@ -221,13 +226,15 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
       incompatiblePlugins.add(pluginId.textTrim)
     }
 
-    val pluginDescriptor = PluginDescriptor(id = id,
-                                            description = xml.getChildTextTrim("description"),
-                                            declaredModules = declaredModules,
-                                            requiredDependencies = requiredDependencies,
-                                            incompatiblePlugins = incompatiblePlugins,
-                                            optionalDependencies = optionalDependencies,
-                                            pluginLayout = pluginLayout)
+    val pluginDescriptor = PluginDescriptor(
+      id = id,
+      description = xml.getChildTextTrim("description"),
+      declaredModules = declaredModules,
+      requiredDependencies = requiredDependencies,
+      incompatiblePlugins = incompatiblePlugins,
+      optionalDependencies = optionalDependencies,
+      pluginLayout = pluginLayout
+    )
     pluginDescriptors.put(id, pluginDescriptor)
     for (module in declaredModules) {
       pluginDescriptors.put(module, pluginDescriptor)
@@ -249,156 +256,12 @@ class PluginDescriptor(
 private class SourcesBasedXIncludeResolver(
   private val pluginLayout: PluginLayout,
   private val context: BuildContext,
-) : JDOMXIncluder.PathResolver {
-  override fun resolvePath(relativePath: String, base: URL?): URL {
-    var result: URL? = null
+) : XIncludePathResolver {
+  override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean): Path {
+    var result: Path? = null
     for (moduleName in pluginLayout.includedModules.asSequence().map { it.moduleName }.distinct()) {
-      result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue).toUri().toURL()
+      result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue)
     }
-    if (result == null) {
-      result = if (base == null) URL(relativePath) else URL(base, relativePath)
-    }
-    return result
-  }
-}
-
-private object JDOMXIncluder {
-  /**
-   * The original element will be mutated in place.
-   */
-  fun resolveNonXIncludeElement(original: Element, base: Path, pathResolver: PathResolver) {
-    check(!isIncludeElement(original))
-    val bases = ArrayDeque<URL>()
-    bases.push(base.toUri().toURL())
-    doResolveNonXIncludeElement(original = original, bases = bases, pathResolver = pathResolver)
-  }
-
-  private fun isIncludeElement(element: Element): Boolean {
-    return element.name == "include" && element.namespace == JDOMUtil.XINCLUDE_NAMESPACE
-  }
-
-  private fun resolveXIncludeElement(element: Element, bases: Deque<URL>, pathResolver: PathResolver): MutableList<Element> {
-    var base: URL? = null
-    if (!bases.isEmpty()) {
-      base = bases.peek()
-    }
-
-    val href = element.getAttributeValue("href")
-    assert(href != null) { "Missing href attribute" }
-
-    val baseAttribute = element.getAttributeValue("base", Namespace.XML_NAMESPACE)
-    if (baseAttribute != null) {
-      base = URL(baseAttribute)
-    }
-
-    val remote = pathResolver.resolvePath(href, base)
-    assert(!bases.contains(remote)) { "Circular XInclude Reference to ${remote.toExternalForm()}" }
-
-    val fallbackElement = element.getChild("fallback", element.namespace)
-    var remoteParsed = parseRemote(bases, remote, fallbackElement, pathResolver)
-    if (!remoteParsed.isEmpty()) {
-      remoteParsed = extractNeededChildren(element, remoteParsed)
-    }
-
-    var i = 0
-    while (true) {
-      if (i >= remoteParsed.size) {
-        break
-      }
-
-      val o = remoteParsed.get(i)
-      if (isIncludeElement(o)) {
-        val elements = resolveXIncludeElement(o, bases, pathResolver)
-        remoteParsed.addAll(i, elements)
-        i += elements.size - 1
-        remoteParsed.removeAt(i)
-      }
-      else {
-        doResolveNonXIncludeElement(o, bases, pathResolver)
-      }
-
-      i++
-    }
-
-    remoteParsed.forEach(Element::detach)
-    return remoteParsed
-  }
-
-  private fun extractNeededChildren(element: Element, remoteElements: List<Element>): MutableList<Element> {
-    val xpointer = element.getAttributeValue("xpointer") ?: "xpointer(/idea-plugin/*)"
-
-    var matcher = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer)
-    if (!matcher.matches()) {
-      throw RuntimeException("Unsupported XPointer: $xpointer")
-    }
-
-    val pointer = matcher.group(1)
-    matcher = JDOMUtil.CHILDREN_PATTERN.matcher(pointer)
-    if (!matcher.matches()) {
-      throw RuntimeException("Unsupported pointer: $pointer")
-    }
-
-    val rootTagName = matcher.group(1)
-
-    assert(remoteElements.size == 1)
-    var e = remoteElements.get(0)
-    if (e.name != rootTagName) {
-      return mutableListOf()
-    }
-
-    val subTagName = matcher.group(2)
-    if (subTagName != null) {
-      // cut off the slash
-      e = e.getChild(subTagName.substring(1))
-      assert(e != null)
-    }
-    return e.children.toMutableList()
-  }
-
-  private fun parseRemote(bases: Deque<URL>,
-                          remote: URL,
-                          fallbackElement: Element?,
-                          pathResolver: PathResolver): MutableList<Element> {
-    try {
-      bases.push(remote)
-      val root = JDOMUtil.load(remote.openStream())
-      return if (isIncludeElement(root)) {
-        resolveXIncludeElement(root, bases, pathResolver)
-      }
-      else {
-        doResolveNonXIncludeElement(root, bases, pathResolver)
-        mutableListOf(root)
-      }
-    }
-    catch (e: IOException) {
-      if (fallbackElement != null) {
-        return mutableListOf()
-      }
-      Span.current().addEvent("${remote.toExternalForm()} include ignored: ${e.message}")
-      return mutableListOf()
-    }
-    finally {
-      bases.pop()
-    }
-  }
-
-  private fun doResolveNonXIncludeElement(original: Element, bases: Deque<URL>, pathResolver: PathResolver) {
-    val contentList = original.content
-    for (i in contentList.size - 1 downTo 0) {
-      val content = contentList.get(i)
-      if (content is Element) {
-        if (isIncludeElement(content)) {
-          original.setContent(i, resolveXIncludeElement(content, bases, pathResolver))
-        }
-        else {
-          // process child element to resolve possible includes
-          doResolveNonXIncludeElement(content, bases, pathResolver)
-        }
-      }
-    }
-  }
-
-  interface PathResolver {
-    fun resolvePath(relativePath: String, base: URL?): URL
+    return result ?: (if (base == null) Path.of(relativePath) else base.resolveSibling(relativePath))
   }
 }

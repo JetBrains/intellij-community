@@ -1168,6 +1168,37 @@ public class JavaKeywordCompletion {
 
     if (JavaPatternCompletionUtil.insideDeconstructionList(position)) {
       JavaPatternCompletionUtil.suggestPrimitivesInsideDeconstructionListPattern(position, result);
+      return;
+    }
+
+    if ((InstanceofTypeProvider.AFTER_INSTANCEOF.accepts(position)) &&
+        position.getParent() instanceof PsiJavaCodeReferenceElement referenceElement &&
+        referenceElement.getParent() instanceof PsiTypeElement typeElement &&
+        (typeElement.getParent() instanceof PsiInstanceOfExpression ||
+         (typeElement.getParent() instanceof PsiPatternVariable variable &&
+          (variable.getParent() instanceof PsiInstanceOfExpression ||
+           variable.getParent() instanceof PsiTypeTestPattern typeTestPattern &&
+           typeTestPattern.getParent() instanceof PsiInstanceOfExpression)))) {
+      PsiInstanceOfExpression instanceOfExpression = PsiTreeUtil.getParentOfType(position, PsiInstanceOfExpression.class);
+      if (instanceOfExpression != null) {
+        JavaPatternCompletionUtil.suggestPrimitiveTypesForPattern(position, instanceOfExpression.getOperand().getType(), result);
+      }
+      return;
+    }
+
+    if (psiElement().afterLeaf(PsiKeyword.CASE).accepts(position) &&
+        ((position.getParent() instanceof PsiReferenceExpression referenceExpression &&
+          referenceExpression.getParent() instanceof PsiCaseLabelElementList)
+         || (position.getParent() instanceof PsiJavaCodeReferenceElement referenceElement &&
+             referenceElement.getParent() instanceof PsiTypeElement typeElement &&
+             typeElement.getParent() instanceof PsiPatternVariable patternVariable &&
+             patternVariable.getParent() instanceof PsiTypeTestPattern typeTestPattern &&
+             typeTestPattern.getParent() instanceof PsiCaseLabelElementList))) {
+      PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class);
+      if (switchBlock != null && switchBlock.getExpression() != null) {
+        JavaPatternCompletionUtil.suggestPrimitiveTypesForPattern(position, switchBlock.getExpression().getType(), result);
+      }
+      return;
     }
 
     boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position) &&
@@ -1391,6 +1422,10 @@ public class JavaKeywordCompletion {
       PsiTreeUtil.skipParentsOfType(myPosition.getParent(), PsiErrorElement.class, PsiJavaCodeReferenceElement.class, PsiTypeElement.class);
     PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myPosition.getParent());
 
+    if (context instanceof PsiField && context.getParent() instanceof PsiImplicitClass) {
+      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.MODULE), TailTypes.humbleSpaceBeforeWordType()));
+    }
+    
     if (context instanceof PsiJavaFile && !(prevElement instanceof PsiJavaModule) || context instanceof PsiImportList) {
       addKeyword(new OverridableSpace(createKeyword(PsiKeyword.MODULE), TailTypes.humbleSpaceBeforeWordType()));
       if (myPrevLeaf == null || !myPrevLeaf.textMatches(PsiKeyword.OPEN)) {

@@ -19,8 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 import java.util.List;
 
-public class CommitAnnotator implements Annotator {
-
+final class CommitAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (!CommitMessage.isCommitMessage(element) || !GrazieConfig.Companion.get().getCheckingContext().isCheckInCommitMessagesEnabled()) {
@@ -62,5 +61,4 @@ public class CommitAnnotator implements Annotator {
       return null;
     });
   }
-
 }

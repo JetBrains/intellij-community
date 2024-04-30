@@ -169,11 +169,16 @@ public class FontFamilyService {
                                       @Nullable String boldSubFamily,
                                       @JdkConstants.FontStyle int style) {
     Font font = new Font(family, style, 1);
-    if (font.getFamily().equals(Font.DIALOG) && !Font.DIALOG.equals(family)) {
+    if (font.getFamily().equals(Font.DIALOG) && !isDialogFamily(family)) {
       // requested family isn't available
       return new Font(FontPreferences.DEFAULT_FONT_NAME, style, 1);
     }
     return font;
+  }
+
+  private static boolean isDialogFamily(@NotNull String family) {
+    if (family.equals(Font.DIALOG)) return true;
+    return family.startsWith(Font.DIALOG) && family.charAt(Font.DIALOG.length()) == '.';
   }
 
   protected @Nullable FontFamilyDescriptor getDescriptorByFontImpl(@NotNull Font font) {

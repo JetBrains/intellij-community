@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.diff
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.viewer.controlReviewIn
+import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
@@ -21,11 +21,14 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.*
@@ -46,22 +49,23 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
   }
 
   @Service(Service.Level.PROJECT)
-  private class InlaysController(private val cs: CoroutineScope) {
+  private class InlaysController(parentCs: CoroutineScope) {
+    private val cs = parentCs.childScope(Dispatchers.Main)
 
     fun installInlays(reviewVm: GHPRDiffViewModel, change: RefComparisonChange, viewer: DiffViewerBase) {
       val settings = GithubSettings.getInstance()
-      cs.launchNow(Dispatchers.Main) {
-        reviewVm.getViewModelFor(change).collectLatest { changeVm ->
-          if (changeVm == null) return@collectLatest
+      cs.launchNow {
+        withContext(Dispatchers.Main) {
+          reviewVm.getViewModelFor(change).collectScoped { changeVm ->
+            if (changeVm == null) return@collectScoped
 
-          if (settings.isAutomaticallyMarkAsViewed) {
-            changeVm.markViewed()
-          }
+            if (settings.isAutomaticallyMarkAsViewed) {
+              changeVm.markViewed()
+            }
 
-          coroutineScope {
-            viewer.controlReviewIn(this, { locationToLine, lineToLocations ->
-              DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
-            }, GHPREditorReviewModel.KEY, { createRenderer(it) })
+            viewer.showCodeReview({ locationToLine, lineToLocations ->
+                                    DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
+                                  }, GHPREditorReviewModel.KEY, { createRenderer(it) })
           }
         }
       }.cancelOnDispose(viewer)
@@ -89,12 +93,11 @@ private class DiffEditorModel(
   private val lineToLocation: (Int) -> DiffLineLocation?
 ) : GHPREditorReviewModel {
 
-  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> = combine(
-    diffVm.threads.mapModelsToViewModels { MappedThread(it) },
-    diffVm.newComments.mapModelsToViewModels { MappedNewComment(it) }
-  ) { threads, new ->
-    threads + new
-  }.stateInNow(cs, emptyList())
+  private val threads = diffVm.threads.mapModelsToViewModels { MappedThread(cs, it) }.stateInNow(cs, emptyList())
+  private val newComments = diffVm.newComments.mapModelsToViewModels { MappedNewComment(it) }.stateInNow(cs, emptyList())
+
+  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> =
+    combineStateIn(cs, threads, newComments) { threads, new -> threads + new }
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
     diffVm.locationsWithDiscussions.map {
@@ -149,9 +152,10 @@ private class DiffEditorModel(
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
   }
 
-  private inner class MappedThread(vm: GHPRReviewThreadDiffViewModel)
+  private inner class MappedThread(parentCs: CoroutineScope, vm: GHPRReviewThreadDiffViewModel)
     : GHPREditorMappedComponentModel.Thread<GHPRCompactReviewThreadViewModel>(vm) {
-    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
+    private val cs = parentCs.childScope(classAsCoroutineName())
+    override val isVisible: StateFlow<Boolean> = combineStateIn(cs, vm.isVisible, hiddenState) { visible, hidden -> visible && !hidden }
     override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
   }
 

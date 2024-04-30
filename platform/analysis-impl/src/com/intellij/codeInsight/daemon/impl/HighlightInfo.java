@@ -512,7 +512,12 @@ public class HighlightInfo implements Segment {
     if (gutterIconRenderer != null) {
       s += "; gutter: " + gutterIconRenderer;
     }
-    s += "; toolId: " + toolId;
+    if (toolId != null) {
+      s += "; toolId: " + toolId;
+    }
+    if (forcedTextAttributesKey != null) {
+      s += "; forcedTextAttributesKey: " + forcedTextAttributesKey;
+    }
     return s;
   }
 
@@ -623,20 +628,18 @@ public class HighlightInfo implements Segment {
     TextAttributesKey key = annotation.getTextAttributes();
     TextAttributesKey forcedAttributesKey = forcedAttributes == null && key != HighlighterColors.NO_HIGHLIGHTING ? key : null;
 
-    PsiReference unresolvedReference = annotation.getUnresolvedReference();
     HighlightInfo info = new HighlightInfo(
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
       annotation.needsUpdateOnTyping(),
       annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotatorClass, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL,
-      unresolvedReference);
+      annotation.getUnresolvedReference());
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {
       for (Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = quickFixInfo.textRange;
-        HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key
-                                                         : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
+        HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
         info.registerFix(quickFixInfo.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(k), range, k);
       }
     }

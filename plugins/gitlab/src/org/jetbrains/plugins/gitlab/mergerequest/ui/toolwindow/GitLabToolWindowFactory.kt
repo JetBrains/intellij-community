@@ -71,7 +71,7 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
       val vm = project.serviceAsync<GitLabToolWindowViewModel>()
       val componentFactory = GitLabReviewTabComponentFactory(project, vm)
 
-      manageReviewToolwindowTabs(cs, toolWindow, vm, componentFactory, GitLabBundle.message("merge.request.toolwindow.tab.title"))
+      manageReviewToolwindowTabs(this, toolWindow, vm, componentFactory, GitLabBundle.message("merge.request.toolwindow.tab.title"))
       val wrapper = ActionUtil.wrap("GitLab.Merge.Request.Create")
       wrapper.registerCustomShortcutSet(CommonShortcuts.getNew(), toolWindow.component)
       toolWindow.setTitleActions(listOf(wrapper))

@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.util.task
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
@@ -17,6 +18,7 @@ class TaskExecutionSpecImpl(
   override val settings: ExternalSystemTaskExecutionSettings,
   override val progressExecutionMode: ProgressExecutionMode,
   override val callback: TaskCallback?,
+  override val listener: ExternalSystemTaskNotificationListener?,
   override val userData: UserDataHolderBase?,
   override val activateToolWindowBeforeRun: Boolean,
   override val activateToolWindowOnFailure: Boolean,

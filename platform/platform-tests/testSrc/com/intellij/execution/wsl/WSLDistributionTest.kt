@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.use
 import com.intellij.platform.ijent.*
-import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.registerOrReplaceServiceInstance
@@ -475,7 +475,7 @@ class WSLDistributionTest {
           @DelicateCoroutinesApi
           override val processAdapterScope: CoroutineScope = scope
 
-          override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
+          override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
             require(wslDistribution == mockWslDistribution) { "$wslDistribution != $mockWslDistribution" }
             return MockIjentApi(adapter, rootUser)
           }
@@ -503,22 +503,22 @@ class WSLDistributionTest {
 
 enum class WslTestStrategy { Legacy, Ijent }
 
-private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentApi {
+private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
   override val id: IjentId get() = throw UnsupportedOperationException()
 
-  override val platform: IjentExecFileProvider.SupportedPlatform get() = throw UnsupportedOperationException()
+  override val platform: IjentPlatform get() = throw UnsupportedOperationException()
 
   override val isRunning: Boolean get() = true
 
-  override val info: IjentApi.Info get() = throw UnsupportedOperationException()
+  override val info: IjentPosixInfo get() = throw UnsupportedOperationException()
 
   override fun close(): Unit = Unit
 
   override val exec: IjentExecApi get() = MockIjentExecApi(adapter, rootUser)
 
-  override val fs: IjentFileSystemApi get() = throw UnsupportedOperationException()
+  override val fs: IjentFileSystemPosixApi get() = throw UnsupportedOperationException()
 
-  override val tunnels: IjentTunnelsApi get() = throw UnsupportedOperationException()
+  override val tunnels: IjentTunnelsPosixApi get() = throw UnsupportedOperationException()
 }
 
 private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {

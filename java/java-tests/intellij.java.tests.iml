@@ -88,5 +88,6 @@
     <orderEntry type="module" module-name="intellij.junit.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.navbar.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.unscramble" scope="TEST" />
   </component>
 </module>

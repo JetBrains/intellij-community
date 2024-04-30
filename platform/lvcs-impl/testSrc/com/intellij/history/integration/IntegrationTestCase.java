@@ -173,7 +173,7 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
   }
 
   protected RootEntry getRootEntry() {
-    return myGateway.createTransientRootEntry();
+    return myGateway.createTransientRootEntryForPath(myGateway.getPathOrUrl(myRoot), true);
   }
 
   protected void addContentRoot(@NotNull String path) {

@@ -66,7 +66,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
                                       filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
                                       consumer: (WebSymbolCodeCompletionItem) -> Unit) {
       processWebSymbolCodeCompletionItems(
-        queryExecutor.runCodeCompletionQuery(qualifiedKind, name, position, scope = queryContext),
+        queryExecutor.runCodeCompletionQuery(qualifiedKind, name, position, additionalScope = queryContext),
         result, qualifiedKind, name, queryExecutor.framework, location, providedNames, filter, consumer
       )
     }

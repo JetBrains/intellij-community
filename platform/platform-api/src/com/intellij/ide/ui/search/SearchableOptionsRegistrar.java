@@ -48,8 +48,8 @@ public abstract class SearchableOptionsRegistrar{
   public abstract Set<String> getProcessedWords(@NotNull String text);
 
   public static String getSearchableOptionsXmlName() {
-    DynamicBundle.LanguageBundleEP bundle = DynamicBundle.findLanguageBundle();
-    return SEARCHABLE_OPTIONS_XML_NAME + (bundle != null ? "_" + bundle.locale : "") + ".xml";
+    String langTag = DynamicBundle.getLocale().toLanguageTag();
+    return SEARCHABLE_OPTIONS_XML_NAME + (langTag.equals("en") ? "" : "_" + langTag) + ".xml";
   }
 
   public interface AdditionalLocationProvider {

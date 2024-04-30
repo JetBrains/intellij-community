@@ -78,6 +78,9 @@ private class SelectInTargetActionImpl<T : SelectInTarget>(
       e.presentation.icon = getIcon()
     }
     e.presentation.isEnabled = isSelectable()
+
+    val project = e.project
+    e.presentation.isVisible = project != null && target.isAvailable(project)
   }
 
   fun doPerform() {

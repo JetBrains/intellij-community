@@ -29,6 +29,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
@@ -60,6 +61,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   // should only be accessed from EDT. This is to order synchronous and asynchronous publishing
   private var lastPublishedState: DumbState = myState.value
+
+  @Volatile
+  private var isDisposed = false
 
   // Not thread safe. Should only be accessed from EDT. Launches myGuiDumbTaskRunner at most once.
   // DumbService can invoke `launch` from completeJustSubmittedTasks or from queueTaskOnEdt
@@ -194,6 +198,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun dispose() {
+    isDisposed = true
     ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     myBalloon.dispose()
     scheduledTasksScope.cancel("On dispose of DumbService", ProcessCanceledException())
@@ -360,6 +365,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun queueTask(task: DumbModeTask) {
+    if (isDisposed) {
+      throw AlreadyDisposedException("Cannot queue task $task after disposal")
+    }
+
     LOG.debug { "Scheduling task $task" }
     if (myProject.isDefault) {
       LOG.error("No indexing tasks should be created for default project: $task")

@@ -141,7 +141,7 @@ internal fun removeDuplicatedUrlsFromRepositoryLibraries(project: Project) {
       else {
         "${validLibraries.size} libraries"
       }
-      Notifications.Bus.notify(JarRepositoryManager.GROUP.createNotification(
+      Notifications.Bus.notify(JarRepositoryManager.getNotificationGroup().createNotification(
         JavaUiBundle.message("notification.title.repository.libraries.cleanup"),
         JavaUiBundle.message("notification.text.duplicated.urls.were.removed",
                              libraryText,

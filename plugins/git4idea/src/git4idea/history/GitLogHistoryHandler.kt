@@ -17,6 +17,7 @@ import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.keysToSet
+import com.intellij.vcs.log.visible.isAll
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
@@ -63,7 +64,10 @@ open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistor
     val parser = GitFileHistory.createLogParser(project)
     val handler = GitLineHandler(project, root, GitCommand.LOG)
     handler.setStdoutSuppressed(true)
-    handler.addParameters("--name-status", parser.pretty, "--encoding=UTF-8", "--max-count=$commitCount")
+    handler.addParameters("--name-status", parser.pretty, "--encoding=UTF-8")
+    if (!isAll(commitCount)) {
+      handler.addParameters("--max-count=$commitCount")
+    }
     handler.addParameters(GitLogProvider.getBranchLikeFilterParameters(repository, filters, null))
     handler.endOptions()
     handler.addRelativePaths(filePath)

@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -78,6 +79,8 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
+      if (!isColumnAvailable(e)) return false;
+
       VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
       if (properties != null) {
         return isVisible(myColumn, properties);
@@ -88,6 +91,8 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       VcsLogUsageTriggerCollector.triggerUsage(e, this);
+
+      if (!isColumnAvailable(e)) return;
 
       VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
       if (properties == null) return;
@@ -105,12 +110,20 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
-      e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
+      e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e) && isColumnAvailable(e));
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
+    }
+
+    private boolean isColumnAvailable(@NotNull AnActionEvent e) {
+      if (myColumn instanceof VcsLogCustomColumn<?> customColumn) {
+        Project project = e.getProject();
+        return project != null && customColumn.isAvailable(project);
+      }
+      return true;
     }
   }
 }

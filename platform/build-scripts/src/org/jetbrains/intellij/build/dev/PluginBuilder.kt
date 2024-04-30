@@ -75,7 +75,7 @@ private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
         includedModules = plugin.layout.includedModules,
         copyFiles = copyFiles,
         // searchable options are not generated in dev mode
-        moduleWithSearchableOptions = emptySet(),
+        jarsWithSearchableOptions = emptySet(),
         context = context,
       )
       pluginEntries

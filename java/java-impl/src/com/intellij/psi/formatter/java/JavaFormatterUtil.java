@@ -6,6 +6,8 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -17,12 +19,15 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class JavaFormatterUtil {
@@ -555,5 +560,32 @@ public final class JavaFormatterUtil {
           ContainerUtil.addIfNotNull(stack, currentNode);
         }
     }
+  }
+
+  /**
+   * Extracts text ranges from a given literal text.
+   *
+   * @param text              the literal text to extract text ranges from
+   * @param indent            the number of spaces used for indentation
+   * @param shouldTreatWholeLine  specifies whether the entire line should be treated as a text range
+   * @return a list of {@code TextRange} objects representing the extracted text ranges
+   */
+  public static @NotNull List<TextRange> extractTextRangesFromLiteralText(@NotNull String text, int indent, boolean shouldTreatWholeLine) {
+    List<TextRange> linesRanges = new ArrayList<>();
+
+    int start = StringUtil.indexOf(text, '\n', 3);
+    if (start == -1) return Collections.emptyList();
+    linesRanges.add(new TextRange(0, start));
+    start += 1;
+
+    while (start < text.length()) {
+      int end = StringUtil.indexOf(text, '\n', start);
+      if (end == -1) end = text.length();
+      if (start + indent < end && !shouldTreatWholeLine) start += indent;
+      if (start != end || shouldTreatWholeLine) linesRanges.add(new TextRange(start, end));
+      start = end + 1;
+    }
+
+    return linesRanges;
   }
 }

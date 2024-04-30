@@ -136,6 +136,10 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
 
       var wasEnabled = settings.isCheckNeeded || settings.isPluginsCheckNeeded
 
+      UpdateSettingsUIProvider.EP_NAME.forEachExtensionSafe {
+        it.init(this)
+      }
+
       onApply {
         val isEnabled = settings.isCheckNeeded || settings.isPluginsCheckNeeded
         if (isEnabled != wasEnabled) {

@@ -929,7 +929,7 @@ abstract class ComponentManagerImpl(
     val pluginId = pluginDescriptor.pluginId
     try {
       @Suppress("UNCHECKED_CAST")
-      return instantiateClass(doLoadClass(className, pluginDescriptor) as Class<T>, pluginId)
+      return instantiateClass(doLoadClass(className, pluginDescriptor, checkCoreSubModules = true) as Class<T>, pluginId)
     }
     catch (e: Throwable) {
       when {
@@ -1443,14 +1443,32 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   }
 }
 
-internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor): Class<*> {
+internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor, checkCoreSubModules: Boolean = false): Class<*> {
   // maybe null in unit tests
   val classLoader = pluginDescriptor.pluginClassLoader ?: ComponentManagerImpl::class.java.classLoader
   if (classLoader is PluginAwareClassLoader) {
     return classLoader.tryLoadingClass(name, true) ?: throw ClassNotFoundException("$name $classLoader")
   }
   else {
-    return classLoader.loadClass(name)
+    try {
+      return classLoader.loadClass(name)
+    }
+    catch (e: ClassNotFoundException) {
+      if (checkCoreSubModules && pluginDescriptor.pluginId == PluginManagerCore.CORE_ID && pluginDescriptor is IdeaPluginDescriptorImpl) {
+        for (module in pluginDescriptor.content.modules) {
+          val subDescriptor = module.requireDescriptor()
+          if (subDescriptor.packagePrefix == null && !module.name.startsWith("intellij.libraries.")) {
+            val pluginClassLoader = subDescriptor.classLoader as? PluginAwareClassLoader ?: continue
+            pluginClassLoader.loadClassInsideSelf(name)?.let {
+              assert(it.isAnnotationPresent(InternalIgnoreDependencyViolation::class.java))
+              return it
+            }
+          }
+        }
+      }
+
+      throw e
+    }
   }
 }
 

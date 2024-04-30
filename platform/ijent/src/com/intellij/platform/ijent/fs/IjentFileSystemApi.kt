@@ -8,13 +8,8 @@ import java.nio.ByteBuffer
 
 // TODO Integrate case-(in)sensitiveness into the interface.
 
-/**
- * No strict reason for having a separate interface for this. It's split just for not making [com.intellij.platform.ijent.IjentApi] too big.
- *
- * This class is significantly inspired by `fleet.api.FsApi` and related classes. Most names remain the same.
- */
 @ApiStatus.Experimental
-interface IjentFileSystemApi {
+sealed interface IjentFileSystemApi {
   /**
    * The same [IjentId] as in the corresponding [com.intellij.platform.ijent.IjentApi].
    */
@@ -25,16 +20,6 @@ interface IjentFileSystemApi {
    */
   @Deprecated("API should avoid exposing coroutine scopes")
   val coroutineScope: CoroutineScope
-
-  /**
-   * Returns true if IJent runs on Windows, false if on a Unix-like OS.
-   */
-  val isWindows: Boolean
-
-  /**
-   * Returns `/` on Unix-like and disk labels on Windows.
-   */
-  suspend fun getRootDirectories(): Collection<IjentPath.Absolute>
 
   /**
    * A user may have no home directory on Unix-like systems, for example, the user `nobody`.
@@ -65,34 +50,15 @@ interface IjentFileSystemApi {
   suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean = true,
-  ): ListDirectoryWithAttrs
+  ): ListDirectoryWithAttrs<out IjentFileInfo>
 
   @Suppress("unused")
-  sealed interface ListDirectoryWithAttrs : IjentFsResult {
-    interface Ok : ListDirectoryWithAttrs, IjentFsResult.Ok<Collection<FileInfo>>
-    sealed interface DoesNotExist : ListDirectoryWithAttrs, IjentFsResult.Error
-    sealed interface PermissionDenied : ListDirectoryWithAttrs, IjentFsResult.Error
-    sealed interface NotDirectory : ListDirectoryWithAttrs, IjentFsResult.Error
-    sealed interface NotFile : ListDirectoryWithAttrs, IjentFsResult.Error
-  }
-
-  // TODO Interface
-  data class FileInfo(
-    val path: IjentPath.Absolute,
-    val fileType: Type,
-    //val permissions: Permissions,  // TODO There are too many options for a good API. Let's add them as soon as they're needed.
-  ) {
-    sealed interface Type {
-      data object Directory : Type
-      data object Regular : Type
-
-      sealed interface Symlink : Type {
-        data object Unresolved : Symlink
-        data class Resolved(val result: IjentPath.Absolute) : Symlink
-      }
-
-      data object Other : Type
-    }
+  sealed interface ListDirectoryWithAttrs<FI : IjentFileInfo> : IjentFsResult {
+    interface Ok<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Ok<Collection<FI>>
+    sealed interface DoesNotExist<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
+    sealed interface PermissionDenied<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
+    sealed interface NotDirectory<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
+    sealed interface NotFile<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
   }
 
   /**
@@ -109,16 +75,16 @@ interface IjentFileSystemApi {
   }
 
   /**
-   * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [FileInfo.fileType] if [path] points on a symlink.
+   * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [IjentFileInfo.fileType] if [path] points on a symlink.
    */
-  suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): Stat
+  suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): Stat<out IjentFileInfo>
 
-  sealed interface Stat : IjentFsResult {
-    interface Ok : Stat, IjentFsResult.Ok<FileInfo>
-    sealed interface DoesNotExist : Stat, IjentFsResult.Error
-    sealed interface PermissionDenied : Stat, IjentFsResult.Error
-    sealed interface NotDirectory : Stat, IjentFsResult.Error
-    sealed interface NotFile : Stat, IjentFsResult.Error
+  sealed interface Stat<FI : IjentFileInfo> : IjentFsResult {
+    interface Ok<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Ok<FI>
+    sealed interface DoesNotExist<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Error
+    sealed interface PermissionDenied<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Error
+    sealed interface NotDirectory<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Error
+    sealed interface NotFile<FI : IjentFileInfo> : Stat<FI>, IjentFsResult.Error
   }
 
   /**
@@ -237,4 +203,24 @@ sealed interface IjentOpenedFile {
       }
     }
   }
+}
+
+interface IjentFileSystemPosixApi : IjentFileSystemApi {
+  override suspend fun listDirectoryWithAttrs(
+    path: IjentPath.Absolute,
+    resolveSymlinks: Boolean,
+  ): IjentFileSystemApi.ListDirectoryWithAttrs<IjentPosixFileInfo>
+
+  override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFileSystemApi.Stat<IjentPosixFileInfo>
+}
+
+interface IjentFileSystemWindowsApi : IjentFileSystemApi {
+  suspend fun getRootDirectories(): Collection<IjentPath.Absolute>
+
+  override suspend fun listDirectoryWithAttrs(
+    path: IjentPath.Absolute,
+    resolveSymlinks: Boolean,
+  ): IjentFileSystemApi.ListDirectoryWithAttrs<IjentWindowsFileInfo>
+
+  override suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): IjentFileSystemApi.Stat<IjentWindowsFileInfo>
 }

@@ -4,7 +4,7 @@ fun test () {
     val int: Int = result
 }
 
-private fun String.i(nullable: String?): Int = nullable.run {
+private fun i(nullable: String?): Int = nullable.run {
     this!!
     toInt()
 }

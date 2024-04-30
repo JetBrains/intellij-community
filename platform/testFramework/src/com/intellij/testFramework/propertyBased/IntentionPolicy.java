@@ -6,14 +6,19 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModDisplayMessage;
+import com.intellij.modcommand.ModUpdateSystemOptions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class IntentionPolicy {
 
@@ -108,5 +113,21 @@ public class IntentionPolicy {
    */
   public boolean shouldTolerateIntroducedError(@NotNull HighlightInfo info) {
     return false;
+  }
+
+  /**
+   * @param modCommand command to validate (already unpacked, not composite)
+   * @return non-null message if the command should be skipped, null if it's ok to execute such a command
+   */
+  @Nullable
+  public String validateCommand(@NotNull ModCommand modCommand) {
+    // TODO: debug commands that do nothing. This should not be generally the case
+    if (modCommand instanceof ModDisplayMessage message && message.kind() == ModDisplayMessage.MessageKind.ERROR) {
+      return "Error: " + message.messageText();
+    }
+    if (modCommand instanceof ModUpdateSystemOptions option) {
+      return "Updates "+option.options().stream().map(opt -> opt.bindId()).collect(Collectors.joining("; "));
+    }
+    return null;
   }
 }

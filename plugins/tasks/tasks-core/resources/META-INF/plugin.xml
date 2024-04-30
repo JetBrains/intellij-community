@@ -1,6 +1,3 @@
-<!--
-  ~ Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-  -->
 <idea-plugin>
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
@@ -16,8 +13,10 @@
 ]]></description>
   <vendor>JetBrains</vendor>
 
-  <!--fake dependency for Web IDE-->
-  <depends>com.intellij.modules.xml</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.xml" />
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
   <depends optional="true" config-file="java-contexts.xml">com.intellij.modules.java</depends>
   <!--
     Optional dependency on XPath plugin for syntax highlighting in GenericRepository configuration dialog
@@ -27,9 +26,8 @@
   <depends optional="true">XPathView</depends>
 
   <actions resource-bundle="messages.TaskBundle">
-
     <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction">
-      <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
+      <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarVCSGroup" anchor="after"/>
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
     </action>
 

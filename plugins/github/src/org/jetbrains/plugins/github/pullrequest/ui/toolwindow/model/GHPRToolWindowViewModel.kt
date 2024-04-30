@@ -12,7 +12,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,8 +35,7 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
   private val settings: GithubPullRequestsProjectUISettings
     get() = GithubPullRequestsProjectUISettings.getInstance(project)
 
-  //TODO: switch to Default dispatcher
-  private val cs = parentCs.childScope(Dispatchers.Main)
+  private val cs = parentCs.childScope()
 
   val isAvailable: StateFlow<Boolean> = repositoriesManager.knownRepositoriesState.mapState(cs) {
     it.isNotEmpty()

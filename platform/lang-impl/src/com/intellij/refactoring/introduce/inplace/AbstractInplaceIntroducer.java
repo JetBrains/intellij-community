@@ -194,7 +194,8 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           setElementToRename(variable);
           updateTitle(getVariable());
           started = super.performInplaceRefactoring(nameSuggestions);
-          if (started) {
+          TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
+          if (started && state != null && !state.isFinished()) {
             myDocumentAdapter = new DocumentListener() {
               @Override
               public void documentChanged(@NotNull DocumentEvent e) {

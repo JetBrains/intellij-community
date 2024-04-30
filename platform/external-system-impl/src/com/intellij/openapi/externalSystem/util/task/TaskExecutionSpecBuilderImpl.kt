@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.util.task
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
@@ -17,6 +18,7 @@ class TaskExecutionSpecBuilderImpl(
   override val settings: ExternalSystemTaskExecutionSettings,
   var progressExecutionMode: ProgressExecutionMode = ProgressExecutionMode.IN_BACKGROUND_ASYNC,
   var callback: TaskCallback? = null,
+  var listener: ExternalSystemTaskNotificationListener? = null,
   var userData: UserDataHolderBase? = null,
   var activateToolWindowBeforeRun: Boolean = false,
   var activateToolWindowOnFailure: Boolean = true
@@ -29,6 +31,11 @@ class TaskExecutionSpecBuilderImpl(
 
   override fun withCallback(callback: TaskCallback?): TaskExecutionSpecBuilder {
     this.callback = callback
+    return this
+  }
+
+  override fun withListener(listener: ExternalSystemTaskNotificationListener?): TaskExecutionSpecBuilder {
+    this.listener = listener
     return this
   }
 
@@ -55,6 +62,7 @@ class TaskExecutionSpecBuilderImpl(
       settings = settings,
       progressExecutionMode = progressExecutionMode,
       callback = callback,
+      listener = listener,
       userData = userData,
       activateToolWindowBeforeRun = activateToolWindowBeforeRun,
       activateToolWindowOnFailure = activateToolWindowOnFailure

@@ -56,6 +56,7 @@ f:com.intellij.UtilBundle
 - sf:captureThreadContext(java.util.function.Supplier):java.util.function.Supplier
 - sf:currentThreadContext():kotlin.coroutines.CoroutineContext
 - sf:currentThreadContextOrNull():kotlin.coroutines.CoroutineContext
+- *sf:escapeCancellation(kotlinx.coroutines.Job,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:getContextSkeleton(kotlin.coroutines.CoroutineContext):java.util.Set
 - sf:installThreadContext(kotlin.coroutines.CoroutineContext,Z):com.intellij.openapi.application.AccessToken
 - bs:installThreadContext$default(kotlin.coroutines.CoroutineContext,Z,I,java.lang.Object):com.intellij.openapi.application.AccessToken

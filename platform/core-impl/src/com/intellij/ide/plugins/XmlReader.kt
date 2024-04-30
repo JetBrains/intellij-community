@@ -44,7 +44,7 @@ private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 fun readModuleDescriptor(
   input: InputStream,
   readContext: ReadModuleContext,
-  pathResolver: PathResolver,
+  pathResolver: PathResolver?,
   dataLoader: DataLoader,
   includeBase: String?,
   readInto: RawPluginDescriptor?,
@@ -82,15 +82,14 @@ fun readModuleDescriptor(
 internal fun readModuleDescriptor(
   reader: XMLStreamReader2,
   readContext: ReadModuleContext,
-  pathResolver: PathResolver,
+  pathResolver: PathResolver?,
   dataLoader: DataLoader,
   includeBase: String?,
   readInto: RawPluginDescriptor?,
 ): RawPluginDescriptor {
   try {
     if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
-      throw XMLStreamException("State ${XMLStreamConstants.START_DOCUMENT} is expected, " +
-                               "but current state is ${getEventTypeString(reader.eventType)}", reader.location)
+      throw XMLStreamException("State ${XMLStreamConstants.START_DOCUMENT} is expected, but current state is ${getEventTypeString(reader.eventType)}", reader.location)
     }
 
     val descriptor = readInto ?: RawPluginDescriptor()
@@ -190,13 +189,15 @@ private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUG
   "org.jetbrains.compose.desktop.ide",
 ))
 
-private fun readRootElementChild(reader: XMLStreamReader2,
-                                 descriptor: RawPluginDescriptor,
-                                 localName: String,
-                                 readContext: ReadModuleContext,
-                                 pathResolver: PathResolver,
-                                 dataLoader: DataLoader,
-                                 includeBase: String?) {
+private fun readRootElementChild(
+  reader: XMLStreamReader2,
+  descriptor: RawPluginDescriptor,
+  localName: String,
+  readContext: ReadModuleContext,
+  pathResolver: PathResolver?,
+  dataLoader: DataLoader,
+  includeBase: String?,
+) {
   when (localName) {
     "id" -> {
       if (descriptor.id == null) {
@@ -270,12 +271,14 @@ private fun readRootElementChild(reader: XMLStreamReader2,
     "projectListeners" -> readListeners(reader, descriptor.projectContainerDescriptor)
 
     "extensions" -> readExtensions(reader, descriptor, readContext.interner)
-    "extensionPoints" -> readExtensionPoints(reader = reader,
-                                             descriptor = descriptor,
-                                             readContext = readContext,
-                                             pathResolver = pathResolver,
-                                             dataLoader = dataLoader,
-                                             includeBase = includeBase)
+    "extensionPoints" -> readExtensionPoints(
+      reader = reader,
+      descriptor = descriptor,
+      readContext = readContext,
+      pathResolver = pathResolver,
+      dataLoader = dataLoader,
+      includeBase = includeBase,
+    )
 
     "content" -> readContent(reader = reader, descriptor = descriptor, readContext = readContext)
     "dependencies" -> readDependencies(reader = reader, descriptor = descriptor, readContext = readContext)
@@ -284,13 +287,15 @@ private fun readRootElementChild(reader: XMLStreamReader2,
 
     "actions" -> readActions(descriptor, reader, readContext)
 
-    "include" -> readInclude(reader = reader,
-                             readInto = descriptor,
-                             readContext = readContext,
-                             pathResolver = pathResolver,
-                             dataLoader = dataLoader,
-                             includeBase = includeBase,
-                             allowedPointer = defaultXPointerValue)
+    "include" -> readInclude(
+      reader = reader,
+      readInto = descriptor,
+      readContext = readContext,
+      pathResolver = pathResolver ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location),
+      dataLoader = dataLoader,
+      includeBase = includeBase,
+      allowedPointer = defaultXPointerValue,
+    )
     "helpset" -> {
       // deprecated and not used element
       reader.skipElement()
@@ -306,11 +311,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
   }
 
   if (!reader.isEndElement) {
-    throw XMLStreamException("Unexpected state (" +
-                             "expected=END_ELEMENT, " +
-                             "actual=${getEventTypeString(reader.eventType)}, " +
-                             "lastProcessedElement=$localName" +
-                             ")", reader.location)
+    throw XMLStreamException("Unexpected state (expected=END_ELEMENT, actual=${getEventTypeString(reader.eventType)}, lastProcessedElement=$localName)", reader.location)
   }
 }
 
@@ -508,23 +509,27 @@ private fun checkXInclude(elementName: String, reader: XMLStreamReader2): Boolea
 }
 
 @Suppress("DuplicatedCode")
-private fun readExtensionPoints(reader: XMLStreamReader2,
-                                descriptor: RawPluginDescriptor,
-                                readContext: ReadModuleContext,
-                                pathResolver: PathResolver,
-                                dataLoader: DataLoader,
-                                includeBase: String?) {
+private fun readExtensionPoints(
+  reader: XMLStreamReader2,
+  descriptor: RawPluginDescriptor,
+  readContext: ReadModuleContext,
+  pathResolver: PathResolver?,
+  dataLoader: DataLoader,
+  includeBase: String?,
+) {
   reader.consumeChildElements { elementName ->
     if (elementName != "extensionPoint") {
       if (elementName == "include" && reader.namespaceURI == "http://www.w3.org/2001/XInclude") {
         val partial = RawPluginDescriptor()
-        readInclude(reader = reader,
-                    readInto = partial,
-                    readContext = readContext,
-                    pathResolver = pathResolver,
-                    dataLoader = dataLoader,
-                    includeBase = includeBase,
-                    allowedPointer = "xpointer(/idea-plugin/extensionPoints/*)")
+        readInclude(
+          reader = reader,
+          readInto = partial,
+          readContext = readContext,
+          pathResolver = pathResolver ?: throw XMLStreamException("include is not supported because no pathResolver", reader.location),
+          dataLoader = dataLoader,
+          includeBase = includeBase,
+          allowedPointer = "xpointer(/idea-plugin/extensionPoints/*)",
+        )
         LOG.warn("`include` is supported only on a root level (${reader.location})")
         applyPartialContainer(partial, descriptor) { it.appContainerDescriptor }
         applyPartialContainer(partial, descriptor) { it.projectContainerDescriptor }
@@ -910,11 +915,7 @@ private fun readInclude(reader: XMLStreamReader2,
 
   var readError: IOException? = null
   val read = try {
-    pathResolver.loadXIncludeReference(dataLoader = dataLoader,
-                                       base = includeBase,
-                                       relativePath = path,
-                                       readContext = readContext,
-                                       readInto = readInto)
+    pathResolver.loadXIncludeReference(dataLoader = dataLoader, base = includeBase, relativePath = path, readContext = readContext, readInto = readInto)
   }
   catch (e: IOException) {
     readError = e

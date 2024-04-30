@@ -1,5 +1,7 @@
+// FIX: Replace 'if' expression with safe access expression
 // WITH_STDLIB
 // HIGHLIGHT: INFORMATION
+// IGNORE_K2
 fun maybeFoo(): String? {
     return "foo"
 }

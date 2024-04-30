@@ -177,7 +177,8 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         PsiExpression operand = cast.getOperand();
         if (operand == null) return;
         PsiType castType = cast.getCastType().getType();
-        if (castType instanceof PsiPrimitiveType) return;
+        if (castType instanceof PsiPrimitiveType &&
+            !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, operand)) return;
         if (!variable.getType().equals(castType)) return;
         PsiType operandType = operand.getType();
         if (operandType == null || castType.isAssignableFrom(operandType)) return;
@@ -431,7 +432,8 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
     PsiExpression operand = expression.getOperand();
     if (operand == null) return null;
     PsiType castType = castTypeElement.getType();
-    if (castType instanceof PsiPrimitiveType) return null;
+    if (castType instanceof PsiPrimitiveType &&
+        !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, operand)) return null;
     PsiType operandType = operand.getType();
     if (operandType == null || castType.isAssignableFrom(operandType)) return null;
     PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(expression, null);

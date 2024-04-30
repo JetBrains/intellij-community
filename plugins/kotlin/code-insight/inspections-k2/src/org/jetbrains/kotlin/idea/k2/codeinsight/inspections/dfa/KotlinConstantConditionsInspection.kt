@@ -518,7 +518,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
         context(KtAnalysisSession)
         private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
-            // TODO: return x && y.let {return...}
             var parent = expression.parent
             if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
                 // Will be reported for parent qualified expression

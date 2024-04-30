@@ -64,12 +64,12 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   public static final boolean FSYNC_ON_FLUSH_BY_DEFAULT = getBooleanProperty("MMappedFileStorage.FSYNC_BY_DEFAULT_ON_FLUSH", false);
 
 
-  //Explicit 'unmap' vs rely on JVM which will unmap pages eventually, as they are collected by GC?
+  //Call 'unmap' explicitly or rely on JVM to unmap pages eventually, as mapped ByteBuffers are collected by GC?
   //  Explicit unmap allows to 'clean after yourself', but carries a risk of JVM crash if somebody still tries
   //  to access unmapped pages.
-  //  Current take:
-  //  1) .close() by default rely on GC
-  //  2) .close(unmap=true) method closes AND unmap explicitly if needed (synonym: .closeAndUnsafelyUnmap())
+  //  Current approach is:
+  //  1) .close() method by default doesn't unmap, and rely on GC (i.e. UNMAP_ON_CLOSE_KIND='never')
+  //  2) .close(unmap=true) method closes AND unmaps explicitly if needed (public API: .closeAndUnsafelyUnmap())
   //  3) .closeAndClean() method always unmaps buffers explicitly, since on Windows it is impossible to delete
   //     (=clean) the files that are currently mapped, and GC is proved unreliable for that task.
 

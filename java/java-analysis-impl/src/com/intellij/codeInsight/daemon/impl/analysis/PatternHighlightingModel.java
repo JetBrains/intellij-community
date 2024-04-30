@@ -12,6 +12,8 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.*;
@@ -66,12 +68,29 @@ final class PatternHighlightingModel {
       PsiType recordComponentType = recordComponents[i].getType();
       PsiType substitutedRecordComponentType = substitutor.substitute(recordComponentType);
       PsiType deconstructionComponentType = JavaPsiPatternUtil.getPatternType(deconstructionComponent);
-      if (!isApplicable(substitutedRecordComponentType, deconstructionComponentType)) {
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(deconstructionPattern);
+      if (!isApplicable(substitutedRecordComponentType, deconstructionComponentType, languageLevel)) {
         hasMismatchedPattern = true;
         if (recordComponents.length == deconstructionComponents.length) {
-          HighlightInfo.Builder
+          HighlightInfo.Builder builder;
+          if ((substitutedRecordComponentType instanceof PsiPrimitiveType || deconstructionComponentType instanceof PsiPrimitiveType) &&
+              JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
+            String message = JavaErrorBundle.message("inconvertible.type.cast",
+                                                     JavaHighlightUtil.formatType(substitutedRecordComponentType), JavaHighlightUtil
+                                                       .formatType(deconstructionComponentType));
+            builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(deconstructionComponent)
+              .descriptionAndTooltip(message);
+          }
+          else {
             builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
                                                                         deconstructionComponent.getTextRange(), 0);
+          }
+
+          if (isApplicable(substitutedRecordComponentType, deconstructionComponentType,
+                           JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel())) {
+             HighlightUtil.registerIncreaseLanguageLevelFixes(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, builder);
+          }
           errorSink.accept(builder);
           reported = true;
         }
@@ -121,8 +140,9 @@ final class PatternHighlightingModel {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(message);
   }
 
-  private static boolean isApplicable(@NotNull PsiType recordType, @Nullable PsiType patternType) {
-    if (recordType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) {
+  private static boolean isApplicable(@NotNull PsiType recordType, @Nullable PsiType patternType, @NotNull LanguageLevel languageLevel) {
+    if ((recordType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
+        !JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
       return recordType.equals(patternType);
     }
     return patternType != null && TypeConversionUtil.areTypesConvertible(recordType, patternType);
@@ -237,7 +257,7 @@ final class PatternHighlightingModel {
         PsiType selectorType = cacheContext.mySelectorType;
         HashMap<ReduceResultCacheContext, ReduceResult> cache = new HashMap<>();
         LoopReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns),
-                                               (descriptionPatterns, type) -> coverSelectorType(descriptionPatterns, selectorType), cache);
+                                               (descriptionPatterns, type) -> coverSelectorType(context, descriptionPatterns, selectorType), cache);
         if (result.stopped()) {
           return RecordExhaustivenessResult.createExhaustiveResult();
         }
@@ -371,7 +391,7 @@ final class PatternHighlightingModel {
         Set<PsiType> existedTypes = StreamEx.of(typeTestDescriptions).map(t -> t.type()).toSet();
         Set<PsiClass> visitedCovered =
           findMissedClasses(mySelectorType, new ArrayList<>(typeTestDescriptions), List.of(), context).coveredClasses();
-        boolean changed = addNewClasses(mySelectorType, visitedCovered, existedTypes, toAdd);
+      boolean changed = addNewClasses(context, mySelectorType, visitedCovered, existedTypes, toAdd);
         if (!changed) {
           return new ReduceResult(currentPatterns, false);
         }
@@ -541,7 +561,7 @@ final class PatternHighlightingModel {
           for (int i = 0; i < recordComponentTypes.size(); i++) {
             PsiType recordComponentType = recordComponentTypes.get(i);
             PsiType descriptionComponentType = descriptionTypes.get(i);
-            if (!SwitchBlockHighlightingModel.oneOfUnconditional(descriptionComponentType, recordComponentType)) {
+            if (!SwitchBlockHighlightingModel.cover(context, descriptionComponentType, recordComponentType)) {
               allCovered = false;
               break;
             }
@@ -634,7 +654,8 @@ final class PatternHighlightingModel {
     return result;
   }
 
-  private static boolean addNewClasses(@NotNull PsiType selectorType,
+  private static boolean addNewClasses(@NotNull PsiElement context,
+                                       @NotNull PsiType selectorType,
                                        @NotNull Set<PsiClass> visitedCovered,
                                        @NotNull Set<PsiType> existedTypes,
                                        @NotNull Collection<PatternTypeTestDescription> toAdd) {
@@ -642,12 +663,12 @@ final class PatternHighlightingModel {
     for (PsiClass covered : visitedCovered) {
       PsiClassType classType = TypeUtils.getType(covered);
       if (!existedTypes.contains(classType)) {
-        if (SwitchBlockHighlightingModel.oneOfUnconditional(selectorType, classType)) {
+        if (SwitchBlockHighlightingModel.cover(context, selectorType, classType)) {
           toAdd.add(new PatternTypeTestDescription(classType));
           changed = true;
         }
         //find something upper. let's change to selectorType
-        if (SwitchBlockHighlightingModel.oneOfUnconditional(classType, selectorType)) {
+        if (SwitchBlockHighlightingModel.cover(context, classType, selectorType)) {
           toAdd.add(new PatternTypeTestDescription(selectorType));
           changed = true;
           break;
@@ -756,7 +777,7 @@ final class PatternHighlightingModel {
           Set<PsiClass> sealedResult =
             findMissedClasses(componentType, nestedTypeDescriptions, new ArrayList<>(), context).missedClasses();
           if (!sealedResult.isEmpty()) {
-            addNewClasses(componentType, sealedResult, existedTypes, missedComponentTypeDescription);
+            addNewClasses(context, componentType, sealedResult, existedTypes, missedComponentTypeDescription);
           }
           else {
             combinedPatterns.removeAll(setWithOneDifferentElement);
@@ -768,7 +789,7 @@ final class PatternHighlightingModel {
         Collection<PatternDeconstructionDescription> newPatterns =
           createPatternsFrom(i, missedComponentTypeDescription, setWithOneDifferentElement.iterator().next());
         for (PatternDeconstructionDescription pattern : newPatterns) {
-          if (ContainerUtil.exists(filtered, existedPattern -> oneOfUnconditional(existedPattern, pattern))) {
+          if (ContainerUtil.exists(filtered, existedPattern -> oneOfUnconditional(context, existedPattern, pattern))) {
             continue;
           }
           missingRecordPatternsForThisIteration.add(pattern);
@@ -786,7 +807,7 @@ final class PatternHighlightingModel {
       }
     }
     LoopReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache);
-    return coverSelectorType(reduceResult.patterns(), selectorType) ? new ArrayList<>(missingRecordPatterns) : null;
+    return coverSelectorType(context, reduceResult.patterns(), selectorType) ? new ArrayList<>(missingRecordPatterns) : null;
   }
 
   @NotNull
@@ -826,7 +847,8 @@ final class PatternHighlightingModel {
     return filtered;
   }
 
-  private static boolean oneOfUnconditional(@NotNull PatternDeconstructionDescription whoType,
+  private static boolean oneOfUnconditional(@NotNull PsiElement context,
+                                            @NotNull PatternDeconstructionDescription whoType,
                                             @NotNull PatternDeconstructionDescription overWhom) {
     if (!whoType.type().equals(overWhom.type())) {
       return false;
@@ -835,17 +857,19 @@ final class PatternHighlightingModel {
       return false;
     }
     for (int i = 0; i < whoType.list().size(); i++) {
-      if (!SwitchBlockHighlightingModel.oneOfUnconditional(whoType.list().get(i).type(), overWhom.list().get(i).type())) {
+      if (!SwitchBlockHighlightingModel.cover(context, whoType.list().get(i).type(), overWhom.list().get(i).type())) {
         return false;
       }
     }
     return true;
   }
 
-  private static boolean coverSelectorType(@NotNull Set<? extends PatternDescription> patterns,
+  private static boolean coverSelectorType(@NotNull PsiElement context,
+                                           @NotNull Set<? extends PatternDescription> patterns,
                                            @NotNull PsiType selectorType) {
     for (PatternDescription pattern : patterns) {
-      if (pattern instanceof PatternTypeTestDescription && SwitchBlockHighlightingModel.oneOfUnconditional(pattern.type(), selectorType)) {
+      if (pattern instanceof PatternTypeTestDescription &&
+          SwitchBlockHighlightingModel.cover(context, pattern.type(), selectorType)) {
         return true;
       }
     }
@@ -921,8 +945,8 @@ final class PatternHighlightingModel {
   }
 
   static class RecordExhaustivenessResult {
-    private boolean isExhaustive;
-    private boolean canBeAdded;
+    private final boolean isExhaustive;
+    private final boolean canBeAdded;
 
     final Map<PsiType, Set<List<PsiType>>> missedBranchesByType = new HashMap<>();
 

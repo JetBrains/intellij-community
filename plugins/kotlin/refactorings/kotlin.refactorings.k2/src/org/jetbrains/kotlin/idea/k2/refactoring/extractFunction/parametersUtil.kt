@@ -203,6 +203,12 @@ private fun ExtractionData.registerParameter(
         extensionReceiver as? KtSmartCastedReceiverValue ?: extensionReceiver as? KtImplicitReceiverValue ?: dispatchReceiver
     val receiverSymbol =
         (((receiverToExtract as? KtSmartCastedReceiverValue)?.original ?: receiverToExtract) as? KtImplicitReceiverValue)?.symbol
+
+    if (receiverSymbol?.psi?.isInsideOf(physicalElements) == true) {
+        //receiver is still available
+        return
+    }
+
     val thisSymbol = (receiverSymbol as? KtReceiverParameterSymbol)?.type?.expandedClassSymbol ?: receiverSymbol
     val hasThisReceiver = thisSymbol != null
     val thisExpr = refInfo.refExpr.parent as? KtThisExpression

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
@@ -99,14 +99,12 @@ class DocumentTracker(
     handlers.remove(handler)
   }
 
-
-  val blocks: List<Block> get() = tracker.blocks
-
+  val blocks: List<Block>
+    get() = tracker.blocks
 
   fun <T> readLock(task: () -> T): T = LOCK.read(task)
   fun <T> writeLock(task: () -> T): T = LOCK.write(task)
   val isLockHeldByCurrentThread: Boolean get() = LOCK.isHeldByCurrentThread
-
 
   fun isFrozen(): Boolean {
     LOCK.read {
@@ -590,9 +588,8 @@ class DocumentTracker(
 }
 
 
-private class LineTracker(private val handlers: List<Handler>,
-                          originalChanges: List<Range>) {
-  var blocks: List<Block> = originalChanges.map { Block(it, false, false) }
+private class LineTracker(private val handlers: List<Handler>, originalChanges: List<Range>) {
+  var blocks: List<Block> = originalChanges.map { Block(range = it, isDirty = false, isTooBig = false) }
     private set
 
   var isDirty: Boolean = false

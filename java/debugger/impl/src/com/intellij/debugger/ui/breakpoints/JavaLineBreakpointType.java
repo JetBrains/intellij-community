@@ -357,8 +357,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
              // 2. User adds lambda to the line.
              // 3. Just for the simplicity of UI we ignore correctness and match this "all positions" breakpoint with a "line" breakpoint variant.
              props.isAllPositions() && JavaLineBreakpointProperties.isLinePosition(exactJavaVariant.myEncodedInlinePosition);
-
-    } else {
+    }
+    else {
       // variant is a default line breakpoint variant or explicit "all" variant
       return props.isLinePosition();
     }

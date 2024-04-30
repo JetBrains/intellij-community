@@ -1,5 +1,5 @@
 class Check {
     fun a() {
-        val d = "" as Int
+        val d = ("") as Int
     }
 }

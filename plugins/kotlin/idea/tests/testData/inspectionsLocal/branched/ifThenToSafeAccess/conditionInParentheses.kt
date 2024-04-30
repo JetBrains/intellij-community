@@ -1,3 +1,6 @@
+// HIGHLIGHT: INFORMATION
+// FIX: Replace 'if' expression with safe access expression
+// FIR_COMPARISON
 class Some {
     fun bar() {}
 }

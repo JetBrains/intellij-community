@@ -4,6 +4,8 @@ package com.intellij.ide.util.treeView
 
 import com.intellij.ui.*
 import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.ReplaceableIcon
 import com.intellij.util.ui.GraphicsUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
@@ -60,8 +62,10 @@ internal fun getLoadingIcon(iconData: CachedIconPresentation?): Icon? {
   }
 }
 
-private class LoadingIcon(private val delegate: Icon) : Icon, RetrievableIcon {
+private class LoadingIcon(private val delegate: Icon) : Icon, RetrievableIcon, ReplaceableIcon {
   override fun retrieveIcon(): Icon = delegate
+
+  override fun replaceBy(replacer: IconReplacer): Icon = LoadingIcon(replacer.replaceIcon(delegate))
 
   override fun getIconWidth(): Int = delegate.iconWidth
 

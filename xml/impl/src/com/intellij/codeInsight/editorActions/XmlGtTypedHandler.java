@@ -122,7 +122,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       }
 
       while(element instanceof PsiWhiteSpace || element instanceof OuterLanguageElement) element = element.getPrevSibling();
-      if (element instanceof XmlDocument) {   // hack for closing tags in RHTML
+      if (element instanceof XmlDocument) {   // hack for closing tags in ERB
         element = element.getLastChild();
       }
       if (element == null) return Result.CONTINUE;

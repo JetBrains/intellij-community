@@ -58,9 +58,12 @@ class JupyterToolbar(actionGroup: ActionGroup, target: JComponent, place: String
 
   fun getRespectiveLineNumberInEditor(editor: Editor): Int? {
     val point = SwingUtilities.convertPoint(this, 0, this.height * 2, editor.contentComponent)
-    return point.y
-      .takeIf { it >= 0 }
-      ?.let { editor.xyToLogicalPosition(point).line }
+    val documentLineCount = editor.document.lineCount
+    var prospectiveLineNumber = point.y
+                                  .takeIf { it >= 0 }
+                                  ?.let { editor.xyToLogicalPosition(point).line } ?: return null
+    if (prospectiveLineNumber >= documentLineCount) { prospectiveLineNumber = documentLineCount - 1 }
+    return prospectiveLineNumber
   }
 
   companion object {

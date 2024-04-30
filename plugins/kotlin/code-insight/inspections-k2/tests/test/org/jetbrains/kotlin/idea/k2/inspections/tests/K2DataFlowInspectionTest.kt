@@ -28,6 +28,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     }
     fun testAnyType() = doTest()
     fun testArrays() = doTest()
+    fun testAssertApply() = doTest()
     fun testBoolean() = doTest()
     fun testBooleanConst() = doTest()
     fun testBoxedInt() = doTest()
@@ -37,6 +38,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testCastGenericMethodReturn() = doTest()
     fun testClassRef() = doTest()
     fun testCollectionConstructors() = doTest()
+    fun testCompareInLoop() = doTest()
     fun testComparison() = doTest()
     fun testComparisonNoValues() = doTest(false)
     fun testConstantWithDifferentType() = doTest()
@@ -59,6 +61,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testJavaType() = doTest()
     fun testLambda() = doTest()
     fun testLanguageConstructs() = doTest()
+    fun testLetNonLocalReturn() = doTest()
     fun testList() = doTest()
     fun testListApply() = doTest()
     fun testMapEmpty() = doTest()

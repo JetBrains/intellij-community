@@ -1124,6 +1124,7 @@ f:com.intellij.execution.impl.RunConfigurationBeforeRunProvider$RunConfigurableB
 - hashCode():I
 - readExternal(org.jdom.Element):V
 - setSettingsWithTarget(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.ExecutionTarget):V
+- toString():java.lang.String
 - writeExternal(org.jdom.Element):V
 com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

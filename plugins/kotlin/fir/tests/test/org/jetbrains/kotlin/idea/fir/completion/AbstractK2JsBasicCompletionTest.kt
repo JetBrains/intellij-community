@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.fir
 
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.completion.test.AbstractJSBasicCompletionTestBase
-import org.jetbrains.kotlin.idea.completion.test.firFileName
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractK2JsBasicCompletionTest : AbstractJSBasicCompletionTestBase() {
@@ -12,12 +12,12 @@ abstract class AbstractK2JsBasicCompletionTest : AbstractJSBasicCompletionTestBa
 
     override fun isFirPlugin(): Boolean = true
 
-    override fun fileName(): String = firFileName(super.fileName(), testDataDirectory)
+    override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, k2Extension = IgnoreTests.FileExtension.FIR)
 
     override fun executeTest(test: () -> Unit) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             super.executeTest(test)
-            IgnoreTests.cleanUpIdenticalFirTestFile(dataFile())
+            IgnoreTests.cleanUpIdenticalK2TestFile(dataFile(), k2Extension = IgnoreTests.FileExtension.FIR)
         }
     }
 

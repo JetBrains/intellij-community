@@ -43,6 +43,8 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
 
     val logColumn: VcsLogColumn<T> = ExternalStatusLogColumn()
 
+    open fun isColumnAvailable(project: Project): Boolean = true
+
     /**
      * Localized column name
      */
@@ -79,6 +81,8 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
       override val isDynamic = true
       override val isResizable = false
 
+      override fun isAvailable(project: Project) = isColumnAvailable(project)
+
       override fun isEnabledByDefault() = isColumnEnabledByDefault
 
       override fun getStubValue(model: GraphTableModel) = getStubStatus()
@@ -108,6 +112,10 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
       override fun getCellController() = ClickController()
 
       private inner class ClickController : VcsLogCellController {
+        override fun shouldSelectCell(row: Int, e: MouseEvent): Boolean {
+          return true
+        }
+
         //todo hand cursor works initially but then stops
         override fun performMouseMove(row: Int, e: MouseEvent): VcsLogCellController.MouseMoveResult {
           val presentation = getStatusPresentation(row)

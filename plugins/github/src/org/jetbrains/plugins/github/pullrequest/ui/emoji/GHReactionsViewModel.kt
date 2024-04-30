@@ -2,13 +2,14 @@
 package org.jetbrains.plugins.github.pullrequest.ui.emoji
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHReaction
@@ -41,12 +42,12 @@ internal class GHReactionViewModelImpl(
     }
   }
 
-  override val reactionsWithInfo: StateFlow<Map<GHReactionContent, ReactionInfo>> = reactionsState.mapState(cs) { data ->
+  override val reactionsWithInfo: StateFlow<Map<GHReactionContent, ReactionInfo>> = reactionsState.map { data ->
     val reactionToUsers = data.groupBy({ it.content }, { it.user })
     reactionToUsers.mapValues { (_, users) ->
       ReactionInfo(users, users.map(GHUser::id).contains(currentUser.id))
     }
-  }
+  }.stateInNow(cs, emptyMap())
 
   override fun toggle(reactionContent: GHReactionContent) {
     cs.launch {

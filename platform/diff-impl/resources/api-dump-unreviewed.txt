@@ -1096,6 +1096,7 @@ c:com.intellij.diff.merge.TextMergeChange
 - pf:myResolved:Z[]
 - pf:myViewer:com.intellij.diff.merge.MergeThreesideViewer
 - <init>(I,Z,com.intellij.diff.fragments.MergeLineFragment,com.intellij.diff.util.MergeConflictType,com.intellij.diff.merge.TextMergeViewer):V
+- p:destroyOperations():V
 - p:getEditor(com.intellij.diff.util.ThreeSide):com.intellij.openapi.editor.Editor
 - getEndLine():I
 - getEndLine(com.intellij.diff.util.ThreeSide):I
@@ -1465,8 +1466,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffRegistry
 - f:resetBadge():V
 - f:setCombinedDiffEnabled(Z):V
 - f:showBadge():Z
-com.intellij.diff.tools.combined.CombinedDiffTool
-- com.intellij.diff.DiffTool
 f:com.intellij.diff.tools.combined.CombinedDiffUIState
 - <init>():V
 - f:getDiffInfoStateFlow():kotlinx.coroutines.flow.StateFlow
@@ -4286,11 +4285,11 @@ a:com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 - doFrozen(java.lang.Runnable):V
 - f:dropBaseRevision():V
 - findRange(com.intellij.openapi.vcs.ex.Range):com.intellij.openapi.vcs.ex.Range
-- pf:getBlockOperations():com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations
-- pf:getBlocks():java.util.List
+- f:getBlockOperations():com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations
+- f:getBlocks():java.util.List
 - f:getDisposable():com.intellij.openapi.Disposable
 - f:getDocument():com.intellij.openapi.editor.Document
-- pf:getDocumentTracker():com.intellij.openapi.vcs.ex.DocumentTracker
+- f:getDocumentTracker():com.intellij.openapi.vcs.ex.DocumentTracker
 - psf:getLOG():com.intellij.openapi.diagnostic.Logger
 - pf:getListeners():com.intellij.util.EventDispatcher
 - getNextRange(I):com.intellij.openapi.vcs.ex.Range
@@ -4304,7 +4303,7 @@ a:com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 - getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 - p:isClearLineModificationFlagOnRollback():Z
 - p:isDetectWhitespaceChangedLines():Z
-- pf:isInitialized():Z
+- f:isInitialized():Z
 - isLineModified(I):Z
 - isOperational():Z
 - isRangeModified(I,I):Z
@@ -4351,8 +4350,6 @@ a:com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations
 - f:getRangesForLines(java.util.BitSet):java.util.List
 - f:isLineModified(I):Z
 - f:isRangeModified(I,I):Z
-- sf:isSelectedByLine(com.intellij.openapi.vcs.ex.BlockI,I):Z
-- sf:isSelectedByLine(com.intellij.openapi.vcs.ex.BlockI,java.util.BitSet):Z
 - pa:toRange(com.intellij.openapi.vcs.ex.BlockI):com.intellij.openapi.vcs.ex.Range
 - f:transferLineFromVcs(I,Z):I
 - f:transferLineToVcs(I,Z):I
@@ -4471,8 +4468,3 @@ com.intellij.openapi.vcs.ex.VisibleRangeMerger$FlagsProvider
 - a:getFlags(com.intellij.openapi.vcs.ex.Range):java.lang.Object
 - a:mergeFlags(java.lang.Object,java.lang.Object):java.lang.Object
 - shouldIgnoreInnerRanges(java.lang.Object):Z
-f:icons.PlatformDiffImplIcons
-- sf:Diff_frame128:javax.swing.Icon
-- sf:Diff_frame32:javax.swing.Icon
-- sf:Diff_frame64:javax.swing.Icon
-- <init>():V

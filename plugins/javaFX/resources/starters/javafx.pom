@@ -5,11 +5,11 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>8.2</gradle.version>
+    <gradle.version>8.7</gradle.version>
     <maven.version>3.8.5</maven.version>
     <maven.wrapper.version>3.1.0</maven.wrapper.version>
-    <junit.version>5.10.0</junit.version>
-    <kotlin.version>1.8.22</kotlin.version>
+    <junit.version>5.10.2</junit.version>
+    <kotlin.version>1.9.23</kotlin.version>
     <javamodularity.version>1.8.12</javamodularity.version>
 
     <!-- OpenJFX release trains -->
@@ -25,10 +25,11 @@
     <fx19.version>19.0.2</fx19.version>
     <fx20.version>20.0.1</fx20.version>
     <fx21.version>21</fx21.version>
-    <fx22.version>22-ea+11</fx22.version>
+    <fx22.version>22.0.1</fx22.version>
 
     <fxgl11.version>11.17</fxgl11.version>
     <fxgl17.version>17.3</fxgl17.version>
+    <fxgl21.version>21.1</fxgl21.version>
   </properties>
 
   <dependencyManagement>
@@ -46,7 +47,7 @@
       <dependency>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
+        <version>3.13.0</version>
       </dependency>
       <dependency>
         <groupId>org.beryx</groupId>
@@ -57,7 +58,7 @@
       <dependency>
         <groupId>org.controlsfx</groupId>
         <artifactId>controlsfx</artifactId>
-        <version>11.1.2</version>
+        <version>11.2.1</version>
       </dependency>
       <dependency>
         <groupId>com.dlsc.formsfx</groupId>
@@ -67,7 +68,7 @@
       <dependency>
         <groupId>net.synedra</groupId>
         <artifactId>validatorfx</artifactId>
-        <version>0.4.0</version>
+        <version>0.5.0</version>
       </dependency>
       <dependency>
         <groupId>org.kordamp.ikonli</groupId>
@@ -82,12 +83,12 @@
       <dependency>
         <groupId>eu.hansolo</groupId>
         <artifactId>tilesfx</artifactId>
-        <version>11.48</version>
+        <version>21.0.3</version>
       </dependency>
       <dependency>
         <groupId>com.github.almasb</groupId>
         <artifactId>fxgl</artifactId>
-        <version>${fxgl17.version}</version>
+        <version>${fxgl21.version}</version>
       </dependency>
 
       <dependency>
@@ -103,7 +104,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>7.8.0</version>
+        <version>7.10.1</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
@@ -118,7 +119,7 @@
       <dependency>
         <groupId>org.apache.groovy</groupId>
         <artifactId>groovy</artifactId>
-        <version>4.0.10</version>
+        <version>4.0.21</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.gmavenplus</groupId>

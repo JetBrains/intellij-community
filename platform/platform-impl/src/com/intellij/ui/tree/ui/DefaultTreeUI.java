@@ -446,6 +446,15 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     super.toggleExpandState(path);
   }
 
+  @ApiStatus.Internal
+  public boolean isLocationInExpandControl(@NotNull Point location) {
+    var tree = getTree();
+    if (tree == null) return false;
+    var path = getClosestPathForLocation(tree, location.x, location.y);
+    if (path == null) return false;
+    return isLocationInExpandControl(path, location.x, location.y);
+  }
+
   @Override
   protected boolean isLocationInExpandControl(TreePath path, int mouseX, int mouseY) {
     JTree tree = getTree();

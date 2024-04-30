@@ -19,8 +19,10 @@ import git4idea.push.GitPushRepoResult
 import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -111,11 +113,17 @@ class GHPRToolWindowProjectViewModel internal constructor(
     }
   }
 
-  fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) =
-    dataContext.filesManager.createAndOpenTimelineFile(id, requestFocus)
+  fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {
+    cs.launch(Dispatchers.Main) {
+      dataContext.filesManager.createAndOpenTimelineFile(id, requestFocus)
+    }
+  }
 
-  fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) =
-    dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
+  fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) {
+    cs.launch(Dispatchers.Main) {
+      dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
+    }
+  }
 
   fun acquireInfoViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRInfoViewModel =
     pullRequestsVms[id].acquireValue(disposable).infoVm

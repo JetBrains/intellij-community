@@ -1,11 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -15,6 +18,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
@@ -224,11 +228,26 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   override suspend fun updateMavenProjects(spec: MavenSyncSpec,
                                            filesToUpdate: List<VirtualFile>,
                                            filesToDelete: List<VirtualFile>) {
-    importMutex.withLock {
-      withContext(tracer.span("updateMavenProjects")) {
-        MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
-        doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
-        MavenLog.LOG.warn("updateMavenProjects finished: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
+
+    val lockSucceed = importMutex.tryLock()
+    try {
+      if (MavenLog.LOG.isDebugEnabled) {
+        MavenLog.LOG.debug("Update maven requested. lock=${lockSucceed}, coroutines dump: ${dumpCoroutines()}")
+      }
+      if (lockSucceed) {
+        withContext(tracer.span("updateMavenProjects")) {
+          MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
+          doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
+          MavenLog.LOG.warn("updateMavenProjects finished: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
+        }
+      }
+      else {
+        MavenLog.LOG.info("Maven import already is in progress")
+      }
+    }
+    finally {
+      if (lockSucceed) {
+        importMutex.unlock()
       }
     }
   }
@@ -313,6 +332,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
     val console = syncConsole
     console.startTransaction()
+    var incompleteState: IncompleteDependenciesService.IncompleteDependenciesAccessToken? = null
     val syncActivity = importActivityStarted(project, MavenUtil.SYSTEM_ID)
     try {
       console.startImport(spec.isExplicit)
@@ -332,19 +352,11 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
           showUntrustedProjectNotification(myProject)
           return result.modules
         }
+        incompleteState = writeAction {
+          project.service<IncompleteDependenciesService>().enterIncompleteState()
+        }
       }
-      val readingResult = readMavenProjectsActivity(syncActivity) { read() }
-
-      fireImportAndResolveScheduled()
-      val projectsToResolve = collectProjectsToResolve(readingResult)
-
-      logDebug("Reading result: ${readingResult.updated.size}, ${readingResult.deleted.size}; to resolve: ${projectsToResolve.size}")
-
-      val result = importModules(spec, syncActivity, projectsToResolve, modelsProvider)
-
-      withContext(tracer.span("notifyMavenProblems")) {
-        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-      }
+      val result = doDynamicSync(syncActivity, read, spec, modelsProvider)
 
       return result
     }
@@ -354,6 +366,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     finally {
       logDebug("Finish update ${project.name}, $spec ${myProject.name}")
+      incompleteState?.let {
+        writeAction { it.finish() }
+      }
       console.finishTransaction(spec.resolveIncrementally())
       syncActivity.finished {
         listOf(ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),
@@ -363,6 +378,25 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncFinished(myProject)
       }
     }
+  }
+
+  private suspend fun MavenProjectsManagerEx.doDynamicSync(syncActivity: StructuredIdeActivity,
+                                                           read: suspend () -> MavenProjectsTreeUpdateResult,
+                                                           spec: MavenSyncSpec,
+                                                           modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    val readingResult = readMavenProjectsActivity(syncActivity) { read() }
+
+    fireImportAndResolveScheduled()
+    val projectsToResolve = collectProjectsToResolve(readingResult)
+
+    logDebug("Reading result: ${readingResult.updated.size}, ${readingResult.deleted.size}; to resolve: ${projectsToResolve.size}")
+
+    val result = importModules(spec, syncActivity, projectsToResolve, modelsProvider)
+
+    withContext(tracer.span("notifyMavenProblems")) {
+      MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+    }
+    return result
   }
 
   private suspend fun importModules(spec: MavenSyncSpec,

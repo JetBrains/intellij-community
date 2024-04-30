@@ -1,11 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
+import com.intellij.execution.wsl.WslPath
 import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardBaseData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.ide.wizard.NewProjectWizardBaseStep
+import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -13,6 +17,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.blockingContext
@@ -25,17 +30,20 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo.isWindows
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.COLUMNS_LARGE
-import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.EmptyIcon
@@ -70,18 +78,20 @@ sealed class ProjectWizardJdkIntent {
   data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String) : ProjectWizardJdkIntent()
 }
 
-fun Row.projectWizardJdkComboBox(
-  context: WizardContext,
+fun NewProjectWizardStep.projectWizardJdkComboBox(
+  row: Row,
   sdkProperty: GraphProperty<Sdk?>,
-  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
-  sdkPropertyId: String,
-  projectJdk: Sdk? = null
+  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>
 ): Cell<ProjectWizardJdkComboBox> {
-  val combo = ProjectWizardJdkComboBox(projectJdk, context.disposable)
+  val baseData = requireNotNull(baseData) {
+    "Expected ${NewProjectWizardBaseStep::class.java.simpleName} in the new project wizard step tree."
+  }
+  val sdkPropertyId = StdModuleTypes.JAVA
+  val selectedJdkProperty = "jdk.selected.${sdkPropertyId.id}"
 
-  val selectedJdkProperty = "jdk.selected.$sdkPropertyId"
+  val combo = ProjectWizardJdkComboBox(context.projectJdk, context.disposable)
 
-  return cell(combo)
+  return row.cell(combo)
     .columns(COLUMNS_LARGE)
     .apply {
       val commentCell = comment(component.comment, 50)
@@ -91,13 +101,17 @@ fun Row.projectWizardJdkComboBox(
     }
     .validationOnApply {
       val intent = it.selectedItem
-      if (intent !is DownloadJdk) { null }
-      else {
-        when (JdkInstaller.getInstance().validateInstallDir(intent.task.plannedHomeDir).first) {
-          null -> error(JavaUiBundle.message("jdk.location.error", intent.task.plannedHomeDir))
-          else -> null
-        }
+
+      if (isWindows) {
+        val wslJDKValidation = validateJdkAndProjectCompatibility(intent, baseData)
+        if (wslJDKValidation != null) return@validationOnApply wslJDKValidation
       }
+
+      if (intent is DownloadJdk) {
+        return@validationOnApply validateInstallDir(intent)
+      }
+
+      null
     }
     .onChanged {
       updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
@@ -123,6 +137,31 @@ fun Row.projectWizardJdkComboBox(
     .apply {
       updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
     }
+}
+
+private fun ValidationInfoBuilder.validateInstallDir(intent: DownloadJdk): ValidationInfo? {
+  return when (JdkInstaller.getInstance().validateInstallDir(intent.task.plannedHomeDir).first) {
+    null -> error(JavaUiBundle.message("jdk.location.error", intent.task.plannedHomeDir))
+    else -> null
+  }
+}
+
+private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any?, baseData: NewProjectWizardBaseData): ValidationInfo? {
+  val path = when (intent) {
+    is DownloadJdk -> intent.task.plannedHomeDir
+    is ExistingJdk -> intent.jdk.homePath
+    else -> null
+  }
+
+  val isProjectWSL = WslPath.isWslUncPath(baseData.path)
+
+  if (path != null && WslPath.isWslUncPath(path) != isProjectWSL) {
+    return when (isProjectWSL) {
+      true -> error(JavaUiBundle.message("jdk.wsl.windows.error"))
+      false -> error(JavaUiBundle.message("jdk.windows.wsl.error"))
+    }
+  }
+  return null
 }
 
 private fun updateGraphProperties(

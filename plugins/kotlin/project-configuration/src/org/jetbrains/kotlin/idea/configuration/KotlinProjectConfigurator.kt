@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 enum class ConfigureKotlinStatus {
@@ -130,6 +131,23 @@ interface KotlinProjectConfigurator {
         scope: DependencyScope
     ) {
         KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.addDependency(module, library.withScope(scope))
+    }
+
+    /**
+     * Whether this configurator supports adding module-wide opt-ins via [addModuleWideOptIn].
+     * If this configurator returns `true`, it must provide a valid implementation for [addModuleWideOptIn].
+     */
+    val canAddModuleWideOptIn: Boolean
+        get() = false
+
+    /**
+     * Adds a module-wide opt-in for the given [annotationFqName] in the given [module].
+     * 
+     * The [compilerArgument] is a convenience for implementations that use raw compiler arguments, It already contains the correct
+     * compiler argument name for the current Kotlin version (`-Xuse-experimental`, `-Xopt-in`, `-opt-in`) and the annotation name.
+     */
+    fun addModuleWideOptIn(module: Module, annotationFqName: FqName, compilerArgument: String) {
+        throw UnsupportedOperationException("Cannot add module-wide opt-in with this configurator (${this::class.qualifiedName})")
     }
 
     companion object {

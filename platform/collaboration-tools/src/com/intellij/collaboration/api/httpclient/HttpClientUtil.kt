@@ -10,10 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
-import java.io.InputStream
-import java.io.Reader
-import java.io.StringReader
-import java.io.Writer
+import java.io.*
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandler
@@ -83,7 +80,12 @@ object HttpClientUtil {
       // See also: java.net.http.HttpResponse.BodySubscribers.ofInputStream
       // and: jdk.internal.net.http.Http1AsyncReceiver.handlePendingDelegate
       // and: https://youtrack.jetbrains.com/issue/IJPL-148688
-      if (it.ready()) it.copyTo(Writer.nullWriter())
+      try {
+        if (it.ready()) it.copyTo(Writer.nullWriter())
+      }
+      catch (ioe: IOException) {
+        // thrown if the stream was closed, so we don't need to do anything more
+      }
 
       result
     }

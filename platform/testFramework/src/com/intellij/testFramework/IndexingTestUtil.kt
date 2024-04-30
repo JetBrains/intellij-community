@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
@@ -103,17 +104,18 @@ class IndexingTestUtil(private val project: Project) {
   private fun shouldWait(): Boolean {
     val dumbService = DumbServiceImpl.getInstance(project)
 
-    dumbService.ensureInitialDumbTaskRequiredForSmartModeSubmitted()
+    dumbService.ensureInitialDumbTaskRequiredForSmartModeSubmitted() // TODO IJPL-578: don't submit
 
-    if (UnindexedFilesScannerExecutor.getInstance(project).isRunning.value || dumbService.isRunning()) {
-      // order is important. DUMB_FULL_INDEX should wait until all the scheduled tasks are finished, but should not wait for smart mode
+    val scannerExecutor = UnindexedFilesScannerExecutor.getInstance(project)
+    if (scannerExecutor.hasQueuedTasks || dumbService.hasScheduledTasks()) {
+      // Scheduled tasks will become a running tasks soon. To avoid a race, we check scheduled tasks first
       return true
     }
-    else if (dumbService.hasScheduledTasks()) {
-      // scheduled tasks will become running tasks (DumbServiceImpl.isRunning == true) after EDT queue is flushed
+    else if (scannerExecutor.isRunning.value || dumbService.isRunning()) {
       return true
     }
     else if (dumbService.isDumb) {
+      // DUMB_FULL_INDEX should wait until all the scheduled tasks are finished, but should not wait for smart mode
       val isEternal = DumbModeTestUtils.isEternalDumbTaskRunning(project)
       if (isEternal) {
         thisLogger().debug("Not waiting, because eternal dumb task is running in the project [$project]")
@@ -130,10 +132,16 @@ class IndexingTestUtil(private val project: Project) {
       thisLogger().debug("suspendUntilIndexesAreReady will be waiting, thread=${Thread.currentThread()}")
     }
 
-    withTimeout(600.seconds) {
-      while (shouldWait()) {
-        delay(1)
+    try {
+      withTimeout(600.seconds) {
+        while (shouldWait()) {
+          delay(1)
+        }
       }
+    }
+    catch (e: TimeoutCancellationException) {
+      thisLogger().warn(ThreadDumper.dumpThreadsToString(), e)
+      throw e
     }
   }
 

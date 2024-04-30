@@ -29,7 +29,7 @@ object IndexStorageLayoutLocator {
    *
    * [customIndexLayoutProviderBean] could be set:
    * 1. Via `-Didea.index.storage.forced.layout=<providerId>`
-   * 2. Via [FileBasedIndexLayoutSettings] -- which loads/stores <providerId> from `{indexRoot}/indices.layout` file.
+   * 2. Via [IndexLayoutPersistentSettings] -- which loads/stores <providerId> from `{indexRoot}/indices.layout` file.
    * This is a way used by UI to switch default provider, and persist chosen provider between sessions.
    */
   @JvmStatic
@@ -64,7 +64,7 @@ object IndexStorageLayoutLocator {
 
   /**
    * IndexLayoutProvider could be customized either by sys('idea.index.storage.forced.layout') property, or
-   * by [FileBasedIndexLayoutSettings] (which is `{indexesRoot}/indices.layout` file), with the first method having a priority.
+   * by [IndexLayoutPersistentSettings] (which is `{indexesRoot}/indices.layout` file), with the first method having a priority.
    *
    * Method throws [IllegalStateException] if custom layout provider configuration exists but not valid (e.g. supplied providerId
    * does not exist). If both configuration methods have no configuration at all (i.e. no system property, no 'indices.layout' file)
@@ -77,7 +77,7 @@ object IndexStorageLayoutLocator {
         return supportedLayoutProviders.find { it.id == forcedLayoutID }
                ?: throw IllegalStateException("Can't find index storage layout for id = $forcedLayoutID")
       }
-      return FileBasedIndexLayoutSettings.getUsedLayout()
+      return IndexLayoutPersistentSettings.getCustomLayout()
     }
 
   /**

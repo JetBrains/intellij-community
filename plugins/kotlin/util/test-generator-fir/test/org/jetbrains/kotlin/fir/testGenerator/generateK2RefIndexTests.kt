@@ -5,9 +5,10 @@ import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractFindUsagesWithCompi
 import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractKotlinCompilerReferenceByReferenceFirTest
 import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractKotlinCompilerReferenceFirTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 
 internal fun MutableTWorkspace.generateK2RefIndexTests() {
-    testGroup("compiler-reference-index/tests.k2", testDataPath = "../../idea/tests/testData") {
+    testGroup("compiler-reference-index/tests.k2", testDataPath = "../../idea/tests/testData", category = FIND_USAGES) {
         testClass<AbstractFindUsagesWithCompilerReferenceIndexFirTest> {
             model("findUsages/kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""), classPerTest = true)
             model("findUsages/java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""), classPerTest = true)
@@ -15,7 +16,7 @@ internal fun MutableTWorkspace.generateK2RefIndexTests() {
         }
     }
 
-    testGroup("compiler-reference-index/tests.k2", testDataPath = "../tests/testData") {
+    testGroup("compiler-reference-index/tests.k2", testDataPath = "../tests/testData", category = FIND_USAGES) {
         testClass<AbstractKotlinCompilerReferenceFirTest> {
             model("compilerIndex", pattern = Patterns.DIRECTORY, classPerTest = true)
         }

@@ -10,6 +10,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
+import com.intellij.util.xml.dom.readXmlAsModel
 import com.jetbrains.plugin.structure.base.utils.toList
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -186,9 +187,12 @@ private suspend fun localizeModules(context: BuildContext, moduleNames: Collecti
   val modules = if (moduleNames.isEmpty()) {
     context.project.modules
   } else {
-    moduleNames.asSequence().mapNotNull { context.findModule(it) }.flatMap { m ->
-      m.dependenciesList.dependencies.asSequence().filterIsInstance<JpsModuleDependency>().mapNotNull { it.module } + sequenceOf(m)
-    }.distinctBy { m -> m.name }.toList()
+    moduleNames.asSequence().mapNotNull { context.findModule(it) }
+      .flatMap { m ->
+        readPluginDependenciesFromXml(context, m).mapNotNull { context.findModule(it) } + sequenceOf(m)
+      }.flatMap { m ->
+        m.dependenciesList.dependencies.asSequence().filterIsInstance<JpsModuleDependency>().mapNotNull { it.module } + sequenceOf(m)
+      }.distinctBy { m -> m.name }.toList()
   }
   spanBuilder("bundle localizations").setAttribute("moduleCount", modules.size.toLong()).useWithScope {
     for (module in modules) {
@@ -1460,6 +1464,24 @@ internal fun collectIncludedPluginModules(
     .flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
 }
 
+internal fun readPluginDependenciesFromXml(context: BuildContext, module: JpsModule) : Sequence<String> {
+  return sequence {
+    context.findFileInModuleSources(module, "META-INF/plugin.xml")?.let { pluginXml ->
+      readXmlAsModel(pluginXml).children("content").let { contents ->
+        contents.forEach { content ->
+          for (depModule in content.children("module")) {
+            val moduleName = depModule.attributes["name"]
+            if (moduleName == null || moduleName.contains('/')) {
+              continue
+            }
+            yield(moduleName)
+          }
+        }
+      }
+    }
+  }
+}
+
 fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
   for (item in context.getDistFiles(os, arch)) {
     val targetFile = newDir.resolve(item.relativePath)
@@ -1507,7 +1529,7 @@ internal fun copyInspectScript(context: BuildContext, distBinDir: Path) {
   }
 }
 
-private fun getLocalizationDir(context: BuildContext): Path? {
+internal fun getLocalizationDir(context: BuildContext): Path? {
   val localizationDir = context.paths.communityHomeDir.parent.resolve("localization")
   if (!Files.exists(localizationDir)) {
     Span.current().addEvent("unable to find 'localization' directory, skip localization bundling")

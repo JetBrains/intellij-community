@@ -30,7 +30,7 @@ interface IjentSessionProvider {
    */
   suspend fun connect(
     ijentId: IjentId,
-    platform: IjentExecFileProvider.SupportedPlatform,
+    platform: IjentPlatform,
     mediator: IjentSessionMediator
   ): IjentApi
 
@@ -55,7 +55,7 @@ sealed class IjentStartupError : RuntimeException {
 }
 
 internal class DefaultIjentSessionProvider : IjentSessionProvider {
-  override suspend fun connect(ijentId: IjentId, platform: IjentExecFileProvider.SupportedPlatform, mediator: IjentSessionMediator): IjentApi {
+  override suspend fun connect(ijentId: IjentId, platform: IjentPlatform, mediator: IjentSessionMediator): IjentApi {
     throw IjentStartupError.MissingImplPlugin()
   }
 }
@@ -76,12 +76,26 @@ fun IjentApi.bindToScope(coroutineScope: CoroutineScope) {
  * [bindToScope] may be useful for terminating the IJent process earlier.
  */
 @ApiStatus.Experimental
-suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProvider.SupportedPlatform, process: Process): IjentApi =
+suspend fun connectToRunningIjent(ijentName: String, platform: IjentPlatform, process: Process): IjentApi =
   IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
     val mediator = IjentSessionMediator.create(process, ijentId)
     mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
     IjentSessionProvider.instanceAsync().connect(ijentId, platform, mediator)
   }
+
+suspend fun connectToRunningIjent(
+  ijentName: String,
+  platform: IjentPlatform.Posix,
+  process: Process,
+): IjentPosixApi =
+  connectToRunningIjent(ijentName, platform as IjentPlatform, process) as IjentPosixApi
+
+suspend fun connectToRunningIjent(
+  ijentName: String,
+  platform: IjentPlatform.Windows,
+  process: Process,
+): IjentWindowsApi =
+  connectToRunningIjent(ijentName, platform as IjentPlatform, process) as IjentWindowsApi
 
 /**
  * Interactively requests IJent through a running POSIX-compliant command interpreter: sh, bash, ash, ksh, zsh.
@@ -120,7 +134,7 @@ suspend fun bootstrapOverShellSession(
   ijentName: String,
   shellProcess: Process,
   pathMapper: suspend (Path) -> String?,
-): Pair<String, IjentApi> {
+): Pair<String, IjentPosixApi> {
   val remoteIjentPath: String
   val ijentApi = IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
     val mediator = IjentSessionMediator.create(shellProcess, ijentId)
@@ -156,14 +170,14 @@ suspend fun bootstrapOverShellSession(
       throw err
     }
   }
-  return remoteIjentPath to ijentApi
+  return remoteIjentPath to (ijentApi as IjentPosixApi)
 }
 
 @OptIn(DelicateCoroutinesApi::class)
 private suspend fun doBootstrapOverShellSession(
   shellProcess: Process,
   pathMapper: suspend (Path) -> String?,
-): Pair<String, IjentExecFileProvider.SupportedPlatform> = computeDetached {
+): Pair<String, IjentPlatform> = computeDetached {
   try {
     @Suppress("NAME_SHADOWING") val shellProcess = ShellProcess(shellProcess)
 
@@ -271,7 +285,7 @@ private suspend fun getCommandPaths(shellProcess: ShellProcess): Commands {
   )
 }
 
-private suspend fun Commands.getTargetPlatform(shellProcess: ShellProcess): IjentExecFileProvider.SupportedPlatform {
+private suspend fun Commands.getTargetPlatform(shellProcess: ShellProcess): IjentPlatform {
   // There are two arguments in `uname` that can show the process architecture: `-m` and `-p`. According to `man uname`, `-p` is more
   // verbose, and that information may be sufficient for choosing the right binary.
   // https://man.freebsd.org/cgi/man.cgi?query=uname&sektion=1
@@ -281,8 +295,8 @@ private suspend fun Commands.getTargetPlatform(shellProcess: ShellProcess): Ijen
 
   val targetPlatform = when {
     arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
-    "x86_64" in arch -> IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
-    "aarch64" in arch -> IjentExecFileProvider.SupportedPlatform.AARCH64__LINUX
+    "x86_64" in arch -> IjentPlatform.X8664Linux
+    "aarch64" in arch -> IjentPlatform.Aarch64Linux
     else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
   return targetPlatform
@@ -290,7 +304,7 @@ private suspend fun Commands.getTargetPlatform(shellProcess: ShellProcess): Ijen
 
 private suspend fun Commands.uploadIjentBinary(
   shellProcess: ShellProcess,
-  targetPlatform: IjentExecFileProvider.SupportedPlatform,
+  targetPlatform: IjentPlatform,
   pathMapper: suspend (Path) -> String?,
 ): String {
   val ijentBinaryOnLocalDisk = IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform)

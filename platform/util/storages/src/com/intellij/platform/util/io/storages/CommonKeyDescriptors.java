@@ -47,24 +47,32 @@ public final class CommonKeyDescriptors {
 
     @Override
     public KnownSizeRecordWriter writerFor(@NotNull Integer value) throws IOException {
-      return new KnownSizeRecordWriter() {
-        @Override
-        public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
-          return data.putInt(value.intValue());
-        }
+      return new IntegerRecordWriter(value.intValue());
+    }
 
-        @Override
-        public int recordSize() {
-          return Integer.BYTES;
-        }
-      };
+    @Override
+    public int recordSizeIfConstant() {
+      return Integer.BYTES;
     }
 
     @Override
     public String toString() {
       return "KeyDescriptorEx[Int32]";
     }
+
+    private record IntegerRecordWriter(int value) implements KnownSizeRecordWriter {
+      @Override
+      public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
+        return data.putInt(value);
+      }
+
+      @Override
+      public int recordSize() {
+        return Integer.BYTES;
+      }
+    }
   };
+
 
   private static final KeyDescriptorEx<ByteArraySequence> BYTE_ARRAY_SEQUENCE_DESCRIPTOR = new KeyDescriptorEx<>() {
     @Override

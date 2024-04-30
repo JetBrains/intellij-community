@@ -15,7 +15,7 @@ interface CodeReviewEditorInlaysModel<I : CodeReviewInlayModel> {
 }
 
 @ApiStatus.Internal
-interface CodeReviewInlayModel : EditorMapped {
+interface CodeReviewInlayModel : EditorMappedViewModel {
   val key: Any
   override val line: StateFlow<Int?>
   override val isVisible: StateFlow<Boolean>

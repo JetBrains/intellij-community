@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import javax.swing.Icon
 
-class FirNativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() {
+internal class FirNativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() {
+
     override val testIconProvider: AbstractGenericTestIconProvider
         get() = SymbolBasedGenericTestIconProvider
 

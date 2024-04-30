@@ -5,21 +5,26 @@ package org.jetbrains.kotlin.idea.inspections.branchedTransformations
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationUtils
+import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationData
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
 import org.jetbrains.kotlin.idea.formatter.rightMarginOrDefault
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection.Util.renameLetParameter
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.*
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -54,14 +59,15 @@ class IfThenToElvisInspection @JvmOverloads constructor(
         val INTENTION_TEXT get() = KotlinBundle.message("replace.if.expression.with.elvis.expression")
 
         fun convert(element: KtIfExpression, editor: Editor?, inlineWithPrompt: Boolean) {
-            val ifThenToSelectData = element.buildSelectTransformationData() ?: return
+            val ifThenToSelectData = IfThenTransformationUtils.buildTransformationData(element) ?: return
+            val context = element.safeAnalyzeNonSourceRootCode()
 
             val psiFactory = KtPsiFactory(element.project)
 
             val commentSaver = CommentSaver(element, saveLineBreaks = false)
             val margin = element.containingKtFile.rightMarginOrDefault
-            val elvis = runWriteAction {
-                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(psiFactory)
+            val elvis = runWriteActionIfPhysical(element) {
+                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(psiFactory, context)
                 val negatedClause = ifThenToSelectData.negatedClause!!
                 val newExpr = element.replaced(
                     psiFactory.createExpressionByPattern(
@@ -83,33 +89,36 @@ class IfThenToElvisInspection @JvmOverloads constructor(
         }
 
         fun isApplicableTo(element: KtIfExpression, expressionShouldBeStable: Boolean): Boolean {
-            val ifThenToSelectData = element.buildSelectTransformationData() ?: return false
+            val ifThenToSelectData = IfThenTransformationUtils.buildTransformationData(element) ?: return false
+            val context = element.safeAnalyzeNonSourceRootCode()
             if (expressionShouldBeStable &&
-                !ifThenToSelectData.receiverExpression.isStableSimpleExpression(ifThenToSelectData.context)
+                !ifThenToSelectData.checkedExpression.isStableSimpleExpression(context)
             ) return false
 
-            val type = element.getType(ifThenToSelectData.context) ?: return false
+            val type = element.getType(context) ?: return false
             if (KotlinBuiltIns.isUnit(type)) return false
 
-            return ifThenToSelectData.clausesReplaceableByElvis()
+            return ifThenToSelectData.clausesReplaceableByElvis(context)
         }
 
         private fun KtExpression.isNullOrBlockExpression(): Boolean {
-            val innerExpression = this.unwrapBlockOrParenthesis()
+            val innerExpression = this.getSingleUnwrappedStatementOrThis()
             return innerExpression is KtBlockExpression || innerExpression.node.elementType == KtNodeTypes.NULL
         }
 
-        private fun IfThenToSelectData.clausesReplaceableByElvis(): Boolean =
+        private fun IfThenTransformationData.clausesReplaceableByElvis(context: BindingContext): Boolean =
             when {
-                baseClause == null || negatedClause == null || negatedClause.isNullOrBlockExpression() ->
+                negatedClause == null || negatedClause?.isNullOrBlockExpression() == true ->
                     false
-                negatedClause is KtThrowExpression && negatedClause.throwsNullPointerExceptionWithNoArguments() ->
+                (negatedClause as? KtThrowExpression)?.throwsNullPointerExceptionWithNoArguments() == true ->
                     false
-                baseClause.evaluatesTo(receiverExpression) ->
+                conditionHasIncompatibleTypes(context) ->
+                    false
+                baseClause.isSimplifiableTo(checkedExpression) ->
                     true
-                baseClause.anyArgumentEvaluatesTo(receiverExpression) ->
+                baseClause.anyArgumentEvaluatesTo(checkedExpression) ->
                     true
-                hasImplicitReceiverReplaceableBySafeCall() || baseClause.hasFirstReceiverOf(receiverExpression) ->
+                hasImplicitReceiverReplaceableBySafeCall(context) || baseClause.hasFirstReceiverOf(checkedExpression) ->
                     !baseClause.hasNullableType(context)
                 else ->
                     false

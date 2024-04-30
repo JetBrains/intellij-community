@@ -16,7 +16,7 @@ interface XDebuggerUtil {
 fun Driver.toggleLineBreakpoint(filePath: String, line: Int) {
   withContext(OnDispatcher.EDT) {
     val debuggerUtil = service<XDebuggerUtil>()
-    val file = findFile(singleProject(), filePath) ?: error("Invalid file path: $filePath")
+    val file = findFile(filePath) ?: error("Invalid file path: $filePath")
     debuggerUtil.toggleLineBreakpoint(singleProject(), file, line, false)
   }
 }

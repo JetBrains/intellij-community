@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.TreeNodeWithCacheableAttributes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -16,16 +17,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 /**
  * A node in the project view tree.
@@ -33,9 +33,11 @@ import java.util.List;
  * @see TreeStructureProvider#modify(AbstractTreeNode, Collection, ViewSettings)
  */
 
-public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> implements RootsProvider, SettingsProvider {
+public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value>
+  implements RootsProvider, SettingsProvider, TreeNodeWithCacheableAttributes {
 
   protected static final Logger LOG = Logger.getInstance(ProjectViewNode.class);
+  public static final @ApiStatus.Internal String CACHED_FILE_PATH_KEY = "filePath";
 
   private final ViewSettings mySettings;
   private boolean myValidating;
@@ -69,6 +71,21 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   @Override
   public @Nullable VirtualFile getVirtualFile() {
     return null;
+  }
+
+  @Nullable
+  @Override
+  @ApiStatus.Internal
+  public Map<String, String> getCacheableAttributes() {
+    return getCacheableAttributesFromFile(getVirtualFile());
+  }
+
+  @ApiStatus.Internal
+  protected Map<String, String> getCacheableAttributesFromFile(@Nullable VirtualFile file) {
+    if (file == null) return null;
+    var path = file.isInLocalFileSystem() ? file.getPath() : null;
+    if (path == null) return null;
+    return Map.of(CACHED_FILE_PATH_KEY, path);
   }
 
   @Override

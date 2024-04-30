@@ -457,6 +457,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
         EXECUTION_SESSION_ID_KEY.set(taskEnvironment, id)
         try {
           if (!provider.executeTask(projectContext, profile, taskEnvironment, task)) {
+            LOG.debug("Before launch task '$task' doesn't finish successfully, cancelling execution")
             if (onCancelRunnable != null) {
               SwingUtilities.invokeLater(onCancelRunnable)
             }
@@ -464,6 +465,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
           }
         }
         catch (e: ProcessCanceledException) {
+          LOG.debug("Before launch task '$task' cancelled, cancelling execution", e)
           if (onCancelRunnable != null) {
             SwingUtilities.invokeLater(onCancelRunnable)
           }

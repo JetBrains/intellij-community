@@ -91,7 +91,7 @@ private constructor(parentCs: CoroutineScope,
       repository = projectName,
       avatarIconsProvider = avatarIconProvider,
       tokenRefreshFlow = connection.tokenRefreshFlow,
-      loaderSupplier = { filtersValue -> connection.projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
+      loaderSupplier = { cs, filtersValue -> connection.projectData.mergeRequests.getListLoaderIn(cs, filtersValue.toSearchQuery()) }
     )
   }
 

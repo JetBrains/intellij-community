@@ -26,7 +26,7 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
 
     private val testRoot: String by lazy {
         val testClassPath = javaClass.getAnnotation(TestMetadata::class.java)?.value
-        ?: error("@${TestMetadata::class.java} annotation not found on class '${javaClass.name}'")
+            ?: error("@${TestMetadata::class.java} annotation not found on class '${javaClass.name}'")
         val pathString = KotlinTestHelpers.getTestRootPath(javaClass).resolve(testClassPath).absolutePathString()
         if (pathString.endsWith(File.separatorChar)) pathString else pathString + File.separatorChar
     }
@@ -111,14 +111,15 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         if (pluginKind == KotlinPluginMode.K2) {
             val expectedPath = Paths.get(testDataPath, expectedPathString)
 
-            val k2ExpectedPathString = getExpectedPath(".fir" + expectedSuffix, addSuffixAfterExtension)
+            val k2ExpectedPathString = getExpectedPath(".$K2_TEST_FILE_EXTENSION$expectedSuffix", addSuffixAfterExtension)
             val k2ExpectedPath = Paths.get(testDataPath, k2ExpectedPathString)
 
             if (k2ExpectedPath.exists()) {
                 checkContentByExpectedPath(k2ExpectedPathString)
-                IgnoreTests.cleanUpIdenticalFirTestFile(
+                IgnoreTests.cleanUpIdenticalK2TestFile(
                     originalTestFile = expectedPath.toFile(),
-                    firTestFile = k2ExpectedPath.toFile()
+                    k2Extension = K2_TEST_FILE_EXTENSION,
+                    k2TestFile = k2ExpectedPath.toFile()
                 )
 
                 return
@@ -160,5 +161,9 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         append(".")
         append(testMethodPath.extension)
         if (addSuffixAfterExtension) append(expectedSuffix)
+    }
+
+    companion object {
+        private val K2_TEST_FILE_EXTENSION: IgnoreTests.FileExtension = IgnoreTests.FileExtension.FIR
     }
 }

@@ -314,10 +314,14 @@ class PluginClassLoader(
     return consistencyError == null && super.hasLoadedClass(name)
   }
 
-  override fun loadClassInsideSelf(name: String,
-                                   fileName: String,
-                                   packageNameHash: Long,
-                                   forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
+  override fun loadClassInsideSelf(name: String): Class<*>? {
+    val fileNameWithoutExtension = name.replace('.', '/')
+    val fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION
+    val packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'))
+    return loadClassInsideSelf(name, fileName, packageNameHash, false)
+  }
+
+  override fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long, forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
     synchronized(getClassLoadingLock(name)) {
       var c = findLoadedClass(name)
       if (c != null && c.classLoader === this) {

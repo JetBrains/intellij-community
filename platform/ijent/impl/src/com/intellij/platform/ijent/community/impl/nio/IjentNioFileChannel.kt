@@ -17,7 +17,7 @@ internal class IjentNioFileChannel private constructor(
   companion object {
     @JvmStatic
     internal suspend fun createReading(nioFs: IjentNioFileSystem, path: IjentPath.Absolute): IjentNioFileChannel =
-      IjentNioFileChannel(nioFs, when (val v = nioFs.ijentFsApi.fileReader(path)) {
+      IjentNioFileChannel(nioFs, when (val v = nioFs.ijent.fs.fileReader(path)) {
         is IjentFileSystemApi.FileReader.Ok -> v.value
         is IjentFsResult.Error -> v.throwFileSystemException()
       })
@@ -31,7 +31,7 @@ internal class IjentNioFileChannel private constructor(
     ): IjentNioFileChannel =
       IjentNioFileChannel(
         nioFs,
-        when (val v = nioFs.ijentFsApi.fileWriter(path, append = append, creationMode = creationMode)) {
+        when (val v = nioFs.ijent.fs.fileWriter(path, append = append, creationMode = creationMode)) {
           is IjentFileSystemApi.FileWriter.Ok -> v.value
           is IjentFsResult.Error -> v.throwFileSystemException()
         },

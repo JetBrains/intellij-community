@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -389,9 +390,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 // in case of an unresolved reference consider all containers applicable
                 val symbol = reference.mainReference.resolveToSymbol() ?: return@flatMap emptyList()
                 val implicitReceivers = reference.resolveCall()
-                    ?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
-                    ?.let { listOfNotNull(it.dispatchReceiver, it.extensionReceiver) }
-                    ?.filterIsInstance<KtImplicitReceiverValue>()
+                    ?.singleCallOrNull<KtCallableMemberCall<*, *>>()
+                    ?.getImplicitReceivers()
 
                 buildList {
                     implicitReceivers?.forEach { addIfNotNull(it.symbol.psi) }

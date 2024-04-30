@@ -28,7 +28,9 @@ object ParityReportGenerator {
         val successByCategory: MutableMap<GroupCategory, AtomicInteger> = mutableMapOf<GroupCategory, AtomicInteger>(),
         val successTestClasses: MutableMap<String, AtomicInteger> = mutableMapOf<String, AtomicInteger>()
     ) {
-        fun totalCount(): Int = successTestClasses.map { it.value }.sumOf { it.get() }
+        fun totalCount(): Int {
+            return successTestClasses.map { it.value }.sumOf { it.get() }
+        }
     }
 
     private const val PIPE = " | "
@@ -77,7 +79,11 @@ object ParityReportGenerator {
                                 suite.generatedClassName.substringAfterLast('.'),
                                 isNested = false
                             )
-                            add(suiteElement)
+                            fun addSuiteElement(e: SuiteElement) {
+                                this += e
+                                e.nestedSuites.forEach(::addSuiteElement)
+                            }
+                            addSuiteElement(suiteElement)
                         } else {
                             addAll(suite.models
                                 .map { SuiteElement.create(group, suite, it, it.testClassName, isNested = true) })

@@ -2,10 +2,8 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.Canonicalize
-import com.intellij.platform.ijent.fs.IjentFsResult
-import com.intellij.platform.ijent.fs.IjentPath
-import com.intellij.platform.ijent.fs.getOrThrow
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.*
@@ -24,9 +22,12 @@ class IjentNioPath internal constructor(
   val ijentPath: IjentPath,
   internal val nioFs: IjentNioFileSystem,
 ) : Path {
-  val ijentId: IjentId get() = nioFs.ijentFsApi.id
+  val ijentId: IjentId get() = nioFs.ijent.fs.id
 
-  private val isWindows get() = nioFs.isWindows
+  private val isWindows get() = when (nioFs.ijent.fs) {
+    is IjentFileSystemPosixApi -> false
+    is IjentFileSystemWindowsApi -> true
+  }
 
   override fun getFileSystem(): FileSystem = nioFs
 
@@ -136,7 +137,7 @@ class IjentNioPath internal constructor(
               normalizedPath
             else
               nioFs.fsBlocking {
-                when (val v = nioFs.ijentFsApi.canonicalize(normalizedPath)) {
+                when (val v = nioFs.ijent.fs.canonicalize(normalizedPath)) {
                   is Canonicalize.Ok -> v.value
                   is IjentFsResult.Error -> v.throwFileSystemException()
                 }

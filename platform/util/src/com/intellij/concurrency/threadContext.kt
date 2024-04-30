@@ -117,6 +117,39 @@ fun resetThreadContext(): AccessToken {
 }
 
 /**
+ * Runs [action] with the cancellation guarantees of [job].
+ *
+ * Consider the following example:
+ * ```kotlin
+ * fun computeSomethingUseful() {
+ *    preComputation()
+ *    application.executeOnPooledThread(::executeInLoop)
+ *    postComputation()
+ * }
+ *
+ * fun executeInLoop() {
+ *   doSomething()
+ *   ProgressManager.checkCancelled()
+ *   Thread.sleep(1000)
+ *   executeInLoop()
+ * }
+ * ```
+ *
+ * If someone wants to track the execution of `computeSomethingUseful`, most likely they are not interested in `executeInLoop`,
+ * as it is a daemon computation that can be only canceled.
+ * It can be a launch of an external process, or some periodic diagnostic check.
+ *
+ * In this case, the platform offers to weaken the cancellation guarantees for the computation:
+ * it still would be cancellable on project closing or component unloading, but it would not be bound to the context cancellation.
+ */
+@Experimental
+fun <T> escapeCancellation(job: Job, action: () -> T): T {
+  return installThreadContext(currentThreadContext() + job + BlockingJob(job), true).use {
+    action()
+  }
+}
+
+/**
  * Installs [coroutineContext] as the current thread context.
  * If [replace] is `false` (default) and the current thread already has context, then this function logs an error.
  *

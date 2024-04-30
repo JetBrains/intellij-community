@@ -307,7 +307,6 @@ object PluginManagerCore {
     shadowedBundledPlugins = Collections.emptySet()
   }
 
-  @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableList()")
   private fun preparePluginErrors(globalErrorsSuppliers: List<Supplier<String>>): List<Supplier<HtmlChunk>> {
     val pluginLoadingErrors = pluginLoadingErrors ?: emptyMap()
     if (pluginLoadingErrors.isEmpty() && globalErrorsSuppliers.isEmpty()) {
@@ -315,11 +314,7 @@ object PluginManagerCore {
     }
 
     // the log includes all messages, not only those which need to be reported to the user
-    val loadingErrors = pluginLoadingErrors.entries
-      .asSequence()
-      .sortedBy { it.key }
-      .map { it.value }
-      .toList()
+    val loadingErrors = pluginLoadingErrors.entries.map { it.value }
     val logMessage = "Problems found loading plugins:\n  " +
                      (globalErrorsSuppliers.asSequence().map { it.get() } + loadingErrors.asSequence().map { it.internalMessage })
                        .joinToString(separator = "\n  ")

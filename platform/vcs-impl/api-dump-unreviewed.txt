@@ -45,7 +45,6 @@ f:com.intellij.codeInsight.actions.VcsFacadeImpl
 - isFileUnderVcs(com.intellij.psi.PsiFile):java.lang.Boolean
 - markFilesDirty(com.intellij.openapi.project.Project,java.util.List):V
 - runHeavyModificationTask(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,java.lang.Runnable):V
-f:com.intellij.codeInsight.completion.ml.VcsFeatureProviderKt
 f:com.intellij.codeInsight.daemon.VcsSilentChangeVetoer
 - <init>():V
 - canChangeFileSilently(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.util.ThreeState
@@ -5777,9 +5776,6 @@ com.intellij.openapi.vcs.changes.ui.CommitLegendPanel$InfoCalculator
 - a:getNew():I
 - a:getUnversioned():I
 f:com.intellij.openapi.vcs.changes.ui.CommitLegendPanelKt
-com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
-- sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getCommitMessage(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.openapi.project.Project):java.lang.String
 c:com.intellij.openapi.vcs.changes.ui.CommittedChangeListPanel
 - javax.swing.JPanel
 - com.intellij.openapi.actionSystem.DataProvider
@@ -6563,11 +6559,10 @@ a:com.intellij.openapi.vcs.configurable.VcsCheckBoxWithSpinnerConfigurable
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
 - createComponent():javax.swing.JComponent
 - pa:createSpinnerModel():javax.swing.SpinnerNumberModel
-c:com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable
+f:com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable
 - com.intellij.openapi.vcs.configurable.VcsCheckBoxWithSpinnerConfigurable
 - <init>(com.intellij.openapi.project.Project):V
 - apply():V
-- p:createSpinnerModel():javax.swing.SpinnerNumberModel
 - getDisplayName():java.lang.String
 - isModified():Z
 - reset():V
@@ -8129,15 +8124,6 @@ c:com.intellij.openapi.vcs.vfs.VcsVirtualFolder
 - contentsToByteArray():B[]
 - getChildren():com.intellij.openapi.vfs.VirtualFile[]
 - isDirectory():Z
-c:com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction
-- com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction
-- <init>():V
 f:com.intellij.options.VcsGeneralEditorOptionsExtension
 - com.intellij.openapi.options.UiDslUnnamedConfigurable$Simple
 - <init>():V

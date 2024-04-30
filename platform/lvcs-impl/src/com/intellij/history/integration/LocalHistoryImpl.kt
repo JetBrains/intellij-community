@@ -203,7 +203,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
 
       override fun getByteContent(path: String): ByteContent {
         return ApplicationManager.getApplication().runReadAction(Computable {
-          impl.getByteContent(gateway!!.createTransientRootEntryForPathOnly(path), path)
+          impl.getByteContent(gateway!!.createTransientRootEntryForPath(path, false), path)
         })
       }
     }

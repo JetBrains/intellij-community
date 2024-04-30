@@ -361,7 +361,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     @NotNull TreePath nodePath
   ) {
     var object = nodePath.getLastPathComponent();
-    var result = new Node(object, LeafState.DEFAULT);
+    var result = new Node(object, cachedPresentation.isLeaf(object) ? LeafState.ALWAYS : LeafState.NEVER);
     if (parent == null) {
       result.paths.add(new CachingTreePath(object));
     }

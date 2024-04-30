@@ -315,10 +315,6 @@
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </action>
 
-    <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" overrides="true">
-      <override-text place="EditorPopup"/>
-    </action>
-
     <group id="RefactoringMenu1">
       <action id="ChangeTypeSignature" class="com.intellij.refactoring.typeMigration.actions.ChangeTypeSignatureAction"/>
       <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>

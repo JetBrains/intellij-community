@@ -3,7 +3,10 @@ package org.jetbrains.plugins.gitlab.apitests
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
+import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.withInitial
 import com.intellij.openapi.components.service
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.fold
@@ -20,9 +23,10 @@ import org.jetbrains.plugins.gitlab.api.loadUpdatableJsonList
 import org.jetbrains.plugins.gitlab.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.DiffPathsInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
-import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.startGitLabRestETagListLoaderIn
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Disabled
@@ -256,9 +260,12 @@ class GitLabApiTest : GitLabApiTestCase() {
     checkVersion(after(v(7, 0)))
 
     requiresAuthentication { api ->
-      val mrs = api.rest.loadMergeRequests(glTest1Coordinates, "search=important").body()
+      val mrs = api.rest.loadUpdatableJsonList<GitLabMergeRequestShortRestDTO>(
+        GitLabApiRequestName.REST_GET_MERGE_REQUESTS,
+        getMergeRequestListURI(glTest1Coordinates, "search=important")
+      ).body()
 
-      assertEquals(listOf("2"), mrs.map { it.iid })
+      assertEquals(listOf("2"), mrs?.map { it.iid })
     }
   }
 
@@ -290,51 +297,69 @@ class GitLabApiTest : GitLabApiTestCase() {
   fun `GQL getMergeRequestStateEvents works`() = runTest {
     checkVersion(after(v(13, 2)))
 
+    val cs = childScope()
     requiresAuthentication { api ->
-      val refreshRequest = MutableSharedFlow<Unit>()
-      val events = GitLabETagUpdatableListLoader(getMergeRequestStateEventsUri(glTest1Coordinates, "1"), refreshRequest) { uri, eTag ->
+      val reloadRequest = MutableSharedFlow<Unit>(1).withInitial(Unit)
+      val loader = startGitLabRestETagListLoaderIn(cs,
+                                                   getMergeRequestStateEventsUri(glTest1Coordinates, "1"),
+                                                   { it.id },
+                                                   reloadRequest) { uri, eTag ->
         api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
-      }.events.first()
+      }
+      val result = loader.stateFlow.first { it.list != null }.list
 
-      assertNotNull(events)
-      assertEquals(listOf(1), events.map { l -> l.map { it.id } })
+      assertNotNull(result)
+      assertEquals(listOf(1), result?.map { it.id })
     }
+    cs.cancelAndJoinSilently()
   }
 
   @Test
   fun `GQL getMergeRequestLabelEvents works`() = runTest {
     checkVersion(after(v(11, 4)))
 
+    val cs = childScope()
     requiresAuthentication { api ->
-      val refreshRequest = MutableSharedFlow<Unit>()
-      val events = GitLabETagUpdatableListLoader(getMergeRequestLabelEventsUri(glTest1Coordinates, "1"), refreshRequest) { uri, eTag ->
+      val reloadRequest = MutableSharedFlow<Unit>(1).withInitial(Unit)
+      val loader = startGitLabRestETagListLoaderIn(cs,
+                                                   getMergeRequestLabelEventsUri(glTest1Coordinates, "1"),
+                                                   { it.id },
+                                                   reloadRequest) { uri, eTag ->
         api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
-      }.events.first()
+      }
+      val result = loader.stateFlow.first { it.list != null }.list
 
-      assertNotNull(events)
-      assertEquals(Result.success(listOf(3, 4, 5)), events.map { l -> l.map { it.id } })
+      assertNotNull(result)
+      assertEquals(listOf(3, 4, 5), result?.map { it.id })
     }
+    cs.cancelAndJoinSilently()
   }
 
   @Test
   fun `GQL getMergeRequestMilestoneEvents works`() = runTest {
     checkVersion(after(v(13, 1)))
 
+    val cs = childScope()
     requiresAuthentication { api ->
-      val refreshRequest = MutableSharedFlow<Unit>()
-      val events = GitLabETagUpdatableListLoader(getMergeRequestMilestoneEventsUri(glTest1Coordinates, "1"), refreshRequest) { uri, eTag ->
+      val reloadRequest = MutableSharedFlow<Unit>(1).withInitial(Unit)
+      val loader = startGitLabRestETagListLoaderIn(cs,
+                                                   getMergeRequestMilestoneEventsUri(glTest1Coordinates, "1"),
+                                                   { it.id },
+                                                   reloadRequest) { uri, eTag ->
         api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(
           GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
         )
-      }.events.first()
+      }
+      val result = loader.stateFlow.first { it.list != null }.list
 
-      assertNotNull(events)
-      assertEquals(listOf(3, 4), events.map { l -> l.map { it.id } })
+      assertNotNull(result)
+      assertEquals(listOf(3, 4), result?.map { it.id })
     }
+    cs.cancelAndJoinSilently()
   }
 
   @Test

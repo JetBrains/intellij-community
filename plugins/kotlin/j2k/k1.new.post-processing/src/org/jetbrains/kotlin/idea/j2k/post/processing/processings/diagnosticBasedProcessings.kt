@@ -7,8 +7,9 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.diagnostics.DiagnosticWithParameters2
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeUnnecessaryParentheses
 import org.jetbrains.kotlin.idea.j2k.post.processing.diagnosticBasedProcessing
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessCastFix
@@ -45,7 +46,11 @@ internal val fixTypeMismatchDiagnosticBasedProcessing =
                     && !expectedType.isNullable()
             -> {
                 val psiFactory = KtPsiFactory(element.project)
-                element.replace(psiFactory.createExpressionByPattern("($0)!!", element.text))
+                val replaced = element.replace(psiFactory.createExpressionByPattern("($0)!!", element.text)) as KtPostfixExpression
+                val parenthesizedExpression = replaced.baseExpression as KtParenthesizedExpression
+                if (KtPsiUtil.areParenthesesUseless(parenthesizedExpression)) {
+                    parenthesizedExpression.removeUnnecessaryParentheses()
+                }
             }
 
             element is KtExpression

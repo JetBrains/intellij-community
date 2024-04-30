@@ -9,8 +9,10 @@ import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,31 +42,64 @@ public class DurableMapFactory<K, V> implements StorageFactory<DurableMapOverApp
   private final StorageFactory<? extends AppendOnlyLog> logFactory;
   private final StorageFactory<? extends DurableIntToMultiIntMap> mapFactory;
 
-  private final KeyDescriptorEx<K> keyDescriptor;
-  private final DataExternalizerEx<V> valueDescriptor;
+  private final @NotNull EqualityPolicy<? super K> keyEquality;
+  private final @Nullable EqualityPolicy<? super V> valueEquality;
+
+  private final @NotNull EntryExternalizer<K, V> entryExternalizer;
 
   private DurableMapFactory(@NotNull StorageFactory<? extends AppendOnlyLog> logFactory,
                             @NotNull StorageFactory<? extends DurableIntToMultiIntMap> mapFactory,
-                            @NotNull KeyDescriptorEx<K> keyDescriptor,
-                            @NotNull DataExternalizerEx<V> valueDescriptor) {
+
+                            @NotNull EqualityPolicy<? super K> keyEquality,
+                            @Nullable EqualityPolicy<? super V> valueEquality,
+
+                            @NotNull EntryExternalizer<K, V> entryExternalizer) {
     this.logFactory = logFactory;
     this.mapFactory = mapFactory;
-    this.keyDescriptor = keyDescriptor;
-    this.valueDescriptor = valueDescriptor;
+    this.keyEquality = keyEquality;
+    this.valueEquality = valueEquality;
+    this.entryExternalizer = entryExternalizer;
   }
 
   public static <K, V> @NotNull DurableMapFactory<K, V> withDefaults(@NotNull KeyDescriptorEx<K> keyDescriptor,
-                                                                     @NotNull DataExternalizerEx<V> valueDescriptor) {
+                                                                     @NotNull KeyDescriptorEx<V> valueDescriptor) {
+    return new DurableMapFactory<>(
+      DEFAULT_VALUES_LOG_FACTORY, DEFAULT_MAP_FACTORY,
+      keyDescriptor, valueDescriptor,
+      entryExternalizerFor(keyDescriptor, valueDescriptor)
+    );
+  }
+
+  public static <K, V> @NotNull DurableMapFactory<K, V> withDefaults(@NotNull KeyDescriptorEx<K> keyDescriptor,
+                                                                     @NotNull DataExternalizerEx<V> valueExternalizer) {
+    return new DurableMapFactory<>(
+      DEFAULT_VALUES_LOG_FACTORY, DEFAULT_MAP_FACTORY,
+      keyDescriptor, /*valueEquality: */ null,
+      entryExternalizerFor(keyDescriptor, valueExternalizer)
+    );
+  }
+
+  public static <K, V> @NotNull DurableMapFactory<K, V> withDefaults(@NotNull EqualityPolicy<? super K> keyEquality,
+                                                                     @NotNull EqualityPolicy<? super V> valueEquality,
+                                                                     @NotNull EntryExternalizer<K, V> entryExternalizer) {
     return new DurableMapFactory<>(DEFAULT_VALUES_LOG_FACTORY, DEFAULT_MAP_FACTORY,
-                                   keyDescriptor, valueDescriptor);
+                                   keyEquality, valueEquality,
+                                   entryExternalizer);
   }
 
-  public DurableMapFactory<K,V> logFactory(@NotNull StorageFactory<? extends AppendOnlyLog> logFactory){
-    return new DurableMapFactory<>(logFactory, mapFactory, keyDescriptor, valueDescriptor);
+  public static <K, V> @NotNull DurableMapFactory<K, V> withDefaults(@NotNull EqualityPolicy<? super K> keyEquality,
+                                                                     @NotNull EntryExternalizer<K, V> entryExternalizer) {
+    return new DurableMapFactory<>(DEFAULT_VALUES_LOG_FACTORY, DEFAULT_MAP_FACTORY,
+                                   keyEquality, /*valueEquality: */ null,
+                                   entryExternalizer);
   }
 
-  public DurableMapFactory<K,V> mapFactory(@NotNull StorageFactory<? extends DurableIntToMultiIntMap> mapFactory){
-    return new DurableMapFactory<>(logFactory, mapFactory, keyDescriptor, valueDescriptor);
+  public DurableMapFactory<K, V> logFactory(@NotNull StorageFactory<? extends AppendOnlyLog> logFactory) {
+    return new DurableMapFactory<>(logFactory, mapFactory, keyEquality, valueEquality, entryExternalizer);
+  }
+
+  public DurableMapFactory<K, V> mapFactory(@NotNull StorageFactory<? extends DurableIntToMultiIntMap> mapFactory) {
+    return new DurableMapFactory<>(logFactory, mapFactory, keyEquality, valueEquality, entryExternalizer);
   }
 
   @Override
@@ -77,10 +112,21 @@ public class DurableMapFactory<K, V> implements StorageFactory<DurableMapOverApp
         keyHashToEntryOffsetMap -> new DurableMapOverAppendOnlyLog<>(
           entriesLog,
           keyHashToEntryOffsetMap,
-          keyDescriptor,
-          valueDescriptor
+          keyEquality,
+          valueEquality,
+          entryExternalizer
         )
       )
     );
+  }
+
+  private static <K, V> @NotNull EntryExternalizer<K, V> entryExternalizerFor(@NotNull KeyDescriptorEx<K> keyDescriptor,
+                                                                              @NotNull DataExternalizerEx<V> valueExternalizer) {
+    if (keyDescriptor.isRecordSizeConstant()) {
+      return new FixedSizeKeyEntryExternalizer<>(keyDescriptor, valueExternalizer);
+    }
+    else {
+      return new DefaultEntryExternalizer<>(keyDescriptor, valueExternalizer);
+    }
   }
 }

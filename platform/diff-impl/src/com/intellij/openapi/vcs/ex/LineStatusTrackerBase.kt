@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
@@ -34,21 +34,21 @@ abstract class LineStatusTrackerBase<R : Range>(
   final override val disposable: Disposable = Disposer.newDisposable()
   internal val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
 
-  protected val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
-  protected val documentTracker: DocumentTracker
+  val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
+  val documentTracker: DocumentTracker = DocumentTracker(vcsDocument, document, LOCK)
 
   final override var isReleased: Boolean = false
     private set
 
-  protected var isInitialized: Boolean = false
+  var isInitialized: Boolean = false
     private set
 
-  protected val blocks: List<Block> get() = documentTracker.blocks
+  val blocks: List<Block>
+    get() = documentTracker.blocks
 
   protected val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
 
   init {
-    documentTracker = DocumentTracker(vcsDocument, document, LOCK)
     Disposer.register(disposable, documentTracker)
 
     documentTracker.addHandler(MyDocumentTrackerHandler())
@@ -144,7 +144,6 @@ abstract class LineStatusTrackerBase<R : Range>(
   override fun <T> readLock(task: () -> T): T {
     return documentTracker.readLock(task)
   }
-
 
   private inner class MyBlockOperations(lock: DocumentTracker.Lock) : LineStatusTrackerBlockOperations<R, Block>(lock) {
     override fun getBlocks(): List<Block>? = if (isValid()) blocks else null

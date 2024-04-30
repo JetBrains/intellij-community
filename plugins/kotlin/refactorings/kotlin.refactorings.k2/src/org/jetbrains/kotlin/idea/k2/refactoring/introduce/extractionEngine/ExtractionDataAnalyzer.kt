@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -292,14 +293,21 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
             element.accept(object : KtTreeVisitorVoid() {
                 override fun visitReferenceExpression(expression: KtReferenceExpression) {
                     super.visitReferenceExpression(expression)
-                    val descriptor = expression.mainReference.resolveToSymbol() as? KtAnnotatedSymbol ?: return
 
-                    for (ann in descriptor.annotations) {
-                        val fqName = ann.classId?.asSingleFqName() ?: continue
-                        if (ann.isExperimentalMarker()) {
-                            requiredMarkers.add(fqName)
+                    fun processSymbolAnnotations(targetSymbol: KtAnnotatedSymbol) {
+                        for (ann in targetSymbol.annotations) {
+                            val fqName = ann.classId?.asSingleFqName() ?: continue
+                            if (ann.isExperimentalMarker()) {
+                                requiredMarkers.add(fqName)
+                            }
                         }
                     }
+
+                    val targetSymbol = expression.mainReference.resolveToSymbol() as? KtAnnotatedSymbol ?: return
+                    processSymbolAnnotations(targetSymbol)
+
+                    val typeSymbol = (targetSymbol as? KtCallableSymbol)?.returnType?.expandedClassSymbol ?: return
+                    processSymbolAnnotations(typeSymbol)
                 }
             })
         }

@@ -1,4 +1,3 @@
-// IGNORE_K2
 class A {
     void doubleToChar() {
         char a = (char) 1.0;

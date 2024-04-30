@@ -6,15 +6,18 @@ import com.intellij.facet.FacetManager
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryAddLibraryAction
 import com.intellij.jarRepository.RepositoryLibraryType
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
@@ -24,17 +27,16 @@ import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.psi.PsiElement
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.idea.base.platforms.StdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ui.CreateLibraryDialogWithModules
+import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
@@ -43,6 +45,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.askUpdateRuntime
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
@@ -320,6 +323,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         state: LanguageFeature.State,
         forTests: Boolean
     ) {
+        // prevents this side effect from being actually run from quickfix previews (e.g. in Fleet)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
         val sinceVersion = feature.sinceApiVersion
 
         if (state != LanguageFeature.State.DISABLED &&
@@ -354,6 +360,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         requiredStdlibVersion: ApiVersion,
         forTests: Boolean
     ) {
+        // prevents this side effect from being actually run from quickfix previews (e.g. in Fleet)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
         val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.apiVersion?.let { runtimeVersion ->
             runtimeVersion < requiredStdlibVersion
         } ?: false
@@ -390,6 +399,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         libraryJarDescriptor: LibraryJarDescriptor,
         scope: DependencyScope
     ) {
+        // prevents this side effect from being actually run from quickfix previews (e.g. in Fleet)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
         val project = module.project
 
         var foundLibrary: Library? = null
@@ -417,6 +429,29 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             /* downloadSources = */ true,
             /* downloadJavaDocs = */ true
         )
+    }
+
+    override val canAddModuleWideOptIn: Boolean = true
+
+    override fun addModuleWideOptIn(module: Module, annotationFqName: FqName, compilerArgument: String) {
+        // if used in a quick fix, this prevents Fleet from running the side-effect during preview (and the bugs that follow)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
+        val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(module.project)
+        try {
+            module.getOrCreateConfiguredFacet(modelsProvider, useProjectSettings = false, commitModel = true) {
+                val facetSettings = configuration.settings
+                val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
+                    facetSettings.compilerSettings = it
+                }
+
+                compilerSettings.additionalArguments += " $compilerArgument"
+                facetSettings.updateMergedArguments()
+            }
+            module.project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
+        } finally {
+            modelsProvider.dispose()
+        }
     }
 
     companion object {

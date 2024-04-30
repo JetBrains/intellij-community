@@ -84,6 +84,7 @@ class NameWithTypeLookupElementDecorator(
         if (shouldInsertType) {
             val text = "$parameterName$spaceBefore:$spaceAfter"
             context.document.insertString(startOffset, text)
+            context.commitDocument()
 
             // update start offset so that it does not include the text we inserted
             context.offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, startOffset + text.length)

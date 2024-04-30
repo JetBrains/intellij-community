@@ -15,7 +15,7 @@ interface ProjectRootManager {
   fun setProjectSdk(sdk: Sdk?)
 }
 
-fun Driver.findFile(project: Project? = null, relativePath: String): VirtualFile? {
+fun Driver.findFile(relativePath: String, project: Project? = null): VirtualFile? {
   return withReadAction {
     service<ProjectRootManager>(project ?: singleProject()).getContentRoots()
       .firstNotNullOfOrNull { it.findFileByRelativePath(relativePath) }

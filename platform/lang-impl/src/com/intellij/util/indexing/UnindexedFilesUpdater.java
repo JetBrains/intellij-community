@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Range;
 
 public final class UnindexedFilesUpdater {
   private static final boolean useConservativeThreadCountPolicy =
@@ -53,6 +54,7 @@ public final class UnindexedFilesUpdater {
   /**
    * Scanning activity can be scaled well across number of threads, so we're trying to use all available resources to do it faster.
    */
+  @Range(from = 1, to = Integer.MAX_VALUE)
   public static int getNumberOfScanningThreads() {
     int scanningThreadCount = Registry.intValue("caches.scanningThreadsCount");
     if (scanningThreadCount > 0) return scanningThreadCount;

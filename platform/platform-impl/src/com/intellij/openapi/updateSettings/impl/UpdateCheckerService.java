@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -173,6 +174,9 @@ final class UpdateCheckerService {
 
   @VisibleForTesting
   static boolean shouldShowWhatsNew(@NotNull BuildNumber current, boolean majorEap) {
+    if (ExperimentalUI.Companion.getForcedSwitchedUi()) {
+      return false;
+    }
     UpdateSettings settings = UpdateSettings.getInstance();
 
     int lastShownFor = settings.getWhatsNewShownFor();

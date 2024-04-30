@@ -726,6 +726,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/PropertyAccessorAddBlockInner.kt");
             }
 
+            @TestMetadata("propertyBasedQualifier.kt")
+            public void testPropertyBasedQualifier() throws Exception {
+                runTest("testData/refactoring/introduceVariable/propertyBasedQualifier.kt");
+            }
+
             @TestMetadata("qualifier.kt")
             public void testQualifier() throws Exception {
                 runTest("testData/refactoring/introduceVariable/qualifier.kt");
@@ -2158,6 +2163,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkers.kt");
             }
 
+            @TestMetadata("filterPropagatingMarkersImplicitUsage.kt")
+            public void testFilterPropagatingMarkersImplicitUsage() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkersImplicitUsage.kt");
+            }
+
             @TestMetadata("filterPropagatingMarkersWitArgs.kt")
             public void testFilterPropagatingMarkersWitArgs() throws Exception {
                 runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkersWitArgs.kt");
@@ -2602,6 +2612,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("qualifiedTypeRef.kt")
                 public void testQualifiedTypeRef() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeRef.kt");
+                }
+
+                @TestMetadata("receiverWithFunctionalLiteral.kt")
+                public void testReceiverWithFunctionalLiteral() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/receiverWithFunctionalLiteral.kt");
                 }
 
                 @TestMetadata("reducedParameterList.kt")

@@ -97,6 +97,10 @@ public enum JavaFeature {
    */
   RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each",
                               LanguageLevel.JDK_20_PREVIEW),
+  /**
+   * Implementation for java 23
+   */
+  PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_X, "feature.primitive.types.in.patterns"),
   ;
 
   private final @NotNull LanguageLevel myLevel;

@@ -12,9 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.InternalFileType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskExecution
 import com.intellij.openapi.roots.ContentIteratorEx
@@ -22,6 +20,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.FilesScanExecutor.runOnAllThreads
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.TaskFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,7 +35,6 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.util.ModalityUiUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -52,17 +50,25 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
+import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Function
+import kotlin.coroutines.coroutineContext
 
 @Internal
 class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFilePropertiesUpdater() {
-  private val myTasks: Queue<Runnable> = ConcurrentLinkedQueue()
+  private fun interface TaskFactory {
+    fun getTasks(): List<Runnable>
+  }
+
+  private val myTasks: Queue<TaskFactory> = ConcurrentLinkedQueue()
 
   init {
     val connection = myProject.messageBus.simpleConnect()
@@ -86,10 +92,9 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     })
   }
 
-  @ApiStatus.Internal
   fun processAfterVfsChanges(events: List<VFileEvent>) {
-    val syncTasks = ArrayList<Runnable>()
-    val delayedTasks: MutableList<Runnable> = ArrayList()
+    val syncTasks = ArrayList<TaskFactory>()
+    val delayedTasks: MutableList<TaskFactory> = ArrayList()
     val filePushers = filePushers
 
     // this is useful for debugging. Especially in integration tests: it is often clear why large file sets have changed
@@ -107,7 +112,9 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
         val pushers = if (isDirectory) FilePropertyPusher.EP_NAME.extensionList else filePushers
 
         if (!event.isFromRefresh()) {
-          ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers))
+          createRecursivePushTask(event, pushers)?.let { recursiveTask ->
+            syncTasks.add(TaskFactory { listOf(recursiveTask) })
+          }
         }
         else {
           val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(event.childName)
@@ -115,7 +122,9 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
                                          VfsUtilCore.findContainingDirectory(event.parent,
                                                                              Project.DIRECTORY_STORE_FOLDER) != null
           if (!isProjectOrWorkspaceFile) {
-            ContainerUtil.addIfNotNull(delayedTasks, createRecursivePushTask(event, pushers))
+            createRecursivePushTask(event, pushers)?.let { recursiveTask ->
+              delayedTasks.add(TaskFactory { listOf(recursiveTask) })
+            }
           }
         }
       }
@@ -124,7 +133,9 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
         if (file == null) continue
         val isDirectory = file.isDirectory
         val pushers = if (isDirectory) FilePropertyPusher.EP_NAME.extensionList else filePushers
-        ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers))
+        createRecursivePushTask(event, pushers)?.let { recursiveTask ->
+          syncTasks.add(TaskFactory { listOf(recursiveTask) })
+        }
       }
     }
     val pushingSomethingSynchronously =
@@ -132,7 +143,9 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     if (pushingSomethingSynchronously) {
       // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
       // when only a few files are created/moved
-      syncTasks.forEach(Runnable::run)
+      syncTasks.forEach { task ->
+        runConcurrentlyIfPossible(task.getTasks())
+      }
     }
     else {
       delayedTasks.addAll(syncTasks)
@@ -191,7 +204,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     finishVisitors(sessions)
   }
 
-  private fun queueTasks(actions: List<Runnable>, reason: @NonNls String) {
+  private fun queueTasks(actions: List<TaskFactory>, reason: @NonNls String) {
     actions.forEach { myTasks.offer(it) }
     val task: DumbModeTask = MyDumbModeTask(reason, this)
     myProject.messageBus.connect(task).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
@@ -207,30 +220,43 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     task.queue(myProject)
   }
 
-  fun performDelayedPushTasks() {
+  suspend fun performDelayedPushTasks() {
     performDelayedPushTasks(null)
   }
 
-  private fun performDelayedPushTasks(statistics: ChangedFilesPushingStatistics?) {
+  private suspend fun performDelayedPushTasks(statistics: ChangedFilesPushingStatistics?) {
     var hadTasks = false
     while (true) {
-      ProgressManager.checkCanceled() // give a chance to suspend indexing
-
+      checkCanceled()
       val task = myTasks.poll()
       if (task == null) {
         break
       }
       try {
-        task.run()
+        coroutineScope {
+          task.getTasks().forEach { subtask ->
+            checkCanceled()
+            SCANNING_SEMAPHORE.withPermit {
+              async {
+                blockingContext {
+                  subtask.run()
+                }
+              }
+            }
+          }
+        }
         hadTasks = true
       }
-      catch (e: ProcessCanceledException) {
-        if (statistics != null) {
-          statistics.finished(true)
-          addEvent(myProject, statistics)
+      catch (e: Throwable) {
+        if (!coroutineContext.isActive) {
+          if (statistics != null) {
+            statistics.finished(true)
+            addEvent(myProject, statistics)
+          }
+          queueTasks(listOf(task),
+                     "Rerun pushing tasks after process cancelled") // reschedule dumb mode and ensure the canceled task is enqueued again
         }
-        queueTasks(listOf(task),
-                   "Rerun pushing tasks after process cancelled") // reschedule dumb mode and ensure the canceled task is enqueued again
+
         throw e
       }
     }
@@ -266,12 +292,11 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       LOG.info("Ignoring push request, as project is not yet initialized")
       return
     }
-    queueTasks(listOf(
-      Runnable { doPushAll(Arrays.asList(*pushers)) }), "Push all on " + pushers.contentToString())
+    queueTasks(listOf(TaskFactory { doPushAll(listOf(*pushers)) }), "Push all on " + pushers.contentToString())
   }
 
-  private fun doPushAll(pushers: List<FilePropertyPusher<*>>) {
-    scanProject(myProject) { module: Module ->
+  private fun doPushAll(pushers: List<FilePropertyPusher<*>>): List<Runnable> {
+    return generateScanTasks(myProject) { module: Module ->
       val moduleValues = getModuleImmediateValues(pushers, module)
       ContentIteratorEx { fileOrDir: VirtualFile ->
         applyPushersToFile(fileOrDir, pushers, moduleValues)
@@ -345,7 +370,11 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
         null
       }
       (GistManager.getInstance() as GistManagerImpl).runWithMergingDependentCacheInvalidations {
-        myUpdater.performDelayedPushTasks(statistics)
+        runBlockingCancellable {
+          withContext(Dispatchers.IO) {
+            myUpdater.performDelayedPushTasks(statistics)
+          }
+        }
       }
     }
 
@@ -362,6 +391,9 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
   companion object {
     private val LOG = Logger.getInstance(
       PushedFilePropertiesUpdater::class.java)
+
+    private val SCANNING_PARALLELISM: Int = UnindexedFilesUpdater.getNumberOfScanningThreads()
+    private val SCANNING_SEMAPHORE: Semaphore = Semaphore(SCANNING_PARALLELISM)
 
     private fun getFile(event: VFileEvent): VirtualFile? {
       var file = event.file
@@ -430,9 +462,8 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       return moduleValues
     }
 
-    @JvmStatic
-    fun scanProject(project: Project,
-                    iteratorProducer: Function<in Module, out ContentIteratorEx>) {
+    private fun generateScanTasks(project: Project,
+                                  iteratorProducer: Function<in Module, out ContentIteratorEx>): List<Runnable> {
       val modulesSequence = ReadAction.compute<Sequence<ModuleEntity>, RuntimeException> {
         WorkspaceModel.getInstance(project).currentSnapshot.entities(
           ModuleEntity::class.java)
@@ -440,7 +471,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       val moduleEntities = modulesSequence.toList()
       val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
-      val tasks = moduleEntities.flatMap { moduleEntity: ModuleEntity ->
+      return moduleEntities.flatMap { moduleEntity: ModuleEntity ->
         ReadAction.compute<List<Runnable>, RuntimeException> {
           val storage: EntityStorage = WorkspaceModel.getInstance(project).currentSnapshot
           val module: Module? = moduleEntity.findModule(storage)
@@ -456,22 +487,27 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
           }
         }
       }
+    }
+
+    @JvmStatic
+    fun scanProject(project: Project,
+                    iteratorProducer: Function<in Module, out ContentIteratorEx>) {
+      val tasks = generateScanTasks(project, iteratorProducer)
       invokeConcurrentlyIfPossible(tasks)
     }
 
     fun invokeConcurrentlyIfPossible(tasks: List<Runnable>) {
       if (tasks.isEmpty()) return
-      var synchronous = (tasks.size == 1)
-      if (isSynchronousTaskExecution) {
-        synchronous = true
-      }
-      else {
-        LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed, "Write access is not allowed")
-      }
+      val synchronous = (isSynchronousTaskExecution || tasks.size == 1)
+
       if (synchronous) {
         for (r in tasks) r.run()
         return
+      } else {
+        // at the moment, we allow `invokeConcurrentlyIfPossible` invocation under WA if there is only one task to execute.
+        LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed, "Write access is not allowed here")
       }
+
       val tasksQueue = ConcurrentLinkedQueue(tasks)
       runOnAllThreads {
         var runnable: Runnable? = tasksQueue.poll()

@@ -2,6 +2,7 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -91,6 +92,9 @@ private class CombinedSimpleDiffHeader(project: Project,
                                        withPathOnly: Boolean,
                                        onClick: () -> Unit) :
   CombinedDiffSelectablePanel(regularBackground = CombinedDiffUI.BLOCK_HEADER_BACKGROUND, onClick = onClick) {
+
+  private var toolbar: ActionToolbar? = null
+
   init {
     addToCenter(if (withPathOnly) createTextComponent(project, blockId.path) else buildToolbar(project, blockId).component)
     border = JBUI.Borders.empty(CombinedDiffUI.BLOCK_HEADER_INSETS)
@@ -99,17 +103,21 @@ private class CombinedSimpleDiffHeader(project: Project,
   private fun buildToolbar(project: Project, blockId: CombinedPathBlockId): ActionToolbar {
     val path = blockId.path
     val toolbarGroup = DefaultActionGroup()
-    toolbarGroup.add(CombinedOpenInEditorAction(path))
+    toolbarGroup.add(OpenInEditorAction())
     toolbarGroup.addSeparator()
     toolbarGroup.add(SelectableFilePathLabel(project, path))
 
     val toolbar = ActionManager.getInstance().createActionToolbar("CombinedDiffBlockHeaderToolbar", toolbarGroup, true)
-    toolbar.targetComponent = this
     toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     toolbar.component.isOpaque = false
     toolbar.component.border = JBUI.Borders.empty()
+    this.toolbar = toolbar
 
     return toolbar
+  }
+
+  fun setToolbarTargetComponent(component: JComponent) {
+    toolbar?.setTargetComponent(component)
   }
 
   override fun getSelectionBackground(state: State): Color = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
@@ -221,7 +229,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
       pathOnlyHeader.selected = newValue
       headerWithToolbar.selected = newValue
       stickyHeader.selected = newValue
-      updateBorder(updateStickyHeaderBottomBorder = false)
+      updateBorder(updateStickyHeaderBottomBorder = stickyHeaderComponent.roundedBottom)
     }
   }
 
@@ -229,7 +237,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
     pathOnlyHeader.focused = state
     headerWithToolbar.focused = state
     stickyHeader.focused = state
-    updateBorder(updateStickyHeaderBottomBorder = false)
+    updateBorder(updateStickyHeaderBottomBorder = stickyHeaderComponent.roundedBottom)
   }
 
   override fun updateBorder(updateStickyHeaderBottomBorder: Boolean) {
@@ -237,6 +245,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
     val borderColor = CombinedDiffUI.getBlockBorderColor(blockSelected, isFocused)
     stickyHeaderComponent.borderColor = borderColor
     stickyHeaderComponent.bottomBorderColor = if (updateStickyHeaderBottomBorder) borderColor else CombinedDiffUI.EDITOR_BORDER_COLOR
+    stickyHeaderComponent.roundedBottom = updateStickyHeaderBottomBorder
     component.borderColor = borderColor
   }
 
@@ -252,6 +261,11 @@ internal class CombinedSimpleDiffBlock(project: Project,
     collapsingListeners.addListener(listener, parentDisposable)
   }
 
+  private fun setHeaderToolbarTargetComponent(component: JComponent) {
+    headerWithToolbar.setToolbarTargetComponent(component)
+    stickyHeader.setToolbarTargetComponent(component)
+  }
+
   private val focusListener = object : FocusAdapter() {
     override fun focusGained(e: FocusEvent) {
       setFocused(true)
@@ -265,12 +279,14 @@ internal class CombinedSimpleDiffBlock(project: Project,
   init {
     component.add(header)
     component.add(body)
+    setHeaderToolbarTargetComponent(content)
     ListenerUtil.addFocusListener(component, focusListener)
   }
 
   override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
     val viewer = newContent.viewer
     content = viewer.component
+    setHeaderToolbarTargetComponent(content)
     if (!blockCollapsed) {
       body.setContent(content)
     }

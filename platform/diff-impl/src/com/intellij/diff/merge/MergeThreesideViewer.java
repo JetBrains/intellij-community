@@ -37,6 +37,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diff.DefaultFlagsProvider;
@@ -57,6 +58,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -75,6 +77,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +87,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
@@ -210,6 +215,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
+
+    AnAction additionalActions = ActionManager.getInstance().getAction("Diff.Conflicts.Additional.Actions");
+    if (additionalActions instanceof ActionGroup) {
+      group.add(additionalActions);
+    }
 
     return group;
   }
@@ -411,6 +421,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         myPanel.setErrorContent();
       };
     }
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public TextMergeRequest getMergeRequest() {
+    return myMergeRequest;
   }
 
   private static MergeLineFragmentsWithImportMetadata getLineFragments(@NotNull ProgressIndicator indicator,
@@ -972,7 +988,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     return ContainerUtil.filter(getAllChanges(), change -> !change.isImportChange() && canResolveChangeAutomatically(change, side));
   }
 
-  private void applyResolvableConflictedChanges() {
+  @ApiStatus.Internal
+  public void applyResolvableConflictedChanges() {
     List<TextMergeChange> changes = getAllChanges();
     executeMergeCommand(DiffBundle.message("message.resolve.simple.conflicts.command"), true, null, () -> {
       MergeReferenceData referenceData = getReferenceDataForChanges(getResolvableChanges(ThreeSide.BASE));
@@ -1074,6 +1091,58 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
   }
 
+  private static final Key<Boolean> EXTERNAL_OPERATION_IN_PROGRESS = Key.create("external.resolve.operation");
+
+  /**
+   * Allows running external heavy operations and blocks the UI during execution.
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public <T> void runExternalResolver(CompletableFuture<? extends T> operation,
+                                      Consumer<T> resultHandler) {
+    runBeforeExternalOperation();
+
+    operation.whenComplete((result, throwable) -> {
+
+      Runnable runnable = () -> {
+        // todo: add error handling
+        if (isDisposed()) return;
+        runAfterExternalOperation();
+
+        if (result != null) {
+          resultHandler.accept(result);
+        }
+      };
+
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(getComponent()));
+    });
+  }
+
+  private boolean isExternalOperationInProgress() {
+    return Boolean.TRUE.equals(myMergeContext.getUserData(EXTERNAL_OPERATION_IN_PROGRESS));
+  }
+
+  @RequiresEdt
+  private void runBeforeExternalOperation() {
+    myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, true);
+    getEditor().setViewer(true);
+
+    for (TextMergeChange change : getAllChanges()) {
+      change.destroyOperations();
+    }
+  }
+
+  @RequiresEdt
+  private void runAfterExternalOperation() {
+    getEditor().setViewer(false);
+
+    for (TextMergeChange change : getAllChanges()) {
+      change.installOperations();
+    }
+
+    myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, null);
+  }
+
   private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -1105,7 +1174,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       presentation.setText(getText(side));
 
       presentation.setVisible(true);
-      presentation.setEnabled(isSomeChangeSelected(side));
+      presentation.setEnabled(isSomeChangeSelected(side) && !isExternalOperationInProgress());
     }
 
     @Override
@@ -1345,7 +1414,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(hasNonConflictedChanges(mySide));
+      e.getPresentation().setEnabled(hasNonConflictedChanges(mySide) && !isExternalOperationInProgress());
     }
 
     @Override
@@ -1376,7 +1445,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(hasResolvableConflictedChanges());
+      e.getPresentation().setEnabled(hasResolvableConflictedChanges() && !isExternalOperationInProgress());
     }
 
     @Override
@@ -1392,6 +1461,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       mySide = side;
       String actionId = mySide.select("Diff.CompareWithBase.Left", "Diff.CompareWithBase.Result", "Diff.CompareWithBase.Right");
       ActionUtil.copyFrom(this, actionId);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(!isExternalOperationInProgress());
     }
 
     @Override

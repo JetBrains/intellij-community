@@ -346,7 +346,7 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   private static boolean thereAreLocalChangesIn(@NotNull GitRepository repository) {
-    return !repository.getStagingAreaHolder().getAllRecords().isEmpty();
+    return !repository.getStagingAreaHolder().isEmpty();
   }
 
   @Override

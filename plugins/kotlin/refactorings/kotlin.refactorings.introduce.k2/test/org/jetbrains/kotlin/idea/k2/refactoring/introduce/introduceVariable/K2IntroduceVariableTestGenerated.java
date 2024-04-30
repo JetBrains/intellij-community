@@ -724,6 +724,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/PropertyAccessorAddBlockInner.kt");
         }
 
+        @TestMetadata("propertyBasedQualifier.kt")
+        public void testPropertyBasedQualifier() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/propertyBasedQualifier.kt");
+        }
+
         @TestMetadata("qualifier.kt")
         public void testQualifier() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/qualifier.kt");

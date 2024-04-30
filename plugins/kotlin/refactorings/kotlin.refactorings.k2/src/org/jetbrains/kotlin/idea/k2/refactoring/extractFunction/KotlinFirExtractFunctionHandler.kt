@@ -107,8 +107,9 @@ class KotlinFirExtractFunctionHandler(
         targetSibling: PsiElement
     ) {
 
+        val adjustedElements = elements.singleOrNull().safeAs<KtBlockExpression>()?.statements ?: elements
+        if (adjustedElements.isEmpty()) return
         val data = ActionUtil.underModalProgress(file.project, KotlinBundle.message("fix.change.signature.prepare")) {
-            val adjustedElements = elements.singleOrNull().safeAs<KtBlockExpression>()?.statements ?: elements
             ExtractionData(file, adjustedElements.toRange(false), targetSibling)
         }
 

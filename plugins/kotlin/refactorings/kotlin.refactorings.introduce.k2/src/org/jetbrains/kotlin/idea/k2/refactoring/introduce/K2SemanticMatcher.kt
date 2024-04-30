@@ -670,8 +670,8 @@ object K2SemanticMatcher {
             }
         }
 
-        val targetCall = targetExpression.resolveCall()?.calls?.singleOrNull()
-        val patternCall = patternExpression.resolveCall()?.calls?.singleOrNull()
+        val targetCall = targetCallInfo.calls.singleOrNull()
+        val patternCall = patternCallInfo.calls.singleOrNull()
 
         if (targetCall?.javaClass != patternCall?.javaClass) return false
 

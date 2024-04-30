@@ -33,7 +33,8 @@ import java.util.function.BiFunction;
 public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
 
-  private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
+  //TODO: this is a temporary solutions, should be done better in IJPL-148813
+  private static @NotNull String ourLangTag = System.getProperty("intellij.searchableOptions.i18n.locale", Locale.ENGLISH.toLanguageTag());
 
   private static final ConcurrentMap<String, ResourceBundle> bundles = CollectionFactory.createConcurrentWeakValueMap();
 
@@ -339,6 +340,13 @@ public class DynamicBundle extends AbstractBundle {
   public static void loadLocale(@Nullable LanguageBundleEP langBundle) {
     if (langBundle != null) {
       ourLangTag = langBundle.locale;
+      ourCache.clear();
+      return;
+    }
+    // TODO: this is a temporary solutions, should be done better in IJPL-148813
+    String i18Locale = System.getProperty("intellij.searchableOptions.i18n.locale", Locale.ENGLISH.toLanguageTag());
+    if (!Locale.ENGLISH.toLanguageTag().equals(i18Locale)) {
+      ourLangTag = i18Locale;
       ourCache.clear();
     }
   }

@@ -354,6 +354,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         else if (node instanceof Navigatable) {
           navigatables.add((Navigatable)node);
         }
+        else if (userObject instanceof CachedTreePresentationNode cached) {
+          navigatables.add(new CachedNodeNavigatable(myProject, cached));
+        }
       }
       return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
     }
@@ -966,6 +969,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Override
     public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       if ((action.getActionId() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return false;
+      var tree = myTree;
+      if (tree == null) return false;
+      if (tree.isOverExpandControl(dragOrigin)) return false;
       var selectedObjects = getSelectedUserObjects();
       for (Object object : selectedObjects) {
         if (object instanceof AbstractPsiBasedNode<?> || object instanceof AbstractModuleNode) {

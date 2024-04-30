@@ -287,6 +287,15 @@ object IgnoreTests {
         const val IGNORE_K1: String = "// IGNORE_K1"
     }
 
+    enum class FileExtension {
+        K2,
+
+        @Deprecated(message = "use K2 instead")
+        FIR;
+
+        override fun toString(): String = name.lowercase()
+    }
+
     enum class DirectivePosition {
         FIRST_LINE_IN_FILE, LAST_LINE_IN_FILE
     }
@@ -294,57 +303,67 @@ object IgnoreTests {
     private val isTeamCityBuild: Boolean
         get() = System.getenv("TEAMCITY_VERSION") != null
 
-    fun getFirTestFile(originalTestFile: File, vararg additionalFilesExtensions: String): File {
+    fun getK2TestFile(
+        originalTestFile: File,
+        k2Extension: FileExtension = FileExtension.K2,
+        vararg additionalFilesExtensions: String
+    ): File {
         if (originalTestFile.readLines().any { it.startsWith(DIRECTIVES.FIR_IDENTICAL) }) {
             return originalTestFile
         }
-        val firTestFile = deriveFirTestFile(originalTestFile)
-        if (!firTestFile.exists()) {
-            FileUtil.copy(originalTestFile, firTestFile)
+        val k2TestFile = deriveK2TestFile(originalTestFile, k2Extension)
+        if (!k2TestFile.exists()) {
+            FileUtil.copy(originalTestFile, k2TestFile)
         }
         for (extension in additionalFilesExtensions) {
-            val additionalFirFile = firTestFile.withExtension(firTestFile.extension + extension)
+            val additionalK2File = k2TestFile.withExtension(k2TestFile.extension + extension)
             val additionalOriginalFile = originalTestFile.withExtension(originalTestFile.extension + extension)
-            if (!additionalFirFile.exists() && additionalOriginalFile.exists()) {
-                FileUtil.copy(additionalOriginalFile, additionalFirFile)
+            if (!additionalK2File.exists() && additionalOriginalFile.exists()) {
+                FileUtil.copy(additionalOriginalFile, additionalK2File)
             }
         }
-        return firTestFile
+        return k2TestFile
     }
 
-    fun getFirTestFileIfFirPassing(originalTestFile: File, passingDirective: String, vararg additionalFilesExtensions: String): File {
+    fun getK2TestFileIfK2Passing(
+        originalTestFile: File,
+        passingDirective: String,
+        k2Extension: FileExtension = FileExtension.K2,
+        vararg additionalFilesExtensions: String
+    ): File {
         if (!InTextDirectivesUtils.isDirectiveDefined(originalTestFile.readText(), passingDirective)) {
             return originalTestFile
         }
-        return getFirTestFile(originalTestFile, *additionalFilesExtensions)
+        return getK2TestFile(originalTestFile, k2Extension, *additionalFilesExtensions)
     }
 
 
-    fun cleanUpIdenticalFirTestFile(
+    fun cleanUpIdenticalK2TestFile(
         originalTestFile: File,
-        firTestFile: File = deriveFirTestFile(originalTestFile),
+        k2Extension: FileExtension = FileExtension.K2,
+        k2TestFile: File = deriveK2TestFile(originalTestFile, k2Extension),
         additionalFileToMarkFirIdentical: File? = null,
         additionalFileToDeleteIfIdentical: File? = null,
         additionalFilesToCompare: Collection<Pair<File, File>> = emptyList()
     ) {
-        if (firTestFile.exists() &&
-            firTestFile.readText().trim() == originalTestFile.readText().trim() &&
+        if (k2TestFile.exists() &&
+            k2TestFile.readText().trim() == originalTestFile.readText().trim() &&
             additionalFilesToCompare.all { (a, b) ->
                 if (!a.exists() || !b.exists()) false
                 else a.readText().trim() == b.readText().trim()
             }
         ) {
             val message = if (isTeamCityBuild) {
-                "Please remove $firTestFile and add // FIR_IDENTICAL to test source file $originalTestFile"
+                "Please remove $k2TestFile and add // FIR_IDENTICAL to test source file $originalTestFile"
             } else {
                 // The FIR test file is identical with the original file. We should remove the FIR file and mark "FIR_IDENTICAL" in the
                 // original file
-                firTestFile.delete()
+                k2TestFile.delete()
                 originalTestFile.prependFirIdentical()
                 additionalFileToMarkFirIdentical?.prependFirIdentical()
                 if (additionalFileToDeleteIfIdentical?.exists() == true) additionalFileToDeleteIfIdentical.delete()
 
-                "Deleted $firTestFile, added // FIR_IDENTICAL to test source file $originalTestFile"
+                "Deleted $k2TestFile, added // FIR_IDENTICAL to test source file $originalTestFile"
             }
             Assert.fail(
                 """
@@ -365,10 +384,11 @@ object IgnoreTests {
         }
     }
 
-    private fun deriveFirTestFile(originalTestFile: File): File {
+    private fun deriveK2TestFile(originalTestFile: File, k2Extension: FileExtension): File {
         val name = originalTestFile.name
-        return originalTestFile.parentFile.resolve(deriveFirFileName(name))
+        return originalTestFile.parentFile.resolve(deriveK2FileName(name, k2Extension))
     }
 
-    fun deriveFirFileName(fileName: String): String = fileName.substringBeforeLast('.') + ".fir." + fileName.substringAfterLast('.')
+    fun deriveK2FileName(fileName: String, k2Extension: FileExtension): String =
+        fileName.substringBeforeLast('.') + ".$k2Extension." + fileName.substringAfterLast('.')
 }

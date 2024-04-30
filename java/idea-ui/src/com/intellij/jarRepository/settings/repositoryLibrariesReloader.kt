@@ -21,10 +21,9 @@ internal fun reloadAllRepositoryLibraries(project: Project) {
     .toList()
     .collectResults()
     .onSuccess {
-      Notifications.Bus.notify(JarRepositoryManager.GROUP.createNotification(
+      Notifications.Bus.notify(JarRepositoryManager.getNotificationGroup().createNotification(
         JavaUiBundle.message("notification.title.repository.library.synchronization"),
         JavaUiBundle.message("notification.content.libraries.reloaded", it.size),
         NotificationType.INFORMATION), project)
     }
-
 }

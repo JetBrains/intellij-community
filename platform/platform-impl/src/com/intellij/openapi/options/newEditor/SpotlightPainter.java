@@ -11,23 +11,28 @@ import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 
-abstract class SpotlightPainter extends AbstractPainter implements ComponentHighlightingListener {
+@ApiStatus.Internal
+public class SpotlightPainter extends AbstractPainter implements ComponentHighlightingListener {
   private final HashMap<String, String> myConfigurableOption = new HashMap<>();
   private final MergingUpdateQueue myQueue;
+  private final SpotlightPainterUpdater myUpdater;
   private final GlassPanel myGlassPanel;
   private final JComponent myTarget;
   boolean myVisible;
 
-  SpotlightPainter(JComponent target, @NotNull Disposable parent) {
+  public SpotlightPainter(@NotNull JComponent target, @NotNull Disposable parent, @NotNull SpotlightPainterUpdater updater) {
     myQueue = new MergingUpdateQueue("SettingsSpotlight", 200, false, target, parent, target);
+    myUpdater = updater;
     myGlassPanel = new GlassPanel(target);
     myTarget = target;
     IdeGlassPaneUtil.installPainter(target, this, parent);
@@ -47,7 +52,7 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
     return true;
   }
 
-  void updateLater() {
+  public final void updateLater() {
     myQueue.queue(new Update(this) {
       @Override
       public void run() {
@@ -56,9 +61,11 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
     });
   }
 
-  abstract void updateNow();
+  public final void updateNow() {
+    myUpdater.updateNow(this);
+  }
 
-  void update(SettingsFilter filter, Configurable configurable, JComponent component) {
+  public void update(SettingsFilter filter, Configurable configurable, JComponent component) {
     if (configurable == null) {
       myGlassPanel.clear();
       myVisible = false;
@@ -88,6 +95,16 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
 
   @Override
   public void highlight(@NotNull JComponent component, @NotNull String searchString) {
-    myGlassPanel.addSpotlight(component);
+    // If several spotlight painters exist, they will receive each other updates,
+    // because they share one message bus (ComponentHighlightingListener.TOPIC).
+    // The painter should only draw spotlights for components in the hierarchy of `myTarget`
+    if (UIUtil.isAncestor(myTarget, component)) {
+      myGlassPanel.addSpotlight(component);
+    }
+  }
+
+  @ApiStatus.Internal
+  public interface SpotlightPainterUpdater {
+    void updateNow(SpotlightPainter painter);
   }
 }

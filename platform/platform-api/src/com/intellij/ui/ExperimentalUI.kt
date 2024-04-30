@@ -33,6 +33,8 @@ abstract class ExperimentalUI {
     // Should be unset by the client, or it will be unset on the IDE close.
     const val NEW_UI_SWITCH: String = "experimental.ui.switch"
     const val NEW_UI_PROMO_BANNER_DISABLED_PROPERTY: String = "experimental.ui.promo.banner.disabled"
+    const val FORCED_SWITCH_TO_NEW_UI: String = "forced.switch.to.new.ui"
+    val forcedSwitchedUi = EarlyAccessRegistryManager.getBoolean(FORCED_SWITCH_TO_NEW_UI)
 
     init {
       NewUiValue.initialize { EarlyAccessRegistryManager.getBoolean(KEY) }

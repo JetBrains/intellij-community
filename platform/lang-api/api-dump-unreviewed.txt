@@ -3072,9 +3072,9 @@ com.intellij.ide.projectView.ProjectViewNestingRulesProvider
 com.intellij.ide.projectView.ProjectViewNestingRulesProvider$Consumer
 - a:addNestingRule(java.lang.String,java.lang.String):V
 a:com.intellij.ide.projectView.ProjectViewNode
-- com.intellij.ide.util.treeView.AbstractTreeNode
 - com.intellij.ide.projectView.RootsProvider
 - com.intellij.ide.projectView.SettingsProvider
+- com.intellij.ide.util.treeView.AbstractTreeNode
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - p:<init>(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.ide.projectView.ViewSettings):V
 - canHaveChildrenMatching(com.intellij.openapi.util.Condition):Z

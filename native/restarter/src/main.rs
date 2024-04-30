@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::{env, process};
+use std::{env, io, process};
 use std::error::Error;
 use std::io::ErrorKind;
 
@@ -36,12 +36,16 @@ fn main() {
 
 fn process_args(args: &[String], log: &mut logger::Logger) -> Result<()> {
     let pid = args[1].parse::<i32>()?;
+    if pid as u32 == process::id() {
+        return Err(Box::new(io::Error::new(ErrorKind::InvalidInput, "Cannot wait for itself")));
+    }
+
     let mut commands = Vec::<&[String]>::new();
     let mut arg_idx = 2;
     while arg_idx < args.len() {
         let arg_n = args[arg_idx].parse::<usize>()?;
         if arg_n == 0 || arg_idx + arg_n >= args.len() {
-            return Err(Box::new(std::io::Error::new(ErrorKind::InvalidInput, format!("unexpected '{}' at {}", arg_n, arg_idx))));
+            return Err(Box::new(io::Error::new(ErrorKind::InvalidInput, format!("unexpected '{}' at {}", arg_n, arg_idx))));
         }
         arg_idx += 1;
         commands.push(&args[arg_idx .. arg_idx + arg_n]);
@@ -75,7 +79,7 @@ fn wait_for_process_exit(pid: i32) -> Result<()> {
     let event = unsafe { WaitForSingleObject(handle, INFINITE) };
     unsafe { CloseHandle(handle) }?;
     if event != WAIT_OBJECT_0 {
-        return Err(Box::new(std::io::Error::new(ErrorKind::Other, format!("WaitForSingleObject: {event:?}"))));
+        return Err(Box::new(io::Error::new(ErrorKind::Other, format!("WaitForSingleObject: {event:?}"))));
     }
     Ok(())
 }

@@ -21,7 +21,7 @@ class RepositoryLibraryResolveErrorNotification extends Notification {
 
   RepositoryLibraryResolveErrorNotification() {
     super(
-      JarRepositoryManager.GROUP.getDisplayId(),
+      JarRepositoryManager.getNotificationGroup().getDisplayId(),
       JavaUiBundle.message("notification.title.repository.library.synchronization"),
       "",
       NotificationType.ERROR

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
+import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
@@ -12,16 +13,21 @@ import com.intellij.collaboration.ui.codereview.diff.viewer.buildChangeContext
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import git4idea.changes.getDiffComputer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -31,6 +37,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffR
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
+import kotlin.time.Duration.Companion.ZERO
+import kotlin.time.Duration.Companion.minutes
 
 internal interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel, ComputedDiffViewModel {
   fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?>
@@ -54,9 +62,8 @@ internal class GitLabMergeRequestDiffViewModelImpl(
 ) {
   private val changesSorter = project.service<GitLabMergeRequestsPreferences>().changesGroupingState
     .map { RefComparisonChangesSorter.Grouping(project, it) }
-  private val helper = CodeReviewDiffViewModelComputer(
-    mergeRequest.changes.mapScoped(true) { async { it.loadRevisionsAndParseChanges() } }, changesSorter
-  ) { changesBundle, change ->
+  private val changesFetchFlow = computationStateFlow(mergeRequest.changes, GitLabMergeRequestChanges::loadRevisionsAndParseChanges)
+  private val helper = CodeReviewDiffViewModelComputer(changesFetchFlow, changesSorter) { changesBundle, change ->
     val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
     val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
                              ?: error("Could not create diff producer from $change")
@@ -66,6 +73,8 @@ internal class GitLabMergeRequestDiffViewModelImpl(
   override val diffVm: StateFlow<ComputedResult<DiffProducersViewModel?>> =
     helper.diffVm.stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
 
+  private val changeVmsMap = mutableMapOf<RefComparisonChange, StateFlow<GitLabMergeRequestDiffReviewViewModelImpl?>>()
+
   init {
     cs.launchNow {
       diffBridge.displayedChanges.collectLatest {
@@ -74,16 +83,20 @@ internal class GitLabMergeRequestDiffViewModelImpl(
     }
   }
 
-  override fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?> {
-    return mergeRequest.changes.map {
-      it.getParsedChanges()
-    }.map { parsedChanges ->
-      parsedChanges.patchesByChange[change]?.let { diffData ->
-        GitLabMergeRequestDiffReviewViewModelImpl(project, mergeRequest, parsedChanges, diffData, change, discussions,
-                                                  discussionsViewOption, avatarIconsProvider)
-      }
-    }.catch { emit(null) }
-  }
+  override fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?> =
+    changeVmsMap.getOrPut(change) {
+      changesFetchFlow
+        .mapNotNull { it.getOrNull() }
+        .mapScoped { changes ->
+          changes.patchesByChange[change]?.let { createChangeVm(changes, change, it) }
+        }.stateIn(cs, SharingStarted.WhileSubscribed(5.minutes, ZERO), null)
+    }
+
+  private fun CoroutineScope.createChangeVm(changes: GitBranchComparisonResult,
+                                            change: RefComparisonChange,
+                                            diffData: GitTextFilePatchWithHistory) =
+    GitLabMergeRequestDiffReviewViewModelImpl(project, this, mergeRequest, changes, diffData, change, discussions,
+                                              discussionsViewOption, avatarIconsProvider)
 }
 
 private suspend fun GitLabMergeRequestChanges.loadRevisionsAndParseChanges(): GitBranchComparisonResult =

@@ -204,8 +204,11 @@ private fun getNegatedOperatorText(token: IElementType): String {
     return negatedOperator.value
 }
 
-fun KtDotQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
-    (receiverExpression as? KtDotQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
+fun KtQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
+    (receiverExpression as? KtQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
+
+fun KtExpression.getLeftMostReceiverExpressionOrThis(): KtExpression =
+    (this as? KtQualifiedExpression)?.getLeftMostReceiverExpression() ?: this
 
 fun KtDotQualifiedExpression.replaceFirstReceiver(
     factory: KtPsiFactory,
@@ -419,3 +422,34 @@ val KtIfExpression.branches: List<KtExpression?>
     }
 
 fun KtClass.isFunInterface(): Boolean = isInterface() && getFunKeyword() != null
+
+fun KtParenthesizedExpression.removeUnnecessaryParentheses() {
+    val commentSaver = CommentSaver(this)
+    val innerExpression = this.expression ?: return
+    val binaryExpressionParent = this.parent as? KtBinaryExpression
+    val ktPsiFactory = KtPsiFactory(this.project)
+
+    val replaced = if (binaryExpressionParent != null &&
+        innerExpression is KtBinaryExpression &&
+        binaryExpressionParent.right == this
+    ) {
+        val newElement = ktPsiFactory.createExpressionByPattern(
+            "$0 $1 $2 $3 $4",
+            binaryExpressionParent.left!!,
+            binaryExpressionParent.operationReference,
+            innerExpression.left!!,
+            innerExpression.operationReference,
+            innerExpression.right!!,
+        )
+        val replace = binaryExpressionParent.replace(newElement)
+        replace.replace(ktPsiFactory.createExpression(replace.text))
+    } else {
+        this.replace(innerExpression)
+    }
+
+    if (innerExpression.firstChild is KtLambdaExpression) {
+        ktPsiFactory.appendSemicolonBeforeLambdaContainingElement(replaced)
+    }
+
+    commentSaver.restore(replaced)
+}

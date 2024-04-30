@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -11,6 +13,8 @@ import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -47,6 +51,7 @@ import java.util.function.Predicate
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 import kotlin.io.path.useLines
 
 /**
@@ -507,7 +512,7 @@ internal suspend fun generateProjectStructureMapping(
           copyFiles = false,
           moduleOutputPatcher = moduleOutputPatcher,
           includedModules = plugin.includedModules,
-          moduleWithSearchableOptions = emptySet(),
+          jarsWithSearchableOptions = emptySet(),
           context = context,
         ).first)
       }
@@ -532,7 +537,7 @@ private suspend fun buildPlugins(
 
   val scrambleTasks = mutableListOf<ScrambleTask>()
 
-  val moduleWithSearchableOptions = getModuleWithSearchableOptions(context)
+  val jarsWithSearchableOptions = getJarsWithSearchableOptions(context)
   val entries = coroutineScope {
     plugins.map { plugin ->
       if (plugin.mainModule != "intellij.platform.builtInHelp") {
@@ -563,7 +568,7 @@ private suspend fun buildPlugins(
             copyFiles = true,
             moduleOutputPatcher = moduleOutputPatcher,
             includedModules = plugin.includedModules,
-            moduleWithSearchableOptions = moduleWithSearchableOptions,
+            jarsWithSearchableOptions = jarsWithSearchableOptions,
             context = context,
           )
           pluginBuilt?.invoke(plugin, file)
@@ -613,7 +618,7 @@ private suspend fun buildPlugins(
   return entries
 }
 
-private suspend fun getModuleWithSearchableOptions(context: BuildContext): Set<String> {
+private suspend fun getJarsWithSearchableOptions(context: BuildContext): Set<String> {
   return withContext(Dispatchers.IO) {
     try {
       val result = HashSet<String>()
@@ -737,7 +742,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
         copyFiles = copyFiles,
         moduleOutputPatcher = moduleOutputPatcher,
         includedModules = platform.includedModules,
-        moduleWithSearchableOptions = if (copyFiles) getModuleWithSearchableOptions(context) else emptySet(),
+        jarsWithSearchableOptions = if (copyFiles) getJarsWithSearchableOptions(context) else emptySet(),
         context = context,
       ).first
     }
@@ -978,7 +983,7 @@ suspend fun layoutDistribution(
   copyFiles: Boolean = true,
   moduleOutputPatcher: ModuleOutputPatcher,
   includedModules: Collection<ModuleItem>,
-  moduleWithSearchableOptions: Set<String>,
+  jarsWithSearchableOptions: Set<String>,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
@@ -996,7 +1001,7 @@ suspend fun layoutDistribution(
       if (!patchers.isEmpty()) {
         spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope {
           for (patcher in patchers) {
-            patcher(moduleOutputPatcher, context)
+            patcher(moduleOutputPatcher, platformLayout, context)
           }
         }
       }
@@ -1014,7 +1019,7 @@ suspend fun layoutDistribution(
                          layout = layout,
                          platformLayout = platformLayout,
                          moduleOutputPatcher = moduleOutputPatcher,
-                         moduleWithSearchableOptions = moduleWithSearchableOptions,
+                         jarsWithSearchableOptions = jarsWithSearchableOptions,
                          dryRun = !copyFiles,
                          context = context)
       }
@@ -1373,32 +1378,49 @@ private suspend fun buildSearchableOptions(
   }
 
   val targetDirectory = context.paths.searchableOptionDir
+  NioFiles.deleteRecursively(targetDirectory)
+
+  val locales = mutableListOf(SearchableOptionLocalization(Locale.ENGLISH.toLanguageTag()))
+  if (!context.isStepSkipped(BuildOptions.LOCALIZE_STEP)) {
+    val localizationDir = getLocalizationDir(context)
+    locales.addAll(
+      localizationDir?.resolve("properties")?.listFiles()?.filter { it.isDirectory }?.map { SearchableOptionLocalization(it.name) }
+      ?: emptyList()
+    )
+  }
+
+  // bundled maven is also downloaded during traverseUI execution in an external process,
+  // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
+  // so it's pre-downloaded with proper synchronization
+  coroutineScope {
+    launch {
+      BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
+    }
+    launch {
+      BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
+    }
+    launch {
+      BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
+    }
+    launch {
+      BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+    }
+  }
   val modules = withContext(Dispatchers.IO) {
-    NioFiles.deleteRecursively(targetDirectory)
-    // bundled maven is also downloaded during traverseUI execution in an external process,
-    // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
-    // so it's pre-downloaded with proper synchronization
     coroutineScope {
-      launch {
-        BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
-      }
-      launch {
-        BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
-      }
-      launch {
-        BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-      }
-      launch {
-        BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+      locales.forEach { locale: SearchableOptionLocalization ->
+        launch {
+          // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+          // It'll process all UI elements in the `Settings` dialog and build an index for them.
+          productRunner.runProduct(
+            arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
+            additionalSystemProperties = systemProperties +
+                                         locale.systemProperties,
+            isLongRunning = true,
+          )
+        }
       }
     }
-    // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-    // It'll process all UI elements in the `Settings` dialog and build an index for them.
-    productRunner.runProduct(
-      arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
-      additionalSystemProperties = systemProperties,
-      isLongRunning = true,
-    )
     check(Files.isDirectory(targetDirectory)) {
       "Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run."
     }
@@ -1410,5 +1432,19 @@ private suspend fun buildSearchableOptions(
 
   span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), modules.size)
   span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"), modules.map { targetDirectory.relativize(it).toString() })
+
   return targetDirectory
+}
+
+private class SearchableOptionLocalization(langTag: String) {
+  private val isEng = Locale.ENGLISH.toLanguageTag().equals(langTag)
+  val systemProperties = if (isEng) {
+    emptyMap()
+  }
+  else {
+    mapOf(
+      "intellij.searchableOptions.i18n.enabled" to "true",
+      "intellij.searchableOptions.i18n.locale" to langTag //TODO: use corresponding property after IJPL-148813
+    )
+  }
 }

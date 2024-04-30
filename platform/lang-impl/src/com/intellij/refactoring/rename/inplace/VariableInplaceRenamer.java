@@ -149,7 +149,6 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                                           final @NotNull PsiElement scope,
                                           final @NotNull PsiFile containingFile) {
     PsiFile fileCopy = (PsiFile)containingFile.copy();
-    myOrigOffset = myEditor.getCaretModel().getOffset();
     try {
       myElementInCopy = PsiTreeUtil.findSameElementInCopy(myElementToRename, fileCopy);
     }
@@ -192,6 +191,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   @Override
   protected void beforeTemplateStart() {
     super.beforeTemplateStart();
+    myOrigOffset = myCaretRangeMarker.getStartOffset();
     myLanguage = myScope.getLanguage();
     if (shouldCreateSnapshot()) {
       final ResolveSnapshotProvider resolveSnapshotProvider = INSTANCE.forLanguage(myLanguage);
@@ -280,28 +280,27 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   protected void performOnInvalidIdentifier(final String newName, final LinkedHashSet<String> nameSuggestions) {
-    final PsiNamedElement variable = getVariable();
-    if (variable != null) {
-      final int offset = variable.getTextOffset();
-      restoreCaretOffset(offset);
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return;
-      }
-      JBPopupFactory.getInstance()
-        .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("label.continue.editing"),
-                            CommonBundle.getCancelButtonText(),
-                            () -> {
-                              startDumbIfPossible();
-                              try {
-                                rollBack();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      tryRollback();
+      return;
+    }
+    JBPopupFactory.getInstance()
+      .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("label.continue.editing"),
+                          CommonBundle.getCancelButtonText(),
+                          () -> {
+                            startDumbIfPossible();
+                            try {
+                              tryRollback();
+                              final PsiNamedElement variable = getVariable();
+                              if (variable != null) {
                                 createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
                               }
-                              finally {
-                                stopDumbLaterIfPossible();
-                              }
-                            },
-                            () -> rollBack(), 0).showInBestPositionFor(myEditor);
-    }
+                            }
+                            finally {
+                              stopDumbLaterIfPossible();
+                            }
+                          },
+                          () -> tryRollback(), 0).showInBestPositionFor(myEditor);
   }
 
   /**
@@ -348,11 +347,6 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     public void showUI() {
       RangeHighlighter highlighter = highlightConflictingElement(collision.getElement());
       String description = StringUtil.stripHtml(collision.getDescription(), false);
-      PsiNamedElement copyVariable = myElementInCopy;
-      if (copyVariable != null) {
-        final int offset = copyVariable.getTextOffset();
-        restoreCaretOffset(offset);
-      }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new BaseRefactoringProcessor.ConflictsInTestsException(List.of(description));
       }
@@ -371,7 +365,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             }
             startDumbIfPossible();
             try {
-              rollBack();
+              tryRollback();
               PsiNamedElement var = getVariable();
               if (var != null) {
                 createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
@@ -386,7 +380,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  private void rollBack() {
+  final void tryRollback() {
+    if (myRevertCommand == null) return;
     Document document = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getDocument();
     PsiFile psiFile = Objects.requireNonNull(PsiDocumentManager.getInstance(myProject).getPsiFile(document));
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
@@ -494,7 +489,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  private void startDumbIfPossible() {
+  void startDumbIfPossible() {
     if (InjectedLanguageEditorUtil.getTopLevelEditor(myEditor) instanceof EditorImpl editor) {
       editor.startDumb();
     }
@@ -563,6 +558,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     else {
       stopDumbLaterIfPossible();
     }
+  }
+
+  @Override
+  protected void performCleanup() {
+    tryRollback();
   }
 
   private static @NotNull ModUpdateFileText getRevertModCommand(@NotNull Editor editor, String oldName) {

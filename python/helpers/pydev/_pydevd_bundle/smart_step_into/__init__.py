@@ -42,6 +42,6 @@ def find_stepping_variants(frame, start_line, end_line):
         if not instruction.lineno:
             continue
         if start_line <= instruction.lineno <= end_line:
-            yield _Variant(instruction.argval, instruction.offset < last_instruction)
+            yield _Variant(instruction.argval, instruction.offset <= last_instruction)
         if instruction.lineno > end_line:
             break

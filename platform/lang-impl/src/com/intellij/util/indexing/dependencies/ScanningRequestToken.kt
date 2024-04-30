@@ -18,16 +18,7 @@ abstract class ScanningRequestToken {
   fun isSuccessful() = successful
 }
 
-internal object RequestHeavyScanningOnNextStartToken : ScanningRequestToken() {
-  override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
-    throw IllegalStateException("This token is a marker. It should not be used.")
-  }
-
-  override val appIndexingRequestId: AppIndexingDependenciesToken
-    get() = throw IllegalStateException("This token is a marker. It should not be used.")
-}
-
-internal object RequestHeavyScanningOnThisOrNextStartToken : ScanningRequestToken() {
+internal object RequestFullHeavyScanningToken : ScanningRequestToken() {
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     throw IllegalStateException("This token is a marker. It should not be used.")
   }

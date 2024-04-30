@@ -19,7 +19,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       return if (end == -1) "" else path.substring(0, end)
     }
 
-    internal fun toLoadPath(relativePath: String, base: String?): String {
+    fun toLoadPath(relativePath: String, base: String?): String {
       return when {
         relativePath[0] == '/' -> relativePath.substring(1)
         relativePath.startsWith("intellij.") -> relativePath

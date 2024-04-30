@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.*;
 
 public interface SelectInTarget extends PossiblyDumbAware {
@@ -14,8 +15,12 @@ public interface SelectInTarget extends PossiblyDumbAware {
   @Nls
   String toString();
 
+  default boolean isAvailable(@NotNull Project project) {
+    return true;
+  }
+
   /**
-   * This should be called in an read action
+   * This should be called in a read action
    */
   boolean canSelect(SelectInContext context);
 

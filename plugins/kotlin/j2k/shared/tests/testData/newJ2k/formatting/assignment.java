@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class J {
     void foo() {
         int x =

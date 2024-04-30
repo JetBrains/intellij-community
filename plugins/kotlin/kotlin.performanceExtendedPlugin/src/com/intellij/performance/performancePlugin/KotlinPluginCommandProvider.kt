@@ -4,22 +4,18 @@ package com.intellij.performance.performancePlugin
 import com.intellij.performance.performancePlugin.commands.*
 import com.jetbrains.performancePlugin.CommandProvider
 import com.jetbrains.performancePlugin.CreateCommand
-import org.jetbrains.plugins.gradle.performanceTesting.EnableKotlinDaemonLogCommand
-import org.jetbrains.plugins.gradle.performanceTesting.AddKotlinCompilerOptionsCommand
 
-class KotlinPluginCommandProvider : CommandProvider {
+internal class KotlinPluginCommandProvider : CommandProvider {
 
-    override fun getCommands(): MutableMap<String, CreateCommand> {
-        return mutableMapOf(
-            ClearSourceCaches.PREFIX to CreateCommand(::ClearSourceCaches),
-            ClearLibraryCaches.PREFIX to CreateCommand(::ClearLibraryCaches),
-            GCCommand.PREFIX to CreateCommand(::GCCommand),
-            AssertKotlinFileInSpecificRootCommand.PREFIX to CreateCommand(::AssertKotlinFileInSpecificRootCommand),
-            KotlinEditorOptionsChangeCommand.PREFIX to CreateCommand(::KotlinEditorOptionsChangeCommand),
-            CreateKotlinFileCommand.PREFIX to CreateCommand(::CreateKotlinFileCommand),
-            TypingWithCompletionCommand.PREFIX to CreateCommand(::TypingWithCompletionCommand),
-            EnableKotlinDaemonLogCommand.PREFIX to CreateCommand(::EnableKotlinDaemonLogCommand),
-            AddKotlinCompilerOptionsCommand.PREFIX to CreateCommand(::AddKotlinCompilerOptionsCommand),
-        )
-    }
+    override fun getCommands(): Map<String, CreateCommand> = mapOf(
+        ClearSourceCaches.PREFIX to CreateCommand(::ClearSourceCaches),
+        ClearLibraryCaches.PREFIX to CreateCommand(::ClearLibraryCaches),
+        GCCommand.PREFIX to CreateCommand(::GCCommand),
+        AssertKotlinFileInSpecificRootCommand.PREFIX to CreateCommand(::AssertKotlinFileInSpecificRootCommand),
+        KotlinEditorOptionsChangeCommand.PREFIX to CreateCommand(::KotlinEditorOptionsChangeCommand),
+        CreateKotlinFileCommand.PREFIX to CreateCommand(::CreateKotlinFileCommand),
+        TypingWithCompletionCommand.PREFIX to CreateCommand(::TypingWithCompletionCommand),
+        EnableKotlinDaemonLogCommand.PREFIX to CreateCommand(::EnableKotlinDaemonLogCommand),
+        AddKotlinCompilerOptionsCommand.PREFIX to CreateCommand(::AddKotlinCompilerOptionsCommand),
+    )
 }

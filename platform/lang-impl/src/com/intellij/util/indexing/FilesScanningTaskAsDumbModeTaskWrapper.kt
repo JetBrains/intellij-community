@@ -4,10 +4,8 @@ package com.intellij.util.indexing
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbModeTask
-import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
-import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
@@ -15,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 @Internal
 @VisibleForTesting // Should be package-private, but kotlin does not have this visibility. This is not public API
 class FilesScanningTaskAsDumbModeTaskWrapper(private val project: Project,
-                                             @VisibleForTesting val task: FilesScanningTask,
+                                             @VisibleForTesting val task: UnindexedFilesScanner,
                                              private val runningTask: AtomicReference<ProgressIndicator>) : DumbModeTask() {
 
   companion object {
@@ -26,7 +24,7 @@ class FilesScanningTaskAsDumbModeTaskWrapper(private val project: Project,
     try {
       val old = runningTask.getAndSet(indicator)
       LOG.assertTrue(old == null, "Old = $old")
-      task.perform(indicator)
+      task.perform()
     }
     finally {
       val old = runningTask.getAndSet(null)
@@ -40,7 +38,7 @@ class FilesScanningTaskAsDumbModeTaskWrapper(private val project: Project,
       val merged = task.tryMergeWith(scanningTaskFromQueue)
       LOG.assertTrue(taskFromQueue.runningTask === runningTask, "Should be the same object: ${runningTask}, ${taskFromQueue.runningTask}")
       LOG.assertTrue(taskFromQueue.project == project, "Should be the same project: ${project}, ${taskFromQueue.project}")
-      return merged?.let { FilesScanningTaskAsDumbModeTaskWrapper(project, it, runningTask) }
+      return FilesScanningTaskAsDumbModeTaskWrapper(project, merged, runningTask)
     }
     else {
       return super.tryMergeWith(taskFromQueue)
@@ -48,7 +46,7 @@ class FilesScanningTaskAsDumbModeTaskWrapper(private val project: Project,
   }
 
   override fun dispose() {
-    Disposer.dispose(task)
+    task.close()
     super.dispose()
   }
 }

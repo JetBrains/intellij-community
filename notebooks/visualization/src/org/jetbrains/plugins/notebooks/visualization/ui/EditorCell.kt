@@ -89,4 +89,8 @@ class EditorCell(
     view?.setGutterAction(action)
   }
 
+  inline fun <reified T : Any> getExtension(): T? {
+    return view?.getExtension<T>()
+  }
+
 }

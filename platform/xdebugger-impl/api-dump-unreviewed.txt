@@ -3838,17 +3838,3 @@ c:com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay
 - setDelay(I):V
 com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay$Task
 - a:run(com.intellij.xdebugger.frame.XSuspendContext):V
-f:icons.PlatformDebuggerImplIcons
-- <init>():V
-f:icons.PlatformDebuggerImplIcons$Actions
-- sf:Force_run_to_cursor:javax.swing.Icon
-- sf:Force_step_into:javax.swing.Icon
-- sf:Force_step_over:javax.swing.Icon
-- <init>():V
-f:icons.PlatformDebuggerImplIcons$MemoryView
-- sf:Active:javax.swing.Icon
-- <init>():V
-f:icons.PlatformDebuggerImplIcons$PinToTop
-- sf:PinnedItem:javax.swing.Icon
-- sf:UnpinnedItem:javax.swing.Icon
-- <init>():V

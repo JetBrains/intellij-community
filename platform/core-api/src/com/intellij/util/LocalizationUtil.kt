@@ -76,18 +76,30 @@ object LocalizationUtil {
 
         //inspectionDescriptions/name.html
         path
-      )
+      ).distinct()
     }
+
+  fun getLocalizationSuffixes(specialLocale: Locale? = null): List<String> {
+    val locale = specialLocale ?: getLocaleFromPlugin() ?: return emptyList()
+    val result = mutableListOf<String>()
+    if (locale.language.isNotEmpty()) {
+      if (locale.country.isNotEmpty()) {
+        result.add("_${locale.language}_${locale.country}")
+      }
+      result.add("_${locale.language}")
+    }
+    return result
+  }
 
     @JvmOverloads
     fun getFolderLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
-      val locale = specialLocale ?: getLocale()
+      val locale = specialLocale ?: getLocaleFromPlugin() ?: return emptyList()
       return listOf(
       //localizations/zh/CN/inspectionDescriptions/name.html
       path.convertToLocalizationFolderUsage(locale, true),
 
       //localizations/zh/inspectionDescriptions/name.html
-      path.convertToLocalizationFolderUsage(locale, false))
+      path.convertToLocalizationFolderUsage(locale, false)).distinct()
     }
 
   fun getLocaleFromPlugin(): Locale? {

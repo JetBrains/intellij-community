@@ -10,6 +10,8 @@ import org.jetbrains.intellij.build.BuildContext
 import java.lang.StackWalker.Option
 import kotlin.streams.asSequence
 
+typealias LayoutPatcher = suspend (ModuleOutputPatcher, PlatformLayout, BuildContext) -> Unit
+
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
  */
@@ -45,11 +47,15 @@ sealed class BaseLayout {
   @JvmField
   internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
 
-  internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
+  internal var patchers: PersistentList<LayoutPatcher> = persistentListOf()
     private set
 
-  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+  fun withPatch(patcher: LayoutPatcher) {
     patchers = patchers.add(patcher)
+  }
+
+  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+    patchers = patchers.add { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
   }
 
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }

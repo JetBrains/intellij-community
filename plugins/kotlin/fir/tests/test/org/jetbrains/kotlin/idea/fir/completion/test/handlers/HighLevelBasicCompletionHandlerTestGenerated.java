@@ -319,6 +319,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeArg.kt");
             }
 
+            @TestMetadata("ExtensionReceiverTypeArgNotImported.kt")
+            public void testExtensionReceiverTypeArgNotImported() throws Exception {
+                runTest("../../completion/testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeArgNotImported.kt");
+            }
+
             @TestMetadata("ExtensionReceiverTypeNotImported.kt")
             public void testExtensionReceiverTypeNotImported() throws Exception {
                 runTest("../../completion/testData/handlers/basic/extensionReceiver/ExtensionReceiverTypeNotImported.kt");
@@ -508,6 +513,54 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("Type.kt")
             public void testType() throws Exception {
                 runTest("../../completion/testData/handlers/basic/importAliases/Type.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/handlers/basic/incompleteCode")
+        public static class IncompleteCode extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("parameterList.kt")
+            public void testParameterList() throws Exception {
+                runTest("../../completion/testData/handlers/basic/incompleteCode/parameterList.kt");
+            }
+
+            @TestMetadata("SecondTypeArg.kt")
+            public void testSecondTypeArg() throws Exception {
+                runTest("../../completion/testData/handlers/basic/incompleteCode/SecondTypeArg.kt");
+            }
+
+            @TestMetadata("SecondTypeArg2.kt")
+            public void testSecondTypeArg2() throws Exception {
+                runTest("../../completion/testData/handlers/basic/incompleteCode/SecondTypeArg2.kt");
+            }
+
+            @TestMetadata("SecondTypeArg3.kt")
+            public void testSecondTypeArg3() throws Exception {
+                runTest("../../completion/testData/handlers/basic/incompleteCode/SecondTypeArg3.kt");
+            }
+
+            @TestMetadata("SecondTypeArgAfterVarianceModifier.kt")
+            public void testSecondTypeArgAfterVarianceModifier() throws Exception {
+                runTest("../../completion/testData/handlers/basic/incompleteCode/SecondTypeArgAfterVarianceModifier.kt");
+            }
+
+            @TestMetadata("SecondTypeArgNested.kt")
+            public void testSecondTypeArgNested() throws Exception {
+                runTest("../../completion/testData/handlers/basic/incompleteCode/SecondTypeArgNested.kt");
+            }
+
+            @TestMetadata("typeReference-KTIJ-28442.kt")
+            public void testTypeReference_KTIJ_28442() throws Exception {
+                runTest("../../completion/testData/handlers/basic/incompleteCode/typeReference-KTIJ-28442.kt");
+            }
+
+            @TestMetadata("typeReference-KTIJ-29241.kt")
+            public void testTypeReference_KTIJ_29241() throws Exception {
+                runTest("../../completion/testData/handlers/basic/incompleteCode/typeReference-KTIJ-29241.kt");
             }
         }
 
@@ -914,6 +967,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("SuperTypeArgWithCall2.kt")
             public void testSuperTypeArgWithCall2() throws Exception {
                 runTest("../../completion/testData/handlers/basic/superEntry/SuperTypeArgWithCall2.kt");
+            }
+
+            @TestMetadata("SuperTypeArgWithTypeArg.kt")
+            public void testSuperTypeArgWithTypeArg() throws Exception {
+                runTest("../../completion/testData/handlers/basic/superEntry/SuperTypeArgWithTypeArg.kt");
+            }
+
+            @TestMetadata("SuperTypeArgWithTypeArg2.kt")
+            public void testSuperTypeArgWithTypeArg2() throws Exception {
+                runTest("../../completion/testData/handlers/basic/superEntry/SuperTypeArgWithTypeArg2.kt");
             }
         }
 
@@ -1496,21 +1559,6 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("ReplaceFunctionCallByPropertyArgs.kt")
             public void testReplaceFunctionCallByPropertyArgs() throws Exception {
                 runTest("../../completion/testData/handlers/basic/ReplaceFunctionCallByPropertyArgs.kt");
-            }
-
-            @TestMetadata("SecondTypeArg.kt")
-            public void testSecondTypeArg() throws Exception {
-                runTest("../../completion/testData/handlers/basic/SecondTypeArg.kt");
-            }
-
-            @TestMetadata("SecondTypeArg2.kt")
-            public void testSecondTypeArg2() throws Exception {
-                runTest("../../completion/testData/handlers/basic/SecondTypeArg2.kt");
-            }
-
-            @TestMetadata("SecondTypeArg3.kt")
-            public void testSecondTypeArg3() throws Exception {
-                runTest("../../completion/testData/handlers/basic/SecondTypeArg3.kt");
             }
 
             @TestMetadata("SpaceAfterParenthesisBug.kt")

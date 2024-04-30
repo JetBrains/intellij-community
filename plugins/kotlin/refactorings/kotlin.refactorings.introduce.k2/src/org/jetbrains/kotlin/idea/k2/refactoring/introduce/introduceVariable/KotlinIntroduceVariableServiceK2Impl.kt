@@ -4,10 +4,9 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPackage
 import com.intellij.psi.util.elementType
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.fir.symbols.KtPackage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler.getCandidateContainers
@@ -19,13 +18,13 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
 
 internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project) : KotlinIntroduceVariableService {
     override fun findElement(
@@ -43,9 +42,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
             val qualifiedExpression = element.parent as? KtDotQualifiedExpression
             if (qualifiedExpression != null && qualifiedExpression.receiverExpression == element) {
                 val resolved = element.mainReference.resolve()
-                val isObjectReferenceInQualifier = resolved is KtClassOrObject &&
-                        resolved.getDeclarationKeyword()?.elementType == KtTokens.OBJECT_KEYWORD
-                if (!isObjectReferenceInQualifier) {
+                if (resolved is PsiPackage || resolved is KtTypeAlias || resolved is KtClassOrObject && resolved.getDeclarationKeyword()?.elementType != KtTokens.OBJECT_KEYWORD) {
                     element = null
                 }
             }

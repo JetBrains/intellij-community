@@ -1,6 +1,5 @@
 f:com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem
 - java.nio.file.FileSystem
-- <init>(com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider,com.intellij.platform.ijent.fs.IjentFileSystemApi):V
 - close():V
 - getFileStores():java.lang.Iterable
 - getPath(java.lang.String,java.lang.String[]):com.intellij.platform.ijent.community.impl.nio.IjentNioPath
@@ -39,7 +38,6 @@ f:com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem
 - setAttribute(java.nio.file.Path,java.lang.String,java.lang.Object,java.nio.file.LinkOption[]):V
 *f:com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider$Companion
 - f:getInstance():com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
-- f:mockIjentFsApiGetter(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1):V
 f:com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemUtil
 - sf:asNioFileSystem(com.intellij.platform.ijent.fs.IjentFileSystemApi):java.nio.file.FileSystem
 *f:com.intellij.platform.ijent.community.impl.nio.IjentNioPath

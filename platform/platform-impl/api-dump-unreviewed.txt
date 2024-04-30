@@ -18201,7 +18201,6 @@ f:com.intellij.openapi.project.DumbUtilImpl
 - mayUseIndices():Z
 - s:waitForSmartMode(com.intellij.openapi.project.Project):V
 com.intellij.openapi.project.FilesScanningTask
-- com.intellij.openapi.project.MergeableQueueTask
 - a:isFullIndexUpdate():Z
 *c:com.intellij.openapi.project.MergingQueueGuiExecutor
 - *sf:Companion:com.intellij.openapi.project.MergingQueueGuiExecutor$Companion
@@ -19131,6 +19130,10 @@ f:com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable
 f:com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurableKt
 com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 - a:getPluginRepositories():java.util.List
+com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider
+- sf:Companion:com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider$Companion
+- a:init(com.intellij.ui.dsl.builder.Panel):V
+f:com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider$Companion
 f:com.intellij.openapi.updateSettings.impl.UpdateStrategy
 - <init>(com.intellij.openapi.util.BuildNumber):V
 - <init>(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.updateSettings.impl.Product):V

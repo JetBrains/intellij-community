@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.JavaVarTypeUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
@@ -26,12 +27,25 @@ import java.util.function.Consumer;
 
 public final class JavaPatternCompletionUtil {
 
+  private static final List<PsiType> PRIMITIVE_TYPES = List.of(
+    PsiTypes.booleanType(),
+    PsiTypes.byteType(),
+    PsiTypes.charType(),
+    PsiTypes.shortType(),
+    PsiTypes.intType(),
+    PsiTypes.floatType(),
+    PsiTypes.doubleType(),
+    PsiTypes.longType()
+  );
 
   public static boolean insideDeconstructionList(@NotNull PsiElement element) {
     if (!PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, element)) return false;
     return element.getParent() instanceof PsiJavaCodeReferenceElement ref &&
            ref.getParent() instanceof PsiTypeElement typeElement &&
-           typeElement.getParent() instanceof PsiDeconstructionList;
+           (typeElement.getParent() instanceof PsiDeconstructionList ||
+            (typeElement.getParent() instanceof PsiPatternVariable patternVariable &&
+             patternVariable.getParent() instanceof PsiTypeTestPattern typeTestPattern &&
+             typeTestPattern.getParent() instanceof PsiDeconstructionList));
   }
 
   /**
@@ -54,9 +68,11 @@ public final class JavaPatternCompletionUtil {
   /**
    * Suggests pattern completion variants based on a given class
    *
-   * @param lookupElements consumer to sink suggestions into
-   * @param context        element where completion is invoked
-   * @param psiClass       class for which patterns should be suggested
+   * @param lookupElements         consumer to sink suggestions into
+   * @param context                element where completion is invoked
+   * @param psiClass               class for which patterns should be suggested
+   * @param onlyDeconstructionList if it is true, only a deconstruction list will be created without high-level type pattern,
+   *                               if it is false, the whole deconstruction pattern will be created
    * @implNote currently, it suggests at most one record deconstruction pattern
    */
   public static void addPatterns(@NotNull Consumer<? super LookupElement> lookupElements,
@@ -70,14 +86,41 @@ public final class JavaPatternCompletionUtil {
                                             onlyDeconstructionList ? 0.5 : -1.0));
   }
 
+  /**
+   * Suggests primitives inside a deconstruction list pattern.
+   *
+   * @param currentPosition the current position within the deconstruction component
+   * @param result          the consumer to sink suggestions into
+   */
   static void suggestPrimitivesInsideDeconstructionListPattern(@NotNull PsiElement currentPosition,
                                                                @NotNull Consumer<? super LookupElement> result) {
+    PsiRecordComponent component = getRecordComponentForDeconstructionComponent(currentPosition);
+    if (component == null) return;
+    PsiType type = component.getType();
+    if (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, currentPosition)) {
+      if (type instanceof PsiPrimitiveType) {
+        LookupElement lookupItem = BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, type.getCanonicalText());
+        result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+      }
+    }
+    else {
+      suggestPrimitiveTypesForPattern(currentPosition, type, result);
+    }
+  }
+
+  /**
+   * Returns the PsiRecordComponent near the current position.
+   *
+   * @param currentPosition the current position within the deconstruction component
+   * @return the PsiRecordComponent associated with the deconstruction component, or null if not found
+   */
+  static @Nullable PsiRecordComponent getRecordComponentForDeconstructionComponent(@NotNull PsiElement currentPosition) {
     PsiDeconstructionList deconstructionList = PsiTreeUtil.getParentOfType(currentPosition, PsiDeconstructionList.class);
-    if (deconstructionList == null) return;
+    if (deconstructionList == null) return null;
     PsiDeconstructionPattern deconstructionPattern = ObjectUtils.tryCast(deconstructionList.getParent(), PsiDeconstructionPattern.class);
-    if (deconstructionPattern == null) return;
+    if (deconstructionPattern == null) return null;
     PsiClass psiRecord = PsiUtil.resolveClassInClassTypeOnly(deconstructionPattern.getTypeElement().getType());
-    if (psiRecord == null || !psiRecord.isRecord()) return;
+    if (psiRecord == null || !psiRecord.isRecord()) return null;
     @NotNull PsiPattern @NotNull [] components = deconstructionList.getDeconstructionComponents();
     int indexOfPattern = -1;
     for (int i = 0; i < components.length; i++) {
@@ -91,15 +134,30 @@ public final class JavaPatternCompletionUtil {
       indexOfPattern = components.length;
     }
     PsiRecordComponent[] recordComponents = psiRecord.getRecordComponents();
-    if (recordComponents.length < indexOfPattern) return;
-    PsiRecordComponent component = recordComponents[indexOfPattern];
-    PsiType type = component.getType();
-    if (type instanceof PsiPrimitiveType) {
-      LookupElement lookupItem = BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, type.getCanonicalText());
-      result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.insertSpaceType()));
+    if (recordComponents.length < indexOfPattern) return null;
+    return recordComponents[indexOfPattern];
+  }
+
+  static void suggestPrimitiveTypesForPattern(@NotNull PsiElement currentPosition,
+                                              @Nullable PsiType fromType,
+                                              @NotNull Consumer<? super LookupElement> result) {
+    if (fromType == null) return;
+    if (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, currentPosition)) return;
+    for (PsiType primitiveType : PRIMITIVE_TYPES) {
+      if (TypeConversionUtil.areTypesConvertible(fromType, primitiveType)) {
+        LookupElement lookupItem =
+          BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, primitiveType.getCanonicalText());
+        result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
+      }
     }
   }
 
+  /**
+   * Suggests a full deconstruction list based on the given completion parameters and result set.
+   *
+   * @param parameters the completion parameters specifying the position and context
+   * @param result     the result set to add suggestions to
+   */
   static void suggestFullDeconstructionList(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiElement currentPosition = parameters.getPosition();
     PsiDeconstructionList deconstructionList = PsiTreeUtil.getParentOfType(currentPosition, PsiDeconstructionList.class);
@@ -182,20 +240,20 @@ public final class JavaPatternCompletionUtil {
       String canonicalText = myModel.getCanonicalText();
       document.replaceString(startOffset, endOffset, canonicalText);
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
-      PsiElement pattern;
+      PsiElement deconstructionElement;
       if (!myModel.onlyDeconstructionList) {
-        pattern = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(startOffset), PsiDeconstructionPattern.class);
+        deconstructionElement = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(startOffset), PsiDeconstructionPattern.class);
       }
       else {
-        pattern = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(startOffset), PsiDeconstructionList.class);
+        deconstructionElement = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(startOffset), PsiDeconstructionList.class);
       }
-      TextRange patternRange = pattern == null ? null : pattern.getTextRange();
-      if (patternRange == null || patternRange.getStartOffset() != startOffset || patternRange.getLength() != canonicalText.length()) {
+      TextRange deconstructionRange = deconstructionElement == null ? null : deconstructionElement.getTextRange();
+      if (deconstructionRange == null || deconstructionRange.getStartOffset() != startOffset || deconstructionRange.getLength() != canonicalText.length()) {
         document.replaceString(startOffset, startOffset + canonicalText.length(), myModel.toString());
         return;
       }
-      pattern = JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(pattern);
-      context.setTailOffset(pattern.getTextRange().getEndOffset());
+      deconstructionElement = JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(deconstructionElement);
+      context.setTailOffset(deconstructionElement.getTextRange().getEndOffset());
       super.handleInsert(context);
     }
   }

@@ -10,7 +10,7 @@ import org.jetbrains.concurrency.toPromise
 import java.lang.ref.WeakReference
 import java.util.concurrent.TimeUnit
 
-class GCCommand(text: String, line: Int) : AbstractCommand(text, line) {
+internal class GCCommand(text: String, line: Int) : AbstractCommand(text, line) {
 
   companion object {
     const val PREFIX = CMD_PREFIX + "performGC"

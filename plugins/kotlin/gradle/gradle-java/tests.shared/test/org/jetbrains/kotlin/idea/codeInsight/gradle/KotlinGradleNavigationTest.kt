@@ -60,6 +60,25 @@ class KotlinGradleNavigationTest : KotlinGradleImportingTestCase() {
 
     @TestMetadata("projectDependency")
     fun testProjectDependency() {
+        verifyNavigationFromCaretToExpected()
+    }
+
+    @TestMetadata("pluginPrecompiled/inGroovy")
+    fun testPluginPrecompiledInGroovy() {
+        verifyNavigationFromCaretToExpected()
+    }
+
+    @TestMetadata("pluginPrecompiled/inKotlin")
+    fun testPluginPrecompiledInKotlin() {
+        verifyNavigationFromCaretToExpected()
+    }
+
+    @TestMetadata("pluginPrecompiled/inKotlinWithPackage")
+    fun testPluginPrecompiledInKotlinWithPackage() {
+        verifyNavigationFromCaretToExpected()
+    }
+
+    private fun verifyNavigationFromCaretToExpected() {
         val mainKtsVirtualFile = configureByFiles()
             .filter { it.name == "build.gradle.kts" && it.parent.name == "project" }
             .firstOrNull() ?: error("main build.gradle.kts file not found")

@@ -1326,6 +1326,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/optIn/filterPropagatingMarkers.kt");
         }
 
+        @TestMetadata("filterPropagatingMarkersImplicitUsage.kt")
+        public void testFilterPropagatingMarkersImplicitUsage() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/optIn/filterPropagatingMarkersImplicitUsage.kt");
+        }
+
         @TestMetadata("filterPropagatingMarkersWitArgs.kt")
         public void testFilterPropagatingMarkersWitArgs() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/optIn/filterPropagatingMarkersWitArgs.kt");
@@ -1770,6 +1775,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             @TestMetadata("qualifiedTypeRef.kt")
             public void testQualifiedTypeRef() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/qualifiedTypeRef.kt");
+            }
+
+            @TestMetadata("receiverWithFunctionalLiteral.kt")
+            public void testReceiverWithFunctionalLiteral() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/receiverWithFunctionalLiteral.kt");
             }
 
             @TestMetadata("reducedParameterList.kt")

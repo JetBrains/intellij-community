@@ -13,6 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 
+@Suppress("RedundantSuspendModifier")
 suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
@@ -21,6 +22,7 @@ suspend fun <T> withBackgroundProgress(
   return withBackgroundProgress(project, title, TaskCancellation.cancellable(), action)
 }
 
+@Suppress("RedundantSuspendModifier")
 suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
@@ -37,7 +39,7 @@ suspend fun <T> withBackgroundProgress(
  * which can be used via [reportProgress], [reportSequentialProgress], [reportRawProgress].
  * Corresponding reporter updates are reflected in the UI during the execution.
  * The progress is not shown in the UI immediately to avoid flickering,
- * i.e. the user won't see anything if the [action] completes within the given timeout.
+ * i.e., the user won't see anything if the [action] completes within the given timeout.
  *
  * ### Threading
  *
@@ -45,7 +47,7 @@ suspend fun <T> withBackgroundProgress(
  *
  * @param project in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
- * @throws CancellationException if the calling coroutine was cancelled, or if the indicator was cancelled by the user in the UI
+ * @throws CancellationException if the calling coroutine was canceled, or if the indicator was canceled by the user in the UI
  */
 suspend fun <T> withBackgroundProgress(
   project: Project,
@@ -56,6 +58,7 @@ suspend fun <T> withBackgroundProgress(
   return taskSupport().withBackgroundProgressInternal(project, title, cancellation, action)
 }
 
+@Suppress("RedundantSuspendModifier")
 suspend fun <T> withModalProgress(
   project: Project,
   title: @ProgressTitle String,
@@ -70,7 +73,7 @@ suspend fun <T> withModalProgress(
  * which can be used via [reportProgress], [reportSequentialProgress], [reportRawProgress].
  * Corresponding reporter updates are reflected in the UI during the execution.
  * The progress dialog is not shown in the UI immediately to avoid flickering,
- * i.e. the user won't see anything if the [action] completes within the given timeout.
+ * i.e., the user won't see anything if the [action] completes within the given timeout.
  *
  * ### Threading
  *
@@ -81,8 +84,8 @@ suspend fun <T> withModalProgress(
  *
  * @param owner in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
- * @throws CancellationException if the calling coroutine was cancelled,
- * or if the indicator was cancelled by the user in the UI
+ * @throws CancellationException if the calling coroutine was canceled,
+ * or if the indicator was canceled by the user in the UI
  */
 suspend fun <T> withModalProgress(
   owner: ModalTaskOwner,
@@ -109,7 +112,7 @@ fun <T> runWithModalProgressBlocking(
  * which can be used via [reportProgress], [reportSequentialProgress], [reportRawProgress].
  * Corresponding reporter updates are reflected in the UI during the execution.
  * The progress dialog is not shown in the UI immediately to avoid flickering,
- * i.e. the user won't see anything if the [action] completes within the given timeout.
+ * i.e., the user won't see anything if the [action] completes within the given timeout.
  *
  * ### Threading
  *
@@ -123,7 +126,7 @@ fun <T> runWithModalProgressBlocking(
  * This method blocks the caller and doesn't return until the [action] is completed.
  * Runnables, scheduled by various `invokeLater` calls within the given modality, are processed by the nested event loop.
  *
- * Usually the usage look like this:
+ * Usually the usage looks like this:
  * ```
  * // on EDT
  * fun actionPerformed() {
@@ -164,8 +167,8 @@ fun <T> runWithModalProgressBlocking(
  *
  * @param owner in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
- * @throws com.intellij.openapi.progress.ProcessCanceledException if the calling coroutine was cancelled,
- * or if the indicator was cancelled by the user in the UI
+ * @throws com.intellij.openapi.progress.ProcessCanceledException if the calling coroutine was canceled,
+ * or if the indicator was canceled by the user in the UI
  */
 @RequiresBlockingContext
 @RequiresEdt

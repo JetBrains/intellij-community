@@ -288,11 +288,7 @@ class IdeaPluginDescriptorImpl(
     }
 
     if (isIncomplete == null && moduleName == null) {
-      processOldDependencies(descriptor = this,
-                             context = context,
-                             pathResolver = pathResolver,
-                             dependencies = pluginDependencies,
-                             dataLoader = dataLoader)
+      processOldDependencies(descriptor = this, context = context, pathResolver = pathResolver, dependencies = pluginDependencies, dataLoader = dataLoader)
     }
   }
 
@@ -353,12 +349,7 @@ class IdeaPluginDescriptorImpl(
       checkCycle(descriptor = descriptor, configFile = configFile, visitedFiles = visitedFiles)
 
       visitedFiles.add(configFile)
-      val subDescriptor = descriptor.createSub(
-        raw = raw,
-        descriptorPath = configFile,
-        context = context,
-        moduleName = null,
-      )
+      val subDescriptor = descriptor.createSub(raw = raw, descriptorPath = configFile, context = context, moduleName = null)
 
       if (subDescriptor.isIncomplete == null) {
         subDescriptor.processOldDependencies(

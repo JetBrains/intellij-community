@@ -1,3 +1,5 @@
+// HIGHLIGHT: WARNING
+// FIX: Remove redundant 'if' expression
 fun foo(arg: Any?): Any? {
     return arg
 }

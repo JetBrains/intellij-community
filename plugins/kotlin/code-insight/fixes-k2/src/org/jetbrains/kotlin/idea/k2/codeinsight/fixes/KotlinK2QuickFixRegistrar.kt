@@ -89,6 +89,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddSuspendModifierFixFactory.addSuspendModifierFixFactory)
         registerFactory(SpecifyOverrideExplicitlyFixFactory.specifyOverrideExplicitlyFixFactory)
         registerFactory(MakeOverriddenMemberOpenFixFactory.makeOverriddenMemberOpenFixFactory)
+        registerFactory(ChangeToStarProjectionFixFactory.uncheckedCastFactory)
+        registerFactory(ChangeToStarProjectionFixFactory.cannotCheckForErased)
+        registerFactory(AddStarProjectionsFixFactory.addStarProjectionsFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

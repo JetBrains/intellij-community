@@ -6,27 +6,30 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
-import org.jetbrains.plugins.gradle.model.RepositoriesModel;
+import org.jetbrains.plugins.gradle.model.RepositoryModels;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
+import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoriesModel;
 import org.jetbrains.plugins.gradle.tooling.internal.MavenRepositoryModelImpl;
-import org.jetbrains.plugins.gradle.tooling.internal.RepositoriesModelImpl;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MavenRepositoriesModelBuilder implements ModelBuilderService {
   @Override
   public boolean canBuild(String modelName) {
-    return RepositoriesModel.class.getName().equals(modelName);
+    return RepositoryModels.class.getName().equals(modelName);
   }
 
   @Override
   public Object buildAll(String modelName, Project project) {
-    final RepositoriesModel repoModel = new RepositoriesModelImpl();
+    List<MavenRepositoryModel> repositories = new ArrayList<>();
     for (MavenArtifactRepository artifactRepository : project.getRepositories().withType(MavenArtifactRepository.class)) {
       final MavenRepositoryModel model = new MavenRepositoryModelImpl(artifactRepository.getName(), artifactRepository.getUrl().toString());
-      repoModel.add(model);
+      repositories.add(model);
     }
-    return repoModel;
+    return new DefaultRepositoriesModel(repositories);
   }
 
   @Override

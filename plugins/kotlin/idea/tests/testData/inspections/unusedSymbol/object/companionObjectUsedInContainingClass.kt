@@ -1,4 +1,4 @@
-class A {
+class AX825 {
     init {
         foo()
         v + v
@@ -18,5 +18,5 @@ class A {
 
 fun main(args: Array<String>) {
     println(args)
-    A()
+    AX825()
 }

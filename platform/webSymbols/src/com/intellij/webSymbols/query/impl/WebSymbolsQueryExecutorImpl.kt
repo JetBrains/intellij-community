@@ -6,12 +6,10 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.util.applyIf
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolQualifiedName
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.filterByQueryParams
@@ -22,11 +20,13 @@ import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
-internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbolsScope>,
+internal class WebSymbolsQueryExecutorImpl(rootScope: List<WebSymbolsScope>,
                                            override val namesProvider: WebSymbolNamesProvider,
                                            override val resultsCustomizer: WebSymbolsQueryResultsCustomizer,
                                            override val context: WebSymbolsContext,
                                            override val allowResolve: Boolean) : WebSymbolsQueryExecutor {
+
+  private val rootScope: List<WebSymbolsScope> = initializeCompoundScopes(rootScope)
 
   override fun hashCode(): Int =
     Objects.hash(rootScope, context, namesProvider, resultsCustomizer)
@@ -64,8 +64,8 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
                                  virtualSymbols: Boolean,
                                  abstractSymbols: Boolean,
                                  strictScope: Boolean,
-                                 scope: List<WebSymbolsScope>): List<WebSymbol> =
-    runNameMatchQuery(path, WebSymbolsNameMatchQueryParams(this, virtualSymbols, abstractSymbols, strictScope), scope)
+                                 additionalScope: List<WebSymbolsScope>): List<WebSymbol> =
+    runNameMatchQuery(path, WebSymbolsNameMatchQueryParams(this, virtualSymbols, abstractSymbols, strictScope), additionalScope)
 
   override fun runListSymbolsQuery(path: List<WebSymbolQualifiedName>,
                                    qualifiedKind: WebSymbolQualifiedKind,
@@ -73,16 +73,16 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
                                    virtualSymbols: Boolean,
                                    abstractSymbols: Boolean,
                                    strictScope: Boolean,
-                                   scope: List<WebSymbolsScope>): List<WebSymbol> =
+                                   additionalScope: List<WebSymbolsScope>): List<WebSymbol> =
     runListSymbolsQuery(path + qualifiedKind.withName(""),
                         WebSymbolsListSymbolsQueryParams(this, expandPatterns = expandPatterns, virtualSymbols = virtualSymbols,
-                                                         abstractSymbols = abstractSymbols, strictScope = strictScope), scope)
+                                                         abstractSymbols = abstractSymbols, strictScope = strictScope), additionalScope)
 
   override fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>,
                                       position: Int,
                                       virtualSymbols: Boolean,
-                                      scope: List<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    runCodeCompletionQuery(path, WebSymbolsCodeCompletionQueryParams(this, position, virtualSymbols), scope)
+                                      additionalScope: List<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+    runCodeCompletionQuery(path, WebSymbolsCodeCompletionQueryParams(this, position, virtualSymbols), additionalScope)
 
   override fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor =
     if (rules.isEmpty())
@@ -91,22 +91,43 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
       WebSymbolsQueryExecutorImpl(rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
 
   override fun hasExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind, scope: List<WebSymbolsScope>): Boolean {
+    return buildQueryScope(scope).any { it.isExclusiveFor(qualifiedKind) }
+  }
+
+  private fun initializeCompoundScopes(rootScope: List<WebSymbolsScope>): List<WebSymbolsScope> {
+    if (rootScope.any { it is WebSymbolsCompoundScope }) {
+      val compoundScopeQueryExecutor = WebSymbolsQueryExecutorImpl(
+        rootScope.filter { it !is WebSymbolsCompoundScope },
+        namesProvider, resultsCustomizer, context, allowResolve
+      )
+      return rootScope.flatMap {
+        if (it is WebSymbolsCompoundScope) {
+          it.getScopes(compoundScopeQueryExecutor)
+        } else {
+          listOf(it)
+        }
+      }
+    } else return rootScope
+  }
+
+  private fun buildQueryScope(additionalScope: List<WebSymbolsScope>): MutableSet<WebSymbolsScope> {
     val finalScope = rootScope.toMutableSet()
-    scope.flatMapTo(finalScope) {
-      if (it is WebSymbol)
-        it.queryScope
-      else
-        listOf(it)
+    additionalScope.flatMapTo(finalScope) {
+      when (it) {
+        is WebSymbolsCompoundScope -> it.getScopes(this)
+        is WebSymbol -> it.queryScope
+        else -> listOf(it)
+      }
     }
-    return finalScope.any { it.isExclusiveFor(qualifiedKind) }
+    return finalScope
   }
 
   private fun runNameMatchQuery(path: List<WebSymbolQualifiedName>,
                                 queryParams: WebSymbolsNameMatchQueryParams,
-                                scope: List<WebSymbolsScope>): List<WebSymbol> =
-    runQuery(path, queryParams, scope) { finalContext: Collection<WebSymbolsScope>,
-                                         qualifiedName: WebSymbolQualifiedName,
-                                         params: WebSymbolsNameMatchQueryParams ->
+                                additionalScope: List<WebSymbolsScope>): List<WebSymbol> =
+    runQuery(path, queryParams, additionalScope) { finalContext: Collection<WebSymbolsScope>,
+                                                   qualifiedName: WebSymbolQualifiedName,
+                                                   params: WebSymbolsNameMatchQueryParams ->
       val result = finalContext
         .takeLastUntilExclusiveScopeFor(qualifiedName.qualifiedKind)
         .asSequence()
@@ -123,10 +144,10 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     }
 
   private fun runListSymbolsQuery(path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsListSymbolsQueryParams,
-                                  scope: List<WebSymbolsScope>): List<WebSymbol> =
-    runQuery(path, queryParams, scope) { finalContext: Collection<WebSymbolsScope>,
-                                         qualifiedName: WebSymbolQualifiedName,
-                                         params: WebSymbolsListSymbolsQueryParams ->
+                                  additionalScope: List<WebSymbolsScope>): List<WebSymbol> =
+    runQuery(path, queryParams, additionalScope) { finalContext: Collection<WebSymbolsScope>,
+                                                   qualifiedName: WebSymbolQualifiedName,
+                                                   params: WebSymbolsListSymbolsQueryParams ->
       val result = finalContext
         .takeLastUntilExclusiveScopeFor(qualifiedName.qualifiedKind)
         .asSequence()
@@ -170,10 +191,10 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     }
 
   private fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsCodeCompletionQueryParams,
-                                     scope: List<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    runQuery(path, queryParams, scope) { finalContext: Collection<WebSymbolsScope>,
-                                         pathSection: WebSymbolQualifiedName,
-                                         params: WebSymbolsCodeCompletionQueryParams ->
+                                     additionalScope: List<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+    runQuery(path, queryParams, additionalScope) { finalContext: Collection<WebSymbolsScope>,
+                                                   pathSection: WebSymbolQualifiedName,
+                                                   params: WebSymbolsCodeCompletionQueryParams ->
       var proximityBase = 0
       var nextProximityBase = 0
       var previousName: String? = null
@@ -217,7 +238,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
   private fun <T, P : WebSymbolsQueryParams> runQuery(
     path: List<WebSymbolQualifiedName>,
     params: P,
-    initialScope: List<WebSymbolsScope>,
+    additionalScope: List<WebSymbolsScope>,
     finalProcessor: (
       context: Collection<WebSymbolsScope>,
       pathSection: WebSymbolQualifiedName,
@@ -226,22 +247,18 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     ProgressManager.checkCanceled()
     if (path.isEmpty()) return emptyList()
 
-    val scope = rootScope.toMutableSet()
-    initialScope.flatMapTo(scope) {
-      if (it is WebSymbol)
-        it.queryScope
-      else
-        listOf(it)
-    }
+    val scope = buildQueryScope(additionalScope)
     return RecursionManager.doPreventingRecursion(Pair(path, params.virtualSymbols), false) {
       val contextQueryParams = WebSymbolsNameMatchQueryParams(this, true, false)
       var i = 0
       while (i < path.size - 1) {
         val qName = path[i++]
         if (qName.name.isEmpty()) return@doPreventingRecursion emptyList()
-        val scopeSymbols = scope.flatMap {
-          it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
-        }
+        val scopeSymbols = scope
+          .takeLastUntilExclusiveScopeFor(qName.qualifiedKind)
+          .flatMap {
+            it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
+          }
         scopeSymbols.flatMapTo(scope) {
           it.queryScope
         }
@@ -250,7 +267,12 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
       finalProcessor(scope, lastSection, params)
     } ?: run {
       thisLogger().warn("Recursive Web Symbols query: ${path.joinToString("/")} with virtualSymbols=${params.virtualSymbols}.\n" +
-                        "Context: " + initialScope.filterIsInstance<WebSymbol>().map { it.kind + "/" + it.name })
+                        "Root scope: " + rootScope.map {
+        it.asSafely<WebSymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
+      } + "\n" +
+                        "Additional scope: " + additionalScope.map {
+        it.asSafely<WebSymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
+      })
       emptyList()
     }
   }

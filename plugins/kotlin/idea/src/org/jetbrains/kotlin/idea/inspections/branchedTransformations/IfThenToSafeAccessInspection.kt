@@ -11,7 +11,11 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationUtils
+import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationData
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.*
 import org.jetbrains.kotlin.idea.intentions.callExpression
@@ -48,8 +52,8 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
     object Util {
         @Nls
         fun fixTextFor(element: KtIfExpression): String {
-            val ifThenToSelectData = element.buildSelectTransformationData()
-            return if (ifThenToSelectData?.baseClauseEvaluatesToReceiver() == true) {
+            val ifThenToSelectData = IfThenTransformationUtils.buildTransformationData(element)
+            return if (ifThenToSelectData?.let { it.baseClause.isSimplifiableTo(it.checkedExpression) } == true) {
                 if (ifThenToSelectData.condition is KtIsExpression) {
                     KotlinBundle.message("replace.if.expression.with.safe.cast.expression")
                 } else {
@@ -61,11 +65,12 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
         }
 
         fun convert(ifExpression: KtIfExpression, editor: Editor?, inlineWithPrompt: Boolean) {
-            val ifThenToSelectData = ifExpression.buildSelectTransformationData() ?: return
+            val ifThenToSelectData = IfThenTransformationUtils.buildTransformationData(ifExpression) ?: return
+            val context = ifExpression.safeAnalyzeNonSourceRootCode()
 
             val psiFactory = KtPsiFactory(ifExpression.project)
             val resultExpr = runWriteAction {
-                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(psiFactory)
+                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(psiFactory, context)
                 val newExpr = ifExpression.replaced(replacedBaseClause)
                 KtPsiUtil.deparenthesize(newExpr)
             }
@@ -77,12 +82,13 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
         }
 
         fun isApplicableTo(element: KtIfExpression, expressionShouldBeStable: Boolean): Boolean {
-            val ifThenToSelectData = element.buildSelectTransformationData() ?: return false
+            val ifThenToSelectData = IfThenTransformationUtils.buildTransformationData(element) ?: return false
+            val context = element.safeAnalyzeNonSourceRootCode()
             if (expressionShouldBeStable &&
-                !ifThenToSelectData.receiverExpression.isStableSimpleExpression(ifThenToSelectData.context)
+                !ifThenToSelectData.checkedExpression.isStableSimpleExpression(context)
             ) return false
 
-            return ifThenToSelectData.clausesReplaceableBySafeCall()
+            return ifThenToSelectData.clausesReplaceableBySafeCall(context)
         }
 
         internal fun KtSafeQualifiedExpression.renameLetParameter(editor: Editor) {
@@ -96,18 +102,18 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
     }
 }
 
-private fun IfThenToSelectData.clausesReplaceableBySafeCall(): Boolean = when {
-    baseClause == null -> false
+private fun IfThenTransformationData.clausesReplaceableBySafeCall(context: BindingContext): Boolean = when {
+    conditionHasIncompatibleTypes(context) -> false
     negatedClause == null && baseClause.isUsedAsExpression(context) -> false
     negatedClause != null && !negatedClause.isNullExpression() -> false
     context.diagnostics.forElement(condition)
         .any { it.factory == Errors.SENSELESS_COMPARISON || it.factory == Errors.USELESS_IS_CHECK } -> false
-    baseClause.evaluatesTo(receiverExpression) -> true
-    (baseClause as? KtCallExpression)?.calleeExpression?.evaluatesTo(receiverExpression) == true
+    baseClause.isSimplifiableTo(checkedExpression) -> true
+    (baseClause as? KtCallExpression)?.calleeExpression?.isSimplifiableTo(checkedExpression) == true
             && baseClause.isCallingInvokeFunction(context) -> true
-    baseClause.hasFirstReceiverOf(receiverExpression) -> withoutResultInCallChain(baseClause, context)
-    baseClause.anyArgumentEvaluatesTo(receiverExpression) -> true
-    receiverExpression is KtThisExpression -> getImplicitReceiver()?.let { it.type == receiverExpression.getType(context) } == true
+    baseClause.hasFirstReceiverOf(checkedExpression) -> withoutResultInCallChain(baseClause, context)
+    baseClause.anyArgumentEvaluatesTo(checkedExpression) -> true
+    checkedExpression is KtThisExpression -> getImplicitReceiver(context)?.let { it.type == checkedExpression.getType(context) } == true
     else -> false
 }
 

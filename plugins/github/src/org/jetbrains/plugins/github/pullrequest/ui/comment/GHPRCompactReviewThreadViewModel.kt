@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.async.classAsCoroutineName
-import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.combineStateIn
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
@@ -71,25 +71,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
 
   override val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
 
-  private val commentsVms = dataState
-    .map { it.comments.withIndex() }
-    .mapDataToModel({ it.value.id }, { createComment(it) }, { update(it) })
-    .stateIn(cs, SharingStarted.Eagerly, emptyList())
   private val repliesFolded = MutableStateFlow(initialData.comments.size > 3)
-
-  override val comments: StateFlow<List<GHPRCompactReviewThreadViewModel.CommentItem>> =
-    commentsVms.combineState(repliesFolded) { comments, folded ->
-      if (!folded || comments.size <= 3) {
-        comments.map { GHPRCompactReviewThreadViewModel.CommentItem.Comment(it) }
-      }
-      else {
-        listOf(
-          GHPRCompactReviewThreadViewModel.CommentItem.Comment(comments.first()),
-          GHPRCompactReviewThreadViewModel.CommentItem.Expander(comments.size - 2) { repliesFolded.value = false },
-          GHPRCompactReviewThreadViewModel.CommentItem.Comment(comments.last())
-        )
-      }
-    }
 
   override val canCreateReplies: StateFlow<Boolean> = dataState.mapState { it.viewerCanReply }
   private val _isWritingReply = MutableStateFlow(false)
@@ -99,6 +81,25 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
   override val canChangeResolvedState: StateFlow<Boolean> =
     dataState.mapState { it.viewerCanResolve || it.viewerCanUnresolve }
   override val isResolved: StateFlow<Boolean> = dataState.mapState { it.isResolved }
+
+  // have to do it LAST, bc comment VMs depend on thread fields
+  // so they have to be initialized first
+  private val commentsVms = dataState
+    .map { it.comments.withIndex() }
+    .mapDataToModel({ it.value.id }, { createComment(it) }, { update(it) })
+    .stateIn(cs, SharingStarted.Eagerly, emptyList())
+  override val comments = combineStateIn(cs, commentsVms, repliesFolded) { comments, folded ->
+    if (!folded || comments.size <= 3) {
+      comments.map { GHPRCompactReviewThreadViewModel.CommentItem.Comment(it) }
+    }
+    else {
+      listOf(
+        GHPRCompactReviewThreadViewModel.CommentItem.Comment(comments.first()),
+        GHPRCompactReviewThreadViewModel.CommentItem.Expander(comments.size - 2) { repliesFolded.value = false },
+        GHPRCompactReviewThreadViewModel.CommentItem.Comment(comments.last())
+      )
+    }
+  }
 
   override fun startWritingReply() {
     _isWritingReply.value = true

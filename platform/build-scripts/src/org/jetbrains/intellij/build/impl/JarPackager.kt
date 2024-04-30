@@ -138,14 +138,14 @@ class JarPackager private constructor(
       platformLayout: PlatformLayout?,
       moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
       dryRun: Boolean,
-      moduleWithSearchableOptions: Set<String> = emptySet(),
+      jarsWithSearchableOptions: Set<String> = emptySet(),
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
       val packager = JarPackager(outDir = outputDir, platformLayout = platformLayout, isRootDir = isRootDir, context = context)
       packager.computeModuleSources(
         includedModules = includedModules,
         moduleOutputPatcher = moduleOutputPatcher,
-        moduleWithSearchableOptions = moduleWithSearchableOptions,
+        jarsWithSearchableOptions = jarsWithSearchableOptions,
         layout = layout,
       )
       if (layout != null) {
@@ -248,7 +248,7 @@ class JarPackager private constructor(
     includedModules: Collection<ModuleItem>,
     moduleOutputPatcher: ModuleOutputPatcher,
     layout: BaseLayout?,
-    moduleWithSearchableOptions: Set<String>,
+    jarsWithSearchableOptions: Set<String>,
   ) {
     val addedModules = HashSet<String>()
 
@@ -257,7 +257,7 @@ class JarPackager private constructor(
         item = item,
         moduleOutputPatcher = moduleOutputPatcher,
         layout = layout,
-        moduleWithSearchableOptions = moduleWithSearchableOptions,
+        jarsWithSearchableOptions = jarsWithSearchableOptions,
       )
 
       addedModules.add(item.moduleName)
@@ -284,7 +284,7 @@ class JarPackager private constructor(
         item = moduleItem,
         moduleOutputPatcher = moduleOutputPatcher,
         layout = layout,
-        moduleWithSearchableOptions = moduleWithSearchableOptions,
+        jarsWithSearchableOptions = jarsWithSearchableOptions,
       )
     }
 
@@ -294,14 +294,9 @@ class JarPackager private constructor(
     }
 
     // check content
-    val file = context.findFileInModuleSources(layout.mainModule, "META-INF/plugin.xml") ?: return
-    readXmlAsModel(file).getChild("content")?.let { content ->
-      for (module in content.children("module")) {
-        val moduleName = module.attributes.get("name")
-        if (moduleName == null || moduleName.contains('/') || !addedModules.add(moduleName)) {
-          continue
-        }
-
+    readPluginDependenciesFromXml(context, context.findRequiredModule(layout.mainModule))
+      .filterNot { d -> !addedModules.add(d) }
+      .forEach { moduleName ->
         val descriptor = readXmlAsModel(context.findFileInModuleSources(moduleName, "$moduleName.xml")!!)
 
         computeSourcesForModule(
@@ -313,10 +308,9 @@ class JarPackager private constructor(
           ),
           moduleOutputPatcher = moduleOutputPatcher,
           layout = layout,
-          moduleWithSearchableOptions = moduleWithSearchableOptions,
+          jarsWithSearchableOptions = jarsWithSearchableOptions,
         )
       }
-    }
 
     // check verifier in all included modules
     val effectiveIncludedNonMainModules = LinkedHashSet<String>(layout.includedModules.size + addedModules.size)
@@ -335,7 +329,7 @@ class JarPackager private constructor(
           item = moduleItem,
           moduleOutputPatcher = moduleOutputPatcher,
           layout = layout,
-          moduleWithSearchableOptions = moduleWithSearchableOptions,
+          jarsWithSearchableOptions = jarsWithSearchableOptions,
         )
       }
     }
@@ -345,13 +339,13 @@ class JarPackager private constructor(
     item: ModuleItem,
     moduleOutputPatcher: ModuleOutputPatcher,
     layout: BaseLayout?,
-    moduleWithSearchableOptions: Set<String>,
+    jarsWithSearchableOptions: Set<String>,
   ) {
     val moduleName = item.moduleName
     val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
 
-    val searchableOptionsModuleDir = if (moduleWithSearchableOptions.contains(item.relativeOutputFile)) {
+    val searchableOptionsJarDir = if (jarsWithSearchableOptions.contains(item.relativeOutputFile)) {
       context.paths.searchableOptionDir.resolve(item.relativeOutputFile)
     }
     else {
@@ -397,8 +391,8 @@ class JarPackager private constructor(
       moduleSources.add(DirSource(dir = dir))
     }
 
-    if (searchableOptionsModuleDir != null) {
-      moduleSources.add(DirSource(dir = searchableOptionsModuleDir))
+    if (searchableOptionsJarDir != null) {
+      moduleSources.add(DirSource(dir = searchableOptionsJarDir))
     }
 
     val excludes = if (extraExcludes.isEmpty()) {

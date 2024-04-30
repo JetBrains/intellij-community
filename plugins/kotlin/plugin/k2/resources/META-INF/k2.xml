@@ -23,7 +23,6 @@
   <xi:include href="searching-base.xml"/>
   <xi:include href="statistics.xml"/>
   <xi:include href="kotlin.highlighting.shared.xml"/>
-  <xi:include href="codeInsights.xml"/>
   <xi:include href="light-classes.xml"/>
   <xi:include href="parcelize.k2.xml"/>
   <xi:include href="jvm-debugger.xml"/>
@@ -38,14 +37,7 @@
   <xi:include href="extensions.xml"/>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJvmIdePlatformKindTooling"/>
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJsIdePlatformKindTooling"/>
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirWasmJsIdePlatformKindTooling"/>
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirWasmWasiIdePlatformKindTooling"/>
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirNativeIdePlatformKindTooling"/>
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirCommonIdePlatformKindTooling"/>
 
-    <supportAvailability implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.MultiplatformSupportAvailability"/>
     <supportAvailability implementation="org.jetbrains.kotlin.idea.highlighter.ScriptingSupportAvailability"/>
 
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.ModuleScriptAdditionalIdeaDependenciesProvider"/>
@@ -90,11 +82,6 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
-    <registryKey key="kotlin.k2.kmp.enabled"
-                 description="Enable KMP support in the Kotlin K2 plugin for all platforms"
-                 defaultValue="false"
-                 restartRequired="true"/>
-
     <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
                  description="Allow only bundled K2 compiler plugins to be used"
                  defaultValue="true"
@@ -119,6 +106,10 @@
                             id="KotlinCompletionContributor"
                             order="first"
                             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFirCompletionContributor"/>
+
+    <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
+             id="kotlin.preferKotlinx"
+             order="after sameModule, before knownElement"/>
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.FirCompletionDummyIdentifierProviderService"
                         serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
@@ -207,9 +198,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector"
-                        serviceImplementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.SymbolBasedKotlinMainFunctionDetector"/>
-
     <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
     <configurationType implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
@@ -219,6 +207,7 @@
   <content>
     <module name="kotlin.base.analysis-api-providers"/>
     <module name="kotlin.base.fir.analysis-api-providers"/>
+    <module name="kotlin.base.fir.code-insight"/>
     <module name="kotlin.base.fir.project-structure"/>
 
     <module name="kotlin.copyright"/>
@@ -284,5 +273,7 @@
 
     <module name="kotlin.injection.k2"/>
     <module name="kotlin.base.injection"/>
+
+    <module name="kotlin.performanceExtendedPlugin"/>
   </content>
 </idea-plugin>

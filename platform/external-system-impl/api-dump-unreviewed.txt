@@ -2654,6 +2654,7 @@ com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 - a:getActivateToolWindowOnFailure():Z
 - a:getCallback():com.intellij.openapi.externalSystem.task.TaskCallback
 - a:getExecutorId():java.lang.String
+- a:getListener():com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 - a:getProgressExecutionMode():com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 - a:getProject():com.intellij.openapi.project.Project
 - a:getSettings():com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
@@ -2670,6 +2671,7 @@ com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withActivateToolWindowBeforeRun(Z):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withActivateToolWindowOnFailure(Z):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withCallback(com.intellij.openapi.externalSystem.task.TaskCallback):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withProgressExecutionMode(com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 - a:withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 a:com.intellij.openapi.externalSystem.util.ui.DataView

@@ -458,13 +458,14 @@ c:com.intellij.history.integration.IdeaGateway
 - createEntryForDeletion(com.intellij.openapi.vfs.VirtualFile):com.intellij.history.core.tree.Entry
 - createTransientEntry(com.intellij.openapi.vfs.VirtualFile):com.intellij.history.core.tree.Entry
 - createTransientRootEntry():com.intellij.history.core.tree.RootEntry
-- createTransientRootEntryForPathOnly(java.lang.String):com.intellij.history.core.tree.RootEntry
+- createTransientRootEntryForPath(java.lang.String,Z):com.intellij.history.core.tree.RootEntry
 - ensureFilesAreWritable(com.intellij.openapi.project.Project,java.util.List):Z
 - findOrCreateFileSafely(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile
 - findOrCreateFileSafely(java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile
 - findVirtualFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - getDocument(java.lang.String):com.intellij.openapi.editor.Document
 - getFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
+- s:getNameOrUrlPart(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getPathOrUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - ps:getVersionedFilterData():com.intellij.history.integration.IdeaGateway$VersionedFilterData
 - isVersioned(com.intellij.openapi.vfs.VirtualFile):Z

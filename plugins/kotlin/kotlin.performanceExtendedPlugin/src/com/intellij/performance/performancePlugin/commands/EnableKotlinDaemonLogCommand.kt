@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.performanceTesting
+package com.intellij.performance.performancePlugin.commands
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -13,7 +13,7 @@ import kotlin.io.path.div
 /**
  *
  */
-class EnableKotlinDaemonLogCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class EnableKotlinDaemonLogCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
     companion object {
         const val NAME = "enableKotlinDaemonLog"
         const val PREFIX = "$CMD_PREFIX$NAME"

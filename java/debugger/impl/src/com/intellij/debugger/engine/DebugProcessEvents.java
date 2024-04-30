@@ -283,7 +283,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                         //((SuspendManagerImpl)getSuspendManager()).popContext(context);
                       }
                       else if (!DebuggerSession.enableBreakpointsDuringEvaluation()) {
-                        notifySkippedBreakpointInEvaluation(locatableEvent, context);
+                        notifySkippedBreakpointInEvaluation(locatableEvent);
                         DebuggerUtilsAsync.resume(eventSet);
                         return true;
                       }
@@ -635,13 +635,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         final SuspendManager suspendManager = getSuspendManager();
-        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getEventThread());
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
-        if (evaluatingContext != null &&
+        ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
+        boolean isEvaluationOnCurrentThread = threadProxy != null && threadProxy.isEvaluating();
+        if ((isEvaluationOnCurrentThread || mySuspendAllInvocation.get() > 0) &&
             !(requestor instanceof InstrumentationTracker.InstrumentationMethodBreakpoint) &&
             !DebuggerSession.enableBreakpointsDuringEvaluation()) {
-          notifySkippedBreakpointInEvaluation(event, evaluatingContext);
+          notifySkippedBreakpointInEvaluation(event);
           // is inside evaluation, so ignore any breakpoints
           suspendManager.voteResume(suspendContext);
           return;
@@ -835,11 +836,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
     STEPPING, // Suspend-all stepping ignores breakpoints in other threads for the sake of ease-of-debug.
   }
 
-  private void notifySkippedBreakpointInEvaluation(@Nullable LocatableEvent event, @NotNull SuspendContextImpl existingContext) {
-    ThreadReferenceProxyImpl contextThread = existingContext.getThread();
-    SkippedBreakpointReason reason =
-      event != null && contextThread != null && contextThread.getThreadReference().equals(event.thread()) ?
-      SkippedBreakpointReason.EVALUATION_IN_THE_SAME_THREAD : SkippedBreakpointReason.EVALUATION_IN_ANOTHER_THREAD;
+  private void notifySkippedBreakpointInEvaluation(@Nullable LocatableEvent event) {
+    SkippedBreakpointReason reason = SkippedBreakpointReason.EVALUATION_IN_ANOTHER_THREAD;
+    if (event != null) {
+      ThreadReferenceProxyImpl proxy = getVirtualMachineProxy().getThreadReferenceProxy(event.thread());
+      if (proxy != null && proxy.isEvaluating()) {
+        reason = SkippedBreakpointReason.EVALUATION_IN_THE_SAME_THREAD;
+      }
+    }
     notifySkippedBreakpoints(event, reason);
   }
 

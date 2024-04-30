@@ -65,7 +65,7 @@ open class PyPackageRepository() : BaseState() {
     return PythonSimplePackageSpecification(packageName, version, this, relation)
   }
 
-  open fun createPackageSpecification(packageName: String,
+  open fun createForcedSpecPackageSpecification(packageName: String,
                                       versionSpecs: String? = null): PythonPackageSpecification {
     val spec = PythonSimplePackageSpecification(packageName, null, this)
     spec.versionSpecs = versionSpecs

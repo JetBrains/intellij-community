@@ -1,13 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.roots.ModuleRootManager
@@ -17,25 +20,29 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.testFramework.*
 import com.intellij.testFramework.TestActionEvent.createTestEvent
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.readJsonIndexingActivityDiagnostic
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexingActivityDiagnostic
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
 import com.intellij.util.indexing.mocks.FakeFileType
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.nio.file.Path
+import kotlin.io.path.createDirectories
 
 /**
  * See also [com.intellij.functionalTests.FunctionalDirtyFilesQueueTest]
@@ -45,35 +52,27 @@ class DirtyFilesQueueTest {
   companion object {
     @ClassRule
     @JvmField
-    val p: ProjectRule = ProjectRule(true, false, null)
+    val appRule: ApplicationRule = ApplicationRule()
   }
 
   @Rule
   @JvmField
   val tempDir: TemporaryDirectory = TemporaryDirectory()
 
-  private lateinit var project: Project
   private lateinit var testRootDisposable: CheckedDisposable
 
   @Before
   fun setup() {
-    project = p.project
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
     testRootDisposable = Disposer.newCheckedDisposable("DirtyFilesQueueTest")
-    IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
   }
 
   @After
   fun tearDown() {
     runBlocking(Dispatchers.EDT) {
       writeAction {
-        Disposer.dispose(testRootDisposable)
+        Disposer.dispose(testRootDisposable) // must dispose in EDT
       }
-      IndexingTestUtil.suspendUntilIndexesAreReady(project) // scanning caused by deregistration of the file type
     }
-    IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
-    IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
-    FileUtil.deleteRecursively(project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir))
   }
 
   @Test
@@ -89,86 +88,188 @@ class DirtyFilesQueueTest {
   @Test
   fun `test queues removed from disk after invalidating caches`() {
     runBlocking {
-      val src = tempDir.createVirtualDir("src")
-      writeAction {
-        val rootModel = ModuleRootManager.getInstance(p.module).modifiableModel
-        rootModel.addContentEntry(src)
-        rootModel.commit()
+      openProject("test_queues_removed_from_disk_after_invalidating_caches") { project, module ->
+        val src = tempDir.createVirtualDir("src")
+        writeAction {
+          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+          rootModel.addContentEntry(src)
+          rootModel.commit()
+        }
+        IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
+        writeAction { src.createFile("A.txt") }
+        restart(skipFullScanning = false, project) // persist queue
+        assertThat(project.getQueueFile()).exists()
+        assertThat(getQueueFile()).exists()
+        runBlocking(Dispatchers.EDT) {
+          ForceIndexRebuildAction().actionPerformed(createTestEvent())
+        }
+        IndexingTestUtil.suspendUntilIndexesAreReady(project)
+        assertThat(project.getQueueFile()).doesNotExist()
+        assertThat(getQueueFile()).doesNotExist()
       }
-      IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
-      writeAction { src.createFile("A.txt") }
-      restartSkippingFullScanning(false) // persist queue
-      assertThat(project.getQueueFile()).exists()
-      assertThat(getQueueFile()).exists()
-      runBlocking(Dispatchers.EDT) {
-        ForceIndexRebuildAction().actionPerformed(createTestEvent())
-      }
-      IndexingTestUtil.suspendUntilIndexesAreReady(project)
-      assertThat(project.getQueueFile()).doesNotExist()
-      assertThat(getQueueFile()).doesNotExist()
     }
   }
 
-  private fun testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning: Boolean) {
-    val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-    val filetype = FakeFileType()
-    registerFiletype(filetype)
-    val src = tempDir.createVirtualDir("src")
-
+  @Test
+  fun `test file is indexed after it was edited when project was closed`() {
     runBlocking {
-      writeAction {
-        val rootModel = ModuleRootManager.getInstance(p.module).modifiableModel
-        rootModel.addContentEntry(src)
-        rootModel.commit()
+      val name = "test_file_is_indexed_after_it_was_edited_when_project_was_closed"
+      val projectFile = TemporaryDirectory.generateTemporaryPath("project_${name}")
+      val filetype = FakeFileType()
+      registerFiletype(filetype)
+      val fileName = "A.${filetype.defaultExtension}"
+      val renamedName = "ARenamed.txt"
+
+      val file = openProject(name, projectFile, save = true) { project, module ->
+        val src = tempDir.createVirtualDir("src")
+        writeAction {
+          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+          rootModel.addContentEntry(src)
+          rootModel.commit()
+        }
+        IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
+        val file = writeAction { src.createFile(fileName) }
+        smartReadAction(project) {
+          ensureUpToDate(project)
+          val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
+          assertThat(files).contains(file)
+        }
+        file
       }
-      IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
-      val file = writeAction {
-        src.createFile("A.${filetype.defaultExtension}")
+      writeAction { file.rename(this@DirtyFilesQueueTest, renamedName) } // add file to orphan queue
+      restart(skipFullScanning = true) // persist orphan queue
+      openProject(name, projectFile, withIndexingHistory = true) { project, _ ->
+        smartReadAction(project) {
+          val files = FileTypeIndex.getFiles(PlainTextFileType.INSTANCE, GlobalSearchScope.allScope(project))
+          assertThat(files).contains(file)
+        }
+
+        IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
+        val scanning = findScanningTriggeredBy(project, "On project open")
+        assertIsFullScanning(scanning, false)
+        assertCameFromOrphanQueue(scanning, renamedName)
       }
-      fileBasedIndex.changedFilesCollector.ensureUpToDate()
-      assertThat(fileBasedIndex.getAllDirtyFiles(project)).contains((file as VirtualFileWithId).id)
-      restartSkippingFullScanning(skipFullScanning)
-      assertFullScanning(!skipFullScanning)
-      smartReadAction(project) {
-        val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
-        assertThat(files).contains(file)
+    }
+  }
+
+  private fun ensureUpToDate(project: Project) {
+    // index has to depend on content in order for FilesToUpdateCollector to be processed
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project))
+  }
+
+  private fun assertCameFromOrphanQueue(scanning: JsonIndexingActivityDiagnostic, fileName: String) {
+    val stats = (scanning.projectIndexingActivityHistory as JsonProjectScanningHistory).scanningStatistics
+      .first { it.providerName == "dirty files iterator (from orphan queue=true)" }
+    assertThat(stats.scannedFiles).anyMatch { it.path.presentablePath.endsWith("/$fileName") }
+  }
+
+  private fun configureModule(project: Project): Module {
+    var m: Module? = null
+    runBlocking(Dispatchers.EDT) {
+      LightProjectDescriptor().setUpProject(project, object : LightProjectDescriptor.SetupHandler {
+        override fun moduleCreated(module: Module) {
+          m = module
+        }
+      })
+    }
+    return m!!
+  }
+
+  private fun testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning: Boolean) {
+    val projectName = "test_dirty_file_is_indexed_after_FileBasedIndex_is_restarted_${if (skipFullScanning) "(skip_full_scanning)" else "(with_full_scanning)"}"
+    runBlocking {
+      openProject(projectName, withIndexingHistory = true) { project, module ->
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        val filetype = FakeFileType()
+        registerFiletype(filetype)
+        val src = tempDir.createVirtualDir("src")
+
+        writeAction {
+          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+          rootModel.addContentEntry(src)
+          rootModel.commit()
+        }
+        IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
+        val file = writeAction {
+          src.createFile("A.${filetype.defaultExtension}")
+        }
+        fileBasedIndex.changedFilesCollector.ensureUpToDate()
+        assertThat(fileBasedIndex.getAllDirtyFiles(project)).contains((file as VirtualFileWithId).id)
+        restart(skipFullScanning, project)
+        assertFullScanning(project, !skipFullScanning)
+        smartReadAction(project) {
+          val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
+          assertThat(files).contains(file)
+        }
       }
     }
   }
 
   @Test
   fun `test removed dirty file is removed from indexes after FileBasedIndex is restarted (skip full scanning)`() {
-    val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-    val filetype = FakeFileType()
-    registerFiletype(filetype)
-    val src = tempDir.createVirtualDir("src")
-
+    val projectName = "test_removed_dirty_file_is_removed_from_indexes_after_FileBasedIndex_is_restarted_(skip_full_scanning)"
     runBlocking {
-      val file = writeAction {
-        val rootModel = ModuleRootManager.getInstance(p.module).modifiableModel
-        rootModel.addContentEntry(src)
-        rootModel.commit()
-        src.createFile("A.${filetype.defaultExtension}")
-      }
-      smartReadAction(project) {
-        val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
-        assertThat(files).contains(file)
-      }
-      writeAction {
-        file.delete(this)
-      }
-      fileBasedIndex.changedFilesCollector.ensureUpToDate()
-      assertThat(fileBasedIndex.getAllDirtyFiles(project)).contains((file as VirtualFileWithId).id)
-      restartSkippingFullScanning(true)
-      assertFullScanning(false)
-      smartReadAction(project) {
-        val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
-        assertThat(files).doesNotContain(file)
+      openProject(projectName, withIndexingHistory = true) { project, module ->
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        val filetype = FakeFileType()
+        registerFiletype(filetype)
+        val src = tempDir.createVirtualDir("src")
+
+        val file = writeAction {
+          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+          rootModel.addContentEntry(src)
+          rootModel.commit()
+          src.createFile("A.${filetype.defaultExtension}")
+        }
+        smartReadAction(project) {
+          val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
+          assertThat(files).contains(file)
+        }
+        writeAction {
+          file.delete(this)
+        }
+        fileBasedIndex.changedFilesCollector.ensureUpToDate()
+        assertThat(fileBasedIndex.getAllDirtyFiles(project)).contains((file as VirtualFileWithId).id)
+        restart(skipFullScanning = true, project)
+        assertFullScanning(project, false)
+        smartReadAction(project) {
+          val files = FileTypeIndex.getFiles(filetype, GlobalSearchScope.allScope(project))
+          assertThat(files).doesNotContain(file)
+        }
       }
     }
   }
 
-  private fun restartSkippingFullScanning(skipFullScanning: Boolean) {
+  private suspend fun <T> openProject(name: String,
+                                      projectFile: Path = TemporaryDirectory.generateTemporaryPath("project_${name}"),
+                                      save: Boolean = false,
+                                      withIndexingHistory: Boolean = false,
+                                      action: suspend (Project, Module) -> T): T {
+    projectFile.createDirectories()
+    val options = createTestOpenProjectOptions().copy(projectName = name)
+    if (withIndexingHistory) {
+      SystemProperties.setProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", "true")
+      IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
+    }
+    if (save) {
+      WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
+    }
+    val project = ProjectUtil.openOrImportAsync(projectFile, options)!!
+    val module = configureModule(project)
+    return project.useProjectAsync(save = save) {
+      val res = action(project, module)
+      IndexingTestUtil.suspendUntilIndexesAreReady(project)
+      if (withIndexingHistory) {
+        IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
+        IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
+        FileUtil.deleteRecursively(project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir))
+        SystemProperties.setProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", "false")
+      }
+      res
+    }
+  }
+
+  private fun restart(skipFullScanning: Boolean, project: Project? = null) {
     runBlocking(Dispatchers.EDT) {
       val tumbler = FileBasedIndexTumbler("test")
       if (skipFullScanning) {
@@ -176,20 +277,25 @@ class DirtyFilesQueueTest {
       }
       tumbler.turnOff()
       tumbler.turnOn()
-      IndexingTestUtil.suspendUntilIndexesAreReady(project)
+      if (project != null) {
+        IndexingTestUtil.suspendUntilIndexesAreReady(project)
+      }
     }
   }
 
-  private fun assertFullScanning(fullScanning: Boolean) {
+  private fun assertFullScanning(project: Project, fullScanning: Boolean, reason: String = "FileBasedIndexTumbler") {
     IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
 
-    val scanning = findScanningTriggeredBy("FileBasedIndexTumbler")
-    assertThat(scanning).isNotNull
+    val scanning = findScanningTriggeredBy(project, reason)
+    assertIsFullScanning(scanning, fullScanning)
+  }
+
+  private fun assertIsFullScanning(scanning: JsonIndexingActivityDiagnostic, fullScanning: Boolean) {
     val times = (scanning.projectIndexingActivityHistory.times as JsonProjectScanningHistoryTimes)
     assertThat(times.scanningType).isEqualTo(if (fullScanning) ScanningType.FULL_ON_PROJECT_OPEN else ScanningType.PARTIAL)
   }
 
-  private fun findScanningTriggeredBy(@Suppress("SameParameterValue") reason: String): JsonIndexingActivityDiagnostic {
+  private fun findScanningTriggeredBy(project: Project, @Suppress("SameParameterValue") reason: String): JsonIndexingActivityDiagnostic {
     val projectDir = project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir)
     val diagnostics = projectDir.toFile().listFiles()!!
       .filter { it.extension == "json" }

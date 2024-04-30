@@ -44,7 +44,8 @@ internal data class IconClassInfo(
   @JvmField val packageName: String,
   @JvmField val className: String,
   @JvmField val outFile: Path,
-  @JvmField val images: Collection<ImageInfo>
+  @JvmField val images: Collection<ImageInfo>,
+  @JvmField val isInternal: Boolean = false,
 )
 
 internal open class IconsClassGenerator(
@@ -107,8 +108,14 @@ internal open class IconsClassGenerator(
 
         val (expUi, others) = images.partition { it.id.startsWith("/expui/") }
         return listOf(
-          IconClassInfo(packageName, className, outFile, images = others),
-          IconClassInfo(packageName, className = "ExpUiIcons", outFile = dir.resolve("ExpUiIcons.java"), images = expUi.map { it.trimPrefix("/expui") }),
+          IconClassInfo(packageName = packageName, className = className, outFile = outFile, images = others),
+          IconClassInfo(
+            packageName = packageName,
+            className = "ExpUiIcons",
+            outFile = dir.resolve("ExpUiIcons.java"),
+            images = expUi.map { it.trimPrefix("/expui") },
+            isInternal = true,
+          ),
         )
       }
       "intellij.android.artwork" -> {
@@ -164,7 +171,7 @@ internal open class IconsClassGenerator(
                         ?: existingIconsClass?.className
                         ?: "${directoryName(module).removeSuffix("Icons")}Icons"
         val outFile = targetRoot.resolve("$className.java")
-        val info = IconClassInfo(packageName, className, outFile, images)
+        val info = IconClassInfo(packageName = packageName, className = className, outFile = outFile, images = images, isInternal = className.contains("Impl"))
         return transformIconClassInfo(info, module)
       }
     }
@@ -327,6 +334,9 @@ internal open class IconsClassGenerator(
     result.append(" * NOTE THIS FILE IS AUTO-GENERATED\n")
     result.append(" * DO NOT EDIT IT BY HAND, run \"Generate icon classes\" configuration instead\n")
     result.append(" */\n")
+    if (info.isInternal) {
+      result.append("@org.jetbrains.annotations.ApiStatus.Internal\n")
+    }
 
     result.append("public")
     // backward compatibility

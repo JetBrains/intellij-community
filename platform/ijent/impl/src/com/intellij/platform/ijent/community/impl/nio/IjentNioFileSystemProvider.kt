@@ -2,18 +2,18 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSessionRegistry
-import com.intellij.platform.ijent.fs.IjentFileSystemApi
-import com.intellij.platform.ijent.fs.IjentFileSystemApi.FileInfo.Type.*
+import com.intellij.platform.ijent.IjentWindowsApi
+import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
+import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
+import com.intellij.platform.ijent.fs.*
+import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.SameFile
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.Stat
-import com.intellij.platform.ijent.fs.IjentFsResult
-import com.intellij.platform.ijent.fs.IjentPath
-import com.intellij.platform.ijent.fs.getOrThrow
-import kotlinx.coroutines.CoroutineScope
+import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.net.URI
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
@@ -28,25 +28,6 @@ import kotlin.contracts.contract
 @ApiStatus.Experimental
 class IjentNioFileSystemProvider : FileSystemProvider() {
   companion object {
-    private var ijentFsApiGetter: (IjentId) -> IjentFileSystemApi = { ijentId ->
-      val ijentApi = IjentSessionRegistry.instance().ijents[ijentId]
-
-      require(ijentApi != null) {
-        "$ijentApi is not registered in ${IjentSessionRegistry::class.java.simpleName}"
-      }
-
-      ijentApi.fs
-    }
-
-    @TestOnly
-    fun mockIjentFsApiGetter(scope: CoroutineScope, getter: (IjentId) -> IjentFileSystemApi) {
-      val oldGetter = ijentFsApiGetter
-      scope.coroutineContext.job.invokeOnCompletion {
-        ijentFsApiGetter = oldGetter
-      }
-      ijentFsApiGetter = getter
-    }
-
     @JvmStatic
     fun getInstance(): IjentNioFileSystemProvider =
       installedProviders()
@@ -66,14 +47,20 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
 
     val ijentId = IjentId(uri.host)
-    val ijentApiFs = ijentFsApiGetter(ijentId)
-    val fs = IjentNioFileSystem(this, ijentApiFs)
+
+    val fs = IjentNioFileSystem(
+      this,
+      when (val ijentApi = IjentSessionRegistry.instance().ijents[ijentId]) {
+        is IjentPosixApi -> IjentNioFileSystem.FsAndUserApi.Posix(ijentApi.fs, ijentApi.info.user)
+        is IjentWindowsApi -> IjentNioFileSystem.FsAndUserApi.Windows(ijentApi.fs, ijentApi.info.user)
+        null -> throw IllegalArgumentException("$ijentApi is not registered in ${IjentSessionRegistry::class.java.simpleName}")
+      })
 
     if (registeredFileSystems.putIfAbsent(ijentId, fs) != null) {
       throw FileSystemAlreadyExistsException("A filesystem for $ijentId is already registered")
     }
 
-    ijentApiFs.coroutineScope.coroutineContext.job.invokeOnCompletion {
+    fs.ijent.fs.coroutineScope.coroutineContext.job.invokeOnCompletion {
       registeredFileSystems.remove(ijentId)
     }
 
@@ -88,8 +75,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun getPath(uri: URI): IjentNioPath =
     getFileSystem(uri).run {
       getPath(
-        if (isWindows) uri.path.trimStart('/')
-        else uri.path
+        when (ijent) {
+          is IjentNioFileSystem.FsAndUserApi.Posix -> uri.path
+          is IjentNioFileSystem.FsAndUserApi.Windows -> uri.path.trimStart('/')
+        }
       )
     }
 
@@ -140,7 +129,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val nioFs = dir.nioFs
 
     return nioFs.fsBlocking {
-      val childrenNames = when (val v = nioFs.ijentFsApi.listDirectory(ensurePathIsAbsolute(dir.ijentPath))) {
+      val childrenNames = when (val v = nioFs.ijent.fs.listDirectory(ensurePathIsAbsolute(dir.ijentPath))) {
         is IjentFileSystemApi.ListDirectory.Ok -> v.value
         is IjentFsResult.Error -> v.throwFileSystemException()
       }
@@ -184,7 +173,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val nioFs = path.nioFs
 
     return nioFs.fsBlocking {
-      when (val v = nioFs.ijentFsApi.sameFile(ensurePathIsAbsolute(path.ijentPath), ensurePathIsAbsolute(path2.ijentPath))) {
+      when (val v = nioFs.ijent.fs.sameFile(ensurePathIsAbsolute(path.ijentPath), ensurePathIsAbsolute(path2.ijentPath))) {
         is SameFile.Ok -> v.value
         is IjentFsResult.Error -> v.throwFileSystemException()
       }
@@ -196,20 +185,61 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun getFileStore(path: Path): FileStore =
-    IjentNioFileStore(ensureIjentNioPath(path).nioFs.ijentFsApi)
+    IjentNioFileStore(ensureIjentNioPath(path).nioFs.ijent.fs)
 
+  private enum class UnixFilePermissionBranch { OWNER, GROUP, OTHER }
 
   override fun checkAccess(path: Path, vararg modes: AccessMode) {
-    if (modes.isNotEmpty()) {
-      TODO("Not yet implemented")
-    }
-
     val fs = ensureIjentNioPath(path).nioFs
     fs.fsBlocking {
-      // According to the javadoc, this method must follow symlinks.
-      when (val v = fs.ijentFsApi.stat(ensurePathIsAbsolute(path.ijentPath), resolveSymlinks = true)) {
-        is Stat.Ok -> v.value
-        is IjentFsResult.Error -> v.throwFileSystemException()
+      when (val ijent = fs.ijent) {
+        is IjentNioFileSystem.FsAndUserApi.Posix -> {
+          // According to the javadoc, this method must follow symlinks.
+          when (val v = ijent.fs.stat(ensurePathIsAbsolute(path.ijentPath), resolveSymlinks = true)) {
+            is Stat.Ok -> {
+              // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess
+              val filePermissionBranch = when {
+                ijent.userInfo.uid == v.value.permissions.owner -> OWNER
+                ijent.userInfo.gid == v.value.permissions.group -> GROUP
+                else -> OTHER
+              }
+
+              // UnixFileSystemProvider#checkAccess checks the read access if there are no flags specified.
+              if (AccessMode.READ in modes || modes.isEmpty()) {
+                val canRead = when (filePermissionBranch) {
+                  OWNER -> v.value.permissions.ownerCanRead
+                  GROUP -> v.value.permissions.groupCanRead
+                  OTHER -> v.value.permissions.otherCanRead
+                }
+                if (!canRead) {
+                  IjentFsResultImpl.PermissionDenied(path.ijentPath, "Permission denied: read").throwFileSystemException()
+                }
+              }
+              if (AccessMode.WRITE in modes) {
+                val canWrite = when (filePermissionBranch) {
+                  OWNER -> v.value.permissions.ownerCanWrite
+                  GROUP -> v.value.permissions.groupCanWrite
+                  OTHER -> v.value.permissions.otherCanWrite
+                }
+                if (!canWrite) {
+                  IjentFsResultImpl.PermissionDenied(path.ijentPath, "Permission denied: write").throwFileSystemException()
+                }
+              }
+              if (AccessMode.EXECUTE in modes) {
+                val canExecute = when (filePermissionBranch) {
+                  OWNER -> v.value.permissions.ownerCanExecute
+                  GROUP -> v.value.permissions.groupCanExecute
+                  OTHER -> v.value.permissions.otherCanExecute
+                }
+                if (!canExecute) {
+                  IjentFsResultImpl.PermissionDenied(path.ijentPath, "Permission denied: execute").throwFileSystemException()
+                }
+              }
+            }
+            is IjentFsResult.Error -> v.throwFileSystemException()
+          }
+        }
+        is IjentNioFileSystem.FsAndUserApi.Windows -> TODO()
       }
     }
   }
@@ -220,15 +250,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     val fs = ensureIjentNioPath(path).nioFs
-    val fileInfo: IjentFileSystemApi.FileInfo = fs.fsBlocking {
+    val fileInfo: IjentFileInfo = fs.fsBlocking {
       @Suppress("NAME_SHADOWING") var path: IjentPath.Absolute = ensurePathIsAbsolute(path.ijentPath)
       while (true) {
-        val fi = when (val v = fs.ijentFsApi.stat(path, resolveSymlinks = LinkOption.NOFOLLOW_LINKS in options)) {
+        val fi = when (val v = fs.ijent.fs.stat(path, resolveSymlinks = LinkOption.NOFOLLOW_LINKS in options)) {
           is Stat.Ok -> v.value
           is IjentFsResult.Error -> v.throwFileSystemException()
         }
-        when (val t = fi.fileType) {
-          Directory, Other, Regular, Symlink.Unresolved -> return@fsBlocking fi
+        when (val t = fi.type) {
+          is Directory, is Other, is Regular, is Symlink.Unresolved -> return@fsBlocking fi
 
           is Symlink.Resolved -> {
             path = t.result
@@ -252,27 +282,27 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       }
 
       override fun isRegularFile(): Boolean =
-        when (fileInfo.fileType) {
-          Regular -> true
-          Directory, Other, is Symlink -> false
+        when (fileInfo.type) {
+          is Regular -> true
+          is Directory, is Other, is Symlink -> false
         }
 
       override fun isDirectory(): Boolean =
-        when (fileInfo.fileType) {
-          Directory -> true
-          Other, Regular, is Symlink -> false
+        when (fileInfo.type) {
+          is Directory -> true
+          is Other, is Regular, is Symlink -> false
         }
 
       override fun isSymbolicLink(): Boolean =
-        when (fileInfo.fileType) {
+        when (fileInfo.type) {
           is Symlink -> true
-          Directory, Other, Regular -> false
+          is Directory, is Other, is Regular -> false
         }
 
       override fun isOther(): Boolean =
-        when (fileInfo.fileType) {
-          Other -> true
-          Directory, Regular, is Symlink -> false
+        when (fileInfo.type) {
+          is Other -> true
+          is Directory, is Regular, is Symlink -> false
         }
 
       override fun size(): Long {

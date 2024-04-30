@@ -34,6 +34,10 @@ class FirInplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
         doTest()
     }
 
+    fun testSearchForCallAfter() {
+        doTest()
+    }
+
     fun testStringTemplateWithNameConflict() {
         doTest(changedName = "substring")
     }

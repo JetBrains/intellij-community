@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -207,6 +208,12 @@ public final class Executor {
   public static File child(@NotNull String fileName) {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir, fileName);
+  }
+
+  @NotNull
+  public static FilePath childPath(@NotNull String fileName) {
+    File child = child(fileName);
+    return VcsUtil.getFilePath(child);
   }
 
   @NotNull

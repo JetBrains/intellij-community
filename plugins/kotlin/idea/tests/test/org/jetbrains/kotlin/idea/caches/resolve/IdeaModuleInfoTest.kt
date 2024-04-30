@@ -1105,9 +1105,12 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         js --> common
         js --> STDLIB_JS
         js --> KOTLIN_SDK
-        wasm --> common
-        wasm --> STDLIB_WASM
-        wasm --> KOTLIN_SDK
+        wasmJs --> common
+        wasmJs --> STDLIB_WASM
+        wasmJs --> KOTLIN_SDK
+        wasmWasi --> common
+        wasmWasi --> STDLIB_WASM
+        wasmWasi --> KOTLIN_SDK
         jvmNoSdk --> common
         jvmNoSdk --> STDLIB_JVM
         jvmWithSdk --> common
@@ -1122,13 +1125,19 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
         val common = module("common")
         val js = module("js")
-        val wasm = module("wasm")
+        val wasmJs = module("wasmJs").apply {
+            setUpPlatform(WasmPlatforms.wasmJs)
+        }
+        val wasmWasi = module("wasmWasi").apply {
+            setUpPlatform(WasmPlatforms.wasmWasi)
+        }
         val jvmNoSdk = module("jvmNoSdk")
         val jvmWithSdk = module("jvmWithSdk")
         val native = module("native")
 
         js.addDependency(common)
-        wasm.addDependency(common)
+        wasmJs.addDependency(common)
+        wasmWasi.addDependency(common)
         jvmNoSdk.addDependency(common)
         jvmWithSdk.addDependency(common)
         native.addDependency(common)
@@ -1148,11 +1157,17 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         js.addDependency(stdlibJs)
         js.addDependency(KotlinSdk, testRootDisposable)
 
-        val stdlibWasm = projectLibrary("stdlibWasm", classesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibWasmJs))
-        val stdlibWasmInfo = stdlibWasm.toLibraryInfo()
+        val stdlibWasmJs = projectLibrary("stdlibWasmJs", classesRoot = TestKotlinArtifacts.kotlinStdlibWasmJs.jarRoot)
+        val stdlibWasmJsInfo = stdlibWasmJs.toLibraryInfo()
 
-        wasm.addDependency(stdlibWasm)
-        wasm.addDependency(KotlinSdk, testRootDisposable)
+        wasmJs.addDependency(stdlibWasmJs)
+        wasmJs.addDependency(KotlinSdk, testRootDisposable)
+
+        val stdlibWasmWasi = projectLibrary("stdlibWasmWasi", classesRoot = TestKotlinArtifacts.kotlinStdlibWasmWasi.jarRoot)
+        val stdlibWasmWasiInfo = stdlibWasmWasi.toLibraryInfo()
+
+        wasmWasi.addDependency(stdlibWasmWasi)
+        wasmWasi.addDependency(KotlinSdk, testRootDisposable)
 
         val stdlibJvm = projectLibrary("stdlibJvm", classesRoot = TestKotlinArtifacts.kotlinStdlib.jarRoot)
         val stdlibJvmLibInfo = stdlibJvm.toLibraryInfo()
@@ -1181,11 +1196,18 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             stdlibJsInfo
         )
 
-        wasm.production.assertDependenciesEqual(
+        wasmJs.production.assertDependenciesEqual(
             kotlinSdkInfo,
-            wasm.production,
+            wasmJs.production,
             common.production,
-            stdlibWasmInfo
+            stdlibWasmJsInfo
+        )
+
+        wasmWasi.production.assertDependenciesEqual(
+            kotlinSdkInfo,
+            wasmWasi.production,
+            common.production,
+            stdlibWasmWasiInfo
         )
 
         jvmNoSdk.production.assertDependenciesEqual(
@@ -1215,9 +1237,15 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         )
 
         assertDependencies(
-            lib = stdlibWasmInfo,
+            lib = stdlibWasmJsInfo,
             expectedSdkInfos = listOf(kotlinSdkInfo),
-            stdlibCommonLibInfo, stdlibWasmInfo
+            stdlibCommonLibInfo, stdlibWasmJsInfo
+        )
+
+        assertDependencies(
+            lib = stdlibWasmWasiInfo,
+            expectedSdkInfos = listOf(kotlinSdkInfo),
+            stdlibCommonLibInfo, stdlibWasmWasiInfo
         )
 
         assertDependencies(
@@ -1799,7 +1827,8 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val stdlibCommon = stdlibCommon()
         val stdlibJvm = stdlibJvm()
         val stdlibJs = stdlibJs()
-        //val stdlibWasm = stdlibWasmJs()
+        val stdlibWasmJs = stdlibWasmJs()
+        val stdlibWasmWasi = stdlibWasmWasi()
 
         val a = module("a")
         a.addDependency(stdlibCommon)
@@ -1810,16 +1839,21 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         b.addDependency(stdlibCommon)
         b.addDependency(stdlibJs)
 
-        // FIXME: KTIJ-29713
-        //val c = module("c")
-        //c.setUpPlatform(WasmPlatforms.unspecifiedWasmPlatform)
-        //c.addDependency(stdlibCommon)
-        //c.addDependency(stdlibWasm)
+        val c = module("c")
+        c.setUpPlatform(WasmPlatforms.wasmJs)
+        c.addDependency(stdlibCommon)
+        c.addDependency(stdlibWasmJs)
+
+        val d = module("d")
+        d.setUpPlatform(WasmPlatforms.wasmWasi)
+        d.addDependency(stdlibCommon)
+        d.addDependency(stdlibWasmWasi)
 
         stdlibCommon.toLibraryInfo().assertAdditionalLibraryDependencies()
         stdlibJvm.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
         stdlibJs.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
-        //stdlibWasm.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
+        stdlibWasmJs.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
+        stdlibWasmWasi.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
     }
 
     fun testScriptDependenciesForModule() {
@@ -2337,13 +2371,13 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
     private fun stdlibWasmJs(): LibraryEx = projectLibrary(
         "kotlin-stdlib-wasm-js",
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibWasmJs),
+        TestKotlinArtifacts.kotlinStdlibWasmJs.jarRoot,
         kind = KotlinWasmJsLibraryKind
     )
 
     private fun stdlibWasmWasi(): LibraryEx = projectLibrary(
         "kotlin-stdlib-wasm-wasi",
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibWasmWasi),
+        TestKotlinArtifacts.kotlinStdlibWasmWasi.jarRoot,
         kind = KotlinWasmWasiLibraryKind
     )
 

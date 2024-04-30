@@ -13,7 +13,6 @@ import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbol.Companion.HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
@@ -29,10 +28,9 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       XmlAttributeDescriptor.EMPTY
     else {
       val queryExecutor = WebSymbolsQueryExecutorFactory.create(context)
-      val symbols = (context.descriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
-                    ?: queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, context.name)
+      val additionalScope = listOf(WebSymbolsHtmlQueryConfigurator.HtmlContextualWebSymbolsScope(context))
       queryExecutor
-        .runListSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true, scope = symbols, virtualSymbols = false)
+        .runListSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true, additionalScope = additionalScope, virtualSymbols = false)
         .asSequence()
         .filter { !it.hasOnlyStandardHtmlSymbolsOrExtensions() }
         .map { it.getAttributeDescriptor(it.name, context, queryExecutor) }
@@ -44,12 +42,16 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
     if (context == null || DumbService.isDumb(context.project))
       null
     else {
-      val queryExecutor = WebSymbolsQueryExecutorFactory.create(context.getAttribute(attributeName) ?: context)
+      val attribute = context.getAttribute(attributeName)
+      val queryExecutor = WebSymbolsQueryExecutorFactory.create(attribute ?: context)
       val elementDescriptor = context.descriptor
-      val symbols = (elementDescriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
-                    ?: queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, context.name)
+      val additionalScope = if (attribute != null)
+        emptyList()
+      else
+        listOf(WebSymbolsHtmlQueryConfigurator.HtmlContextualWebSymbolsScope(context))
+
       queryExecutor
-        .runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, attributeName, scope = symbols)
+        .runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, attributeName, additionalScope = additionalScope)
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()
