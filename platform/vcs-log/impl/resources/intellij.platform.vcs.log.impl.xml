@@ -251,6 +251,7 @@
              class="com.intellij.vcs.log.ui.actions.VcsLogToolWindowDropdownActionGroup">
         <reference id="Vcs.Log.OpenAnotherTabInEditor"/>
         <reference id="Vcs.ShowTabbedFileHistory"/>
+        <reference id="Vcs.ShowConsoleTab"/>
       </group>
       <add-to-group group-id="LocalChangesView.TabActions"/>
     </group>
