@@ -302,7 +302,7 @@ public final class TypeUtils {
    * @return the textual representation of default value
    */
   @NonNls
-  public static String getDefaultValue(PsiType type) {
+  public static @NotNull String getDefaultValue(PsiType type) {
     if (PsiTypes.intType().equals(type)) {
       return "0";
     }
