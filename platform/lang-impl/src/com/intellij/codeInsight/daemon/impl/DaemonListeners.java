@@ -89,6 +89,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * listen for any daemon-related activities and restart the daemon if needed
+ */
 public final class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance(DaemonListeners.class);
   private final Project myProject;
@@ -227,7 +230,7 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
-        // re-initialize TrafficLightRenderer in each editor since root change event could change highlightability
+        // re-initialize TrafficLightRenderer in each editor since root change event could change highlight-ability
         reInitTrafficLightRendererForAllEditors();
       }
     });
@@ -330,6 +333,7 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
+    //noinspection rawtypes
     connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerListener() {
       @Override
       public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {
@@ -352,9 +356,9 @@ public final class DaemonListeners implements Disposable {
       }
     });
 
-    restartOnExtensionChange(LanguageAnnotators.EP_NAME, "annotators list changed");
-    restartOnExtensionChange(LineMarkerProviders.EP_NAME, "line marker providers list changed");
-    restartOnExtensionChange(ExternalLanguageAnnotators.EP_NAME, "external annotators list changed");
+    listenForExtensionChange(LanguageAnnotators.EP_NAME, "annotators list changed");
+    listenForExtensionChange(LineMarkerProviders.EP_NAME, "line marker providers list changed");
+    listenForExtensionChange(ExternalLanguageAnnotators.EP_NAME, "external annotators list changed");
 
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -444,7 +448,7 @@ public final class DaemonListeners implements Disposable {
     return ProjectUtil.guessProjectForFile(virtualFile);
   }
 
-  private <T, U extends KeyedLazyInstance<T>> void restartOnExtensionChange(@NotNull ExtensionPointName<U> name, @NotNull String message) {
+  private <T, U extends KeyedLazyInstance<T>> void listenForExtensionChange(@NotNull ExtensionPointName<U> name, @NotNull String message) {
     name.addChangeListener(() -> stopDaemonAndRestartAllFiles(message), this);
   }
 
