@@ -27,6 +27,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkCallableReferenceWithGeneric(myFixture)
     }
 
+    fun testCallableReferenceWithGeneric_convertedToSAM() {
+        checkCallableReferenceWithGeneric_convertedToSAM(myFixture, isK2 = false)
+    }
+
     fun testDivByZero() {
         checkDivByZero(myFixture)
     }

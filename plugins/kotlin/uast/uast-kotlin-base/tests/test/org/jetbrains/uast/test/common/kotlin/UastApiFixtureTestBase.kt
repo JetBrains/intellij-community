@@ -108,6 +108,50 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(2, count)
     }
 
+    fun checkCallableReferenceWithGeneric_convertedToSAM(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+        myFixture.configureByText(
+            "main.kt", """
+                import java.lang.Runnable
+                import java.util.function.Supplier
+
+                class GenericClass<T> { fun foo(): T = TODO() }
+                val runnable1 = Runnable(GenericClass<Any>()::foo)
+                val runnable2 = Runnable(GenericClass<String>()::foo)
+                val supplier1 = Supplier<Any>(GenericClass<Any>()::foo)
+                val supplier2 = Supplier<Any>(GenericClass<String>()::foo)
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        val expectedQualifierTypes = listOf(
+            "GenericClass<java.lang.Object>",
+            "GenericClass<java.lang.String>",
+            "GenericClass<java.lang.Object>",
+            "GenericClass<java.lang.String>",
+        )
+        // In K2, for SAM conversion to Runnable, method references are resolved as
+        // () -> Unit and then mapped to Function0<? extends Unit>.
+        val func = if (isK2) "kotlin.jvm.functions.Function0" else "kotlin.reflect.KFunction"
+        val expectedExpressionTypes = listOf(
+            "$func<? extends kotlin.Unit>",
+            "$func<? extends kotlin.Unit>",
+            "kotlin.reflect.KFunction<? extends java.lang.Object>",
+            "kotlin.reflect.KFunction<? extends java.lang.String>",
+        )
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
+                    TestCase.assertEquals(expectedQualifierTypes[count], node.qualifierType?.canonicalText)
+                    TestCase.assertEquals(expectedExpressionTypes[count], node.getExpressionType()?.canonicalText)
+                    count++
+                    return super.visitCallableReferenceExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(4, count)
+    }
+
     fun checkDivByZero(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
