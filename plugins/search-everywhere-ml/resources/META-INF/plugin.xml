@@ -17,6 +17,7 @@
     <module name="intellij.searchEverywhereMl.typos"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
     <module name="intellij.searchEverywhereMl.ranking.core"/>
+    <module name="intellij.searchEverywhereMl.ranking.java"/>
     <module name="intellij.searchEverywhereMl.ranking.yaml"/>
     <module name="intellij.searchEverywhereMl.ranking.vcs"/>
     <module name="intellij.searchEverywhereMl.semantics"/>
