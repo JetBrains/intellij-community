@@ -374,10 +374,15 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
 
+      group(message("group.trees")) {
+        twoColumnsRow(
+          { checkBox(cdShowTreeIndents) },
+          { checkBox(cdUseCompactTreeIndents) },
+        )
+      }
+
       group(message("group.ui.options")) {
         val leftColumnControls = sequence<Row.() -> Unit> {
-          yield { checkBox(cdShowTreeIndents) }
-          yield { checkBox(cdUseCompactTreeIndents) }
           yield { checkBox(cdEnableMenuMnemonics) }
           yield { checkBox(cdEnableControlsMnemonics) }
           if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
