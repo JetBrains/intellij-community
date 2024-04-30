@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 import java.util.List;
 
+import static com.intellij.history.integration.ui.HistoryDialogModelsKt.createDirectoryModel;
+
 public class DirectoryHistoryDialogModelTest extends LocalHistoryUITestCase {
   private DirectoryHistoryDialogModel m;
 
@@ -46,6 +48,6 @@ public class DirectoryHistoryDialogModelTest extends LocalHistoryUITestCase {
   }
 
   private void initModelFor(VirtualFile dir) {
-    m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), dir);
+    m = createDirectoryModel(this, dir);
   }
 }

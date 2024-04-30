@@ -140,8 +140,12 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> document.setText(text));
   }
 
-  protected LocalHistoryFacade getVcs() {
+  public @NotNull LocalHistoryFacade getVcs() {
     return LocalHistoryImpl.getInstanceImpl().getFacade();
+  }
+
+  public @NotNull IdeaGateway getGateway() {
+    return myGateway;
   }
 
   /**
@@ -172,7 +176,7 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     return LocalHistoryTestCase.getEntryFor(getVcs(), getRootEntry(), revisionId, f.getPath());
   }
 
-  protected RootEntry getRootEntry() {
+  public @NotNull RootEntry getRootEntry() {
     return myGateway.createTransientRootEntryForPath(myGateway.getPathOrUrl(myRoot), true);
   }
 

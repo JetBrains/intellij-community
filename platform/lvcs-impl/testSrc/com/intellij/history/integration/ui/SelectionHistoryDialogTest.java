@@ -15,6 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.nio.charset.StandardCharsets;
 
+import static com.intellij.history.integration.ui.HistoryDialogModelsKt.createDirectoryModel;
+import static com.intellij.history.integration.ui.HistoryDialogModelsKt.createSelectionModel;
 import static org.easymock.EasyMock.*;
 
 public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
@@ -112,7 +114,7 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   private void initModelOnSecondLineAndSelectRevisions(int first, int second) {
-    m = new SelectionHistoryDialogModel(myProject, myGateway, getVcs(), f, 1, 1);
+    m = createSelectionModel(this, f, 1, 1);
     m.selectRevisions(first, second);
     dm = m.getDifferenceModel();
   }

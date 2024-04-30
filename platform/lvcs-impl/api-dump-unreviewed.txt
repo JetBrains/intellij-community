@@ -603,7 +603,7 @@ c:com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
 f:com.intellij.history.integration.ui.models.EntireFileDifferenceModel
 - com.intellij.history.integration.ui.models.FileDifferenceModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.Entry,com.intellij.history.core.tree.Entry,Z):V
-f:com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel
+c:com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel
 - com.intellij.history.integration.ui.models.FileHistoryDialogModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile):V
 - getDifferenceModel():com.intellij.history.integration.ui.models.FileDifferenceModel
@@ -643,6 +643,7 @@ a:com.intellij.history.integration.ui.models.HistoryDialogModel
 - p:collectRevisionData():com.intellij.history.integration.ui.models.RevisionData
 - p:createChange(com.intellij.history.core.revisions.Difference):com.intellij.openapi.vcs.changes.Change
 - a:createReverter():com.intellij.history.integration.revertion.Reverter
+- p:createRootEntry():com.intellij.history.core.tree.RootEntry
 - getChanges():java.util.List
 - getCurrentRevision():com.intellij.history.core.revisions.Revision
 - p:getDifferences():java.util.List
@@ -809,9 +810,10 @@ com.intellij.history.integration.ui.views.RevisionsList$SelectionListener
 f:com.intellij.history.integration.ui.views.SelectionHistoryDialog
 - com.intellij.history.integration.ui.views.FileHistoryDialog
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile,I,I):V
-f:com.intellij.history.integration.ui.views.SelectionHistoryDialogModel
+c:com.intellij.history.integration.ui.views.SelectionHistoryDialogModel
 - com.intellij.history.integration.ui.models.FileHistoryDialogModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile,I,I):V
+- p:collectRevisionData():com.intellij.history.integration.ui.models.RevisionData
 - createReverter():com.intellij.history.integration.revertion.Reverter
 - filterContents(java.lang.String):java.util.Set
 - getDifferenceModel():com.intellij.history.integration.ui.models.FileDifferenceModel

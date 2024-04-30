@@ -24,6 +24,8 @@ import com.intellij.openapi.util.Disposer;
 
 import java.util.Collections;
 
+import static com.intellij.history.integration.ui.HistoryDialogModelsKt.createDirectoryModel;
+
 public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
   public void testDialogWorks() {
     DirectoryHistoryDialog d = new DirectoryHistoryDialog(myProject, myGateway, myRoot);
@@ -56,7 +58,7 @@ public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   private DirectoryHistoryDialogModel createModelAndSelectRevisions(int first, int second) {
-    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), myRoot);
+    DirectoryHistoryDialogModel m = createDirectoryModel(this, myRoot);
     m.selectRevisions(first, second);
     return m;
   }

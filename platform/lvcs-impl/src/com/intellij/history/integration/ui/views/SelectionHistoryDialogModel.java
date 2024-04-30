@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 
-public final class SelectionHistoryDialogModel extends FileHistoryDialogModel {
+public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   private RevisionSelectionCalculator myCalculatorCache;
   private final int myFrom;
   private final int myTo;
