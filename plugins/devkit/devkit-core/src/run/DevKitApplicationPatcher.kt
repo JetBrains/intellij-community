@@ -13,6 +13,7 @@ import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.idea.devkit.requestHandlers.CompileHttpRequestHandlerToken
+import org.jetbrains.idea.devkit.requestHandlers.passDataAboutBuiltInServer
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -29,6 +30,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (!PsiUtil.isIdeaProject(project)) {
       return
     }
+    passDataAboutBuiltInServer(javaParameters, project)
 
     val vmParameters = javaParameters.vmParametersList
     val isDev = configuration.mainClassName == "org.jetbrains.intellij.build.devServer.DevMainKt"
