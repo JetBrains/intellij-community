@@ -113,12 +113,6 @@ class PluginServiceImpl : PluginService {
 
   )
 
-  private val listOf1: List<WizardPlugin> = listOf(
-    WizardPluginImpl(AllIcons.Plugins.PluginLogo, "Python Community Edition", "The Python plugin provides smart editing for Python scripts. The feature set of the plugin corresponds to PyCharm IDE Community Edition"),
-    WizardPluginImpl(AllIcons.Plugins.PluginLogoDisabled, "IdeaVim", "Emulates Vim editor"),
-    WizardPluginImpl(AllIcons.TransferSettings.RecentProjects, "Heap Allocation Viewer", "Highlights local object allocations, boxing, delegates and closure creations points"),
-  )
-
   override val plugins: List<WizardPlugin> = listOf
 
   override fun onStepEnter() {}
