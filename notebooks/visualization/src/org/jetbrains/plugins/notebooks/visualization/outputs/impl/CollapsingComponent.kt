@@ -2,14 +2,12 @@ package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.IdeBorderFactory
-import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
@@ -104,10 +102,6 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
       else -> mainComponent.preferredSize
     }
     result.height += insets.run { top + bottom }
-    val map = editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength)
-      .filter { it.renderer.asSafely<JComponent>()!!.getComponent(0) is SurroundingComponent }
-
-    thisLogger().debug("$result ${isSeen} ${editor.preferredSize} ${editor.contentComponent.height} ${map.joinToString { it.heightInPixels.toString() }}")
     return result
   }
 
