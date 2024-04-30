@@ -1217,18 +1217,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                          @Nullable PsiType patternType) {
     checkType = TypeConversionUtil.erasure(checkType);
     if (patternType == null ||
-        (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context) &&
-        (checkType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType)) ||
         ((checkType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
-         !TypeConversionUtil.areTypesConvertible(checkType, patternType))) {
+         (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context) || !TypeConversionUtil.areTypesConvertible(checkType, patternType)))) {
       addInstruction(new PopInstruction());
       pushUnknown();
       return;
     }
-    if ((checkType instanceof PsiPrimitiveType) &&
-        patternType instanceof PsiPrimitiveType) {
-      if (checkType.equals(patternType) ||
-          JavaPsiPatternUtil.isExactPrimitiveWideningConversion(checkType, patternType)) {
+    if (checkType instanceof PsiPrimitiveType && patternType instanceof PsiPrimitiveType) {
+      if (checkType.equals(patternType) || JavaPsiPatternUtil.isExactPrimitiveWideningConversion(checkType, patternType)) {
         addInstruction(new PopInstruction());
         addInstruction(new PushValueInstruction(DfTypes.booleanValue(true)));
         if (instanceofAnchor != null) {
@@ -1239,17 +1235,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         generateExactTestingConversion(context, checkType, patternType, instanceofAnchor);
       }
     }
-    else if (checkType instanceof PsiPrimitiveType) {
-      PsiClassType boxedType = ((PsiPrimitiveType)checkType).getBoxedType(context);
-      generateBoxingUnboxingInstructionFor(context, checkType, boxedType, false);
-      addInstruction(new PushValueInstruction(DfTypes.typedObject(patternType, Nullability.NOT_NULL)));
-      addInstruction(new InstanceofInstruction(instanceofAnchor, false));
-    }
-    else if (patternType instanceof PsiPrimitiveType) {
+    else if (patternType instanceof PsiPrimitiveType patternPrimitiveType) {
       PsiPrimitiveType unboxedCheckedType = PsiPrimitiveType.getUnboxedType(checkType);
       if (unboxedCheckedType != null) {
-        boolean isWideningConversion = JavaPsiPatternUtil.isExactPrimitiveWideningConversion(unboxedCheckedType, patternType) ||
-                                       unboxedCheckedType.equals(patternType);
+        boolean isWideningConversion = JavaPsiPatternUtil.isExactPrimitiveWideningConversion(unboxedCheckedType, patternPrimitiveType) ||
+                                       unboxedCheckedType.equals(patternPrimitiveType);
         if (!isWideningConversion) {
           addInstruction(new DupInstruction());
         }
@@ -1260,11 +1250,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           CFGBuilder builder = new CFGBuilder(this) //checkValue resultNotNull
             .push(DfTypes.booleanValue(false)) //checkValue resultNotNull false
             .ifCondition(RelationType.EQ) //checkValue
-              .pop() //
-              .push(DfTypes.booleanValue(false)) //false
+            .pop() //
+            .push(DfTypes.booleanValue(false)) //false
             .elseBranch(); //checkValue
           generateBoxingUnboxingInstructionFor(context, checkType, unboxedCheckedType, false);
-          generateInstanceOfInstructions(context,  null, unboxedCheckedType, patternType);
+          generateInstanceOfInstructions(context, null, unboxedCheckedType, patternPrimitiveType);
           builder
             .end();
           if (instanceofAnchor != null) {
@@ -1273,12 +1263,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
       else {
-        PsiClassType boxedType = ((PsiPrimitiveType)patternType).getBoxedType(context);
+        PsiClassType boxedType = patternPrimitiveType.getBoxedType(context);
         addInstruction(new PushValueInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL)));
         addInstruction(new InstanceofInstruction(instanceofAnchor, false));
       }
     }
     else {
+      if (checkType instanceof PsiPrimitiveType checkPrimitiveType) {
+        PsiClassType boxedType = checkPrimitiveType.getBoxedType(context);
+        generateBoxingUnboxingInstructionFor(context, checkType, boxedType, false);
+      }
       addInstruction(new PushValueInstruction(DfTypes.typedObject(patternType, Nullability.NOT_NULL)));
       addInstruction(new InstanceofInstruction(instanceofAnchor, false));
     }
@@ -1315,9 +1309,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         builder //stack: checkValue
           .dup() //checkValue checkValue
           .dup() //checkValue checkValue checkValue
-          .compare(RelationType.EQ); //checkValue isNotNun
-        addInstruction(new NotInstruction(null)); //checkValue isNun
-        builder.swap(); //isNun checkValue
+          .compare(RelationType.EQ); //checkValue isNotNan
+        addInstruction(new NotInstruction(null)); //checkValue isNan
+        builder.swap(); //isNan checkValue
       }
       else {
         generateAnd = true;
