@@ -188,19 +188,13 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   @Override
   @RequiresEdt
   protected void installOperations() {
+    if (myViewer.isExternalOperationInProgress()) return;
+
     ContainerUtil.addIfNotNull(myOperations, createResolveOperation());
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.IGNORE));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.IGNORE));
-  }
-
-  /**
-   * Overrided to allow package-level access from {@link MergeThreesideViewer}
-   */
-  @Override
-  protected void destroyOperations() {
-    super.destroyOperations();
   }
 
   @Nullable

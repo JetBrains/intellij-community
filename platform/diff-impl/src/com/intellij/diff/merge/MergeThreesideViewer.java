@@ -1118,7 +1118,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     });
   }
 
-  private boolean isExternalOperationInProgress() {
+  protected boolean isExternalOperationInProgress() {
     return Boolean.TRUE.equals(myMergeContext.getUserData(EXTERNAL_OPERATION_IN_PROGRESS));
   }
 
@@ -1128,19 +1128,18 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     getEditor().setViewer(true);
 
     for (TextMergeChange change : getAllChanges()) {
-      change.destroyOperations();
+      change.reinstallHighlighters();
     }
   }
 
   @RequiresEdt
   private void runAfterExternalOperation() {
+    myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, null);
     getEditor().setViewer(false);
 
     for (TextMergeChange change : getAllChanges()) {
-      change.installOperations();
+      change.reinstallHighlighters();
     }
-
-    myMergeContext.putUserData(EXTERNAL_OPERATION_IN_PROGRESS, null);
   }
 
   private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
