@@ -525,7 +525,7 @@ internal object RwLockHolder: ThreadingSupport {
       // - but do not re-acquire any locks because it could be deadlock-level dangerous
       if (!l.isWriteAcquired) {
         val delay = ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting
-        val reportSlowWrite: Future<*>? = if (delay <= 0) null
+        val reportSlowWrite: Future<*>? = if (delay <= 0 || PerformanceWatcher.getInstanceIfCreated() == null) null
         else AppExecutorUtil.getAppScheduledExecutorService()
           .scheduleWithFixedDelay({ PerformanceWatcher.getInstance().dumpThreads("waiting", true, true) },
                                   delay.toLong(), delay.toLong(), TimeUnit.MILLISECONDS)
