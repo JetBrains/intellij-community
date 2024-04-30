@@ -20,7 +20,7 @@ class BuildDependenciesJpsTest {
       "debugger-agent",
       BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
       communityRoot,
-      null, null
+      null
     )
     assertTrue(root.pathString, root.pathString.endsWith("debugger-agent-1.9.jar"))
   }
@@ -40,7 +40,7 @@ class BuildDependenciesJpsTest {
         "debugger-agent",
         BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
         communityRoot,
-        null, null
+        null
       )
       assertEquals("must resolve to a local file from .m2/repository", localFile.pathString, resolved.pathString)
     }
@@ -58,7 +58,7 @@ class BuildDependenciesJpsTest {
         "debugger-agent",
         BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
         communityRoot,
-        null, null
+        null
       )
     }
     assertTrue(ex.cause!!.message,
@@ -76,7 +76,7 @@ class BuildDependenciesJpsTest {
         "debugger-agent",
         BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
         communityRoot,
-        null, null
+        null
       )
     }
     assertTrue(ex.cause!!.message, ex.cause!!.message!!.contains("SHA256 checksum is missing"))
@@ -96,7 +96,7 @@ class BuildDependenciesJpsTest {
         "debugger-agent",
         BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
         communityRoot,
-        null, null
+        null
       )
       assertEquals("must resolve to a local file from .m2/repository", localFile.pathString, resolved.pathString)
     }

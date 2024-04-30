@@ -7,6 +7,7 @@ import com.google.common.io.ByteStreams
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.asText
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getChildElements
@@ -46,8 +47,7 @@ object BuildDependenciesJps {
     libraryName: String,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
-    username: String?,
-    password: String?
+    credentialsProvider: (() -> Credentials)?
   ): List<Path> = try {
     val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
 
@@ -80,7 +80,7 @@ object BuildDependenciesJps {
 
         val file = when {
           Files.isRegularFile(localMavenFile) && Files.size(localMavenFile) > 0 -> localMavenFile
-          username != null && password != null -> BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(remoteUrl), username, password)
+          credentialsProvider != null -> BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(remoteUrl), credentialsProvider)
           else -> BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(remoteUrl))
         }
 
@@ -117,7 +117,7 @@ object BuildDependenciesJps {
     libraryName: String,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot
-  ) = getModuleLibrarySingleRoot(iml, libraryName, mavenRepositoryUrl, communityRoot, null, null)
+  ) = getModuleLibrarySingleRoot(iml, libraryName, mavenRepositoryUrl, communityRoot, null)
 
   @JvmStatic
   fun getModuleLibrarySingleRoot(
@@ -125,11 +125,10 @@ object BuildDependenciesJps {
     libraryName: String,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
-    username: String?,
-    password: String?
+    credentialsProvider: (() -> Credentials)?
   ): Path {
 
-    val roots = getModuleLibraryRoots(iml, libraryName, mavenRepositoryUrl, communityRoot, username, password)
+    val roots = getModuleLibraryRoots(iml, libraryName, mavenRepositoryUrl, communityRoot, credentialsProvider)
     if (roots.size != 1) {
       error("Expected one and only one library '$libraryName' root in '$iml', but got ${roots.size}: ${roots.joinToString()}")
     }
