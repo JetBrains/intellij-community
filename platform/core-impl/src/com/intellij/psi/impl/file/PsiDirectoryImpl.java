@@ -353,7 +353,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       if (UPDATE_ADDED_FILE_KEY.get(this, true)) {
         DumbService.getInstance(getProject()).completeJustSubmittedTasks();
         PsiFile copyPsi = findCopy(copyVFile, vFile);
-        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(copyPsi));
+        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(copyPsi), Collections.singletonList(originalFile));
         return copyPsi;
       }
       return findCopy(copyVFile, vFile);
@@ -432,7 +432,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
         PsiFile newFile = myManager.findFile(newVFile);
         if (newFile == null) throw new IncorrectOperationException("Could not find file " + newVFile);
-        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(newFile));
+        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(newFile), Collections.singletonList(originalFile));
         return newFile;
       }
       catch (IOException e) {
