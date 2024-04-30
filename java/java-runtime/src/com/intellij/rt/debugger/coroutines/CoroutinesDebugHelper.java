@@ -8,20 +8,14 @@ import java.util.List;
 
 public final class CoroutinesDebugHelper {
 
-  private static final String GET_CALLER_FRAME_METHOD = "getCallerFrame";
-  private static final String DUMP_COROUTINES_INFO_METHOD = "dumpCoroutinesInfo";
-  private static final String GET_LAST_OBSERVED_THREAD_METHOD = "getLastObservedThread";
-  private static final String GET_SEQUENCE_NUMBER_METHOD = "getSequenceNumber";
   private static final String COROUTINE_OWNER_CLASS = "CoroutineOwner";
-  private static final String DEBUG_COROUTINE_INFO_FIELD = "info";
-  private static final String SEQUENCE_NUMBER_FIELD = "sequenceNumber";
 
   public static long[] getCoroutinesRunningOnCurrentThread(Object debugProbes, Thread currentThread) throws ReflectiveOperationException {
     List<Long> coroutinesIds = new ArrayList<>();
-    List infos = (List)invoke(debugProbes, DUMP_COROUTINES_INFO_METHOD);
+    List infos = (List)invoke(debugProbes, "dumpCoroutinesInfo");
     for (Object info : infos) {
-      if (invoke(info, GET_LAST_OBSERVED_THREAD_METHOD) == currentThread) {
-        coroutinesIds.add((Long)invoke(info, GET_SEQUENCE_NUMBER_METHOD));
+      if (invoke(info, "getLastObservedThread") == currentThread) {
+        coroutinesIds.add((Long)invoke(info, "getSequenceNumber"));
       }
     }
     long[] res = new long[coroutinesIds.size()];
@@ -34,8 +28,8 @@ public final class CoroutinesDebugHelper {
   public static long tryGetContinuationId(Object continuation) throws ReflectiveOperationException {
     Object rootContinuation = getCoroutineOwner(continuation, true);
     if (rootContinuation.getClass().getSimpleName().contains(COROUTINE_OWNER_CLASS)) {
-      Object debugCoroutineInfo = getField(rootContinuation, DEBUG_COROUTINE_INFO_FIELD);
-      return (long) getField(debugCoroutineInfo, SEQUENCE_NUMBER_FIELD);
+      Object debugCoroutineInfo = getField(rootContinuation, "info");
+      return (long) getField(debugCoroutineInfo, "sequenceNumber");
     }
     return -1;
   }
@@ -44,7 +38,7 @@ public final class CoroutinesDebugHelper {
   // it is invoked when kotlinx-coroutines debug agent is enabled.
   private static Object getCoroutineOwner(Object continuation, boolean checkForCoroutineOwner) throws ReflectiveOperationException {
     Method getCallerFrame = Class.forName("kotlin.coroutines.jvm.internal.CoroutineStackFrame", false, continuation.getClass().getClassLoader())
-      .getDeclaredMethod(GET_CALLER_FRAME_METHOD);
+      .getDeclaredMethod("getCallerFrame");
     getCallerFrame.setAccessible(true);
     Object current = continuation;
     while (true) {
