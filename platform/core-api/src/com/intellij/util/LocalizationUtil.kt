@@ -15,6 +15,7 @@ import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 object LocalizationUtil {
+  var isL10nPluginInitialized: Boolean = false
   private const val LOCALIZATION_FOLDER_NAME = "localization"
     fun getPluginClassLoader(): ClassLoader? = DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader
     private fun Path.convertToLocalizationFolderUsage(locale: Locale, withRegion: Boolean): Path {

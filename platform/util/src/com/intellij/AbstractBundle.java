@@ -127,7 +127,7 @@ public class AbstractBundle {
   @ApiStatus.Internal
   public final @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader classLoader) {
     boolean isDefault = DefaultBundleService.isDefaultBundle();
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(isDefault ? myDefaultBundle : myBundle);
+    ResourceBundle bundle = getBundle(isDefault);
     if (bundle == null) {
       bundle = resolveResourceBundle(myPathToBundle, classLoader);
       SoftReference<ResourceBundle> ref = new SoftReference<>(bundle);
@@ -139,6 +139,10 @@ public class AbstractBundle {
       }
     }
     return bundle;
+  }
+
+  protected ResourceBundle getBundle(boolean isDefault) {
+    return com.intellij.reference.SoftReference.dereference(isDefault ? myDefaultBundle : myBundle);
   }
 
   private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {

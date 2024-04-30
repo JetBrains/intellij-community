@@ -7,6 +7,7 @@ c:com.intellij.DynamicBundle
 - s:findLanguageBundle():com.intellij.DynamicBundle$LanguageBundleEP
 - s:getBundle(java.lang.String):java.util.ResourceBundle
 - s:getBundle(java.lang.String,java.lang.Class):java.util.ResourceBundle
+- p:getBundle(Z):java.util.ResourceBundle
 - s:getLocale():java.util.Locale
 - s:getPluginBundle(com.intellij.openapi.extensions.PluginDescriptor):java.util.ResourceBundle
 - s:getResourceBundle(java.lang.ClassLoader,java.lang.String):java.util.ResourceBundle
