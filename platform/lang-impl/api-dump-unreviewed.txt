@@ -25917,6 +25917,7 @@ c:com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler
 - getActionName(com.intellij.psi.PsiElement[]):java.lang.String
 - s:resolveDirectory(com.intellij.psi.PsiDirectory):com.intellij.psi.PsiDirectory
 - s:updateAddedFiles(java.util.List):V
+- s:updateAddedFiles(java.util.List,java.util.List):V
 f:com.intellij.refactoring.copy.CopyHandler
 - s:canClone(com.intellij.psi.PsiElement[]):Z
 - s:canCopy(com.intellij.psi.PsiElement[]):Z

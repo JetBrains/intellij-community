@@ -3158,7 +3158,7 @@ a:com.intellij.psi.impl.file.UpdateAddedFileProcessor
 - a:canProcessElement(com.intellij.psi.PsiFile):Z
 - s:forElement(com.intellij.psi.PsiFile):com.intellij.psi.impl.file.UpdateAddedFileProcessor
 - a:update(com.intellij.psi.PsiFile,com.intellij.psi.PsiFile):V
-- s:updateAddedFiles(java.lang.Iterable):V
+- s:updateAddedFiles(java.lang.Iterable,java.lang.Iterable):V
 com.intellij.psi.impl.file.impl.FileManager
 - a:cleanupForNextTest():V
 - a:createFileViewProvider(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.psi.FileViewProvider

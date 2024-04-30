@@ -239,6 +239,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
     try {
       final int[] choice = files.length > 1 || files[0].isDirectory() ? new int[]{-1} : null;
       List<PsiFile> added = new ArrayList<>();
+      List<PsiFile> originals = new ArrayList<>();
       PsiManager manager = PsiManager.getInstance(project);
       List<PsiFileSystemItem> items = new ArrayList<>(files.length);
       for (VirtualFile file : files) {
@@ -249,12 +250,12 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
         }
         items.add(item);
       }
-      copyToDirectory(items, newName, targetDirectory, choice, title, added);
+      copyToDirectory(items, newName, targetDirectory, choice, title, added, originals);
 
 
       if (!added.isEmpty()) {
         DumbService.getInstance(project).completeJustSubmittedTasks();
-        updateAddedFiles(added);
+        updateAddedFiles(added, originals);
         if (openInEditor) {
           PsiFile firstFile = added.get(0);
           CopyHandler.updateSelectionInActiveProjectView(firstFile, project, doClone);
@@ -269,16 +270,24 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
     }
   }
 
+  /**
+   * @deprecated it's better to call {@link CopyFilesOrDirectoriesHandler#updateAddedFiles(List, List)} to provide original elements
+   */
+  @Deprecated
   public static void updateAddedFiles(List<? extends PsiFile> added) {
+    updateAddedFiles(added, null);
+  }
+
+  public static void updateAddedFiles(List<? extends PsiFile> added, @Nullable List<? extends PsiFile> originals) {
     if (added.isEmpty()) return;
     Project project = added.get(0).getProject();
     DumbService dumbService = DumbService.getInstance(project);
     if (Registry.is("run.refactorings.under.progress")) {
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
-        RefactoringBundle.message("progress.title.update.added.files"), project, null, pi -> dumbService.runWithAlternativeResolveEnabled(() -> UpdateAddedFileProcessor.updateAddedFiles(added)));
+        RefactoringBundle.message("progress.title.update.added.files"), project, null, pi -> dumbService.runWithAlternativeResolveEnabled(() -> UpdateAddedFileProcessor.updateAddedFiles(added, originals)));
     }
     else {
-      WriteAction.run(() -> dumbService.runWithAlternativeResolveEnabled(() -> UpdateAddedFileProcessor.updateAddedFiles(added)));
+      WriteAction.run(() -> dumbService.runWithAlternativeResolveEnabled(() -> UpdateAddedFileProcessor.updateAddedFiles(added, originals)));
     }
   }
 
@@ -307,12 +316,13 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
                                         int @Nullable [] choice,
                                         @Nullable @NlsContexts.Command String title) throws IncorrectOperationException, IOException {
     ArrayList<PsiFile> added = new ArrayList<>();
-    copyToDirectory(Collections.singletonList(elementToCopy), newName, targetDirectory, choice, title, added);
+    ArrayList<PsiFile> originals = new ArrayList<>();
+    copyToDirectory(Collections.singletonList(elementToCopy), newName, targetDirectory, choice, title, added, originals);
     if (added.isEmpty()) {
       return null;
     }
     DumbService.getInstance(elementToCopy.getProject()).completeJustSubmittedTasks();
-    updateAddedFiles(added);
+    updateAddedFiles(added, originals);
     return added.get(0);
   }
 
@@ -321,7 +331,8 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
                                       @NotNull PsiDirectory targetDirectory,
                                       int @Nullable [] choice,
                                       @Nullable @NlsContexts.Command String title,
-                                      @NotNull List<? super PsiFile> added) throws IncorrectOperationException, IOException {
+                                      @NotNull List<? super PsiFile> added,
+                                      @NotNull List<? super PsiFile> originals) throws IncorrectOperationException, IOException {
     MultiMap<PsiDirectory, PsiFile> existingFiles = new MultiMap<>();
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     if (Registry.is("run.refactorings.under.progress")) {
@@ -329,7 +340,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
       Consumer<ProgressIndicator> copyAction = pi -> {
         try {
           for (PsiFileSystemItem elementToCopy : elementsToCopy) {
-            copyToDirectoryUnderProgress(elementToCopy, newName, targetDirectory, added, existingFiles, pi);
+            copyToDirectoryUnderProgress(elementToCopy, newName, targetDirectory, added, originals, existingFiles, pi);
           }
         }
         catch (Throwable e) {
@@ -349,7 +360,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
         .withName(title)
         .run(() -> {
           for (PsiFileSystemItem elementToCopy : elementsToCopy) {
-            copyToDirectoryUnderProgress(elementToCopy, newName, targetDirectory, added, existingFiles, null);
+            copyToDirectoryUnderProgress(elementToCopy, newName, targetDirectory, added, originals, existingFiles, null);
           }
         });
     }
@@ -446,15 +457,17 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
 
   /**
    * @param elementToCopy PsiFile or PsiDirectory
-   * @param newName can be not null only if elements.length == 1
-   * @param added  a collection of files to be updated
+   * @param newName       can be not null only if elements.length == 1
+   * @param added         a collection of files to be updated
+   * @param originals     a collection of files which were updated
    * @param existingFiles a collection of files which already exist in the target
-   * @param pi progress indicator if any
+   * @param pi            progress indicator if any
    */
   private static void copyToDirectoryUnderProgress(PsiFileSystemItem elementToCopy,
                                                    @Nullable String newName,
                                                    @NotNull PsiDirectory targetDirectory,
                                                    @NotNull List<? super PsiFile> added,
+                                                   List<? super PsiFile> originals,
                                                    MultiMap<PsiDirectory, PsiFile> existingFiles,
                                                    @Nullable ProgressIndicator pi) throws IncorrectOperationException, IOException {
     if (pi != null) {
@@ -469,6 +482,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
         existingFiles.putValue(targetDirectory, file);
         return;
       }
+      originals.add(file);
       ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> ContainerUtil.addIfNotNull(added, targetDirectory.copyFileFrom(name, file)));
     }
     else if (elementToCopy instanceof PsiDirectory directory) {
@@ -496,7 +510,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase imple
           LOG.info("invalid file: " + file.getExtension());
           continue;
         }
-        copyToDirectoryUnderProgress(item, null, subdirectory, added, existingFiles, pi);
+        copyToDirectoryUnderProgress(item, null, subdirectory, added, originals, existingFiles, pi);
       }
     }
     else {
