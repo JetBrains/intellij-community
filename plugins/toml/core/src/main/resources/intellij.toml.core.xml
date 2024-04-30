@@ -5,7 +5,7 @@
                   implementationClass="org.toml.lang.psi.TomlFileType"
                   fieldName="INSTANCE"
                   extensions="toml"
-                  fileNames="Cargo.lock;Cargo.toml.orig;Gopkg.lock;Pipfile;poetry.lock;uv.lock"/>
+                  fileNames="Cargo.lock;Cargo.toml.orig;Gopkg.lock;Pipfile;pdm.lock;poetry.lock;uv.lock"/>
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
         <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
         <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
