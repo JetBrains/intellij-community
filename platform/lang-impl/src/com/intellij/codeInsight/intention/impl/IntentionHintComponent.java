@@ -107,14 +107,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull Editor editor,
-                                 @NotNull IntentionContainer cachedIntentions) {
-    this(project, file, editor, LightBulbUtil.getIcon(cachedIntentions), new IntentionPopup(project, file, editor, cachedIntentions));
-  }
-
-  @RequiresEdt
-  private IntentionHintComponent(@NotNull Project project,
-                                 @NotNull PsiFile file,
-                                 @NotNull Editor editor,
                                  @NotNull Icon icon,
                                  @NotNull AbstractIntentionPopup popup) {
     myEditor = editor;

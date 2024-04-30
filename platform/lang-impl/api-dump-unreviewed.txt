@@ -4323,6 +4323,7 @@ f:com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 - s:mayAutoImportNow(com.intellij.psi.PsiFile,Z,com.intellij.util.ThreeState):Z
 f:com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 - com.intellij.codeHighlighting.TextEditorHighlightingPass
+- com.intellij.openapi.project.DumbAware
 - doApplyInformationToEditor():V
 - doCollectInformation(com.intellij.openapi.progress.ProgressIndicator):V
 - s:fillIntentionsInfoForHighlightInfo(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.codeInsight.daemon.impl.ShowIntentionsPass$IntentionsInfo,java.util.List):V

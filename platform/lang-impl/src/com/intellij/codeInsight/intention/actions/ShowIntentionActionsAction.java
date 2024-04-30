@@ -8,16 +8,13 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -53,13 +50,6 @@ public final class ShowIntentionActionsAction extends BaseCodeInsightAction impl
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
-
-    if (!LightEdit.owns(project) && DumbService.isDumb(project)) {
-      DumbService.getInstance(project).showDumbModeNotificationForAction(
-        ApplicationBundle.message("intentions.are.not.available.message"),
-        ActionManager.getInstance().getId(this));
-      return;
-    }
 
     Editor editor = getEditor(e.getDataContext(), project, false);
     if (editor == null) return;
