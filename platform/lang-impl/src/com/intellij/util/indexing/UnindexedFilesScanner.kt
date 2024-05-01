@@ -124,7 +124,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
     return predefinedIndexableFilesIterators == null
   }
 
-  // TODO: Must not change state. We want to allow this method in CAS re-computations
   fun tryMergeWith(oldTask: FilesScanningTask): UnindexedFilesScanner {
     oldTask as UnindexedFilesScanner
 
