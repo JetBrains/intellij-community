@@ -759,6 +759,7 @@ public class InstanceofFromPrimitiveToPrimitive {
 
     private static void testShort() {
         System.out.println(0);
+
         short o = 0;
         if (<warning descr="Condition 'o instanceof int t' is always 'true'">o instanceof int t</warning>) { //true
             System.out.println("int" + t);
