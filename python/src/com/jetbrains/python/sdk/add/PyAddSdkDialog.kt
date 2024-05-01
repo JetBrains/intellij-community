@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -24,18 +23,18 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.icons.PythonIcons
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
+import java.io.IOException
 import java.util.function.Consumer
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.math.log
 
 /**
  * The dialog may look like the normal dialog with OK, Cancel and Help buttons
@@ -67,7 +66,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val panels = createPanels(sdks).toMutableList()
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
       .mapNotNull {
-        it.safeCreateView(project = project, module = module, existingSdks = existingSdks, context=context)
+        it.safeCreateView(project = project, module = module, existingSdks = existingSdks, context = context)
           .registerIfDisposable()
       }
     panels.addAll(extendedPanels)
@@ -287,8 +286,19 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       selectedPanel?.complete()
     }
     catch (e: CreateSdkInterrupted) {
-      thisLogger().info(e)
       return
+    }
+    catch (e: IOException) {
+      Messages.showErrorDialog(e.localizedMessage, CommonBundle.message("title.error"))
+      return
+    }
+    catch (e: Exception) {
+      val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
+      if (cause != null) {
+        showProcessExecutionErrorDialog(project, cause)
+        return
+      }
+      throw e
     }
     close(OK_EXIT_CODE)
   }
