@@ -119,16 +119,8 @@ public final class SearchUtil {
 
   private static void processComponent(SearchableConfigurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component, boolean i18n) {
     if (component != null) {
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-        extension.beforeComponent(configurable, component, configurableOptions);
-      }
-
       processUILabel(configurable.getDisplayName(), configurableOptions, null, i18n);
       processComponent(component, configurableOptions, null, i18n);
-
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-        extension.afterComponent(configurable, component, configurableOptions);
-      }
     }
   }
 

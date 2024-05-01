@@ -18,7 +18,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
@@ -29,7 +31,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
-import com.intellij.util.ui.EdtInvocationManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jdom.IllegalDataException
 import org.jetbrains.annotations.NonNls
@@ -58,23 +61,14 @@ private const val ROOT_ACTION_MODULE = "intellij.platform.ide"
  *
  * Pass `true` as the second parameter to have searchable options split by modules.
  */
-class TraverseUIStarter : ApplicationStarter {
-  private var OUTPUT_PATH: String? = null
-  private var SPLIT_BY_RESOURCE_PATH = false
-  private var I18N_OPTION = false
-
-  override val requiredModality: Int
-    get() = ApplicationStarter.NOT_IN_EDT
-
-  override fun premain(args: List<String>) {
-    OUTPUT_PATH = args[1]
-    SPLIT_BY_RESOURCE_PATH = args.size > 2 && args[2].toBoolean()
-    I18N_OPTION = java.lang.Boolean.getBoolean("intellij.searchableOptions.i18n.enabled")
-  }
-
-  override fun main(args: List<String>) {
+private class TraverseUIStarter : ModernApplicationStarter() {
+  override suspend fun start(args: List<String>) {
     try {
-      buildSearchableOptions(outputPath = Path.of(OUTPUT_PATH!!), splitByResourcePath = SPLIT_BY_RESOURCE_PATH, i18n = I18N_OPTION)
+      buildSearchableOptions(
+        outputPath = Path.of(args[1]),
+        splitByResourcePath = args.size > 2 && args[2].toBoolean(),
+        i18n = java.lang.Boolean.getBoolean("intellij.searchableOptions.i18n.enabled"),
+      )
       println("Searchable options index builder completed")
       exitProcess(0)
     }
@@ -88,7 +82,6 @@ class TraverseUIStarter : ApplicationStarter {
     }
   }
 }
-
 
 private fun addOptions(configurable: SearchableConfigurable,
                        options: Map<SearchableConfigurable, Set<OptionDescription>>,
@@ -306,39 +299,36 @@ private fun createOptionElement(path: String?, hit: String?, word: String): Elem
   return optionElement
 }
 
-@JvmOverloads
-fun buildSearchableOptions(outputPath: Path, splitByResourcePath: Boolean, i18n: Boolean = false) {
+suspend fun buildSearchableOptions(outputPath: Path, splitByResourcePath: Boolean, i18n: Boolean = false) {
   val options = LinkedHashMap<SearchableConfigurable, Set<OptionDescription>>()
   val roots = HashMap<String, Element>()
   try {
-    EdtInvocationManager.invokeAndWaitIfNeeded {
+    withContext(Dispatchers.EDT) {
       for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
         extension.beforeStart()
       }
-      SearchUtil.processConfigurables(getConfigurables(ProjectManager.getInstance().defaultProject, true, false), options, i18n)
-      for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
-        extension.afterTraversal(options)
-      }
+      SearchUtil.processConfigurables(
+        getConfigurables(project = serviceAsync<ProjectManager>().defaultProject, withIdeSettings = true, checkNonDefaultProject = false),
+        options,
+        i18n,
+      )
     }
 
     println("Found ${options.size} configurables")
 
     for (configurable in options.keys) {
       try {
-        addOptions(configurable, options, roots, splitByResourcePath)
+        addOptions(configurable = configurable, options = options, roots = roots, splitByResourcePath = splitByResourcePath)
       }
-      catch (jdomValidationException: IllegalDataException) {
-        val exception = IllegalStateException(
-          "Unable to process configurable '" + configurable.id +
-          "', please check strings used in class: " + configurable.originalClass.canonicalName
+      catch (e: IllegalDataException) {
+        throw IllegalStateException(
+          "Unable to process configurable '${configurable.id}', please check strings used in class: ${configurable.originalClass.name}", e
         )
-        exception.addSuppressed(jdomValidationException)
-        throw exception
       }
     }
   }
   finally {
-    EdtInvocationManager.invokeAndWaitIfNeeded {
+    withContext(Dispatchers.EDT) {
       for (configurable in options.keys) {
         configurable.disposeUIResources()
       }
