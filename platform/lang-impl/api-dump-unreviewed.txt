@@ -29258,23 +29258,19 @@ com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator
 - getIndexingProgressText():java.lang.String
 - a:getOrigin():com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOrigin
 - getRootsScanningProgressText():java.lang.String
-f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
+*f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 - com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
+- *sf:Companion:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
 - <init>():V
 - <init>(java.nio.file.Path):V
 - dispose():V
 - f:getCurrent():com.intellij.util.indexing.dependencies.AppIndexingDependenciesToken
 - f:getCurrentTokenInTest():com.intellij.util.indexing.dependencies.AppIndexingDependenciesToken
 - f:invalidateAllStamps(java.lang.String):V
-f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
+*f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
 com.intellij.util.indexing.dependencies.FileIndexingStamp
 - a:isSame(I):Z
 - a:store(java.util.function.IntConsumer):V
-f:com.intellij.util.indexing.dependencies.FutureScanningRequestToken
-- <init>():V
-- f:isSuccessful():Z
-- f:markSuccessful():V
 com.intellij.util.indexing.dependencies.IndexingRequestToken
 - a:getFileIndexingStamp(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.dependencies.FileIndexingStamp
 f:com.intellij.util.indexing.dependencies.IndexingRequestTokenImpl
@@ -29289,25 +29285,6 @@ f:com.intellij.util.indexing.dependencies.IndexingRequestTokenImpl
 - getFileIndexingStamp(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.dependencies.FileIndexingStamp
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
-- com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService$Companion
-- <init>(com.intellij.openapi.project.Project):V
-- <init>(java.nio.file.Path,com.intellij.util.indexing.dependencies.AppIndexingDependenciesService):V
-- f:completeToken(com.intellij.util.indexing.dependencies.FutureScanningRequestToken):V
-- f:completeToken(com.intellij.util.indexing.dependencies.ScanningRequestToken,Z):V
-- dispose():V
-- f:getAppIndexingRequestIdOfLastScanning():I
-- f:getLatestIndexingRequestToken():com.intellij.util.indexing.dependencies.IndexingRequestToken
-- sf:getNULL_STAMP():com.intellij.util.indexing.dependencies.FileIndexingStamp
-- f:getReadOnlyTokenForTest():com.intellij.util.indexing.dependencies.ScanningRequestToken
-- f:isScanningCompleted():Z
-- f:newFutureScanningToken():com.intellij.util.indexing.dependencies.FutureScanningRequestToken
-- f:newScanningToken():com.intellij.util.indexing.dependencies.ScanningRequestToken
-- f:newScanningTokenOnProjectOpen():com.intellij.util.indexing.dependencies.ScanningRequestToken
-- f:requestHeavyScanningOnProjectOpen(java.lang.String):V
-f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService$Companion
-- f:getNULL_STAMP():com.intellij.util.indexing.dependencies.FileIndexingStamp
 f:com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
 - com.intellij.util.indexing.dependencies.FileIndexingStamp
 - <init>(I):V

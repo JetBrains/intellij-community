@@ -26,7 +26,6 @@ import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler
 import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilterScanningHandler
 import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator
-import com.intellij.util.indexing.dependencies.FutureScanningRequestToken
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.ScanningRequestToken
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
@@ -77,7 +76,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private val myIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   private val myFilterHandler: FilesFilterScanningHandler
   private val myProvidedStatusMark: StatusMark?
-  private val myFutureScanningRequestToken: FutureScanningRequestToken
+  private val taskToken = myProject.getService(ProjectIndexingDependenciesService::class.java).newIncompleteTaskToken()
   private var flushQueueAfterScanning = true
   private val scanningHistory = ProjectScanningHistoryImpl(myProject, indexingReason, scanningType)
 
@@ -130,7 +129,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       !myOnProjectOpen ||
       isIndexingFilesFilterUpToDate || this.predefinedIndexableFilesIterators == null,
       "Should request full scanning on project open")
-    myFutureScanningRequestToken = myProject.getService(ProjectIndexingDependenciesService::class.java).newFutureScanningToken()
   }
 
   private fun defaultHideProgressInSmartModeStrategy(): Boolean {
@@ -163,8 +161,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
     LOG.debug("Merged $this task")
 
-    oldTask.myFutureScanningRequestToken.markSuccessful() // fixme: non-idempotent
-    myFutureScanningRequestToken.markSuccessful()         // fixme: non-idempotent
     LOG.assertTrue(!(startCondition != null && oldTask.startCondition != null), "Merge of two start conditions is not implemented")
     val mergedHideProgress: Boolean?
     if (shouldHideProgressInSmartMode == null) {
@@ -210,8 +206,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
       val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
       val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen() else projectIndexingDependenciesService.newScanningToken()
-      myFutureScanningRequestToken.markSuccessful()
-      projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken)
 
       try {
         ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, progressReporter, scanningRequest)
@@ -610,8 +604,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   override fun close() {
     if (!myProject.isDisposed) {
-      myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
-        ?.completeToken(myFutureScanningRequestToken)
+      myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)?.completeToken(taskToken)
     }
   }
 

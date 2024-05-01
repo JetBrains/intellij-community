@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
@@ -87,11 +88,12 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
             LOG.info("Task finished: $task")
           }
           catch (t: Throwable) {
-            LOG.info("Task canceled $task")
+            LOG.info("Task interrupted: $task. ${t.message}")
+            project.service<ProjectIndexingDependenciesService>().requestHeavyScanningOnProjectOpen("Task interrupted: $task")
             checkCanceled() // this will re-throw cancellation
 
             // other exceptions: log and forget
-            LOG.error("Failed to execute task $task. ${t.message}", t)
+            LOG.error("Failed to execute task $task", t)
           }
           finally {
             task.close()
