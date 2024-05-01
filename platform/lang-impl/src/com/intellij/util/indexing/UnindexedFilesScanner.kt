@@ -511,7 +511,19 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
         prepareScanningHistoryAndRun {
           waitForPreconditions()
-          performScanningAndIndexing(indicator, progressReporter)
+          val markRef = Ref<StatusMark>()
+          var successfullyFinished = false
+          try {
+            (GistManager.getInstance() as GistManagerImpl).runWithMergingDependentCacheInvalidations {
+              scanAndUpdateUnindexedFiles(indicator, progressReporter, markRef)
+            }
+            successfullyFinished = true
+          }
+          finally {
+            if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
+              DependenciesIndexedStatusService.getInstance(myProject).indexingFinished(successfullyFinished, markRef.get())
+            }
+          }
           futureScanningHistory.set(scanningHistory)
         }
       }
@@ -544,23 +556,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
     finally {
       diagnosticDumper.onScanningFinished(scanningHistory) //todo[lene] 1
-    }
-  }
-
-  private fun performScanningAndIndexing(indicator: CheckPauseOnlyProgressIndicator,
-                                         progressReporter: IndexingProgressReporter) {
-    val markRef = Ref<StatusMark>()
-    var successfullyFinished = false
-    try {
-      (GistManager.getInstance() as GistManagerImpl).runWithMergingDependentCacheInvalidations {
-        scanAndUpdateUnindexedFiles(indicator, progressReporter, markRef)
-      }
-      successfullyFinished = true
-    }
-    finally {
-      if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
-        DependenciesIndexedStatusService.getInstance(myProject).indexingFinished(successfullyFinished, markRef.get())
-      }
     }
   }
 
