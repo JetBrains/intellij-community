@@ -38,6 +38,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * Holder for [ScriptClassRootsCache].
@@ -63,6 +65,7 @@ abstract class ScriptClassRootsUpdater(
     private var syncUpdateRequired: Boolean = false
     private val concurrentUpdates = AtomicInteger()
     private val lock = CheckCanceledLock()
+    private val invalidationLock = ReentrantLock()
 
     abstract fun gatherRoots(builder: ScriptClassRootsBuilder)
 
@@ -102,7 +105,7 @@ abstract class ScriptClassRootsUpdater(
      */
     @Suppress("UNUSED_PARAMETER")
     fun invalidate(file: VirtualFile, synchronous: Boolean = false) {
-        lock.withLock {
+        invalidationLock.withLock {
             // todo: record invalided files for some optimisations in update
             invalidate(synchronous)
         }
@@ -112,7 +115,7 @@ abstract class ScriptClassRootsUpdater(
      * @param synchronous Used from legacy FS cache only, don't use
      */
     fun invalidate(synchronous: Boolean = false) {
-        lock.withLock {
+        invalidationLock.withLock {
             checkHasTransactionToHappen()
             invalidated = true
             if (synchronous) {
@@ -173,15 +176,15 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun scheduleUpdateIfInvalid() {
-        lock.withLock {
+        val isSync = invalidationLock.withLock {
             invalidated.ifFalse { return }
             invalidated = false
 
-            val isSync = (syncUpdateRequired || isUnitTestMode()).also {
+            return@withLock (syncUpdateRequired || isUnitTestMode()).also {
                 it.ifTrue { syncUpdateRequired = false }
             }
-            performUpdate(synchronous = isSync)
         }
+        performUpdate(synchronous = isSync)
     }
 
     private var scheduledUpdate: BackgroundTaskUtil.BackgroundTask<*>? = null
@@ -202,7 +205,6 @@ abstract class ScriptClassRootsUpdater(
     private fun ensureUpdateScheduled(parentDisposable: Disposable) {
         lock.withLock {
             scheduledUpdate?.cancel()
-
             scheduledUpdate = BackgroundTaskUtil.submitTask(parentDisposable) {
                 doUpdate()
             }
