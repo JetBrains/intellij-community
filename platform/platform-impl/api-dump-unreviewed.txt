@@ -10403,11 +10403,8 @@ f:com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 - replaceSynonyms(java.util.Set,com.intellij.openapi.options.SearchableConfigurable):java.util.Set
 com.intellij.ide.ui.search.TraverseUIHelper
 - sf:helperExtensionPoint:com.intellij.openapi.extensions.ExtensionPointName
-- afterComponent(com.intellij.openapi.options.SearchableConfigurable,javax.swing.JComponent,java.util.Set):V
 - afterConfigurable(com.intellij.openapi.options.SearchableConfigurable,java.util.Set):V
 - afterResultsAreSaved():V
-- afterTraversal(java.util.Map):V
-- beforeComponent(com.intellij.openapi.options.SearchableConfigurable,javax.swing.JComponent,java.util.Set):V
 - beforeConfigurable(com.intellij.openapi.options.SearchableConfigurable,java.util.Set):V
 - beforeStart():V
 f:com.intellij.ide.ui.text.DateTimeFormatConfigurable
