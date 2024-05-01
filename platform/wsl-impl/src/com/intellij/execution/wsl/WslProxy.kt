@@ -156,9 +156,10 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
   }
 
   private suspend fun clientConnected(linuxEgressPort: Int) {
+    val selector = ActorSelectorManager(scope.coroutineContext)
     val winToLin = scope.async {
       thisLogger().info("Connecting to WSL: $wslLinuxIp:$linuxEgressPort")
-      val socket = aSocket(ActorSelectorManager(scope.coroutineContext)).tcp().tryConnect(wslLinuxIp, linuxEgressPort)
+      val socket = aSocket(selector).tcp().tryConnect(wslLinuxIp, linuxEgressPort)
       thisLogger().info("Connected to WSL")
       socket
     }
