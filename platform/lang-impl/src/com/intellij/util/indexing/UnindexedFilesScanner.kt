@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -531,15 +530,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
   }
 
-  protected fun performScanningAndIndexing(indicator: CheckPauseOnlyProgressIndicator,
-                                           progressReporter: IndexingProgressReporter): ProjectScanningHistory {
-    if (ApplicationManager.getApplication().isUnitTestMode && DELAY_IN_TESTS_MS > 0) {
-      // This is to ease discovering races, when a test needs indexes, but forgot to wait for smart mode (see IndexingTestUtil).
-      // It's better to install assert into FileBasedIndexImpl about access without explicit "wait" or "nowait" action, but this is
-      // not feasible at the moment. At the moment, just keep things easy. Most tests cannot tolerate DELAY_IN_TESTS_MS delay.
-      // Test will run a bit slower, but behavior will be more stable
-      LockSupport.parkNanos(DELAY_IN_TESTS_MS * 1000000L)
-    }
+  private fun performScanningAndIndexing(indicator: CheckPauseOnlyProgressIndicator,
+                                         progressReporter: IndexingProgressReporter): ProjectScanningHistory {
     myIndex.loadIndexes()
     myIndex.registeredIndexes.waitUntilAllIndicesAreInitialized() // wait until stale ids are deleted
     if (startCondition != null) { // wait until indexes for dirty files are cleared
@@ -633,8 +625,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   }
 
   companion object {
-    private val DELAY_IN_TESTS_MS = SystemProperties.getIntProperty("scanning.delay.before.start.in.tests.ms", 0)
-
     private val SCANNING_PARALLELISM = UnindexedFilesUpdater.getNumberOfScanningThreads()
     private val BLOCKING_PROVIDERS_ITERATOR_PARALLELISM = SCANNING_PARALLELISM
 
