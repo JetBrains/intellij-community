@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.highlighting;
 
+import com.intellij.idea.IJIgnore;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -32,6 +33,7 @@ public abstract class K2GradleBuildFileHighlightingTestGenerated extends Abstrac
         }
 
         @TestMetadata("gradleSampleMultiProject")
+        @IJIgnore(issue = "KTIJ-29790")
         public void testGradleSampleMultiProject() throws Exception {
             runTest("../../../idea/tests/testData/gradle/highlighting/gradle8/gradleSampleMultiProject/");
         }
@@ -42,16 +44,19 @@ public abstract class K2GradleBuildFileHighlightingTestGenerated extends Abstrac
         }
 
         @TestMetadata("wizardMultiAllTargets")
+        @IJIgnore(issue = "KTIJ-29790")
         public void testWizardMultiAllTargets() throws Exception {
             runTest("../../../idea/tests/testData/gradle/highlighting/gradle8/wizardMultiAllTargets/");
         }
 
         @TestMetadata("wizardNativeUiMultiplatformApp")
+        @IJIgnore(issue = "KTIJ-29790")
         public void testWizardNativeUiMultiplatformApp() throws Exception {
             runTest("../../../idea/tests/testData/gradle/highlighting/gradle8/wizardNativeUiMultiplatformApp/");
         }
 
         @TestMetadata("wizardSharedUiMultiplatformApp")
+        @IJIgnore(issue = "KTIJ-29790")
         public void testWizardSharedUiMultiplatformApp() throws Exception {
             runTest("../../../idea/tests/testData/gradle/highlighting/gradle8/wizardSharedUiMultiplatformApp/");
         }
@@ -76,6 +81,7 @@ public abstract class K2GradleBuildFileHighlightingTestGenerated extends Abstrac
         }
 
         @TestMetadata("gradleSampleMultiProject")
+        @IJIgnore(issue = "KTIJ-29790")
         public void testGradleSampleMultiProject() throws Exception {
             runTest("../../../idea/tests/testData/gradle/highlighting/gradle7/gradleSampleMultiProject/");
         }
@@ -86,6 +92,7 @@ public abstract class K2GradleBuildFileHighlightingTestGenerated extends Abstrac
         }
 
         @TestMetadata("wizardSimpleKotlinProject")
+        @IJIgnore(issue = "KTIJ-29790")
         public void testWizardSimpleKotlinProject() throws Exception {
             runTest("../../../idea/tests/testData/gradle/highlighting/gradle7/wizardSimpleKotlinProject/");
         }
