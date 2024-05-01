@@ -72,8 +72,15 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     UnindexedFilesScanner t1 = createScanningTask(iter1, "reason 1", ScanningType.PARTIAL);
     UnindexedFilesScanner full = createScanningTask(null, "full", ScanningType.FULL);
 
-    assertNull(t1.tryMergeWith(full).getPredefinedIndexableFilesIterators());
-    assertNull(full.tryMergeWith(t1).getPredefinedIndexableFilesIterators());
+    List<UnindexedFilesScanner> mergedVariants = Arrays.asList(
+      t1.tryMergeWith(full),
+      full.tryMergeWith(t1)
+    );
+
+    for (UnindexedFilesScanner merged : mergedVariants) {
+      assertNull(merged.getPredefinedIndexableFilesIterators());
+      assertEquals(ScanningType.FULL, merged.getScanningType());
+    }
   }
 
   public void testTryMergeDumbScanningTasks() {
