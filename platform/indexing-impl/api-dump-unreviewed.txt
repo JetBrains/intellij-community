@@ -520,7 +520,7 @@ f:com.intellij.util.indexing.hints.RejectAllIndexingHint
 - acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
 c:com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor
 - com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor
-- <init>(com.intellij.util.indexing.IndexExtension):V
+- <init>(com.intellij.util.indexing.SingleEntryFileBasedIndexExtension):V
 - convertToDataType(com.intellij.util.indexing.impl.InputData):java.lang.Void
 - p:convertToMap(I,java.lang.Void):java.util.Map
 - createDiffBuilderByMap(I,java.util.Map):com.intellij.util.indexing.impl.InputDataDiffBuilder
