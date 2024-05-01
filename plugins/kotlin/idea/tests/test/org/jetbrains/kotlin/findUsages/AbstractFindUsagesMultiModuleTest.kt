@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -44,6 +45,11 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
         UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
         val options = parser?.parse(mainFileText, project)
+        val testType = when (pluginMode) {
+            KotlinPluginMode.K1 -> FindUsageTestType.DEFAULT
+            KotlinPluginMode.K2 -> FindUsageTestType.FIR
+        }
+
         findUsagesAndCheckResults(
             mainFileText,
             prefix,
@@ -52,7 +58,7 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
             options,
             project,
             alwaysAppendFileName = true,
-            testType = if (isFirPlugin()) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
+            testType = testType,
         )
     }
 }

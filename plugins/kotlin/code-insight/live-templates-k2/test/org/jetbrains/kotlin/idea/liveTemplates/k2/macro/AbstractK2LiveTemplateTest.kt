@@ -13,7 +13,8 @@ import java.nio.file.Paths
 import kotlin.io.path.name
 
 abstract class AbstractK2LiveTemplateTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginMode
+
+    override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
     override fun setUp() {
@@ -26,7 +27,7 @@ abstract class AbstractK2LiveTemplateTest : NewLightKotlinCodeInsightFixtureTest
     }
 
     protected fun performTest() {
-        val disableDirective = when (pluginKind) {
+        val disableDirective = when (pluginMode) {
             KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
             KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
         }

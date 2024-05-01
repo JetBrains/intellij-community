@@ -2,8 +2,11 @@
 
 package org.jetbrains.kotlin.idea.fir.completion
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.completion.test.AbstractMultiPlatformCompletionTest
 
 abstract class AbstractK2MultiPlatformCompletionTest : AbstractMultiPlatformCompletionTest() {
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 }

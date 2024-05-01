@@ -5,15 +5,20 @@ package org.jetbrains.kotlin.idea.k2.highlighting
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleBuildFileHighlightingTest
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.assertKotlinPluginMode
 
 
 private const val SCRIPTING_ENABLED_FLAG = "kotlin.k2.scripting.enabled"
 
-abstract class AbstractK2GradleBuildFileHighlightingTest : AbstractGradleBuildFileHighlightingTest() {
+abstract class AbstractK2GradleBuildFileHighlightingTest : AbstractGradleBuildFileHighlightingTest(),
+                                                           ExpectedPluginModeProvider {
 
     private var originalRegistryFlag: String? = null
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun setUp() {
         originalRegistryFlag = Registry.getInstance().getBundleValueOrNull(SCRIPTING_ENABLED_FLAG)
@@ -21,7 +26,7 @@ abstract class AbstractK2GradleBuildFileHighlightingTest : AbstractGradleBuildFi
         Registry.get(SCRIPTING_ENABLED_FLAG).setValue(true)
 
         super.setUp()
-        checkKotlinPluginMode(KotlinPluginMode.K2)
+        assertKotlinPluginMode()
     }
 
     override fun tearDown() {

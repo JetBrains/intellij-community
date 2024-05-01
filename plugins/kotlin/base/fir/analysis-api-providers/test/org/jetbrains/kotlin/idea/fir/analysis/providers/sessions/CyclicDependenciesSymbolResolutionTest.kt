@@ -2,10 +2,11 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -24,9 +25,11 @@ import java.io.File
  * support cyclic module dependencies, which makes this strictly an issue of JPS project structures.
  */
 class CyclicDependenciesSymbolResolutionTest : AbstractMultiModuleTest() {
+
     override fun getTestDataDirectory(): File = error("Should not be called")
 
-    override fun isFirPlugin(): Boolean = true
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     fun `test that function symbols from cyclic dependencies can be resolved`() {
         val moduleA = createModuleInTmpDir("a") {

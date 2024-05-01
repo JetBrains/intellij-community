@@ -9,30 +9,19 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
+import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.assertInstanceOf
-import com.intellij.testFramework.requireIs
+import com.intellij.testFramework.*
 import com.intellij.util.CommonProcessors.FindProcessor
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModuleOfType
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -46,9 +35,11 @@ import org.junit.Assert.assertNotEquals
 import java.io.File
 
 class KotlinProjectStructureTest : AbstractMultiModuleTest() {
+
     override fun getTestProjectJdk(): Sdk = IdeaTestUtil.getMockJdk11()
 
-    override fun isFirPlugin(): Boolean = true
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getTestDataDirectory(): File = throw UnsupportedOperationException()
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.psi.KtFile
@@ -14,9 +15,11 @@ import org.junit.Assert
 import java.io.File
 
 abstract class AbstractKotlinModificationEventTest<TRACKER : ModificationEventTracker> : AbstractMultiModuleTest() {
+
     override fun getTestDataDirectory(): File = error("Should not be called")
 
-    override fun isFirPlugin(): Boolean = true
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     protected fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(myProject, name)
 

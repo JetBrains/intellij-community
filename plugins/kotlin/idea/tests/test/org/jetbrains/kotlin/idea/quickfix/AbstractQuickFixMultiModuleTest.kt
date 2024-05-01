@@ -14,15 +14,16 @@ import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
+import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K1_TOOL_DIRECTIVE
+import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K2_TOOL_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K1_TOOL_DIRECTIVE
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K2_TOOL_DIRECTIVE
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
@@ -39,18 +40,24 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
     }
 
     override val additionalToolDirectives: Array<String>
-        get() = arrayOf(if (isFirPlugin()) K2_TOOL_DIRECTIVE else K1_TOOL_DIRECTIVE)
+        get() {
+            val directive = when (pluginMode) {
+                KotlinPluginMode.K1 -> K1_TOOL_DIRECTIVE
+                KotlinPluginMode.K2 -> K2_TOOL_DIRECTIVE
+            }
+            return arrayOf(directive)
+        }
 
     fun doTest(unused: String) {
         setupMppProjectFromDirStructure(dataFile())
         val actionFile = project.findFileWithCaret()
         val virtualFilePath = actionFile.virtualFile!!.toNioPath()
 
-        val ignoreDirective = if (isFirPlugin()) {
-            IgnoreTests.DIRECTIVES.IGNORE_K2
-        } else {
-            IgnoreTests.DIRECTIVES.IGNORE_K1
+        val ignoreDirective = when (pluginMode) {
+            KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
+            KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
         }
+
         IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, ignoreDirective) {
             val directiveFileText = actionFile.text
             withCustomCompilerOptions(directiveFileText, project, module) {
@@ -126,8 +133,10 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                 }
 
                 if (actionFile is KtFile) {
-                    // TODO check diagnostics for K2
-                    if (!isFirPlugin()) DirectiveBasedActionUtils.checkForUnexpectedErrors(actionFile)
+                    when (pluginMode) {
+                        KotlinPluginMode.K1 -> DirectiveBasedActionUtils.checkForUnexpectedErrors(actionFile)
+                        KotlinPluginMode.K2 -> {} // TODO check diagnostics for K2
+                    }
                 }
 
                 if (actionShouldBeAvailable) {

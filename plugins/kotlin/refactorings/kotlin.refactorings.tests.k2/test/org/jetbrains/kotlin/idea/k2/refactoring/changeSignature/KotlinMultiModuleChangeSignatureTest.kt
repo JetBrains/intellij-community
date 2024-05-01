@@ -5,13 +5,11 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
-import org.jetbrains.kotlin.idea.test.extractMarkerOffset
-import org.jetbrains.kotlin.idea.test.util.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -19,16 +17,18 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
+class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase(),
+                                             ExpectedPluginModeProvider {
 
     init {
         isMultiModule = true
     }
 
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     override fun setUp() {
-        setUpWithKotlinPlugin(true) {
-            super.setUp()
-        }
+        setUpWithKotlinPlugin { super.setUp() }
     }
 
     override fun getTestRoot(): String = "/refactoring/changeSignatureMultiModule/"
