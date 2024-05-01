@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -25,7 +26,6 @@ import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -41,6 +41,8 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
+val LOG = logger<ScriptClassRootsUpdater>()
+
 /**
  * Holder for [ScriptClassRootsCache].
  *
@@ -54,7 +56,6 @@ import kotlin.concurrent.withLock
  * This will start indexing.
  * Also analysis cache will be cleared and changed opened script files will be reanalyzed.
  */
-
 abstract class ScriptClassRootsUpdater(
     val project: Project,
     val manager: CompositeScriptConfigurationManager,
@@ -64,8 +65,19 @@ abstract class ScriptClassRootsUpdater(
     private var invalidated: Boolean = false
     private var syncUpdateRequired: Boolean = false
     private val concurrentUpdates = AtomicInteger()
-    private val lock = CheckCanceledLock()
     private val invalidationLock = ReentrantLock()
+    private val updateState = AtomicReference(UpdateState.NONE)
+
+    /**
+     * Represents the state of the [cache] update process.
+     */
+    private enum class UpdateState {
+        // nothing runs or is scheduled
+        NONE,
+        // update process is scheduled for the future
+        SCHEDULED,
+        // update process runs right now
+        RUNNING }
 
     abstract fun gatherRoots(builder: ScriptClassRootsBuilder)
 
@@ -203,19 +215,21 @@ abstract class ScriptClassRootsUpdater(
 
 
     private fun ensureUpdateScheduled(parentDisposable: Disposable) {
-        lock.withLock {
-            scheduledUpdate?.cancel()
+        if (updateState.compareAndSet(UpdateState.NONE, UpdateState.SCHEDULED)) {
             scheduledUpdate = BackgroundTaskUtil.submitTask(parentDisposable) {
-                doUpdate()
+                if (updateState.compareAndSet(UpdateState.SCHEDULED, UpdateState.RUNNING)) {
+                    doUpdate()
+                }
             }
         }
     }
 
     private fun updateSynchronously() {
-        lock.withLock {
+        val previousState = updateState.getAndSet(UpdateState.RUNNING)
+        if (previousState == UpdateState.SCHEDULED) {
             scheduledUpdate?.cancel()
-            doUpdate(false)
         }
+        doUpdate()
     }
 
     private fun doUpdate(underProgressManager: Boolean = true) {
@@ -278,6 +292,7 @@ abstract class ScriptClassRootsUpdater(
             }
         } finally {
             scheduledUpdate = null
+            updateState.set(UpdateState.NONE)
             concurrentUpdates.decrementAndGet()
         }
     }
