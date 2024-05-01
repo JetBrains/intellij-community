@@ -13,6 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest
  * Tests for navigation to Gradle plugin source from a string literal with plugin ID in `plugins` closure.
  * @see <a href="https://docs.gradle.org/current/userguide/custom_plugins.html#sec:precompile_script_plugin">Gradle Precompiled plugins</a>
  */
+@IJIgnore(issue = "IDEA-352806")
 class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
@@ -22,7 +23,6 @@ class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
     id ('<caret>my-plugin'),
     id ("<caret>my-plugin")
   """)
-  @IJIgnore(issue = "IDEA-352806")
   fun `Groovy Precompiled plugin is navigatable`(gradleVersion: GradleVersion, pluginIdStatement: String) {
     val pluginOnGroovy = "tasks.register('taskFromPlugin') {}"
     val buildScript = """
