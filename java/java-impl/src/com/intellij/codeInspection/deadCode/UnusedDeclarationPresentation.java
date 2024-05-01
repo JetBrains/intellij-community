@@ -635,11 +635,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return ScrollPaneFactory.createScrollPane(htmlView, true);
   }
 
-  @Override
-  public boolean showProblemCount() {
-    return false;
-  }
-
   @ApiStatus.Internal
   protected static class UnusedDeclarationRefElementNode extends RefElementNode {
     UnusedDeclarationRefElementNode(@Nullable RefEntity entity,
