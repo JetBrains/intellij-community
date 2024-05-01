@@ -1129,6 +1129,7 @@ a:com.intellij.codeInspection.GlobalInspectionTool
 - <init>():V
 - checkElement(com.intellij.codeInspection.reference.RefEntity,com.intellij.analysis.AnalysisScope,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext):com.intellij.codeInspection.CommonProblemDescriptor[]
 - checkElement(com.intellij.codeInspection.reference.RefEntity,com.intellij.analysis.AnalysisScope,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):com.intellij.codeInspection.CommonProblemDescriptor[]
+- checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.ProblemsHolder,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
 - compose(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity,com.intellij.codeInspection.HTMLComposer):V
 - getAdditionalJobs():com.intellij.codeInspection.ex.JobDescriptor[]
 - getAdditionalJobs(com.intellij.codeInspection.GlobalInspectionContext):com.intellij.codeInspection.ex.JobDescriptor[]
@@ -1138,6 +1139,7 @@ a:com.intellij.codeInspection.GlobalInspectionTool
 - getSharedLocalInspectionTool():com.intellij.codeInspection.LocalInspectionTool
 - f:getSuppressId():java.lang.String
 - isEnabledByDefault():Z
+- isGlobalSimpleInspectionTool():Z
 - isGraphNeeded():Z
 - isReadActionNeeded():Z
 - queryExternalUsagesRequests(com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):Z
@@ -1149,6 +1151,7 @@ a:com.intellij.codeInspection.GlobalSimpleInspectionTool
 - a:checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.ProblemsHolder,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
 - inspectionFinished(com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
 - inspectionStarted(com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
+- f:isGlobalSimpleInspectionTool():Z
 - f:isGraphNeeded():Z
 - isReadActionNeeded():Z
 - f:runInspection(com.intellij.analysis.AnalysisScope,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V

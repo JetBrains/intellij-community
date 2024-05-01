@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -164,10 +165,53 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   @Override
+  public boolean isGlobalSimpleInspectionTool() {
+    return Registry.is("java.unused.declaration.inspection.use.shallow.local.anaysis.as.global");
+  }
+
+  @Override
+  public void checkFile(@NotNull PsiFile file,
+                        @NotNull InspectionManager manager,
+                        @NotNull ProblemsHolder ignored,
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    if (!file.getLanguage().isKindOf("JAVA")) return;
+    // don't use supplied problems holder to get nice warnings attached to members instead of anchored at the file level
+    ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, false);
+    PsiElementVisitor visitor = myLocalInspectionBase.buildVisitor(problemsHolder, false);
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        element.accept(visitor);
+        super.visitElement(element);
+      }
+    });
+    for (ProblemDescriptor problemDescriptor : problemsHolder.getResults()) {
+      PsiElement psiElement = problemDescriptor.getPsiElement();
+      if (psiElement != null) {
+        PsiElement member = globalContext.getRefManager().getContainerElement(psiElement);
+        RefElement reference = globalContext.getRefManager().getReference(member);
+        if (reference != null) {
+          problemDescriptionsProcessor.addProblemElement(reference, problemDescriptor);
+        }
+      }
+    }
+  }
+
+  @Override
   public void runInspection(@NotNull AnalysisScope scope,
                             @NotNull InspectionManager manager,
                             @NotNull GlobalInspectionContext globalContext,
                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    System.out.println("UnusedDeclarationInspectionBase.runInspection(" +
+                       scope +
+                       ", " +
+                       manager +
+                       ", " +
+                       globalContext.getClass() +
+                       ", " +
+                       problemDescriptionsProcessor +
+                       ")");
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
@@ -299,11 +343,15 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                                              @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     checkForReachableRefs(globalContext);
     int phase = Objects.requireNonNull(globalContext.getUserData(PHASE_KEY));
+    if (phase == 2) {
+      globalContext.putUserData(PROCESSED_SUSPICIOUS_ELEMENTS_KEY, null);
+      return false;
+    }
+    System.out.println("phase = " + phase);
     Set<RefElement> processedSuspicious = globalContext.getUserData(PROCESSED_SUSPICIOUS_ELEMENTS_KEY);
 
     boolean firstPhase = phase == 1;
-    RefFilter filter = firstPhase ? new StrictUnreferencedFilter(this, globalContext) :
-                             new RefUnreachableFilter(this, globalContext);
+    RefFilter filter = firstPhase ? new StrictUnreferencedFilter(this, globalContext) : new RefUnreachableFilter(this, globalContext);
     LOG.assertTrue(processedSuspicious != null, "phase: " + phase);
 
     Collection<Language> uastLanguages = Language.findInstance(UastMetaLanguage.class).getMatchingLanguages();
@@ -406,16 +454,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         }
       }
     });
-
-    if (!requestAdded[0]) {
-      if (phase == 2) {
-        globalContext.putUserData(PROCESSED_SUSPICIOUS_ELEMENTS_KEY, null);
-        return false;
-      }
-      else {
-        globalContext.putUserData(PHASE_KEY, 2);
-      }
-    }
+    globalContext.putUserData(PHASE_KEY, 2);
 
     return true;
   }
@@ -456,11 +495,14 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   void checkForReachableRefs(@NotNull GlobalInspectionContext context) {
+    System.out.println("UnusedDeclarationInspectionBase.checkForReachableRefs(" + ")");
+    new Throwable().printStackTrace(System.out);
     CodeScanner codeScanner = new CodeScanner();
 
     // Cleanup previous reachability information.
-    RefManager refManager = context.getRefManager();
-    refManager.iterate(new RefJavaVisitor() {
+   RefManager refManager = context.getRefManager();
+    long timestamp = System.currentTimeMillis();
+    /*refManager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefJavaElementImpl refElement) {
@@ -469,7 +511,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         }
       }
     });
+    System.out.println("clearing took " + (System.currentTimeMillis() - timestamp) + "ms");*/
 
+    //timestamp = System.currentTimeMillis();
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
       entry.accept(codeScanner);
     }
@@ -486,6 +530,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         codeScanner.myNextRound.pop().accept(codeScanner);
       }
     }
+    System.out.println("reachability analysis took " + (System.currentTimeMillis() - timestamp) + " ms");
   }
 
   private static EntryPointsManager getEntryPointsManager(@NotNull GlobalInspectionContext context) {

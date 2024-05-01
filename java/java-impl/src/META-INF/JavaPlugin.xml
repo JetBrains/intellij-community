@@ -2308,6 +2308,9 @@
                       presentation="com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation" key="inspection.unused.display.name"
                       editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                       bundle="messages.JavaBundle"/>
+    <registryKey defaultValue="false"
+                 description="Use shallow unused declaration analysis in batch mode (like in the editor, Java only)"
+                 key="java.unused.declaration.inspection.use.shallow.local.anaysis.as.global"/>
 
     <intentionAction>
       <language>JAVA</language>

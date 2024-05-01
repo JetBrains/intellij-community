@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.GlobalInspectionTool
-import com.intellij.codeInspection.GlobalSimpleInspectionTool
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 
@@ -15,7 +14,7 @@ private object GlobalGroup : YamlInspectionGroup {
   override val groupId: String = "GLOBAL"
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     val inspection = tool.tool
-    return inspection is GlobalInspectionTool && inspection !is GlobalSimpleInspectionTool
+    return inspection is GlobalInspectionTool && !inspection.isGlobalSimpleInspectionTool
   }
 }
 
@@ -23,7 +22,7 @@ private object LocalGroup : YamlInspectionGroup {
   override val groupId: String = "LOCAL"
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     val inspection = tool.tool
-    return inspection is LocalInspectionTool || inspection is GlobalSimpleInspectionTool
+    return inspection is LocalInspectionTool || (inspection is GlobalInspectionTool && inspection.isGlobalSimpleInspectionTool)
   }
 }
 

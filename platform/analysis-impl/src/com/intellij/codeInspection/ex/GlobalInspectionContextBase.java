@@ -365,15 +365,12 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
       outLocalTools.add(currentTools);
     }
-    else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-      if (toolWrapper.getTool() instanceof GlobalSimpleInspectionTool) {
+    else if (toolWrapper instanceof GlobalInspectionToolWrapper globalToolWrapper) {
+      if (globalToolWrapper.getTool().isGlobalSimpleInspectionTool()) {
         outGlobalSimpleTools.add(currentTools);
       }
-      else if (toolWrapper.getTool() instanceof GlobalInspectionTool) {
-        outGlobalTools.add(currentTools);
-      }
       else {
-        throw new RuntimeException("unknown global tool " + toolWrapper);
+        outGlobalTools.add(currentTools);
       }
     }
     else {
