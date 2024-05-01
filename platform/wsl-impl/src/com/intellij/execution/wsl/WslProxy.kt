@@ -7,11 +7,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.close
+import io.ktor.utils.io.*
 import io.ktor.utils.io.jvm.javaio.toByteReadChannel
-import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import java.io.IOException
@@ -53,17 +50,15 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
 
 
     suspend fun connectChannels(source: ByteReadChannel, dest: ByteWriteChannel) {
-      val buffer = ByteBuffer.allocate(64800)
+      val buffer = ByteArray(64800)
       while (coroutineContext.isActive) {
-        buffer.rewind()
         val bytesRead = source.readAvailable(buffer)
         if (bytesRead < 1) {
           dest.close()
           return
         }
-        buffer.rewind()
         try {
-          dest.writeFully(buffer.array(), 0, bytesRead)
+          dest.writeFully(buffer, 0, bytesRead)
         }
         catch (e: IOException) {
           dest.close()
