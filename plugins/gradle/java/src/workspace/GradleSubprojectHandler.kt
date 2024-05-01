@@ -12,10 +12,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.service.project.open.canLinkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.service.project.open.canOpenGradleProject
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -54,8 +57,13 @@ internal class GradleSubprojectHandler : SubprojectHandler {
 
 private class GradleImportedProjectSettings(project: Project) : ImportedProjectSettings {
   private val gradleProjectsSettings: Collection<GradleProjectSettings> = GradleSettings.getInstance(project).linkedProjectsSettings
+  private val projectDir = project.guessProjectDir()
 
-  override fun applyTo(workspace: Project) {
+  override suspend fun applyTo(workspace: Project) {
+    if (gradleProjectsSettings.isEmpty() && projectDir != null && canOpenGradleProject(projectDir)) {
+      linkAndSyncGradleProject(workspace, projectDir)
+      return
+    }
     val targetGradleSettings = GradleSettings.getInstance(workspace)
 
     val specBuilder = ImportSpecBuilder(workspace, GradleConstants.SYSTEM_ID)

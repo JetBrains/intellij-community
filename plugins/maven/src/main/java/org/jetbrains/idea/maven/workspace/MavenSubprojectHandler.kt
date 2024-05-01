@@ -6,8 +6,11 @@ import com.intellij.ide.workspace.Subproject
 import com.intellij.ide.workspace.SubprojectHandler
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenRoamableSettings
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
@@ -44,8 +47,14 @@ internal class MavenSubprojectHandler : SubprojectHandler {
 
 private class MavenImportedProjectSettings(project: Project) : ImportedProjectSettings {
   val roamableSettings: MavenRoamableSettings = MavenProjectsManager.getInstance(project).roamableSettings
+  val projectDir = project.guessProjectDir()
 
-  override fun applyTo(workspace: Project) {
+  override suspend fun applyTo(workspace: Project) {
+    val openProjectProvider = MavenOpenProjectProvider()
+    if (roamableSettings.originalFiles.isEmpty() && openProjectProvider.canOpenProject(projectDir!!)) {
+      openProjectProvider.linkToExistingProjectAsync(projectDir, workspace)
+      return
+    }
     val manager = MavenProjectsManager.getInstance(workspace)
     manager.applyRoamableSettings(roamableSettings)
   }

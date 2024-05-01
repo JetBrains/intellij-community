@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.Topic
 
 interface SubprojectHandler {
   companion object {
@@ -31,5 +30,5 @@ interface WorkspaceSettingsImporter {
 }
 
 interface ImportedProjectSettings {
-  fun applyTo(workspace: Project)
+  suspend fun applyTo(workspace: Project)
 }

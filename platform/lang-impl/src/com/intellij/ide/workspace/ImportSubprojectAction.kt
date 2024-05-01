@@ -10,12 +10,16 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
@@ -23,9 +27,14 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.containers.addIfNotNull
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 
@@ -122,18 +131,18 @@ private class ImportSubprojectAction(val source: SubprojectSource) : DumbAwareAc
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    source.import(project)
+    runWithModalProgressBlocking(project, "") {
+      source.import(project)
+    }
   }
 }
-
 
 private fun createWorkspaceFromCurrent(project: Project, vararg additionalSources: SubprojectSource): Boolean {
   val dialog = NewWorkspaceDialog(project)
   if (!dialog.showAndGet()) return false
 
   val settings = importSettingsFromProject(project, true)
-
-  ApplicationManager.getApplication().executeOnPooledThread {
+  project.service<MyCoroutineScopeService>().scope.launch  {
     createAndOpenWorkspaceProject(project, dialog.projectPath, dialog.projectName) { workspace ->
       for (importedSetting in settings) {
         importedSetting.applyTo(workspace)
@@ -165,7 +174,7 @@ private fun importSettingsFromProject(project: Project, newWorkspace: Boolean): 
 private fun createAndOpenWorkspaceProject(project: Project,
                                           projectPath: Path,
                                           projectName: String?,
-                                          initTask: (workspace: Project) -> Unit) {
+                                          initTask: suspend CoroutineScope.(workspace: Project) -> Unit) {
   val options = OpenProjectTask {
     projectToClose = project
     this.projectName = projectName
@@ -175,7 +184,7 @@ private fun createAndOpenWorkspaceProject(project: Project,
     isRefreshVfsNeeded = true
     beforeOpen = { workspace ->
       WorkspaceSettings.getInstance(workspace).isWorkspace = true
-      invokeAndWaitIfNeeded {
+      withContext(Dispatchers.EDT) {
         initTask(workspace)
       }
       true
@@ -204,12 +213,15 @@ private interface SubprojectSource {
   fun import(workspace: Project): Boolean
 }
 
+@Service(Service.Level.PROJECT)
+internal class MyCoroutineScopeService(val scope: CoroutineScope)
+
 private class ExistingProjectSource(val projectPath: String, val projectName: @Nls String) : SubprojectSource {
   override val actionText: TextWithMnemonic get() = TextWithMnemonic.fromPlainText(projectName)
 
   override fun import(workspace: Project): Boolean {
     val projectManagerImpl = ProjectManager.getInstance() as ProjectManagerImpl
-    ApplicationManager.getApplication().executeOnPooledThread {
+    workspace.service<MyCoroutineScopeService>().scope.launch {
       val referentProject = projectManagerImpl.loadProject(Path.of(projectPath), false, false)
       try {
         val settings = importSettingsFromProject(referentProject, false)
@@ -219,7 +231,7 @@ private class ExistingProjectSource(val projectPath: String, val projectName: @N
       }
       finally {
         // TODO: fix 'already disposed' failures
-        ApplicationManager.getApplication().invokeAndWait {
+        withContext(Dispatchers.EDT) {
           projectManagerImpl.forceCloseProject(referentProject)
         }
       }
