@@ -272,15 +272,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                  markRef: Ref<StatusMark>) {
     LOG.info("Started scanning for indexing of " + myProject.name + ". Reason: " + indexingReason)
 
-    indicator.onPausedStateChanged { paused: Boolean ->
-      if (paused) {
-        scanningHistory.suspendStages(Instant.now())
-      }
-      else {
-        scanningHistory.stopSuspendingStages(Instant.now())
-      }
-    }
-
     if (myStartSuspended) {
       freezeUntilAllowed()
     }
@@ -509,7 +500,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     getInstance().getTracer(Indexes).spanBuilder("UnindexedFilesScanner.perform").use {
       try {
         myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
-        prepareScanningHistoryAndRun {
+        prepareScanningHistoryAndRun(indicator) {
           waitForPreconditions()
           val markRef = Ref<StatusMark>()
           var successfullyFinished = false
@@ -538,7 +529,16 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
   }
 
-  private fun prepareScanningHistoryAndRun(block: () -> Unit) {
+  private fun prepareScanningHistoryAndRun(indicator: CheckPauseOnlyProgressIndicator, block: () -> Unit) {
+    indicator.onPausedStateChanged { paused: Boolean ->
+      if (paused) {
+        scanningHistory.suspendStages(Instant.now())
+      }
+      else {
+        scanningHistory.stopSuspendingStages(Instant.now())
+      }
+    }
+
     val diagnosticDumper = IndexDiagnosticDumper.getInstance()
     diagnosticDumper.onScanningStarted(scanningHistory) //todo[lene] 1
     try {
