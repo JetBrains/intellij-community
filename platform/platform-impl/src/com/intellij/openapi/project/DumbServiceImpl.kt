@@ -225,6 +225,17 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
 
   /**
+   * Same as [isDumb], but if form of a flow with the following properties:
+   *   * This flow never completes
+   *   * Last emitted value is always immediately available
+   *   * Conflation and other properties of the flow are not specified
+   *
+   * In most cases you don't need this method, because neither checking `isDumb` outside a read action, nor suspending inside a read action
+   *  have little sense except a few very special use cases.
+   */
+  val isDumbAsFlow: Flow<Boolean> = myState.map { it.isDumb }
+
+  /**
    * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
    *
    * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
