@@ -12,10 +12,12 @@ import com.intellij.openapi.util.registry.RegistryKeyDescriptor
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.Ksuid
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import io.kotest.mpp.atomics.AtomicReference
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -87,10 +89,10 @@ class RegistryKeyBeanPluginTest {
     val plugin2 = PluginBuilder()
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = true, overrides = true))
-    val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
+    val message = executeAndReturnPluginLoadingWarning {
       loadPlugins(testDisposable, plugin1, plugin2)
     }
-    ex.message.shouldStartWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
+    message.shouldStartWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
   }
 
   @Test
@@ -115,10 +117,10 @@ class RegistryKeyBeanPluginTest {
       .extensions(registryKey("my.key", defaultValue = false))
 
     lateinit var registry: Map<String, RegistryKeyDescriptor>
-    val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
+    val message = executeAndReturnPluginLoadingWarning {
       registry = emulateStaticRegistryLoad(plugin1, plugin2)
     }
-    ex.message.shouldStartWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
+    message.shouldStartWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
 
     registry["my.key"].shouldNotBeNull().defaultValue.toBoolean().shouldBe(false)
   }
@@ -132,10 +134,10 @@ class RegistryKeyBeanPluginTest {
       .id("plugin2")
       .extensions(registryKey("my.key", defaultValue = false))
 
-    val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
+    val message = executeAndReturnPluginLoadingWarning {
       loadPlugins(testDisposable, plugin1, plugin2)
     }
-    ex.message.shouldStartWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
+    message.shouldStartWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
     Registry.get("my.key").asBoolean().shouldBe(false)
   }
 
@@ -152,10 +154,10 @@ class RegistryKeyBeanPluginTest {
       .extensions(registryKey("my.key", defaultValue = "2", overrides = true))
 
     lateinit var registry: Map<String, RegistryKeyDescriptor>
-    val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
+    val message = executeAndReturnPluginLoadingWarning {
       registry = emulateStaticRegistryLoad(pluginB, plugin1, plugin2)
     }
-    ex.message.shouldBe("Incorrect registry key override for key my.key: both plugins plugin1 and plugin2 claim to override it to different defaults.")
+    message.shouldBe("Incorrect registry key override for key my.key: both plugins plugin1 and plugin2 claim to override it to different defaults.")
 
     registry["my.key"].shouldNotBeNull().defaultValue.shouldBe("1")
   }
@@ -191,10 +193,10 @@ class RegistryKeyBeanPluginTest {
 
     val nestedDisposable = Disposer.newDisposable()
     try {
-      val ex = LoggedErrorProcessor.executeAndReturnLoggedError {
+      val message = executeAndReturnPluginLoadingWarning {
         loadPlugins(nestedDisposable, plugin2)
       }
-      ex.message.shouldStartWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
+      message.shouldStartWith("A dynamically-loaded plugin plugin2 is forbidden to override the registry key my.key introduced by plugin1.")
 
       val key = getContributedKeyDescriptor("my.key")
       key.shouldNotBeNull().pluginId.shouldNotBeNull().shouldBe("plugin1")
@@ -254,4 +256,19 @@ private fun getContributedKeyDescriptor(@Suppress("SameParameterValue") name: St
     keys
   }
   return descriptor
+}
+
+private fun executeAndReturnPluginLoadingWarning(block: () -> Unit): String {
+  val error = AtomicReference<String?>(null)
+  LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
+    override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+      if (category == RegistryKeyBean.KEY_CONFLICT_LOG_CATEGORY) {
+        error.compareAndSet(null, message).shouldBeTrue()
+      }
+
+      return super.processWarn(category, message, t)
+    }
+  }, block)
+
+  return error.value.shouldNotBeNull()
 }

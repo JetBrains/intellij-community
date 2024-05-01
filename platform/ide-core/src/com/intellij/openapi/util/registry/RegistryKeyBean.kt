@@ -97,11 +97,14 @@ class RegistryKeyBean private constructor() {
       }
 
       val logger = Logger.getInstance(KEY_CONFLICT_LOG_CATEGORY)
+      fun emitRegistryKeyWarning(message: String) {
+        logger.warn(message)
+      }
 
       when (oldDescriptor.isOverrides to newDescriptor.isOverrides) {
         false to true -> { // a normal override, allow it for non-dynamic usages
           if (isDynamic) {
-            logger.error(
+            emitRegistryKeyWarning(
               "A dynamically-loaded plugin ${newDescriptor.pluginId} is forbidden to override" +
               " the registry key ${newDescriptor.name} introduced by ${oldDescriptor.pluginId}." +
               " Consider implementing the functionality in another way," +
@@ -120,7 +123,7 @@ class RegistryKeyBean private constructor() {
         false to false -> {
           // For now, preserve the legacy behavior but report an error.
           map.put(newDescriptor.name, newDescriptor)
-          logger.error(
+          emitRegistryKeyWarning(
             "Conflicting registry key definition for key ${oldDescriptor.name}:" +
             " it was defined by plugin ${oldDescriptor.pluginId}" +
             " but redefined by plugin ${newDescriptor.pluginId}." +
@@ -130,7 +133,7 @@ class RegistryKeyBean private constructor() {
         }
         true to true -> {
           if (oldDescriptor.defaultValue != newDescriptor.defaultValue) {
-            logger.error(
+            emitRegistryKeyWarning(
               "Incorrect registry key override for key ${oldDescriptor.name}:" +
               " both plugins ${oldDescriptor.pluginId} and ${newDescriptor.pluginId} claim to override it to different defaults."
             )
