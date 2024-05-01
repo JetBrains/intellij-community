@@ -10,7 +10,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.FilesScanningTask
+import com.intellij.openapi.project.InitialVfsRefreshService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
@@ -588,22 +591,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   }
 
   fun queue(): Future<ProjectScanningHistory> {
-    // Delay scanning tasks until after all the scheduled dumb tasks are finished.
-    // For example, PythonLanguageLevelPusher.initExtra is invoked from RequiredForSmartModeActivity and may submit additional dumb tasks.
-    // We want scanning to start after all these "extra" dumb tasks are finished.
-    // Note that a project may become dumb/smart immediately after the check
-    // If a project becomes smart, in the worst case, we'll trigger additional short dumb mode.
-    // If a project becomes dumb, not a problem at all - we'll schedule a scanning task out of dumb mode either way.
-    if (DumbService.isDumb(myProject) && Registry.`is`("scanning.waits.for.non.dumb.mode", true)) {
-      object : DumbModeTask() {
-        override fun performInDumbMode(indicator: ProgressIndicator) {
-          UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this@UnindexedFilesScanner)
-        }
-      }.queue(myProject)
-    }
-    else {
-      UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this)
-    }
+    UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this)
     return futureScanningHistory
   }
 

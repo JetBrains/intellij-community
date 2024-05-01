@@ -107,8 +107,22 @@ class IndexingTestUtil(private val project: Project) {
     dumbService.ensureInitialDumbTaskRequiredForSmartModeSubmitted() // TODO IJPL-578: don't submit
 
     val scannerExecutor = UnindexedFilesScannerExecutor.getInstance(project)
-    if (scannerExecutor.hasQueuedTasks || dumbService.hasScheduledTasks()) {
-      // Scheduled tasks will become a running tasks soon. To avoid a race, we check scheduled tasks first
+
+    // Scheduled tasks will become a running tasks soon. To avoid a race, we check scheduled tasks first
+    if (scannerExecutor.hasQueuedTasks) {
+      return if (UnindexedFilesScannerExecutor.scanningWaitsForNonDumbMode() && dumbService.isDumb) {
+        val isEternal = DumbModeTestUtils.isEternalDumbTaskRunning(project)
+        if (isEternal) {
+          thisLogger().debug("Do not wait for queued scanning task, because eternal dumb task is running in the project [$project]")
+        }
+        !isEternal;
+      }
+      else {
+        true // wait for queued scanning tasks to complete
+      }
+    }
+    // Scheduled tasks will become a running tasks soon. To avoid a race, we check scheduled tasks first
+    else if (dumbService.hasScheduledTasks()) {
       return true
     }
     else if (scannerExecutor.isRunning.value || dumbService.isRunning()) {
@@ -118,7 +132,7 @@ class IndexingTestUtil(private val project: Project) {
       // DUMB_FULL_INDEX should wait until all the scheduled tasks are finished, but should not wait for smart mode
       val isEternal = DumbModeTestUtils.isEternalDumbTaskRunning(project)
       if (isEternal) {
-        thisLogger().debug("Not waiting, because eternal dumb task is running in the project [$project]")
+        thisLogger().debug("Do not wait for smart mode, because eternal dumb task is running in the project [$project]")
       }
       return !isEternal
     }

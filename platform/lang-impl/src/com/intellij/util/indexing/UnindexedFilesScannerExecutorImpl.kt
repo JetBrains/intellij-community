@@ -58,8 +58,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     cs.childScope("Scanning (root)").launch {
       while (true) {
         try {
-          scanningEnabled.first { it }
-          scanningTask.first { it != null }
+          waitUntilNextTaskExecutionAllowed()
 
           // first set isRunning, otherwise we can find ourselves in a situation
           // isRunning=false, hasScheduledTask=false, but in fact we do have a scheduled task
@@ -114,6 +113,25 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
         }
       }
     }
+  }
+
+  private suspend fun waitUntilNextTaskExecutionAllowed() {
+    // wait until scanning is enabled
+    var flow: Flow<Boolean> = scanningEnabled.combine(scanningTask) { enabled, scanningTask ->
+      enabled && scanningTask != null
+    }
+
+    // Delay scanning tasks until after all the scheduled dumb tasks are finished.
+    // For example, PythonLanguageLevelPusher.initExtra is invoked from RequiredForSmartModeActivity and may submit additional dumb tasks.
+    // We want scanning to start after all these "extra" dumb tasks are finished.
+    // Note that a project may become dumb immediately after the check. This is not a problem - we schedule scanning anyway.
+    if (UnindexedFilesScannerExecutor.scanningWaitsForNonDumbMode()) {
+      flow = flow.combine(DumbServiceImpl.getInstance(project).isDumbAsFlow) { shouldRun, isDumb ->
+        shouldRun && !isDumb
+      }
+    }
+
+    flow.first { it }
   }
 
   private suspend fun runScanningTask(task: UnindexedFilesScanner) {
