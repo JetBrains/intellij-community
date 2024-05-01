@@ -125,7 +125,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
               project = project,
               orphanQueue = registeredIndexes.orphanDirtyFilesQueue,
               projectDirtyFilesQueue = projectDirtyFilesQueue,
-              startSuspended = false,
+
               allowSkippingFullScanning = allowSkippingFullScanning && !registeredIndexes.wasCorrupted,
               requireReadingIndexableFilesIndexFromDisk = !allowSkippingFullScanning,
               coroutineScope = (project as ComponentManagerEx).getCoroutineScope(),

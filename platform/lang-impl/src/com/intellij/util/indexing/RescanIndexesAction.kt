@@ -73,7 +73,7 @@ class RescanIndexesAction : RecoveryAction {
     }
     application.service<AppIndexingDependenciesService>().invalidateAllStamps("Rescanning indexes recovery action")
     val trigger = ForceReindexingTrigger()
-    val historyFuture = UnindexedFilesScanner(project, false, false, false,
+    val historyFuture = UnindexedFilesScanner(project, false, false,
                                               predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
                                               if (predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED, null,
                                               false, trigger).queue()

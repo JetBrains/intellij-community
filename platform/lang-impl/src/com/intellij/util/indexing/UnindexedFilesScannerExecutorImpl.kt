@@ -12,6 +12,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -60,6 +61,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     // Note about Dispatchers.IO: we'll do "runBlocking" in UnindexedFilesScanner.ScanningSession.collectIndexableFilesConcurrently
     // Make sure that we are not using limited dispatchers here (e.g., Dispatchers.Default).
     cs.childScope("Scanning (root)", Dispatchers.IO).launch {
+      suspendIfShouldStartSuspended()
       while (true) {
         try {
           waitUntilNextTaskExecutionAllowed()
@@ -114,6 +116,20 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           // We don't care about finishing scanning without a write action. This looks harmless at the moment
           isRunning.value = false
           startedOrStoppedEvent.getAndUpdate(Int::inc)
+        }
+      }
+    }
+  }
+
+  private suspend fun suspendIfShouldStartSuspended() {
+    if (IndexInfrastructure.isIndexesInitializationSuspended()) {
+      supervisorScope {
+        async {
+          withBackgroundProgress(project, IndexingBundle.message("progress.indexing.started.as.suspended")) {
+            while (true) {
+              delay(1000) // wait for cancellation
+            }
+          }
         }
       }
     }

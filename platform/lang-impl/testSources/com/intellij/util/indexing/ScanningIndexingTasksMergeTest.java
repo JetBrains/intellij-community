@@ -114,7 +114,7 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   @NotNull
   private UnindexedFilesScanner createScanningTask(IndexableFilesIterator iter, String reason, ScanningType type) {
     List<IndexableFilesIterator> iterators = iter == null ? null : Collections.singletonList(iter);
-    return new UnindexedFilesScanner(getProject(), false, false, false, iterators, null, reason, type, null);
+    return new UnindexedFilesScanner(getProject(), false, false, iterators, null, reason, type, null);
   }
 
   private void assertMergedStateInvariants(UnindexedFilesIndexer mergedTask) {

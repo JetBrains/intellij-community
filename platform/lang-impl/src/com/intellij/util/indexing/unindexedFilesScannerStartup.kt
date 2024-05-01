@@ -42,7 +42,6 @@ private val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSIS
 internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           orphanQueue: OrphanDirtyFilesQueue,
                                           projectDirtyFilesQueue: ProjectDirtyFilesQueue,
-                                          startSuspended: Boolean,
                                           allowSkippingFullScanning: Boolean,
                                           requireReadingIndexableFilesIndexFromDisk: Boolean,
                                           coroutineScope: CoroutineScope,
@@ -64,12 +63,12 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val skippingScanningUnsatisfiedConditions = SkippingFullScanningCondition.entries.filter { !it.canSkipFullScanning(scanningCheckState) }
   return if (skippingScanningUnsatisfiedConditions.isEmpty()) {
     LOG.info("Full scanning on startup will be skipped for project ${project.name}")
-    scheduleDirtyFilesScanning(project, notSeenIds as AllNotSeenDirtyFileIds, projectDirtyFilesQueue, startSuspended, coroutineScope, indexingReason)
+    scheduleDirtyFilesScanning(project, notSeenIds as AllNotSeenDirtyFileIds, projectDirtyFilesQueue, coroutineScope, indexingReason)
   }
   else {
     LOG.info("Full scanning on startup will NOT be skipped for project ${project.name} because of following unsatisfied conditions:\n" +
              skippingScanningUnsatisfiedConditions.joinToString("\n") { "${it.name}: ${it.explain(scanningCheckState)}" })
-    scheduleFullScanning(project, notSeenIds, projectDirtyFilesQueue, startSuspended, filterUpToDateUnsatisfiedConditions.isEmpty(), coroutineScope, indexingReason)
+    scheduleFullScanning(project, notSeenIds, projectDirtyFilesQueue, filterUpToDateUnsatisfiedConditions.isEmpty(), coroutineScope, indexingReason)
   }
 }
 
@@ -112,7 +111,6 @@ internal fun Job.forgetProjectDirtyFilesOnCompletion(fileBasedIndex: FileBasedIn
 private fun scheduleFullScanning(project: Project,
                                  notSeenIds: GetNotSeenDirtyFileIdsResult,
                                  projectDirtyFilesQueue: ProjectDirtyFilesQueue,
-                                 startSuspended: Boolean,
                                  isFilterUpToDate: Boolean,
                                  coroutineScope: CoroutineScope,
                                  indexingReason: String): Job {
@@ -121,7 +119,7 @@ private fun scheduleFullScanning(project: Project,
   }
   else CompletableDeferred(Unit)
 
-  UnindexedFilesScanner(project, startSuspended, true, isFilterUpToDate, null, null, indexingReason,
+  UnindexedFilesScanner(project, true, isFilterUpToDate, null, null, indexingReason,
                         ScanningType.FULL_ON_PROJECT_OPEN, someDirtyFilesScheduledForIndexing.asCompletableFuture())
     .queue()
   return someDirtyFilesScheduledForIndexing
@@ -133,7 +131,6 @@ private fun isShutdownPerformedForFileBasedIndex(fileBasedIndex: FileBasedIndexI
 private fun scheduleDirtyFilesScanning(project: Project,
                                        notSeenIds: AllNotSeenDirtyFileIds,
                                        projectDirtyFilesQueue: ProjectDirtyFilesQueue,
-                                       startSuspended: Boolean,
                                        coroutineScope: CoroutineScope,
                                        indexingReason: String): Job {
   val projectDirtyFiles = coroutineScope.async(Dispatchers.IO) {
@@ -143,7 +140,7 @@ private fun scheduleDirtyFilesScanning(project: Project,
   val projectDirtyFilesFromOrphanQueue = coroutineScope.async { projectDirtyFiles.await()?.projectDirtyFilesFromOrphanQueue ?: emptyList() }
   val iterators = listOf(DirtyFilesIndexableFilesIterator(projectDirtyFilesFromProjectQueue, false),
                          DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
-  UnindexedFilesScanner(project, startSuspended, true, true, iterators, null,
+  UnindexedFilesScanner(project, true, true, iterators, null,
                         indexingReason, ScanningType.PARTIAL, projectDirtyFiles.asCompletableFuture())
     .queue()
   return projectDirtyFiles
