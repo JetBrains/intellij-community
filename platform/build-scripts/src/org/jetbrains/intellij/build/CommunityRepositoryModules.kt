@@ -221,15 +221,8 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
       spec.withProjectLibrary("okhttp")
     },
-    pluginAuto(
-      listOf(
-        "intellij.performanceTesting",
-        "intellij.performanceTesting.remoteDriver",
-        "intellij.driver.model",
-        "intellij.driver.impl",
-        "intellij.driver.client"
-      )
-    ))
+    pluginAuto(listOf("intellij.performanceTesting", "intellij.driver.model", "intellij.driver.impl", "intellij.driver.client"))
+  )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
     pluginAuto("intellij.errorProne") { spec ->

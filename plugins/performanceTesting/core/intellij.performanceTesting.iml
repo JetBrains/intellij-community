@@ -23,10 +23,10 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module-library">
       <library name="github.oshi.core" type="repository">
-        <properties maven-id="com.github.oshi:oshi-core:6.4.4">
+        <properties maven-id="com.github.oshi:oshi-core:6.6.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.4.4/oshi-core-6.4.4.jar">
-              <sha256sum>423ef4cd72207b73a9197bd5c3514c3b336a706e44f2dfbd1e9da14f75135dce</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.6.0/oshi-core-6.6.0.jar">
+              <sha256sum>706b5582246d534f427a57141d9fe4a9a7ac1aae37aac857769ec9abacf0de82</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -36,11 +36,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.4.4/oshi-core-6.4.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.6.0/oshi-core-6.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.4.4/oshi-core-6.4.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.6.0/oshi-core-6.6.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -48,9 +48,6 @@
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.log" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />

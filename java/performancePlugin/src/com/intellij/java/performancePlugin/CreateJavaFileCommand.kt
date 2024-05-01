@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.performancePlugin
 
 import com.intellij.core.JavaPsiBundle.message
@@ -11,7 +11,7 @@ import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.impl.file.PsiJavaDirectoryFactory
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import com.jetbrains.performancePlugin.utils.VcsTestUtil
+import com.intellij.performanceTesting.vcs.VcsTestUtil
 import io.opentelemetry.context.Context
 import org.jetbrains.annotations.Nls
 
@@ -19,8 +19,7 @@ import org.jetbrains.annotations.Nls
  * Command to add Java file to project
  * Example: %createJavaFile fileName,dstDir,fileType - class, enum, annotation, record, interface
  */
-class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
-
+internal class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val NAME: String = "createJavaFile"
     const val PREFIX: String = CMD_PREFIX + NAME
@@ -58,5 +57,4 @@ class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCorouti
   }
 
   override fun getName(): String = NAME
-
 }

@@ -1,4 +1,4 @@
-package com.jetbrains.performancePlugin.utils
+package com.intellij.performanceTesting.vcs
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -6,11 +6,9 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 
 object VcsTestUtil {
-
   /**
    * This function modifies 'Preferences->Version Control->Confirmation->When files are created' option
    */
-  @JvmStatic
   fun provisionVcsAddFileConfirmation(project: Project, fileConfirmation: VcsAddFileConfirmation) {
     val addFileConfirmationSetting = ProjectLevelVcsManagerEx
       .getInstanceEx(project)
@@ -28,5 +26,4 @@ object VcsTestUtil {
     DO_NOTHING,
     DO_SILENTLY
   }
-
 }
