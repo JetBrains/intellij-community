@@ -77,7 +77,6 @@ com/intellij/openapi/vfs/newvfs/persistent/PersistentFSLoader
 com/intellij/openapi/vfs/newvfs/persistent/PersistentFSRecordsStorage
 com/intellij/openapi/vfs/newvfs/persistent/VFSAttributesStorage
 com/intellij/openapi/vfs/newvfs/persistent/VfsRecoveryUtils$RecoveryPoint
-com/intellij/openapi/vfs/newvfs/persistent/dev/blobstorage/RecordLayout
 com/intellij/openapi/vfs/newvfs/persistent/log/VfsLogCompactionContext
 com/intellij/openapi/vfs/newvfs/persistent/log/VfsLogImpl$ContextImpl
 com/intellij/openapi/vfs/newvfs/persistent/log/VfsLogOperationTrackingContext
@@ -96,7 +95,6 @@ com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory$JAction
 com/intellij/patterns/compiler/PatternCompilerImpl$Node
 com/intellij/platform/diagnostic/telemetry/Scope
 com/intellij/platform/ide/menu/ActionAwareIdeMenuBar
-com/intellij/platform/util/io/storages/mmapped/MMappedFileStorage
 com/intellij/platform/workspace/jps/serialization/impl/FileInDirectorySourceNames
 com/intellij/platform/workspace/jps/serialization/impl/JpsFileContentReader
 com/intellij/platform/workspace/jps/serialization/impl/JpsFileContentWriter
@@ -115,8 +113,5 @@ com/intellij/ui/wizard/WizardCallback
 com/intellij/util/SVGLoader$SvgElementColorPatcherProvider
 com/intellij/util/concurrency/ChildContext
 com/intellij/util/io/SimpleStringPersistentEnumerator
-com/intellij/util/io/blobstorage/ByteBufferReader
-com/intellij/util/io/blobstorage/ByteBufferWriter
-com/intellij/util/io/blobstorage/StreamlinedBlobStorage$Processor
 com/intellij/util/io/storage/VFSContentStorage
 com/intellij/xml/breadcrumbs/BreadcrumbsComponent$Crumb

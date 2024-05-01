@@ -8,6 +8,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.io.IOException;
 /**
  * @author Eugene Zhuravlev
  */
+@Internal
 public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value> {
   // there is no volatile as we modify under write lock and read under read lock
   protected ValueContainerImpl<Value> myAdded;

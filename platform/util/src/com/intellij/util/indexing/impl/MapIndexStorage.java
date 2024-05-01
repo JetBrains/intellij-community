@@ -9,7 +9,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.nio.file.Path;
 
+@Internal
 public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
   private static final boolean ENABLE_WAL = SystemProperties.getBooleanProperty("idea.index.enable.wal", false);
@@ -336,7 +337,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   public final void clearCachedMappings() {
     myCache.invalidateAll();
   }

@@ -119,7 +119,7 @@ f:com.intellij.history.core.LocalHistoryRecordsTable
 - setPrevRecord(I,I):V
 - setTimestamp(I,J):V
 f:com.intellij.history.core.LocalHistoryStorage
-- com.intellij.util.io.storage.AbstractStorage
+- com.intellij.util.io.storage.IStorage
 - <init>(java.nio.file.Path):V
 - createNextRecord():I
 - deleteRecordsUpTo(I):V

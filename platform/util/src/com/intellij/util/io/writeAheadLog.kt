@@ -11,6 +11,7 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.indexing.impl.IndexStorageUtil
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -231,6 +232,7 @@ fun <Data> restoreMemoryEnumeratorFromWal(walFile: Path,
   }).toList()
 }
 
+@Internal
 @Throws(IOException::class)
 fun <Data> restorePersistentEnumeratorFromWal(walFile: Path,
                                               outputMapFile: Path,

@@ -29,7 +29,6 @@ com/sun/jna/platform/win32/WinDef$UINT
 com/sun/jna/platform/win32/WinDef$UINTByReference
 com/sun/jna/win32/StdCallLibrary
 io/netty/buffer/ByteBuf
-io/opentelemetry/api/metrics/BatchCallback
 io/opentelemetry/api/metrics/Meter
 it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap
 it/unimi/dsi/fastutil/ints/IntArrayList

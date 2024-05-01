@@ -558,8 +558,8 @@ com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage$BufferingSt
 - a:bufferingStateChanged(Z):V
 - a:memoryStorageCleared():V
 c:com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
-- com.intellij.util.indexing.impl.MapIndexStorage
 - com.intellij.util.indexing.VfsAwareIndexStorage
+- com.intellij.util.indexing.impl.IndexStorage
 - <init>(java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer,I,Z):V
 - <init>(java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer,I,Z,Z,Z):V
 - addValue(java.lang.Object,I,java.lang.Object):V
@@ -570,7 +570,7 @@ c:com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
 - processKeys(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
 - removeAllValues(java.lang.Object,I):V
 *a:com.intellij.util.indexing.storage.MapReduceIndexBase
-- com.intellij.util.indexing.impl.MapReduceIndex
+- com.intellij.util.indexing.InvertedIndex
 - com.intellij.util.indexing.UpdatableIndex
 - p:<init>(com.intellij.util.indexing.IndexExtension,com.intellij.openapi.util.ThrowableComputable,com.intellij.openapi.util.ThrowableComputable,com.intellij.util.indexing.impl.forward.ForwardIndexAccessor):V
 - checkCanceled():V

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
@@ -9,6 +9,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
 import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.storage.AbstractStorage;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.nio.file.Path;
 
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
+@Internal
 public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Closeable {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
