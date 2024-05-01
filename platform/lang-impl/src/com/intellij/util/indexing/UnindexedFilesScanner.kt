@@ -529,9 +529,18 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private fun prepareScanningHistoryAndRun(block: () -> Unit) {
     val diagnosticDumper = IndexDiagnosticDumper.getInstance()
     diagnosticDumper.onScanningStarted(scanningHistory) //todo[lene] 1
-
     try {
-      block()
+      ProjectScanningHistoryImpl.startDumbModeBeginningTracking(myProject, scanningHistory)
+      try {
+        block()
+      }
+      finally {
+        ProjectScanningHistoryImpl.finishDumbModeBeginningTracking(myProject)
+      }
+    }
+    catch (e: Throwable) {
+      scanningHistory.setWasInterrupted()
+      throw e
     }
     finally {
       diagnosticDumper.onScanningFinished(scanningHistory) //todo[lene] 1
@@ -539,29 +548,20 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   }
 
   private fun performScanningAndIndexing(indicator: CheckPauseOnlyProgressIndicator,
-                                         progressReporter: IndexingProgressReporter): ProjectScanningHistory {
+                                         progressReporter: IndexingProgressReporter) {
     val markRef = Ref<StatusMark>()
+    var successfullyFinished = false
     try {
-      ProjectScanningHistoryImpl.startDumbModeBeginningTracking(myProject, scanningHistory)
       (GistManager.getInstance() as GistManagerImpl).runWithMergingDependentCacheInvalidations {
         scanAndUpdateUnindexedFiles(indicator, progressReporter, markRef)
       }
-    }
-    catch (e: Throwable) {
-      scanningHistory.setWasInterrupted()
-      if (e is ControlFlowException) {
-        LOG.info("Cancelled indexing of " + myProject.name)
-      }
-      throw e
+      successfullyFinished = true
     }
     finally {
-      ProjectScanningHistoryImpl.finishDumbModeBeginningTracking(myProject)
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
-        DependenciesIndexedStatusService.getInstance(myProject)
-          .indexingFinished(!scanningHistory.times.wasInterrupted, markRef.get())
+        DependenciesIndexedStatusService.getInstance(myProject).indexingFinished(successfullyFinished, markRef.get())
       }
     }
-    return scanningHistory
   }
 
   private fun waitForPreconditions() {
