@@ -217,7 +217,7 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
 
   @TestOnly
   @NotNull
-  public static List<CustomFoldingRegionSurrounder> getAllSurrounders() {
+  public static List<Surrounder> getAllSurrounders() {
     return ContainerUtil.map(
       CustomFoldingProvider.getAllProviders(), provider -> new CustomFoldingRegionSurrounder(provider));
   }
