@@ -2287,6 +2287,7 @@ f:com.intellij.openapi.util.registry.RegistryKeyBean
 - defaultValue:java.lang.String
 - description:java.lang.String
 - key:java.lang.String
+- overrides:Z
 - restartRequired:Z
 f:com.intellij.openapi.util.registry.RegistryKeyBean$Companion
 com.intellij.openapi.vcs.FilePath
