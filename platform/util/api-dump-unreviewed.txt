@@ -2273,7 +2273,6 @@ com.intellij.ui.IconManager
 - a:getIcon(java.lang.String,java.lang.Class):javax.swing.Icon
 - a:getIcon(java.lang.String,java.lang.ClassLoader):javax.swing.Icon
 - s:getInstance():com.intellij.ui.IconManager
-- a:getPlatformIcon(com.intellij.ui.PlatformIcons):javax.swing.Icon
 - getPluginAndModuleId(java.lang.ClassLoader):kotlin.Pair
 - a:registerIconLayer(I,javax.swing.Icon):V
 - a:tooltipOnlyIfComposite(javax.swing.Icon):javax.swing.Icon
@@ -6371,34 +6370,26 @@ c:com.intellij.util.xmlb.BeanBinding
 - com.intellij.util.xmlb.Binding
 - com.intellij.util.xmlb.RootBinding
 - f:beanClass:java.lang.Class
-- bindings:com.intellij.util.xmlb.NestedBinding[]
 - compareByFields:com.intellij.util.ThreeState
 - f:tagName:java.lang.String
 - <init>(java.lang.Class):V
-- deserialize(java.lang.Object,java.lang.Object,com.intellij.util.xmlb.DomAdapter):java.lang.Object
-- f:deserializeInto(java.lang.Object,com.intellij.util.xml.dom.XmlElement):V
-- f:deserializeInto(java.lang.Object,java.lang.Object,com.intellij.util.xmlb.DomAdapter):V
 - f:deserializeInto(java.lang.Object,org.jdom.Element):V
 - deserializeToJson(org.jdom.Element):kotlinx.serialization.json.JsonElement
 - f:deserializeToJson(org.jdom.Element,Z):kotlinx.serialization.json.JsonElement
 - f:equalByFields(java.lang.Object,java.lang.Object,com.intellij.util.xmlb.SkipDefaultsSerializationFilter):Z
 - fromJson(java.lang.Object,kotlinx.serialization.json.JsonElement):java.lang.Object
 - f:init(java.lang.reflect.Type,com.intellij.util.xmlb.Serializer):V
-- isBoundTo(java.lang.Object,com.intellij.util.xmlb.DomAdapter):Z
 - newInstance():java.lang.Object
 - serialize(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
 - f:serialize(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):V
 - f:serialize(java.lang.Object,Z,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
 - f:serializeInto(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
 - serializeProperties(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
-- f:serializeProperty(com.intellij.util.xmlb.NestedBinding,java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter,Z):org.jdom.Element
 - f:sortBindings(it.unimi.dsi.fastutil.objects.Object2FloatMap):V
 - toJson(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):kotlinx.serialization.json.JsonElement
 - toString():java.lang.String
 com.intellij.util.xmlb.Binding
-- a:deserialize(java.lang.Object,java.lang.Object,com.intellij.util.xmlb.DomAdapter):java.lang.Object
 - init(java.lang.reflect.Type,com.intellij.util.xmlb.Serializer):V
-- a:isBoundTo(java.lang.Object,com.intellij.util.xmlb.DomAdapter):Z
 - a:serialize(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):V
 - a:toJson(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):kotlinx.serialization.json.JsonElement
 com.intellij.util.xmlb.Constants
@@ -6419,12 +6410,6 @@ f:com.intellij.util.xmlb.JDOMXIncluder
 - s:resolve(org.jdom.Element,java.net.URL):java.util.List
 com.intellij.util.xmlb.JDOMXIncluder$PathResolver
 - a:resolvePath(java.lang.String,java.net.URL):java.net.URL
-com.intellij.util.xmlb.NestedBinding
-- com.intellij.util.xmlb.Binding
-- a:deserializeToJson(org.jdom.Element):kotlinx.serialization.json.JsonElement
-- a:getAccessor():com.intellij.serialization.MutableAccessor
-- getPropertyName():java.lang.String
-- a:setFromJson(java.lang.Object,kotlinx.serialization.json.JsonElement):V
 com.intellij.util.xmlb.RootBinding
 - com.intellij.util.xmlb.Binding
 - a:deserializeToJson(org.jdom.Element):kotlinx.serialization.json.JsonElement

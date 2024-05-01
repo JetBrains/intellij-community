@@ -44,6 +44,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
   @JvmField
   val tagName: String
 
+  @Internal
   @JvmField
   var bindings: Array<NestedBinding>? = null
 
@@ -173,6 +174,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
     return element
   }
 
+  @Internal
   fun serializeProperty(binding: NestedBinding, bean: Any, parentElement: Element?, filter: SerializationFilter?, isFilterPropertyItself: Boolean): Element? {
     if (isPropertySkipped(filter = filter, binding = binding, bean = bean, rootBinding = this, isFilterPropertyItself = isFilterPropertyItself)) {
       return parentElement
@@ -183,6 +185,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
     return element
   }
 
+  @Internal
   override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {
     val instance = newInstance()
     deserializeInto(bean = instance, element = element, adapter = adapter)
@@ -193,6 +196,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
     deserializeJdomIntoBean(result = bean, element = element, accessorNameTracker = null, bindings = bindings!!)
   }
 
+  @Internal
   fun <T : Any> deserializeInto(bean: Any, element: T, adapter: DomAdapter<T>) {
     when (adapter) {
       JdomAdapter -> deserializeJdomIntoBean(result = bean, element = element as Element, accessorNameTracker = null, bindings = bindings!!)
@@ -200,6 +204,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
     }
   }
 
+  @Internal
   fun deserializeInto(bean: Any, element: XmlElement) {
     deserializeBeanInto(result = bean, element = element, bindings = bindings!!)
   }
@@ -261,6 +266,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
     }
   }
 
+  @Internal
   override fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean = adapter.getName(element) == tagName
 
   override fun toString(): String = "BeanBinding(${beanClass.name}, tagName=$tagName)"

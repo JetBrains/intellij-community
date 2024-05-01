@@ -1,4 +1,0 @@
-com/intellij/serialization/MutableAccessor
-com/intellij/ui/PlatformIcons
-com/intellij/util/xml/dom/XmlElement
-com/intellij/util/xmlb/DomAdapter

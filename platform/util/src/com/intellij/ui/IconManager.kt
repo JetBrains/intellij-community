@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package com.intellij.ui
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.RowIcon
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.lang.invoke.MethodHandles
@@ -48,6 +49,7 @@ interface IconManager {
     }
   }
 
+  @Internal
   fun getPlatformIcon(id: PlatformIcons): Icon
 
   @Deprecated("Use getIcon(path, classLoader)")
