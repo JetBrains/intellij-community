@@ -4092,7 +4092,6 @@ a:com.intellij.psi.FilePropertyKeyImpl
 - sf:createPersistentStringKey(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute,java.util.function.Function,java.util.function.Function):com.intellij.psi.FilePropertyKey
 - pa:fromRaw(java.lang.Object):java.lang.Object
 - getPersistentValue(com.intellij.openapi.vfs.VirtualFile):java.lang.Object
-- sf:getREAD_PERSISTENT_VALUE():Z
 - f:getUserDataKey():com.intellij.openapi.util.Key
 - pf:readValue(com.intellij.openapi.vfs.VirtualFile):java.lang.Object
 - pa:readValue(com.intellij.openapi.vfs.newvfs.AttributeInputStream):java.lang.Object
@@ -4105,7 +4104,6 @@ f:com.intellij.psi.FilePropertyKeyImpl$Companion
 - f:createPersistentIntKey(java.lang.String,java.lang.String,I):com.intellij.psi.FilePropertyKey
 - f:createPersistentStringKey(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute):com.intellij.psi.FilePropertyKey
 - f:createPersistentStringKey(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute,java.util.function.Function,java.util.function.Function):com.intellij.psi.FilePropertyKey
-- f:getREAD_PERSISTENT_VALUE():Z
 c:com.intellij.psi.IntentionFilterOwnerActionFilter
 - com.intellij.codeInsight.daemon.impl.IntentionActionFilter
 - <init>():V

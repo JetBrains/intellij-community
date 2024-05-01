@@ -5,10 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.Disposer
@@ -25,7 +23,6 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 import java.util.function.Predicate
 
@@ -35,8 +32,6 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   // helpers for tests
   private val scanningWaitsForNonDumbModeOverride = MutableStateFlow<Boolean?>(null)
   private var taskFilter: Predicate<UnindexedFilesScanner>? = null
-
-  private val runningDumbTask = AtomicReference<ProgressIndicator>()
 
   // note that shouldShowProgressIndicator = false in UnindexedFilesScannerExecutor, so there is no suspender for the progress indicator
   private val pauseReason = MutableStateFlow<PersistentList<String>>(persistentListOf())
@@ -220,14 +215,9 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     if (task.isFullIndexUpdate()) {
       // we don't want to execute any of the existing tasks - the only task we want to execute will be submitted the few lines below
       cancelAllTasks("Full scanning is queued")
-      cancelRunningScannerTaskInDumbQueue()
     }
-    if (UnindexedFilesScannerExecutor.shouldScanInSmartMode()) {
-      startTaskInSmartMode(task)
-    }
-    else {
-      startTaskInDumbMode(task)
-    }
+
+    startTaskInSmartMode(task)
   }
 
   private fun startTaskInSmartMode(task: UnindexedFilesScanner) {
@@ -244,26 +234,6 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       }
       else {
         merged?.close()
-      }
-    }
-  }
-
-  private fun startTaskInDumbMode(task: UnindexedFilesScanner) {
-    wrapAsDumbTask(task).queue(project)
-  }
-
-  @VisibleForTesting
-  fun wrapAsDumbTask(task: UnindexedFilesScanner): DumbModeTask {
-    return FilesScanningTaskAsDumbModeTaskWrapper(project, task, runningDumbTask)
-  }
-
-  private fun cancelRunningScannerTaskInDumbQueue() {
-    val indicator = runningDumbTask.get()
-    if (indicator != null) {
-      indicator.cancel()
-      val suspender = ProgressSuspender.getSuspender(indicator)
-      if (suspender != null && suspender.isSuspended) {
-        suspender.resumeProcess()
       }
     }
   }

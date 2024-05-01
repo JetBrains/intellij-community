@@ -55,7 +55,6 @@ import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.locks.LockSupport
-import java.util.function.Consumer
 import java.util.function.Predicate
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
@@ -506,14 +505,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         }
       }
     }
-  }
-
-  fun perform() {
-    perform(object : CheckPauseOnlyProgressIndicator {
-      override fun onPausedStateChanged(action: Consumer<Boolean>) {}
-
-      override fun freezeIfPaused() {}
-    }, IndexingProgressReporter(/* no visible progress */))
   }
 
   fun perform(indicator: CheckPauseOnlyProgressIndicator, progressReporter: IndexingProgressReporter) {

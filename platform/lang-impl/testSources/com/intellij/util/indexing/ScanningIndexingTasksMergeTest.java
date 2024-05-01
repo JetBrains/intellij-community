@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -83,14 +81,6 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     }
   }
 
-  public void testTryMergeDumbScanningTasks() {
-    UnindexedFilesScanner t1 = createScanningTask(iter1, "reason 1", ScanningType.PARTIAL);
-    UnindexedFilesScanner t2 = createScanningTask(iter2, "reason 2", ScanningType.PARTIAL);
-
-    assertSameElements(mergeAsDumbTasks(t1, t2).getPredefinedIndexableFilesIterators(), Arrays.asList(iter1, iter2));
-    assertSameElements(mergeAsDumbTasks(t2, t1).getPredefinedIndexableFilesIterators(), Arrays.asList(iter1, iter2));
-  }
-
   // we don't care which exact reason will be after merge. We only care that we don't have hundreds of "On refresh of files" in it
   public void testVFSRefreshIndexingTasksReasonsDoNotAccumulate() {
     String[][] situations = {
@@ -119,23 +109,6 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
 
     merged = merged.tryMergeWith(task2);
     assertEquals("Merged " + task1Reason + " with " + task2Reason + " with " + task2Reason, merged.getIndexingReason());
-  }
-
-  private UnindexedFilesScanner mergeAsDumbTasks(UnindexedFilesScanner t1, UnindexedFilesScanner t2) {
-    UnindexedFilesScannerExecutorImpl executor =
-      (UnindexedFilesScannerExecutorImpl)getProject().getService(UnindexedFilesScannerExecutor.class);
-
-    DumbModeTask dumb1 = executor.wrapAsDumbTask(t1);
-    DumbModeTask dumb2 = executor.wrapAsDumbTask(t2);
-    DumbModeTask mergedDumb = dumb1.tryMergeWith(dumb2);
-
-    assertEquals("Should be of the same class to merge successfully", dumb1.getClass(), dumb2.getClass());
-    assertEquals(
-      "Should be of the same class, otherwise mergedDumb will not be able to merge with new tasks produced by executor.wrapAsDumbTask",
-      mergedDumb.getClass(), dumb1.getClass()
-    );
-
-    return ((FilesScanningTaskAsDumbModeTaskWrapper)mergedDumb).getTask();
   }
 
   @NotNull
