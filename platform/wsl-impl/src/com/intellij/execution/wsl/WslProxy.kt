@@ -53,7 +53,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
 
 
     suspend fun connectChannels(source: ByteReadChannel, dest: ByteWriteChannel) {
-      val buffer = ByteBuffer.allocate(4096)
+      val buffer = ByteBuffer.allocate(64800)
       while (coroutineContext.isActive) {
         buffer.rewind()
         val bytesRead = source.readAvailable(buffer)
@@ -96,7 +96,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
 
   val wslIngressPort: Int
   private var wslLinuxIp: String
-  private val scope = CoroutineScope(Dispatchers.IO)
+  private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
   private suspend fun readToBuffer(channel: ByteReadChannel, bufferSize: Int): ByteBuffer {
     val buffer = ByteBuffer.allocate(bufferSize).order(ByteOrder.LITTLE_ENDIAN)
@@ -171,12 +171,16 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
     scope.launch {
       val winToLinSocket = winToLin.await()
       val winToWinSocket = winToWin.await()
+      val closeSockets = {
+        winToWinSocket.close()
+        winToLinSocket.close()
+      }
       launch(CoroutineName("WinWin->WinLin $linuxEgressPort")) {
         connectChannels(winToWinSocket.openReadChannel(), winToLinSocket.openWriteChannel(true))
-      }
+      }.invokeOnCompletion { closeSockets() }
       launch(CoroutineName("WinLin->WinWin $applicationPort")) {
         connectChannels(winToLinSocket.openReadChannel(), winToWinSocket.openWriteChannel(true))
-      }
+      }.invokeOnCompletion { closeSockets() }
     }
   }
 
