@@ -384,14 +384,11 @@ object CommunityLibraryLicenses {
                    url = "https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/",
                    additionalLibraryNames = listOf("ai.grazie.nlp.langs",
                                                    "ai.grazie.nlp.detect",
-                                                   "ai.grazie.utils.common",
                                                    "ai.grazie.utils.lucene.lt.compatibility",
                                                    "ai.grazie.model.bdg.jvm",
                                                    "ai.grazie.spell.hunspell.en",
                                                    "ai.grazie.emb",
-                                                   "ai.grazie.model.nlp.encoder",
                                                    "ai.grazie.utils.ki",
-                                                   "ai.grazie.nlp.encoder",
                                                    "ai.grazie.nlp.encoder.bert.uncased")).apache()
       .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "Groovy", libraryName = "org.codehaus.groovy:groovy", url = "https://groovy-lang.org/")
