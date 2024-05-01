@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.jmxDriver
 
 import com.intellij.driver.impl.Invoker
 import com.intellij.driver.impl.InvokerMBean
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.transport.Ref
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
@@ -12,7 +13,6 @@ import com.intellij.util.PlatformUtils
 import io.opentelemetry.context.Context
 import java.awt.Component
 import java.lang.management.ManagementFactory
-import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.management.JMException
 import javax.management.ObjectName
@@ -32,6 +32,12 @@ class InvokerService {
 
   private var myInvoker: InvokerMBean? = null
 
+  val rdTarget = when {
+    PlatformUtils.isJetBrainsClient() -> RdTarget.FRONTEND
+    AppMode.isRemoteDevHost() -> RdTarget.BACKEND
+    else -> RdTarget.DEFAULT
+  }
+
   val invoker: InvokerMBean
     get() = myInvoker ?: throw IllegalStateException("Invoker is not registered")
 
@@ -48,13 +54,7 @@ class InvokerService {
     val objectName = ObjectName("com.intellij.driver:type=Invoker")
     val server = ManagementFactory.getPlatformMBeanServer()
 
-    val prefix = when {
-      PlatformUtils.isJetBrainsClient() -> Ref.FRONTEND_REFERENCE_PREFIX
-      AppMode.isRemoteDevHost() -> Ref.BACKEND_REFERENCE_PREFIX
-      else -> ""
-    }
-
-    val localInvoker = Invoker(prefix, tracerSupplier, timedContextSupplier, screenshotAction)
+    val localInvoker = Invoker(rdTarget, tracerSupplier, timedContextSupplier, screenshotAction)
 
     val remoteJmxAddress = jmxBackendPort?.let { "$JMX_BACKEND_IP:$it" }
 

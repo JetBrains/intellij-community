@@ -5,7 +5,6 @@ import com.intellij.driver.client.impl.DriverImpl
 import com.intellij.driver.client.impl.Invoker
 import com.intellij.driver.client.impl.JmxHost
 import com.intellij.driver.impl.InvokerMBean
-import com.intellij.driver.model.DriverIlligalStateException
 import com.intellij.driver.model.ProductVersion
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.transport.Ref
@@ -49,17 +48,9 @@ internal class RemoteDevInvoker(private val localInvoker: InvokerMBean, remoteJm
 
   override fun invoke(call: RemoteCall): RemoteCallResult {
     when (call.rdTarget) {
-      RdTarget.FRONTEND_ONLY -> return localInvoker.invoke(call)
-      RdTarget.BACKEND_ONLY -> return invokeRemote(call)
-      RdTarget.FRONTEND_FIRST -> try {
-        return localInvoker.invoke(call)
-      }
-      catch (_: DriverIlligalStateException) {
-        return invokeRemote(call)
-      }
-      catch (t: Throwable) {
-        throw t
-      }
+      RdTarget.FRONTEND -> return localInvoker.invoke(call)
+      RdTarget.BACKEND -> return invokeRemote(call)
+      RdTarget.DEFAULT -> throw IllegalArgumentException("RdTarget should be resolved on the caller side")
     }
   }
 

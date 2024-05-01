@@ -6,7 +6,7 @@ import com.intellij.driver.client.service
 import com.intellij.driver.client.utility
 import com.intellij.driver.model.RdTarget
 
-@Remote("com.intellij.openapi.roots.ProjectRootManager")
+@Remote("com.intellij.openapi.roots.ProjectRootManager", rdTarget = RdTarget.BACKEND)
 interface ProjectRootManager {
   fun getContentRoots(): Array<VirtualFile>
 
@@ -33,7 +33,7 @@ interface Sdk {
 
 @Remote(value = "com.jetbrains.performancePlugin.commands.SetupProjectSdkUtil",
         plugin = "com.jetbrains.performancePlugin",
-        rdTarget = RdTarget.BACKEND_ONLY)
+        rdTarget = RdTarget.BACKEND)
 interface SetupProjectSdkUtil {
   fun setupOrDetectSdk(project: Project, name: String, type: String, home: String)
 

@@ -11,17 +11,17 @@ import java.awt.Point
 import java.awt.image.BufferedImage
 import javax.swing.JViewport
 
-internal object TextParser {
+object TextParser {
   private val graphics = BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics()
   private val logger = thisLogger()
 
-  fun parseComponent(component: Component, textToKey: TextToKeyCache): List<TextData> {
+  fun parseComponent(component: Component): List<TextData> {
     val containerComponent = findContainerComponent(component) ?: return emptyList()
     val x = containerComponent.locationOnScreen.x - component.locationOnScreen.x
     val y = containerComponent.locationOnScreen.y - component.locationOnScreen.y
     val data = mutableListOf<TextData>()
 
-    val g = DataExtractorGraphics2d(graphics, data, Point(x, y), textToKey)
+    val g = DataExtractorGraphics2d(graphics, data, Point(x, y), TextToKeyCache)
     parseData(g, containerComponent)
     return data.distinct()
   }

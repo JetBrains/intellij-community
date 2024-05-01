@@ -1,6 +1,9 @@
 package com.intellij.driver.impl;
 
-import com.intellij.driver.model.*;
+import com.intellij.driver.model.DriverIlligalStateException;
+import com.intellij.driver.model.OnDispatcher;
+import com.intellij.driver.model.ProductVersion;
+import com.intellij.driver.model.RdTarget;
 import com.intellij.driver.model.transport.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -52,13 +55,14 @@ public class Invoker implements InvokerMBean {
 
   private final ClearableLazyValue<IJTracer> tracer;
   private final Function<String, String> screenshotAction;
-  private final String refIdPrefix;
   private final Supplier<? extends Context> timedContextSupplier;
 
-  public Invoker(@NotNull String refIdPrefix, @NotNull Supplier<? extends IJTracer> tracerSupplier,
+  private final RdTarget rdTarget;
+
+  public Invoker(RdTarget rdTarget, @NotNull Supplier<? extends IJTracer> tracerSupplier,
                  @NotNull Supplier<? extends Context> timedContextSupplier,
                  @NotNull Function<String, String> screenshotAction) {
-    this.refIdPrefix = refIdPrefix;
+    this.rdTarget = rdTarget;
     this.timedContextSupplier = timedContextSupplier;
     this.tracer = new ClearableLazyValue<>() {
       @Override
@@ -362,7 +366,8 @@ public class Invoker implements InvokerMBean {
       clazz = getClassLoader(call).loadClass(call.getClassName());
     }
     catch (ClassNotFoundException e) {
-      throw new DriverIlligalStateException("No such class '" + call.getClassName() + "'", e);
+      throw new DriverIlligalStateException(
+        (rdTarget == RdTarget.DEFAULT ? "" : rdTarget + ": ") + "No such class '" + call.getClassName() + "'", e);
     }
     return clazz;
   }
@@ -412,16 +417,17 @@ public class Invoker implements InvokerMBean {
       }
 
       Object instance;
-      Boolean isControllerSession = ((ServiceCall)call).isControllerSession();
       if (projectInstance instanceof Project) {
-        instance = isControllerSession
-                   ? ((Project)projectInstance).getServices(serviceClass, ClientKind.CONTROLLER).get(0)
-                   : ((Project)projectInstance).getService(serviceClass);
+        instance = ((Project)projectInstance).getService(serviceClass);
+        if (instance == null) {
+          instance = ((Project)projectInstance).getServices(serviceClass, ClientKind.CONTROLLER).get(0);
+        }
       }
       else {
-        instance = isControllerSession
-                   ? ApplicationManager.getApplication().getServices(serviceClass, ClientKind.CONTROLLER).get(0)
-                   : ApplicationManager.getApplication().getService(serviceClass);
+        instance = ApplicationManager.getApplication().getService(serviceClass);
+        if (instance == null) {
+          instance = ApplicationManager.getApplication().getServices(serviceClass, ClientKind.CONTROLLER).get(0);
+        }
       }
       return instance;
     }
@@ -535,13 +541,6 @@ public class Invoker implements InvokerMBean {
   }
 
   private static @NotNull Ref putAdhocReference(@NotNull Object item, @NotNull Session session) {
-    if (item instanceof LocalRefDelegate<?> delegate) {
-      item = delegate.getLocalValue();
-    }
-    if (item instanceof RemoteRefDelegate<?> delegate) {
-      return delegate.getRemoteRef();
-    }
-
     return session.putReference(item);
   }
 
@@ -562,6 +561,10 @@ public class Invoker implements InvokerMBean {
   @Override
   public String takeScreenshot(@Nullable String outFolder) {
     return this.screenshotAction.apply(outFolder);
+  }
+
+  private String genId() {
+    return rdTarget.name() + "_" + REF_SEQUENCE.getAndIncrement();
   }
 
   interface Session {
@@ -585,13 +588,13 @@ public class Invoker implements InvokerMBean {
 
     @Override
     public @NotNull Ref putReference(@NotNull Object value) {
-      var id = refIdPrefix + REF_SEQUENCE.getAndIncrement();
+      var id = genId();
       variables.put(id, new HardReference(value));
 
       // also make variable available out ouf `driver.withContext { }` block as weak reference
       adhocReferenceMap.put(id, new WeakReference<>(value));
 
-      return RefProducer.makeRef(id, value);
+      return RefProducer.makeRef(id, rdTarget, value);
     }
   }
 
@@ -607,10 +610,10 @@ public class Invoker implements InvokerMBean {
 
     @Override
     public @NotNull Ref putReference(@NotNull Object value) {
-      var id = refIdPrefix + REF_SEQUENCE.getAndIncrement();
+      var id = genId();
       adhocReferenceMap.put(id, new WeakReference<>(value));
 
-      return RefProducer.makeRef(id, value);
+      return RefProducer.makeRef(id, rdTarget, value);
     }
   }
 
@@ -626,14 +629,15 @@ final class HardReference {
 }
 
 final class RefProducer {
-  public static @NotNull Ref makeRef(String id, @NotNull Object value) {
+  public static @NotNull Ref makeRef(String id, RdTarget rdTarget, @NotNull Object value) {
     if (value instanceof Ref) return (Ref)value;
 
     return new Ref(
       id,
       value.getClass().getName(),
       System.identityHashCode(value),
-      value.toString()
+      value.toString(),
+      rdTarget
     );
   }
 }

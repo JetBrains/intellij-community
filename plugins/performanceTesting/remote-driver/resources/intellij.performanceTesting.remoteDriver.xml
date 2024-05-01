@@ -11,5 +11,10 @@
                  description="Enables UI components hierarchy URL"/>
 
     <httpRequestHandler implementation="com.jetbrains.performancePlugin.remotedriver.webservice.UiHierarchyWebService"/>
+
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
+    <remotedriver.xpathDataModelExtension implementation="com.jetbrains.performancePlugin.remotedriver.RemoteDriverDataModelExtension"/>
   </extensions>
 </idea-plugin>

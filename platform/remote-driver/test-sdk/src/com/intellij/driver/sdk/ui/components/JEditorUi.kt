@@ -5,6 +5,8 @@ import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.Document
 import com.intellij.driver.sdk.Editor
 import com.intellij.driver.sdk.logicalPosition
+import com.intellij.driver.sdk.remoteDev.BeControlClass
+import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
@@ -60,6 +62,7 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorComponentImpl")
+@BeControlClass(EditorComponentImplBeControlBuilder::class)
 interface EditorComponentImpl : Component {
   fun getEditor(): Editor
 }

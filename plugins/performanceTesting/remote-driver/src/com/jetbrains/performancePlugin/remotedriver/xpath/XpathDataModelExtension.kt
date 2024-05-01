@@ -11,6 +11,7 @@ interface XpathDataModelExtension {
     val EP_NAME = ExtensionPointName.create<XpathDataModelExtension>("com.jetbrains.performancePlugin.remotedriver.xpathDataModelExtension")
   }
 
-  fun acceptComponent(component: Component): Boolean
-  fun processComponent(doc: Document, parentElement: Element, component: Component)
+  val isRemDevExtension: Boolean
+
+  fun postProcessElement(doc: Document, component: Component, element: Element, parentElement: Element)
 }

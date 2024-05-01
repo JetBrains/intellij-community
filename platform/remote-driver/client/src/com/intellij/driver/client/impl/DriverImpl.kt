@@ -19,7 +19,7 @@ import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
-class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver {
+open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver {
   private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
   private val sessionHolder = ThreadLocal<Session>()
 
@@ -59,27 +59,27 @@ class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> service(clazz: KClass<T>, isBackendService: Boolean): T {
-    return appServices.computeIfAbsent(AppServiceId(clazz.java, isBackendService)) { serviceBridge(clazz.java, null, isBackendService) } as T
+  override fun <T : Any> service(clazz: KClass<T>, rdTarget: RdTarget): T {
+    return appServices.computeIfAbsent(AppServiceId(clazz.java, rdTarget)) { serviceBridge(clazz.java, null, rdTarget) } as T
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> service(clazz: KClass<T>, project: ProjectRef?, isBackendService: Boolean): T {
-    val id = ProjectServiceId((project as RefWrapper).getRef().identityHashCode, clazz.java, isBackendService)
-    return projectServices.computeIfAbsent(id) { serviceBridge(clazz.java, project, isBackendService) } as T
+  override fun <T : Any> service(clazz: KClass<T>, project: ProjectRef?, rdTarget: RdTarget): T {
+    val id = ProjectServiceId((project as RefWrapper).getRef().identityHashCode, clazz.java, rdTarget)
+    return projectServices.computeIfAbsent(id) { serviceBridge(clazz.java, project, rdTarget) } as T
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> utility(clazz: KClass<T>, isBackendUtility: Boolean): T {
-    return utils.computeIfAbsent(UtilityId(clazz.java, isBackendUtility)) { utilityBridge(clazz.java, isBackendUtility) } as T
+  override fun <T : Any> utility(clazz: KClass<T>, rdTarget: RdTarget): T {
+    return utils.computeIfAbsent(UtilityId(clazz.java, rdTarget)) { utilityBridge(clazz.java, rdTarget) } as T
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> new(clazz: KClass<T>, vararg args: Any?, forceRunOnBackend: Boolean): T {
+  override fun <T : Any> new(clazz: KClass<T>, vararg args: Any?, rdTarget: RdTarget): T {
     val remote = findRemoteMeta(clazz.java)
                  ?: throw IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
 
-    val rdTarget = checkRdTargetConsistencyAndGetMostSuitable(clazz.java, if (forceRunOnBackend) RdTarget.BACKEND_ONLY else remote.rdTarget, *args)
+    val rdTarget = mergeRdTargets(rdTarget, remote, *args)
     val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
     val call = NewInstanceCall(
       sessionId,
@@ -88,7 +88,7 @@ class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver
       dispatcher,
       semantics,
       remote.value,
-      if (rdTarget == RdTarget.FRONTEND_FIRST) RdTarget.FRONTEND_ONLY else rdTarget,
+      if (rdTarget == RdTarget.DEFAULT) RdTarget.FRONTEND else rdTarget,
       convertArgsToPass(args)
     )
     val callResult = makeCall(call)
@@ -96,7 +96,9 @@ class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver
   }
 
   override fun <T : Any> cast(instance: Any, clazz: KClass<T>): T {
-    if (instance !is RefWrapper) throw IllegalArgumentException("instance not a Ref to remote instance")
+    if (instance !is RefWrapper) {
+      throw IllegalArgumentException("$instance not a Ref to remote instance")
+    }
 
     val ref = instance.getRef()
     val refPluginId = instance.getRefPluginId()
@@ -166,11 +168,8 @@ class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver
     return remote.plugin.takeIf { it.isNotBlank() }
   }
 
-  private fun serviceBridge(clazz: Class<*>, project: ProjectRef? = null, forceRunOnBackend: Boolean = false): Any {
+  private fun serviceBridge(clazz: Class<*>, project: ProjectRef? = null, rdTarget: RdTarget): Any {
     val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
-
-    val rdTarget = if (forceRunOnBackend) RdTarget.BACKEND_ONLY else remote.rdTarget
-    val isControllerSession = remote.isControllerSession
 
     return Proxy.newProxyInstance(clazz.classLoader, arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
@@ -178,7 +177,7 @@ class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver
         "hashCode" -> clazz.hashCode()
         "toString" -> "@Service(APP) " + remote.value
         else -> {
-          val rdTarget = checkRdTargetConsistencyAndGetMostSuitable(clazz, rdTarget, args)
+          val rdTarget = mergeRdTargets(rdTarget, remote, project, *(args ?: emptyArray()))
           val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = ServiceCall(
             sessionId,
@@ -191,7 +190,7 @@ class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver
             convertArgsToPass(args),
             (project as? RefWrapper?)?.getRef(),
             remote.serviceInterface.takeIf { it.isNotBlank() },
-            rdTarget, isControllerSession
+            rdTarget
           )
           val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
@@ -209,17 +208,16 @@ class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver
     }
   }
 
-  private fun utilityBridge(clazz: Class<*>, forceRunOnBackend: Boolean): Any {
+  private fun utilityBridge(clazz: Class<*>, rdTarget: RdTarget): Any {
     val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
 
-    val rdTarget = if (forceRunOnBackend) RdTarget.BACKEND_ONLY else remote.rdTarget
     return Proxy.newProxyInstance(clazz.classLoader, arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
         "equals" -> proxy === args?.firstOrNull()
         "hashCode" -> clazz.hashCode()
         "toString" -> "Utility " + remote.value
         else -> {
-          val rdTarget = checkRdTargetConsistencyAndGetMostSuitable(clazz, rdTarget, args)
+          val rdTarget = mergeRdTargets(rdTarget, remote, *(args ?: emptyArray()))
           val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = UtilityCall(
             sessionId,
@@ -264,14 +262,10 @@ class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver
             ref
           )
           val callResult = makeCall(call)
-          convertResult(callResult, method, getPluginId(remote))
+          convertResult(callResult, method, pluginId)
         }
       }
     }
-  }
-
-  private fun getClassLoader(): ClassLoader? {
-    return javaClass.classLoader
   }
 
   override fun <T> withContext(dispatcher: OnDispatcher,
@@ -335,26 +329,25 @@ private fun findRemoteMeta(clazz: Class<*>): Remote? {
     .firstOrNull()
 }
 
-private fun checkRdTargetConsistencyAndGetMostSuitable(
-  clazz: Class<*>,
+private fun mergeRdTargets(
   rdTarget: RdTarget,
+  remote: Remote,
   vararg args: Any?
 ): RdTarget {
-  val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
-  val classRdTarget = remote.rdTarget
-  val argsRdTarget =
-    args.filterIsInstance<RefWrapper>()
-      .map { if (it.getRef().isBackendReference) RdTarget.BACKEND_ONLY else RdTarget.FRONTEND_ONLY }
-      .reduceOrNull { acc, b ->
-        if (acc != b) throw IllegalStateException("Inconsistent rdTarget")
-        acc
-      } ?: RdTarget.FRONTEND_FIRST
+  val rdTargets = args.filterIsInstance<RefWrapper>()
+    .map { it.getRef().rdTarget() }
 
-  return listOf(classRdTarget, argsRdTarget, rdTarget).reduce { acc, b ->
-    if (acc == RdTarget.FRONTEND_FIRST) b
-    else if (b == RdTarget.FRONTEND_FIRST) acc
+  return (rdTargets + rdTarget + remote.rdTarget).reduce { acc, b ->
+    if (acc == RdTarget.DEFAULT) b
+    else if (b == RdTarget.DEFAULT) acc
     else if (acc == b) acc
-    else throw IllegalStateException("Inconsistent rdTarget")
+    else throw IllegalStateException("Inconsistent rdTargets. " +
+                                     "ForceRdTarget=$rdTarget " +
+                                     "Remote(value=${remote.value}, rdTarget=${remote.rdTarget}), " +
+                                     "Args: [${args.filterIsInstance<RefWrapper>().map { "${it.getRef().rdTarget()} -> $it" }.joinToString()}]"
+    )
+  }.let {
+    if (it == RdTarget.DEFAULT) RdTarget.FRONTEND else it
   }
 }
 
@@ -368,9 +361,9 @@ private val NO_SESSION: Session = Session(0, OnDispatcher.DEFAULT, LockSemantics
 
 class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)
 
-private data class AppServiceId(val clazz: Class<*>, val isBackendService: Boolean)
-private data class ProjectServiceId(val projectId: Int, val serviceClass: Class<*>, val isBackendService: Boolean)
-private data class UtilityId(val clazz: Class<*>, val isBackendUtility: Boolean)
+private data class AppServiceId(val clazz: Class<*>, val rdTarget: RdTarget)
+private data class ProjectServiceId(val projectId: Int, val serviceClass: Class<*>, val rdTarget: RdTarget)
+private data class UtilityId(val clazz: Class<*>, val rdTarget: RdTarget)
 
 @JmxName("com.intellij.driver:type=Invoker")
 interface Invoker : AutoCloseable {

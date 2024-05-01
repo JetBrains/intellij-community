@@ -2,11 +2,6 @@
 
 package com.jetbrains.performancePlugin.remotedriver.xpath
 
-import com.intellij.driver.model.LocalRefDelegate
-import com.intellij.driver.model.RefDelegate
-import com.intellij.driver.model.RemoteRefDelegate
-import com.intellij.driver.model.transport.Ref
-import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 import java.awt.Component
 import javax.xml.xpath.XPathConstants
@@ -15,7 +10,7 @@ import javax.xml.xpath.XPathFactory
 internal class XpathSearcher {
   private val xPath = XPathFactory.newInstance().newXPath()
 
-  fun findComponent(xpathExpression: String, component: Component?): RefDelegate<Component> {
+  fun findComponent(xpathExpression: String, component: Component?): Component {
     val components = findComponents(xpathExpression, component)
     if (components.size > 1) {
       throw IllegalStateException("To many components found by xpath '$xpathExpression'")
@@ -26,19 +21,10 @@ internal class XpathSearcher {
     return components.first()
   }
 
-  fun findComponents(xpathExpression: String, component: Component?): List<RefDelegate<Component>> {
-    val model = XpathDataModelCreator.create(component)
+  fun findComponents(xpathExpression: String, component: Component?): List<Component> {
+    val model = XpathDataModelCreator().create(component)
     val result = xPath.compile(xpathExpression).evaluate(model, XPathConstants.NODESET) as NodeList
-    return (0 until result.length).mapNotNull { result.item(it) }.filterIsInstance<Element>().mapNotNull {
-      if (it.hasAttribute("remoteId")) {
-        val remoteId = it.getAttribute("remoteId")
-        val className = it.getAttribute("javaclass")
-        val identityHash = it.getAttribute("hashCode")
-        RemoteRefDelegate(Ref(remoteId, className, identityHash.toInt(), null))
-      }
-      else {
-        LocalRefDelegate(it.getUserData("component") as Component)
-      }
-    }
+
+    return (0 until result.length).mapNotNull { result.item(it).getUserData("component") as? Component }
   }
 }

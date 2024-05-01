@@ -2,7 +2,6 @@
 
 package com.jetbrains.performancePlugin.remotedriver.xpath
 
-import com.jetbrains.performancePlugin.jmxDriver.InvokerService
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextParser
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import org.assertj.swing.edt.GuiActionRunner
@@ -21,39 +20,17 @@ import javax.swing.JComponent
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.math.absoluteValue
 
-object XpathDataModelCreator {
-  interface ComponentTranslator {
-    fun translate(c: Component, e: Element)
-  }
-
-  private object DefaultComponentTranslator : ComponentTranslator {
-    override fun translate(c: Component, e: Element) {
-      e.setUserData("component", c, null)
-    }
-  }
-
-  private object RemoteComponentTranslator : ComponentTranslator {
-    override fun translate(c: Component, e: Element) {
-      val ref = InvokerService.getInstance().putReference(c)
-      e.setAttribute("remoteId", ref.id)
-      e.setAttribute("hashCode", ref.identityHashCode.toString())
-    }
-  }
+class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
+  val elementProcessors = XpathDataModelExtension.EP_NAME.extensionList.toMutableList()
 
   private fun addComponent(
     doc: Document,
     parentElement: Element,
     hierarchy: ComponentHierarchy,
     component: Component,
-    translator: ComponentTranslator,
     targetComponent: Component? = null
   ) {
-    XpathDataModelExtension.EP_NAME.extensionList.find { it.acceptComponent(component) }?.let {
-      it.processComponent(doc, parentElement, component)
-      return
-    }
-
-    val element = createElement(doc, component, translator, targetComponent)
+    val element = createElement(doc, component, targetComponent)
     parentElement.appendChild(element)
 
     val allChildren = hierarchy.childrenOf(component)
@@ -71,20 +48,20 @@ object XpathDataModelCreator {
       addAll(filteredChildren)
       addAll(exceptionChildren)
     }.sortedWith(ComponentOrderComparator).forEach {
-      addComponent(doc, element, hierarchy, it, translator, targetComponent)
+      addComponent(doc, element, hierarchy, it, targetComponent)
     }
+    elementProcessors.forEach { it.postProcessElement(doc, component, element, parentElement) }
   }
 
-  private fun createElement(doc: Document, component: Component, translator: ComponentTranslator, targetComponent: Component? = null): Element {
+  fun createElement(doc: Document, component: Component, targetComponent: Component? = null): Element {
 
     val element = doc.createElement("div")
 
     component.fillElement(doc, element, targetComponent)
 
-    translator.translate(component, element)
+    element.setUserData("component", component, null)
     return element
   }
-
 
   private fun <C : Component> C.fillElement(doc: Document, element: Element, targetComponent: Component? = null) {
     val jClass = if (javaClass.isAnonymousClass) {
@@ -119,7 +96,7 @@ object XpathDataModelCreator {
       .forEach { field ->
         try {
           field.isAccessible = true
-          val attributeName = field.name.replace("$", "_").toLowerCase()
+          val attributeName = field.name.replace("$", "_").lowercase()
           val value = field.get(this)?.toString()?.let {
             if (it.contains(".svg")) {
               return@let it
@@ -179,7 +156,7 @@ object XpathDataModelCreator {
           && bounds.width > 0 && bounds.height > 0
       ) {
         try {
-          val foundText = TextParser.parseComponent(this, TextToKeyCache)
+          val foundText = TextParser.parseComponent(this)
           val text = foundText.joinToString(" || ") { it.text }
           element.setAttribute("visible_text", text)
           if (text.trim().isNotEmpty()) {
@@ -246,10 +223,11 @@ object XpathDataModelCreator {
   }
 
   private val componentFilter: (Component) -> Boolean = {
-    it.isVisible && it.isShowing
+    (it.isVisible && it.isShowing || !onlyVisibleComponents)
     && it::class.java.simpleName != "Corner"
-    && ((it.bounds.width > 0
-         && it.bounds.height > 0) || it::class.java.simpleName in listOf("IdeMenuBar", "ActionMenu"))
+    && ((it.bounds.width > 0 && it.bounds.height > 0)
+        || !onlyVisibleComponents
+        || it::class.java.simpleName in listOf("IdeMenuBar", "ActionMenu"))
   }
 
   private val componentsWithBlockingModalTextSupplier = listOf(
@@ -295,6 +273,8 @@ object XpathDataModelCreator {
 
   private object ComponentOrderComparator : Comparator<Component> {
     override fun compare(c1: Component, c2: Component): Int {
+      if (!c1.isShowing) return -1
+      if (!c2.isShowing) return 1
       val yDiff = c1.locationOnScreen.y - c2.locationOnScreen.y
       if (yDiff.absoluteValue > 10) {
         return yDiff
@@ -304,19 +284,8 @@ object XpathDataModelCreator {
 
   }
 
-  fun create(component: Component?, targetComponent: Component? = null): Document {
-    return create(component, DefaultComponentTranslator, targetComponent)
-  }
 
-  fun createForRemote(component: Component?, targetComponent: Component? = null): Document {
-    return create(component, RemoteComponentTranslator, targetComponent)
-  }
-
-  private fun create(
-    rootComponent: Component?,
-    translator: ComponentTranslator,
-    targetComponent: Component? = null,
-  ): Document {
+  fun create(rootComponent: Component?, includeRoot: Boolean = false, targetComponent: Component? = null): Document {
 
     val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument()
 
@@ -326,13 +295,14 @@ object XpathDataModelCreator {
         val rootElement = doc.createElement("div")
         doc.appendChild(rootElement)
         val containers = if (rootComponent != null) {
-          hierarchy.childrenOf(rootComponent)
+          if (includeRoot) listOf(rootComponent)
+          else hierarchy.childrenOf(rootComponent).takeIf { it.isNotEmpty() } ?: listOf(rootComponent)
         }
         else {
           hierarchy.roots()
         }
-        containers.filter { it.isShowing || it.javaClass.name.endsWith("SharedOwnerFrame") }.forEach {
-          addComponent(doc, rootElement, hierarchy, it, translator, targetComponent)
+        containers.filter { it.isShowing || !onlyVisibleComponents || it.javaClass.name.endsWith("SharedOwnerFrame") }.forEach {
+          addComponent(doc, rootElement, hierarchy, it, targetComponent)
         }
       }
     })
