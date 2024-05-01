@@ -16,7 +16,6 @@ import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindSwitcher
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.base.plugin.getPluginModeDescription
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import javax.swing.JComponent
 
@@ -57,12 +56,20 @@ class KotlinPluginKindSwitcherController {
 
     fun createComponent(): JComponent = panel {
         currentPluginPanel = panel {
+            val currentPluginMode = KotlinPluginModeProvider.currentPluginMode
             row {
-                text(KotlinPreferencesBundle.message("label.your.current.plugin", KotlinPluginModeProvider.currentPluginMode.getPluginModeDescription()))
+                val text = KotlinPreferencesBundle.message(
+                    "label.your.current.plugin",
+                    currentPluginMode.pluginModeDescription,
+                )
+                text(text)
             }
             row {
-                val otherPlugin = KotlinPluginModeProvider.currentPluginMode.other()
-                text(KotlinPreferencesBundle.message("label.plugin.will.be.switched.after.ide.restart", otherPlugin.getPluginModeDescription()))
+                val text = KotlinPreferencesBundle.message(
+                    "label.plugin.will.be.switched.after.ide.restart",
+                    currentPluginMode.other.pluginModeDescription,
+                )
+                text(text)
             }
             row {
                 link(

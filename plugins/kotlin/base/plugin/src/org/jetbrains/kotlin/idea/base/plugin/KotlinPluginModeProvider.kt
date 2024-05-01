@@ -21,24 +21,24 @@ interface KotlinPluginModeProvider {
     }
 }
 
-enum class KotlinPluginMode {
-    K1 {
-        override fun other(): KotlinPluginMode = K2
+enum class KotlinPluginMode(
+    private val propertyKey: String // TODO @PropertyKey,
+) {
+
+    K1(propertyKey = "kotlin.plugin.kind.k1") {
+
+        override val other: KotlinPluginMode get() = K2
     },
-    K2 {
-        override fun other(): KotlinPluginMode = K1
+    K2(propertyKey = "kotlin.plugin.kind.k2") {
+
+        override val other: KotlinPluginMode get() = K1
     };
 
-    abstract fun other(): KotlinPluginMode
-}
+    abstract val other: KotlinPluginMode
 
-fun KotlinPluginMode.getPluginModeDescription(): @Nls String {
-    return when (this) {
-        KotlinPluginMode.K1 -> KotlinBasePluginBundle.message("kotlin.plugin.kind.k1")
-        KotlinPluginMode.K2 -> KotlinBasePluginBundle.message("kotlin.plugin.kind.k2")
-    }
+    val pluginModeDescription: @Nls String
+        get() = KotlinBasePluginBundle.message(propertyKey)
 }
-
 
 @Deprecated(
     "Use `KotlinPluginModeProvider.isK2Mode()` instead",
