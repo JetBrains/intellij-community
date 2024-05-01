@@ -385,7 +385,6 @@ object CommunityLibraryLicenses {
                    additionalLibraryNames = listOf("ai.grazie.nlp.langs",
                                                    "ai.grazie.nlp.detect",
                                                    "ai.grazie.utils.lucene.lt.compatibility",
-                                                   "ai.grazie.model.bdg.jvm",
                                                    "ai.grazie.spell.hunspell.en",
                                                    "ai.grazie.emb",
                                                    "ai.grazie.utils.ki",
