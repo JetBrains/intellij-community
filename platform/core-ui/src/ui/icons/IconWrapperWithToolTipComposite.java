@@ -2,6 +2,7 @@
 package com.intellij.ui.icons;
 
 import com.intellij.ui.RetrievableIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,10 +10,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-final class IconWrapperWithToolTipComposite implements IconWithToolTip, CopyableIcon, RetrievableIcon {
+@ApiStatus.Internal
+public final class IconWrapperWithToolTipComposite implements IconWithToolTip, CopyableIcon, RetrievableIcon {
   private final Icon myIcon;
 
-  IconWrapperWithToolTipComposite(Icon icon) {
+  public IconWrapperWithToolTipComposite(Icon icon) {
     myIcon = icon;
   }
 
