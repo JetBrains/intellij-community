@@ -244,10 +244,10 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
   }
 
   // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
-  private static void disposeWithFileLevel(@NotNull HighlightInfo info,
-                                           @NotNull RangeHighlighterEx highlighter,
-                                           @NotNull HighlightingSession highlightingSession) {
-    if (info.isFileLevelAnnotation()) {
+  static void disposeWithFileLevel(@Nullable HighlightInfo info,
+                                   @NotNull RangeHighlighterEx highlighter,
+                                   @NotNull HighlightingSession highlightingSession) {
+    if (info != null && info.isFileLevelAnnotation()) {
       ((HighlightingSessionImpl)highlightingSession).removeFileLevelHighlight(info);
     }
     highlighter.dispose();
@@ -357,7 +357,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           RangeHighlighterEx salvagedHighlighter = toReuse.pickupHighlighterFromGarbageBin(0, psiFile.getTextLength(), -409423948);
           HighlightInfo oldFileInfo = salvagedHighlighter == null ? null : HighlightInfo.fromRangeHighlighter(salvagedHighlighter);
           if (oldFileInfo != null) {
-            ((HighlightingSessionImpl)session).removeFileLevelHighlight(oldFileInfo);
+            disposeWithFileLevel(oldFileInfo, salvagedHighlighter, session);
             salvagedHighlighter = null;
           }
           ((HighlightingSessionImpl)session).addFileLevelHighlight(info, salvagedHighlighter);

@@ -231,16 +231,13 @@ public final class UpdateHighlightersUtil {
     // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
     for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
       boolean shouldRemove = shouldRemoveHighlighter(highlighter, session);
-      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
       if (LOG.isDebugEnabled()) {
         LOG.debug("incinerateObsoleteHighlighters "+highlighter+"; shouldRemove:"+shouldRemove);
       }
       if (shouldRemove) {
-        highlighter.dispose();
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        HighlightInfoUpdaterImpl.disposeWithFileLevel(info, (RangeHighlighterEx)highlighter, session);
         changed = true;
-        if (info != null && info.isFileLevelAnnotation()) {
-          ((HighlightingSessionImpl)session).removeFileLevelHighlight(info);
-        }
       }
     }
     return changed;
@@ -458,8 +455,16 @@ public final class UpdateHighlightersUtil {
     });
 
     for (HighlightInfo info : toRemove) {
-      if (!info.getHighlighter().isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
-        info.getHighlighter().dispose();
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (!highlighter.isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
+        if (info.isFileLevelAnnotation()) {
+          DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
+          PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
+          if (psiFile != null) {
+            codeAnalyzer.removeFileLevelHighlight(psiFile, info);
+          }
+        }
+        highlighter.dispose();
       }
     }
 
