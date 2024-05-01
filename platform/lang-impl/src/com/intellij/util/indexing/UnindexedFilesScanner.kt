@@ -17,7 +17,6 @@ import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
@@ -508,10 +507,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   }
 
   fun perform(indicator: CheckPauseOnlyProgressIndicator, progressReporter: IndexingProgressReporter) {
-    LOG.assertTrue(myProject.getUserData(INDEX_UPDATE_IN_PROGRESS) != true, "Scanning is already in progress")
     getInstance().getTracer(Indexes).spanBuilder("UnindexedFilesScanner.perform").use {
       try {
-        myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true)
         myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
         val diagnosticDumper = IndexDiagnosticDumper.getInstance()
         diagnosticDumper.onScanningStarted(scanningHistory) //todo[lene] 1
@@ -528,7 +525,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         throw t
       }
       finally {
-        myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false)
         myFilterHandler.scanningCompleted(myProject)
         LOG.assertTrue(futureScanningHistory.isDone, "futureScanningHistory.isDone should be true")
       }
@@ -658,8 +654,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     @Volatile
     var ourTestMode: TestMode? = null
 
-    private val INDEX_UPDATE_IN_PROGRESS = Key.create<Boolean>("INDEX_UPDATE_IN_PROGRESS")
-
     private fun mergeIterators(iterators: List<IndexableFilesIterator>?,
                                otherIterators: List<IndexableFilesIterator>?): List<IndexableFilesIterator>? {
       if (iterators == null || otherIterators == null) return null
@@ -675,7 +669,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
     @JvmStatic
     fun isIndexUpdateInProgress(project: Project): Boolean {
-      return project.getUserData(INDEX_UPDATE_IN_PROGRESS) == true
+      return UnindexedFilesScannerExecutor.getInstance(project).isRunning.value
     }
 
     private fun collectProviders(project: Project, index: FileBasedIndexImpl): Pair<List<IndexableFilesIterator>, StatusMark?> {
