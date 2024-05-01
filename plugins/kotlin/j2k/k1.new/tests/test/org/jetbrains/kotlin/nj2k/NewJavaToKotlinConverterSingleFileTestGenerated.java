@@ -1724,6 +1724,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/detectProperties/DropGetterForMutable.java");
         }
 
+        @TestMetadata("Enum.java")
+        public void testEnum() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/Enum.java");
+        }
+
         @TestMetadata("FalseGetter.java")
         public void testFalseGetter() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/FalseGetter.java");
@@ -1737,6 +1742,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("FieldUsagesInFactoryMethods.java")
         public void testFieldUsagesInFactoryMethods() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/FieldUsagesInFactoryMethods.java");
+        }
+
+        @TestMetadata("FunctionalInterfaceGetter.java")
+        public void testFunctionalInterfaceGetter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/FunctionalInterfaceGetter.java");
         }
 
         @TestMetadata("GetterAndSetterNamesDifferent.java")
@@ -2076,11 +2086,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     public static class Enum extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("colorEnum.java")
-        public void testColorEnum() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/enum/colorEnum.java");
         }
 
         @TestMetadata("companionObject.java")
@@ -2962,14 +2967,9 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("AbstractGetter1.java")
-        public void testAbstractGetter1() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/functionalInterfaces/AbstractGetter1.java");
-        }
-
-        @TestMetadata("AbstractGetter2.java")
-        public void testAbstractGetter2() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/functionalInterfaces/AbstractGetter2.java");
+        @TestMetadata("AbstractGetter.java")
+        public void testAbstractGetter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/functionalInterfaces/AbstractGetter.java");
         }
 
         @TestMetadata("AbstractGetterNoFunctionalInterfaceAnnotation.java")
