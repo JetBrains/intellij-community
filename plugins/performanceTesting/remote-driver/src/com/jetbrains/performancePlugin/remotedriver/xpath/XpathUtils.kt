@@ -3,6 +3,7 @@
 package com.jetbrains.performancePlugin.remotedriver.xpath
 
 import org.w3c.dom.Document
+import org.w3c.dom.Element
 import java.io.StringWriter
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.Transformer
@@ -33,3 +34,5 @@ internal fun Document.convertToHtml(): String {
     throw RuntimeException("Error converting to String", ex)
   }
 }
+
+fun Element.childElements() = (0..childNodes.length).mapNotNull { childNodes.item(it) }.filterIsInstance<Element>()
