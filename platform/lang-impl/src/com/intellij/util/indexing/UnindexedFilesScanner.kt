@@ -512,6 +512,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         val diagnosticDumper = IndexDiagnosticDumper.getInstance()
         diagnosticDumper.onScanningStarted(scanningHistory) //todo[lene] 1
         try {
+          waitForPreconditions()
           performScanningAndIndexing(indicator, progressReporter)
         }
         finally {
@@ -532,14 +533,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   private fun performScanningAndIndexing(indicator: CheckPauseOnlyProgressIndicator,
                                          progressReporter: IndexingProgressReporter): ProjectScanningHistory {
-    myIndex.loadIndexes()
-    myIndex.registeredIndexes.waitUntilAllIndicesAreInitialized() // wait until stale ids are deleted
-    if (startCondition != null) { // wait until indexes for dirty files are cleared
-      ProgressIndicatorUtils.awaitWithCheckCanceled(startCondition)
-    }
-    // Not sure that ensureUpToDate is really needed, but it wouldn't hurt to clear up queue not from EDT
-    // It was added in this commit: 'Process vfs events asynchronously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
-    myIndex.changedFilesCollector.ensureUpToDate()
     val markRef = Ref<StatusMark>()
     try {
       ProjectScanningHistoryImpl.startDumbModeBeginningTracking(myProject, scanningHistory)
@@ -562,6 +555,17 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       }
     }
     return scanningHistory
+  }
+
+  private fun waitForPreconditions() {
+    myIndex.loadIndexes()
+    myIndex.registeredIndexes.waitUntilAllIndicesAreInitialized() // wait until stale ids are deleted
+    if (startCondition != null) { // wait until indexes for dirty files are cleared
+      ProgressIndicatorUtils.awaitWithCheckCanceled(startCondition)
+    }
+    // Not sure that ensureUpToDate is really needed, but it wouldn't hurt to clear up queue not from EDT
+    // It was added in this commit: 'Process vfs events asynchronously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
+    myIndex.changedFilesCollector.ensureUpToDate()
   }
 
   override fun toString(): String {
