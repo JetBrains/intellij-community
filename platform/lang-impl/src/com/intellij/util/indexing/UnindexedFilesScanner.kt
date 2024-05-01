@@ -509,16 +509,11 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     getInstance().getTracer(Indexes).spanBuilder("UnindexedFilesScanner.perform").use {
       try {
         myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
-        val diagnosticDumper = IndexDiagnosticDumper.getInstance()
-        diagnosticDumper.onScanningStarted(scanningHistory) //todo[lene] 1
-        try {
+        prepareScanningHistoryAndRun {
           waitForPreconditions()
           performScanningAndIndexing(indicator, progressReporter)
+          futureScanningHistory.set(scanningHistory)
         }
-        finally {
-          diagnosticDumper.onScanningFinished(scanningHistory) //todo[lene] 1
-        }
-        futureScanningHistory.set(scanningHistory)
       }
       catch (t: Throwable) {
         futureScanningHistory.setException(t)
@@ -528,6 +523,18 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         myFilterHandler.scanningCompleted(myProject)
         LOG.assertTrue(futureScanningHistory.isDone, "futureScanningHistory.isDone should be true")
       }
+    }
+  }
+
+  private fun prepareScanningHistoryAndRun(block: () -> Unit) {
+    val diagnosticDumper = IndexDiagnosticDumper.getInstance()
+    diagnosticDumper.onScanningStarted(scanningHistory) //todo[lene] 1
+
+    try {
+      block()
+    }
+    finally {
+      diagnosticDumper.onScanningFinished(scanningHistory) //todo[lene] 1
     }
   }
 
