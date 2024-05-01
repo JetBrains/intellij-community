@@ -177,13 +177,13 @@ sealed interface DistFileContent {
   fun readAsStringForDebug(): String
 }
 
-internal data class LocalDistFileContent(@JvmField val file: Path) : DistFileContent {
+data class LocalDistFileContent(@JvmField val file: Path) : DistFileContent {
   override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).toString(Charsets.UTF_8)
 
   override fun toString(): String = "LocalDistFileContent(file=$file)"
 }
 
-internal data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
+data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
   override fun readAsStringForDebug(): String = String(data, 0, data.size.coerceAtMost(1024), Charsets.UTF_8)
 
   override fun equals(other: Any?): Boolean {
