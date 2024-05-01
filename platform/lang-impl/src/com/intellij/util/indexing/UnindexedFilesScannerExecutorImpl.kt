@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
@@ -17,6 +18,8 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistoryImpl
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
@@ -24,6 +27,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.Future
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.locks.LockSupport
 import java.util.function.Predicate
 
@@ -51,7 +56,11 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   override val startedOrStoppedEvent: MutableStateFlow<Int> = MutableStateFlow(0)
 
   // Use from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet
-  private val scanningTask = MutableStateFlow<UnindexedFilesScanner?>(null)
+  private class ScheduledScanningTask(val task: UnindexedFilesScanner, val futureHistory: SettableFuture<ProjectScanningHistory>) {
+    fun close() = task.close()
+  }
+
+  private val scanningTask = MutableStateFlow<ScheduledScanningTask?>(null)
   private val scanningEnabled = MutableStateFlow(true)
 
   @Volatile
@@ -87,7 +96,14 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
             runningTask?.cancel() // We expect that running task is null. But it's better to be on the safe side
             coroutineScope {
               runningTask = async(CoroutineName("Scanning")) {
-                runScanningTask(task)
+                try {
+                  val history = runScanningTask(task.task)
+                  task.futureHistory.set(history)
+                }
+                catch (t: Throwable) {
+                  task.futureHistory.setException(t)
+                  throw t
+                }
               }
             }
             logInfo("Task finished: $task")
@@ -173,14 +189,14 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     scanningWaitsForNonDumbModeOverride.value = newValue
   }
 
-  private suspend fun runScanningTask(task: UnindexedFilesScanner) {
+  private suspend fun runScanningTask(task: UnindexedFilesScanner): ProjectScanningHistoryImpl {
     val shouldShowProgress: StateFlow<Boolean> = if (task.shouldHideProgressInSmartMode()) {
       project.service<DumbModeWhileScanningTrigger>().isDumbModeForScanningActive()
     }
     else {
       MutableStateFlow(true)
     }
-    coroutineScope {
+    return coroutineScope{
       val progressScope = childScope("Scanning progress")
       val progressReporter = IndexingProgressReporter()
       val taskIndicator = IndexingProgressReporter.CheckPauseOnlyProgressIndicatorImpl(progressScope, getPauseReason())
@@ -188,15 +204,16 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
                                                                 IndexingBundle.message("progress.indexing.scanning"),
                                                                 taskIndicator.getPauseReason())
 
-
+      val scanningHistory = ProjectScanningHistoryImpl(project, task.indexingReason, task.scanningType)
       (GistManager.getInstance() as GistManagerImpl).mergeDependentCacheInvalidations().use {
-        task.applyDelayedPushOperations()
+        task.applyDelayedPushOperations(scanningHistory)
       }
       blockingContext {
-        task.perform(taskIndicator, progressReporter)
+        task.perform(taskIndicator, progressReporter, scanningHistory)
       }
 
       progressScope.cancel()
+      return@coroutineScope scanningHistory
     }
   }
 
@@ -214,14 +231,16 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     }
   }
 
-  override fun submitTask(task: FilesScanningTask) {
+  override fun submitTask(task: FilesScanningTask): Future<ProjectScanningHistory> {
     task as UnindexedFilesScanner
     LOG.debug(Throwable("submit task, ${project.name}[${project.locationHash}], thread=${Thread.currentThread()}"))
 
     if (taskFilter?.test(task) == false) {
       logInfo("Skipping task (rejected by filter): $task")
       task.close()
-      return
+      return SettableFuture.create<ProjectScanningHistory>().also { settableFuture ->
+        settableFuture.setException(RejectedExecutionException("(rejected by filter)"))
+      }
     }
 
     // Two tasks with limited checks should be just run one after another.
@@ -233,25 +252,34 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       cancelAllTasks("Full scanning is queued")
     }
 
-    startTaskInSmartMode(task)
+    return startTaskInSmartMode(task)
   }
 
-  private fun startTaskInSmartMode(task: UnindexedFilesScanner) {
+  private fun startTaskInSmartMode(task: UnindexedFilesScanner): Future<ProjectScanningHistory> {
+    lateinit var new: ScheduledScanningTask
     // Use from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet
     synchronized(scanningTask) {
       val old = scanningTask.value
-      val merged = old?.tryMergeWith(task)
-      val new = merged ?: task
+      new = if (old != null) {
+        ScheduledScanningTask(old.task.tryMergeWith(task), old.futureHistory)
+      }
+      else {
+        ScheduledScanningTask(task, SettableFuture.create())
+      }
+
       val updated = scanningTask.compareAndSet(old, new)
       LOG.assertTrue(updated, "Use scanningTask from synchronized block, because UnindexedFilesScanner.tryMergeWith is not idempotent yet")
       if (updated) {
         old?.close()
-        if (new != task) task.close() else Unit
+        if (new.task != task) {
+          task.close()
+        }
       }
       else {
-        merged?.close()
+        new.close()
       }
     }
+    return new.futureHistory
   }
 
   override fun cancelAllTasksAndWait() {

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
@@ -57,18 +56,17 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
-class UnindexedFilesScanner private constructor(private val myProject: Project,
-                                                private val myOnProjectOpen: Boolean,
-                                                isIndexingFilesFilterUpToDate: Boolean,
-                                                val predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
-                                                mark: StatusMark?,
-                                                val indexingReason: String,
-                                                val scanningType: ScanningType,
-                                                private val startCondition: Future<*>?,
-                                                private val shouldHideProgressInSmartMode: Boolean?,
-                                                private val futureScanningHistory: SettableFuture<ProjectScanningHistory>,
-                                                private val forceReindexingTrigger: Predicate<IndexedFile>?) : FilesScanningTask,
-                                                                                                               Closeable {
+class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Project,
+                                                      private val myOnProjectOpen: Boolean,
+                                                      isIndexingFilesFilterUpToDate: Boolean,
+                                                      val predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
+                                                      mark: StatusMark?,
+                                                      val indexingReason: String,
+                                                      val scanningType: ScanningType,
+                                                      private val startCondition: Future<*>?,
+                                                      private val shouldHideProgressInSmartMode: Boolean?= null,
+                                                      private val forceReindexingTrigger: Predicate<IndexedFile>? = null) : FilesScanningTask,
+                                                                                                                            Closeable {
   enum class TestMode {
     PUSHING, PUSHING_AND_SCANNING
   }
@@ -78,7 +76,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private val myProvidedStatusMark: StatusMark?
   private val taskToken = myProject.getService(ProjectIndexingDependenciesService::class.java).newIncompleteTaskToken()
   private var flushQueueAfterScanning = true
-  private val scanningHistory = ProjectScanningHistoryImpl(myProject, indexingReason, scanningType)
+  private lateinit var scanningHistory: ProjectScanningHistoryImpl
 
   @TestOnly
   constructor(project: Project) : this(project, false, false, null, null,
@@ -100,23 +98,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
               indexingReason: String) : this(project, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
                                              if (predefinedIndexableFilesIterators == null) ScanningType.FULL else ScanningType.PARTIAL,
                                              null)
-
-  @JvmOverloads
-  constructor(project: Project,
-              onProjectOpen: Boolean,
-              isIndexingFilesFilterUpToDate: Boolean,
-              predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
-              mark: StatusMark?,
-              indexingReason: String,
-              scanningType: ScanningType,
-              startCondition: Future<*>?,
-              shouldHideProgressInSmartMode: Boolean? = null,
-              forceReindexTrigger: Predicate<IndexedFile>? = null) : this(project, onProjectOpen,
-                                                                          isIndexingFilesFilterUpToDate, predefinedIndexableFilesIterators,
-                                                                          mark, indexingReason, scanningType, startCondition,
-                                                                          shouldHideProgressInSmartMode,
-                                                                          SettableFuture.create<ProjectScanningHistory>(),
-                                                                          forceReindexTrigger)
 
   init {
     val filterHolder = myIndex.indexableFilesFilterHolder
@@ -173,10 +154,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       mergedHideProgress = shouldHideProgressInSmartMode
     }
 
-    val mergedScanningHistoryFuture = SettableFuture.create<ProjectScanningHistory>()
-    futureScanningHistory.setFuture(mergedScanningHistoryFuture)         // fixme: non-idempotent
-    oldTask.futureScanningHistory.setFuture(mergedScanningHistoryFuture) // fixme: non-idempotent
-
     val triggerA = forceReindexingTrigger
     val triggerB = oldTask.forceReindexingTrigger
     val mergedPredicate = Predicate { f: IndexedFile ->
@@ -192,7 +169,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       reason,
       ScanningType.merge(scanningType, oldTask.scanningType),
       startCondition ?: oldTask.startCondition,
-      mergedHideProgress, mergedScanningHistoryFuture, mergedPredicate
+      mergedHideProgress, mergedPredicate
     )
   }
 
@@ -233,7 +210,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       }
     }
 
-  internal suspend fun applyDelayedPushOperations() {
+  internal suspend fun applyDelayedPushOperations(scanningHistory: ProjectScanningHistoryImpl) {
+    this.scanningHistory = scanningHistory
     markStageSus(ProjectScanningHistoryImpl.Stage.DelayedPushProperties) {
       val pusher = blockingContext { PushedFilePropertiesUpdater.getInstance(myProject) }
       if (pusher is PushedFilePropertiesUpdaterImpl) {
@@ -467,9 +445,14 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
   }
 
-  fun perform(indicator: CheckPauseOnlyProgressIndicator, progressReporter: IndexingProgressReporter) {
+  fun perform(
+    indicator: CheckPauseOnlyProgressIndicator,
+    progressReporter: IndexingProgressReporter,
+    scanningHistory: ProjectScanningHistoryImpl,
+  ) {
     getInstance().getTracer(Indexes).spanBuilder("UnindexedFilesScanner.perform").use {
       try {
+        this.scanningHistory = scanningHistory
         myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
         prepareScanningHistoryAndRun(indicator) {
           waitForPreconditions()
@@ -486,16 +469,10 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
               DependenciesIndexedStatusService.getInstance(myProject).indexingFinished(successfullyFinished, markRef.get())
             }
           }
-          futureScanningHistory.set(scanningHistory)
         }
-      }
-      catch (t: Throwable) {
-        futureScanningHistory.setException(t)
-        throw t
       }
       finally {
         myFilterHandler.scanningCompleted(myProject)
-        LOG.assertTrue(futureScanningHistory.isDone, "futureScanningHistory.isDone should be true")
       }
     }
   }
@@ -547,8 +524,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   }
 
   fun queue(): Future<ProjectScanningHistory> {
-    UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this)
-    return futureScanningHistory
+    return UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this) as Future<ProjectScanningHistory>
   }
 
   override fun close() {
