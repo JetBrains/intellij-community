@@ -1,4 +1,4 @@
-package org.jetbrains.yaml.frontback.lexer;
+package org.jetbrains.yaml.editing.lexer;
 
 import com.intellij.psi.tree.IElementType;
 

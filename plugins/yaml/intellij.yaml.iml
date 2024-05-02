@@ -26,6 +26,6 @@
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.sh" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.yaml.frontback" exported="" />
+    <orderEntry type="module" module-name="intellij.yaml.editing" exported="" />
   </component>
 </module>

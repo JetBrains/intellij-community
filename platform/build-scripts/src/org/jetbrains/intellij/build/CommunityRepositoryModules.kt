@@ -26,7 +26,7 @@ object CommunityRepositoryModules {
    */
   val COMMUNITY_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
     pluginAuto(listOf("intellij.yaml")) { spec ->
-      spec.withModule("intellij.yaml.frontback", "yaml-frontback.jar")
+      spec.withModule("intellij.yaml.editing", "yaml-editing.jar")
       spec.withModule("intellij.yaml.frontend", "client/yaml-frontend.jar")
     },
     plugin("intellij.ant") { spec ->

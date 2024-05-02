@@ -41,7 +41,7 @@
     <lang.foldingBuilder language="yaml" id="YAMLFoldingBuilder" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
 
     <!--Remdev backend only-->
-    <virtualFileCustomDataProvider implementation="org.jetbrains.yaml.frontback.YamlCodeStyleSettingsCustomDataSynchronizer"/>
+    <virtualFileCustomDataProvider implementation="org.jetbrains.yaml.editing.YamlCodeStyleSettingsCustomDataSynchronizer"/>
     <!-- YAML -->
     <additionalTextAttributes scheme="Default" file="colorSchemes/YAMLDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/YAMLDarcula.xml"/>
