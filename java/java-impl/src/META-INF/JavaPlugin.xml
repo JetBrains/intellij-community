@@ -1508,6 +1508,7 @@
                                                implementationClass="com.intellij.psi.impl.source.tree.injected.JavaInjectedFileChangesHandlerProvider"/>
     <registryKey key="injections.java.fragment.editor.new" defaultValue="true" restartRequired="false"
                  description="Using new optimised JavaInjectedFileChangesHandler when editing code injected to Java in the fragment editor"/>
+    <formatting.caretRestorationDecider language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaCaretRestorationDecider"/>
     <deadCode implementation="com.intellij.codeInspection.deadCode.DeprecatedEntryPoint"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.java18api.Java8MapApiInspectionMerger"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionMerger"/>
