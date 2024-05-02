@@ -119,9 +119,9 @@ fun doPatchPluginXml(document: Document,
     Span.current().addEvent("patch $pluginModuleName for WebStorm")
     val pluginName = rootElement.getChild("name")
     check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }
-    pluginName.text = "Database Tools and SQL for WebStorm"
+    pluginName.text = "Database Tools and SQL for WebStorm & RustRover"
     val description = rootElement.getChild("description")
-    val replaced = replaceInElementText(description, "IntelliJ-based IDEs", "WebStorm")
+    val replaced = replaceInElementText(description, "IntelliJ-based IDEs", "WebStorm and RustRover")
     check(replaced) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
   }
   return document.toXML()
