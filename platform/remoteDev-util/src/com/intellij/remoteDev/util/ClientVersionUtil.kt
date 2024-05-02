@@ -1,7 +1,6 @@
 package com.intellij.remoteDev.util
 
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -29,11 +28,10 @@ object ClientVersionUtil {
    */
   fun computeSeparateConfigEnvVariableValue(clientVersion: String): String? {
     val clientBuild = BuildNumber.fromString(clientVersion) ?: return null
-    val enableProcessPerConnection = Registry.`is`("rdct.enable.per.connection.client.process")
     if (isSeparateConfigSupported(clientBuild) &&
-        !(enableProcessPerConnection && (clientBuild >= separateConfigEnabledByDefaultSince || 
-                                         clientBuild.baselineVersion == 232 && clientBuild >= separateConfigEnabledByDefaultSince232))) {
-      return enableProcessPerConnection.toString()
+        !(clientBuild >= separateConfigEnabledByDefaultSince ||
+          clientBuild.baselineVersion == 232 && clientBuild >= separateConfigEnabledByDefaultSince232)) {
+      return true.toString()
     }
     return null
   }
