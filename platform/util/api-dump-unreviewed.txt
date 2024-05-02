@@ -4844,15 +4844,15 @@ com.intellij.util.indexing.impl.ValueSerializationProblemReporter
 - a:reportProblem(java.lang.Exception):V
 a:com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor
 - com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
-- <init>(com.intellij.util.io.DataExternalizer):V
-- a:convertToDataType(com.intellij.util.indexing.impl.InputData):java.lang.Object
+- p:<init>(com.intellij.util.io.DataExternalizer):V
+- pa:convertToDataType(com.intellij.util.indexing.impl.InputData):java.lang.Object
 - pa:createDiffBuilder(I,java.lang.Object):com.intellij.util.indexing.impl.InputDataDiffBuilder
 - deserializeData(com.intellij.openapi.util.io.ByteArraySequence):java.lang.Object
 - s:deserializeFromByteSeq(com.intellij.openapi.util.io.ByteArraySequence,com.intellij.util.io.DataExternalizer):java.lang.Object
 - p:getBufferInitialSize(java.lang.Object):I
 - getDiffBuilder(I,com.intellij.openapi.util.io.ByteArraySequence):com.intellij.util.indexing.impl.InputDataDiffBuilder
 - serializeIndexedData(com.intellij.util.indexing.impl.InputData):com.intellij.openapi.util.io.ByteArraySequence
-- serializeIndexedData(java.lang.Object):com.intellij.openapi.util.io.ByteArraySequence
+- p:serializeIndexedData(java.lang.Object):com.intellij.openapi.util.io.ByteArraySequence
 - s:serializeKeyToByteSeq(java.lang.Object,com.intellij.util.io.DataExternalizer,I):com.intellij.openapi.util.io.ByteArraySequence
 - s:serializeToByteSeq(java.lang.Object,com.intellij.util.io.DataExternalizer,I,com.intellij.openapi.util.ThreadLocalCachedByteArray):com.intellij.openapi.util.io.ByteArraySequence
 - s:serializeValueToByteSeq(java.lang.Object,com.intellij.util.io.DataExternalizer,I):com.intellij.openapi.util.io.ByteArraySequence
