@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
@@ -61,7 +62,13 @@ internal class VcsLogBookmark(override val provider: VcsLogBookmarkProvider,
   override fun canNavigate(): Boolean = true
   override fun canNavigateToSource(): Boolean = false
   override fun navigate(requestFocus: Boolean) {
-    VcsLogNavigationUtil.jumpToRevisionAsync(provider.project, root, hash)
+    VcsLogNavigationUtil.jumpToRevisionAsync(provider.project, root, hash).whenComplete { result: Boolean?, error ->
+      if (result != true) {
+        val commitPresentation = VcsLogBundle.message("vcs.log.commit.prefix", hash)
+        val message = VcsLogBundle.message("vcs.log.commit.not.found", commitPresentation)
+        VcsNotifier.getInstance(provider.project).notifyWarning(VcsLogNotificationIdsHolder.COMMIT_NOT_FOUND, "", message);
+      }
+    }
   }
 
   override fun prepareDefaultDescription(): String? {
