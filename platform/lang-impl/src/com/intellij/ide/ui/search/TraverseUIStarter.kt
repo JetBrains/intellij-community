@@ -5,7 +5,7 @@ package com.intellij.ide.ui.search
 
 import com.intellij.application.options.OptionsContainingConfigurable
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.ShowSettingsUtilImpl.Companion.getConfigurables
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable
@@ -13,19 +13,20 @@ import com.intellij.ide.fileTemplates.impl.BundledFileTemplate
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
-import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.*
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -35,7 +36,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jdom.IllegalDataException
+import org.jdom.Namespace
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -64,17 +68,17 @@ private const val ROOT_ACTION_MODULE = "intellij.platform.ide"
 private class TraverseUIStarter : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
     try {
-      buildSearchableOptions(
+      doBuildSearchableOptions(
+        options = LinkedHashMap<SearchableConfigurable, Set<OptionDescription>>(),
         outputPath = Path.of(args[1]),
         splitByResourcePath = args.size > 2 && args[2].toBoolean(),
         i18n = java.lang.Boolean.getBoolean("intellij.searchableOptions.i18n.enabled"),
       )
-      println("Searchable options index builder completed")
       exitProcess(0)
     }
     catch (e: Throwable) {
       try {
-        Logger.getInstance(javaClass).error("Searchable options index builder failed", e)
+        logger<TraverseUIStarter>().error("Searchable options index builder failed", e)
       }
       catch (ignored: Throwable) {
       }
@@ -83,20 +87,22 @@ private class TraverseUIStarter : ModernApplicationStarter() {
   }
 }
 
-private fun addOptions(configurable: SearchableConfigurable,
-                       options: Map<SearchableConfigurable, Set<OptionDescription>>,
-                       roots: MutableMap<String, Element>,
-                       splitByResourcePath: Boolean) {
-  var configurable = configurable
-  val configurableElement = createConfigurableElement(configurable)
-  writeOptions(configurableElement, options.get(configurable)!!)
+private fun addOptions(
+  originalConfigurable: SearchableConfigurable,
+  options: Map<SearchableConfigurable, Set<OptionDescription>>,
+  roots: MutableMap<String, Element>,
+  splitByResourcePath: Boolean,
+) {
+  val configurableElement = createConfigurableElement(originalConfigurable)
+  writeOptions(configurableElement, options.get(originalConfigurable)!!)
 
-  if (configurable is ConfigurableWrapper) {
-    val wrapped = configurable.configurable
-    if (wrapped is SearchableConfigurable) {
-      configurable = wrapped
-    }
+  val configurable = if (originalConfigurable is ConfigurableWrapper) {
+    originalConfigurable.configurable as? SearchableConfigurable ?: originalConfigurable
   }
+  else {
+    originalConfigurable
+  }
+
   when (configurable) {
     is KeymapPanel -> {
       for ((key, value) in processKeymap(splitByResourcePath)) {
@@ -106,14 +112,13 @@ private fun addOptions(configurable: SearchableConfigurable,
       }
     }
     is OptionsContainingConfigurable -> {
-      processOptionsContainingConfigurable(configurable as OptionsContainingConfigurable, configurableElement)
+      processOptionsContainingConfigurable(configurable, configurableElement)
     }
     is PluginManagerConfigurable -> {
       val optionDescriptions = TreeSet<OptionDescription>()
-      wordsToOptionDescriptors(setOf(IdeBundle.message("plugin.manager.repositories")), null, optionDescriptions)
+      wordsToOptionDescriptors(optionPath = setOf(IdeBundle.message("plugin.manager.repositories")), path = null, result = optionDescriptions)
       for (description in optionDescriptions) {
-        configurableElement.addContent(
-          createOptionElement(path = null, hit = IdeBundle.message("plugin.manager.repositories"), word = description.option))
+        configurableElement.addContent(createOptionElement(path = null, hit = IdeBundle.message("plugin.manager.repositories"), word = description.option))
       }
     }
     is AllFileTemplatesConfigurable -> {
@@ -126,7 +131,7 @@ private fun addOptions(configurable: SearchableConfigurable,
   }
 
   val module = if (splitByResourcePath) getModuleByClass(configurable.originalClass) else ""
-  addElement(roots, configurableElement, module)
+  addElement(roots = roots, element = configurableElement, module = module)
 }
 
 @Throws(IOException::class)
@@ -151,7 +156,7 @@ private fun saveResults(outputPath: Path, roots: Map<String, Element>) {
 }
 
 private fun createConfigurableElement(configurable: SearchableConfigurable): Element {
-  val configurableElement = Element(CONFIGURABLE)
+  val configurableElement = Element(true, CONFIGURABLE, Namespace.NO_NAMESPACE)
   configurableElement.setAttribute(ID, configurable.id)
   configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.displayName)
   return configurableElement
@@ -200,7 +205,7 @@ private fun collectOptions(registrar: SearchableOptionsRegistrar, options: Mutab
 private fun processOptionsContainingConfigurable(configurable: OptionsContainingConfigurable, configurableElement: Element) {
   val optionsPath = configurable.processListOptions()
   val result = TreeSet<OptionDescription>()
-  wordsToOptionDescriptors(optionsPath = optionsPath, path = null, result = result)
+  wordsToOptionDescriptors(optionPath = optionsPath, path = null, result = result)
   val optionsWithPaths = configurable.processListOptionsWithPaths()
   for (path in optionsWithPaths.keys) {
     wordsToOptionDescriptors(optionsWithPaths.get(path)!!, path, result)
@@ -208,9 +213,9 @@ private fun processOptionsContainingConfigurable(configurable: OptionsContaining
   writeOptions(configurableElement, result)
 }
 
-private fun wordsToOptionDescriptors(optionsPath: Set<String>, path: String?, result: MutableSet<OptionDescription>) {
+private fun wordsToOptionDescriptors(optionPath: Set<String>, path: String?, result: MutableSet<OptionDescription>) {
   val registrar = SearchableOptionsRegistrar.getInstance()
-  for (opt in optionsPath) {
+  for (opt in optionPath) {
     for (word in registrar.getProcessedWordsWithoutStemming(opt)) {
       if (word != null) {
         result.add(OptionDescription(word, opt, path))
@@ -290,7 +295,7 @@ private fun writeOptions(configurableElement: Element, options: Set<OptionDescri
 }
 
 private fun createOptionElement(path: String?, hit: String?, word: String): Element {
-  val optionElement = Element(OPTION)
+  val optionElement = Element(true, OPTION, Namespace.NO_NAMESPACE)
   optionElement.setAttribute(NAME, word)
   if (path != null) {
     optionElement.setAttribute(PATH, path)
@@ -299,41 +304,138 @@ private fun createOptionElement(path: String?, hit: String?, word: String): Elem
   return optionElement
 }
 
+@VisibleForTesting
 suspend fun buildSearchableOptions(outputPath: Path, splitByResourcePath: Boolean, i18n: Boolean = false) {
   val options = LinkedHashMap<SearchableConfigurable, Set<OptionDescription>>()
-  val roots = HashMap<String, Element>()
   try {
-    withContext(Dispatchers.EDT) {
-      for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
-        extension.beforeStart()
-      }
-      SearchUtil.processConfigurables(
-        getConfigurables(project = serviceAsync<ProjectManager>().defaultProject, withIdeSettings = true, checkNonDefaultProject = false),
-        options,
-        i18n,
-      )
-    }
-
-    println("Found ${options.size} configurables")
-
-    for (configurable in options.keys) {
-      try {
-        addOptions(configurable = configurable, options = options, roots = roots, splitByResourcePath = splitByResourcePath)
-      }
-      catch (e: IllegalDataException) {
-        throw IllegalStateException(
-          "Unable to process configurable '${configurable.id}', please check strings used in class: ${configurable.originalClass.name}", e
-        )
+    doBuildSearchableOptions(options = options, outputPath = outputPath, splitByResourcePath = splitByResourcePath, i18n = i18n)
+  }
+  finally {
+    if (!options.isEmpty()) {
+      withContext(Dispatchers.EDT) {
+        blockingContext {
+          for (configurable in options.keys) {
+            configurable.disposeUIResources()
+          }
+        }
       }
     }
   }
-  finally {
-    withContext(Dispatchers.EDT) {
-      for (configurable in options.keys) {
-        configurable.disposeUIResources()
+}
+
+@VisibleForTesting
+suspend fun doBuildSearchableOptions(
+  options: MutableMap<SearchableConfigurable, Set<OptionDescription>>,
+  outputPath: Path,
+  splitByResourcePath: Boolean,
+  i18n: Boolean = false,
+) {
+  assert(AppMode.isHeadless())
+
+  val roots = HashMap<String, Element>()
+
+  val defaultProject = serviceAsync<ProjectManager>().defaultProject
+  withContext(Dispatchers.EDT) {
+    blockingContext {
+      for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+        extension.beforeStart()
       }
+      processConfigurables(
+        configurables = ShowSettingsUtilImpl.configurables(
+          project = defaultProject,
+          withIdeSettings = true,
+          checkNonDefaultProject = false,
+        ),
+        options = options,
+        i18n = i18n,
+      )
+    }
+  }
+
+  logger<TraverseUIStarter>().info("Found ${options.size} configurables")
+
+  for (configurable in options.keys) {
+    try {
+      addOptions(originalConfigurable = configurable, options = options, roots = roots, splitByResourcePath = splitByResourcePath)
+    }
+    catch (e: IllegalDataException) {
+      throw IllegalStateException(
+        "Unable to process configurable '${configurable.id}', please check strings used in class: ${configurable.originalClass.name}", e
+      )
     }
   }
 
   saveResults(outputPath, roots)
+}
+
+private fun processConfigurables(
+  configurables: Sequence<Configurable>,
+  options: MutableMap<SearchableConfigurable, Set<OptionDescription>>,
+  i18n: Boolean,
+) {
+  for (configurable in configurables) {
+    if (configurable !is SearchableConfigurable) {
+      continue
+    }
+
+    val configurableOptions = TreeSet<OptionDescription>()
+    options.put(configurable, configurableOptions)
+
+    for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+      extension.beforeConfigurable(configurable, configurableOptions)
+    }
+
+    if (configurable is MasterDetails) {
+      configurable.initUi()
+      SearchUtil.processComponent(configurable, configurableOptions, configurable.master, i18n)
+      SearchUtil.processComponent(configurable, configurableOptions, configurable.details.component, i18n)
+    }
+    else {
+      SearchUtil.processComponent(configurable, configurableOptions, configurable.createComponent(), i18n)
+      val unwrapped = SearchUtil.unwrapConfigurable(configurable)
+      if (unwrapped is CompositeConfigurable<*>) {
+        unwrapped.disposeUIResources()
+        val children = unwrapped.configurables
+        for (child in children) {
+          val childConfigurableOptions: Set<OptionDescription> = TreeSet()
+          options.put(SearchableConfigurableAdapter(configurable, child), childConfigurableOptions)
+
+          if (child is SearchableConfigurable) {
+            SearchUtil.processUILabel(child.displayName, childConfigurableOptions, null, i18n)
+          }
+          val component = child.createComponent()
+          if (component != null) {
+            SearchUtil.processComponent(component, childConfigurableOptions, null, i18n)
+          }
+
+          configurableOptions.removeAll(childConfigurableOptions)
+        }
+      }
+    }
+
+    for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+      extension.afterConfigurable(configurable, configurableOptions)
+    }
+  }
+}
+
+private class SearchableConfigurableAdapter(
+  private val original: SearchableConfigurable,
+  private val delegate: UnnamedConfigurable,
+) : SearchableConfigurable {
+  override fun getId(): String = original.id
+
+  @Nls(capitalization = Nls.Capitalization.Title)
+  override fun getDisplayName(): String = original.displayName
+
+  override fun getOriginalClass(): Class<*> = if (delegate is SearchableConfigurable) delegate.originalClass else delegate.javaClass
+
+  override fun createComponent() = null
+
+  override fun isModified(): Boolean = false
+
+  override fun apply() {
+  }
+
+  override fun toString(): String = displayName
 }
