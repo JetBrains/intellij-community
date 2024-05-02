@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.jediterm.terminal.TerminalCustomCommandListener
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptState
@@ -201,7 +201,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
 
   fun sendCommandToExecute(shellCommand: String) = commandExecutionManager.sendCommandToExecute(shellCommand)
 
-  fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): CompletableDeferred<String> {
+  fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): Deferred<String> {
     return commandExecutionManager.runGeneratorAsync(generatorName, generatorParameters)
   }
 

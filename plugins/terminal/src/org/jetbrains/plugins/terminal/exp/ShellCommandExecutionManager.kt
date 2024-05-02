@@ -8,6 +8,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.input.InputEvent.CTRL_MASK
 import com.jediterm.core.input.KeyEvent.VK_HOME
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.exp.ShellCommandManager.Companion.LOG
@@ -111,7 +112,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     processQueueIfReady()
   }
 
-  fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): CompletableDeferred<String> {
+  fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): Deferred<String> {
     val generator = Generator(generatorName, generatorParameters)
     lock.withLock { withoutLock ->
       val cancelReason: String? = when {
