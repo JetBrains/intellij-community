@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.uiDesigner.UIFormXmlConstants
 import java.awt.BorderLayout
@@ -9,31 +8,32 @@ import java.awt.Color
 import java.awt.Dimension
 import javax.swing.JPanel
 
-class NotebookAboveCellDelimiterPanelNew(val editor: Editor) : JPanel(BorderLayout()) {
+class NotebookAboveCellDelimiterPanelNew(
+  val editor: Editor,
+  private val isCodeCell: Boolean,
+  private val isFirstCell: Boolean
+) : JPanel(BorderLayout()) {
   private var backgroundColor: Color = editor.colorsScheme.defaultBackground
   private var cellRoofColor: Color? = null
-  private var isCodeCell: Boolean = false
   private val standardDelimiterHeight = editor.notebookAppearance.CELL_BORDER_HEIGHT / 2
 
-  fun initialize(isCodeCell: Boolean, isFirstCell: Boolean) {
-    if (editor.editorKind == EditorKind.DIFF) return
-    this.isCodeCell = isCodeCell
-    refreshColorScheme()
-
-    val (delimiterPanel, roofPanel) = createRoofAndDelimiterPanels(cellRoofColor, isFirstCell)
-
-    add(delimiterPanel, BorderLayout.NORTH)
-    add(roofPanel, BorderLayout.SOUTH)
-
-    listenForColorSchemeChanges()
+  init {
+    if (!editor.editorKind.isDiff()) {
+      refreshColorScheme()
+      val (delimiterPanel, roofPanel) = createRoofAndDelimiterPanels(cellRoofColor)
+      add(delimiterPanel, BorderLayout.NORTH)
+      add(roofPanel, BorderLayout.SOUTH)
+      listenForColorSchemeChanges()
+    }
   }
 
-  private fun createRoofAndDelimiterPanels(cellRoofColor: Color?, isFirstCell: Boolean): Pair<JPanel, JPanel> {
+  private fun createRoofAndDelimiterPanels(cellRoofColor: Color?): Pair<JPanel, JPanel> {
     val delimiterPanel = JPanel()
     val delimiterPanelHeight = when (isFirstCell) {
       true -> FIRST_CELL_DELIMITER_HEIGHT
       false -> standardDelimiterHeight
     }
+
     delimiterPanel.background = backgroundColor
     delimiterPanel.preferredSize = Dimension(JBUIScale.scale(1), delimiterPanelHeight)
 

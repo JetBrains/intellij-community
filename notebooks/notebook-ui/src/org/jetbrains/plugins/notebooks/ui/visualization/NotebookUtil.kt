@@ -108,3 +108,5 @@ fun installNotebookEditorView(editor: Editor) {
 }
 
 fun getJupyterCellSpacing(editor: Editor): Int = editor.getLineHeight()
+
+internal fun EditorKind.isDiff(): Boolean = this === EditorKind.DIFF
