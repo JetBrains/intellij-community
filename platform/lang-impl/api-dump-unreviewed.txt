@@ -4353,7 +4353,6 @@ a:com.intellij.codeInsight.daemon.impl.StatusItemMerger
 - a:mergeItems(com.intellij.openapi.editor.markup.SeverityStatusItem,com.intellij.openapi.editor.markup.SeverityStatusItem):com.intellij.openapi.editor.markup.SeverityStatusItem
 f:com.intellij.codeInsight.daemon.impl.TogglePopupHintsAction
 - com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification$Frontend
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -4377,7 +4376,6 @@ c:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 - p:refresh(com.intellij.openapi.editor.impl.EditorMarkupModelImpl):V
 - s:setTrafficLightOnEditor(com.intellij.openapi.project.Project,com.intellij.openapi.editor.ex.EditorMarkupModel,com.intellij.openapi.application.ModalityState,java.util.function.Supplier):V
 pc:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$AbstractUIController
-- com.intellij.openapi.editor.markup.UIController
 - canClosePopup():Z
 - fillHectorPanels(java.awt.Container,com.intellij.util.ui.GridBag):V
 - getAvailableLevels():java.util.List
@@ -15595,6 +15593,7 @@ f:com.intellij.ide.fileTemplates.impl.BundledFileTemplate
 - getDescription():java.lang.String
 - getExtension():java.lang.String
 - getName():java.lang.String
+- getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - isDefault():Z
 - isLiveTemplateEnabled():Z
 - isLiveTemplateEnabledByDefault():Z
@@ -15612,13 +15611,11 @@ f:com.intellij.ide.fileTemplates.impl.CustomFileTemplate
 - setExtension(java.lang.String):V
 - setName(java.lang.String):V
 f:com.intellij.ide.fileTemplates.impl.DefaultTemplate
-- <init>(java.lang.String,java.lang.String,java.net.URL,java.net.URL):V
-- <init>(java.lang.String,java.lang.String,java.util.function.Function,java.util.function.Function,java.lang.String,java.nio.file.Path):V
+- <init>(java.lang.String,java.lang.String,java.util.function.Function,java.util.function.Function,java.lang.String,java.nio.file.Path,com.intellij.openapi.extensions.PluginDescriptor):V
 - f:getDescriptionText():java.lang.String
 - f:getExtension():java.lang.String
 - f:getName():java.lang.String
 - f:getQualifiedName():java.lang.String
-- f:getTemplateURL():java.net.URL
 - f:getText():java.lang.String
 - toString():java.lang.String
 a:com.intellij.ide.fileTemplates.impl.FileTemplateBase
@@ -18204,10 +18201,10 @@ c:com.intellij.ide.todo.nodes.TodoTreeHelper
 - getSelectedElement(java.lang.Object):com.intellij.psi.PsiElement
 - skipDirectory(com.intellij.psi.PsiDirectory):Z
 f:com.intellij.ide.ui.search.TraverseUIStarterKt
-- sf:buildSearchableOptions(java.nio.file.Path,Z,Z,kotlin.coroutines.Continuation):java.lang.Object
-- bs:buildSearchableOptions$default(java.nio.file.Path,Z,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- sf:doBuildSearchableOptions(java.util.Map,java.nio.file.Path,Z,Z,kotlin.coroutines.Continuation):java.lang.Object
-- bs:doBuildSearchableOptions$default(java.util.Map,java.nio.file.Path,Z,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:buildSearchableOptions(java.nio.file.Path,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:buildSearchableOptions$default(java.nio.file.Path,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:doBuildSearchableOptions(java.util.Map,java.nio.file.Path,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:doBuildSearchableOptions$default(java.util.Map,java.nio.file.Path,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 a:com.intellij.ide.util.AbstractTreeClassChooserDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.ide.util.TreeChooser

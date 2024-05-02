@@ -32,27 +32,28 @@ fun createMarkFile(file: Path): Boolean {
 internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionClassOutDir: Path): List<SourceAndCacheStrategy> {
   return sources
     .map { source ->
-      when {
-        source is DirSource -> {
+      when (source) {
+        is DirSource -> {
           val dir = source.dir
           if (dir.startsWith(productionClassOutDir)) {
             ModuleOutputSourceAndCacheStrategy(source = source, path = productionClassOutDir.relativize(dir).toString())
+          }
+          else if (dir.parent.endsWith("searchable-options")) {
+            DirSourceAndCacheStrategy(source = source, path = "")
           }
           else {
             throw UnsupportedOperationException("$source is not supported")
           }
         }
-        source is InMemoryContentSource -> {
-          InMemorySourceAndCacheStrategy(source)
-        }
-        source !is ZipSource -> {
-          throw UnsupportedOperationException("$source is not supported")
-        }
-        !source.file.startsWith(MAVEN_REPO) -> {
-          NonMavenJarSourceAndCacheStrategy(source)
-        }
-        else -> {
-          MavenJarSourceAndCacheStrategy(source)
+        is InMemoryContentSource -> InMemorySourceAndCacheStrategy(source)
+        is FileSource -> FileSourceCacheStrategy(source)
+        is ZipSource -> {
+          if (!source.file.startsWith(MAVEN_REPO)) {
+            NonMavenJarSourceAndCacheStrategy(source)
+          }
+          else {
+            MavenJarSourceAndCacheStrategy(source)
+          }
         }
       }
     }
@@ -111,6 +112,27 @@ private class ModuleOutputSourceAndCacheStrategy(override val source: DirSource,
   }
 }
 
+private class DirSourceAndCacheStrategy(override val source: DirSource, override val path: String) : SourceAndCacheStrategy {
+  private var hash: Long = 0
+
+  override fun getHash() = hash
+
+  override fun getSize(): Long = 0
+
+  override fun updateDigest(digest: HashStream64) {
+    val files = Files.newDirectoryStream(source.dir).use { stream -> stream.sortedBy { it.fileName } }
+    val hashStream = Hashing.komihash5_0().hashStream()
+    hashStream.putInt(files.size)
+    for (file in files) {
+      hashStream.putString(file.fileName.toString())
+      hashStream.putLong(Files.getLastModifiedTime(file).toMillis())
+    }
+
+    hash = hashStream.asLong
+    digest.putLong(hash)
+  }
+}
+
 private class InMemorySourceAndCacheStrategy(override val source: InMemoryContentSource) : SourceAndCacheStrategy {
   private var hash: Long = 0
 
@@ -124,5 +146,20 @@ private class InMemorySourceAndCacheStrategy(override val source: InMemoryConten
   override fun updateDigest(digest: HashStream64) {
     hash = Hashing.komihash5_0().hashBytesToLong(source.data)
     digest.putLong(hash).putInt(source.data.size)
+  }
+}
+
+private class FileSourceCacheStrategy(override val source: FileSource) : SourceAndCacheStrategy {
+  private var hash: Long = source.hash
+
+  override val path: String
+    get() = source.relativePath
+
+  override fun getHash() = hash
+
+  override fun getSize(): Long = source.size.toLong()
+
+  override fun updateDigest(digest: HashStream64) {
+    digest.putLong(hash)
   }
 }

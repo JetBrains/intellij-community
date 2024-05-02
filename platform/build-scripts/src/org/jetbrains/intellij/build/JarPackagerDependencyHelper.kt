@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build
 
@@ -23,7 +23,15 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     return getModuleDependencies(context.findRequiredModule(moduleName)).map { it.moduleReference.moduleName }
   }
 
-  fun readPluginContentFromDescriptor(context: BuildContext, pluginModule: JpsModule): Sequence<String> {
+  fun getPluginIdByModule(pluginModule: JpsModule): String {
+    val fileName = "META-INF/plugin.xml"
+    val file = context.findFileInModuleSources(pluginModule, fileName) ?: throw IllegalStateException("Cannot find $fileName in $pluginModule")
+    val root = readXmlAsModel(file)
+    val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot attribute id or name in $file")
+    return element.content!!
+  }
+
+  fun readPluginContentFromDescriptor(pluginModule: JpsModule): Sequence<String> {
     val pluginXml = context.findFileInModuleSources(pluginModule, "META-INF/plugin.xml") ?: return emptySequence()
     return sequence {
       for (content in readXmlAsModel(pluginXml).children("content")) {

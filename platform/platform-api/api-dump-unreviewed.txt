@@ -1320,7 +1320,6 @@ a:com.intellij.ide.ui.search.SearchableOptionsRegistrar
 - s:getInstance():com.intellij.ide.ui.search.SearchableOptionsRegistrar
 - a:getProcessedWords(java.lang.String):java.util.Set
 - a:getProcessedWordsWithoutStemming(java.lang.String):java.util.Set
-- s:getSearchableOptionsXmlName():java.lang.String
 - a:isStopWord(java.lang.String):Z
 - a:replaceSynonyms(java.util.Set,com.intellij.openapi.options.SearchableConfigurable):java.util.Set
 com.intellij.ide.ui.search.SearchableOptionsRegistrar$AdditionalLocationProvider

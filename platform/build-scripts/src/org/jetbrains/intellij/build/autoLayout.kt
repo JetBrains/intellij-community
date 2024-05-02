@@ -11,7 +11,7 @@ internal suspend fun inferModuleSources(
   helper: JarPackagerDependencyHelper,
   jarPackager: JarPackager,
   moduleOutputPatcher: ModuleOutputPatcher,
-  jarsWithSearchableOptions: Set<String>,
+  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ) {
   // for now, check only direct dependencies of the main plugin module
@@ -27,7 +27,7 @@ internal suspend fun inferModuleSources(
       continue
     }
 
-    jarPackager.computeSourcesForModule(item = moduleItem, moduleOutputPatcher = moduleOutputPatcher, layout = layout, jarsWithSearchableOptions = jarsWithSearchableOptions)
+    jarPackager.computeSourcesForModule(item = moduleItem, moduleOutputPatcher = moduleOutputPatcher, layout = layout, searchableOptionSetDescriptor = jarsWithSearchableOptions)
   }
 
   if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter") {
@@ -36,7 +36,7 @@ internal suspend fun inferModuleSources(
   }
 
   // check content
-  helper.readPluginContentFromDescriptor(context, context.findRequiredModule(layout.mainModule))
+  helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule))
     .filterNot { !addedModules.add(it) }
     .forEach { moduleName ->
       val descriptor = readXmlAsModel(context.findFileInModuleSources(moduleName, "$moduleName.xml")!!)
@@ -49,7 +49,7 @@ internal suspend fun inferModuleSources(
         ),
         moduleOutputPatcher = moduleOutputPatcher,
         layout = layout,
-        jarsWithSearchableOptions = jarsWithSearchableOptions,
+        searchableOptionSetDescriptor = jarsWithSearchableOptions,
       )
     }
 
@@ -70,7 +70,7 @@ internal suspend fun inferModuleSources(
         item = moduleItem,
         moduleOutputPatcher = moduleOutputPatcher,
         layout = layout,
-        jarsWithSearchableOptions = jarsWithSearchableOptions,
+        searchableOptionSetDescriptor = jarsWithSearchableOptions,
       )
     }
   }

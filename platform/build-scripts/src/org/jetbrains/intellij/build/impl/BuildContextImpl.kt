@@ -115,17 +115,10 @@ class BuildContextImpl(
       val compilationContext = CompilationContextImpl.createCompilationContext(
         projectHome = projectHome,
         setupTracer = setupTracer,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(
-          projectHome = projectHome,
-          productProperties = productProperties,
-          buildOptions = options
-        ),
+        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome, productProperties = productProperties, buildOptions = options),
         options = options,
       )
-      return createContext(compilationContext = compilationContext,
-                           projectHome = projectHome,
-                           productProperties = productProperties,
-                           proprietaryBuildTools = proprietaryBuildTools)
+      return createContext(compilationContext = compilationContext, projectHome = projectHome, productProperties = productProperties, proprietaryBuildTools = proprietaryBuildTools)
     }
 
     fun createContext(
@@ -252,18 +245,15 @@ class BuildContextImpl(
       options = options,
       paths = computeBuildPaths(
         options = options,
-        project = project,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(
+        buildOut = options.outRootDir ?: createBuildOutputRootEvaluator(
           projectHome = paths.projectHome,
           productProperties = productProperties,
           buildOptions = options,
-        ),
+        )(project),
         projectHome = paths.projectHome,
-        artifactPathSupplier = if (prepareForBuild) {
-          {
+        artifactDir = if (prepareForBuild) {
             @Suppress("DEPRECATION")
             paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode)
-          }
         }
         else {
           null
@@ -379,9 +369,7 @@ class BuildContextImpl(
   }
 }
 
-private fun createBuildOutputRootEvaluator(projectHome: Path,
-                                           productProperties: ProductProperties,
-                                           buildOptions: BuildOptions): (JpsProject) -> Path {
+private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path {
   return { project ->
     val appInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = buildOptions)
     projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")

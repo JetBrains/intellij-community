@@ -800,14 +800,7 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
     buildJar(targetFile = antTargetFile, sources = sources)
 
     sources.map { source ->
-      ProjectLibraryEntry(
-        path = antTargetFile,
-        data = libraryData,
-        libraryFile = source.file,
-        hash = source.hash,
-        size = source.size,
-        relativeOutputFile = "dist/ant.jar",
-      )
+      ProjectLibraryEntry(path = antTargetFile, data = libraryData, libraryFile = source.file, hash = source.hash, size = source.size, relativeOutputFile = "dist/ant.jar")
     }
   }
 }

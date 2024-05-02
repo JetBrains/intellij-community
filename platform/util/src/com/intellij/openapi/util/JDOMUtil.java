@@ -535,7 +535,7 @@ public final class JDOMUtil {
   }
 
   @ApiStatus.Internal
-  public static @NotNull XMLOutputter createOutputter(String lineSeparator) {
+  public static @NotNull XMLOutputter createOutputter(@Nullable String lineSeparator) {
     return new MyXMLOutputter(lineSeparator);
   }
 
@@ -584,14 +584,14 @@ public final class JDOMUtil {
       String quotation = escapeChar(ch, escapeApostrophes, escapeSpaces, escapeLineEnds);
       buffer = XmlStringUtil.appendEscapedSymbol(text, buffer, i, quotation, ch);
     }
-    // If there were any entities, return the escaped characters
-    // that we put in the StringBuffer. Otherwise, just return the unmodified input string.
+    // If there were any entities, return the escaped characters that we put in the StringBuffer.
+    // Otherwise, return the unmodified input string.
     return buffer == null ? text : buffer.toString();
   }
 
   private static final class MyXMLOutputter extends XMLOutputter {
-    private MyXMLOutputter(@NotNull String lineSeparator) {
-      super(createFormat(lineSeparator));
+    private MyXMLOutputter(@Nullable String lineSeparator) {
+      super(lineSeparator == null ? null : createFormat(lineSeparator));
     }
 
     @Override

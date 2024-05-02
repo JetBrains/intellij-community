@@ -137,7 +137,7 @@ class JarPackager private constructor(
       platformLayout: PlatformLayout?,
       moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
       dryRun: Boolean,
-      jarsWithSearchableOptions: Set<String> = emptySet(),
+      jarsWithSearchableOptions: SearchableOptionSetDescriptor? = null,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
       val packager = JarPackager(outDir = outputDir, platformLayout = platformLayout, isRootDir = isRootDir, context = context)
@@ -232,17 +232,12 @@ class JarPackager private constructor(
     includedModules: Collection<ModuleItem>,
     moduleOutputPatcher: ModuleOutputPatcher,
     layout: BaseLayout?,
-    jarsWithSearchableOptions: Set<String>,
+    jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
   ) {
     val addedModules = HashSet<String>()
 
     for (item in includedModules) {
-      computeSourcesForModule(
-        item = item,
-        moduleOutputPatcher = moduleOutputPatcher,
-        layout = layout,
-        jarsWithSearchableOptions = jarsWithSearchableOptions,
-      )
+      computeSourcesForModule(item = item, moduleOutputPatcher = moduleOutputPatcher, layout = layout, searchableOptionSetDescriptor = jarsWithSearchableOptions)
 
       addedModules.add(item.moduleName)
     }
@@ -267,7 +262,7 @@ class JarPackager private constructor(
     item: ModuleItem,
     moduleOutputPatcher: ModuleOutputPatcher,
     layout: BaseLayout?,
-    jarsWithSearchableOptions: Set<String>,
+    searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   ) {
     val moduleName = item.moduleName
     val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
@@ -291,13 +286,7 @@ class JarPackager private constructor(
     }
     else {
       assets.computeIfAbsent(outFile) { file ->
-        createAssetDescriptor(
-          outDir = outDir,
-          targetFile = file,
-          relativeOutputFile = item.relativeOutputFile,
-          context = context,
-          metaInfDir = moduleOutDir.resolve("META-INF"),
-        )
+        createAssetDescriptor(outDir = outDir, targetFile = file, relativeOutputFile = item.relativeOutputFile, context = context, metaInfDir = moduleOutDir.resolve("META-INF"))
       }
     }
 
@@ -312,8 +301,22 @@ class JarPackager private constructor(
       moduleSources.add(DirSource(dir = dir))
     }
 
-    if (jarsWithSearchableOptions.contains(item.relativeOutputFile)) {
-      moduleSources.add(DirSource(dir = context.paths.searchableOptionDir.resolve(item.relativeOutputFile)))
+    if (searchableOptionSetDescriptor != null) {
+      if (layout is PluginLayout) {
+        if (moduleName == layout.mainModule) {
+          val pluginId = helper.getPluginIdByModule(module)
+          moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin(pluginId))
+        }
+        else {
+          // is it a product module?
+          context.findFileInModuleSources(module, "$moduleName.xml")?.let {
+            moduleSources.addAll(searchableOptionSetDescriptor.createSourceByModule(moduleName))
+          }
+        }
+      }
+      else if (moduleName == (context.productProperties.productPluginSourceModuleName ?: context.productProperties.applicationInfoModule)) {
+        moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin("com.intellij"))
+      }
     }
 
     val excludes = if (extraExcludes.isEmpty()) {
@@ -1001,6 +1004,10 @@ private fun computeDistributionFileEntries(
 private fun updateModuleSourceHash(asset: AssetDescriptor) {
   for (sources in asset.includedModules.values) {
     for (source in sources) {
+      if (source is FileSource) {
+        continue
+      }
+
       check(source is DirSource)
       if (source.hash == 0L) {
         source.hash = computeHashForModuleOutput(source)

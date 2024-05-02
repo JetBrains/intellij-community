@@ -81,10 +81,12 @@ data class ZipSource(
   }
 }
 
-data class DirSource(@JvmField val dir: Path,
-                     @JvmField val excludes: List<PathMatcher> = emptyList(),
-                     @JvmField val prefix: String = "",
-                     @JvmField val removeModuleInfo: Boolean = true) : Source {
+data class DirSource(
+  @JvmField val dir: Path,
+  @JvmField val excludes: List<PathMatcher> = emptyList(),
+  @JvmField val prefix: String = "",
+  @JvmField val removeModuleInfo: Boolean = true,
+) : Source {
   override var size: Int = 0
   override var hash: Long = 0
 
@@ -192,10 +194,7 @@ internal suspend fun buildJar(
 
           is InMemoryContentSource -> {
             if (uniqueNames.putIfAbsent(source.relativePath, Path.of(source.relativePath)) != null) {
-              throw IllegalStateException(
-                "in-memory source must always be first " +
-                "(targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})"
-              )
+              throw IllegalStateException("in-memory source must always be first (targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
             }
 
             packageIndexBuilder?.addFile(source.relativePath)
@@ -207,6 +206,15 @@ internal suspend fun buildJar(
                 it.put(source.data)
               },
             )
+          }
+
+          is FileSource -> {
+            if (uniqueNames.putIfAbsent(source.relativePath, Path.of(source.relativePath)) != null) {
+              throw IllegalStateException("fileSource source must always be first (targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
+            }
+
+            packageIndexBuilder?.addFile(source.relativePath)
+            zipCreator.file(file = source.file, nameString = source.relativePath, indexWriter = packageIndexBuilder?.indexWriter)
           }
 
           is ZipSource -> {

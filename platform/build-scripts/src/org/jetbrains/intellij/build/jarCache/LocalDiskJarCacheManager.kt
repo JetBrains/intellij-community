@@ -77,14 +77,7 @@ internal class LocalDiskJarCacheManager(
     val cacheFileName = (cacheName + jarSuffix).takeLast(255)
     val cacheFile = cacheDir.resolve(cacheFileName)
     val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
-    if (checkCache(
-        cacheMetadataFile = cacheMetadataFile,
-        cacheFile = cacheFile,
-        sources = sources,
-        items = items,
-        span = span,
-        nativeFiles = nativeFiles
-      )) {
+    if (checkCache(cacheMetadataFile = cacheMetadataFile, cacheFile = cacheFile, sources = sources, items = items, span = span, nativeFiles = nativeFiles)) {
       if (!producer.useCacheAsTargetFile) {
         Files.createDirectories(targetFile.parent)
         Files.copy(cacheFile, targetFile)
@@ -103,9 +96,7 @@ internal class LocalDiskJarCacheManager(
       return if (producer.useCacheAsTargetFile) cacheFile else targetFile
     }
 
-    val tempFile = cacheDir.resolve(
-      "$cacheName.temp-${java.lang.Long.toUnsignedString(DigestUtil.random.nextLong(), Character.MAX_RADIX)}".takeLast(255)
-    )
+    val tempFile = cacheDir.resolve("$cacheName.temp-${java.lang.Long.toUnsignedString(DigestUtil.random.nextLong(), Character.MAX_RADIX)}".takeLast(255))
     var fileMoved = false
     try {
       producer.produce(tempFile)

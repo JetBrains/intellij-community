@@ -9,6 +9,7 @@ import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBuildDescriptor
+import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -18,13 +19,14 @@ internal suspend fun buildPlugins(
   pluginBuildDescriptors: List<PluginBuildDescriptor>,
   platformLayout: PlatformLayout,
   context: BuildContext,
+  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope { span ->
     val counter = LongAdder()
     val pluginEntries = coroutineScope {
       pluginBuildDescriptors.map { plugin ->
         async {
-          plugin to buildPluginIfNotCached(plugin = plugin, platformLayout = platformLayout, context = context)
+          plugin to buildPluginIfNotCached(plugin = plugin, platformLayout = platformLayout, context = context, jarsWithSearchableOptions = jarsWithSearchableOptions)
         }
       }
     }.map { it.getCompleted() }
@@ -33,9 +35,12 @@ internal suspend fun buildPlugins(
   }
 }
 
-internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
-                                            platformLayout: PlatformLayout,
-                                            context: BuildContext): List<DistributionFileEntry> {
+internal suspend fun buildPluginIfNotCached(
+  plugin: PluginBuildDescriptor,
+  platformLayout: PlatformLayout,
+  context: BuildContext,
+  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
+): List<DistributionFileEntry> {
   val mainModule = plugin.layout.mainModule
 
   withContext(Dispatchers.IO) {
@@ -52,16 +57,16 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
     }
   }
 
-  return buildPlugin(plugin = plugin,
-                     platformLayout = platformLayout,
-                     context = context,
-                     copyFiles = true)
+  return buildPlugin(plugin = plugin, platformLayout = platformLayout, context = context, copyFiles = true, jarsWithSearchableOptions = jarsWithSearchableOptions)
 }
 
-private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
-                                platformLayout: PlatformLayout,
-                                context: BuildContext,
-                                copyFiles: Boolean): List<DistributionFileEntry> {
+private suspend fun buildPlugin(
+  plugin: PluginBuildDescriptor,
+  platformLayout: PlatformLayout,
+  context: BuildContext,
+  copyFiles: Boolean,
+  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
+): List<DistributionFileEntry> {
   val moduleOutputPatcher = ModuleOutputPatcher()
   return spanBuilder("build plugin")
     .setAttribute("mainModule", plugin.layout.mainModule)
@@ -74,8 +79,7 @@ private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
         moduleOutputPatcher = moduleOutputPatcher,
         includedModules = plugin.layout.includedModules,
         copyFiles = copyFiles,
-        // searchable options are not generated in dev mode
-        jarsWithSearchableOptions = emptySet(),
+        jarsWithSearchableOptions = jarsWithSearchableOptions,
         context = context,
       )
       pluginEntries
