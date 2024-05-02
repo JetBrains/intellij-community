@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.NioFiles
@@ -246,7 +247,11 @@ private suspend fun checkEnvironment() {
 }
 
 private fun checkLauncher() {
-  if ((SystemInfo.isWindows || SystemInfo.isLinux) && !System.getProperty("ide.native.launcher").toBoolean()) {
+  if (
+    (SystemInfo.isWindows || SystemInfo.isLinux) &&
+    !System.getProperty("ide.native.launcher").toBoolean() &&
+    !ExternalUpdateManager.isCreatingDesktopEntries()
+  ) {
     val baseName = ApplicationNamesInfo.getInstance().scriptName
     val binName = baseName + if (SystemInfo.isWindows) "64.exe" else ""
     val scriptName = baseName + if (SystemInfo.isWindows) ".bat" else ".sh"
