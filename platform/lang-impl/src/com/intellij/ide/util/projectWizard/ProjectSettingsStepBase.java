@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,6 +197,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     checkWebProjectValid();
   }
 
+  @ApiStatus.Internal
   protected void addLocationChangeListener(@NotNull Consumer<? super DocumentEvent> listener) {
     if (myLocationField == null) return;
     DocumentListener documentAdapter = new DocumentAdapter() {
