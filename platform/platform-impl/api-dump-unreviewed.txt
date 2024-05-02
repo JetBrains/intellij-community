@@ -8930,6 +8930,194 @@ f:com.intellij.ide.projectWizard.NewProjectWizardConstants$Language
 - sf:RUBY:java.lang.String
 - sf:RUST:java.lang.String
 - sf:SCALA:java.lang.String
+f:com.intellij.ide.settings.json.ComponentDescriptor
+- <init>(java.lang.String,java.lang.Class,com.intellij.openapi.extensions.PluginDescriptor,com.intellij.openapi.components.State):V
+- f:collectFieldInfo():java.util.List
+- f:component1():java.lang.String
+- f:component2():java.lang.Class
+- f:component3():com.intellij.openapi.extensions.PluginDescriptor
+- f:component4():com.intellij.openapi.components.State
+- f:copy(java.lang.String,java.lang.Class,com.intellij.openapi.extensions.PluginDescriptor,com.intellij.openapi.components.State):com.intellij.ide.settings.json.ComponentDescriptor
+- bs:copy$default(com.intellij.ide.settings.json.ComponentDescriptor,java.lang.String,java.lang.Class,com.intellij.openapi.extensions.PluginDescriptor,com.intellij.openapi.components.State,I,java.lang.Object):com.intellij.ide.settings.json.ComponentDescriptor
+- equals(java.lang.Object):Z
+- f:findStorage():com.intellij.openapi.components.Storage
+- f:getAClass():java.lang.Class
+- f:getCategoryString():java.lang.String
+- f:getName():java.lang.String
+- f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
+- f:getRoamingTypeString():java.lang.String
+- f:getState():com.intellij.openapi.components.State
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.ide.settings.json.JsonSettingsModel
+- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$Companion
+- <init>(java.util.Map):V
+- f:getPropertyMap():java.util.Map
+f:com.intellij.ide.settings.json.JsonSettingsModel$Companion
+- f:getInstance():com.intellij.ide.settings.json.JsonSettingsModel
+- f:jsonDataToModel(com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel):com.intellij.ide.settings.json.JsonSettingsModel
+f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo
+- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$Companion
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- f:component5():java.lang.String
+- f:component6():java.util.List
+- f:copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List):com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo
+- bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo
+- equals(java.lang.Object):Z
+- f:getClassFqn():java.lang.String
+- f:getKey():java.lang.String
+- f:getName():java.lang.String
+- f:getPluginId():java.lang.String
+- f:getProperties():java.util.List
+- f:getScope():java.lang.String
+- f:getStorage():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel
+- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$Companion
+- <init>():V
+- <init>(java.util.List):V
+- b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.List
+- f:copy(java.util.List):com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel
+- bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel,java.util.List,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel
+- equals(java.lang.Object):Z
+- f:getComponents():java.util.List
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo
+- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$Companion
+- <init>(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.util.List):V
+- b:<init>(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- f:component4():java.lang.String
+- f:component5():java.util.List
+- f:copy(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.util.List):com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo
+- bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo
+- equals(java.lang.Object):Z
+- f:getJavaType():java.lang.String
+- f:getMapTo():java.lang.String
+- f:getName():java.lang.String
+- f:getType():com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- f:getVariants():java.util.List
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
+- <init>(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List):V
+- b:<init>(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- f:component4():java.lang.String
+- f:component5():java.lang.String
+- f:component6():java.util.List
+- f:copy(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List):com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
+- bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
+- equals(java.lang.Object):Z
+- f:getComponentName():java.lang.String
+- f:getMapTo():java.lang.String
+- f:getName():java.lang.String
+- f:getStorage():java.lang.String
+- f:getType():com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- f:getVariants():java.util.List
+- hashCode():I
+- toString():java.lang.String
+e:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- java.lang.Enum
+- sf:Boolean:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- sf:Enum:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- sf:Integer:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- sf:String:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- sf:StringList:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- sf:StringSet:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- sf:Unsupported:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- s:values():com.intellij.ide.settings.json.JsonSettingsModel$PropertyType[]
+f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo
+- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$Companion
+- <init>(java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo
+- bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo
+- equals(java.lang.Object):Z
+- f:getMapTo():java.lang.String
+- f:getValue():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList
+- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList$Companion
+- <init>():V
+- <init>(java.util.List):V
+- b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.List
+- f:copy(java.util.List):com.intellij.ide.settings.json.JsonSettingsModel$WhiteList
+- bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$WhiteList,java.util.List,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$WhiteList
+- equals(java.lang.Object):Z
+- f:getProperties():java.util.List
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.settings.json.JsonSettingsModel$WhiteList
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$WhiteList):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.settings.json.SettingsInspectorKt
+- sf:buildComponentModel():com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel
 f:com.intellij.ide.startup.ServiceNotReadyException
 - com.intellij.openapi.progress.ProcessCanceledException
 - <init>():V
@@ -10906,23 +11094,6 @@ f:com.intellij.internal.cachedValueProfiler.CachedValueProfilerDumpHelper
 - s:loadDump(java.io.File,com.intellij.psi.util.CachedValueProfiler$EventConsumer):V
 com.intellij.internal.cachedValueProfiler.CachedValueProfilerDumpHelper$EventConsumerFactory
 - a:createEventConsumer():com.intellij.psi.util.CachedValueProfiler$EventConsumer
-f:com.intellij.internal.components.ComponentDescriptor
-- <init>(java.lang.String,java.lang.Class,com.intellij.openapi.extensions.PluginDescriptor,com.intellij.openapi.components.State):V
-- f:component1():java.lang.String
-- f:component2():java.lang.Class
-- f:component3():com.intellij.openapi.extensions.PluginDescriptor
-- f:component4():com.intellij.openapi.components.State
-- f:copy(java.lang.String,java.lang.Class,com.intellij.openapi.extensions.PluginDescriptor,com.intellij.openapi.components.State):com.intellij.internal.components.ComponentDescriptor
-- bs:copy$default(com.intellij.internal.components.ComponentDescriptor,java.lang.String,java.lang.Class,com.intellij.openapi.extensions.PluginDescriptor,com.intellij.openapi.components.State,I,java.lang.Object):com.intellij.internal.components.ComponentDescriptor
-- equals(java.lang.Object):Z
-- f:getAClass():java.lang.Class
-- f:getCategoryString():java.lang.String
-- f:getName():java.lang.String
-- f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
-- f:getRoamingTypeString():java.lang.String
-- f:getState():com.intellij.openapi.components.State
-- hashCode():I
-- toString():java.lang.String
 f:com.intellij.internal.focus.FocusTracesDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(com.intellij.openapi.project.Project,java.util.ArrayList):V
