@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -236,7 +237,7 @@ public final class UpdateHighlightersUtil {
       }
       if (shouldRemove) {
         HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
-        HighlightInfoUpdaterImpl.disposeWithFileLevelIgnoreErrors(info, (RangeHighlighterEx)highlighter, session);
+        disposeWithFileLevelIgnoreErrors(highlighter, info, session);
         changed = true;
       }
     }
@@ -457,19 +458,47 @@ public final class UpdateHighlightersUtil {
     for (HighlightInfo info : toRemove) {
       RangeHighlighterEx highlighter = info.getHighlighter();
       if (!highlighter.isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
-        if (info.isFileLevelAnnotation()) {
-          DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
-          PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
-          if (psiFile != null) {
-            codeAnalyzer.removeFileLevelHighlight(psiFile, info);
-          }
-        }
-        highlighter.dispose();
+        disposeWithFileLevelIgnoreErrors(highlighter, project, info);
       }
     }
 
     if (!toRemove.isEmpty()) {
       disableWhiteSpaceOptimization(document);
+    }
+  }
+
+  @RequiresEdt
+  static void disposeWithFileLevelIgnoreErrors(@NotNull RangeHighlighter highlighter,
+                                               @NotNull Project project,
+                                               @NotNull HighlightInfo info) {
+    if (info.isFileLevelAnnotation()) {
+      DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(highlighter.getDocument());
+      if (psiFile != null) {
+        codeAnalyzer.removeFileLevelHighlight(psiFile, info);
+      }
+    }
+    try {
+      highlighter.dispose();
+    }
+    catch (Exception ignored) {
+      // in theory, rogue plugin might register a listener on range marker dispose, which can do nasty things, including throwing exceptions
+      // but in highlighting range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
+    }
+  }
+  // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
+  static void disposeWithFileLevelIgnoreErrors(@NotNull RangeHighlighter highlighter,
+                                               @Nullable HighlightInfo info,
+                                               @NotNull HighlightingSession highlightingSession) {
+    if (info != null && info.isFileLevelAnnotation()) {
+      ((HighlightingSessionImpl)highlightingSession).removeFileLevelHighlight(info);
+    }
+    try {
+      highlighter.dispose();
+    }
+    catch (Exception ignored) {
+      // in theory, rogue plugin might register a listener on range marker dispose, which can do nasty things, including throwing exceptions
+      // but in highlighting range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
     }
   }
 

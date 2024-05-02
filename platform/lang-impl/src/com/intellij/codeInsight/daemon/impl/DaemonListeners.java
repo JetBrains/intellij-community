@@ -75,6 +75,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -251,9 +252,12 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(PowerSaveMode.TOPIC, () -> {
       stopDaemonAndRestartAllFiles("Power save mode changed to " + PowerSaveMode.isEnabled());
       if (PowerSaveMode.isEnabled()) {
-        clearAllHighlightersInAllEditors();
+        clearHighlightingRelatedHighlightersInAllEditors();
         reInitTrafficLightRendererForAllEditors();
         repaintTrafficLightIconForAllEditors();
+      }
+      else {
+        daemonCodeAnalyzer.restart();
       }
     });
     connection.subscribe(EditorColorsManager.TOPIC, __ -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
@@ -430,12 +434,19 @@ public final class DaemonListeners implements Disposable {
     }
   }
 
-  private void clearAllHighlightersInAllEditors() {
+  private void clearHighlightingRelatedHighlightersInAllEditors() {
     for (Editor editor : myActiveEditors) {
       editor.getMarkupModel().removeAllHighlighters();
       MarkupModel documentMarkupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
-      if (documentMarkupModel != null) {
-        documentMarkupModel.removeAllHighlighters();
+      List<RangeHighlighter> toRemove = documentMarkupModel == null ? List.of() : ContainerUtil.filter(documentMarkupModel.getAllHighlighters(), highlighter -> {
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        return info != null && (info.isFromInspection() || info.isFromAnnotator() || info.isFromHighlightVisitor());
+      });
+      for (RangeHighlighter highlighter : toRemove) {
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (info != null) {
+          UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, myProject, info);
+        }
       }
     }
   }

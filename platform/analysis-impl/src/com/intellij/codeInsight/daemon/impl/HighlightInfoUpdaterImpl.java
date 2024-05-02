@@ -211,7 +211,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                   if (LOG.isDebugEnabled()) {
                     LOG.debug("removeInvalidPsiElements: " + info + " for invalid " + element + " from " + requestor);
                   }
-                  disposeWithFileLevelIgnoreErrors(info, highlighter, highlightingSession);
+                  UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, highlightingSession);
                 }
               }
               iterator.remove();
@@ -232,7 +232,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         for (HighlightInfo info : list) {
           RangeHighlighterEx highlighter = info.highlighter;
           if (highlighter != null) {
-            disposeWithFileLevelIgnoreErrors(info, highlighter, highlightingSession);
+            UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, highlightingSession);
             removed++;
           }
         }
@@ -240,22 +240,6 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("removeAllHighlighterInsideFile: removed invalid file: " + psiFile + " (" + removed + " highlighters removed); from " + requestor);
-    }
-  }
-
-  // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
-  static void disposeWithFileLevelIgnoreErrors(@Nullable HighlightInfo info,
-                                               @NotNull RangeHighlighterEx highlighter,
-                                               @NotNull HighlightingSession highlightingSession) {
-    if (info != null && info.isFileLevelAnnotation()) {
-      ((HighlightingSessionImpl)highlightingSession).removeFileLevelHighlight(info);
-    }
-    try {
-      highlighter.dispose();
-    }
-    catch (Exception ignored) {
-      // in theory, rogue plugin might register a listener on range marker dispose, which can do nasty things, including throwing exceptions
-      // but in highlighting range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
     }
   }
 
@@ -363,7 +347,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           RangeHighlighterEx salvagedHighlighter = toReuse.pickupHighlighterFromGarbageBin(0, psiFile.getTextLength(), -409423948);
           HighlightInfo oldFileInfo = salvagedHighlighter == null ? null : HighlightInfo.fromRangeHighlighter(salvagedHighlighter);
           if (oldFileInfo != null) {
-            disposeWithFileLevelIgnoreErrors(oldFileInfo, salvagedHighlighter, session);
+            UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(salvagedHighlighter, oldFileInfo, session);
             salvagedHighlighter = null;
           }
           ((HighlightingSessionImpl)session).addFileLevelHighlight(info, salvagedHighlighter);
@@ -410,7 +394,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
               if (LOG.isTraceEnabled()) {
                 LOG.trace("removeHighlightsForObsoleteTools: " + highlighter);
               }
-              disposeWithFileLevelIgnoreErrors(info, highlighter, highlightingSession);
+              UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, highlightingSession);
             }
           }
         }

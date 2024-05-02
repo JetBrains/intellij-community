@@ -1087,4 +1087,7 @@ public class HighlightInfo implements Segment {
   boolean isFromInspection() {
     return toolId instanceof String;
   }
+  boolean isFromHighlightVisitor() {
+    return toolId instanceof Class<?> c && HighlightVisitor.class.isAssignableFrom(c);
+  }
 }
