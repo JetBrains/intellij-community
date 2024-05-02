@@ -115,6 +115,8 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
 
   private @Nullable SelectionSnapshot mySelectionSnapshot = null;
 
+  private boolean myDisposed = false;
+
   public VcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
                           @NotNull Runnable requestMore, @NotNull Disposable disposable) {
@@ -177,6 +179,7 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
 
   @Override
   public void dispose() {
+    myDisposed = true;
   }
 
   @Override
@@ -1040,7 +1043,7 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
     public void columnAvailabilityChanged() {
       ApplicationManager.getApplication().invokeLater(() -> {
         onColumnOrderSettingChanged();
-      });
+      }, o -> myDisposed);
     }
   }
 
