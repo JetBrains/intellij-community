@@ -13,16 +13,13 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 interface CaretRestorationDecider {
-
   /**
    * Determines whether the caret position should be restored after formatting.
-   *
    * @param document the document being formatted
    * @param editor the editor in which the document is being displayed
-   * @param caretOffset the offset of the caret position
    * @return true if the caret position should be restored, false otherwise
    */
-  fun shouldRestoreCaret(document: Document, editor: Editor, caretOffset: Int): Boolean
+  fun shouldRestoreCaret(document: Document, editor: Editor): Boolean
 
   companion object : LanguageExtension<CaretRestorationDecider>("com.intellij.formatting.caretRestorationDecider")
 }

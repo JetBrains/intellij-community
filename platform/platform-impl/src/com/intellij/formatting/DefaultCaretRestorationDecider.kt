@@ -6,7 +6,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.util.text.CharArrayUtil
 
 object DefaultCaretRestorationDecider: CaretRestorationDecider {
-  override fun shouldRestoreCaret(document: Document, editor: Editor, caretOffset: Int): Boolean {
+  override fun shouldRestoreCaret(document: Document, editor: Editor): Boolean {
+    val caretOffset = editor.caretModel.offset
     val lineStartOffset = CaretPositionKeeper.getLineStartOffsetByTotalOffset(document, caretOffset)
     val lineEndOffset = CaretPositionKeeper.getLineEndOffsetByTotalOffset(document, caretOffset)
     return CharArrayUtil.isEmptyOrSpaces(document.charsSequence, lineStartOffset, lineEndOffset)

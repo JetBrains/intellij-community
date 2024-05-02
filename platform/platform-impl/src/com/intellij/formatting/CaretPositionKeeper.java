@@ -37,6 +37,11 @@ public final class CaretPositionKeeper {
     myDocument = editor.getDocument();
     myBlankLineIndentPreserved = isBlankLineIndentPreserved(settings, language);
 
+    Project project = myEditor.getProject();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitDocument(myDocument);
+    }
+
     int caretOffset = getCaretOffset();
     CaretRestorationDecider decider = CaretRestorationDecider.Companion.forLanguage(language);
 
@@ -44,7 +49,7 @@ public final class CaretPositionKeeper {
       decider = DefaultCaretRestorationDecider.INSTANCE;
     }
 
-    boolean shouldFixCaretPosition = decider.shouldRestoreCaret(myDocument, myEditor, caretOffset);
+    boolean shouldFixCaretPosition = decider.shouldRestoreCaret(myDocument, myEditor);
 
     if (shouldFixCaretPosition) {
       initRestoreInfo(caretOffset);
