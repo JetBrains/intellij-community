@@ -426,7 +426,30 @@ public class PyMoveTest extends PyTestCase {
       runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/b.py", "MyClass"));
     });
   }
-
+  public void testMoveSymbolCreateInitPyInNameSpace1() {
+    doComparingDirectories(testDir -> {
+      final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/B/module_b.py", "myfunc"));
+    });
+  }
+  public void testMoveSymbolCreateInitPyInNameSpace2() {
+    doComparingDirectories(testDir -> {
+      final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/module_b.py", "myfunc"));
+    });
+  }
+  public void testMoveSymbolCreateInitPyInNameSpace3() {
+    doComparingDirectories(testDir -> {
+      final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/B/module_b.py", "myfunc"));
+    });
+  }
+  public void testMoveSymbolCreateInitPyInNameSpace4() {
+    doComparingDirectories(testDir -> {
+      final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> moveSymbols(testDir, "src/pkg/subpkg/A/B/module_b.py", "myfunc"));
+    });
+  }
   // PY-23968
   public void testUpdatingNamesInFromImportsRespectsOrder() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
