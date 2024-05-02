@@ -158,15 +158,20 @@ private fun filterSmartStepTargets(
     val targetFiltererAdapter = KotlinSmartStepTargetFiltererAdapter(
         lines, location, debugProcess.positionManager, targetFilterer
     )
-    val visitedOpcodes = mutableListOf<Int>()
 
-    // During the first pass we traverse the whole method to collect its opcodes (the result is different
-    // from method.bytecodes() because of the method visiting policy), and to check
-    // that all smart step targets are filtered out.
-    MethodBytecodeUtil.visit(method, Long.MAX_VALUE, object : OpcodeReportingMethodVisitor(targetFiltererAdapter) {
+    var unvisitedTargets: List<KotlinMethodSmartStepTarget>? = null
+    MethodBytecodeUtil.visit(method, Long.MAX_VALUE, object : OpcodeReportingMethodVisitor(targetFiltererAdapter), MethodBytecodeUtil.InstructionOffsetReader {
+        private var stopCollectingVisitedTargets = false
+
+        override fun readBytecodeInstructionOffset(offset: Int) {
+            if (!stopCollectingVisitedTargets && offset >= location.codeIndex()) {
+                unvisitedTargets = targetFilterer.getUnvisitedTargets()
+                stopCollectingVisitedTargets = true
+            }
+        }
+
         override fun reportOpcode(opcode: Int) {
             ProgressManager.checkCanceled()
-            visitedOpcodes.add(opcode)
             targetFiltererAdapter.reportOpcode(opcode)
         }
 
@@ -180,29 +185,7 @@ private fun filterSmartStepTargets(
     if (targetFilterer.getUnvisitedTargets().isNotEmpty()) {
         return targets
     }
-    targetFilterer.reset()
-
-    // During the second pass we traverse a part of the method (until location.codeIndex()), the rest opcodes
-    // will be replaced with mock ones, so we stop when current opcode doesn't match the previously visited one.
-    MethodBytecodeUtil.visit(method, location.codeIndex(), object : OpcodeReportingMethodVisitor(targetFiltererAdapter) {
-        private var visitedOpcodeCnt = 0
-        private var stopVisiting = false
-        override fun reportOpcode(opcode: Int) {
-            ProgressManager.checkCanceled()
-            if (stopVisiting || opcode != visitedOpcodes[visitedOpcodeCnt++]) {
-                stopVisiting = true
-                return
-            }
-            targetFiltererAdapter.reportOpcode(opcode)
-        }
-
-        override fun visitMethodInsn(opcode: Int, owner: String, name: String, descriptor: String, isInterface: Boolean) {
-            if (stopVisiting) return
-            targetFiltererAdapter.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-        }
-    }, true)
-
-    return targetFilterer.getUnvisitedTargets()
+    return unvisitedTargets ?: targets
 }
 
 private fun Range<Int>.toClosedRange() = from..to
