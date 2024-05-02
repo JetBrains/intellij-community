@@ -163,6 +163,7 @@ f:com.intellij.vcs.log.data.RefsModel
 - f:getAllRefsByRoot():java.util.Map
 - getBranches():java.util.Collection
 - f:refsToCommit(I):java.util.List
+- f:refsToCommit(com.intellij.openapi.vfs.VirtualFile,I):java.util.List
 - f:rootAtHead(I):com.intellij.openapi.vfs.VirtualFile
 - stream():java.util.stream.Stream
 f:com.intellij.vcs.log.data.RefsModel$Companion
