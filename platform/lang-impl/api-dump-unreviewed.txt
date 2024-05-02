@@ -10758,6 +10758,7 @@ c:com.intellij.execution.console.ConsoleHistoryController
 - com.intellij.openapi.Disposable
 - <init>(com.intellij.execution.console.ConsoleRootType,java.lang.String,com.intellij.execution.console.LanguageConsoleView):V
 - <init>(com.intellij.execution.console.ConsoleRootType,java.lang.String,com.intellij.execution.console.LanguageConsoleView,Z):V
+- <init>(com.intellij.execution.console.ConsoleRootType,java.lang.String,java.lang.String,com.intellij.execution.console.LanguageConsoleView):V
 - <init>(java.lang.String,java.lang.String,com.intellij.execution.console.LanguageConsoleView):V
 - s:addToHistory(com.intellij.execution.console.LanguageConsoleView,java.lang.String):V
 - addToHistory(java.lang.String):V
@@ -10765,6 +10766,7 @@ c:com.intellij.execution.console.ConsoleHistoryController
 - dispose():V
 - getBrowseHistory():com.intellij.openapi.actionSystem.AnAction
 - s:getContentFile(com.intellij.execution.console.ConsoleRootType,java.lang.String,com.intellij.ide.scratch.ScratchFileService$Option):com.intellij.openapi.vfs.VirtualFile
+- ps:getContentFile(com.intellij.execution.console.ConsoleRootType,java.lang.String,java.lang.String,com.intellij.ide.scratch.ScratchFileService$Option):com.intellij.openapi.vfs.VirtualFile
 - s:getController(com.intellij.execution.console.LanguageConsoleView):com.intellij.execution.console.ConsoleHistoryController
 - getHistoryNext():com.intellij.openapi.actionSystem.AnAction
 - getHistoryPrev():com.intellij.openapi.actionSystem.AnAction
@@ -10786,6 +10788,7 @@ pc:com.intellij.execution.console.ConsoleHistoryController$BrowseAction
 f:com.intellij.execution.console.ConsoleHistoryController$ModelHelper
 - com.intellij.openapi.vfs.SafeWriteRequestor
 - <init>(com.intellij.execution.console.ConsoleRootType,java.lang.String,com.intellij.execution.console.ConsoleHistoryModel):V
+- <init>(com.intellij.execution.console.ConsoleRootType,java.lang.String,java.lang.String,com.intellij.execution.console.ConsoleHistoryModel):V
 - getContent():java.lang.CharSequence
 - getId():java.lang.String
 - getModel():com.intellij.execution.console.ConsoleHistoryModel

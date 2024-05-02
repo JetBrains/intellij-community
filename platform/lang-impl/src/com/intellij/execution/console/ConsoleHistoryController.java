@@ -97,13 +97,18 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
-    this(rootType, fixNullPersistenceId(persistenceId, console), console,
+    this(rootType, rootType.getDefaultFileExtension(), persistenceId, console);
+  }
+
+  public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @NotNull String fileExtension,
+                                  @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
+    this(rootType, fileExtension, fixNullPersistenceId(persistenceId, console), console,
          ConsoleHistoryModelProvider.findModelForConsole(fixNullPersistenceId(persistenceId, console), console));
   }
 
-  private ConsoleHistoryController(@NotNull ConsoleRootType rootType, @NotNull String persistenceId,
+  private ConsoleHistoryController(@NotNull ConsoleRootType rootType, @NotNull String fileExtension, @NotNull String persistenceId,
                                    @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
-    myHelper = new ModelHelper(rootType, persistenceId, model);
+    myHelper = new ModelHelper(rootType, fileExtension, persistenceId, model);
     myConsole = console;
   }
 
@@ -115,7 +120,7 @@ public class ConsoleHistoryController implements Disposable {
 
   @TestOnly
   public void setModel(@NotNull ConsoleHistoryModel model){
-    myHelper = new ModelHelper(myHelper.myRootType, myHelper.myId, model);
+    myHelper = new ModelHelper(myHelper.myRootType, myHelper.myFileExtension, myHelper.myId, model);
   }
 
   @Override
@@ -445,12 +450,18 @@ public class ConsoleHistoryController implements Disposable {
 
   public static final class ModelHelper implements SafeWriteRequestor {
     private final ConsoleRootType myRootType;
+    private final String myFileExtension;
     private final String myId;
     private final ConsoleHistoryModel myModel;
     private CharSequence myContent;
 
     public ModelHelper(ConsoleRootType rootType, String id, ConsoleHistoryModel model) {
+      this(rootType, rootType.getDefaultFileExtension(), id, model);
+    }
+
+    public ModelHelper(ConsoleRootType rootType, String fileExtension, String id, ConsoleHistoryModel model) {
       myRootType = rootType;
+      myFileExtension = fileExtension;
       myId = id;
       myModel = model;
     }
@@ -475,7 +486,7 @@ public class ConsoleHistoryController implements Disposable {
     File getFile(String id) {
       if (myRootType.isHidden()) return null;
       String rootPath = ScratchFileService.getInstance().getRootPath(HistoryRootType.getInstance());
-      return new File(FileUtil.toSystemDependentName(rootPath + "/" + getHistoryName(myRootType, id)));
+      return new File(FileUtil.toSystemDependentName(rootPath + "/" + getHistoryName(myRootType, myFileExtension, id)));
     }
 
     @NotNull
@@ -523,14 +534,24 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   @NotNull
-  private static String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String id) {
+  private static String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String fileExtension, @NotNull String id) {
     return rootType.getConsoleTypeId() + "/" +
-           PathUtil.makeFileName(rootType.getHistoryPathName(id), rootType.getDefaultFileExtension());
+           PathUtil.makeFileName(rootType.getHistoryPathName(id), fileExtension);
   }
 
   @Nullable
-  public static VirtualFile getContentFile(@NotNull final ConsoleRootType rootType, @NotNull String id, ScratchFileService.Option option) {
-    final String pathName = PathUtil.makeFileName(rootType.getContentPathName(id), rootType.getDefaultFileExtension());
+  public static VirtualFile getContentFile(@NotNull final ConsoleRootType rootType,
+                                           @NotNull String id,
+                                           @NotNull ScratchFileService.Option option) {
+    return getContentFile(rootType, rootType.getDefaultFileExtension(), id, option);
+  }
+
+  @Nullable
+  protected static VirtualFile getContentFile(@NotNull final ConsoleRootType rootType,
+                                              @NotNull String fileExtension,
+                                              @NotNull String id,
+                                              @NotNull ScratchFileService.Option option) {
+    final String pathName = PathUtil.makeFileName(rootType.getContentPathName(id), fileExtension);
     try {
       return rootType.findFile(null, pathName, option);
     }
