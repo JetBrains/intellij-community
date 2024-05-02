@@ -103,7 +103,7 @@ internal class VcsLogBookmarkNode(project: Project, bookmark: VcsLogBookmark) : 
 private fun getDefaultBookmarkDescription(project: Project, root: VirtualFile, hash: Hash): String? {
   val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return null
   val commitId = dataManager.getCommitIndex(hash, root)
-  val details = dataManager.miniDetailsGetter.getCommitData(commitId, listOf(commitId))
+  val details = dataManager.miniDetailsGetter.getCachedDataOrPlaceholder(commitId)
   if (details is LoadingDetails) return null
   return details.subject.ifBlank { VcsLogBundle.message("vcs.log.bookmark.description.empty.subject") }
 }
