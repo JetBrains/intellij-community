@@ -1,10 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.ide.ui.search
 
+import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar.AdditionalLocationProvider
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.lang.UrlClassLoader
+import org.jdom.Element
+import org.jdom.JDOMException
+import java.io.IOException
+import java.nio.file.Files
+import java.util.*
+import java.util.concurrent.CancellationException
+import java.util.function.BiConsumer
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache: MutableSet<String> = HashSet()
@@ -31,7 +44,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
 
   fun computeHighlightOptionToSynonym(): Map<Pair<String, String>, MutableSet<String>> {
     val xmlName = SearchableOptionsRegistrar.getSearchableOptionsXmlName()
-    SearchableOptionsRegistrarImpl.processSearchableOptions({ it.endsWith(xmlName) }) { _, root ->
+    processSearchableOptions({ it.endsWith(xmlName) }) { _, root ->
       for (configurable in root.getChildren("configurable")) {
         val id = configurable.getAttributeValue("id") ?: continue
         val groupName = configurable.getAttributeValue("configurable_name")
@@ -59,7 +72,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
         cache.clear()
         SearchableOptionsRegistrarImpl.collectProcessedWords(synonym, cache, stopWords)
         for (word in cache) {
-          putOptionWithHelpId(word, id, groupName, synonym, null)
+          putOptionWithHelpId(option = word, id = id, groupName = groupName, hit = synonym, path = null)
         }
       }
 
@@ -99,5 +112,52 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
       configs = ArrayUtil.append(configs, packed)
     }
     storage.put(option, configs!!)
+  }
+}
+
+private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("com.intellij.search.additionalOptionsLocation")
+
+private fun processSearchableOptions(fileNameFilter: (String) -> Boolean, consumer: BiConsumer<String, Element>) {
+  val visited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
+  for (plugin in getPluginSet().getEnabledModules()) {
+    val classLoader = plugin.pluginClassLoader
+    if (classLoader !is UrlClassLoader || !visited.add(classLoader)) {
+      continue
+    }
+
+    classLoader.processResources("search", fileNameFilter) { name, stream ->
+      try {
+        consumer.accept(name, JDOMUtil.load(stream))
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        throw RuntimeException("Can't parse searchable options $name for plugin ${plugin.pluginId}", e)
+      }
+    }
+  }
+
+  // process additional locations
+  LOCATION_EP_NAME.forEachExtensionSafe { provider ->
+    val additionalLocation = provider.additionalLocation ?: return@forEachExtensionSafe
+    if (Files.isDirectory(additionalLocation)) {
+      Files.list(additionalLocation).use { stream ->
+        stream
+          .filter { path -> fileNameFilter(path.fileName.toString()) }
+          .forEach { file ->
+            val fileName = file.fileName.toString()
+            try {
+              consumer.accept(fileName, JDOMUtil.load(file))
+            }
+            catch (e: IOException) {
+              throw RuntimeException("Can't parse searchable options $fileName", e)
+            }
+            catch (e: JDOMException) {
+              throw RuntimeException("Can't parse searchable options $fileName", e)
+            }
+          }
+      }
+    }
   }
 }
