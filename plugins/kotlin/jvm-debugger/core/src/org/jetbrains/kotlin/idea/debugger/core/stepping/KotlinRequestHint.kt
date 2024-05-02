@@ -89,9 +89,11 @@ class KotlinStepOverRequestHint(
                             STOP
                         } else {
                             resumeBreakpointInstalled = true
+                            isIgnoreFilters = true
                             StepRequest.STEP_OVER
                         }
                     } else {
+                        isIgnoreFilters = true
                         StepRequest.STEP_OVER
                     }
                 }
