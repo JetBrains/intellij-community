@@ -34,7 +34,8 @@ class AdjustWhitespaceLineTextBlockReformatPostProcessor : PostFormatProcessor {
       val newSpaces = buildWhitespaceString(settings, source.fileType, indent)
       deltaLength += newSpaces.length
       deltaLength -= range.length
-      document.replaceString(range.startOffset, range.endOffset, newSpaces)
+      document.deleteString(range.startOffset, range.endOffset)
+      document.insertString(range.startOffset, newSpaces)
     }
 
     documentManager.commitDocument(document)

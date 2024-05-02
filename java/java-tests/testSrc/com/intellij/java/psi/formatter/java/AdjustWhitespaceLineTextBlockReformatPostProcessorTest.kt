@@ -56,6 +56,16 @@ class AdjustWhitespaceLineTextBlockReformatPostProcessorTest : LightPlatformCode
     doTest()
   }
 
+  fun testCaretInWhitespaceLineInMiddleAfterAlignment() {
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
+
+  fun testCaretInWhitespaceLineInMiddleBeforeAlignment() {
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
+
   private fun getCommonSettings(): CommonCodeStyleSettings = currentCodeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
 
 
