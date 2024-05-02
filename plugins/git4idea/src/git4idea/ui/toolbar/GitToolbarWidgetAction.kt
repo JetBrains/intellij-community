@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
+import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -16,6 +18,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.GitVcs
@@ -50,6 +53,18 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
     if (state is GitWidgetState.Repo) {
       return GitBranchesTreePopup.create(project, state.repository)
+    }
+
+    if (state is GitWidgetState.GitVcs) {
+      val repo = runWithModalProgressBlocking(project, GitBundle.message("action.Git.Loading.Branches.progress")) {
+        coroutineToIndicator {
+          VcsRepositoryManager.getInstance(project).ensureUpToDate()
+          GitBranchUtil.guessWidgetRepository(project, event.dataContext)
+        }
+      }
+      if (repo != null) {
+        return GitBranchesTreePopup.create(project, repo)
+      }
     }
 
     updatePlaceholder(project, null)
