@@ -17,7 +17,7 @@ suspend fun boo() {
 // 2 suspend calls, so there is switcher here
 suspend fun bar() {
     boo()
-    delay(1)
+    delay(100)
 }
 
 fun main() = runBlocking {

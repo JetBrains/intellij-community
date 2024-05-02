@@ -6,11 +6,11 @@ suspend fun foo(i: Int) {
     //Breakpoint!
     println("Start foo")
     coroutineScope {
-        delay(10)
+        delay(100)
         println("coroutineScope completed")
     }
     println("coroutineScope completed $i")
-    delay(10)
+    delay(100)
     println("End foo")
 }
 

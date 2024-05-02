@@ -9,7 +9,7 @@ suspend fun foo(i: Int) {
             //Breakpoint!
             startMethod(i)
         }
-        delay(10)
+        delay(100)
         // EXPRESSION: i
         // RESULT: 25: I
         println("After delay $i")
@@ -19,13 +19,13 @@ suspend fun foo(i: Int) {
 
 suspend fun startMethod(i: Int) {
     if (i == 25) {
-        delay(10)
+        delay(100)
         "".toString()
     }
 }
 
 suspend fun endMethod(i: Int) {
-    delay(10)
+    delay(100)
 }
 
 fun main() {

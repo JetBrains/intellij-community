@@ -28,14 +28,14 @@ fun beforeBBB(i: Int) {
 }
 
 suspend fun afterBBB(i: Int) {
-    delay(10)
+    delay(100)
     println("afterBBB: $i")
 }
 
 suspend fun bbb(i: Int) {
-    delay(10)
+    delay(100)
     ccc(i)
-    delay(10)
+    delay(100)
     println("End bbb")
 }
 
@@ -50,7 +50,7 @@ fun ccc(i: Int) {
 }
 
 private suspend fun bar(willSuspend: Boolean): String {
-    if (willSuspend) delay(1)
+    if (willSuspend) delay(100)
     return "Result"
 }
 

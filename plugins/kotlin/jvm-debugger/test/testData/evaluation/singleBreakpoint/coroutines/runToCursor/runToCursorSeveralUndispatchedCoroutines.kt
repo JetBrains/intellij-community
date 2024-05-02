@@ -11,7 +11,7 @@ fun main() = runBlocking {
                 //Breakpoint!
                 foo(i)
             }
-            delay(10)
+            delay(100)
             // EXPRESSION: i
             // RESULT: 5: I
             // RUN_TO_CURSOR: 1
@@ -22,7 +22,7 @@ fun main() = runBlocking {
 }
 
 suspend fun foo(i: Int) {
-    delay(10)
+    delay(100)
     println("End foo $i")
 }
 

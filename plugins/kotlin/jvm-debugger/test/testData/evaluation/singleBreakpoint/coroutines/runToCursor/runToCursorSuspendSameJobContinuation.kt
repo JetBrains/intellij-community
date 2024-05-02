@@ -33,7 +33,7 @@ suspend fun endMethod(k: Int) {
     // EXPRESSION: k
     // RESULT: 1: I
     // RUN_TO_CURSOR: 1
-    delay(1)
+    delay(100)
 }
 
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
