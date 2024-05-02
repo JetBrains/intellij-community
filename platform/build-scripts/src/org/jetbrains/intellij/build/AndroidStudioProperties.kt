@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
+import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import java.nio.file.Files
 import java.nio.file.Path
@@ -48,7 +49,13 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.rml.dfa.plugin",
     )
 
-    private val EXCLUDED_PLUGINS = listOf(
+    // EAP-only plugins are generally intended for JetBrains' products only. We always exclude them from Android Studio.
+    private val EAP_PLUGINS = COMMUNITY_REPOSITORY_PLUGINS
+      .filter { plugin -> plugin.bundlingRestrictions.includeInDistribution == PluginDistribution.NOT_FOR_RELEASE }
+      .map(PluginLayout::mainModule)
+      .filter(INHERITED_PLUGINS::contains)
+
+    private val EXCLUDED_PLUGINS = EAP_PLUGINS + listOf(
       "intellij.settingsSync", // Not supported yet in Studio (b/267070185).
       "intellij.android.gradle.dsl",
       "intellij.eclipse",
@@ -62,7 +69,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.maven",
       "intellij.platform.tracing.ide",
       "intellij.searchEverywhereMl",
-      "intellij.statsCollector",
     )
   }
 
