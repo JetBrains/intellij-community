@@ -15,6 +15,3 @@ class F : MyClass() {
         return t
     }
 }
-
-// IGNORE_PLATFORM_JS: KTIJ-29711
-// IGNORE_PLATFORM_NATIVE: KTIJ-29711
