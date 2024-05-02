@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier;
-import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.ProjectIdentifier;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
-import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,14 +45,5 @@ class DefaultGradleLightProject implements GradleLightProject, Serializable {
     File rootDir = projectIdentifier.getBuildIdentifier().getRootDir();
     String projectPath = projectIdentifier.getProjectPath();
     return new DefaultGradleLightProject(name, rootDir, projectPath);
-  }
-
-  public static @NotNull DefaultGradleProjectModel convertIdeaProject(@NotNull IdeaModule ideaModule) {
-    GradleProject gradleProject = ideaModule.getGradleProject();
-    String name = gradleProject.getName();
-    ProjectIdentifier projectIdentifier = gradleProject.getProjectIdentifier();
-    File rootDir = projectIdentifier.getBuildIdentifier().getRootDir();
-    String projectPath = projectIdentifier.getProjectPath();
-    return new DefaultGradleProjectModel(name, rootDir, projectPath);
   }
 }
