@@ -19,12 +19,10 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.psi.PsiManager
-import com.intellij.psi.createSmartPointer
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
@@ -366,36 +364,24 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun updateHighlighting(project: Project, filter: (VirtualFile) -> Boolean) {
-        if (!project.isOpen) return
-
-        val openFiles = FileEditorManager.getInstance(project).allEditors.mapNotNull { it.file }
-        val openedScripts = openFiles.filter(filter)
-
-        if (openedScripts.isEmpty()) return
-
         /**
          * Scripts guts are everywhere in the plugin code, without them some functionality does not work,
          * And with them some other fir plugin related is broken
          * As FIR plugin does not have scripts support yet, just disabling not working one for now
          */
         @Suppress("DEPRECATION")
-        if (project.isDisposed || project.service<FirPluginOracleService>().isFirPlugin()) return
+        if (!project.isOpen || project.service<FirPluginOracleService>().isFirPlugin()) return
+        // tests do not like sudden daemon restarts
+        if (ApplicationManager.getApplication().isUnitTestMode) return
 
-        val ktFiles = openedScripts.mapNotNull {
-            if (!it.isValid) return@mapNotNull null
+        val openFiles = FileEditorManager.getInstance(project).allEditors.mapNotNull { it.file }
+        val openedScripts = openFiles.filter(filter) 
 
-            val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile
-            ktFile?.createSmartPointer()
-        }
-        if (ktFiles.isNotEmpty()) {
-            scope.launch {
-                readAction {
-                    val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
-                    for (it in ktFiles) {
-                        val ktFile = it.element ?: continue
-                        daemonCodeAnalyzer.restart(ktFile) // only requires read action, do not move to EDT
-                    }
-                }
+        if (openedScripts.isEmpty()) return
+
+        openedScripts.forEach {
+            if (it.isValid) {
+                (PsiManager.getInstance(project).findFile(it) as? KtFile)?.let { ktFile -> DaemonCodeAnalyzer.getInstance(project).restart(ktFile) }
             }
         }
     }
