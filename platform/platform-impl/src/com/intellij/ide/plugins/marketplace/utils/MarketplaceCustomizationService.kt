@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable
  * usually defined in *ApplicationInfo.xml file
  */
 @ApiStatus.Experimental
+@ApiStatus.Internal
 interface MarketplaceCustomizationService {
 
   companion object {
