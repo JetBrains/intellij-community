@@ -63,26 +63,10 @@ private fun getLoadingIcon(iconData: CachedIconPresentation?): Icon {
       DEFAULT_ICON
     }
     else try {
-      LoadingIcon(iconManager.getIcon(iconData.path, classLoader))
+      iconManager.getIcon(iconData.path, classLoader)
     }
     catch (e: Exception) {
       DEFAULT_ICON
-    }
-  }
-}
-
-private class LoadingIcon(private val delegate: Icon) : Icon, RetrievableIcon, ReplaceableIcon {
-  override fun retrieveIcon(): Icon = delegate
-
-  override fun replaceBy(replacer: IconReplacer): Icon = LoadingIcon(replacer.replaceIcon(delegate))
-
-  override fun getIconWidth(): Int = delegate.iconWidth
-
-  override fun getIconHeight(): Int = delegate.iconHeight
-
-  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    GraphicsUtil.paintWithAlpha(g, 0.5f) {
-      delegate.paintIcon(c, g, x, y)
     }
   }
 }
