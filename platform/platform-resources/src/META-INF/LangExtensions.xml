@@ -316,8 +316,8 @@
 
     <projectService serviceInterface="com.intellij.formatting.service.FormattingNotificationService"
                     serviceImplementation="com.intellij.formatting.service.FormattingUiNotificationService"/>
-    <projectService serviceInterface="com.intellij.formatting.service.DelayedImportsOptimizerService"
-                    serviceImplementation="com.intellij.formatting.service.DelayedImportsOptimizerServiceImpl"/>
+    <projectService serviceInterface="com.intellij.formatting.service.PostQuickFixTaskService"
+                    serviceImplementation="com.intellij.formatting.service.PostQuickFixTaskServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"

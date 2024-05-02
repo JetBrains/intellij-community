@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.helper
 
-import com.intellij.formatting.service.DelayedImportsOptimizerService
+import com.intellij.formatting.service.PostQuickFixTaskService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
@@ -114,7 +114,8 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
                 progressManager.run(progressTask)
             }
         }
-        if (!DelayedImportsOptimizerService.getInstance(project).delayOptimizeImportsTask(collectTask)) {
+
+        PostQuickFixTaskService.getInstance(project).runOrRegisterPostQuickFixTask {
             progressManager.run(collectTask)
         }
     }
