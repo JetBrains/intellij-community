@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search
 
 import com.intellij.openapi.util.JDOMUtil
@@ -30,8 +30,8 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
   }
 
   fun computeHighlightOptionToSynonym(): Map<Pair<String, String>, MutableSet<String>> {
-    val fileNameFilter = { it: String -> it.endsWith(SearchableOptionsRegistrar.getSearchableOptionsXmlName())}
-    SearchableOptionsRegistrarImpl.processSearchableOptions(fileNameFilter) { _, root ->
+    val xmlName = SearchableOptionsRegistrar.getSearchableOptionsXmlName()
+    SearchableOptionsRegistrarImpl.processSearchableOptions({ it.endsWith(xmlName) }) { _, root ->
       for (configurable in root.getChildren("configurable")) {
         val id = configurable.getAttributeValue("id") ?: continue
         val groupName = configurable.getAttributeValue("configurable_name")
