@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.ide.util
@@ -39,9 +39,13 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
     keyToString.forEach(consumer)
   }
 
-  private fun doPut(key: String, value: String) {
-    if (keyToString.put(key, value) !== value) {
+  private fun doPut(key: String, value: String): Boolean {
+    if (keyToString.put(key, value) === value) {
+      return false
+    }
+    else {
       tracker.incModificationCount()
+      return true
     }
   }
 
@@ -55,8 +59,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   }
 
   override fun updateValue(name: String, newValue: Boolean): Boolean {
-    val s = newValue.toString()
-    return s != keyToString.put(name, s)
+    return doPut(key = name, value = newValue.toString())
   }
 
   override fun getValue(name: String): String? = keyToString.get(name)
