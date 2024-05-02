@@ -81,6 +81,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
     DaemonProgressIndicator.setDebug(true);
+    PlatformTestUtil.assumeEnoughParallelism();
   }
 
   @Override
@@ -471,7 +472,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   }
 
   public void testAddInspectionProblemToProblemHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
-    PlatformTestUtil.assumeEnoughParallelism();
     registerInspection(new MySwearingInspection());
     checkSwearingHighlightIsVisibleImmediately();
   }

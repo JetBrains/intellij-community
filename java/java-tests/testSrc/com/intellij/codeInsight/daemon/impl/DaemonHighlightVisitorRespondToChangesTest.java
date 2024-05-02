@@ -34,9 +34,11 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -47,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -62,6 +65,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
     DaemonProgressIndicator.setDebug(true);
+    PlatformTestUtil.assumeEnoughParallelism();
   }
 
   @Override
@@ -456,7 +460,12 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     STATE.put("MSG2", new State(new AtomicBoolean(), new AtomicBoolean(true), new AtomicBoolean()));
     myDaemonCodeAnalyzer.restart();
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false);
+    TestTimeOut timeOut = TestTimeOut.setTimeout(2, TimeUnit.MINUTES);
     myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), TextEditorProvider.getInstance().getTextEditor(getEditor()), ArrayUtilRt.EMPTY_INT_ARRAY, true, () -> {
+      if (timeOut.isTimedOut()) {
+          System.err.println("Timed out\n"+ThreadDumper.dumpThreadsToString());
+          fail();
+      }
       if (visitor1.myState().THINKING.get() && visitor2.myState().THINKING.get()) {
         // if two visitors are paused, it means they both have visited comments. Check that corresponding highlights are in the markup model
         List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
@@ -473,7 +482,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     assertTrue(infos.toString(), ContainerUtil.exists(infos, info->visitor1.isMy(info)) && ContainerUtil.exists(infos, info->visitor2.isMy(info)));
   }
 
-  private record State(AtomicBoolean COMMENT_HIGHLIGHTED, AtomicBoolean THINK, AtomicBoolean THINKING) {}
+  private record State(@NotNull AtomicBoolean COMMENT_HIGHLIGHTED, @NotNull AtomicBoolean THINK, @NotNull AtomicBoolean THINKING) {}
   private static final Map<String, State> STATE = new ConcurrentHashMap<>(); // must keep the state out of visitors because of their peculiar lifecycle
   // highlight comment and pause for a bit (to checkk the other highlight visitors are run in parallel)
   private static abstract class MyThinkingHighlightVisitor implements HighlightVisitor {
