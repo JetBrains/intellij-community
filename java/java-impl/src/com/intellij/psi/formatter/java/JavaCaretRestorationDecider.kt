@@ -9,14 +9,13 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiLiteralExpression
 
 class JavaCaretRestorationDecider : CaretRestorationDecider {
-  override fun shouldRestoreCaret(document: Document, editor: Editor): Boolean {
-    val defaultRestorationResult = DefaultCaretRestorationDecider.shouldRestoreCaret(document, editor)
+  override fun shouldRestoreCaret(document: Document, editor: Editor, caretOffset: Int): Boolean {
+    val defaultRestorationResult = DefaultCaretRestorationDecider.shouldRestoreCaret(document, editor, caretOffset)
     
     val project = editor.project ?: return defaultRestorationResult
     val manager = PsiDocumentManager.getInstance(project) ?: return defaultRestorationResult
     val file = manager.getPsiFile(document) ?: return defaultRestorationResult
 
-    val caretOffset = editor.caretModel.offset
     val element = file.findElementAt(caretOffset) ?: return defaultRestorationResult
 
     if (element.parent is PsiLiteralExpression) {

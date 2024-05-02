@@ -17,9 +17,11 @@ interface CaretRestorationDecider {
    * Determines whether the caret position should be restored after formatting.
    * @param document the document being formatted
    * @param editor the editor in which the document is being displayed
+   * @param caretOffset offset in which the caret is located.
+   * Note that it might be different from ```editor.caretModel.caretOffset``` due to the late synchronization.
    * @return true if the caret position should be restored, false otherwise
    */
-  fun shouldRestoreCaret(document: Document, editor: Editor): Boolean
+  fun shouldRestoreCaret(document: Document, editor: Editor, caretOffset: Int): Boolean
 
   companion object : LanguageExtension<CaretRestorationDecider>("com.intellij.formatting.caretRestorationDecider")
 }

@@ -49,7 +49,7 @@ public final class CaretPositionKeeper {
       decider = DefaultCaretRestorationDecider.INSTANCE;
     }
 
-    boolean shouldFixCaretPosition = decider.shouldRestoreCaret(myDocument, myEditor);
+    boolean shouldFixCaretPosition = decider.shouldRestoreCaret(myDocument, myEditor, caretOffset);
 
     if (shouldFixCaretPosition) {
       initRestoreInfo(caretOffset);
