@@ -64,6 +64,10 @@ internal class VcsLogBookmark(override val provider: VcsLogBookmarkProvider,
     VcsLogNavigationUtil.jumpToRevisionAsync(provider.project, root, hash)
   }
 
+  override fun prepareDefaultDescription(): String? {
+    return getDefaultBookmarkDescription(provider.project, root, hash)
+  }
+
   override fun hashCode(): Int = Objects.hash(provider, root, hash)
   override fun equals(other: Any?): Boolean = other === this || other is VcsLogBookmark
                                               && other.provider == provider

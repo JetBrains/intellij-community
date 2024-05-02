@@ -2855,6 +2855,7 @@ com.intellij.ide.bookmark.Bookmark
 - a:getAttributes():java.util.Map
 - a:getProvider():com.intellij.ide.bookmark.BookmarkProvider
 - a:hashCode():I
+- prepareDefaultDescription():java.lang.String
 com.intellij.ide.bookmark.BookmarkGroup
 - a:add(com.intellij.ide.bookmark.Bookmark,com.intellij.ide.bookmark.BookmarkType,java.lang.String):Z
 - bs:add$default(com.intellij.ide.bookmark.BookmarkGroup,com.intellij.ide.bookmark.Bookmark,com.intellij.ide.bookmark.BookmarkType,java.lang.String,I,java.lang.Object):Z
