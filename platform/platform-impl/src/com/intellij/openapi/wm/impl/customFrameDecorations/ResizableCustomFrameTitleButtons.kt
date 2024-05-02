@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
 import javax.swing.Action
 
@@ -34,11 +35,10 @@ internal class ResizableCustomFrameTitleButtons(closeAction: Action,
   private val maximizeButton = createButton("Maximize", myMaximizeAction)
   private val minimizeButton = createButton("Iconify", myIconifyAction)
 
-  override fun fillButtonPane() {
-    super.fillButtonPane()
-    addComponent(minimizeButton)
-    addComponent(maximizeButton)
-    addComponent(restoreButton)
+  override fun createChildren() {
+    fillContent(WindowButtonsConfiguration.getInstance()?.state)
+    updateVisibility()
+    updateStyles()
   }
 
   override fun updateVisibility() {
@@ -53,5 +53,23 @@ internal class ResizableCustomFrameTitleButtons(closeAction: Action,
     StyleManager.applyStyle(restoreButton, getStyle(if (isSelected) restoreIcon else restoreInactiveIcon, restoreIcon))
     StyleManager.applyStyle(maximizeButton, getStyle(if (isSelected) maximizeIcon else maximizeInactiveIcon, maximizeIcon))
     StyleManager.applyStyle(minimizeButton, getStyle(if (isSelected) minimizeIcon else minimizeInactiveIcon, minimizeIcon))
+  }
+
+  fun fillContent(state: WindowButtonsConfiguration.State?) {
+    getView().removeAll()
+
+    val buttons: List<WindowButtonsConfiguration.WindowButton> =
+      state?.buttons
+      ?: listOf(WindowButtonsConfiguration.WindowButton.MINIMIZE, WindowButtonsConfiguration.WindowButton.MAXIMIZE, WindowButtonsConfiguration.WindowButton.CLOSE)
+    for (button in buttons) {
+      when (button) {
+        WindowButtonsConfiguration.WindowButton.MINIMIZE -> addComponent(minimizeButton)
+        WindowButtonsConfiguration.WindowButton.MAXIMIZE -> {
+          addComponent(maximizeButton)
+          addComponent(restoreButton)
+        }
+        WindowButtonsConfiguration.WindowButton.CLOSE -> addComponent(closeButton)
+      }
+    }
   }
 }

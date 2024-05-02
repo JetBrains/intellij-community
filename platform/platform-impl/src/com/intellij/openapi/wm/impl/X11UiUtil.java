@@ -12,6 +12,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.StartupUiUtil;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -334,12 +335,7 @@ public final class X11UiUtil {
     ThreadingAssertions.assertBackgroundThread();
     if (SystemInfo.isGNOME) {
       String result = exec("Cannot get gnome theme", "gsettings", "get", "org.gnome.desktop.interface", "gtk-theme");
-
-      if (result == null || result.length() <= 1 || !result.startsWith("'") || !result.endsWith("'")) {
-        return result;
-      }
-
-      return result.substring(1, result.length() - 1);
+      return trimQuotes(result);
     }
 
     if (SystemInfo.isKDE) {
@@ -359,6 +355,30 @@ public final class X11UiUtil {
     }
 
     return null;
+  }
+
+  /**
+   * Format like `icon:minimize,maximize,close` or `close:icon`
+   */
+  @RequiresBackgroundThread
+  @ApiStatus.Internal
+  public static @Nullable String getWindowButtonsConfig() {
+    ThreadingAssertions.assertBackgroundThread();
+    if (SystemInfo.isGNOME || SystemInfo.isKDE) {
+      String execResult =
+        exec("Cannot get gnome WM buttons layout", "gsettings", "get", "org.gnome.desktop.wm.preferences", "button-layout");
+      return trimQuotes(execResult);
+    }
+
+    return null;
+  }
+
+  private static @Nullable String trimQuotes(@Nullable String s) {
+    if (s == null || s.length() <= 1 || !s.startsWith("'") || !s.endsWith("'")) {
+      return s;
+    }
+
+    return s.substring(1, s.length() - 1);
   }
 
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
