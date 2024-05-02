@@ -22,6 +22,8 @@ internal class StickyLinesManager(
 
   private var activeVisualArea: Rectangle = Rectangle()
   private var activeVisualLine: Int = -1
+  private var activeIsEnabled: Boolean = false
+  private var activeLineLimit: Int = -1
 
   init {
     Disposer.register(parentDisposable, this)
@@ -62,6 +64,23 @@ internal class StickyLinesManager(
     return false
   }
 
+  fun reinitSettings() {
+    val oldIsEnabled: Boolean = activeIsEnabled
+    val newIsEnabled: Boolean = editor.settings.areStickyLinesShown()
+    val oldLineLimit: Int = activeLineLimit
+    val newLineLimit: Int = editor.settings.stickyLinesLimit
+    activeIsEnabled = newIsEnabled
+    activeLineLimit = newLineLimit
+
+    if (newIsEnabled && !oldIsEnabled) {
+      recalculateAndRepaintLines(force = true)
+    } else if (!newIsEnabled && oldIsEnabled) {
+      resetLines()
+    } else if (newLineLimit != oldLineLimit) {
+      recalculateAndRepaintLines()
+    }
+  }
+
   override fun visibleAreaChanged(event: VisibleAreaEvent) {
     if (editor.settings.areStickyLinesShown() && isAreaChanged(event)) {
       activeVisualArea = event.newRectangle
@@ -90,8 +109,12 @@ internal class StickyLinesManager(
     return ColorUtil.isDark(background)
   }
 
-  private fun recalculateAndRepaintLines() {
-    if (activeVisualLine != -1) {
+  private fun recalculateAndRepaintLines(force: Boolean = false) {
+    if (force) {
+      activeVisualArea = editor.scrollingModel.visibleArea
+      isLineChanged() // activeVisualLine updated as a side effect
+    }
+    if (activeVisualLine != -1 && !isPoint(activeVisualArea)) {
       visualStickyLines.recalculate(activeVisualArea)
       repaintLines()
     }
@@ -131,5 +154,12 @@ internal class StickyLinesManager(
   private fun isSizeChanged(event: VisibleAreaEvent): Boolean {
     return event.oldRectangle.width != event.newRectangle.width ||
            event.oldRectangle.height != event.newRectangle.height
+  }
+
+  private fun isPoint(rectangle: Rectangle): Boolean {
+    return rectangle.x == 0 &&
+           rectangle.y == 0 &&
+           rectangle.height == 0 &&
+           rectangle.width == 0
   }
 }
