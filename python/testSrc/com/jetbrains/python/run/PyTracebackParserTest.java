@@ -39,6 +39,16 @@ public class PyTracebackParserTest extends TestCase {
     Assert.assertEquals("Bad end pos", 16, linkInTrace.getEndPos());
   }
 
+  public void testLineWithLink2() {
+    final LinkInTrace linkInTrace = new PyTracebackParser().findLinkInTrace(
+      "File ~/.pyenv/versions/3.10.11/lib/python3.10/threading.py:324, in Condition.wait(self, timeout)");
+    Assert.assertNotNull("Failed to parse line", linkInTrace);
+    Assert.assertEquals("Bad file name", "~/.pyenv/versions/3.10.11/lib/python3.10/threading.py", linkInTrace.getFileName());
+    Assert.assertEquals("Bad line number", 324, linkInTrace.getLineNumber());
+    Assert.assertEquals("Bad start pos", 5, linkInTrace.getStartPos());
+    Assert.assertEquals("Bad end pos", 62, linkInTrace.getEndPos());
+  }
+
   /**
    * lines with out of file references should not have links
    */
