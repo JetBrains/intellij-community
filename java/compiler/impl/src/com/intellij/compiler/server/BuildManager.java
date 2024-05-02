@@ -119,8 +119,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -149,7 +148,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 
 public final class BuildManager implements Disposable {
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
-  private static final Key<Integer> COMPILER_PROCESS_DEBUG_PORT = Key.create("_compiler_process_debug_port_");
+  private static final Key<String> COMPILER_PROCESS_DEBUG_PORT = Key.create("_compiler_process_debug_port_");
   private static final Key<CharSequence> STDERR_OUTPUT = Key.create("_process_launch_errors_");
   private static final SimpleDateFormat USAGE_STAMP_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -995,14 +994,14 @@ public final class BuildManager implements Disposable {
                 processHandler.startNotify();
               }
 
-              Integer debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_PORT);
+              @NlsSafe String debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_PORT);
               if (debugPort != null) {
                 messageHandler.handleCompileMessage(
                   sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse("Build: waiting for debugger connection on port " + debugPort //NON-NLS
                 ).getCompileMessage());
                 // additional support for debugger auto-attach feature
                 //noinspection UseOfSystemOutOrSystemErr
-                System.out.println("Build: Listening for transport dt_socket at address: " + debugPort.intValue()); //NON-NLS
+                System.out.println("Build: Listening for transport dt_socket at address: " + debugPort); //NON-NLS
               }
 
               while (!processHandler.waitFor()) {
@@ -1502,21 +1501,19 @@ public final class BuildManager implements Disposable {
     }
 
     // debugging
-    int debugPort = -1;
+    String debugPort = null;
     if (myBuildProcessDebuggingEnabled) {
-      debugPort = Registry.intValue("compiler.process.debug.port");
-      if (debugPort <= 0) {
+      debugPort = StringUtil.nullize(Registry.stringValue("compiler.process.debug.port"));
+      if (debugPort == null) {
         try {
-          debugPort = NetUtils.findAvailableSocketPort();
+          debugPort = String.valueOf(NetUtils.findAvailableSocketPort());
         }
         catch (IOException e) {
           throw new ExecutionException(JavaCompilerBundle.message("build.process.no.free.debug.port"), e);
         }
       }
-      if (debugPort > 0) {
-        cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-        cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
-      }
+      cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+      cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
     }
 
     // portable caches
@@ -1679,7 +1676,7 @@ public final class BuildManager implements Disposable {
         }
       }
     });
-    if (debugPort > 0) {
+    if (debugPort != null) {
       processHandler.putUserData(COMPILER_PROCESS_DEBUG_PORT, debugPort);
     }
 
