@@ -137,12 +137,12 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     e.presentation.putClientProperty(GIT_WIDGET_STATE_KEY, state)
 
     when (state) {
+      GitWidgetState.NotActivated,
       GitWidgetState.OtherVcs -> {
         e.presentation.isEnabledAndVisible = false
         return
       }
 
-      GitWidgetState.NotActivated,
       is GitWidgetState.GitVcs,
       GitWidgetState.NoVcs -> {
         val placeholder = getPlaceholder(project)
