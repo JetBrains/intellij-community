@@ -12,7 +12,7 @@ import java.util.*
 import java.util.function.IntPredicate
 
 
-internal fun buildComponentModel(): JsonSettingsModel.ComponentModel =
+fun buildComponentModel(): JsonSettingsModel.ComponentModel =
   JsonSettingsModel.ComponentModel(listAppComponents().map { descriptor ->
     JsonSettingsModel.ComponentInfo(
       name = descriptor.state?.name,

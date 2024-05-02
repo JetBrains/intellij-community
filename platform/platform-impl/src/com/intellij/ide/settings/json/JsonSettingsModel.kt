@@ -77,7 +77,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
       } ?: ComponentModel()
     }
 
-    private fun jsonDataToModel(jsonData: ComponentModel): JsonSettingsModel {
+    fun jsonDataToModel(jsonData: ComponentModel): JsonSettingsModel {
       val propertyMap = mutableMapOf<String, PropertyDescriptor>()
       val filteredModel = filterSettings(jsonData)
       filteredModel.components.forEach { componentInfo ->
