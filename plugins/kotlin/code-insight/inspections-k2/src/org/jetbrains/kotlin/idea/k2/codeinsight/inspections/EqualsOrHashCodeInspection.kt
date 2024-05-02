@@ -282,7 +282,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 val isNullable = type.isMarkedNullable
 
                 var text = when {
-                    type isEqualTo builtinTypes.BYTE || type isEqualTo builtinTypes.SHORT || type isEqualTo builtinTypes.INT -> ref
+                    type.isEqualTo(builtinTypes.BYTE) || type.isEqualTo(builtinTypes.SHORT) || type.isEqualTo(builtinTypes.INT) -> ref
 
                     type.isArrayOrPrimitiveArray() -> {
                         val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()

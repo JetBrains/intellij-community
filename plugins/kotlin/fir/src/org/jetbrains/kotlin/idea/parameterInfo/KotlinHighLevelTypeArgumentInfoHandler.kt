@@ -5,6 +5,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
@@ -62,7 +63,26 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         val symbols = callElement.collectCallCandidates()
             .mapNotNull { (it.candidate as? KtCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
             .filterIsInstance<KtFunctionLikeSignature<*>>()
-            .filter { filterCandidateByReceiverTypeAndVisibility(it, callElement, fileSymbol, explicitReceiver) }
+            .filter { candidate ->
+                // We use the `LENIENT` error type policy to permit candidates even when there are partially specified type arguments (e.g.,
+                // `foo<>` for `foo<A, B>`), as the specified type arguments may directly affect a candidate's receiver type.
+                //
+                // ```
+                // fun <T, K> List<T>.foo() {}
+                //
+                // listOf(1).foo<<caret>>()
+                // ```
+                //
+                // In this example, the call candidate for `fun <T, K> List<T>.foo() {}` has the following receiver type: `List<ERROR>`,
+                // because `T` is not specified. But the call still fits `foo`. The user just hasn't written down the type argument yet.
+                filterCandidateByReceiverTypeAndVisibility(
+                    candidate,
+                    callElement,
+                    fileSymbol,
+                    explicitReceiver,
+                    KaSubtypingErrorTypePolicy.LENIENT,
+                )
+            }
 
         // Multiple overloads may have the same type parameters (see Overloads.kt test), so we select the distinct ones.
         return symbols.distinctBy { buildPresentation(fetchCandidateInfo(it.symbol), -1).first }.map { it.symbol }

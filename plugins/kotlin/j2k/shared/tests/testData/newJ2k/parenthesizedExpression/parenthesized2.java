@@ -1,3 +1,3 @@
 //statement
-Character str = ''
+Character str = 'a'
 (str.toString() + "abc").length()

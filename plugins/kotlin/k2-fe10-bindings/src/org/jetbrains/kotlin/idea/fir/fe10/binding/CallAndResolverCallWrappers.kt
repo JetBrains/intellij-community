@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
@@ -128,17 +128,9 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
                 }
                 return FunctionFe10WrapperResolvedCall(call, ktCall, diagnostic, context)
             }
+
             is KtVariableAccessCall -> {
                 return VariableFe10WrapperResolvedCall(call, ktCall, diagnostic, context)
-            }
-            is KtCheckNotNullCall -> {
-                val kotlinType = context.withAnalysisSession { ktCall.baseExpression.getKtType() }?.toKotlinType(context)
-                return Fe10BindingSpecialConstructionResolvedCall(
-                    call,
-                    kotlinType,
-                    context.fe10BindingSpecialConstructionFunctions.EXCL_EXCL,
-                    context
-                )
             }
 
             else -> context.implementationPostponed(ktCall.javaClass.canonicalName)
