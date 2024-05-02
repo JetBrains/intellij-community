@@ -34,8 +34,100 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" exported="" name="jetbrains.fleet.rpc" level="project" />
-    <orderEntry type="library" exported="" name="jetbrains.fleet.kernel" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.fleet.rpc" type="repository">
+        <properties maven-id="org.jetbrains.fleet:rpc:1.33.0-temporaryHack.6">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc/1.33.0-temporaryHack.6/rpc-1.33.0-temporaryHack.6.jar">
+              <sha256sum>31136c86cc917a28067e508a080cb357e250c1dcb6c36deda0ca79533cbca3a8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/reporting-api/1.33.0-temporaryHack.6/reporting-api-1.33.0-temporaryHack.6.jar">
+              <sha256sum>48871d7404ff4a3b8b298c0c19c1f41fe2c302fbda50ec25a76ecd4a7098fea0</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/preferences/1.33.0-temporaryHack.6/preferences-1.33.0-temporaryHack.6.jar">
+              <sha256sum>e9a630e791ab197739caeec0e522a9313c98fd0480dd68fe5aabd1aeff7aabab</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/util-os/1.33.0-temporaryHack.6/util-os-1.33.0-temporaryHack.6.jar">
+              <sha256sum>658de09f80b89ba92be4f727a44a4df604bd87558efc09818c8d219df4d8fec8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/util-core/1.33.0-temporaryHack.6/util-core-1.33.0-temporaryHack.6.jar">
+              <sha256sum>102bc685e5c9061b2d51a58e8f87567f49d3ee54c7a44c79f2d48a44fc4b9c56</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/util-logging-api/1.33.0-temporaryHack.6/util-logging-api-1.33.0-temporaryHack.6.jar">
+              <sha256sum>a744dd81e1263d1f2bd410148a55ce72deb4bf4c96cf1d54f24b0451fb88b556</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-sdk" />
+            <dependency maven-id="io.opentelemetry.semconv:opentelemetry-semconv" />
+            <dependency maven-id="io.lacuna:bifurcan" />
+            <dependency maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc/1.33.0-temporaryHack.6/rpc-1.33.0-temporaryHack.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/reporting-api/1.33.0-temporaryHack.6/reporting-api-1.33.0-temporaryHack.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/preferences/1.33.0-temporaryHack.6/preferences-1.33.0-temporaryHack.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/util-os/1.33.0-temporaryHack.6/util-os-1.33.0-temporaryHack.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/util-core/1.33.0-temporaryHack.6/util-core-1.33.0-temporaryHack.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/util-logging-api/1.33.0-temporaryHack.6/util-logging-api-1.33.0-temporaryHack.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rpc/1.33.0-temporaryHack.6/rpc-1.33.0-temporaryHack.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/reporting-api/1.33.0-temporaryHack.6/reporting-api-1.33.0-temporaryHack.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/preferences/1.33.0-temporaryHack.6/preferences-1.33.0-temporaryHack.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/util-os/1.33.0-temporaryHack.6/util-os-1.33.0-temporaryHack.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/util-core/1.33.0-temporaryHack.6/util-core-1.33.0-temporaryHack.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/util-logging-api/1.33.0-temporaryHack.6/util-logging-api-1.33.0-temporaryHack.6-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.fleet.kernel" type="repository">
+        <properties maven-id="org.jetbrains.fleet:kernel:1.33.0-temporaryHack.6">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.33.0-temporaryHack.6/kernel-1.33.0-temporaryHack.6.jar">
+              <sha256sum>36bf84fda3f027d436fbff578d178cb3d6bde3d9dc4130e80d250d9f5177ce17</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.33.0-temporaryHack.6/rhizomedb-1.33.0-temporaryHack.6.jar">
+              <sha256sum>53898ac9ef1c8162ed000ebcb012205faed1703ac0204a72d257e80d12ad4ca1</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm" />
+            <dependency maven-id="org.jetbrains.fleet:util-core" />
+            <dependency maven-id="org.jetbrains.fleet:rpc" />
+            <dependency maven-id="org.jetbrains.fleet:preferences" />
+            <dependency maven-id="org.jetbrains.fleet:reporting-api" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.33.0-temporaryHack.6/kernel-1.33.0-temporaryHack.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.33.0-temporaryHack.6/rhizomedb-1.33.0-temporaryHack.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/kernel/1.33.0-temporaryHack.6/kernel-1.33.0-temporaryHack.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/fleet/rhizomedb/1.33.0-temporaryHack.6/rhizomedb-1.33.0-temporaryHack.6-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="library" exported="" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" exported="" name="io.lacuna:bifurcan" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
