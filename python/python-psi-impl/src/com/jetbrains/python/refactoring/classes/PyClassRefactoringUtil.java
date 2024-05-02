@@ -5,10 +5,13 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,7 +31,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
-import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -518,8 +520,103 @@ public final class PyClassRefactoringUtil {
     PyImportOptimizer.onlyRemoveUnused().processFile(file).run();
   }
 
+
+  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, boolean isNamespace) throws IOException {
+    return placeFile(project, path, filename, null, isNamespace);
+  }
+
+  /**
+   * Places a file at the end of given path, creating intermediate dirs and inits.
+   *
+   * @return the placed file
+   */
+  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, @Nullable String content, boolean isNamespace) throws IOException {
+    PsiDirectory psiDir = createDirectories(project, path, isNamespace);
+    LOG.assertTrue(psiDir != null);
+    PsiFile psiFile = psiDir.findFile(filename);
+    if (psiFile == null) {
+      psiFile = psiDir.createFile(filename);
+      if (content != null) {
+        PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+        Document document = manager.getDocument(psiFile);
+        if (document != null) {
+          document.setText(content);
+          manager.commitDocument(document);
+        }
+      }
+    }
+    return psiFile;
+  }
+
+  /**
+   * Create all intermediate dirs with inits from one of roots up to target dir.
+   *
+   * @param target  a full path to target dir
+   * @return deepest child directory, or null if target is not in roots or process fails at some point.
+   */
+  @Nullable
+  private static PsiDirectory createDirectories(@NotNull Project project, @NotNull String target, boolean isNamespace) throws IOException {
+    String relativePath = null;
+    VirtualFile closestRoot = null;
+
+    // NOTE: we don't canonicalize target; must be ok in reasonable cases, and is far easier in unit test mode
+    target = FileUtil.toSystemIndependentName(target);
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+    final List<VirtualFile> allRoots = new ArrayList<>();
+    ContainerUtil.addAll(allRoots, projectRootManager.getContentRoots());
+    ContainerUtil.addAll(allRoots, projectRootManager.getContentSourceRoots());
+    // Check deepest roots first
+    allRoots.sort(Comparator.comparingInt((VirtualFile vf) -> vf.getPath().length()).reversed());
+    for (VirtualFile file : allRoots) {
+      final String rootPath = file.getPath();
+      if (target.startsWith(rootPath)) {
+        relativePath = target.substring(rootPath.length());
+        closestRoot = file;
+        break;
+      }
+    }
+    if (closestRoot == null) {
+      throw new IOException("Can't find '" + target + "' among roots");
+    }
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final String[] dirs = relativePath.split("/");
+    int i = 0;
+    if (dirs[0].isEmpty()) i = 1;
+    VirtualFile resultDir = closestRoot;
+    while (i < dirs.length) {
+      VirtualFile subdir = resultDir.findChild(dirs[i]);
+      if (subdir != null) {
+        if (!subdir.isDirectory()) {
+          throw new IOException("Expected resultDir, but got non-resultDir: " + subdir.getPath());
+        }
+      }
+      else {
+        subdir = resultDir.createChildDirectory(lfs, dirs[i]);
+      }
+      if (subdir.findChild(PyNames.INIT_DOT_PY) == null && !isNamespace) {
+        subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
+      }
+      /*
+      // here we could add an __all__ clause to the __init__.py.
+      // * there's no point to do so; we import the class directly;
+      // * we can't do this consistently since __init__.py may already exist and be nontrivial.
+      if (i == dirs.length - 1) {
+        PsiFile init_file = psiManager.findFile(initVFile);
+        LOG.assertTrue(init_file != null);
+        final PyElementGenerator gen = PyElementGenerator.getInstance(project);
+        final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + lastName + "\"]");
+        init_file.add(statement);
+      }
+      */
+      resultDir = subdir;
+      i += 1;
+    }
+    return psiManager.findDirectory(resultDir);
+  }
+
   @NotNull
-  public static PyFile getOrCreateFile(String path, Project project) {
+  public static PyFile getOrCreateFile(@NotNull String path, @NotNull Project project, boolean isNamespace) {
     final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
     final PsiFile psi;
     if (vfile == null) {
@@ -531,14 +628,14 @@ public final class PyClassRefactoringUtil {
         final Properties properties = fileTemplateManager.getDefaultProperties();
         properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
         final String content = template.getText(properties);
-        psi = PyExtractSuperclassHelper.placeFile(project,
+        psi = PyClassRefactoringUtil.placeFile(project,
                                                   StringUtil.notNullize(
                                                     file.getParent(),
                                                     baseDir != null ? baseDir
                                                       .getPath() : "."
                                                   ),
                                                   file.getName(),
-                                                  content
+                                                  content, isNamespace
         );
       }
       catch (IOException e) {

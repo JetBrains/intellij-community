@@ -5,6 +5,7 @@ import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.*;
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isNamespacePackage;
 
 /**
  * @author Mikhail Golubev
@@ -89,7 +92,8 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject);
+    boolean isNamespace = isInNamespacePackage(myFunction);
+    final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject, isNamespace);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
         PyBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));

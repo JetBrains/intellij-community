@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
+
 /**
  * Group found usages by moved elements and move each of these elements using {@link PyMoveSymbolProcessor}.
  *
@@ -81,8 +83,9 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
+    boolean isNamespace = areAllFilesInNamespacePackage(mySourceFiles);
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject);
+      final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject, isNamespace);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
       final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
       for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
@@ -125,6 +128,13 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         PyClassRefactoringUtil.optimizeImports(file);
       }
     }), getRefactoringName(), null);
+  }
+
+  private static boolean areAllFilesInNamespacePackage(@NotNull Collection<PsiFile> myFiles) {
+    if (myFiles == null || myFiles.isEmpty()) {
+      return false;
+    }
+    return ContainerUtil.all(myFiles, (file) -> isInNamespacePackage(file));
   }
 
   @Override

@@ -4,10 +4,14 @@ package com.jetbrains.python.refactoring.classes.extractSuperclass;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -17,6 +21,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -134,6 +139,51 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
     });
   }
 
+  // PY-44858
+  public void testExtractNotCreateInitInAnotherDir() throws IOException {
+    String pathToSuperclass = "b";
+    doTestNotCreateInitCommon(pathToSuperclass);
+  }
+
+  // PY-44858
+  public void testExtractNotCreateInitInSameDir() throws IOException {
+    String pathToSuperclass = "a";
+    doTestNotCreateInitCommon(pathToSuperclass);
+  }
+
+  // PY-44858
+  public void testExtractNotCreateInitInParentDir() throws IOException {
+    String pathToSuperclass = "a/b";
+    doTestNotCreateInitCommon(pathToSuperclass);
+  }
+
+  // PY-44858
+  public void testExtractNotCreateInitInChildDir() throws IOException {
+    String pathToSuperclass = "b";
+    doTestNotCreateInitCommon(pathToSuperclass);
+  }
+
+  private void doTestNotCreateInitCommon(@NotNull String pathToSuperclass)
+    throws IOException {
+    String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
+    VirtualFile pkgDir = myFixture.copyDirectoryToProject(baseName + "/before", "");
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+    String className = "Foo";
+    String superclassName = "Suppa";
+    PyClass clazz = findClass(className);
+    List<PyMemberInfo<PyElement>> members = new ArrayList<>();
+    PyElement member = findMember(className, ".foo");
+    members.add(MembersManager.findMember(clazz, member));
+
+    WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
+      String path = pkgDir.getPath() + "/" + pathToSuperclass + "/suppa.py";
+      PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path);
+    });
+
+    VirtualFile expectedDir = PyTestCase.getVirtualFileByName(PythonTestUtil.getTestDataPath() + baseName + "/after");
+    PlatformTestUtil.assertDirectoriesEqual(expectedDir, pkgDir);
+  }
+
   // PY-16770
   public void testAbstractMethodDocStringPrefixPreserved() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
@@ -172,15 +222,15 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
   }
 
   public void testMultifileNew() {
-    String baseName = "refactoring/extractsuperclass/multifile/";
-    myFixture.configureByFile(baseName + "source.py");
+    String baseName = "refactoring/extractsuperclass/multifileNew/";
+    VirtualFile base_dir = myFixture.copyDirectoryToProject(baseName, "");
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     final String className = "Foo";
     final String superclassName = "Suppa";
     final PyClass clazz = findClass(className);
     final List<PyMemberInfo<PyElement>> members = new ArrayList<>();
     final PyElement member = findMember(className, ".foo");
     members.add(MembersManager.findMember(clazz, member));
-    final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
 
     WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
       final String path = base_dir.getPath() + "/a/b";
