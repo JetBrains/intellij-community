@@ -6,9 +6,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 
 public interface HighlightVisitor extends PossiblyDumbAware {
+  HighlightVisitor [] EMPTY_ARRAY = new HighlightVisitor[0];
+  ArrayFactory<HighlightVisitor> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new HighlightVisitor[count];
   ExtensionPointName<HighlightVisitor> EP_HIGHLIGHT_VISITOR = new ExtensionPointName<>("com.intellij.highlightVisitor");
 
   boolean suitableForFile(@NotNull PsiFile file);

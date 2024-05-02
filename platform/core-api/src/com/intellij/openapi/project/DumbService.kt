@@ -416,6 +416,13 @@ abstract class DumbService {
   @ApiStatus.Internal
   abstract fun unsafeRunWhenSmart(runnable: Runnable)
 
+  /**
+   * return true if [thing] can be used in current dumb context, i.e., either the [thing] is [isDumbAware] or the current context is smart; return false otherwise
+   */
+  fun isUsableInCurrentContext(thing: Any) : Boolean {
+    return !isDumb || isDumbAware(thing)
+  }
+
   companion object {
     @JvmField
     @Topic.ProjectLevel

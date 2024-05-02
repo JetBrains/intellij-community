@@ -2646,6 +2646,7 @@ a:com.intellij.openapi.project.DumbService
 - a:isDumb():Z
 - sf:isDumb(com.intellij.openapi.project.Project):Z
 - sf:isDumbAware(java.lang.Object):Z
+- f:isUsableInCurrentContext(java.lang.Object):Z
 - f:makeDumbAware(javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - a:queueTask(com.intellij.openapi.project.DumbModeTask):V
 - f:repeatUntilPassesInSmartMode(java.lang.Runnable):V

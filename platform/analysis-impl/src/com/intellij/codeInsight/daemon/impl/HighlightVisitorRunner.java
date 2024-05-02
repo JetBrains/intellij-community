@@ -19,6 +19,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TriConsumer;
@@ -30,72 +31,72 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.IntFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 class HighlightVisitorRunner {
-  private final Project myProject;
+  private final PsiFile myPsiFile;
   private @Nullable final TextAttributesScheme myColorsScheme;
 
-  HighlightVisitorRunner(@NotNull Project project, @Nullable TextAttributesScheme scheme) {
-    myProject = project;
+  HighlightVisitorRunner(@NotNull PsiFile psiFile, @Nullable TextAttributesScheme scheme) {
+    myPsiFile = psiFile;
     myColorsScheme = scheme;
   }
 
-  void setHighlightVisitorProducer(@NotNull IntFunction<? extends @NotNull List<HighlightVisitor>> highlightVisitorProducer) {
+  void setHighlightVisitorProducer(@NotNull Function<? super Boolean, ? extends @NotNull HighlightVisitor @NotNull []> highlightVisitorProducer) {
     myHighlightVisitorProducer = highlightVisitorProducer;
   }
+
   private static final PassRunningAssert HIGHLIGHTING_PERFORMANCE_ASSERT =
     new PassRunningAssert("the expensive method should not be called inside the highlighting pass");
-  private volatile @NotNull IntFunction<? extends @NotNull List<HighlightVisitor>> myHighlightVisitorProducer = this::cloneHighlightVisitors;
+  private volatile @NotNull Function<? super Boolean, ? extends @NotNull HighlightVisitor @NotNull []> myHighlightVisitorProducer = this::cloneAndFilterHighlightVisitors;
   static void assertHighlightingPassNotRunning() {
     HIGHLIGHTING_PERFORMANCE_ASSERT.assertPassNotRunning();
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
 
-  private @NotNull List<HighlightVisitor> cloneHighlightVisitors(int oldCount) {
-    List<HighlightVisitor> highlightVisitors = HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(myProject);
-    if (oldCount != 0) {
-      HighlightVisitor[] clones = new HighlightVisitor[highlightVisitors.size()];
-      for (int i = 0; i < highlightVisitors.size(); i++) {
-        HighlightVisitor highlightVisitor = highlightVisitors.get(i);
-        HighlightVisitor cloned = highlightVisitor.clone();
-        assert cloned.getClass() == highlightVisitor.getClass() : highlightVisitor.getClass()+".clone() must return a copy of "+highlightVisitor.getClass()+"; but got: "+cloned+" of "+cloned.getClass();
-        clones[i] = cloned;
-      }
-      // List.of will copy the array - do not use it
-      return Arrays.asList(clones);
-    }
-    return highlightVisitors;
-  }
-
-  private HighlightVisitor @NotNull [] filterVisitors(@NotNull List<? extends HighlightVisitor> highlightVisitors, @NotNull PsiFile psiFile) {
-    List<HighlightVisitor> visitors = new ArrayList<>(highlightVisitors.size());
-    for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(highlightVisitors)) {
-
-      if (visitor instanceof RainbowVisitor
-          && !RainbowHighlighter.isRainbowEnabledWithInheritance(myColorsScheme, psiFile.getLanguage())) {
+  private @NotNull HighlightVisitor @NotNull [] cloneAndFilterHighlightVisitors(boolean mustClone) {
+    Project project = myPsiFile.getProject();
+    HighlightVisitor[] visitors = HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(project);
+    DumbService dumbService = DumbService.getInstance(project);
+    int o = 0;
+    HighlightVisitor[] clones = new HighlightVisitor[visitors.length];
+    for (HighlightVisitor visitor : visitors) {
+      if (!dumbService.isUsableInCurrentContext(visitor)) {
         continue;
       }
-      if (visitor.suitableForFile(psiFile)) {
-        visitors.add(visitor);
+      if (visitor instanceof RainbowVisitor
+          && !RainbowHighlighter.isRainbowEnabledWithInheritance(myColorsScheme, myPsiFile.getLanguage())) {
+        continue;
+      }
+      if (visitor.suitableForFile(myPsiFile)) {
+        HighlightVisitor cloned;
+        if (mustClone) {
+          cloned = visitor.clone();
+          assert cloned.getClass() == visitor.getClass() : visitor.getClass()+".clone() must return a copy of "+visitor.getClass()+"; but got: "+cloned+" of "+cloned.getClass();
+        }
+        else {
+          cloned = visitor;
+        }
+        clones[o++] = cloned;
       }
     }
-    if (visitors.isEmpty()) {
-      GeneralHighlightingPass.LOG.error("No visitors registered. list=" + highlightVisitors + "; all visitors are:" + HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(myProject));
+    if (o == 0) {
+      GeneralHighlightingPass.LOG.error("No visitors registered. all visitors:" + Arrays.toString(visitors));
     }
-
-    return visitors.toArray(new HighlightVisitor[0]);
+    return ArrayUtil.realloc(clones, o, HighlightVisitor.ARRAY_FACTORY);
   }
 
   void createHighlightVisitorsFor(@NotNull PsiFile psiFile, @NotNull Consumer<? super HighlightVisitor[]> consumer) {
-    AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
+    Project project = myPsiFile.getProject();
+    AtomicInteger count = project.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
     if (count == null) {
-      count = ((UserDataHolderEx)myProject).putUserDataIfAbsent(HIGHLIGHT_VISITOR_INSTANCE_COUNT, new AtomicInteger(0));
+      count = ((UserDataHolderEx)project).putUserDataIfAbsent(HIGHLIGHT_VISITOR_INSTANCE_COUNT, new AtomicInteger(0));
     }
     int oldCount = count.getAndIncrement();
-    HighlightVisitor[] filtered = filterVisitors(myHighlightVisitorProducer.apply(oldCount), psiFile);
+    // first ever queried HighlightVisitor can be used as is, but all further HighlightVisitors queried while the previous HighlightVisitor haven't finished, should be cloned to avoid reentrancy issues
+    HighlightVisitor[] filtered = myHighlightVisitorProducer.apply(oldCount != 0);
     try {
       consumer.consume(filtered);
     }

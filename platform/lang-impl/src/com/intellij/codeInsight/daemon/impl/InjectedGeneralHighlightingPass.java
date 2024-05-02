@@ -49,8 +49,9 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
   private final ProperTextRange myPriorityRange;
   private final @NotNull EditorColorsScheme myGlobalScheme;
   private final List<HighlightInfo> myHighlights = new ArrayList<>(); // guarded by myHighlights
-  private final HighlightVisitorRunner myHighlightVisitorRunner;
   private final boolean myRunAnnotators;
+  private final boolean myRunVisitors;
+  private final boolean myHighlightErrorElements;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
 
   InjectedGeneralHighlightingPass(@NotNull PsiFile psiFile,
@@ -67,13 +68,10 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
     myGlobalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
-    myHighlightVisitorRunner = new HighlightVisitorRunner(psiFile.getProject(), myGlobalScheme);
     myRunAnnotators = runAnnotators;
+    myRunVisitors = runVisitors;
+    myHighlightErrorElements = highlightErrorElements;
     myHighlightInfoUpdater = highlightInfoUpdater;
-    if (!runVisitors) {
-      // "do not run visitors" here means "reduce the set of visitors down to DefaultHighlightVisitor", because it reports error elements
-      myHighlightVisitorRunner.setHighlightVisitorProducer(__ -> List.of(new DefaultHighlightVisitor(psiFile.getProject(), highlightErrorElements, false)));
-    }
   }
 
   @Override
@@ -197,9 +195,15 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
       List<? extends @NotNull PsiElement> inside = dividedElements.inside();
       LongList insideRanges = dividedElements.insideRanges();
       BooleanSupplier runnable = () -> {
-        myHighlightVisitorRunner.createHighlightVisitorsFor(injectedPsi, visitors -> {
+        HighlightVisitorRunner highlightVisitorRunner = new HighlightVisitorRunner(injectedPsi, myGlobalScheme);
+        if (!myRunVisitors) {
+          // "do not run visitors" here means "reduce the set of visitors down to DefaultHighlightVisitor", because it reports error elements
+          highlightVisitorRunner.setHighlightVisitorProducer(__ -> new HighlightVisitor[]{ new DefaultHighlightVisitor(myProject, myHighlightErrorElements, false) });
+        }
+
+        highlightVisitorRunner.createHighlightVisitorsFor(injectedPsi, visitors -> {
           int chunkSize = Math.max(1, inside.size() / 100); // one percent precision is enough
-          myHighlightVisitorRunner.runVisitors(injectedPsi, injectedPsi.getTextRange(), inside,
+          highlightVisitorRunner.runVisitors(injectedPsi, injectedPsi.getTextRange(), inside,
                                                insideRanges, List.of(), LongList.of(), visitors, false, chunkSize, true,
                                                () -> createInfoHolder(injectedPsi), (toolId, psiElement, infos) -> {
               // convert injected infos to host

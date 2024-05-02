@@ -92,10 +92,10 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
     // initial guess to show correct progress in the traffic light icon
     setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
     EditorColorsScheme globalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
-    myHighlightVisitorRunner = new HighlightVisitorRunner(myProject, globalScheme);
+    myHighlightVisitorRunner = new HighlightVisitorRunner(psiFile, globalScheme);
     if (!runVisitors) {
       // "do not run visitors" here means "reduce the set of visitors down to DefaultHighlightVisitor", because it reports error elements
-      myHighlightVisitorRunner.setHighlightVisitorProducer(__ -> List.of(new DefaultHighlightVisitor(psiFile.getProject(), highlightErrorElements, false)));
+      myHighlightVisitorRunner.setHighlightVisitorProducer(__ -> new HighlightVisitor[]{new DefaultHighlightVisitor(psiFile.getProject(), highlightErrorElements, false)});
     }
   }
 
