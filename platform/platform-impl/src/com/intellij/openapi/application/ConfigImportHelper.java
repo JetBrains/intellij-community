@@ -143,6 +143,9 @@ public final class ConfigImportHelper {
         try {
           if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace mcp) {
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(mcp.getLocation());
+            if (oldConfigDirAndOldIdePath == null) {
+              logInfoAboutNotAcceptedConfigDirectory(log, "Custom location", mcp.getLocation());
+            }
             if (oldConfigDirAndOldIdePath != null && oldConfigDirAndOldIdePath.first != null) {
               if (doesVmOptionsFileExist(newConfigDir) && !vmOptionsRequiresMerge(oldConfigDirAndOldIdePath.first, newConfigDir, log)) {
                 //save old lines for the new file
@@ -168,7 +171,7 @@ public final class ConfigImportHelper {
           if (!isConfigOld(bestConfigGuess.second)) {
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
             if (oldConfigDirAndOldIdePath == null) {
-              log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
+              logInfoAboutNotAcceptedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
               importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
             }
           }
@@ -205,7 +208,7 @@ public final class ConfigImportHelper {
           else {
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
             if (oldConfigDirAndOldIdePath == null) {
-              log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
+              logInfoAboutNotAcceptedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
               importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
             }
           }
@@ -277,6 +280,36 @@ public final class ConfigImportHelper {
       log.info("The vmoptions file has changed, restarting...");
       restartWithContinue(newConfigDir, args, settings);
     }
+  }
+
+  private static void logInfoAboutNotAcceptedConfigDirectory(@NotNull Logger log, @NotNull String description, @NotNull Path path) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(description + " was detected but not accepted: ");
+    builder.append(path);
+    builder.append(". Its content:\n");
+    if (Files.isDirectory(path)) {
+      try {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+          for (Path child : stream) {
+            builder.append(" ").append(child.getFileName()).append("\n");
+            if (Files.isDirectory(child)) {
+              try (DirectoryStream<Path> grandChildren = Files.newDirectoryStream(path)) {
+                for (Path grandChild : grandChildren) {
+                  builder.append(" |- ").append(grandChild.getFileName()).append("\n");
+                }
+              }
+            }
+          }
+        }
+      }
+      catch (IOException e) {
+        builder.append("failed to get: ").append(e.toString());
+      }
+    }
+    else {
+      builder.append("not a directory");
+    }
+    log.info(builder.toString());
   }
 
   public static void restartWithContinue(@NotNull Path newConfigDir, @NotNull List<String> args, @Nullable ConfigImportSettings settings) {
