@@ -13,7 +13,20 @@ private val logger = getLogger<BringProcessWindowToForegroundSupport>()
 private val terminalPIDKey = Key<Int?>("ProcessWindowUtils_TerminalPIDKey")
 private val terminalBroughtSuccessfullyKey = Key<Boolean>("ProcessWindowUtils_TerminalBroughtSuccessfullyKey")
 
-fun BringProcessWindowToForegroundSupport.tryBringTerminalWindow(dataHolder: UserDataHolderBase, pid: Int): Boolean {
+
+fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHolderBase) : Boolean{
+  if (bring(pid)) {
+    logger.trace { "Could successfully bring $pid process into foreground" }
+    return true
+  }
+
+  logger.trace { "Bringing terminal window into foreground if it exists" }
+
+  return tryBringTerminalWindow(dataHolder, pid)
+    .also { logger.trace { "Bringing cmd process to foreground : ${if (it) "succeeded" else "failed"}" } }
+}
+
+private fun BringProcessWindowToForegroundSupport.tryBringTerminalWindow(dataHolder: UserDataHolderBase, pid: Int): Boolean {
   if (dataHolder.getUserData(terminalBroughtSuccessfullyKey) == false)
     return false
 
