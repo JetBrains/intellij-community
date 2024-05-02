@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl.productRunner
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.xml.dom.readXmlAsModel
+import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
@@ -15,7 +16,10 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.name
+import kotlin.io.path.walk
 import kotlin.time.Duration
 
 /**
@@ -30,7 +34,8 @@ suspend fun runApplicationStarter(
   homePath: Path = context.paths.projectHome,
   timeout: Duration = DEFAULT_TIMEOUT,
 ) {
-  val tempDir = createTempDirectory(context.paths.tempDir, arguments.firstOrNull() ?: "appStarter")
+  val tempFileNamePrefix = arguments.firstOrNull() ?: "appStarter"
+  val tempDir = createTempDirectory(context.paths.tempDir, tempFileNamePrefix)
   Files.createDirectories(tempDir)
   val jvmArgs = mutableListOf<String>()
   val systemDir = tempDir.resolve("system")
@@ -69,14 +74,25 @@ suspend fun runApplicationStarter(
     classPath = effectiveIdeClasspath.toList(),
     timeout = timeout
   ) {
-    val logFile = systemDir.resolve("log").resolve("idea.log")
-    if (Files.exists(logFile)) {
-      val logFileToPublish = Files.createTempFile("idea-", ".log")
+    val logFile = findLogFile(systemDir)
+    if (logFile != null) {
+      val logFileToPublish = Files.createTempFile(tempFileNamePrefix, ".log")
       Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
       context.notifyArtifactBuilt(logFileToPublish)
       Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
     }
   }
+}
+
+@OptIn(ExperimentalPathApi::class)
+private fun findLogFile(systemDir: Path): Path? {
+  val logDir = systemDir.resolve("log")
+  val defaultLog = logDir.resolve("idea.log")
+  if (defaultLog.exists()) {
+    return defaultLog
+  }
+  //variants of IDEs which use 'PerProcessPathCustomizer' store idea.log in a subdirectory of logDir 
+  return logDir.walk().filter { it.name == "idea.log" }.firstOrNull()
 }
 
 private fun readPluginId(pluginJar: Path): String? {
