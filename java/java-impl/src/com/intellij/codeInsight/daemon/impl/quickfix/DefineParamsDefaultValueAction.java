@@ -108,7 +108,7 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
     final String callArgs =
       "(" + StringUtil.join(parameterList.getParameters(), psiParameter -> {
         if (ArrayUtil.find(parameters, psiParameter) > -1) {
-          PsiType type = psiParameter.getType();
+          PsiType type = GenericsUtil.getVariableTypeByExpressionType(psiParameter.getType());
           String defaultValue = TypeUtils.getDefaultValue(type);
           return defaultValue.equals(PsiKeyword.NULL) ? "(" + type.getCanonicalText() + ")null" : defaultValue;
         }
