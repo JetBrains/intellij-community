@@ -236,7 +236,7 @@ public final class UpdateHighlightersUtil {
       }
       if (shouldRemove) {
         HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
-        HighlightInfoUpdaterImpl.disposeWithFileLevel(info, (RangeHighlighterEx)highlighter, session);
+        HighlightInfoUpdaterImpl.disposeWithFileLevelIgnoreErrors(info, (RangeHighlighterEx)highlighter, session);
         changed = true;
       }
     }
