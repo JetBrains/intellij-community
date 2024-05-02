@@ -19,6 +19,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.Indexes
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.gist.GistManager
@@ -512,27 +515,29 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   fun perform(indicator: CheckPauseOnlyProgressIndicator, progressReporter: IndexingProgressReporter) {
     LOG.assertTrue(myProject.getUserData(INDEX_UPDATE_IN_PROGRESS) != true, "Scanning is already in progress")
-    try {
-      myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true)
-      myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
-      val diagnosticDumper = IndexDiagnosticDumper.getInstance()
-      diagnosticDumper.onScanningStarted(scanningHistory)
+    getInstance().getTracer(Indexes).spanBuilder("UnindexedFilesScanner.perform").use {
       try {
-        performScanningAndIndexing(indicator, progressReporter)
+        myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true)
+        myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
+        val diagnosticDumper = IndexDiagnosticDumper.getInstance()
+        diagnosticDumper.onScanningStarted(scanningHistory) //todo[lene] 1
+        try {
+          performScanningAndIndexing(indicator, progressReporter)
+        }
+        finally {
+          diagnosticDumper.onScanningFinished(scanningHistory) //todo[lene] 1
+        }
+        futureScanningHistory.set(scanningHistory)
+      }
+      catch (t: Throwable) {
+        futureScanningHistory.setException(t)
+        throw t
       }
       finally {
-        diagnosticDumper.onScanningFinished(scanningHistory)
+        myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false)
+        myFilterHandler.scanningCompleted(myProject)
+        LOG.assertTrue(futureScanningHistory.isDone, "futureScanningHistory.isDone should be true")
       }
-      futureScanningHistory.set(scanningHistory)
-    }
-    catch (t: Throwable) {
-      futureScanningHistory.setException(t)
-      throw t
-    }
-    finally {
-      myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false)
-      myFilterHandler.scanningCompleted(myProject)
-      LOG.assertTrue(futureScanningHistory.isDone, "futureScanningHistory.isDone should be true")
     }
   }
 
