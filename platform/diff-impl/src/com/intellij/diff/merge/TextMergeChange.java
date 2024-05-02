@@ -27,13 +27,17 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.icons.StrokeKt;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 
 public class TextMergeChange extends ThreesideDiffChangeBase {
@@ -47,6 +51,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   protected final boolean[] myResolved = new boolean[2];
   private boolean myOnesideAppliedConflict;
+
+  private boolean myIsResolvedWithAI;
 
   @Nullable private MergeInnerDifferences myInnerFragments; // warning: might be out of date
 
@@ -118,6 +124,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   public void markOnesideAppliedConflict() {
     myOnesideAppliedConflict = true;
+  }
+
+  @ApiStatus.Internal
+  void markChangeResolvedWithAI() {
+    myIsResolvedWithAI = true;
   }
 
   public boolean isImportChange() {
@@ -195,6 +206,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.IGNORE));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.IGNORE));
+    ContainerUtil.addIfNotNull(myOperations, createResetOperation());
   }
 
   @Nullable
@@ -226,6 +238,25 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       else {
         return createIgnoreRenderer(versionSide, ctrlPressed);
       }
+    });
+  }
+
+  @Nullable
+  private DiffGutterOperation createResetOperation() {
+    if (!isResolved() || !myIsResolvedWithAI) return null;
+
+    EditorEx editor = myViewer.getEditor(ThreeSide.BASE);
+    int offset = DiffGutterOperation.lineToOffset(editor, getStartLine(ThreeSide.BASE));
+
+
+    return new DiffGutterOperation.Simple(editor, offset, () -> {
+      Icon icon = StrokeKt.toStrokeIcon(AllIcons.Diff.Revert, AI_COLOR);
+
+      return createIconRenderer(DiffBundle.message("action.presentation.diff.revert.text"), icon, false, () -> {
+        myViewer.executeMergeCommand(DiffBundle.message("merge.dialog.reset.change.command"),
+                                     Collections.singletonList(this),
+                                     () -> myViewer.resetResolvedChange(this));
+      });
     });
   }
 
@@ -292,7 +323,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myResolved[0],
       myResolved[1],
 
-      myOnesideAppliedConflict);
+      myOnesideAppliedConflict,
+      myIsResolvedWithAI);
   }
 
   public void restoreState(@NotNull State state) {
@@ -300,6 +332,15 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myResolved[1] = state.myResolved2;
 
     myOnesideAppliedConflict = state.myOnesideAppliedConflict;
+    myIsResolvedWithAI = state.myIsResolvedByAI;
+  }
+
+  @ApiStatus.Internal
+  void resetState() {
+    myResolved[0] = false;
+    myResolved[1] = false;
+    myOnesideAppliedConflict = false;
+    myIsResolvedWithAI = false;
   }
 
   public static class State extends MergeModelBase.State {
@@ -307,17 +348,22 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     private final boolean myResolved2;
 
     private final boolean myOnesideAppliedConflict;
+    private final boolean myIsResolvedByAI;
 
     public State(int index,
                  int startLine,
                  int endLine,
                  boolean resolved1,
                  boolean resolved2,
-                 boolean onesideAppliedConflict) {
+                 boolean onesideAppliedConflict,
+                 boolean isResolvedByAI) {
       super(index, startLine, endLine);
       myResolved1 = resolved1;
       myResolved2 = resolved2;
       myOnesideAppliedConflict = onesideAppliedConflict;
+      myIsResolvedByAI = isResolvedByAI;
     }
   }
+
+  private static final JBColor AI_COLOR = new JBColor(0x834DF0, 0xA571E6); // TODO: move to platform utils
 }
