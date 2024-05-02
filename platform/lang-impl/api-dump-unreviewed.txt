@@ -10286,7 +10286,6 @@ f:com.intellij.codeInspection.ui.InspectionTree
 - getToolTipText(java.awt.event.MouseEvent):java.lang.String
 - removeSelectedProblems():V
 - selectNode(com.intellij.codeInspection.ui.InspectionTreeNode):V
-- setQueueUpdate(Z):V
 com.intellij.codeInspection.ui.InspectionTreeLoadingProgressAware
 - com.intellij.openapi.Disposable
 - dispose():V

@@ -69,7 +69,6 @@ public final class InspectionTree extends Tree {
 
   private final InspectionTreeModel myModel;
 
-  private boolean myQueueUpdate;
   private final OccurenceNavigator myOccurenceNavigator = new MyOccurrenceNavigator();
   private final InspectionResultsView myView;
   private final Map<ProblemDescriptionNode, CancellablePromise<String>> scheduledTooltipTasks = new ConcurrentHashMap<>();
@@ -89,7 +88,6 @@ public final class InspectionTree extends Tree {
     setRootVisible(true);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getSelectionModel().addTreeSelectionListener(e -> {
-        if (isUnderQueueUpdate()) return;
         if (!myView.isDisposed()) {
           myView.syncRightPanel();
           if (myView.isAutoScrollMode()) {
@@ -130,14 +128,6 @@ public final class InspectionTree extends Tree {
 
   public InspectionTreeModel getInspectionTreeModel() {
     return myModel;
-  }
-
-  public void setQueueUpdate(boolean queueUpdate) {
-    myQueueUpdate = queueUpdate;
-  }
-
-  private boolean isUnderQueueUpdate() {
-    return myQueueUpdate;
   }
 
   void removeAllNodes() {
@@ -728,5 +718,7 @@ public final class InspectionTree extends Tree {
       }
       return false;
     }
+    
+    public void asdfasdfasdfasdf() {}
   }
 }
