@@ -20,7 +20,6 @@ import org.jetbrains.jps.api.GlobalOptions;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -43,8 +42,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   private static boolean CURRENT_SNAPSHOT_COPIED = false;
   private boolean myReportedProgress;
 
-  WslBuildCommandLineBuilder(@NotNull Project project, @NotNull WSLDistribution distribution, @NotNull String sdkPath,
-                             @Nullable ProgressIndicator progressIndicator) {
+  WslBuildCommandLineBuilder(@NotNull Project project, @NotNull WSLDistribution distribution, @NotNull String sdkPath, @Nullable ProgressIndicator progressIndicator) {
     myProject = project;
     myDistribution = distribution;
     myProgressIndicator = progressIndicator;
@@ -154,21 +152,6 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   @Override
   public @NotNull String getWorkingDirectory() {
     return myWorkingDirectory;
-  }
-
-  @Override
-  public InetAddress getListenAddress() {
-    try {
-      return myDistribution.getHostIpAddress();
-    }
-    catch (ExecutionException ignored) {
-      return null;
-    }
-  }
-
-  @Override
-  public @NotNull String getHostIp() throws ExecutionException {
-    return myDistribution.getHostIpAddress().getHostAddress();
   }
 
   @Override

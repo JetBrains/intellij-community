@@ -23,6 +23,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.execution.wsl.WslPath;
+import com.intellij.execution.wsl.WslProxy;
 import com.intellij.ide.IdleTracker;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
@@ -287,6 +288,7 @@ public final class BuildManager implements Disposable {
   }
 
   private final List<ListeningConnection> myListeningConnections = new ArrayList<>();
+  private final Map<String, WslProxy> myWslProxyCache = new HashMap<>();
 
   private final @NotNull Charset mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
   private volatile boolean myBuildProcessDebuggingEnabled;
@@ -406,7 +408,10 @@ public final class BuildManager implements Disposable {
       });
     }
 
-    ShutDownTracker.getInstance().registerShutdownTask(this::stopListening);
+    ShutDownTracker.getInstance().registerShutdownTask(() -> {
+      stopListening();
+      clearWslProxyCache();
+    });
 
     if (!IS_UNIT_TEST_MODE) {
       ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
@@ -716,10 +721,8 @@ public final class BuildManager implements Disposable {
       final TaskFuture<?> future = scheduleBuild(
         project, false, true, false, scopes, Collections.emptyList(), Collections.singletonMap(BuildParametersKeys.IS_AUTOMAKE, "true"), handler
       );
-      if (future != null) {
-        myAutomakeFutures.put(future, project);
-        futures.add(new Pair<>(future, handler));
-      }
+      myAutomakeFutures.put(future, project);
+      futures.add(new Pair<>(future, handler));
     }
     boolean needAdditionalBuild = false;
     for (Pair<TaskFuture<?>, AutoMakeMessageHandler> pair : futures) {
@@ -862,7 +865,7 @@ public final class BuildManager implements Disposable {
     return result != null && !result.first.isDone()? result : null;
   }
 
-  public @Nullable TaskFuture<?> scheduleBuild(
+  public @NotNull TaskFuture<?> scheduleBuild(
     final Project project, final boolean isRebuild, final boolean isMake,
     final boolean onlyCheckUpToDate, final List<TargetTypeBuildScope> scopes,
     final Collection<String> paths,
@@ -873,15 +876,6 @@ public final class BuildManager implements Disposable {
     final boolean isAutomake = messageHandler instanceof AutoMakeMessageHandler;
     final WSLDistribution wslDistribution = findWSLDistribution(project);
     final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, wslDistribution != null ? wslDistribution::getWindowsPath : null, isAutomake);
-    try {
-      ensureListening(wslDistribution != null ? wslDistribution.getHostIpAddress() : InetAddress.getLoopbackAddress());
-    }
-    catch (Exception e) {
-      final UUID sessionId = UUID.randomUUID(); // the actual session did not start; use random UUID
-      handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), null));
-      handler.sessionTerminated(sessionId);
-      return null;
-    }
     Function<String, String> pathMapper = wslDistribution != null ? wslDistribution::getWslPath : Function.identity();
 
     final DelegateFuture _future = new DelegateFuture();
@@ -1128,9 +1122,30 @@ public final class BuildManager implements Disposable {
     return startListening(inetAddress);
   }
 
+  private synchronized int getWslPort(WSLDistribution dist, int localPort) {
+    return myWslProxyCache.computeIfAbsent(dist.getId() + ":" + localPort, key -> new WslProxy(dist, localPort)).getWslIngressPort();
+  }
+
+  private synchronized void cleanWslProxies(WSLDistribution dist) {
+    String idPrefix = dist.getId() + ":";
+    List<String> keys = new SmartList<>();
+    for (String key : myWslProxyCache.keySet()) {
+      if (key.startsWith(idPrefix)) {
+        keys.add(key);
+      }
+    }
+    for (String key : keys) {
+      WslProxy proxy = myWslProxyCache.remove(key);
+      if (proxy != null) {
+        Disposer.dispose(proxy);
+      }
+    }
+  }
+
   @Override
   public void dispose() {
     stopListening();
+    clearWslProxyCache();
     myAutomakeTrigger.cancel();
     myRequestsProcessor.cancel();
   }
@@ -1323,6 +1338,11 @@ public final class BuildManager implements Disposable {
     final CompilerConfiguration projectConfig = CompilerConfiguration.getInstance(project);
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
 
+    InetAddress listenAddress = InetAddress.getLoopbackAddress();
+    int listenPort = ensureListening(listenAddress);
+    String buildProcessConnectHost = listenAddress.getHostAddress();
+    int buildProcessConnectPort = listenPort;
+
     BuildCommandLineBuilder cmdLine;
     WslPath wslPath = WslPath.parseWindowsUncPath(vmExecutablePath);
     if (wslPath != null) {
@@ -1331,6 +1351,8 @@ public final class BuildManager implements Disposable {
         throw new ExecutionException(JavaCompilerBundle.message("build.process.wsl.distribution.dont.match", sdkName + " (WSL " + sdkDistribution.getPresentableName() + ")", MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
       }
       cmdLine = new WslBuildCommandLineBuilder(project, sdkDistribution, wslPath.getLinuxPath(), progressIndicator);
+      buildProcessConnectHost = "127.0.0.1"; // WslProxy listen address on linux side
+      buildProcessConnectPort = getWslPort(sdkDistribution, listenPort);
     }
     else {
       if (projectWslDistribution != null) {
@@ -1338,7 +1360,6 @@ public final class BuildManager implements Disposable {
       }
       cmdLine = new LocalBuildCommandLineBuilder(vmExecutablePath);
     }
-    int listenPort = ensureListening(cmdLine.getListenAddress());
 
     boolean profileWithYourKit = false;
     boolean isAgentpathSet = false;
@@ -1612,8 +1633,8 @@ public final class BuildManager implements Disposable {
     }
 
     cmdLine.addParameter(BuildMain.class.getName());
-    cmdLine.addParameter(cmdLine.getHostIp());
-    cmdLine.addParameter(Integer.toString(listenPort));
+    cmdLine.addParameter(buildProcessConnectHost);
+    cmdLine.addParameter(Integer.toString(buildProcessConnectPort));
     cmdLine.addParameter(sessionId.toString());
 
     cmdLine.addParameter(cmdLine.getWorkingDirectory());
@@ -1782,11 +1803,22 @@ public final class BuildManager implements Disposable {
     return null;
   }
 
-  private void stopListening() {
+  private synchronized void stopListening() {
     for (ListeningConnection connection : myListeningConnections) {
       connection.myChannelRegistrar.close();
     }
     myListeningConnections.clear();
+  }
+
+  private synchronized void clearWslProxyCache() {
+    for (WslProxy proxy : myWslProxyCache.values()) {
+      try {
+        Disposer.dispose(proxy);
+      }
+      catch (Throwable ignored) {
+      }
+    }
+    myWslProxyCache.clear();
   }
 
   private int startListening(InetAddress address) {
@@ -2193,6 +2225,10 @@ public final class BuildManager implements Disposable {
           }
         }
       });
+      WSLDistribution wslDistr = findWSLDistribution(project);
+      if (wslDistr != null) {
+        cleanWslProxies(wslDistr);
+      }
     }
 
     @Override
