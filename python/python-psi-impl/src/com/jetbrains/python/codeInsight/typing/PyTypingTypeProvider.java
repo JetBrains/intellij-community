@@ -112,6 +112,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String REQUIRED_EXT = "typing_extensions.Required";
   public static final String NOT_REQUIRED = "typing.NotRequired";
   public static final String NOT_REQUIRED_EXT = "typing_extensions.NotRequired";
+  private static final String UNPACK = "typing.Unpack";
+  private static final String UNPACK_EXT = "typing_extensions.Unpack";
 
   public static final String SELF = "typing.Self";
   public static final String SELF_EXT = "typing_extensions.Self";
@@ -256,6 +258,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
     if (typeHint == null) {
       return null;
+    }
+    if (param.isKeywordContainer()) {
+      Ref<PyType> type = getTypeFromUnpackOperator(typeHint, context.myContext);
+      if (type != null) {
+        return type.get() instanceof PyTypedDictType ? type : null;
+      }
     }
     if (typeHint instanceof PyReferenceExpression ref && ref.isQualified() && (
       param.isPositionalContainer() && "args".equals(ref.getReferencedName()) ||
@@ -1624,6 +1632,17 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       return typeVarTupleType;
     }
     return null;
+  }
+
+  @Nullable
+  private static Ref<@Nullable PyType> getTypeFromUnpackOperator(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (!(element instanceof PySubscriptionExpression subscriptionExpr)) return null;
+    if (!resolvesToQualifiedNames(subscriptionExpr.getOperand(), context, UNPACK, UNPACK_EXT)) {
+      return null;
+    }
+    PyExpression indexExpression = subscriptionExpr.getIndexExpression();
+    if (indexExpression == null) return null;
+    return Ref.create(Ref.deref(getType(indexExpression, context)));
   }
 
   @Nullable
