@@ -88,7 +88,7 @@ open class BasicFileReportGenerator(
   }
 
   protected open fun getSpan(session: Session?, text: String, lookupOrder: Int): String =
-    createHTML().span("completion ${
+    createHTML().span("session ${
       ReportColors.getColor(
         session,
         HtmlColorClasses,

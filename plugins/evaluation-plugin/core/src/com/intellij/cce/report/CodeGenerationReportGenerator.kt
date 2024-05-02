@@ -17,7 +17,7 @@ class CodeGenerationReportGenerator(
   override fun textToInsert(session: Session) = session.expectedText.lines().first()
 
   override fun getSpan(session: Session?, text: String, lookupOrder: Int): String =
-    createHTML().span("completion ${
+    createHTML().span("session ${
       getColor(session, lookupOrder)
     }") {
       id = "${session?.id} $lookupOrder"
