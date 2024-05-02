@@ -120,9 +120,9 @@ fun doPatchPluginXml(
     Span.current().addEvent("patch $pluginModuleName for WebStorm")
     val pluginName = rootElement.getChild("name")
     check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }
-    pluginName.text = "Database Tools and SQL for WebStorm"
+    pluginName.text = "Database Tools and SQL for WebStorm & RustRover"
     val description = rootElement.getChild("description")
-    val replaced = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm")
+    val replaced = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm and RustRover")
     check(replaced) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
   }
   return JDOMUtil.write(rootElement)
