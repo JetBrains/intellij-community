@@ -1,0 +1,16 @@
+Index: platform/lvcs-impl/src/com/intellij/platform/lvcs/impl/ui/ActivityView.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/lvcs-impl/src/com/intellij/platform/lvcs/impl/ui/ActivityView.kt b/platform/lvcs-impl/src/com/intellij/platform/lvcs/impl/ui/ActivityView.kt
+--- a/platform/lvcs-impl/src/com/intellij/platform/lvcs/impl/ui/ActivityView.kt	(revision 3f059b7a390a846c7382fddd578fb007c14575ca)
++++ b/platform/lvcs-impl/src/com/intellij/platform/lvcs/impl/ui/ActivityView.kt	(date 1714638309287)
+@@ -286,6 +286,7 @@
+
+     @JvmStatic
+     fun isViewAvailable(): Boolean {
++      if (true) return false
+       if (AppMode.isRemoteDevHost()) return false
+       return ApplicationInfo.getInstance().isEAP || Registry.`is`("lvcs.show.activity.view")
+     }
