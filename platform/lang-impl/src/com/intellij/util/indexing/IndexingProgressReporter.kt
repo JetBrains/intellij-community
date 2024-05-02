@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.flow.mapStateIn
-import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.application
 import kotlinx.collections.immutable.PersistentList
@@ -25,28 +24,20 @@ import java.util.function.Consumer
 
 // This class is thread safe
 @Internal
-class IndexingProgressReporter(private val indicator: RawProgressReporter) {
+class IndexingProgressReporter {
   @Volatile
   internal var subTasksCount: Int = 0
+  internal val operationName = MutableStateFlow<@ProgressText String?>(null)
   internal val subTasksFinished = MutableStateFlow(0)
   internal val subTaskTexts = MutableStateFlow(persistentListOf<@NlsContexts.ProgressDetails String>())
 
-
-  @Deprecated("Only needed for scanning in dumb mode, which will be removed in IJPL-2852")
-  constructor() : this(object : RawProgressReporter {})
-
   fun setSubTasksCount(value: Int) {
     thisLogger().assertTrue(subTasksCount == 0, "subTasksCount can be set only once. Previous value: $subTasksCount")
-    indicator.fraction(0.0)
     subTasksCount = value
   }
 
-  fun setIndeterminate(indeterminate: Boolean) {
-    indicator.fraction(if (indeterminate) null else 0.0)
-  }
-
   fun setText(value: @ProgressText String) {
-    indicator.text(value)
+    operationName.value = value
   }
 
   fun getSubTaskReporter(): IndexingSubTaskProgressReporter {
@@ -69,12 +60,12 @@ class IndexingProgressReporter(private val indicator: RawProgressReporter) {
           withBackgroundProgress(project, progressTitle, cancellable = false) {
             reportRawProgress { reporter ->
               async {
-                pauseReason.collect { paused ->
-                  reporter.text(
+                pauseReason
+                  .combine(progressReporter.operationName) { paused, operation ->
                     if (paused != null) IdeBundle.message("dumb.service.indexing.paused.due.to", paused)
-                    else progressTitle
-                  )
-                }
+                    else operation ?: progressTitle
+                  }
+                  .collect(reporter::text)
               }
               async {
                 progressReporter.subTaskTexts.collect {
@@ -89,7 +80,7 @@ class IndexingProgressReporter(private val indicator: RawProgressReporter) {
                     reporter.fraction(newValue)
                   }
                   else {
-                    reporter.fraction(0.0)
+                    reporter.fraction(null)
                   }
                 }
               }

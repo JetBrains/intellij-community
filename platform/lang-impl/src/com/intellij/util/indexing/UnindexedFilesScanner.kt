@@ -288,7 +288,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       freezeUntilAllowed()
     }
 
-    progressReporter.setIndeterminate(true)
     progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
 
     if (isFullIndexUpdate()) {

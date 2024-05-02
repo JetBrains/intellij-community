@@ -13,9 +13,7 @@ import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.namedChildScope
-import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import kotlinx.collections.immutable.PersistentList
@@ -123,25 +121,23 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     else {
       MutableStateFlow(true)
     }
-    withBackgroundProgress(project, IndexingBundle.message("progress.indexing.scanning")) {
-      reportRawProgress { rawReporter ->
-        val progressScope = namedChildScope("Scanning progress")
-        val progressReporter = IndexingProgressReporter(rawReporter)
-        val taskIndicator = IndexingProgressReporter.CheckPauseOnlyProgressIndicatorImpl(progressScope, getPauseReason())
-        IndexingProgressReporter.launchIndexingProgressUIReporter(progressScope, project, shouldShowProgress, progressReporter,
-                                                                  IndexingBundle.message("progress.indexing.scanning"),
-                                                                  taskIndicator.getPauseReason())
+    coroutineScope {
+      val progressScope = namedChildScope("Scanning progress")
+      val progressReporter = IndexingProgressReporter()
+      val taskIndicator = IndexingProgressReporter.CheckPauseOnlyProgressIndicatorImpl(progressScope, getPauseReason())
+      IndexingProgressReporter.launchIndexingProgressUIReporter(progressScope, project, shouldShowProgress, progressReporter,
+                                                                IndexingBundle.message("progress.indexing.scanning"),
+                                                                taskIndicator.getPauseReason())
 
 
-        (GistManager.getInstance() as GistManagerImpl).mergeDependentCacheInvalidations().use {
-          task.applyDelayedPushOperations()
-        }
-        blockingContext {
-          task.perform(taskIndicator, progressReporter)
-        }
-
-        progressScope.cancel()
+      (GistManager.getInstance() as GistManagerImpl).mergeDependentCacheInvalidations().use {
+        task.applyDelayedPushOperations()
       }
+      blockingContext {
+        task.perform(taskIndicator, progressReporter)
+      }
+
+      progressScope.cancel()
     }
   }
 
