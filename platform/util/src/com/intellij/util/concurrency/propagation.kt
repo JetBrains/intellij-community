@@ -214,7 +214,16 @@ fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boole
         continuation.resume(Unit)
       }
       // `deferred` is an integral part of `job`, so manual cancellation within `action` should lead to the cancellation of `job`
-      is CancellationException -> continuation.resumeWithException(it)
+      is CancellationException ->
+        // We have scheduled periodic runnables, which use `runAsCoroutine` several times on the same `Continuation`.
+        // When the context `Job` gets canceled and a corresponding `SchedulingExecutorService` does not,
+        // we appear in a situation where the `SchedulingExecutorService` still launches its tasks with a canceled `Continuation`
+        //
+        // Multiple resumption of a single continuation is disallowed; hence, we need to prevent this situation
+        // by avoiding resumption in the case of a dead coroutine scope
+        if (!continuation.context.job.isCompleted) {
+          continuation.resumeWithException(it)
+        }
       // Regular exceptions get propagated to `job` via parent-child relations between Jobs
     }
   }
