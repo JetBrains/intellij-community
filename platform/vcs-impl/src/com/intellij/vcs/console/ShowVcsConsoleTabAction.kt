@@ -3,6 +3,7 @@ package com.intellij.vcs.console
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindowManager
@@ -25,7 +26,9 @@ class ShowVcsConsoleTabAction : DumbAwareAction() {
       return
     }
 
-    e.presentation.isEnabledAndVisible = true
+    val consoleTabService = project.serviceIfCreated<VcsConsoleTabService>()
+    e.presentation.isEnabledAndVisible = consoleTabService != null &&
+                                         (!consoleTabService.isConsoleEmpty() || consoleTabService.isConsoleVisible())
   }
 
   override fun actionPerformed(e: AnActionEvent) {
