@@ -26,7 +26,7 @@ infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
     val superTypeWithReplacedTypeArguments = superType.expandedClassSymbol?.let { symbol ->
         buildClassTypeWithStarProjections(symbol, superType.nullability)
     }
-    return superTypeWithReplacedTypeArguments != null && this isSubTypeOf superTypeWithReplacedTypeArguments
+    return superTypeWithReplacedTypeArguments != null && isSubTypeOf(superTypeWithReplacedTypeArguments)
 }
 
 context(KtAnalysisSession)

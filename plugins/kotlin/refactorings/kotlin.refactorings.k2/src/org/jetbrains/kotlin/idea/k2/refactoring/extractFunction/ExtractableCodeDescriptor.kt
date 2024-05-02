@@ -7,14 +7,10 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
-import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
-import org.jetbrains.kotlin.analysis.utils.relfection.renderAsDataClassToString
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ControlFlow
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.DuplicateInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractableCodeDescriptorWithConflictsResult
@@ -24,12 +20,12 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IReplace
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.TypeParameter
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.utils.mapToSetOrEmpty
 
 data class ExtractableCodeDescriptor(
     val context: KtElement,
@@ -44,7 +40,7 @@ data class ExtractableCodeDescriptor(
     override val returnType: KtType,
     override val modifiers: List<KtKeywordToken> = emptyList(),
     override val optInMarkers: List<FqName> = emptyList(),
-    val annotations: List<KtAnnotationApplicationWithArgumentsInfo> = emptyList()
+    val annotationClassIds: Set<ClassId> = emptySet()
 ) : IExtractableCodeDescriptor<KtType> {
     override val name: String get() = suggestedNames.firstOrNull() ?: ""
 
@@ -56,9 +52,8 @@ data class ExtractableCodeDescriptor(
 
     override val annotationsText: String
         get() {
-            if (annotations.isEmpty()) return ""
+            if (annotationClassIds.isEmpty()) return ""
             val container = extractionData.commonParent.getStrictParentOfType<KtNamedFunction>() ?: return ""
-            val classIds = annotations.mapNotNull { it.classId }.toSet()
             return analyze(container) {
                 val filteredRenderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.annotationRenderer.with {
                     annotationFilter = annotationFilter.and(object : KtRendererAnnotationsFilter {
@@ -67,7 +62,7 @@ data class ExtractableCodeDescriptor(
                             annotation: KtAnnotationApplication,
                             owner: KtAnnotated
                         ): Boolean {
-                            return annotation.classId in classIds
+                            return annotation.classId in annotationClassIds
                         }
                     })
 

@@ -203,6 +203,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                         runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/singleParam.kt");
                     }
 
+                    @TestMetadata("singleParamTypeError.kt")
+                    public void testSingleParamTypeError() throws Exception {
+                        runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/singleParamTypeError.kt");
+                    }
+
                     @TestMetadata("unitCoercion.kt")
                     public void testUnitCoercion() throws Exception {
                         runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/unitCoercion.kt");

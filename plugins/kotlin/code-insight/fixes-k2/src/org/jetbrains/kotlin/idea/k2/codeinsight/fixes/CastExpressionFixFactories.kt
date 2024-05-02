@@ -115,7 +115,7 @@ object CastExpressionFixFactories {
 
         if (element is KtExpression) {
             val actualExpressionType = element.getKtType()
-            if (actualExpressionType != null && !(actualExpressionType isEqualTo actualType)) {
+            if (actualExpressionType != null && !actualExpressionType.isEqualTo(actualType)) {
                 //don't suggest cast for nested generic argument incompatibilities
                 return emptyList()
             }
