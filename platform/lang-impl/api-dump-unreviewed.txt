@@ -17946,6 +17946,7 @@ a:com.intellij.ide.todo.TodoPanel
 - sf:TODO_PANEL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - pf:myProject:com.intellij.openapi.project.Project
 - pf:myTodoView:com.intellij.ide.todo.TodoView
+- <init>(com.intellij.ide.todo.TodoView,com.intellij.ide.todo.TodoPanelSettings,Z,com.intellij.ui.content.Content):V
 - p:createAutoScrollToSourceAction():com.intellij.openapi.actionSystem.AnAction
 - p:createCenterComponent():javax.swing.JComponent
 - p:createGroupByActionGroup():com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -18001,6 +18002,7 @@ a:com.intellij.ide.todo.TodoTreeBuilder
 - pf:myFile2Highlighter:java.util.Map
 - pf:myFileTree:com.intellij.ide.todo.FileTree
 - pf:myProject:com.intellij.openapi.project.Project
+- <init>(javax.swing.JTree,com.intellij.openapi.project.Project):V
 - pf:clearCache():V
 - p:collectFiles(java.util.function.Consumer):V
 - pa:createTreeStructure():com.intellij.ide.todo.TodoTreeStructure

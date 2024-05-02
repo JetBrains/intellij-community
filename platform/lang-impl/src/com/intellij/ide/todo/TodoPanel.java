@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
@@ -76,10 +76,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
    * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
    *                        actions.
    */
-  TodoPanel(@NotNull TodoView todoView,
-            @NotNull TodoPanelSettings settings,
-            boolean currentFileMode,
-            @NotNull Content content) {
+  public TodoPanel(@NotNull TodoView todoView, @NotNull TodoPanelSettings settings, boolean currentFileMode, @NotNull Content content) {
     super(false, true);
 
     myTodoView = todoView;
