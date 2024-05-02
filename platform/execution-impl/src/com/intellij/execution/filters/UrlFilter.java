@@ -70,7 +70,7 @@ public class UrlFilter implements Filter, DumbAware {
 
   private @Nullable HyperlinkInfo buildFileHyperlinkInfo(@NotNull String url) {
     if (myProject != null && !url.endsWith(".html") && url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-      int documentLine = 0, documentColumn = 0;
+      int documentLine = -1, documentColumn = -1;
       int filePathEndIndex = url.length();
       final int lastColonInd = url.lastIndexOf(':');
       if (lastColonInd > LocalFileSystem.PROTOCOL_PREFIX.length() && lastColonInd < url.length() - 1) {
