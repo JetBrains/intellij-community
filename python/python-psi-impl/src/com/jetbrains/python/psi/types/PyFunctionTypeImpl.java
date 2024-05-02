@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,12 +21,31 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Type of a particular function that is represented as a {@link PyCallable} in the PSI tree.
- *
  */
 public class PyFunctionTypeImpl implements PyFunctionType {
+  public static PyFunctionType create(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    List<PyCallableParameter> parameters = new ArrayList<>();
+    for (PyParameter parameter : callable.getParameterList().getParameters()) {
+      if (parameter instanceof PyNamedParameter namedParameter &&
+          namedParameter.isKeywordContainer() &&
+          context.getType(namedParameter) instanceof PyTypedDictType typedDictType) {
+        List<PyCallableParameter> typedDictParameters = typedDictType.toClass().getParameters(context);
+        parameters.addAll(ContainerUtil.notNullize(typedDictParameters));
+      }
+      else {
+        parameters.add(PyCallableParameterImpl.psi(parameter));
+      }
+    }
+    return new PyFunctionTypeImpl(callable, parameters);
+  }
+
   @NotNull private final PyCallable myCallable;
   @NotNull private final List<PyCallableParameter> myParameters;
 
+  /**
+   * @deprecated Use {@link PyFunctionTypeImpl#create(PyCallable, TypeEvalContext)}
+   */
+  @Deprecated
   public PyFunctionTypeImpl(@NotNull PyCallable callable) {
     this(callable, ContainerUtil.map(callable.getParameterList().getParameters(), PyCallableParameterImpl::psi));
   }

@@ -1981,4 +1981,19 @@ def foo(param: str | int) -> TypeGuard[str]:
   public void testExpectedKeywordOnlyParameterMatchedWithRegularParameter() {
     doTest();
   }
+
+  // PY-55044
+  public void testTypedDictKwargsArgument() {
+    doTestByText("""
+                   from typing import TypedDict, Unpack
+                   
+                   class Movie(TypedDict):
+                       name: str
+                   
+                   def foo(**x: Unpack[Movie]):
+                       pass
+                   
+                   foo(<warning descr="Expected type 'str', got 'int' instead">name=1</warning>)
+                   """);
+  }
 }
