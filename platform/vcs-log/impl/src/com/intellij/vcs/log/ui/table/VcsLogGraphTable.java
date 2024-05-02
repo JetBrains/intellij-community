@@ -231,9 +231,7 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
       }
 
       for (VcsLogColumn<?> column : columnOrder) {
-        boolean isAvailable = column instanceof VcsLogCustomColumn<?> customColumn
-                              ? customColumn.isAvailable(myLogData.getProject())
-                              : true;
+        boolean isAvailable = !(column instanceof VcsLogCustomColumn<?> customColumn) || customColumn.isAvailable(myLogData.getProject());
         if (isAvailable) {
           myTableColumns.computeIfAbsent(column, (k) -> createTableColumn(column));
           columnModel.addColumn(myTableColumns.get(column));
