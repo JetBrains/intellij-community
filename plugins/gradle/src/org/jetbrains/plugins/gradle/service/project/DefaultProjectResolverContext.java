@@ -24,7 +24,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.Build;
+import org.jetbrains.plugins.gradle.model.GradleLightBuild;
 import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -195,17 +195,17 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   }
 
   @Override
-  public @NotNull Build getRootBuild() {
+  public @NotNull GradleLightBuild getRootBuild() {
     return getModels().getRootBuild();
   }
 
   @Override
-  public @NotNull Collection<? extends Build> getNestedBuilds() {
+  public @NotNull Collection<? extends GradleLightBuild> getNestedBuilds() {
     return getModels().getNestedBuilds();
   }
 
   @Override
-  public @NotNull Collection<? extends Build> getAllBuilds() {
+  public @NotNull Collection<? extends GradleLightBuild> getAllBuilds() {
     return getModels().getAllBuilds();
   }
 
@@ -260,7 +260,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return getAllBuilds().stream()
       .filter(b -> b.getBuildIdentifier().getRootDir().toString().equals(parentRootDir))
       .findFirst()
-      .map(Build::getName)
+      .map(model -> model.getName())
       .orElse(myBuildSrcGroup);
   }
 

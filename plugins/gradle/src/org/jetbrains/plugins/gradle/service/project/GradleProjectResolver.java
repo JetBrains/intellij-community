@@ -649,7 +649,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     if (!includedBuilds.isEmpty()) {
       ProjectData projectData = projectDataNode.getData();
       compositeBuildData = new CompositeBuildData(projectData.getLinkedExternalProjectPath());
-      for (Build build : includedBuilds) {
+      for (GradleLightBuild build : includedBuilds) {
         if (!build.getProjects().isEmpty()) {
           IdeaProject ideaProject = resolverCtx.getBuildModel(build, IdeaProject.class);
           if (ideaProject != null) {
@@ -716,15 +716,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     models.addModel(ExternalProject.class, wrappedExternalRootProject);
     final Map<String, DefaultExternalProject> externalProjectsMap = createExternalProjectsMap(wrappedExternalRootProject);
 
-    Collection<Project> projects = models.getRootBuild().getProjects();
-    for (Project project : projects) {
+    for (GradleLightProject project : models.getRootBuild().getProjects()) {
       ExternalProject externalProject = externalProjectsMap.get(project.getProjectIdentifier().getProjectPath());
       if (externalProject != null) {
         models.addProjectModel(project, ExternalProject.class, externalProject);
       }
     }
 
-    for (Build nestedBuild : models.getNestedBuilds()) {
+    for (GradleLightBuild nestedBuild : models.getNestedBuilds()) {
       final ExternalProject externalIncludedRootProject = models.getBuildModel(nestedBuild, ExternalProject.class);
       if (externalIncludedRootProject == null) continue;
       final DefaultExternalProject wrappedExternalIncludedRootProject = useCustomSerialization

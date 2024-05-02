@@ -7,6 +7,7 @@ import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
@@ -14,49 +15,49 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @ApiStatus.Internal
-public final class DefaultBuild implements Build, Serializable {
+public final class DefaultGradleLightBuild implements GradleLightBuild, Serializable {
 
-  private final String myName;
-  private final DefaultBuildIdentifier myBuildIdentifier;
-  private final Collection<Project> myProjects = new ArrayList<>(0);
+  private final @NotNull String myName;
+  private final @NotNull DefaultBuildIdentifier myBuildIdentifier;
+  private final @NotNull Collection<DefaultGradleLightProject> myProjects = new ArrayList<>(0);
 
-  private DefaultBuildIdentifier myParentBuildIdentifier = null;
+  private @Nullable DefaultBuildIdentifier myParentBuildIdentifier = null;
 
-  private DefaultBuild(String name, File rootDir) {
+  private DefaultGradleLightBuild(@NotNull String name, @NotNull File rootDir) {
     myName = name;
     myBuildIdentifier = new DefaultBuildIdentifier(rootDir);
   }
 
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   @Override
-  public BuildIdentifier getBuildIdentifier() {
+  public @NotNull BuildIdentifier getBuildIdentifier() {
     return myBuildIdentifier;
   }
 
   @Override
-  public Collection<Project> getProjects() {
+  public @NotNull Collection<? extends GradleLightProject> getProjects() {
     return myProjects;
   }
 
   @Override
-  public BuildIdentifier getParentBuildIdentifier() {
+  public @Nullable BuildIdentifier getParentBuildIdentifier() {
     return myParentBuildIdentifier;
   }
 
-  public void setParentBuildIdentifier(DefaultBuildIdentifier parentBuildIdentifier) {
+  public void setParentBuildIdentifier(@Nullable DefaultBuildIdentifier parentBuildIdentifier) {
     myParentBuildIdentifier = parentBuildIdentifier;
   }
 
-  public static @NotNull DefaultBuild convertGradleBuild(@NotNull GradleBuild gradleBuild) {
+  public static @NotNull DefaultGradleLightBuild convertGradleBuild(@NotNull GradleBuild gradleBuild) {
     String name = gradleBuild.getRootProject().getName();
     File rootDir = gradleBuild.getBuildIdentifier().getRootDir();
-    DefaultBuild build = new DefaultBuild(name, rootDir);
+    DefaultGradleLightBuild build = new DefaultGradleLightBuild(name, rootDir);
     for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
-      build.myProjects.add(DefaultProject.convertGradleProject(gradleProject));
+      build.myProjects.add(DefaultGradleLightProject.convertGradleProject(gradleProject));
     }
     return build;
   }

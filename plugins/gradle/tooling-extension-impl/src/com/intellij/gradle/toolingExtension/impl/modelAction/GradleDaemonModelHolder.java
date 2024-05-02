@@ -13,7 +13,7 @@ import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.DefaultBuild;
+import org.jetbrains.plugins.gradle.model.DefaultGradleLightBuild;
 import org.jetbrains.plugins.gradle.model.DefaultBuildController;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment;
@@ -34,12 +34,12 @@ import java.util.concurrent.*;
  *     <li>Using two-phased Gradle executor with {@link org.gradle.tooling.IntermediateResultHandler}.</li>
  *     <li>Using one-phased Gradle executor with {@link org.gradle.tooling.ResultHandler}.</li>
  *   </ul>
- *   <li>Consumes data on the Idea side into the {@link org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder}.
+ *   <li>Consumes data on the Idea side into the {@link org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder}.
  *   This data can be accessed by the {@link org.jetbrains.plugins.gradle.service.project.ProjectResolverContext}
  *   in the {@link org.jetbrains.plugins.gradle.service.project.GradleProjectResolver} and their extensions.</li>
  * </ul>
  *
- * @see org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder
+ * @see org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder
  * @see org.gradle.tooling.BuildActionExecuter.Builder#projectsLoaded
  * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
  * @see org.gradle.tooling.BuildActionExecuter#run
@@ -54,8 +54,8 @@ public class GradleDaemonModelHolder {
 
   private final @NotNull BuildEnvironment myBuildEnvironment;
 
-  private final @NotNull BlockingQueue<Future<DefaultBuild>> myConvertedRootBuild = new LinkedBlockingQueue<>();
-  private final @NotNull BlockingQueue<Future<Collection<DefaultBuild>>> myConvertedNestedBuilds = new LinkedBlockingQueue<>();
+  private final @NotNull BlockingQueue<Future<DefaultGradleLightBuild>> myConvertedRootBuild = new LinkedBlockingQueue<>();
+  private final @NotNull BlockingQueue<Future<Collection<DefaultGradleLightBuild>>> myConvertedNestedBuilds = new LinkedBlockingQueue<>();
   private final @NotNull BlockingQueue<Future<ConvertedModel>> myConvertedModelQueue = new LinkedBlockingQueue<>();
   private final @NotNull BlockingQueue<Future<BuildEnvironment>> myConvertedBuildEnvironment = new LinkedBlockingQueue<>();
 
@@ -71,7 +71,7 @@ public class GradleDaemonModelHolder {
     myNestedGradleBuilds = nestedGradleBuilds;
     myBuildEnvironment = buildEnvironment;
     GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedRootBuild, () -> {
-      return DefaultBuild.convertGradleBuild(rootGradleBuild);
+      return DefaultGradleLightBuild.convertGradleBuild(rootGradleBuild);
     });
     GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedNestedBuilds, () -> {
       return convertNestedGradleBuilds(nestedGradleBuilds);
@@ -114,19 +114,19 @@ public class GradleDaemonModelHolder {
   }
 
   public @NotNull GradleModelHolderState pollPendingState() {
-    DefaultBuild rootBuild = pollPendingConvertedRootBuild();
-    Collection<DefaultBuild> nestedBuilds = pollPendingConvertedNestedBuilds();
+    DefaultGradleLightBuild rootBuild = pollPendingConvertedRootBuild();
+    Collection<DefaultGradleLightBuild> nestedBuilds = pollPendingConvertedNestedBuilds();
     Map<GradleModelId, Object> models = pollAllPendingConvertedModels();
     BuildEnvironment buildEnvironment = pollPendingBuildEnvironment();
     return new GradleModelHolderState(rootBuild, nestedBuilds, buildEnvironment, models);
   }
 
-  private @Nullable DefaultBuild pollPendingConvertedRootBuild() {
+  private @Nullable DefaultGradleLightBuild pollPendingConvertedRootBuild() {
     return GradleExecutorServiceUtil.poolPendingResult(myConvertedRootBuild);
   }
 
-  private @NotNull Collection<DefaultBuild> pollPendingConvertedNestedBuilds() {
-    Collection<DefaultBuild> builds = GradleExecutorServiceUtil.poolPendingResult(myConvertedNestedBuilds);
+  private @NotNull Collection<DefaultGradleLightBuild> pollPendingConvertedNestedBuilds() {
+    Collection<DefaultGradleLightBuild> builds = GradleExecutorServiceUtil.poolPendingResult(myConvertedNestedBuilds);
     return builds == null ? Collections.emptyList() : builds;
   }
 
@@ -143,12 +143,12 @@ public class GradleDaemonModelHolder {
     return GradleExecutorServiceUtil.poolPendingResult(myConvertedBuildEnvironment);
   }
 
-  private static @NotNull Collection<DefaultBuild> convertNestedGradleBuilds(
+  private static @NotNull Collection<DefaultGradleLightBuild> convertNestedGradleBuilds(
     @NotNull Collection<? extends GradleBuild> nestedGradleBuilds
   ) {
-    List<DefaultBuild> nestedBuilds = new ArrayList<>();
+    List<DefaultGradleLightBuild> nestedBuilds = new ArrayList<>();
     for (GradleBuild gradleBuild : nestedGradleBuilds) {
-      DefaultBuild build = DefaultBuild.convertGradleBuild(gradleBuild);
+      DefaultGradleLightBuild build = DefaultGradleLightBuild.convertGradleBuild(gradleBuild);
       nestedBuilds.add(build);
     }
     setupNestedBuildHierarchy(nestedBuilds, nestedGradleBuilds);
@@ -156,25 +156,25 @@ public class GradleDaemonModelHolder {
   }
 
   private static void setupNestedBuildHierarchy(
-    @NotNull Collection<DefaultBuild> builds,
+    @NotNull Collection<DefaultGradleLightBuild> builds,
     @NotNull Collection<? extends GradleBuild> gradleBuilds
   ) {
-    Set<DefaultBuild> updatedBuilds = new HashSet<>();
-    Map<File, DefaultBuild> rootDirsToBuilds = new HashMap<>();
-    for (DefaultBuild build : builds) {
+    Set<DefaultGradleLightBuild> updatedBuilds = new HashSet<>();
+    Map<File, DefaultGradleLightBuild> rootDirsToBuilds = new HashMap<>();
+    for (DefaultGradleLightBuild build : builds) {
       BuildIdentifier buildIdentifier = build.getBuildIdentifier();
       rootDirsToBuilds.put(buildIdentifier.getRootDir(), build);
     }
 
     for (GradleBuild gradleBuild : gradleBuilds) {
       BuildIdentifier buildIdentifier = gradleBuild.getBuildIdentifier();
-      DefaultBuild build = rootDirsToBuilds.get(buildIdentifier.getRootDir());
+      DefaultGradleLightBuild build = rootDirsToBuilds.get(buildIdentifier.getRootDir());
       if (build == null) {
         continue;
       }
 
       for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
-        DefaultBuild buildToUpdate = rootDirsToBuilds.get(includedGradleBuild.getBuildIdentifier().getRootDir());
+        DefaultGradleLightBuild buildToUpdate = rootDirsToBuilds.get(includedGradleBuild.getBuildIdentifier().getRootDir());
         if (buildToUpdate != null && updatedBuilds.add(buildToUpdate)) {
           buildToUpdate.setParentBuildIdentifier(new DefaultBuildIdentifier(buildIdentifier.getRootDir()));
         }

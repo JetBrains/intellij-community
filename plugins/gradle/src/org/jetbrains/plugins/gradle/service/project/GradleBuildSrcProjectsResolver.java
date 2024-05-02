@@ -16,7 +16,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.Build;
+import org.jetbrains.plugins.gradle.model.GradleLightBuild;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
@@ -73,7 +73,7 @@ public final class GradleBuildSrcProjectsResolver {
       jvmOptions.addAll(mainBuildExecutionSettings.getJvmArguments());
     }
 
-    for (Build build : myResolverContext.getAllBuilds()) {
+    for (GradleLightBuild build : myResolverContext.getAllBuilds()) {
       String buildPath = FileUtil.toSystemIndependentName(build.getBuildIdentifier().getRootDir().getPath());
 
       GradleExecutionSettings buildSrcProjectSettings;

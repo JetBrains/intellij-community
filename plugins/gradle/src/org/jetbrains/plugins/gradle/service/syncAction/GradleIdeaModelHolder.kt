@@ -10,7 +10,7 @@ import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.model.Build
+import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.util.GradleObjectTraverser
 import org.jetbrains.plugins.gradle.util.telemetry.GradleOpenTelemetryTraceService
 import java.io.File
@@ -25,8 +25,8 @@ class GradleIdeaModelHolder(
   private var buildEnvironment: BuildEnvironment? = null
 ) {
 
-  private var rootBuild: Build? = null
-  private val nestedBuilds = ArrayList<Build>()
+  private var rootBuild: GradleLightBuild? = null
+  private val nestedBuilds = ArrayList<GradleLightBuild>()
 
   private val models: MutableMap<GradleModelId, Any> = LinkedHashMap()
   private val buildIdMapping: MutableMap<String, String> = LinkedHashMap()
@@ -41,16 +41,16 @@ class GradleIdeaModelHolder(
     return buildEnvironment
   }
 
-  fun getRootBuild(): Build {
+  fun getRootBuild(): GradleLightBuild {
     return rootBuild!!
   }
 
-  fun getNestedBuilds(): List<Build> {
+  fun getNestedBuilds(): List<GradleLightBuild> {
     return nestedBuilds
   }
 
-  fun getAllBuilds(): List<Build> {
-    val result = ArrayList<Build>()
+  fun getAllBuilds(): List<GradleLightBuild> {
+    val result = ArrayList<GradleLightBuild>()
     result.add(getRootBuild())
     result.addAll(getNestedBuilds())
     return result
@@ -182,7 +182,7 @@ class GradleIdeaModelHolder(
     }
   }
 
-  private fun convertBuildModelPathsInPlace(build: Build) {
+  private fun convertBuildModelPathsInPlace(build: GradleLightBuild) {
     val originalBuildId = GradleModelId.createBuildId(build.buildIdentifier)
     convertModelPathsInPlace(build)
     val currentBuildId = GradleModelId.createBuildId(build.buildIdentifier)

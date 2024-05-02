@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.DefaultBuild;
+import org.jetbrains.plugins.gradle.model.DefaultGradleLightBuild;
 
 import java.io.Serializable;
 import java.util.*;
@@ -15,8 +15,8 @@ import java.util.*;
 @ApiStatus.Internal
 public class GradleModelHolderState implements Serializable {
 
-  private final @Nullable DefaultBuild myRootBuild;
-  private final @NotNull Collection<DefaultBuild> myNestedBuilds;
+  private final @Nullable DefaultGradleLightBuild myRootBuild;
+  private final @NotNull Collection<DefaultGradleLightBuild> myNestedBuilds;
   private final @Nullable BuildEnvironment myBuildEnvironment;
   private final @NotNull Map<GradleModelId, Object> myModels;
 
@@ -25,8 +25,8 @@ public class GradleModelHolderState implements Serializable {
   private final byte[] myOpenTelemetryTraces;
 
   public GradleModelHolderState(
-    @Nullable DefaultBuild rootBuild,
-    @NotNull Collection<DefaultBuild> nestedBuilds,
+    @Nullable DefaultGradleLightBuild rootBuild,
+    @NotNull Collection<DefaultGradleLightBuild> nestedBuilds,
     @Nullable BuildEnvironment buildEnvironment,
     @NotNull Map<GradleModelId, Object> models
   ) {
@@ -34,8 +34,8 @@ public class GradleModelHolderState implements Serializable {
   }
 
   public GradleModelHolderState(
-    @Nullable DefaultBuild rootBuild,
-    @NotNull Collection<DefaultBuild> nestedBuilds,
+    @Nullable DefaultGradleLightBuild rootBuild,
+    @NotNull Collection<DefaultGradleLightBuild> nestedBuilds,
     @Nullable BuildEnvironment buildEnvironment,
     @NotNull Map<GradleModelId, Object> models,
     @Nullable GradleModelFetchPhase phase,
@@ -49,11 +49,11 @@ public class GradleModelHolderState implements Serializable {
     myOpenTelemetryTraces = openTelemetryTraces;
   }
 
-  public @Nullable DefaultBuild getRootBuild() {
+  public @Nullable DefaultGradleLightBuild getRootBuild() {
     return myRootBuild;
   }
 
-  public @NotNull Collection<DefaultBuild> getNestedBuilds() {
+  public @NotNull Collection<DefaultGradleLightBuild> getNestedBuilds() {
     return myNestedBuilds;
   }
 

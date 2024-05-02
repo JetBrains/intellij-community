@@ -13,23 +13,23 @@ import java.io.File;
 import java.io.Serializable;
 
 @ApiStatus.Internal
-class DefaultProject implements Project, Serializable {
+class DefaultGradleLightProject implements GradleLightProject, Serializable {
 
-  private final String myName;
-  private final DefaultProjectIdentifier myProjectIdentifier;
+  private final @NotNull String myName;
+  private final @NotNull DefaultProjectIdentifier myProjectIdentifier;
 
-  private DefaultProject(@NotNull String name, @NotNull File rootDir, @NotNull String projectPath) {
+  private DefaultGradleLightProject(@NotNull String name, @NotNull File rootDir, @NotNull String projectPath) {
     myName = name;
     myProjectIdentifier = new DefaultProjectIdentifier(rootDir, projectPath);
   }
 
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   @Override
-  public ProjectIdentifier getProjectIdentifier() {
+  public @NotNull ProjectIdentifier getProjectIdentifier() {
     return myProjectIdentifier;
   }
 
@@ -41,20 +41,20 @@ class DefaultProject implements Project, Serializable {
            '}';
   }
 
-  public static @NotNull Project convertGradleProject(@NotNull BasicGradleProject gradleProject) {
+  public static @NotNull DefaultGradleLightProject convertGradleProject(@NotNull BasicGradleProject gradleProject) {
     String name = gradleProject.getName();
     ProjectIdentifier projectIdentifier = gradleProject.getProjectIdentifier();
     File rootDir = projectIdentifier.getBuildIdentifier().getRootDir();
     String projectPath = projectIdentifier.getProjectPath();
-    return new DefaultProject(name, rootDir, projectPath);
+    return new DefaultGradleLightProject(name, rootDir, projectPath);
   }
 
-  public static @NotNull Project convertIdeaProject(@NotNull IdeaModule ideaModule) {
+  public static @NotNull DefaultGradleProjectModel convertIdeaProject(@NotNull IdeaModule ideaModule) {
     GradleProject gradleProject = ideaModule.getGradleProject();
     String name = gradleProject.getName();
     ProjectIdentifier projectIdentifier = gradleProject.getProjectIdentifier();
     File rootDir = projectIdentifier.getBuildIdentifier().getRootDir();
     String projectPath = projectIdentifier.getProjectPath();
-    return new DefaultProject(name, rootDir, projectPath);
+    return new DefaultGradleProjectModel(name, rootDir, projectPath);
   }
 }
