@@ -2237,7 +2237,7 @@ com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation$Clickable
 - pa:getExternalStatusColumnService():com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService
 - f:getLogColumn():com.intellij.vcs.log.ui.table.column.VcsLogColumn
 - pa:getStubStatus():com.intellij.vcs.log.data.VcsCommitExternalStatus
-- isColumnAvailable(com.intellij.openapi.project.Project):Z
+- isColumnAvailable(com.intellij.openapi.project.Project,java.util.Collection):Z
 - pa:isColumnEnabledByDefault():Z
 f:com.intellij.vcs.log.ui.frame.VcsLogChangeProcessor
 - com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
@@ -2618,9 +2618,11 @@ com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 - com.intellij.vcs.log.ui.table.column.VcsLogColumn
 - sf:Companion:com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn$Companion
 - sf:KEY:com.intellij.openapi.extensions.ExtensionPointName
-- isAvailable(com.intellij.openapi.project.Project):Z
+- isAvailable(com.intellij.openapi.project.Project,java.util.Collection):Z
+- s:isAvailable(com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn,com.intellij.vcs.log.data.VcsLogData):Z
 - isEnabledByDefault():Z
 f:com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn$Companion
+- f:isAvailable(com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn,com.intellij.vcs.log.data.VcsLogData):Z
 com.intellij.vcs.log.ui.table.column.VcsLogCustomColumnListener
 - java.util.EventListener
 - sf:Companion:com.intellij.vcs.log.ui.table.column.VcsLogCustomColumnListener$Companion
@@ -2766,6 +2768,7 @@ f:com.intellij.vcs.log.util.VcsLogUtil
 - s:isFullHash(java.lang.String):Z
 - s:isMoreRequested(com.intellij.vcs.log.visible.VisiblePack):java.lang.Boolean
 - s:isProjectLog(com.intellij.openapi.project.Project,java.util.Map):Z
+- s:isProjectLogForVcs(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.vcs.AbstractVcs):Z
 - s:isRegexp(java.lang.String):Z
 - s:requestToLoadMore(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.Runnable):V
 - s:runWhenVcsAndLogIsReady(com.intellij.openapi.project.Project,com.intellij.util.Consumer):V
