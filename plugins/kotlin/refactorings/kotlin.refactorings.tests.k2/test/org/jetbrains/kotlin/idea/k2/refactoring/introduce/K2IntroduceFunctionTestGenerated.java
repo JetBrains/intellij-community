@@ -2015,6 +2015,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
         }
 
+        @TestMetadata("definitelyNotNullType.kt")
+        public void testDefinitelyNotNullType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/typeParameters/definitelyNotNullType.kt");
+        }
+
         @TestMetadata("localClassInBound.kt")
         public void testLocalClassInBound() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/typeParameters/localClassInBound.kt");

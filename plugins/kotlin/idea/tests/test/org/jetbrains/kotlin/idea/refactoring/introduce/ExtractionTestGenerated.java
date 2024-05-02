@@ -2852,6 +2852,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
 
+            @TestMetadata("definitelyNotNullType.kt")
+            public void testDefinitelyNotNullType() throws Exception {
+                runTest("testData/refactoring/extractFunction/typeParameters/definitelyNotNullType.kt");
+            }
+
             @TestMetadata("localClassInBound.kt")
             public void testLocalClassInBound() throws Exception {
                 runTest("testData/refactoring/extractFunction/typeParameters/localClassInBound.kt");
