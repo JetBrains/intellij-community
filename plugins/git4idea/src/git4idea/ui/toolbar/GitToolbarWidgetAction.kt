@@ -142,8 +142,6 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
         e.presentation.isEnabledAndVisible = false
         return
       }
-
-      is GitWidgetState.GitVcs,
       GitWidgetState.NoVcs -> {
         val placeholder = getPlaceholder(project)
         with(e.presentation) {
@@ -153,7 +151,15 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
           description = GitBundle.message("git.toolbar.widget.no.repo.tooltip")
         }
       }
-
+      is GitWidgetState.GitVcs -> {
+        val placeholder = getPlaceholder(project)
+        with(e.presentation) {
+          isEnabledAndVisible = true
+          text = placeholder ?: GitBundle.message("git.toolbar.widget.no.loaded.repo")
+          icon = WIDGET_ICON
+          description = null
+        }
+      }
       is GitWidgetState.Repo -> {
         with(e.presentation) {
           isEnabledAndVisible = true
