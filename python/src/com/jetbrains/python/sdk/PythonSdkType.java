@@ -60,7 +60,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
 
 import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfiguration;
 
@@ -82,13 +81,6 @@ public final class PythonSdkType extends SdkType {
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
-  /**
-   * Note that <i>\w+.*</i> pattern is not sufficient because we need also the
-   * hyphen sign (<i>-</i>) for <i>docker-compose:</i> scheme.
-   * For WSL we use <code>\\wsl.local\</code> or <code>\\wsl$\</code>.
-   * As with a new workspace model paths changed on save, hence we need to support <code>//wsl</code> as well
-   */
-  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("^([-a-zA-Z_0-9]{2,}:|\\\\\\\\|//wsl).+");
 
   /**
    * Old configuration may have this prefix in homepath. We must remove it
@@ -324,7 +316,7 @@ public final class PythonSdkType extends SdkType {
    */
   @Contract(pure = true)
   static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
-    return CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN.matcher(homePath).matches();
+    return PythonSdkUtil.isCustomPythonSdkHomePath(homePath);
   }
 
   public static boolean isSkeletonsPath(String path) {
@@ -480,7 +472,7 @@ public final class PythonSdkType extends SdkType {
   @Override
   public @Nullable String getVersionString(final @NotNull String sdkHome) {
     // Paths like \\wsl and ssh:// can't be used here
-    if (CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN.matcher(sdkHome).matches()) {
+    if (isCustomPythonSdkHomePath(sdkHome)) {
       return null;
     }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
