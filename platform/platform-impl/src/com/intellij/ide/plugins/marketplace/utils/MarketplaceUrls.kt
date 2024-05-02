@@ -10,9 +10,11 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 import java.net.URL
 
+@ApiStatus.Internal
 object MarketplaceUrls {
   private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild)
 

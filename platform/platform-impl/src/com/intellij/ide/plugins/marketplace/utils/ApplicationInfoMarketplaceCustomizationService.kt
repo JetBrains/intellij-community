@@ -4,7 +4,9 @@ package com.intellij.ide.plugins.marketplace.utils
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ApplicationInfoMarketplaceCustomizationService : MarketplaceCustomizationService {
   override fun getPluginManagerUrl() = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl
 
