@@ -15,7 +15,7 @@ sealed class LcrInitParams {
   }
 
   /**
-   * If specified then the cell occupies all available free space (so next cells will be near right edge) and the content of the cell
+   * If specified then the cell occupies all available free space (so next cells will be near right edge), and the content of the cell
    * is placed according to the [align] value
    */
   var align: Align? = null

@@ -9565,9 +9565,11 @@ f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - f:getFont():java.awt.Font
 - f:getForeground():java.awt.Color
 - f:getGreyForeground():java.awt.Color
+- f:getSpeedSearchHighlighting():Z
 - f:setAttributes(com.intellij.ui.SimpleTextAttributes):V
 - f:setFont(java.awt.Font):V
 - f:setForeground(java.awt.Color):V
+- f:setSpeedSearchHighlighting(Z):V
 f:com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt
 - sf:stripHorizontalInsets(javax.swing.JComponent):V
 com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider
