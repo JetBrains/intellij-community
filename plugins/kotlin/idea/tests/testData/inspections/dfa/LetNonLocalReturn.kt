@@ -16,11 +16,17 @@ fun testChain(file: String): Boolean {
 }
 
 fun testChain3(file: String): Boolean {
-    return file != "xyz" && file.isNotEmpty() && file.let {
-        if (it == "h") return true
-        if (it == "x") return false
+    return file != "xyz" && file.isNotEmpty() && file.run {
+        if (this == "h") return true
+        if (this == "x") return false
         false
     }
+}
+
+fun testElvis(param: String?, other: String) = param ?: other.let {
+    if (it.isNotEmpty()) return it
+
+    null
 }
 
 fun testChainMiddle(file: String): Boolean {
