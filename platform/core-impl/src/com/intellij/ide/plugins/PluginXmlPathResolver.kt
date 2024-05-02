@@ -25,6 +25,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     ): String = when {
       relativePath[0] == '/' -> relativePath.substring(1)
       relativePath.startsWith("intellij.")
+      // TODO to be removed after KTIJ-29799
       || relativePath.startsWith("kotlin.") -> relativePath
       else -> (base ?: "META-INF") + '/' + relativePath
     }
