@@ -123,13 +123,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
 
   public void testNewInCast() { doTest(2, "new", "null", "true", "false"); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testNewInNegation() {
-    if (getIndexingMode() == IndexingMode.DUMB_EMPTY_INDEX) {
-      // Object's methods are not found in empty indices, so the only element is inserted
-      doTest();
-    } else {
-      doTest(1, "new", "null", "true", "false");
-    }
+    doTest(1, "new", "null", "true", "false");
   }
 
   public void testSpaceAfterInstanceof() { doTest(); }
