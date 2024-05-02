@@ -66,6 +66,8 @@ class JupyterToolbar(actionGroup: ActionGroup, target: JComponent, place: String
     return prospectiveLineNumber
   }
 
+  override fun installPopupHandler(customizable: Boolean, popupActionGroup: ActionGroup?, popupActionId: String?) = Unit
+
   companion object {
     private const val ALPHA = 1.0f
     private val TOOLBAR_ARC_SIZE = JBUI.scale(14)
