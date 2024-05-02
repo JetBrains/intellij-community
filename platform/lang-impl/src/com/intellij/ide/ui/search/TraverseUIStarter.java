@@ -87,6 +87,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
     }
     catch (Throwable e) {
       try {
+        System.err.println("Searchable options index builder failed: " + e);
         Logger.getInstance(getClass()).error("Searchable options index builder failed", e);
       }
       catch (Throwable ignored) {
