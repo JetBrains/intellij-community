@@ -4,7 +4,8 @@ package com.intellij.cce.evaluation.step
 import com.intellij.cce.actions.ProjectOpeningUtils
 import com.intellij.cce.evaluation.FinishEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationEx.FORCE_EXIT
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.Project
 import kotlin.system.exitProcess
 
@@ -29,7 +30,7 @@ class HeadlessFinishEvaluationStep(private val project: Project) : FinishEvaluat
   }
 
   private fun exit(exitCode: Int) = try {
-    ApplicationManager.getApplication().exit(true, false, false, exitCode)
+    ApplicationManagerEx.getApplicationEx().exit(FORCE_EXIT, exitCode)
   } catch (t: Throwable) {
     exitProcess(exitCode)
   }
