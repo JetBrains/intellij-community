@@ -2200,6 +2200,11 @@ f:com.intellij.codeInspection.util.RefEntityAlphabeticalComparator
 - <init>():V
 - compare(com.intellij.codeInspection.reference.RefEntity,com.intellij.codeInspection.reference.RefEntity):I
 - s:getInstance():com.intellij.codeInspection.util.RefEntityAlphabeticalComparator
+*:com.intellij.formatting.CaretRestorationDecider
+- *sf:Companion:com.intellij.formatting.CaretRestorationDecider$Companion
+- a:shouldRestoreCaret(com.intellij.openapi.editor.Document,com.intellij.openapi.editor.Editor,I):Z
+*f:com.intellij.formatting.CaretRestorationDecider$Companion
+- com.intellij.lang.LanguageExtension
 a:com.intellij.ide.PlatformIdeService
 - <init>():V
 - createHyperlinkConsumer():java.util.function.BiConsumer

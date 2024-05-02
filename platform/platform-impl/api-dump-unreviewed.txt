@@ -3564,6 +3564,10 @@ f:com.intellij.featureStatistics.fusCollectors.ThrowableDescription
 - getThrowableClass():java.lang.Class
 f:com.intellij.formatting.CaretPositionKeeper
 - restoreCaretPosition():V
+f:com.intellij.formatting.DefaultCaretRestorationDecider
+- com.intellij.formatting.CaretRestorationDecider
+- sf:INSTANCE:com.intellij.formatting.DefaultCaretRestorationDecider
+- shouldRestoreCaret(com.intellij.openapi.editor.Document,com.intellij.openapi.editor.Editor,I):Z
 f:com.intellij.formatting.EditorFormatterListener
 - com.intellij.psi.codeStyle.CodeStyleManager$Listener
 - <init>():V
