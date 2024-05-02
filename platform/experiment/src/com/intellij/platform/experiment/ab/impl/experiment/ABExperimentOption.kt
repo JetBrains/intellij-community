@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.experiment.ab.impl.experiment
 
-import com.intellij.openapi.extensions.PluginAware
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
 
 /**
@@ -10,9 +8,8 @@ import com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSi
  *
  * Implement and register an option for your feature.
  *
- * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBase
  */
-interface ABExperimentOption : PluginAware {
+interface ABExperimentOption {
   val id: ABExperimentOptionId
 
   /**
@@ -48,8 +45,6 @@ interface ABExperimentOption : PluginAware {
    * For IDEs it allows to control in what version of IDE what options are enabled.
    */
   fun checkIdeVersionIsSuitable(): Boolean
-
-  fun getPluginDescriptor(): PluginDescriptor
 }
 
 fun ABExperimentOption.isEnabled(): Boolean {

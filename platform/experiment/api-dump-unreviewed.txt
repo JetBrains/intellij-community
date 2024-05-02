@@ -7,17 +7,14 @@ f:com.intellij.platform.experiment.ab.impl.experiment.ABExperiment$Companion
 f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentKt
 - sf:getABExperimentInstance():com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
-- com.intellij.openapi.extensions.PluginAware
 - a:checkIdeIsSuitable():Z
 - a:checkIdeVersionIsSuitable():Z
 - a:getGroupSizeForIde-VJBkicw(Z):I
 - a:getId-d3vBMqI():java.lang.String
-- a:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
-a:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBase
-- com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
+f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBean
+- com.intellij.serviceContainer.BaseKeyedLazyInstance
+- implementationClass:java.lang.String
 - <init>():V
-- getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
-- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
 - bsf:box-impl(java.lang.String):com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
 - s:constructor-impl(java.lang.String):java.lang.String

@@ -48,7 +48,7 @@ fun getABExperimentInstance(): ABExperiment {
 class ABExperiment {
 
   companion object {
-    private val AB_EXPERIMENTAL_OPTION_EP = ExtensionPointName<ABExperimentOption>("com.intellij.experiment.abExperimentOption")
+    private val AB_EXPERIMENTAL_OPTION_EP = ExtensionPointName<ABExperimentOptionBean>("com.intellij.experiment.abExperimentOption")
     private val LOG = logger<ABExperiment>()
 
     private const val DEVICE_ID_PURPOSE = "A/B Experiment"
@@ -59,10 +59,14 @@ class ABExperiment {
     internal val OPTION_ID_FREE_GROUP = ABExperimentOptionId("free.option")
 
     internal fun getJbABExperimentOptionList(): List<ABExperimentOption> {
+      return getJbABExperimentOptionBeanList().map { it.instance }
+    }
+
+    internal fun getJbABExperimentOptionBeanList(): List<ABExperimentOptionBean> {
       return AB_EXPERIMENTAL_OPTION_EP.extensionList.filter {
-        val pluginDescriptor = it.getPluginDescriptor()
+        val pluginDescriptor = it.pluginDescriptor
         val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
-        pluginInfo.isDevelopedByJetBrains() && it.isEnabled()
+        pluginInfo.isDevelopedByJetBrains() && it.instance.isEnabled()
       }
     }
 
