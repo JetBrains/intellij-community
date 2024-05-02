@@ -53,8 +53,9 @@ public final class SearchUtil {
   private SearchUtil() { }
 
   static void processConfigurables(@NotNull List<? extends Configurable> configurables,
-                                   @NotNull Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options, boolean i18n) {
-    for (final Configurable configurable : configurables) {
+                                   @NotNull Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options,
+                                   boolean i18n) {
+    for (Configurable configurable : configurables) {
       if (!(configurable instanceof SearchableConfigurable searchableConfigurable)) {
         continue;
       }
@@ -73,10 +74,10 @@ public final class SearchUtil {
       }
       else {
         processComponent(searchableConfigurable, configurableOptions, configurable.createComponent(), i18n);
-        final Configurable unwrapped = unwrapConfigurable(configurable);
-        if (unwrapped instanceof CompositeConfigurable) {
+        Configurable unwrapped = unwrapConfigurable(configurable);
+        if (unwrapped instanceof CompositeConfigurable<?> compositeConfigurable) {
           unwrapped.disposeUIResources();
-          final List<? extends UnnamedConfigurable> children = ((CompositeConfigurable<?>)unwrapped).getConfigurables();
+          List<? extends UnnamedConfigurable> children = compositeConfigurable.getConfigurables();
           for (final UnnamedConfigurable child : children) {
             final Set<OptionDescription> childConfigurableOptions = new TreeSet<>();
             options.put(new SearchableConfigurableAdapter(searchableConfigurable, child), childConfigurableOptions);
@@ -343,7 +344,7 @@ public final class SearchUtil {
       List<String> labels = getItemsFromComboBox(((JComboBox<?>)rootComponent));
       if (labels.stream().anyMatch(t -> isComponentHighlighted(t, option, force, configurable))) {
         highlightComponent(rootComponent, option);
-        // do not visit children of highlighted component
+        // do not visit children of a highlighted component
         return true;
       }
     }
@@ -706,27 +707,27 @@ public final class SearchUtil {
   }
 
   private static final class SearchableConfigurableAdapter implements SearchableConfigurable {
-    private final SearchableConfigurable myOriginal;
-    private final UnnamedConfigurable myDelegate;
+    private final SearchableConfigurable original;
+    private final UnnamedConfigurable delegate;
 
     private SearchableConfigurableAdapter(final @NotNull SearchableConfigurable original, final @NotNull UnnamedConfigurable delegate) {
-      myOriginal = original;
-      myDelegate = delegate;
+      this.original = original;
+      this.delegate = delegate;
     }
 
     @Override
     public @NotNull String getId() {
-      return myOriginal.getId();
+      return original.getId();
     }
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName() {
-      return myOriginal.getDisplayName();
+      return original.getDisplayName();
     }
 
     @Override
     public @NotNull Class<?> getOriginalClass() {
-      return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).getOriginalClass() : myDelegate.getClass();
+      return delegate instanceof SearchableConfigurable ? ((SearchableConfigurable)delegate).getOriginalClass() : delegate.getClass();
     }
 
     @Override

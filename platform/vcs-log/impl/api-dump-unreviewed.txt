@@ -1368,10 +1368,6 @@ f:com.intellij.vcs.log.ui.VcsLogPanel
 - <init>(com.intellij.vcs.log.impl.VcsLogManager,com.intellij.vcs.log.ui.VcsLogUiEx):V
 - getData(java.lang.String):java.lang.Object
 - getVcsLogUi():com.intellij.vcs.log.ui.VcsLogUiEx
-f:com.intellij.vcs.log.ui.VcsLogSharedSettingsConfigurable
-- com.intellij.openapi.options.DslConfigurableBase
-- <init>(com.intellij.openapi.project.Project):V
-- createPanel():com.intellij.openapi.ui.DialogPanel
 a:com.intellij.vcs.log.ui.VcsLogUiBase
 - com.intellij.vcs.log.ui.VcsLogUiEx
 - pf:myDisposableFlag:com.intellij.openapi.util.CheckedDisposable
