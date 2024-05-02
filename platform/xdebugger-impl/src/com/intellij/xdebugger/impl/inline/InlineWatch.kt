@@ -1,69 +1,57 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.inline;
+package com.intellij.xdebugger.impl.inline
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.DocumentUtil;
-import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.XSourcePosition;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.util.DocumentUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.XExpression
+import com.intellij.xdebugger.XSourcePosition
 
-import java.util.Objects;
+class InlineWatch(val expression: XExpression, var position: XSourcePosition) {
+  private val myFile = position.file
 
-public class InlineWatch {
-  private final @NotNull XExpression myExpression;
-  private final @NotNull VirtualFile myFile;
-  private @NotNull XSourcePosition myPosition;
-  private @Nullable RangeMarker myRangeMarker;
+  @Volatile
+  private var myRangeMarker: RangeMarker? = null
 
-  public InlineWatch(@NotNull XExpression expression, @NotNull XSourcePosition position) {
-    myExpression = expression;
-    myFile = position.getFile();
-    myPosition = position;
-  }
+  val line: Int
+    get() = position.line
 
-  public @NotNull XExpression getExpression() {
-    return myExpression;
-  }
-
-  public @NotNull XSourcePosition getPosition() {
-      return myPosition;
-  }
-
-  public boolean isValid() {
-    return myRangeMarker != null && myRangeMarker.isValid();
-  }
-
-  public int getLine() {
-    return myPosition.getLine();
-  }
-
-  public void updatePosition() {
-    if (myRangeMarker != null && myRangeMarker.isValid()) {
-      int line = myRangeMarker.getDocument().getLineNumber(myRangeMarker.getStartOffset());
-      if (line != myPosition.getLine()) {
-        myPosition = Objects.requireNonNull(XDebuggerUtil.getInstance().createPosition(myFile, line));
+  fun updatePosition(): Boolean {
+    val rangeMarker = myRangeMarker
+    if (rangeMarker?.isValid == true) {
+      val line = rangeMarker.document.getLineNumber(rangeMarker.startOffset)
+      if (line != position.line) {
+        position = XDebuggerUtil.getInstance().createPosition(myFile, line)!!
       }
+      return true
     }
+    return false
   }
 
-  /**
-   * @return true if marker was added successfully
-   */
-  public boolean setMarker() {
-    Document document = FileDocumentManager.getInstance().getDocument(myFile);
+
+  @RequiresReadLock
+    /**
+     * @return true if marker was added successfully
+     */
+  fun setMarker(): Boolean {
+    if (myRangeMarker != null) return true
+    // try not to decompile files
+    var document = FileDocumentManager.getInstance().getCachedDocument(myFile)
+    if (document == null) {
+      if (myFile.fileType.isBinary()) return true
+      document = FileDocumentManager.getInstance().getDocument(myFile)
+    }
+    if (myRangeMarker != null) return true // an extra check for myRangeMarker because we call setMarker from fileContentLoaded
     if (document != null) {
-      int line = myPosition.getLine();
+      val line = position.line
       if (DocumentUtil.isValidLine(line, document)) {
-        int offset = document.getLineEndOffset(line);
-        myRangeMarker = document.createRangeMarker(offset, offset, true);
-        return true;
+        val offset = document.getLineEndOffset(line)
+        myRangeMarker = document.createRangeMarker(offset, offset, true)
+        return true
       }
     }
-    return false;
+    return false
   }
 }

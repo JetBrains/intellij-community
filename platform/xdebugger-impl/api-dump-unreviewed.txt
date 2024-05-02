@@ -2104,14 +2104,14 @@ com.intellij.xdebugger.impl.inline.InlineValuePopupProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
 - a:showPopup(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.editor.Editor,java.awt.Point,java.lang.Runnable):V
-c:com.intellij.xdebugger.impl.inline.InlineWatch
+f:com.intellij.xdebugger.impl.inline.InlineWatch
 - <init>(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition):V
-- getExpression():com.intellij.xdebugger.XExpression
-- getLine():I
-- getPosition():com.intellij.xdebugger.XSourcePosition
-- isValid():Z
-- setMarker():Z
-- updatePosition():V
+- f:getExpression():com.intellij.xdebugger.XExpression
+- f:getLine():I
+- f:getPosition():com.intellij.xdebugger.XSourcePosition
+- f:setMarker():Z
+- f:setPosition(com.intellij.xdebugger.XSourcePosition):V
+- f:updatePosition():Z
 c:com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor
 - com.intellij.xdebugger.impl.ui.InplaceEditor
 - <init>(com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XDebugSession,com.intellij.openapi.editor.Editor):V

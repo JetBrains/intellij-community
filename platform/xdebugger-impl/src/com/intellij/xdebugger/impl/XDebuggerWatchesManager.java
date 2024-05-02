@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -10,10 +9,11 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -40,6 +40,12 @@ public final class XDebuggerWatchesManager {
     myProject = project;
     EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     editorEventMulticaster.addDocumentListener(new MyDocumentListener(), project);
+    myProject.getMessageBus().connect().subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
+      @Override
+      public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
+        getDocumentInlines(document).forEach(InlineWatch::setMarker);
+      }
+    });
     myInlinesUpdateQueue = new MergingUpdateQueue("XInlineWatches", 300, true, null, project);
   }
 
@@ -103,14 +109,13 @@ public final class XDebuggerWatchesManager {
       inlineWatches.computeIfAbsent(inlineWatchState.getFileUrl(), (k) -> new HashSet<>()).add(watch);
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      List<InlineWatch> allInlines = inlineWatches.values().stream().flatMap(set -> set.stream()).toList();
-      for (InlineWatch i : allInlines) {
+    ReadAction.run(() -> {
+      for (InlineWatch i : ContainerUtil.flatten(inlineWatches.values())) {
         if (!i.setMarker()) {
           inlineWatches.get(i.getPosition().getFile().getUrl()).remove(i);
         }
       }
-    }, ModalityState.nonModal(), myProject.getDisposed());
+    });
   }
 
   public void showInplaceEditor(@NotNull XSourcePosition presentationPosition,
@@ -142,9 +147,8 @@ public final class XDebuggerWatchesManager {
     }
   }
 
+  @RequiresEdt
   public void addInlineWatchExpression(@NotNull XExpression expression, int index, XSourcePosition position, boolean navigateToWatchNode) {
-    ThreadingAssertions.assertEventDispatchThread();
-
     InlineWatch watch = new InlineWatch(expression, position);
     watch.setMarker();
     String fileUrl = position.getFile().getUrl();
@@ -160,8 +164,7 @@ public final class XDebuggerWatchesManager {
 
     Set<InlineWatch> toRemove = new HashSet<>();
     for (InlineWatch inlineWatch : inlines) {
-      inlineWatch.updatePosition();
-      if (!inlineWatch.isValid()) {
+      if (!inlineWatch.updatePosition()) {
         toRemove.add(inlineWatch);
       }
     }
