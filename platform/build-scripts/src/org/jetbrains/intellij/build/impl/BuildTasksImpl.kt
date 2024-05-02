@@ -991,7 +991,8 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
     val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
     for (libraryName in value) {
       check(libraries.any { getLibraryFileName(it) == libraryName }) {
-        "Cannot find library \'$libraryName\' in \'$key\' (used in \'excludedModuleLibraries\' in $description)"
+        val where = key?.let { "module \'$it\'" } ?: "project"
+        "Cannot find library \'$libraryName\' in $where (used in \'excludedModuleLibraries\' in $description)"
       }
     }
   }
