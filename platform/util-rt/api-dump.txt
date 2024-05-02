@@ -308,6 +308,15 @@ f:com.intellij.openapi.util.io.FileUtilRt
 - s:toSystemDependentName(java.lang.String):java.lang.String
 - s:toSystemDependentName(java.lang.String,C):java.lang.String
 - s:toSystemIndependentName(java.lang.String):java.lang.String
+c:com.intellij.openapi.util.io.FileUtilRt$DeleteFileVisitor
+- java.nio.file.SimpleFileVisitor
+- <init>(com.intellij.openapi.util.io.FileUtilRt$DeleteRecursivelyCallback):V
+- postVisitDirectory(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
+- preVisitDirectory(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
+- visitFile(java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):java.nio.file.FileVisitResult
+- visitFileFailed(java.nio.file.Path,java.io.IOException):java.nio.file.FileVisitResult
+com.intellij.openapi.util.io.FileUtilRt$DeleteRecursivelyCallback
+- a:onDelete(java.nio.file.Path):V
 com.intellij.openapi.util.io.FileUtilRt$RepeatableIOOperation
 - a:execute(Z):java.lang.Object
 f:com.intellij.openapi.util.text.StringHash
