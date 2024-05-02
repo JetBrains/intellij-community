@@ -13,8 +13,6 @@ import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -1370,6 +1368,13 @@ private suspend fun buildSearchableOptions(productRunner: IntellijProductRunner,
   NioFiles.deleteRecursively(targetDirectory)
 
   val locales = mutableListOf(SearchableOptionLocalization(Locale.ENGLISH.toLanguageTag()))
+  if (!context.isStepSkipped(BuildOptions.LOCALIZE_STEP)) {
+    val localizationDir = getLocalizationDir(context)
+    locales.addAll(
+      localizationDir?.resolve("properties")?.listDirectoryEntries()?.map { SearchableOptionLocalization(it.name) }
+      ?: emptyList()
+    )
+  }
 
   // bundled maven is also downloaded during traverseUI execution in an external process,
   // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
@@ -1389,18 +1394,14 @@ private suspend fun buildSearchableOptions(productRunner: IntellijProductRunner,
     }
   }
   val modules = withContext(Dispatchers.IO) {
-    coroutineScope {
-      for (locale in locales) {
-        launch {
-          // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-          // It'll process all UI elements in the `Settings` dialog and build an index for them.
-          productRunner.runProduct(
-            arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
-            additionalSystemProperties = systemProperties + locale.systemProperties,
-            isLongRunning = true,
-          )
-        }
-      }
+    for (locale in locales) {
+      // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+      // It'll process all UI elements in the `Settings` dialog and build an index for them.
+      productRunner.runProduct(
+        arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
+        additionalSystemProperties = systemProperties + locale.systemProperties,
+        isLongRunning = true,
+      )
     }
     check(Files.isDirectory(targetDirectory)) {
       "Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run."
