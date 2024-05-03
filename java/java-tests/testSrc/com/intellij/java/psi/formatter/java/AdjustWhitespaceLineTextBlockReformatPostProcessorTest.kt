@@ -30,6 +30,11 @@ class AdjustWhitespaceLineTextBlockReformatPostProcessorTest : LightPlatformCode
     doTest()
   }
 
+  fun testNonIntegerNumberOfTabs() {
+    getCommonSettings().indentOptions?.USE_TAB_CHARACTER = true
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
 
   fun testAlignTextBlockWhitespacesLessThanAlignment() {
     getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
