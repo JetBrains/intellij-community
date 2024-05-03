@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.rd.util.adviseSuspendPreserveClientId
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
 import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
@@ -37,6 +38,7 @@ import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
 import com.jetbrains.rd.util.threading.asRdScheduler
+import com.jetbrains.rd.util.threading.coroutines.asCoroutineDispatcher
 import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -177,8 +179,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
                   requestFocus(actionTitle)
                 }
 
-                showNotification("${session.agentInfo.id}: $actionTitle")
-
                 val agentContext = when (session.agentInfo.agentType) {
                   RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol)
                   RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol)
@@ -197,9 +197,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             }
             catch (ex: Throwable) {
               LOG.warn("${session.agentInfo.id}: ${actionTitle.let { "'$it' " }}hasn't finished successfully", ex)
-              if (!app.isHeadlessEnvironment && isNotRdHost) {
-                makeScreenshot(actionTitle)
-              }
               throw ex
             }
           }
@@ -272,8 +269,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           ProjectManagerEx.getOpenProjects().map { it.isInitialized }.all { true }
         }
 
-        session.showNotification.advise(lifetime) { actionTitle ->
-          showNotification("${session.agentInfo.id}: $actionTitle")
+        session.showNotification.adviseSuspendPreserveClientId(lifetime, Dispatchers.Default.asRdScheduler.asCoroutineDispatcher) { notificationText ->
+          showNotification(notificationText)
         }
 
         // Initialize loggers
