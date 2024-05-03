@@ -10,19 +10,23 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
 public final class JpsWslPathMapper implements JpsPathMapper {
-  private static final String WSL_PREFIX = "//wsl$/";
+  private static final List<@NotNull String> WSL_PREFIXES = Arrays.asList("//wsl$/", "//wsl.localhost/");
   private @Nullable String myWslRootPrefix;
 
   @Override
   public @Nullable String mapUrl(@Nullable String url) {
     if (url == null) return null;
-    if (url.contains(WSL_PREFIX)) {
-      int startPos = url.indexOf(WSL_PREFIX);
-      int endPos = url.indexOf('/', startPos + WSL_PREFIX.length());
-      if (endPos >= 0) {
-        return url.substring(0, startPos) + url.substring(endPos);
+    for (String wslPrefix : WSL_PREFIXES) {
+      if (url.contains(wslPrefix)) {
+        int startPos = url.indexOf(wslPrefix);
+        int endPos = url.indexOf('/', startPos + wslPrefix.length());
+        if (endPos >= 0) {
+          return url.substring(0, startPos) + url.substring(endPos);
+        }
       }
     }
     if (url.startsWith(JpsPathUtil.FILE_URL_PREFIX)) {
