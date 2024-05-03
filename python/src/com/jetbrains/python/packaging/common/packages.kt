@@ -109,3 +109,6 @@ data class PythonVcsPackageSpecification(override val name: String,
                                          override val prefix: String,
                                          override val editable: Boolean) : PythonLocationBasedPackageSpecification
 
+fun normalizePackageName(name: String): String {
+  return name.replace('_', '-')
+}
