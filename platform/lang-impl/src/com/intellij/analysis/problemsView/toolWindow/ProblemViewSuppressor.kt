@@ -13,10 +13,7 @@ object ProblemViewSuppressor {
   /**
   * Set problems view suppressing status
   */
-  fun RangeHighlighter.setSuppressedInProblemView(value: Boolean) {
-    if (value)
-      this.putUserData(SUPPRESS_IN_PROBLEMS_VIEW, value)
-  }
+  fun RangeHighlighter.setSuppressedInProblemView(value: Boolean) = this.putUserData(SUPPRESS_IN_PROBLEMS_VIEW, if (value) true else null)
 
   fun RangeHighlighter.isSuppressedInProblemsView(): Boolean = this.getUserData(SUPPRESS_IN_PROBLEMS_VIEW) ?: false
 }
