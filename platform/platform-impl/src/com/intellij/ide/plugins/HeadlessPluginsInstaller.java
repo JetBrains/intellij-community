@@ -115,7 +115,7 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
       LOG.info("unknown plugins: " + unknown);
     }
 
-    var indicator = new EmptyProgressIndicator();
+    @SuppressWarnings("UsagesOfObsoleteApi") var indicator = new EmptyProgressIndicator();
     var policy = PluginManagementPolicy.getInstance();
     var installed = new ArrayList<PluginNode>();
 
