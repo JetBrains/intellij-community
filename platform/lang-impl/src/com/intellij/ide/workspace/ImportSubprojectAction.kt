@@ -4,6 +4,8 @@ package com.intellij.ide.workspace
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -187,6 +189,8 @@ private fun createAndOpenWorkspaceProject(project: Project,
       true
     }
   }
+  TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(projectPath, null), true)
+
   val workspace = ProjectManagerEx.getInstanceEx().openProject(projectPath, options) ?: return
 
   activateProjectToolwindowLater(workspace)
