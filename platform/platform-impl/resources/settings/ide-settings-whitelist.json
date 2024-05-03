@@ -2,6 +2,8 @@
   "properties": [
     "com.intellij:app:EmmetOptions.*",
     "com.intellij:app:HttpConfigurable.*",
+    "com.intellij.css:app:CssEmmetOptions.*",
+    "com.intellij.css:app:JsxEmmetOptions.*",
     "Docker:app:DockerSettings.dockerComposePath",
     "Docker:app:DockerSettings.dockerPath",
     "Pythonid:app:PyCondaPackageService.*"
