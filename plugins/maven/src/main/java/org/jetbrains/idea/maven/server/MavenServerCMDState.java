@@ -34,7 +34,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
 import org.slf4j.jul.JDK14LoggerFactory;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -83,6 +82,11 @@ public class MavenServerCMDState extends CommandLineState {
   }
 
   protected SimpleJavaParameters createJavaParameters() {
+    if (!myDistribution.isValid()) {
+      MavenLog.LOG.warn("Maven Distribution " + myDistribution + " is not valid");
+      throw new IllegalArgumentException("Maven distribution at " + myDistribution.getMavenHome().toAbsolutePath() + " is not valid");
+    }
+
     final SimpleJavaParameters params = new SimpleJavaParameters();
 
     params.setJdk(myJdk);
@@ -145,7 +149,10 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
-    params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(myDistribution));
+    MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(myDistribution);
+    checkExtension(extension);
+    params.getClassPath().addAllFiles(extension.collectClassPathAndLibsFolder(myDistribution));
+
 
     Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());
     for (String s : classPath) {
@@ -179,23 +186,14 @@ public class MavenServerCMDState extends CommandLineState {
     return params;
   }
 
-  public static @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
-    if (!distribution.isValid()) {
-      MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
-      throw new IllegalArgumentException("Maven distribution at " + distribution.getMavenHome().toAbsolutePath() + " is not valid");
-    }
-
-    MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(distribution);
-
-
+  private void checkExtension(MavenVersionAwareSupportExtension extension) {
     if (extension == null) {
-      if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3") < 0) {
+      if (StringUtil.compareVersionNumbers(myDistribution.getVersion(), "3") < 0) {
         throw new BuildIssueException(new InstallMaven2BuildIssue());
       }
-      throw new IllegalStateException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not supported");
+      throw new IllegalStateException("Maven distribution at" + myDistribution.getMavenHome().toAbsolutePath() + " is not supported");
     }
     MavenLog.LOG.info("Using extension " + extension + " to start MavenServer");
-    return extension.collectClassPathAndLibsFolder(distribution);
   }
 
   private void setupMainExt(SimpleJavaParameters params) {
