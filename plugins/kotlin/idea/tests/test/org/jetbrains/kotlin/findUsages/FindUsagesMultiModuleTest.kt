@@ -61,6 +61,10 @@ open class FindUsagesMultiModuleTest : AbstractFindUsagesMultiModuleTest() {
         doTest()
     }
 
+    fun testFindImportAlias() {
+        doTest()
+    }
+
     private fun doTest() {
         setupMppProjectFromDirStructure(getTestdataFile())
         doFindUsagesTest()

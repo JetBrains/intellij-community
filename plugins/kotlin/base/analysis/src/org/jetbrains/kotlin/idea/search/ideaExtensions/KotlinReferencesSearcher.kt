@@ -102,10 +102,17 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
 
             if (!element.isValid) return@Callable null
             val unwrappedElement = element.namedUnwrappedElement ?: return@Callable null
-            val name = unwrappedElement.name
-            if (name == null || StringUtil.isEmptyOrSpaces(name)) return@Callable null
+            val elementToSearch =
+                if (kotlinOptions.searchForExpectedUsages && unwrappedElement is KtDeclaration && unwrappedElement.hasActualModifier()) {
+                    unwrappedElement.expectedDeclarationIfAny() as? PsiNamedElement
+                } else {
+                    null
+                } ?: unwrappedElement
 
-            val effectiveSearchScope = parameters.effectiveSearchScope(unwrappedElement)
+            val name = elementToSearch.name
+            if (name.isNullOrBlank()) return@Callable null
+
+            val effectiveSearchScope = parameters.effectiveSearchScope(elementToSearch)
 
             val collector = parameters.optimizer
             val session = collector.searchSession
@@ -115,8 +122,8 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
                     effectiveSearchScope,
                     UsageSearchContext.IN_CODE,
                     true,
-                    element,
-                    AliasProcessor(element, session)
+                    elementToSearch,
+                    AliasProcessor(elementToSearch, session)
                 )
             }
             function
