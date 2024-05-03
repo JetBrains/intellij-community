@@ -519,7 +519,7 @@ public final class PyClassRefactoringUtil {
   }
 
   @NotNull
-  public static PyFile getOrCreateFile(String path, Project project) {
+  public static PyFile getOrCreateFile(String path, Project project, boolean isNameSpace) {
     final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
     final PsiFile psi;
     if (vfile == null) {
@@ -538,7 +538,7 @@ public final class PyClassRefactoringUtil {
                                                       .getPath() : "."
                                                   ),
                                                   file.getName(),
-                                                  content
+                                                  content,isNameSpace
         );
       }
       catch (IOException e) {

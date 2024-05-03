@@ -26,9 +26,12 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isNamespacePackage;
 
 /**
  * Group found usages by moved elements and move each of these elements using {@link PyMoveSymbolProcessor}.
@@ -81,8 +84,9 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
+    boolean isNameSpace = isNamespacePackage(this.mySourceFiles.stream().findFirst().get().getParent());
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject);
+      final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject,isNameSpace);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
       final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
       for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {

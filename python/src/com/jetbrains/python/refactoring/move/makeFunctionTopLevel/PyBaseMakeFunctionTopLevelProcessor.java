@@ -89,7 +89,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject);
+    final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject,false);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
         PyBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));

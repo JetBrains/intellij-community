@@ -169,12 +169,12 @@ public final class PyExtractSuperclassHelper {
    * @return the placed file
    */
   public static PsiFile placeFile(Project project, String path, String filename) throws IOException {
-    return placeFile(project, path, filename, null);
+    return placeFile(project, path, filename, null,false);
   }
 
   //TODO: Mover to the other class? That is not good to dependent PyUtils on this class
-  public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content) throws IOException {
-    PsiDirectory psiDir = createDirectories(project, path);
+  public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content,boolean isNameSpace) throws IOException {
+    PsiDirectory psiDir = createDirectories(project, path,isNameSpace);
     LOG.assertTrue(psiDir != null);
     PsiFile psiFile = psiDir.findFile(filename);
     if (psiFile == null) {
@@ -198,7 +198,7 @@ public final class PyExtractSuperclassHelper {
    * @return deepest child directory, or null if target is not in roots or process fails at some point.
    */
   @Nullable
-  private static PsiDirectory createDirectories(Project project, String target) throws IOException {
+  private static PsiDirectory createDirectories(Project project, String target,boolean isNameSpace) throws IOException {
     String relativePath = null;
     VirtualFile closestRoot = null;
 
@@ -237,7 +237,7 @@ public final class PyExtractSuperclassHelper {
       else {
         subdir = resultDir.createChildDirectory(lfs, dirs[i]);
       }
-      if (subdir.findChild(PyNames.INIT_DOT_PY) == null) {
+      if ((subdir.findChild(PyNames.INIT_DOT_PY) == null)&& !isNameSpace) {
         subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
       }
       /*
