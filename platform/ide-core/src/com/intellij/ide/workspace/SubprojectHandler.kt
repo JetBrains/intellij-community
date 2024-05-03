@@ -15,7 +15,7 @@ interface SubprojectHandler {
   fun getSubprojectFor(module: Module): Subproject?
 
   fun canImportFromFile(project: Project, file: VirtualFile): Boolean
-  fun importFromFile(project: Project, file: VirtualFile)
+  suspend fun importFromFile(project: Project, file: VirtualFile)
   fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings?
 
   fun suppressGenericImportFor(module: Module): Boolean = false

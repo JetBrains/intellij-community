@@ -31,10 +31,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.containers.addIfNotNull
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 
@@ -214,12 +211,14 @@ private interface SubprojectSource {
 @Service(Service.Level.PROJECT)
 internal class MyCoroutineScopeService(val scope: CoroutineScope)
 
+private fun getCoroutineScope(workspace: Project) = workspace.service<MyCoroutineScopeService>().scope
+
 private class ExistingProjectSource(val projectPath: String, val projectName: @Nls String) : SubprojectSource {
   override val actionText: TextWithMnemonic get() = TextWithMnemonic.fromPlainText(projectName)
 
   override fun import(workspace: Project): Boolean {
     val projectManagerImpl = ProjectManager.getInstance() as ProjectManagerImpl
-    workspace.service<MyCoroutineScopeService>().scope.launch {
+    getCoroutineScope(workspace).launch {
       val referentProject = projectManagerImpl.loadProject(Path.of(projectPath), false, false)
       try {
         val settings = importSettingsFromProject(referentProject, false)
@@ -252,7 +251,9 @@ private object OpenProjectSource : SubprojectSource {
     val file = chooser.choose(workspace).singleOrNull() ?: return false
 
     val handler = handlers.find { it.canImportFromFile(workspace, file) } ?: return false
-    handler.importFromFile(workspace, file)
+    getCoroutineScope(workspace).async {
+      handler.importFromFile(workspace, file)
+    }
     return true
   }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.workspace
 import com.intellij.ide.workspace.ImportedProjectSettings
 import com.intellij.ide.workspace.Subproject
 import com.intellij.ide.workspace.SubprojectHandler
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -12,7 +13,6 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenRoamableSettings
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
 internal class MavenSubprojectHandler : SubprojectHandler {
@@ -27,12 +27,13 @@ internal class MavenSubprojectHandler : SubprojectHandler {
   }
 
   override fun canImportFromFile(project: Project, file: VirtualFile): Boolean {
-    return MavenActionUtil.isMavenProjectFile(file)
+    return MavenOpenProjectProvider().canOpenProject(file)
   }
 
-  override fun importFromFile(project: Project, file: VirtualFile) {
-    MavenUtil.isProjectTrustedEnoughToImport(project)
-    MavenOpenProjectProvider().linkToExistingProject(file, project)
+  override suspend fun importFromFile(project: Project, file: VirtualFile) {
+    if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProjectAsync(project, MavenUtil.SYSTEM_ID)) {
+      MavenOpenProjectProvider().linkToExistingProjectAsync(file, project)
+    }
   }
 
   override fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings {

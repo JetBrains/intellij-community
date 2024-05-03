@@ -689,7 +689,7 @@ com.intellij.ide.workspace.SubprojectHandler
 - a:canImportFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - a:getSubprojectFor(com.intellij.openapi.module.Module):com.intellij.ide.workspace.Subproject
 - a:getSubprojects(com.intellij.openapi.project.Project):java.util.List
-- a:importFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
+- a:importFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - a:importFromProject(com.intellij.openapi.project.Project,Z):com.intellij.ide.workspace.ImportedProjectSettings
 - suppressGenericImportFor(com.intellij.openapi.module.Module):Z
 f:com.intellij.ide.workspace.SubprojectHandler$Companion
