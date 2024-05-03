@@ -119,6 +119,7 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
     for (var plugin : plugins) {
       if (PluginManagerCore.getPlugin(plugin.getPluginId()) != null) {
         LOG.info("already installed: " + plugin.getPluginId());
+        installed.add(plugin);
         continue;
       }
       if (!policy.canInstallPlugin(plugin)) {
