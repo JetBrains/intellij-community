@@ -822,7 +822,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   /**
-   * return true if the progress really was canceled
    * reset {@link #myScheduledUpdateTimestamp} always, but re-schedule {@link #myUpdateRunnable} only rarely because of thread scheduling overhead
    */
   synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
