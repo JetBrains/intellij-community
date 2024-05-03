@@ -142,8 +142,12 @@ fun Code.appendDocComment(text: String?): Code {
     return this
 }
 
-fun Code.appendAnnotation(annotation: TAnnotation) {
-    append("@${annotation.simpleName}")
+fun Code.appendAnnotation(annotation: TAnnotation, useQualifiedName: Boolean = false) {
+    if (useQualifiedName) {
+        append("@${annotation.className}")
+    } else {
+        append("@${annotation.simpleName}")
+    }
     with(annotation.args) {
         if (isNotEmpty()) {
             val args = if (size == 1) {

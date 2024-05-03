@@ -24,7 +24,7 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/diagnostics")
     public static class Diagnostics extends AbstractK2HighlightingMetaInfoTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.NativeLinux;
         }
@@ -57,7 +57,7 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/dsl")
     public static class Dsl extends AbstractK2HighlightingMetaInfoTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.NativeLinux;
         }
@@ -100,7 +100,7 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/focusMode")
     public static class FocusMode extends AbstractK2HighlightingMetaInfoTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.NativeLinux;
         }
@@ -128,7 +128,7 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/smartCasts")
     public static class SmartCasts extends AbstractK2HighlightingMetaInfoTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.NativeLinux;
         }
@@ -191,7 +191,7 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo")
     public static class Uncategorized extends AbstractK2HighlightingMetaInfoTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.NativeLinux;
         }
@@ -324,7 +324,7 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/unresolved")
     public static class Unresolved extends AbstractK2HighlightingMetaInfoTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.NativeLinux;
         }

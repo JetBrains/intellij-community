@@ -24,7 +24,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
     public static class CompanionObject extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -85,7 +85,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
         public static class Components extends AbstractFindUsagesFirTest {
-            @Override
+            @java.lang.Override
             public KMPTestPlatform getTestPlatform() {
                 return KMPTestPlatform.Js;
             }
@@ -203,7 +203,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
         public static class Invoke extends AbstractFindUsagesFirTest {
-            @Override
+            @java.lang.Override
             public KMPTestPlatform getTestPlatform() {
                 return KMPTestPlatform.Js;
             }
@@ -236,7 +236,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
         public static class Uncategorized extends AbstractFindUsagesFirTest {
-            @Override
+            @java.lang.Override
             public KMPTestPlatform getTestPlatform() {
                 return KMPTestPlatform.Js;
             }
@@ -355,7 +355,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
     public static class FindClassUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -653,7 +653,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
     public static class FindFunctionUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -961,7 +961,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findJavaPropertyUsages")
     public static class FindJavaPropertyUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -989,7 +989,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
     public static class FindObjectUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1037,7 +1037,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPackageUsages")
     public static class FindPackageUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1055,7 +1055,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
     public static class FindParameterUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1138,7 +1138,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
     public static class FindPrimaryConstructorUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1201,7 +1201,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
     public static class FindPropertyUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1394,7 +1394,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
     public static class FindSecondaryConstructorUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1437,7 +1437,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeAliasUsages")
     public static class FindTypeAliasUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1460,7 +1460,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
     public static class FindTypeParameterUsages extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1493,7 +1493,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithFilteringImports")
     public static class FindWithFilteringImports extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1511,7 +1511,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithStructuralGrouping")
     public static class FindWithStructuralGrouping extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1542,7 +1542,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
         public static class FindFunctionUsages extends AbstractFindUsagesFirTest {
-            @Override
+            @java.lang.Override
             public KMPTestPlatform getTestPlatform() {
                 return KMPTestPlatform.Js;
             }
@@ -1590,7 +1590,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPrimaryConstructorUsages")
         public static class FindPrimaryConstructorUsages extends AbstractFindUsagesFirTest {
-            @Override
+            @java.lang.Override
             public KMPTestPlatform getTestPlatform() {
                 return KMPTestPlatform.Js;
             }
@@ -1613,7 +1613,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
         public static class FindPropertyUsages extends AbstractFindUsagesFirTest {
-            @Override
+            @java.lang.Override
             public KMPTestPlatform getTestPlatform() {
                 return KMPTestPlatform.Js;
             }
@@ -1646,7 +1646,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findSecondaryConstructorUsages")
         public static class FindSecondaryConstructorUsages extends AbstractFindUsagesFirTest {
-            @Override
+            @java.lang.Override
             public KMPTestPlatform getTestPlatform() {
                 return KMPTestPlatform.Js;
             }
@@ -1675,7 +1675,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/propertyFiles")
     public static class PropertyFiles extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1698,7 +1698,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/unresolvedAnnotation")
     public static class UnresolvedAnnotation extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }
@@ -1716,7 +1716,7 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
     public static class Variable extends AbstractFindUsagesFirTest {
-        @Override
+        @java.lang.Override
         public KMPTestPlatform getTestPlatform() {
             return KMPTestPlatform.Js;
         }

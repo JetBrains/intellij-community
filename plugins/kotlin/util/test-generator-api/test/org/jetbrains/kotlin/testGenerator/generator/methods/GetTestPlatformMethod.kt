@@ -16,7 +16,7 @@ class GetTestPlatformMethod(private val platform: KMPTestPlatform) : TestMethod 
     }
 
     override fun Code.render() {
-        appendAnnotation(TAnnotation<Override>())
+        appendAnnotation(TAnnotation<Override>(), useQualifiedName = true)
         appendBlock("public KMPTestPlatform $methodName()") {
             append("return ${KMPTestPlatform::class.simpleName}.${platform};")
         }
