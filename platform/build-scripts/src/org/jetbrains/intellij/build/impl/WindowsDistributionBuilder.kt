@@ -40,6 +40,8 @@ internal class WindowsDistributionBuilder(
 
       copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
 
+      copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
+
       FileSet(sourceBinDir)
         .includeAll()
         .also {
