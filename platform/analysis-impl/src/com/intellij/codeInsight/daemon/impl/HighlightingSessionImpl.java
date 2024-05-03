@@ -119,7 +119,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     HighlightingSession session = map == null ? null : map.get(psiFile);
     if (session == null) {
-      createHighlightingSession(psiFile, progressIndicator, null, visibleRange, CanISilentlyChange.Result.UH_UH, 0);
+      createHighlightingSession(psiFile, progressIndicator, null, visibleRange, CanISilentlyChange.Result.NO, 0);
     }
   }
 
@@ -162,8 +162,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     HighlightingSessionImpl session = createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently
-                                                                                                                 ? CanISilentlyChange.Result.UH_HUH
-                                                                                                                 : CanISilentlyChange.Result.UH_UH,
+                                                                                                                 ? CanISilentlyChange.Result.YES
+                                                                                                                 : CanISilentlyChange.Result.NO,
                                                                 0);
     try {
       session.additionalSetupFromBackground(file);
@@ -187,8 +187,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     HighlightingSessionImpl session = createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently
-                                                                                                                 ? CanISilentlyChange.Result.UH_HUH
-                                                                                                                 : CanISilentlyChange.Result.UH_UH,
+                                                                                                                 ? CanISilentlyChange.Result.YES
+                                                                                                                 : CanISilentlyChange.Result.NO,
                                                                 0);
     session.myInContent = true;
     try {
