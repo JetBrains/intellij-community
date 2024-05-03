@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractLocalSe
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2MultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.fir.completion.*
+import org.jetbrains.kotlin.idea.fir.completion.kmpBasic.AbstractKotlinKmpCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.*
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
@@ -244,6 +245,16 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
             model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
+        }
+
+        testClass<AbstractKotlinKmpCompletionTest>(
+            platforms = listOf(
+                KMPTestPlatform.Js,
+                KMPTestPlatform.NativeLinux,
+                // KMPTestPlatform.CommonNativeJvm, uncomment after KTIJ-29826 is fixed
+            ),
+        ) {
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractK2JvmBasicCompletionTest>("org.jetbrains.kotlin.idea.fir.completion.K2KDocCompletionTestGenerated") {
