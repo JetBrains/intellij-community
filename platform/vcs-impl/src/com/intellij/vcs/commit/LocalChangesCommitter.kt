@@ -28,6 +28,7 @@ open class LocalChangesCommitter(
   init {
     addResultHandler(CommittedChangesCacheListener(project))
     addResultHandler(ChangeListDataCleaner(this))
+    addResultHandler(EmptyChangeListDeleter(this))
   }
 
   var isSuccess = false
@@ -103,10 +104,26 @@ private class CommittedChangesCacheListener(val project: Project) : CommitterRes
   }
 }
 
+private class EmptyChangeListDeleter(val committer: LocalChangesCommitter) : CommitterResultHandler {
+  override fun onAfterRefresh() {
+    if (committer.isSuccess) {
+      val changeListManager = ChangeListManager.getInstance(committer.project)
+      val listName = committer.commitState.changeList.name
+      val localList = changeListManager.findChangeList(listName) ?: return
+
+      if (!localList.isDefault) {
+        changeListManager.scheduleAutomaticEmptyChangeListDeletion(localList)
+      }
+    }
+  }
+}
+
 private class ChangeListDataCleaner(val committer: LocalChangesCommitter) : CommitterResultHandler {
   override fun onAfterRefresh() {
     if (committer.isSuccess) {
-      ChangeListManagerEx.getInstanceEx(committer.project).editChangeListData(committer.commitState.changeList.name, null)
+      val changeListManager = ChangeListManagerEx.getInstanceEx(committer.project)
+      val listName = committer.commitState.changeList.name
+      changeListManager.editChangeListData(listName, null)
     }
   }
 }
