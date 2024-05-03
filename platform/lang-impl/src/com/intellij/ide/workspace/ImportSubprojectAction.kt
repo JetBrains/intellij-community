@@ -4,8 +4,7 @@ package com.intellij.ide.workspace
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.trustedProjects.TrustedProjects
-import com.intellij.ide.trustedProjects.TrustedProjectsLocator
+import com.intellij.ide.impl.TrustedPaths
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -171,7 +170,7 @@ private fun importSettingsFromProject(project: Project, newWorkspace: Boolean): 
 }
 
 private fun createAndOpenWorkspaceProject(project: Project,
-                                          projectPath: Path,
+                                          workspacePath: Path,
                                           projectName: String?,
                                           initTask: suspend CoroutineScope.(workspace: Project) -> Unit) {
   val options = OpenProjectTask {
@@ -189,10 +188,8 @@ private fun createAndOpenWorkspaceProject(project: Project,
       true
     }
   }
-  TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(projectPath, null), true)
-
-  val workspace = ProjectManagerEx.getInstanceEx().openProject(projectPath, options) ?: return
-
+  TrustedPaths.getInstance().setProjectPathTrusted(workspacePath, true)
+  val workspace = ProjectManagerEx.getInstanceEx().openProject(workspacePath, options) ?: return
   activateProjectToolwindowLater(workspace)
 }
 
