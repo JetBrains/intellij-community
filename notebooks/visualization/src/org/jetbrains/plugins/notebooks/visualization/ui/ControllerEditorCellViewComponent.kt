@@ -29,12 +29,14 @@ class ControllerEditorCellViewComponent(
       return component.size
     }
 
+  private val listener = object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent) {
+      cellEventListeners.multicaster.componentBoundaryChanged(e.component.location, e.component.size)
+    }
+  }
+
   init {
-    controller.inlay.renderer.asSafely<JComponent>()?.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) {
-        cellEventListeners.multicaster.componentBoundaryChanged(e.component.location, e.component.size)
-      }
-    })
+    controller.inlay.renderer.asSafely<JComponent>()?.addComponentListener(listener)
   }
 
   override fun updateGutterIcons(gutterAction: AnAction?) {
@@ -44,6 +46,7 @@ class ControllerEditorCellViewComponent(
   }
 
   override fun dispose() {
+    controller.inlay.renderer.asSafely<JComponent>()?.removeComponentListener(listener)
     controller.let { controller -> Disposer.dispose(controller.inlay) }
   }
 

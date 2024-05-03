@@ -26,14 +26,19 @@ import kotlin.reflect.KClass
 class EditorCellView(
   private val editor: EditorImpl,
   private val intervals: NotebookCellLines,
-  internal var intervalPointer: NotebookIntervalPointer
+  internal var cell: EditorCell
 ) {
 
   private var _controllers: List<NotebookCellInlayController> = emptyList()
   private val controllers: List<NotebookCellInlayController>
     get() = _controllers + ((input.component as? ControllerEditorCellViewComponent)?.controller?.let { listOf(it) } ?: emptyList())
 
-  private val interval get() = intervalPointer.get() ?: error("Invalid interval")
+  private val intervalPointer: NotebookIntervalPointer
+    get() = cell.intervalPointer
+  private val interval: NotebookCellLines.Interval
+    get() {
+      return intervalPointer.get() ?: error("Invalid interval")
+    }
 
   val input: EditorCellInput = EditorCellInput(
     editor,
@@ -52,9 +57,9 @@ class EditorCellView(
         }
       }
       else {
-        TextEditorCellViewComponent(editor, intervalPointer)
+        TextEditorCellViewComponent(editor, cell)
       }
-    }, intervalPointer).also {
+    }, cell).also {
     it.addViewComponentListener(object : EditorCellViewComponentListener {
       override fun componentBoundaryChanged(location: Point, size: Dimension) {
         updateBoundaries()

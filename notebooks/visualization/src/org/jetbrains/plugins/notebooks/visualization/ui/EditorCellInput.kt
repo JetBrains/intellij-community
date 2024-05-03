@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
-import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
+import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -13,14 +14,19 @@ import java.awt.Rectangle
 class EditorCellInput(
   private val editor: EditorEx,
   private val componentFactory: (EditorCellViewComponent?) -> EditorCellViewComponent,
-  private val intervalPointer: NotebookIntervalPointer
+  private val cell: EditorCell
 ) {
 
   private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
 
+  val interval: NotebookCellLines.Interval
+    get() = cell.intervalPointer.get() ?: error("Invalid interval")
+
+  private var foldRegion: FoldRegion? = null
+
   val bounds: Rectangle
     get() {
-      val linesRange = intervalPointer.get()!!.lines
+      val linesRange = interval.lines
       val startOffset = editor.document.getLineStartOffset(linesRange.first)
       val endOffset = editor.document.getLineEndOffset(linesRange.last)
       val bounds = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
@@ -67,7 +73,7 @@ class EditorCellInput(
     _component = if (_component is ControllerEditorCellViewComponent) {
       _component.dispose()
       toggleTextFolding()
-      TextEditorCellViewComponent(editor, intervalPointer)
+      TextEditorCellViewComponent(editor, cell)
     }
     else {
       toggleTextFolding()
@@ -76,21 +82,23 @@ class EditorCellInput(
   }
 
   private fun toggleTextFolding() {
-    val interval = intervalPointer.get() ?: error("Invalid interval")
-    val startOffset = editor.document.getLineStartOffset(interval.lines.first)
+    val interval = interval
+    val startOffset = editor.document.getLineStartOffset(interval.lines.first + 1)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
     val foldingModel = editor.foldingModel
-    val foldRegion = foldingModel.getFoldRegion(startOffset, endOffset)
-    if (foldRegion == null) {
+    val currentFoldingRegion = foldRegion
+    if (currentFoldingRegion == null) {
       foldingModel.runBatchFoldingOperation {
         val text = editor.document.getText(TextRange(startOffset, endOffset))
-        val placeholder = text.lines().drop(1).firstOrNull { it.trim().isNotEmpty() }?.ellipsis(30) ?: "..."
-        foldingModel.createFoldRegion(startOffset, endOffset, placeholder, null, true)
+        val firstNotEmptyString = text.lines().firstOrNull { it.trim().isNotEmpty() }
+        val placeholder = firstNotEmptyString?.ellipsis(30) ?: "\u2026"
+        foldRegion = foldingModel.createFoldRegion(startOffset, endOffset, placeholder, null, true)
       }
     }
     else {
       foldingModel.runBatchFoldingOperation {
-        foldingModel.removeFoldRegion(foldRegion)
+        foldingModel.removeFoldRegion(currentFoldingRegion)
+        foldRegion = null
       }
     }
   }
@@ -146,12 +154,11 @@ class EditorCellInput(
   }
 }
 
-
 private fun String.ellipsis(length: Int): String {
   return if (this.length > length) {
-    substring(0, length - 1) + "\u2026"
+    substring(0, length - 1)
   }
   else {
     this
-  }
+  } + "\u2026"
 }

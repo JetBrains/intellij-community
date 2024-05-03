@@ -10,14 +10,9 @@ import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
 
 class EditorCell(
   private val editor: EditorEx,
-  intervalPointer: NotebookIntervalPointer,
+  internal var intervalPointer: NotebookIntervalPointer,
   private val viewFactory: (EditorCell) -> EditorCellView
 ) : UserDataHolder by UserDataHolderBase() {
-  internal var intervalPointer: NotebookIntervalPointer = intervalPointer
-    set(value) {
-      view?.intervalPointer = value
-      field = value
-    }
 
   val source: String
     get() {

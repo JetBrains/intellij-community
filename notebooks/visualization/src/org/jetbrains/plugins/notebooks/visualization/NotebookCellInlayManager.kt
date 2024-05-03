@@ -231,7 +231,7 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, interval) { cell ->
-    EditorCellView(editor, notebookCellLines, interval)
+    EditorCellView(editor, notebookCellLines, cell)
   }
 
   private fun ensureInlaysAndHighlightersExist(matchingCellsBeforeChange: List<NotebookCellLines.Interval>, logicalLines: IntRange) {
@@ -349,6 +349,7 @@ class NotebookCellInlayManager private constructor(
     var start = Int.MAX_VALUE
     var end = Int.MIN_VALUE
     val events = mutableListOf<EditorCellEvent>()
+    var needUpdatePositions = false
     for (change in event.changes) {
       when (change) {
         is NotebookIntervalPointersEvent.OnEdited -> {
@@ -364,7 +365,7 @@ class NotebookCellInlayManager private constructor(
           }
           start = minOf(start, change.subsequentPointers.first().interval.lines.first)
           end = maxOf(end, change.subsequentPointers.last().interval.lines.last)
-          scheduleUpdatePositions()
+          needUpdatePositions = true
         }
         is NotebookIntervalPointersEvent.OnRemoved -> {
           change.subsequentPointers.reversed().forEach {
@@ -374,7 +375,7 @@ class NotebookCellInlayManager private constructor(
           }
           start = minOf(start, change.subsequentPointers.first().interval.lines.first)
           end = maxOf(end, change.subsequentPointers.last().interval.lines.last)
-          scheduleUpdatePositions()
+          needUpdatePositions = true
         }
         is NotebookIntervalPointersEvent.OnSwapped -> {
           val first = _cells[change.firstOrdinal].intervalPointer
@@ -384,6 +385,9 @@ class NotebookCellInlayManager private constructor(
           end = maxOf(end, change.second.interval.lines.last)
         }
       }
+    }
+    if (needUpdatePositions) {
+      scheduleUpdatePositions()
     }
     cellEventListeners.multicaster.onEditorCellEvents(events)
     updateConsequentInlays(start..end)
