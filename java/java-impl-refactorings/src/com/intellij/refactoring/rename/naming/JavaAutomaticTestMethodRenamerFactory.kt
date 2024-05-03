@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming
 
-import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -11,8 +10,7 @@ import com.intellij.usageView.UsageInfo
 class JavaAutomaticTestMethodRenamerFactory : AutomaticTestMethodRenamerFactory() {
   override fun isApplicable(element: PsiElement): Boolean {
     if (element !is PsiMethod) return false
-    val file = element.containingFile
-    return !ProjectRootsUtil.isInTestSource(file)
+    return super.isApplicable(element)
   }
 
   override fun isEnabled(): Boolean = JavaRefactoringSettings.getInstance().isRenameTestMethods

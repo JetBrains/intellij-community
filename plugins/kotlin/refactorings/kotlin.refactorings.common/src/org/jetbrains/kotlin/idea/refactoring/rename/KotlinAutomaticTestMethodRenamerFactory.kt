@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticTestMethodRenamerFactory
@@ -14,8 +13,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 class KotlinAutomaticTestMethodRenamerFactory : AutomaticTestMethodRenamerFactory() {
     override fun isApplicable(element: PsiElement): Boolean {
         if (element !is KtNamedFunction) return false
-        val file = element.containingKtFile
-        return !ProjectRootsUtil.isInTestSource(file)
+        return super.isApplicable(element)
     }
 
     override fun createRenamer(element: PsiElement, newName: String, usages: MutableCollection<UsageInfo>): AutomaticRenamer {
