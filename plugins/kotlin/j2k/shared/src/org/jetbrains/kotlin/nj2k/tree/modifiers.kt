@@ -2,6 +2,10 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
+import com.intellij.openapi.project.ProjectManager
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.ExplicitApiMode
+import org.jetbrains.kotlin.idea.base.projectStructure.LanguageVersionSettingsProvider
 import org.jetbrains.kotlin.nj2k.isInterface
 import org.jetbrains.kotlin.nj2k.tree.Modality.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
@@ -150,8 +154,13 @@ internal fun JKModifierElement.isRedundant(): Boolean {
                 (it is JKDeclaration && it.parentOfType<JKClass>()?.isInterface() == true)
     }
 
+    val project = ProjectManager.getInstance().getOpenProjects().firstOrNull()
+    val explicitVisibilityRequired = if (project == null) false else
+        LanguageVersionSettingsProvider(project).librarySettings.getFlag(AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED
+
     return when (modifier) {
-        PUBLIC, FINAL -> !hasOverrideModifier
+        PUBLIC -> !hasOverrideModifier && !explicitVisibilityRequired
+        FINAL -> !hasOverrideModifier
         OPEN, ABSTRACT -> isOpenAndAbstractByDefault
         else -> false
     }
