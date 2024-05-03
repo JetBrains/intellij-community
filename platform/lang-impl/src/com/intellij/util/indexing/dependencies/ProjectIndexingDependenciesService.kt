@@ -186,10 +186,13 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       val removed = issuedScanningTokens.remove(token)
       if (removed && issuedScanningTokens.isEmpty() && storage.isOpen) {
         storage.writeIncompleteScanningMark(false)
-        if (lastAppIndexingRequestId != null) {
-          storage.writeAppIndexingRequestIdOfLastScanning(lastAppIndexingRequestId.toInt())
-        }
       }
+    }
+
+    if (lastAppIndexingRequestId != null) {
+      // Write each time, not only after the last token has completed, because the last completed token
+      // might be an IncompleteTaskToken. Then lastAppIndexingRequestId will be null.
+      storage.writeAppIndexingRequestIdOfLastScanning(lastAppIndexingRequestId.toInt())
     }
   }
 
