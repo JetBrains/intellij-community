@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
@@ -67,5 +68,15 @@ class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryMana
   override suspend fun refreshCashes() {
     super.refreshCashes()
     service<CondaPackageCache>().refreshAll(sdk, project)
+  }
+
+  override fun searchPackages(query: String, repository: PyPackageRepository): List<String> {
+    return if (repository is CondaPackageRepository) {
+      service<CondaPackageCache>().packages
+        .filter { StringUtil.containsIgnoreCase(it, query) }
+    }
+    else {
+      super.searchPackages(query, repository)
+    }
   }
 }
