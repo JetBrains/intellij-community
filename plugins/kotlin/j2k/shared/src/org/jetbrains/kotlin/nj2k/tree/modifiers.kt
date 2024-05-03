@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.ExplicitApiMode
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.nj2k.isInterface
 import org.jetbrains.kotlin.nj2k.tree.Modality.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.INNER
@@ -143,7 +146,7 @@ inline fun JKModifiersListOwner.forEachModifier(action: (JKModifierElement) -> U
     safeAs<JKMutabilityOwner>()?.mutabilityElement?.let(action)
 }
 
-internal fun JKModifierElement.isRedundant(): Boolean {
+internal fun JKModifierElement.isRedundant(languageVersionSettings: LanguageVersionSettings): Boolean {
     val owner = parent ?: return false
     if (owner is JKMethod && owner.hasRedundantVisibility && modifier is Visibility) return true
 
@@ -159,8 +162,10 @@ internal fun JKModifierElement.isRedundant(): Boolean {
     val redundantOnConstructor = (owner is JKConstructor && parentClass?.classKind == JKClass.ClassKind.ENUM)
             || (owner is JKKtPrimaryConstructor && parentClass?.visibility == PRIVATE && parentClass.parentOfType<JKClass>() != null)
 
+    val isExplicitApiMode = languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED
+
     return when (modifier) {
-        PUBLIC -> !hasOverrideModifier
+        PUBLIC -> !hasOverrideModifier && !isExplicitApiMode
         FINAL -> !hasOverrideModifier
         PRIVATE -> (parentIsPrivate && owner is JKMethod && owner !is JKConstructor) || redundantOnConstructor
         INTERNAL -> (parentIsPrivate && owner is JKMethod && owner !is JKConstructor)

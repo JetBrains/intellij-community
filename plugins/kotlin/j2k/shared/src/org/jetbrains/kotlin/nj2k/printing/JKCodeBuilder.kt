@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.nj2k.types.isInterface
 import org.jetbrains.kotlin.nj2k.types.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class JKCodeBuilder(context: NewJ2kConverterContext) {
+class JKCodeBuilder(private val context: NewJ2kConverterContext) {
     private val elementInfoStorage = context.elementsInfoStorage
     private val printer = JKPrinter(context.project, context.importStorage, elementInfoStorage)
     private val commentPrinter = JKCommentPrinter(printer)
@@ -66,7 +66,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner): Boolean {
             var hasRenderedModifiers = false
             modifiersListOwner.forEachModifier { modifierElement ->
-                if (modifierElement.isRedundant()) {
+                if (modifierElement.isRedundant(context.languageVersionSettings)) {
                     printLeftNonCodeElements(modifierElement)
                     printRightNonCodeElements(modifierElement)
                 } else {
