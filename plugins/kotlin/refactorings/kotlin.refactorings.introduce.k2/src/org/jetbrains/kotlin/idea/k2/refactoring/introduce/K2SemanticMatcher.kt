@@ -200,7 +200,7 @@ object K2SemanticMatcher {
                 val patternElement = patternSymbol.psi as? PsiNamedElement
                 if (patternElement != null && parameterSubstitution.containsKey(patternElement)) {
                     val expression =
-                        KtPsiFactory.contextual(targetSymbol.psi!!).createExpression((targetSymbol as KtNamedSymbol).name.asString())
+                        KtPsiFactory(patternElement.project).createExpression((targetSymbol as KtNamedSymbol).name.asString())
                     val oldElement = parameterSubstitution.put(patternElement, expression)
                     return oldElement !is KtElement || oldElement.text == expression.text
                 }

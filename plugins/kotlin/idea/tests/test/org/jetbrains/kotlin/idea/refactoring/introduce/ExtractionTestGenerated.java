@@ -1930,6 +1930,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testSingleExpression() throws Exception {
                 runTest("testData/refactoring/extractFunction/duplicates/singleExpression.kt");
             }
+
+            @TestMetadata("syntheticJavaReference.kt")
+            public void testSyntheticJavaReference() throws Exception {
+                runTest("testData/refactoring/extractFunction/duplicates/syntheticJavaReference.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

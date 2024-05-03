@@ -1093,6 +1093,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         public void testSingleExpression() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/singleExpression.kt");
         }
+
+        @TestMetadata("syntheticJavaReference.kt")
+        public void testSyntheticJavaReference() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/syntheticJavaReference.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
