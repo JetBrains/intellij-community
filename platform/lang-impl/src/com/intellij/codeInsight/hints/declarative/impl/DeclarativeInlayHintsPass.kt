@@ -14,6 +14,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntFunction
 
 class DeclarativeInlayHintsPass(
@@ -55,16 +56,21 @@ class DeclarativeInlayHintsPass(
   )
 
   override fun doApplyInformationToEditor() {
-    applyInlayData(editor, myFile, inlayDatas = sinks.flatMap { it.finish() })
+    applyInlayData(editor, myFile, inlayDatas = sinks.flatMap { it.finish() }, DeclarativeInlayHintsPass::class.java)
   }
 
   companion object {
     @RequiresEdt
-    internal fun applyInlayData(editor: Editor, file: PsiFile, inlayDatas: List<InlayData>) {
+    @ApiStatus.Internal
+    fun applyInlayData(editor: Editor, file: PsiFile, inlayDatas: List<InlayData>, createdBy: Class<*>) {
       val inlayModel = editor.inlayModel
       val document = editor.document
-      val existingInlineElements = inlayModel.getInlineElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
-      val existingEolElements = inlayModel.getAfterLineEndElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
+      val existingInlineElements = inlayModel
+        .getInlineElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
+        .filter { it.renderer.getCreatedBy()?.name == createdBy.name }
+      val existingEolElements = inlayModel
+        .getAfterLineEndElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
+        .filter { it.renderer.getCreatedBy()?.name == createdBy.name }
       val offsetToExistingInlineElements = Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>() // either inlay or list of inlays
       val offsetToExistingEolElements = Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>() // either inlay or list of inlays
       for (inlineElement in existingInlineElements) {
@@ -84,7 +90,7 @@ class DeclarativeInlayHintsPass(
             if (!updated) {
               val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled,
                                                            createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip)
-              val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId, position)
+              val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId, position, createdBy)
               val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, true, renderer)
               if (inlay != null) {
                 renderer.setInlay(inlay)
@@ -96,7 +102,7 @@ class DeclarativeInlayHintsPass(
             if (!updated) {
               val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled,
                                                            createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip)
-              val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId, position)
+              val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId, position, createdBy)
               val inlay = inlayModel.addInlineElement(position.offset, position.relatedToPrevious, position.priority, renderer)
               if (inlay != null) {
                 renderer.setInlay(inlay)

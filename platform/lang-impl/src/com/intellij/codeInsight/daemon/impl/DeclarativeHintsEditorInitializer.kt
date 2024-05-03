@@ -51,7 +51,7 @@ private class DeclarativeHintsEditorInitializer : TextEditorInitializer {
     } ?: return
     val editor = editorSupplier()
     withContext(Dispatchers.EDT) {
-      DeclarativeInlayHintsPass.applyInlayData(editor, psiFile, inlayDataList)
+      DeclarativeInlayHintsPass.applyInlayData(editor, psiFile, inlayDataList, DeclarativeInlayHintsPass::class.java)
     }
   }
 }

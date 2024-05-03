@@ -29,6 +29,16 @@ class DeclarativeInlayRenderer(
   val providerId: String,
   private val position: InlayPosition,
 ) : EditorCustomElementRenderer {
+  private var createdBy: Class<*>? = null
+
+  constructor(presentationList: InlayPresentationList,
+              fontMetricsStorage: InlayTextMetricsStorage,
+              providerId: String,
+              position: InlayPosition,
+              createdBy: Class<*>) : this(presentationList, fontMetricsStorage, providerId, position) {
+    this.createdBy = createdBy
+  }
+
   private var inlay: Inlay<DeclarativeInlayRenderer>? = null
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
@@ -100,4 +110,6 @@ class DeclarativeInlayRenderer(
     }
     return presentationList.toInlayData(pos, providerId)
   }
+
+  fun getCreatedBy(): Class<*>? = createdBy
 }
