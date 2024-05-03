@@ -6739,8 +6739,10 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFacto
 f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer
 - com.intellij.openapi.editor.EditorCustomElementRenderer
 - <init>(com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList,com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage,java.lang.String,com.intellij.codeInsight.hints.declarative.InlayPosition):V
+- <init>(com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList,com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage,java.lang.String,com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.Class):V
 - calcWidthInPixels(com.intellij.openapi.editor.Inlay):I
 - getContextMenuGroupId(com.intellij.openapi.editor.Inlay):java.lang.String
+- f:getCreatedBy():java.lang.Class
 - f:getMouseArea(java.awt.Point):com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 - f:getPresentationList():com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 - f:getProviderId():java.lang.String
