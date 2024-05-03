@@ -16,6 +16,8 @@ class YamlIconsAstLoadingTest : BasePlatformTestCase() {
     Registry.get("ast.loading.filter").setValue(true, testRootDisposable);
   }
 
+  override fun isIconRequired(): Boolean = true
+
   /**
    * If this test fails for your [com.intellij.ide.IconProvider] you MUST avoid loading PSI by either:
    * - indexing and accessing index instead from [com.intellij.ide.IconProvider];
