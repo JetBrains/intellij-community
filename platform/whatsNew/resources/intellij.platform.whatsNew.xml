@@ -1,0 +1,12 @@
+<idea-plugin package="com.intellij.platform.whatsNew">
+  <extensions defaultExtensionNs="com.intellij">
+    <backgroundPostStartupActivity implementation="com.intellij.platform.whatsNew.WhatsNewShowOnStartCheckService" order="last"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.whatsNew.reaction.ReactionCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.whatsNew.reaction.LegacyReactionCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.whatsNew.LegacyRiderWhatsNewCounterUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.whatsNew.WhatsNewCounterUsageCollector"/>
+
+    <registryKey defaultValue="false" description="Whats new test mode" key="whats.new.test.mode" restartRequired="false" />
+    <registryKey defaultValue="true" description="Whats new enabled" key="whats.new.enabled" restartRequired="false" />
+  </extensions>
+</idea-plugin>

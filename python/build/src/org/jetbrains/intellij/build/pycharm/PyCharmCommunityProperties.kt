@@ -28,6 +28,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
       "intellij.xml.dom.impl",
       "intellij.platform.main",
       "intellij.pycharm.community",
+      "intellij.platform.whatsNew",
     )
     productLayout.bundledPluginModules.addAll(
       listOf(
