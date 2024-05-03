@@ -14,7 +14,10 @@ private val terminalPIDKey = Key<Int?>("ProcessWindowUtils_TerminalPIDKey")
 private val terminalBroughtSuccessfullyKey = Key<Boolean>("ProcessWindowUtils_TerminalBroughtSuccessfullyKey")
 
 
-fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHolderBase) : Boolean{
+fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHolderBase) : Boolean {
+  if (!this.isApplicable())
+    return false
+
   if (bring(pid)) {
     logger.trace { "Could successfully bring $pid process into foreground" }
     return true
@@ -89,3 +92,6 @@ private fun WinBringProcessWindowToForegroundSupport.tryBringWindowsTerminalInFo
   // if there are more than 1 Debugger.Worker.exe window, we will bring none of them
   return bringWindowWithName(windowsTerminalPid, dataHolder, "Debugger.Worker.exe")
 }
+
+fun BringProcessWindowToForegroundSupport.isApplicable() =
+  ((this as? BringProcessWindowToForegroundSupportApplicable)?.isApplicable() ?: true)

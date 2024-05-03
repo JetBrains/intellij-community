@@ -312,8 +312,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (myDebugProcess.checkCanInitBreakpoints()) {
       initBreakpoints();
     }
-    if (myDebugProcess instanceof XDebugProcessDebuggeeInForeground xDebugProcessDebuggeeInForeground) {
-      BringDebuggeeInForegroundUtilsKt.start(xDebugProcessDebuggeeInForeground, this, 1000);
+    if (myDebugProcess instanceof XDebugProcessDebuggeeInForeground debuggeeInForeground &&
+        debuggeeInForeground.isBringingToForegroundApplicable()) {
+      BringDebuggeeInForegroundUtilsKt.start(debuggeeInForeground, this, 1000);
     }
 
 

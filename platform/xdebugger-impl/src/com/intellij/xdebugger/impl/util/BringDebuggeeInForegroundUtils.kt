@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.util
 
-import com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupport
-import com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupportApplicable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.registry.Registry
@@ -19,10 +17,6 @@ fun XDebugProcessDebuggeeInForeground.start(session: XDebugSession, bringAfterMs
   if (!isEnabled())
     return
 
-  val bringProcessWindowSupport = BringProcessWindowToForegroundSupport.getInstance()
-  if (!bringProcessWindowSupport.isApplicable())
-    return
-
   var executor: ScheduledFuture<*>? = null
 
   val support = this
@@ -32,7 +26,7 @@ fun XDebugProcessDebuggeeInForeground.start(session: XDebugSession, bringAfterMs
       executor = EdtScheduledExecutorService.getInstance()
         .schedule({
                     logger.trace { "Bringing debuggee into foreground" }
-                    support.bring()
+                    support.bringToForeground()
                   }, bringAfterMs, TimeUnit.MILLISECONDS)
     }
 
@@ -48,6 +42,3 @@ fun XDebugProcessDebuggeeInForeground.start(session: XDebugSession, bringAfterMs
 
 private fun isEnabled() = Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume.supported").asBoolean() ||
                           Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume").asBoolean()
-
-private fun BringProcessWindowToForegroundSupport.isApplicable() =
-  ((this as? BringProcessWindowToForegroundSupportApplicable)?.isApplicable() ?: true)
