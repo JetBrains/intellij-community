@@ -138,7 +138,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo @NotNull [] _usages) {
     try {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      if (myElementsToMove.length > 1) progressIndicator.setIndeterminate(false); // only show progress when moving multiple elements
+      progressIndicator.setIndeterminate(myElementsToMove.length <= 1); // only show progress when moving multiple elements
       progressIndicator.setFraction(0.0);
       List<PsiElement> toChange = new ArrayList<>();
       Collections.addAll(toChange, myElementsToMove);
