@@ -39,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
+import static com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil.placeFile;
+
 /**
  * @author Dennis.Ushakov
  */
@@ -168,28 +170,7 @@ public final class PyExtractSuperclassHelper {
    *
    * @return the placed file
    */
-  public static PsiFile placeFile(Project project, String path, String filename) throws IOException {
-    return placeFile(project, path, filename, null,false);
-  }
 
-  //TODO: Mover to the other class? That is not good to dependent PyUtils on this class
-  public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content,boolean isNameSpace) throws IOException {
-    PsiDirectory psiDir = createDirectories(project, path,isNameSpace);
-    LOG.assertTrue(psiDir != null);
-    PsiFile psiFile = psiDir.findFile(filename);
-    if (psiFile == null) {
-      psiFile = psiDir.createFile(filename);
-      if (content != null) {
-        final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-        final Document document = manager.getDocument(psiFile);
-        if (document != null) {
-          document.setText(content);
-          manager.commitDocument(document);
-        }
-      }
-    }
-    return psiFile;
-  }
 
   /**
    * Create all intermediate dirs with inits from one of roots up to target dir.
@@ -198,7 +179,7 @@ public final class PyExtractSuperclassHelper {
    * @return deepest child directory, or null if target is not in roots or process fails at some point.
    */
   @Nullable
-  private static PsiDirectory createDirectories(Project project, String target,boolean isNameSpace) throws IOException {
+  public static PsiDirectory createDirectories(Project project, String target, boolean isNameSpace) throws IOException {
     String relativePath = null;
     VirtualFile closestRoot = null;
 

@@ -5,6 +5,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper.createDirectories;
 
 /**
  * @author Dennis.Ushakov
@@ -518,6 +521,30 @@ public final class PyClassRefactoringUtil {
     PyImportOptimizer.onlyRemoveUnused().processFile(file).run();
   }
 
+
+  public static PsiFile placeFile(Project project, String path, String filename) throws IOException {
+    return placeFile(project, path, filename, null,false);
+  }
+
+  //TODO: Mover to the other class? That is not good to dependent PyUtils on this class
+  public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content,boolean isNameSpace) throws IOException {
+    PsiDirectory psiDir = createDirectories(project, path,isNameSpace);
+    LOG.assertTrue(psiDir != null);
+    PsiFile psiFile = psiDir.findFile(filename);
+    if (psiFile == null) {
+      psiFile = psiDir.createFile(filename);
+      if (content != null) {
+        final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+        final Document document = manager.getDocument(psiFile);
+        if (document != null) {
+          document.setText(content);
+          manager.commitDocument(document);
+        }
+      }
+    }
+    return psiFile;
+  }
+
   @NotNull
   public static PyFile getOrCreateFile(String path, Project project, boolean isNameSpace) {
     final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
@@ -531,7 +558,7 @@ public final class PyClassRefactoringUtil {
         final Properties properties = fileTemplateManager.getDefaultProperties();
         properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
         final String content = template.getText(properties);
-        psi = PyExtractSuperclassHelper.placeFile(project,
+        psi = PyClassRefactoringUtil.placeFile(project,
                                                   StringUtil.notNullize(
                                                     file.getParent(),
                                                     baseDir != null ? baseDir
