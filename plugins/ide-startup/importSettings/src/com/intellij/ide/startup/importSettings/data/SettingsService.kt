@@ -29,10 +29,7 @@ import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.jetbrains.rd.swing.proxyProperty
-import com.jetbrains.rd.util.reactive.IPropertyView
-import com.jetbrains.rd.util.reactive.ISignal
-import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rd.util.reactive.Signal
+import com.jetbrains.rd.util.reactive.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.Nls
@@ -69,14 +66,12 @@ interface SettingsService {
   val pluginIdsPreloaded: Boolean
 
   fun configChosen()
-
-  fun isLoggedIn(): Boolean = jbAccount.value != null
 }
 
 class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : SettingsService, Disposable.Default {
 
   override fun getSyncService() =
-    if (useMockDataForStartupWizard) TestSyncService()
+    if (useMockDataForStartupWizard) TestSyncService.getInstance()
     else SyncServiceImpl.getInstance()
 
   override fun getJbService() =
@@ -84,7 +79,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     else JbImportServiceImpl.getInstance()
 
   override fun getExternalService(): ExternalService =
-    if (useMockDataForStartupWizard) TestExternalService()
+    if (useMockDataForStartupWizard) TestExternalService.getInstance()
     else SettingTransferService.getInstance()
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -176,8 +171,8 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     }
   }
 
-  override val isSyncEnabled = Property(
-    useMockDataForStartupWizard) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+  // override val isSyncEnabled = jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+  override val isSyncEnabled = jbAccount.compose(getSyncService().syncState) { account, state -> account != null && state == SyncService.SYNC_STATE.LOGGED }
 
   init {
     if (useMockDataForStartupWizard) {
@@ -192,11 +187,9 @@ interface SyncService : JbService {
   enum class SYNC_STATE {
     UNLOGGED,
     WAINING_FOR_LOGIN,
-    LOGIN_FAILED,
     LOGGED,
     TURNED_OFF,
-    NO_SYNC,
-    GENERAL
+    NO_SYNC
   }
 
   val syncState: IPropertyView<SYNC_STATE>
@@ -204,7 +197,6 @@ interface SyncService : JbService {
   fun syncSettings(): DialogImportData
   fun importSyncSettings(): DialogImportData
   fun getMainProduct(): Product?
-  fun generalSync()
 }
 
 interface ExternalService {

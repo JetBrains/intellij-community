@@ -163,7 +163,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
 
   private fun updateSyncMap() {
     val service = settingsService.getSyncService()
-    if (!settingsService.isLoggedIn()) {
+    if (!settingsService.isSyncEnabled.value) {
       map = null
       return
     }

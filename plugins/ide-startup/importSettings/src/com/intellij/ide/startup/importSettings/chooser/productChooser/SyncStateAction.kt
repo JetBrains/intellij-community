@@ -24,16 +24,12 @@ class SyncStateAction : ChooseProductActionButton() {
         syncService.tryToLogin()
         return
       }
-      SyncService.SYNC_STATE.GENERAL -> {
-        syncService.generalSync()
-        return
-      }
       else -> return
     }
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = settingsService.isSyncEnabled.value
+    e.presentation.isVisible = !settingsService.isSyncEnabled.value
     if(!e.presentation.isVisible) {
       return
     }
@@ -47,11 +43,6 @@ class SyncStateAction : ChooseProductActionButton() {
       }
       SyncService.SYNC_STATE.WAINING_FOR_LOGIN -> {
         e.presentation.text = ImportSettingsBundle.message("choose.product.log.in.to.setting.sync")
-        e.presentation.isEnabled = false
-        true
-      }
-      SyncService.SYNC_STATE.LOGIN_FAILED -> {
-        e.presentation.text = ImportSettingsBundle.message("choose.product.log.in.failed")
         e.presentation.isEnabled = false
         true
       }

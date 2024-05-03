@@ -99,9 +99,6 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
     //}
   }
 
-  override fun generalSync() {
-    TODO("Not yet implemented")
-  }
 
   override fun getOldProducts(): List<Product> {
     // TODO: Figure out what are these

@@ -37,7 +37,7 @@ class OtherOptions(private val controller: ImportSettingsController) : ProductCh
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val jbProducts = jbDataProvider.other
-    val syncProducts = if (syncDataProvider.settingsService.isLoggedIn()) syncDataProvider.other else emptyList()
+    val syncProducts = if (syncDataProvider.settingsService.isSyncEnabled.value) syncDataProvider.other else emptyList()
 
     val arr = mutableListOf<AnAction>()
     if (jb == null && jbProducts != null) {

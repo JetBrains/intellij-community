@@ -5,10 +5,13 @@ package com.intellij.ide.startup.importSettings.testActions
 
 import com.intellij.ide.startup.importSettings.data.NotificationData
 import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.data.SyncService
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.panel
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.Signal
 import javax.swing.JComponent
 
@@ -56,6 +59,26 @@ class ErrorTestDialogAction : DumbAwareAction() {
           row {
             button("close dialog") {
               settService.doClose.fire(Unit)
+            }
+          }
+          row {
+            val state = SettingsService.getInstance().getSyncService().syncState
+            if(state is Property<SyncService.SYNC_STATE>) {
+
+              comboBox(SyncService.SYNC_STATE.entries).onChanged {
+                if (it.selectedItem is SyncService.SYNC_STATE) {
+                  state.value = it.selectedItem as SyncService.SYNC_STATE
+                }
+              }.applyToComponent {
+                selectedItem = state.value
+              }
+
+
+              val component = textField().component
+              state.advise(Lifetime.Eternal) {
+                component.text = it.toString()
+              }
+
             }
           }
         }
