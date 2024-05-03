@@ -6,12 +6,17 @@ import java.time.format.DateTimeFormatter.ofPattern
 
 private val maxActionLength = 30
 
+
+@ApiStatus.Internal
+fun getAsPartOfArtifactsFileName(text: String): String =
+  text
+    .replace("[^a-zA-Z.]".toRegex(), "_")
+    .replace("_+".toRegex(), "_")
+
 @ApiStatus.Internal
 fun getArtifactsFileName(actionName: String, suffix: String? = null, extension: String, timeStamp: LocalTime = LocalTime.now()): String =
   buildString {
-    append(actionName
-             .replace("[^a-zA-Z.]".toRegex(), "_")
-             .replace("_+".toRegex(), "_")
+    append(getAsPartOfArtifactsFileName(actionName)
              .take(maxActionLength))
     append(suffix?.let { "-$it" }.orEmpty())
     append("-at_${timeStamp.format(ofPattern("HHmmss"))}")
