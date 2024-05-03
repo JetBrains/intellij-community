@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -34,6 +35,7 @@ import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
@@ -260,7 +262,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             dependencies.runtime dependencies.project(path: projectPath, transitive: true)
             dependencies.testRuntime dependencies.project(path: projectPath, transitive: true)
           }
-
+          
           dependencies {
             strict ':project1'
           }
@@ -375,7 +377,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         <groupId>dep</groupId>
         <artifactId>dep</artifactId>
         <version>1.0</version>
-
+      
       </project>
       """);
     importProject(
@@ -494,7 +496,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         <groupId>dep</groupId>
         <artifactId>dep</artifactId>
         <version>1.0</version>
-
+      
       </project>
       """);
     importProject(
@@ -949,6 +951,92 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDeps((actual, expected) -> actual.endsWith(expected), "project.moduleB.main", "moduleA-all.jar");
     assertModuleModuleDeps("project.moduleB.test", "project.moduleB.main", "project.moduleA.extraSourceSet", "project.moduleA.main");
   }
+
+
+  @Test
+  @TargetVersions("7.6+")
+  @TargetJavaVersion(value = "17+", reason = "Spring Boot 3 Compatibility")
+  @TestFor(issues = "IDEA-339492")
+  public void testProjectDependencyOnBootJar3Artifact() throws Exception {
+    createSettingsFile(including("moduleA", "moduleB"));
+    createProjectSubFile("moduleB/build.gradle",
+                         script( it -> {
+                           it.withJavaPlugin();
+                           it.addImplementationDependency(it.project(":moduleA")); }));
+
+    String springBootVersion = "3.2.0";
+    importProject(script(it -> {
+        it.withMavenCentral();
+        it.withPlugin("org.springframework.boot", springBootVersion);
+        it.allprojects(all -> {
+          all.withMavenCentral();
+          all.applyPlugin("java");
+          all.applyPlugin("org.springframework.boot");
+          all.addPostfix("""
+                             bootJar {
+                               enabled = true
+                               mainClass = 'MyApplication'
+                             }
+                             jar {
+                               enabled = true
+                               archiveClassifier.set('')
+                             }
+                           """);
+        });
+      }
+    ));
+
+    assertModules("project", "project.main", "project.test",
+                  "project.moduleA", "project.moduleA.main", "project.moduleA.test",
+                  "project.moduleB", "project.moduleB.main", "project.moduleB.test");
+
+    assertModuleModuleDeps("project.moduleB.main", "project.moduleA.main");
+    assertModuleLibDeps((actual, expected) -> actual.endsWith(expected), "project.moduleB.main");
+    assertModuleModuleDeps("project.moduleB.test", "project.moduleB.main", "project.moduleA.main");
+  }
+
+  @Test
+  @TargetVersions("6.8 <=> 7.5")
+  @TargetJavaVersion(value = "<22", reason = "Spring Boot 2 Compatibility")
+  @TestFor(issues = "IDEA-339492")
+  public void testProjectDependencyOnBootJar2Artifact() throws Exception {
+    createSettingsFile(including("moduleA", "moduleB"));
+    createProjectSubFile("moduleB/build.gradle",
+                         script( it -> {
+                           it.withJavaPlugin();
+                           it.addImplementationDependency(it.project(":moduleA")); }));
+
+    String springBootVersion = "2.7.18";
+    importProject(script(it -> {
+                           it.withMavenCentral();
+                           it.withPlugin("org.springframework.boot", springBootVersion);
+                           it.allprojects(all -> {
+                             all.withMavenCentral();
+                             all.applyPlugin("java");
+                             all.applyPlugin("org.springframework.boot");
+                             all.addPostfix("""
+                             bootJar {
+                               enabled = true
+                               mainClass = 'MyApplication'
+                             }
+                             jar {
+                               enabled = true
+                               archiveClassifier.set('')
+                             }
+                           """);
+                           });
+                         }
+    ));
+
+    assertModules("project", "project.main", "project.test",
+                  "project.moduleA", "project.moduleA.main", "project.moduleA.test",
+                  "project.moduleB", "project.moduleB.main", "project.moduleB.test");
+
+    assertModuleModuleDeps("project.moduleB.main", "project.moduleA.main");
+    assertModuleLibDeps((actual, expected) -> actual.endsWith(expected), "project.moduleB.main");
+    assertModuleModuleDeps("project.moduleB.test", "project.moduleB.main", "project.moduleA.main");
+  }
+
 
   @Test
   public void testCompileAndRuntimeConfigurationsTransitiveDependencyMerge() throws Exception {
@@ -1910,18 +1998,18 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         import java.util.zip.ZipException
         import java.util.zip.ZipFile
         import org.gradle.api.artifacts.transform.TransformParameters
-
+        
         abstract class Unzip implements TransformAction<TransformParameters.None> {
             @InputArtifact
             abstract Provider<FileSystemLocation> getInputArtifact()
-
+        
             @Override
             void transform(TransformOutputs outputs) {
                 def input = inputArtifact.get().asFile
                 def unzipDir = outputs.dir(input.name)
                 unzipTo(input, unzipDir)
             }
-
+        
             private static void unzipTo(File zipFile, File unzipDir) {
                 new ZipFile(zipFile).withCloseable { zip ->
                     def outputDirectoryCanonicalPath = unzipDir.canonicalPath
@@ -1930,7 +2018,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                     }
                 }
             }
-
+        
             private static unzipEntryTo(File outputDirectory, String outputDirectoryCanonicalPath, ZipFile zip, ZipEntry entry) {
                 def output = new File(outputDirectory, entry.name)
                 if (!output.canonicalPath.startsWith(outputDirectoryCanonicalPath)) {
@@ -1944,34 +2032,34 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                 }
             }
         }
-
+        
         allprojects {
             apply plugin: 'java'
         }
-
+        
         def processed = Attribute.of('processed', Boolean)
         def artifactType = Attribute.of('artifactType', String)
-
-
+        
+        
         dependencies {
             attributesSchema {
                 attribute(processed)
             }
-
+        
             artifactTypes.getByName("jar") {
                 attributes.attribute(processed, false)\s
             }
-
+        
             registerTransform(Unzip) {
                 from.attribute(artifactType, 'jar').attribute(processed, false)
                 to.attribute(artifactType, 'java-classes-directory').attribute(processed, true)
             }
-
+        
             implementation project(':lib-1')
             implementation project(':lib-2')
         }
-
-
+        
+        
         configurations.all {
             afterEvaluate {
                 if (canBeResolved) {
