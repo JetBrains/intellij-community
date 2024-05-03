@@ -11,7 +11,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.withCurrentJob
 import com.intellij.openapi.project.DumbService
@@ -194,10 +193,8 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         val continueExecution = block()
         if (!continueExecution) endExecution()
       }
-      catch (e: ProcessCanceledException) {
-        endExecution()
-      }
       catch (e: CancellationException) {
+        LOG.debug("commit process was cancelled", Throwable(e))
         endExecution()
       }
       catch (e: Throwable) {
@@ -364,7 +361,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
     catch (e: CancellationException) {
-      LOG.debug("CheckinHandler cancelled $commitCheck")
+      LOG.debug("runModalCommitCheck was cancelled: $commitCheck")
       throw e
     }
   }
@@ -426,11 +423,14 @@ abstract class AbstractCommitWorkflow(val project: Project) {
             }
           }
           catch (e: CancellationException) {
-            LOG.debug("CheckinMetaHandler cancelled $metaHandler")
+            LOG.warn("CheckinMetaHandler was cancelled: $metaHandler")
+            if (LOG.isDebugEnabled) {
+              LOG.debug(Throwable(e))
+            }
             continuation.resumeWithException(e)
           }
           catch (e: Throwable) {
-            LOG.debug("CheckinMetaHandler failed $metaHandler")
+            LOG.debug("CheckinMetaHandler failed: $metaHandler")
             continuation.resumeWithException(e)
           }
         }
@@ -439,7 +439,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
     suspend fun runCommitCheck(project: Project, commitCheck: CommitCheck, commitInfo: CommitInfo): CommitProblem? {
       if (DumbService.isDumb(project) && !DumbService.isDumbAware(commitCheck)) {
-        LOG.debug("Skipped commit check in dumb mode $commitCheck")
+        LOG.debug("Skipped commit check in dumb mode: $commitCheck")
         return null
       }
 
@@ -454,7 +454,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
 
       try {
-        LOG.debug("Running commit check $commitCheck")
+        LOG.debug("Running commit check: $commitCheck")
         currentCoroutineContext().ensureActive()
 
         val problem = commitCheck.runCheck(commitInfo)
@@ -462,6 +462,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         return problem
       }
       catch (e: CancellationException) {
+        LOG.warn("CommitCheck was cancelled: $commitCheck")
+        if (LOG.isDebugEnabled) {
+          LOG.debug(Throwable(e))
+        }
         throw e
       }
       catch (e: Throwable) {

@@ -72,27 +72,35 @@ class PostCommitChecksHandler(val project: Project) {
 
   private suspend fun runPostCommitChecks(commitInfo: StaticCommitInfo,
                                           commitChecks: List<CommitCheck>) {
-    withBackgroundProgress(project, VcsBundle.message("post.commit.checks.progress.text")) {
-      reportSequentialProgress { reporter ->
-        val postCommitInfo = reporter.nextStep(20, VcsBundle.message("post.commit.checks.progress.step.collecting.commits.text")) {
-          prepareCommitsToCheck(commitInfo)
-        }
-
-        reporter.nextStep(100) {
-          val problems = runCommitChecks(commitChecks, postCommitInfo)
-          if (problems.isEmpty()) {
-            LOG.debug("Post-commit checks succeeded")
-            pendingCommits.clear()
-            postCommitCheckErrorNotifications.clear()
-            lastCommitProblems = null
+    try {
+      withBackgroundProgress(project, VcsBundle.message("post.commit.checks.progress.text")) {
+        reportSequentialProgress { reporter ->
+          val postCommitInfo = reporter.nextStep(20, VcsBundle.message("post.commit.checks.progress.step.collecting.commits.text")) {
+            prepareCommitsToCheck(commitInfo)
           }
-          else {
-            postCommitCheckErrorNotifications.clear()
-            reportPostCommitChecksFailure(problems)
-            lastCommitProblems = problems
+
+          reporter.nextStep(100) {
+            val problems = runCommitChecks(commitChecks, postCommitInfo)
+            if (problems.isEmpty()) {
+              LOG.debug("Post-commit checks succeeded")
+              pendingCommits.clear()
+              postCommitCheckErrorNotifications.clear()
+              lastCommitProblems = null
+            }
+            else {
+              postCommitCheckErrorNotifications.clear()
+              reportPostCommitChecksFailure(problems)
+              lastCommitProblems = problems
+            }
           }
         }
       }
+    }
+    catch (e: CancellationException) {
+      LOG.debug("post-commit checks cancelled", Throwable(e))
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
     }
   }
 
