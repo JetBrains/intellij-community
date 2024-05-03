@@ -316,6 +316,7 @@ class EditorCellView(
       for (controller: NotebookCellInlayController in controllers) {
         controller.paintGutter(editor, g, r, interval)
       }
+      outputs?.paintGutter(editor, g, r)
     }
   }
 

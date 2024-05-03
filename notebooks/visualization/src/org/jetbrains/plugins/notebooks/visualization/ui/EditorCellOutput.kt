@@ -4,13 +4,14 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
+import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayShowable
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComponent
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Point
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -84,5 +85,19 @@ class EditorCellOutput internal constructor(private val editor: EditorEx, privat
 
   fun updateSelection(value: Boolean) {
     folding.updateSelection(value)
+  }
+
+  fun paintGutter(editor: EditorImpl, yOffset: Int, g: Graphics, r: Rectangle) {
+    if (editor.getUserData(isFoldingEnabledKey) != true) {
+      component.paintGutter(editor, yOffset, g)
+    }
+    val mainComponent = component.mainComponent
+
+    mainComponent.gutterPainter?.let { painter ->
+      mainComponent.yOffsetFromEditor(editor)?.let { yOffset ->
+        val bounds = Rectangle(r.x, yOffset, r.width, mainComponent.height)
+        painter.paintGutter(editor, g, bounds)
+      }
+    }
   }
 }

@@ -18,6 +18,8 @@ import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComp
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.InnerComponent
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.SurroundingComponent
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView.NotebookCellDataProvider
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.Toolkit
 import java.awt.event.ComponentAdapter
@@ -257,6 +259,19 @@ class EditorCellOutputs(
   private fun <A, B> Iterator<A>.zip(other: Iterator<B>): Iterator<Pair<A, B>> = object : Iterator<Pair<A, B>> {
     override fun hasNext(): Boolean = this@zip.hasNext() && other.hasNext()
     override fun next(): Pair<A, B> = this@zip.next() to other.next()
+  }
+
+  fun paintGutter(editor: EditorImpl,
+                  g: Graphics,
+                  r: Rectangle) {
+    val yOffset = innerComponent.yOffsetFromEditor(editor) ?: return
+
+    val oldClip = g.clipBounds
+    val ng = g.create() as Graphics2D
+    ng.clip(Rectangle(oldClip.x, yOffset, oldClip.width, innerComponent.height).intersection(oldClip))
+    outputs.forEach {
+      it.paintGutter(editor, yOffset, ng, r)
+    }
   }
 }
 
