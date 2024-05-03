@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.intellij.notification.impl.NotificationIdsHolder
@@ -6,6 +6,7 @@ import com.intellij.notification.impl.NotificationIdsHolder
 class GitNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
     return listOf(
+      BRANCH_UPDATE_FORCE_PUSHED_BRANCH_SUCCESS,
       BRANCH_CHECKOUT_FAILED,
       BRANCH_CREATION_FAILED,
       BRANCH_DELETED,
@@ -115,6 +116,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
   }
 
   companion object {
+    const val BRANCH_UPDATE_FORCE_PUSHED_BRANCH_SUCCESS = "git.update.force.pushed.branch.success"
     const val BRANCH_CHECKOUT_FAILED = "git.branch.checkout.failed"
     const val BRANCH_CREATION_FAILED = "git.branch.creation.failed"
     const val BRANCH_DELETED = "git.branch.deleted"

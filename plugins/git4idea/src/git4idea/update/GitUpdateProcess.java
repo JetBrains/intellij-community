@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -127,7 +127,7 @@ public final class GitUpdateProcess {
     myProgressIndicator.setText(GitBundle.message("update.process.progress.title"));
 
     // check if update is possible
-    if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) {
+    if (isUpdateNotReady()) {
       return GitUpdateResult.NOT_READY;
     }
 
@@ -146,6 +146,10 @@ public final class GitUpdateProcess {
     }
     myProgressIndicator.setText(oldText);
     return result;
+  }
+
+  public boolean isUpdateNotReady() {
+    return checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles();
   }
 
   private @NotNull GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {

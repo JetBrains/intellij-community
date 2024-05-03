@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -134,6 +135,9 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private fun findOrCreateLogUi(rangeFilter: VcsLogRangeFilter, select: Boolean) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
     val logManager = projectLog.logManager
     if (logManager == null) {
       if (select) {
