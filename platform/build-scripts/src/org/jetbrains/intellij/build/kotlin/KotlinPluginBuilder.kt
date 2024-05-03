@@ -189,7 +189,6 @@ object KotlinPluginBuilder {
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
     "kotlin.refactorings.common",
-    "kotlin.refactorings.introduce.k2",
     "kotlin.refactorings.k2",
     "kotlin.refactorings.move.k2",
     "kotlin.refactorings.rename.k2",
