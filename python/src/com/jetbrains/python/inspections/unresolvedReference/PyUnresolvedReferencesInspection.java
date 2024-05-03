@@ -92,7 +92,7 @@ public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferenc
           final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
           if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
             return StreamEx
-              .of(packageName, PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, ""))
+              .of(packageName, PyPsiPackageUtil.INSTANCE.moduleToPackageName(packageName, ""))
               .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
               .map(pkg -> new PyPackageRequirementsInspection.InstallPackageQuickFix(pkg));
           }
