@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.util.text.StringUtil
@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_JAR_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
 
@@ -166,12 +167,11 @@ class RuntimeModuleRepositoryChecker private constructor(
         continue
       }
       val module = context.findModule(rawModuleId)
-      if (module != null && (context.getModuleOutputDir(module) / "${module.name}.xml").exists()) {
-        /* such descriptor indicates that it's a module in plugin model V2, and its ClassLoader ignores classes from irrelevant packages,
-           so including its JAR to classpath should not cause problems */
+      if (module != null && Files.exists(context.getModuleOutputDir(module).resolve("${module.name}.xml"))) {
+        // such a descriptor indicates that it's a module in plugin model V2, and its ClassLoader ignores classes from irrelevant packages,
+        // so including its JAR to classpath should not cause problems
         continue
       }
-      
       
       val resourceRoots = repository.getModuleResourcePaths(moduleId)/*.filterNot {
         //ClassLoader used for classes in modules.jar ignores classes from irrelevant packages, so it's ok to have it in classpath
