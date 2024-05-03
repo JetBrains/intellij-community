@@ -53,6 +53,7 @@ interface FileHistoryLogUiProvider {
 
 object VcsLogDirectoryHistoryProvider : FileHistoryLogUiProvider {
   override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
+    if (paths.isEmpty()) return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
     return createPathsFilter(project, dataManager.logProviders, paths) != null
   }
