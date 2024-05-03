@@ -346,6 +346,7 @@ f:com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 - addRepository(com.intellij.openapi.vfs.VirtualFile):V
 - s:getInstance():com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 - getRepositoryCount():I
+- getRepositoryPaths():java.util.SortedSet
 - getState():com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList$State
 - isBig(com.intellij.openapi.vfs.VirtualFile):Z
 - isBig(java.lang.String):Z
@@ -1686,6 +1687,10 @@ c:com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Clipboard
 c:com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Dialog
 - com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider
 - <init>():V
+f:com.intellij.vcs.log.ui.actions.VcsLogShowBigRepositoriesList
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.project.DumbAware
