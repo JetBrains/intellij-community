@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.resume
 
 fun <T : Any> ExtensionPointName<T>.lazyDumbAwareExtensions(project: Project): Sequence<T> {
-  return if (DumbService.getInstance(project).isDumb) lazySequence().filter { DumbService.isDumbAware(it) } else lazySequence()
+  return lazySequence().filter { DumbService.getInstance(project).isUsableInCurrentContext(it) }
 }
 
 /**

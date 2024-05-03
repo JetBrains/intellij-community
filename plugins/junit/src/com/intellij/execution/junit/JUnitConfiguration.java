@@ -169,7 +169,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   public TestObject getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     TestObject testObject = TestObject.fromString(myData.TEST_OBJECT, this, env);
     DumbService dumbService = DumbService.getInstance(getProject());
-    if (dumbService.isDumb() && !DumbService.isDumbAware(testObject)) {
+    if (testObject != null && !dumbService.isUsableInCurrentContext(testObject)) {
       throw new ExecutionException(JUnitBundle.message("running.tests.disabled.during.index.update.error.message"));
     }
     return testObject;

@@ -402,7 +402,7 @@ final class PassExecutorService implements Disposable {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
           try {
-            if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(myPass)) {
+            if (!DumbService.getInstance(myProject).isUsableInCurrentContext(myPass)) {
               return;
             }
 

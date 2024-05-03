@@ -27,10 +27,10 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
    */
   @ApiStatus.Internal
   public static <T extends PsiReference> void registerReferenceFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar) {
-    boolean dumb = DumbService.getInstance(ref.getElement().getProject()).isDumb();
+    DumbService dumbService = DumbService.getInstance(ref.getElement().getProject());
     Class<? extends PsiReference> referenceClass = ref.getClass();
     for (UnresolvedReferenceQuickFixProvider<?> each : EP_NAME.getExtensionList()) {
-      if (dumb && !DumbService.isDumbAware(each)) {
+      if (!dumbService.isUsableInCurrentContext(each)) {
         continue;
       }
       if (ReflectionUtil.isAssignable(each.getReferenceClass(), referenceClass)) {

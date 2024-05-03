@@ -114,7 +114,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
         return null;
       }
 
-      if (DumbService.isDumb(file.getProject()) && !DumbService.isDumbAware(descriptor.getAction())) {
+      if (!DumbService.getInstance(file.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
         return null;
       }
 

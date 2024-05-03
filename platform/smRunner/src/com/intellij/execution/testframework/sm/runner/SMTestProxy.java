@@ -336,7 +336,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     String protocolId = VirtualFileManager.extractProtocol(locationUrl);
     if (protocolId != null) {
       String path = VirtualFileManager.extractPath(locationUrl);
-      if (!DumbService.isDumb(project) || DumbService.isDumbAware(locator)) {
+      if (DumbService.getInstance(project).isUsableInCurrentContext(locator)) {
         return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
           List<Location> locations = locator.getLocation(protocolId, path, myMetainfo, project, searchScope);
           return ContainerUtil.getFirstItem(locations);

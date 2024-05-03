@@ -37,7 +37,7 @@ public final class GutterIntentionMenuContributor implements IntentionMenuContri
     Collection<AnAction> actions = result.stream()
       .map(RangeHighlighter::getGutterIconRenderer)
       .filter(Objects::nonNull)
-      .filter(r -> !DumbService.isDumb(project) || DumbService.isDumbAware(r))
+      .filter(r -> DumbService.getInstance(project).isUsableInCurrentContext(r))
       .flatMap(r -> {
         ActionGroup group = r.getPopupMenuActions();
         List<AnAction> clickActions = Arrays.asList(r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction());

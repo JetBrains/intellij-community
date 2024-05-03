@@ -69,7 +69,7 @@ public class JavaEditablePostfixTemplate
   @Override
   protected List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
     DumbService dumbService = DumbService.getInstance(context.getProject());
-    if (dumbService.isDumb() && !DumbService.isDumbAware(this)) return Collections.emptyList();
+    if (!dumbService.isUsableInCurrentContext(this)) return Collections.emptyList();
     if (!PsiUtil.getLanguageLevel(context).isAtLeast(myMinimumLanguageLevel)) {
       return Collections.emptyList();
     }

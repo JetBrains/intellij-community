@@ -136,11 +136,9 @@ class PostCommitChecksHandler(val project: Project) {
                                       postCommitInfo: PostCommitInfo): List<CommitProblem> {
     val problems = mutableListOf<CommitProblem>()
 
-    if (DumbService.isDumb(project)) {
-      if (commitChecks.any { !DumbService.isDumbAware(it) }) {
-        problems += TextCommitProblem(VcsBundle.message("before.checkin.post.commit.error.dumb.mode"))
-        DumbModeBlockedFunctionalityCollector.logFunctionalityBlocked(project, DumbModeBlockedFunctionality.PostCommitCheck)
-      }
+    if (commitChecks.any { !DumbService.getInstance(project).isUsableInCurrentContext(it) }) {
+      problems += TextCommitProblem(VcsBundle.message("before.checkin.post.commit.error.dumb.mode"))
+      DumbModeBlockedFunctionalityCollector.logFunctionalityBlocked(project, DumbModeBlockedFunctionality.PostCommitCheck)
     }
 
     problems += commitChecks.mapWithProgress { commitCheck ->

@@ -322,8 +322,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   private fun checkDumbMode(commitInfo: DynamicCommitInfo,
                             commitChecks: List<CommitCheck>): Boolean {
-    if (!DumbService.isDumb(project)) return true
-    if (commitChecks.none { commitCheck -> commitCheck.isEnabled() && !DumbService.isDumbAware(commitCheck) }) return true
+    if (commitChecks.none { commitCheck -> commitCheck.isEnabled() && !DumbService.getInstance(project).isUsableInCurrentContext(commitCheck) }) return true
 
     return !MessageDialogBuilder.yesNo(message("commit.checks.error.indexing"),
                                        message("commit.checks.error.indexing.message", ApplicationNamesInfo.getInstance().productName))
@@ -438,7 +437,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
 
     suspend fun runCommitCheck(project: Project, commitCheck: CommitCheck, commitInfo: CommitInfo): CommitProblem? {
-      if (DumbService.isDumb(project) && !DumbService.isDumbAware(commitCheck)) {
+      if (!DumbService.getInstance(project).isUsableInCurrentContext(commitCheck)) {
         LOG.debug("Skipped commit check in dumb mode: $commitCheck")
         return null
       }

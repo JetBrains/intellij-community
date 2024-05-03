@@ -93,10 +93,8 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
 
   private static boolean mayUseBuilder(@NotNull ASTNode node, @Nullable FoldingBuilder builder) {
     if (builder == null) return false;
-    if (DumbService.isDumbAware(builder)) return true;
-
     Project project = getProjectByNode(node);
-    return project == null || !DumbService.isDumb(project);
+    return project == null || DumbService.getInstance(project).isUsableInCurrentContext(builder);
   }
 
   private static @Nullable Project getProjectByNode(@NotNull ASTNode node) {
