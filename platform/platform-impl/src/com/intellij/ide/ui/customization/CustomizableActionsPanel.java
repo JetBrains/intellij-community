@@ -94,6 +94,7 @@ public class CustomizableActionsPanel {
 
     ActionToolbarImpl addGroupToolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(new AddActionActionTreeSelectionAction()), true);
+    addGroupToolbar.setTargetComponent(myPanel);
     addGroupToolbar.setActionButtonBorder(new JBEmptyBorder(0));
     addGroupToolbar.setBorder(new JBEmptyBorder(0));
     container.add(addGroupToolbar, BorderLayout.WEST);
@@ -168,6 +169,7 @@ public class CustomizableActionsPanel {
 
   private void addCustomizedAction(ActionUrl url) {
     mySelectedSchema.addAction(url);
+    onModified();
   }
 
   private static boolean isMoveSupported(JTree tree, int dir) {
@@ -262,7 +264,10 @@ public class CustomizableActionsPanel {
     }
     TreeUtil.selectPaths(myActionsTree, toTreePaths(root, selectedIds));
     TreeUtil.ensureSelection(myActionsTree);
+    onModified();
   }
+
+  protected void onModified() { }
 
   private static List<String> toActionIDs(List<? extends TreePath> paths) {
     return ContainerUtil.map(paths, path -> getActionId((DefaultMutableTreeNode)path.getLastPathComponent()));
@@ -282,7 +287,13 @@ public class CustomizableActionsPanel {
   }
 
   public boolean isModified() {
-    CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
+    return isModified(true);
+  }
+
+  boolean isModified(boolean optimized) {
+    if (optimized) {
+      CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
+    }
     return CustomActionsSchema.getInstance().isModified(mySelectedSchema);
   }
 
@@ -292,6 +303,7 @@ public class CustomizableActionsPanel {
       mySelectedSchema.fillCorrectedActionGroups(root);
     }
     ((DefaultTreeModel)myActionsTree.getModel()).reload();
+    onModified();
   }
 
   private static final class TreePathStringFunction implements Function<TreePath, String> {
@@ -1044,6 +1056,7 @@ public class CustomizableActionsPanel {
       final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myActionsTree);
       patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
       restorePathsAfterTreeOptimization(treePaths);
+      onModified();
     }
 
     @Override

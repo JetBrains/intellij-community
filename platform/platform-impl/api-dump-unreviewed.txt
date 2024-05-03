@@ -9335,6 +9335,7 @@ c:com.intellij.ide.ui.customization.CustomizableActionsPanel
 - p:getRestoreGroup():com.intellij.openapi.actionSystem.ActionGroup
 - isModified():Z
 - p:needExpandAll():Z
+- p:onModified():V
 - p:patchActionsTreeCorrespondingToSchema(javax.swing.tree.DefaultMutableTreeNode):V
 - reset():V
 - resetToDefaults():V
