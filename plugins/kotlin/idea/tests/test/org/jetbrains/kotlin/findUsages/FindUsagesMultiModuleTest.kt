@@ -65,6 +65,10 @@ open class FindUsagesMultiModuleTest : AbstractFindUsagesMultiModuleTest() {
         doTest()
     }
 
+    fun testFindJvmFromActualJs() {
+        doTest()
+    }
+
     private fun doTest() {
         setupMppProjectFromDirStructure(getTestdataFile())
         doFindUsagesTest()

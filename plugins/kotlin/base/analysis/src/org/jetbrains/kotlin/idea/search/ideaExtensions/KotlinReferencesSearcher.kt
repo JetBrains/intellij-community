@@ -7,7 +7,6 @@ import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.*
@@ -303,13 +302,9 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 }
 
                 is KtConstructor<*> -> {
-                    val psiMethods = if (element.isExpectDeclaration()) {
-                        val declarations = ExpectActualSupport.getInstance(project)
-                            .actualsForExpected(element)
-                        declarations
-                            .filterIsInstance<KtConstructor<*>>()
-                            .flatMap { getLightClassMethods(it) }
-                    } else getLightClassMethods(element)
+                    val psiMethods = findAllRelatedActuals(element)
+                        .filterIsInstance<KtConstructor<*>>()
+                        .flatMap { getLightClassMethods(it) }
 
                     psiMethods.forEach { psiMethod ->
                         MethodReferencesSearch.search(
@@ -329,12 +324,9 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 }
 
                 is KtProperty -> {
-                    val propertyAccessors = if (element.isExpectDeclaration()) {
-                        ExpectActualSupport.getInstance(project)
-                            .actualsForExpected(element)
+                    val propertyAccessors = findAllRelatedActuals(element)
                             .filterIsInstance<KtProperty>()
                             .map { getLightClassPropertyMethods(it) }
-                    } else listOfNotNull(getLightClassPropertyMethods(element))
                     propertyAccessors.forEach { propertyAccessor ->
                         propertyAccessor.allDeclarations.forEach(::searchNamedElement)
                     }
@@ -375,13 +367,10 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
         @RequiresReadLock
         private fun searchPropertyAccessorMethods(origin: KtParameter) {
-            val lightMethods = if (origin.isExpectDeclaration()) {
-                ExpectActualSupport.getInstance(origin.project)
-                    .actualsForExpected(origin)
-                    .filterIsInstance<KtParameter>()
-                    .flatMap { it.toLightElements() }
-                    .toList()
-            } else origin.toLightElements()
+            val lightMethods = findAllRelatedActuals(origin)
+                .filterIsInstance<KtParameter>()
+                .flatMap { it.toLightElements() }
+                .toList()
             val namedElements = lightMethods.filterDataClassComponentsIfDisabled(kotlinOptions)
             for (element in namedElements) {
                 searchMethodAware(element)
@@ -397,14 +386,30 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             }
         }
 
+        /**
+         * return self if [element] is not expect nor actual
+         */
+        @RequiresReadLock
+        private fun findAllRelatedActuals(element: KtDeclaration): Set<KtDeclaration> {
+            val expectActualSupport = ExpectActualSupport.getInstance(element.project)
+            return when {
+                element.isExpectDeclaration() -> expectActualSupport.actualsForExpected(element)
+                !kotlinOptions.searchForExpectedUsages -> setOf(element)
+                else -> {
+                    val expectDeclaration = expectActualSupport.expectedDeclarationIfAny(element)
+                    when (expectDeclaration) {
+                        null -> setOf(element)
+                        else -> expectActualSupport.actualsForExpected(expectDeclaration)
+                    }
+                }
+            }
+        }
+
         @RequiresReadLock
         private fun processKtClassOrObject(element: KtClassOrObject) {
             if (element.name == null) return
-            val lightClasses = (if (element.isExpectDeclaration()) {
-                ExpectActualSupport.getInstance(element.project)
-                    .actualsForExpected(element)
-                    .mapNotNull { (it as? KtClassOrObject)?.toLightClass() }
-            } else listOfNotNull(element.toLightClass()))
+
+            val lightClasses = findAllRelatedActuals(element).mapNotNull { (it as? KtClassOrObject)?.toLightClass() }
 
             lightClasses.forEach(::searchNamedElement)
 
