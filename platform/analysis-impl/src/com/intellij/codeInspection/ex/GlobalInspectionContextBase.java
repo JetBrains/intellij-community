@@ -119,7 +119,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     RefManagerImpl refManager = (RefManagerImpl)getRefManager();
     if (refManager.isDeclarationsFound()) {
       RefElement refElement = refManager.getReference(element);
-      return refElement instanceof RefElementImpl && ((RefElementImpl)refElement).isSuppressed(id);
+      return refElement instanceof RefElementImpl && refElement.isSuppressed(id);
     }
     return SuppressionUtil.isSuppressed(element, id);
   }
@@ -193,7 +193,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   public boolean isToCheckMember(@NotNull RefElement owner, @NotNull InspectionProfileEntry tool) {
     return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool) &&
-           !((RefElementImpl)owner).isSuppressed(tool.getShortName(), tool.getAlternativeID());
+           !owner.isSuppressed(tool.getShortName(), tool.getAlternativeID());
   }
 
   public boolean isToCheckFile(@Nullable PsiFileSystemItem file, @NotNull InspectionProfileEntry tool) {

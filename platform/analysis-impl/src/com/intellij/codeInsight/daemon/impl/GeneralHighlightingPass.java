@@ -188,6 +188,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
           for (HighlightInfo info : newInfos) {
             if (info.getSeverity() == HighlightSeverity.ERROR) {
               myHasErrorSeverity = true;
+              break;
             }
           }
         });
