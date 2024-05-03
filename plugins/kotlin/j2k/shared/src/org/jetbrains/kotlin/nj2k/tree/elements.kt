@@ -295,6 +295,7 @@ interface JKJavaSwitchBlock : JKElement {
 interface JKKtWhenBlock : JKElement, JKFormattingOwner {
     val expression: JKExpression
     val cases: List<JKKtWhenCase>
+    var hasLiftedReturn: Boolean
 }
 
 sealed class JKJavaResourceElement : JKTreeElement(), PsiOwner by PsiOwnerImpl()

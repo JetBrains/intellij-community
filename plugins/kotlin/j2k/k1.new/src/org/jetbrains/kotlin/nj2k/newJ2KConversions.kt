@@ -65,5 +65,8 @@ fun getNewJ2KConversions(context: NewJ2kConverterContext): List<Conversion> = li
     RemoveUnnecessaryParenthesesConversion(context),
     AddElementsInfoConversion(context),
     AddConstModifierConversion(context),
-    EnumSyntheticValuesMethodConversion(context)
+    EnumSyntheticValuesMethodConversion(context),
+    MarkConditionalStatementsWithLiftedReturnsConversion(context),
+    RemoveLiftedReturnStatementsConversion(context),
+
 )

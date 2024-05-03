@@ -13,7 +13,10 @@ import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKContextType
+import org.jetbrains.kotlin.nj2k.types.isAnnotationMethod
+import org.jetbrains.kotlin.nj2k.types.isInterface
+import org.jetbrains.kotlin.nj2k.types.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JKCodeBuilder(context: NewJ2kConverterContext) {
@@ -367,8 +370,10 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-
         override fun visitIfElseStatementRaw(ifElseStatement: JKIfElseStatement) {
+            if (ifElseStatement.hasLiftedReturn) {
+                printer.print("return ")
+            }
             printer.print("if (")
             ifElseStatement.condition.accept(this)
             printer.print(") ")
@@ -861,6 +866,9 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) {
+            if (ktWhenBlock.hasLiftedReturn) {
+                printer.print("return ")
+            }
             printer.print("when (")
             ktWhenBlock.expression.accept(this)
             printer.print(")")

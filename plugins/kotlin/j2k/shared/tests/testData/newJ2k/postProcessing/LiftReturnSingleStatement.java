@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Test {
     public static int getInt(int i) {
         switch (i) {

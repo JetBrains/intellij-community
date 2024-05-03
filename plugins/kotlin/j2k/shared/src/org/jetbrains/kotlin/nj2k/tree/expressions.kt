@@ -441,6 +441,7 @@ class JKKtWhenExpression(
 ) : JKExpression(), JKKtWhenBlock {
     override var expression: JKExpression by child(expression)
     override var cases: List<JKKtWhenCase> by children(cases)
+    override var hasLiftedReturn: Boolean = false
     override fun accept(visitor: JKVisitor) = visitor.visitKtWhenExpression(this)
 
     override fun calculateType(typeFactory: JKTypeFactory): JKType? = expressionType
