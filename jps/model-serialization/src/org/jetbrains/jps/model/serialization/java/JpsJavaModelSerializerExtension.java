@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 import org.jetbrains.jps.model.serialization.java.compiler.*;
@@ -327,12 +328,12 @@ public final class JpsJavaModelSerializerExtension extends JpsModelSerializerExt
     }
 
     @Override
-    public JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor> loadProperties(@Nullable Element elem) {
-      return JpsElementFactory.getInstance().createSimpleElement(loadDescriptor(elem));
+    public JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor> loadProperties(@Nullable Element elem, @NotNull JpsPathMapper pathMapper) {
+      return JpsElementFactory.getInstance().createSimpleElement(loadDescriptor(elem, pathMapper));
     }
 
     @NotNull
-    private static JpsMavenRepositoryLibraryDescriptor loadDescriptor(@Nullable Element elem) {
+    private static JpsMavenRepositoryLibraryDescriptor loadDescriptor(@Nullable Element elem, @NotNull JpsPathMapper pathMapper) {
       if (elem == null) return new JpsMavenRepositoryLibraryDescriptor(null);
       String mavenId = elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null);
 
@@ -343,14 +344,15 @@ public final class JpsJavaModelSerializerExtension extends JpsModelSerializerExt
       Element excludeTag = elem.getChild(EXCLUDE_TAG);
       List<Element> dependencyTags = excludeTag != null ? excludeTag.getChildren(DEPENDENCY_TAG) : Collections.emptyList();
       List<String> excludedDependencies = ContainerUtil.map(dependencyTags, it -> it.getAttributeValue(MAVEN_ID_ATTRIBUTE));
-      var verificationProperties = loadArtifactsVerificationProperties(mavenId, elem.getChild(VERIFICATION_TAG));
+      var verificationProperties = loadArtifactsVerificationProperties(mavenId, elem.getChild(VERIFICATION_TAG), pathMapper);
       return new JpsMavenRepositoryLibraryDescriptor(mavenId,
                                                      includeTransitiveDependencies, excludedDependencies,
                                                      verificationProperties,
                                                      jarRepositoryId);
     }
 
-    private static List<ArtifactVerification> loadArtifactsVerificationProperties(@Nullable String mavenId, @Nullable Element element) {
+    private static List<ArtifactVerification> loadArtifactsVerificationProperties(@Nullable String mavenId, @Nullable Element element,
+                                                                                  @NotNull JpsPathMapper pathMapper) {
       if (element == null) {
         return Collections.emptyList();
       }
@@ -366,7 +368,7 @@ public final class JpsJavaModelSerializerExtension extends JpsModelSerializerExt
           if (sha256sum == null) {
             LOG.warn("Missing sha256sum attribute for verification artifact tag for descriptor maven-id=" + mavenId);
           } else {
-            result.add(new ArtifactVerification(artifactUrl, sha256sum));
+            result.add(new ArtifactVerification(pathMapper.mapUrl(artifactUrl), sha256sum));
           }
         } else {
           LOG.warn("Missing url attribute for verification artifact tag for descriptor maven-id=" + mavenId);
