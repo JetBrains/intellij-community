@@ -151,7 +151,10 @@ public class MavenServerCMDState extends CommandLineState {
 
     MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(myDistribution);
     checkExtension(extension);
+    assert extension != null; //checked in the method above, need to make static analyzer happy
     params.getClassPath().addAllFiles(extension.collectClassPathAndLibsFolder(myDistribution));
+
+    params.getVMParametersList().addAll(extension.getAdditionalVmParameters(myDistribution));
 
 
     Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());

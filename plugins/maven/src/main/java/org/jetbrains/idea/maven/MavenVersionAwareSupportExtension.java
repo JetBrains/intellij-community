@@ -3,12 +3,14 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -18,7 +20,14 @@ public interface MavenVersionAwareSupportExtension {
 
   boolean isSupportedByExtension(@Nullable File mavenHome);
 
-  @Nullable File getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType);
+  @Nullable
+  File getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType);
 
-  @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution);
+  @NotNull
+  List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution);
+
+  @NotNull
+  default List<@NonNls String> getAdditionalVmParameters(MavenDistribution distribution) {
+    return Collections.emptyList();
+  }
 }

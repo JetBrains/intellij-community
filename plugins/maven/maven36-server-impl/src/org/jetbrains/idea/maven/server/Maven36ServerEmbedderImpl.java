@@ -18,6 +18,7 @@ import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven36ArtifactDescriptorReader;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven36ArtifactResolver;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
@@ -32,16 +33,14 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
   protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
     super.customizeComponents(workspaceMap);
 
-    if (myEmbedderSettings.useCustomDependenciesResolver()) {
-      ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
-      if (artifactResolver instanceof DefaultArtifactResolver) {
-        artifactResolver = new CustomMaven36ArtifactResolver(artifactResolver);
-        addComponent(artifactResolver, ArtifactResolver.class);
-      }
+    ArtifactResolver customResolver = createCustomResolver();
+    if (customResolver != null) {
+
+      addComponent(customResolver, ArtifactResolver.class);
 
       ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
       if (artifactDescriptorReader instanceof DefaultArtifactDescriptorReader) {
-        ((DefaultArtifactDescriptorReader)artifactDescriptorReader).setArtifactResolver(artifactResolver);
+        ((DefaultArtifactDescriptorReader)artifactDescriptorReader).setArtifactResolver(customResolver);
         artifactDescriptorReader = new CustomMaven36ArtifactDescriptorReader(artifactDescriptorReader);
         addComponent(artifactDescriptorReader, ArtifactDescriptorReader.class);
       }
@@ -49,7 +48,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
       RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
       if (repositorySystem instanceof DefaultRepositorySystem) {
         DefaultRepositorySystem defaultRepositorySystem = (DefaultRepositorySystem)repositorySystem;
-        defaultRepositorySystem.setArtifactResolver(artifactResolver);
+        defaultRepositorySystem.setArtifactResolver(customResolver);
 
         defaultRepositorySystem.setArtifactDescriptorReader(artifactDescriptorReader);
 
@@ -100,6 +99,26 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
         }
       }
     }
+  }
+
+  @Nullable
+  private ArtifactResolver createCustomResolver() {
+    if (!myEmbedderSettings.useCustomDependenciesResolver()) {
+      return null;
+    }
+    String resolverClassName = System.getProperty("intellij.custom.resolver", CustomMaven36ArtifactResolver.class.getCanonicalName());
+    if (resolverClassName == null || resolverClassName.isEmpty()) return null;
+    try {
+      ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
+      if (artifactResolver instanceof DefaultArtifactResolver) {
+        Constructor<?> constructor = Class.forName(resolverClassName).getConstructor(ArtifactResolver.class);
+        return (ArtifactResolver)constructor.newInstance(artifactResolver);
+      }
+    }
+    catch (Exception e) {
+      MavenServerGlobals.getLogger().error(e);
+    }
+    return null;
   }
 
   @Override
