@@ -4,9 +4,11 @@ package git4idea.rebase.log
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.VcsLogDataKeys
@@ -62,17 +64,7 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
 
   override fun createCenterPanel(): JComponent {
     return panel {
-      row {
-        label(dialogLabel)
-          .resizableColumn()
-          .align(Align.FILL)
-        cell(commitEditor.createToolbar(true))
-      }
-      row {
-        cell(commitEditor)
-          .resizableColumn()
-          .align(Align.FILL)
-      }.resizableRow()
+      commitMessageWithLabelAndToolbar(commitEditor, dialogLabel)
     }.also {
       // Temporary workaround for IDEA-302779
       it.minimumSize = JBUI.size(400, 120)
@@ -118,4 +110,18 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     return commitEditor.comment != originMessage
   }
 
+}
+
+internal fun Panel.commitMessageWithLabelAndToolbar(commitMessage: CommitMessage, label: @NlsContexts.Label String) {
+  row {
+    label(label).also { it.component.labelFor = commitMessage.editorField }
+      .resizableColumn()
+      .align(Align.FILL)
+    cell(commitMessage.createToolbar(true))
+  }
+  row {
+    cell(commitMessage)
+      .resizableColumn()
+      .align(Align.FILL)
+  }.resizableRow()
 }
