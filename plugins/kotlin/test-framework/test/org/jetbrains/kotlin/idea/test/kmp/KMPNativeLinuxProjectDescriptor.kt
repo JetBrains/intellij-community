@@ -11,15 +11,13 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
-import org.jetbrains.kotlin.konan.target.KonanTarget
-import org.jetbrains.kotlin.platform.konan.NativePlatforms
 
 
 object KMPNativeLinuxProjectDescriptor : KotlinLightProjectDescriptor() {
     override fun getSdk(): Sdk? = null
 
     override fun configureModule(module: Module, model: ModifiableRootModel) {
-        module.createMultiplatformFacetM3(platformKind = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64))
+        module.createMultiplatformFacetM3(platformKind = KMPTestPlatform.NativeLinux.targetPlatform)
 
         ConfigLibraryUtil.addLibrary(model, "kotlin-stdlib-native-linux", KotlinNativeLibraryKind) {
             addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlibNative), OrderRootType.CLASSES)

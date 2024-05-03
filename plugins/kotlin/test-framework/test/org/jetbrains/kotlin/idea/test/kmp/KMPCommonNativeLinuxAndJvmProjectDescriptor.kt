@@ -12,20 +12,13 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
-import org.jetbrains.kotlin.konan.target.KonanTarget
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.platform.konan.NativePlatforms
 
 object KMPCommonNativeLinuxAndJvmProjectDescriptor : KotlinLightProjectDescriptor() {
     override fun getSdk(): Sdk? = IdeaTestUtil.getMockJdk18()
 
     override fun configureModule(module: Module, model: ModifiableRootModel) {
         module.createMultiplatformFacetM3(
-            platformKind = TargetPlatform(
-                NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64).componentPlatforms +
-                        JvmPlatforms.unspecifiedJvmPlatform.componentPlatforms
-            )
+            platformKind = KMPTestPlatform.CommonNativeJvm.targetPlatform,
         )
 
         ConfigLibraryUtil.addLibrary(
