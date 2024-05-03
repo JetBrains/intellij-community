@@ -112,10 +112,6 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
       override fun getCellController() = ClickController()
 
       private inner class ClickController : VcsLogCellController {
-        override fun shouldSelectCell(row: Int, e: MouseEvent): Boolean {
-          return true
-        }
-
         //todo hand cursor works initially but then stops
         override fun performMouseMove(row: Int, e: MouseEvent): VcsLogCellController.MouseMoveResult {
           val presentation = getStatusPresentation(row)
