@@ -27,7 +27,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.containers.addIfNotNull
@@ -131,9 +130,7 @@ private class ImportSubprojectAction(val source: SubprojectSource) : DumbAwareAc
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    runWithModalProgressBlocking(project, "") {
-      source.import(project)
-    }
+    source.import(project)
   }
 }
 
