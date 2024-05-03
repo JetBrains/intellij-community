@@ -423,41 +423,71 @@ open class FileEditorManagerImpl(
 
   // need to open additional non-dumb-aware editors
   private suspend fun dumbModeFinished(project: Project, fileEditorProviderManager: FileEditorProviderManager) {
-    // predictable order of iteration
-    val fileToNewProviders = openedComposites.groupByTo(LinkedHashMap()) { it.file }.entries.mapNotNull { entry ->
-      val composites = entry.value
-      val existingIds = composites.asSequence().flatMap(EditorComposite::providerSequence).mapTo(HashSet()) { it.editorTypeId }
-      val file = entry.key
-      val newProviders = fileEditorProviderManager.getDumbUnawareProviders(project, file, existingIds)
+    val fileToNewProviders = openedComposites.groupBy { it.file }.entries.mapNotNull { (file, composites) ->
+      val newProviders = fileEditorProviderManager.getDumbUnawareProviders(project, file, excludeIds = getEditorTypeIds(composites))
       if (newProviders.isEmpty()) {
         null
       }
       else {
-        file to composites.map { it to newProviders }
+        file to newProviders
       }
     }
 
-    for ((file, toOpen) in fileToNewProviders) {
-      withContext(Dispatchers.EDT) {
-        for ((composite, providers) in toOpen) {
-          if (!openedComposites.contains(composite)) {
-            continue
-          }
-
-          for (provider in providers) {
-            val editor = provider.createEditor(project, file)
-            composite.addEditor(editor = editor, provider = provider)
-          }
-        }
-        for (each in getAllSplitters()) {
-          each.updateFileBackgroundColorAsync(file)
-        }
-      }
+    for ((file, newProviders) in fileToNewProviders) {
+      updateFileEditorProviders(file, newProviders)
     }
 
     // update for non-dumb-aware EditorTabTitleProviders
     updateFileName(file = null)
   }
+
+  private suspend fun rootsChanged(project: Project, fileEditorProviderManager: FileEditorProviderManager) {
+    val providerChanges = openedComposites.groupBy { it.file }.mapNotNull { (file, composites) ->
+      val providers = fileEditorProviderManager.getProvidersAsync(project, file)
+      val editorTypeIds = providers.asSequence().map { it.editorTypeId }.toSet()
+      val oldEditorTypeIds = getEditorTypeIds(composites)
+      val newProviders = providers.filter { it.editorTypeId !in oldEditorTypeIds }
+      val editorTypeIdsToRemove = oldEditorTypeIds.filter { it !in editorTypeIds }
+      if (newProviders.isEmpty() && editorTypeIdsToRemove.isEmpty()) {
+        null
+      }
+      else {
+        Triple(file, newProviders, editorTypeIdsToRemove)
+      }
+    }
+    if (providerChanges.isEmpty()) return
+
+    for ((file, newProviders, editorTypeIdsToRemove) in providerChanges) {
+      updateFileEditorProviders(file, newProviders, editorTypeIdsToRemove)
+    }
+
+    updateFileName(file = null)
+  }
+
+  private suspend fun updateFileEditorProviders(
+    file: VirtualFile,
+    newProviders: List<FileEditorProvider>,
+    editorTypeIdsToRemove: List<String> = emptyList(),
+  ) = withContext(Dispatchers.EDT) {
+    val composites = getAllComposites(file)
+    for (composite in composites) {
+      for (editorTypeId in editorTypeIdsToRemove) {
+        composite.removeEditor(editorTypeId)
+      }
+    }
+
+    for (composite in composites) {
+      for (provider in newProviders) {
+        val editor = provider.createEditor(project, file)
+        composite.addEditor(editor = editor, provider = provider)
+      }
+    }
+    updateFileBackgroundColor(file)
+    updateTabPaneActions(file)
+  }
+
+  private fun getEditorTypeIds(composites: List<EditorComposite>): Set<String> =
+    composites.asSequence().flatMap(EditorComposite::providerSequence).mapTo(HashSet()) { it.editorTypeId }
 
   @RequiresEdt
   fun initDockableContentFactory() {
@@ -560,6 +590,12 @@ open class FileEditorManagerImpl(
   private fun updateFileBackgroundColor(file: VirtualFile) {
     for (each in getAllSplitters()) {
       each.updateFileBackgroundColorAsync(file)
+    }
+  }
+
+  private fun updateTabPaneActions(file: VirtualFile) {
+    for (each in getAllSplitters()) {
+      each.updateTabPaneActions(file)
     }
   }
 
@@ -1935,6 +1971,8 @@ open class FileEditorManagerImpl(
             withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
               replaceEditors(replacements)
             }
+
+            rootsChanged(project, serviceAsync<FileEditorProviderManager>())
           }
       }
       flow

@@ -94,18 +94,14 @@ open class EditorComposite internal constructor(
       }
     }
 
+    compositePanel = EditorCompositePanel(composite = this)
     when {
       fileEditorWithProviderList.size > 1 -> {
         tabbedPaneWrapper = createTabbedPaneWrapper(component = null)
-        val component = tabbedPaneWrapper!!.component
-        compositePanel = EditorCompositePanel(realComponent = component, composite = this, focusComponent = { component })
+        setTabbedPaneComponent()
       }
       fileEditorWithProviderList.size == 1 -> {
-        tabbedPaneWrapper = null
-        val editor = fileEditorWithProviderList[0].fileEditor
-        compositePanel = EditorCompositePanel(realComponent = createEditorComponent(editor),
-                                              composite = this,
-                                              focusComponent = { editor.preferredFocusedComponent })
+        setEditorComponent()
       }
       else -> throw IllegalArgumentException("editor array cannot be empty")
     }
@@ -113,6 +109,17 @@ open class EditorComposite internal constructor(
     selectedEditorWithProviderMutable.value = fileEditorWithProviderList[0]
     focusWatcher = FocusWatcher()
     focusWatcher.install(compositePanel)
+  }
+
+  private fun setTabbedPaneComponent() {
+    val component = tabbedPaneWrapper!!.component
+    compositePanel.setComponent(component, focusComponent = { component })
+  }
+
+  private fun setEditorComponent() {
+    val editor = fileEditorWithProviderList.single().fileEditor
+    val component = createEditorComponent(editor)
+    compositePanel.setComponent(component, focusComponent = { editor.preferredFocusedComponent })
   }
 
   companion object {
@@ -436,9 +443,13 @@ open class EditorComposite internal constructor(
     if (!clientId.isLocal) {
       assignClientId(editor, clientId)
     }
-    if (tabbedPaneWrapper == null) {
+    if (fileEditorWithProviderList.size == 1) {
+      setEditorComponent()
+      selectedEditorWithProviderMutable.value = fileEditorWithProviderList[0]
+    }
+    else if (tabbedPaneWrapper == null) {
       tabbedPaneWrapper = createTabbedPaneWrapper(compositePanel)
-      compositePanel.setComponent(tabbedPaneWrapper!!.component)
+      setTabbedPaneComponent()
     }
     else {
       val component = createEditorComponent(editor)
@@ -446,7 +457,39 @@ open class EditorComposite internal constructor(
     }
     focusWatcher!!.deinstall(focusWatcher.topComponent)
     focusWatcher.install(compositePanel)
+    if (fileEditorWithProviderList.size == 1) {
+      preferredFocusedComponent?.requestFocusInWindow()
+    }
     dispatcher.multicaster.editorAdded(editorWithProvider)
+  }
+
+  internal fun removeEditor(editorTypeId: String) {
+    ThreadingAssertions.assertEventDispatchThread()
+    for (i in fileEditorWithProviderList.indices.reversed()) {
+      val (fileEditor, provider) = fileEditorWithProviderList[i]
+      if (provider.editorTypeId != editorTypeId) continue
+      tabbedPaneWrapper?.removeTabAt(i)
+      fileEditorWithProviderList.removeAt(i)
+      topComponents.remove(fileEditor)
+      bottomComponents.remove(fileEditor)
+      displayNames.remove(fileEditor)
+      Disposer.dispose(fileEditor)
+    }
+
+    if (fileEditorWithProviderList.isEmpty()) {
+      compositePanel.removeAll()
+    }
+    else if (fileEditorWithProviderList.size == 1 && tabbedPaneWrapper != null) {
+      tabbedPaneWrapper = null
+      setEditorComponent()
+    }
+
+    if (selectedEditorWithProvider.value?.provider?.editorTypeId == editorTypeId) {
+      selectedEditorWithProviderMutable.value = fileEditorWithProviderList.firstOrNull()
+    }
+    focusWatcher!!.deinstall(focusWatcher.topComponent)
+    focusWatcher.install(compositePanel)
+    dispatcher.multicaster.editorRemoved(editorTypeId)
   }
 
   internal fun currentStateAsHistoryEntry(): HistoryEntry {
@@ -494,17 +537,18 @@ open class EditorComposite internal constructor(
   }
 }
 
-private class EditorCompositePanel(realComponent: JComponent,
-                                   private val composite: EditorComposite,
-                                   @JvmField var focusComponent: () -> JComponent?) : JPanel(BorderLayout()), DataProvider {
+private class EditorCompositePanel(private val composite: EditorComposite) : JPanel(BorderLayout()), DataProvider {
+  lateinit var focusComponent: () -> JComponent?
+    private set
+
   init {
     isFocusable = false
-    add(realComponent, BorderLayout.CENTER)
   }
 
-  fun setComponent(newComponent: JComponent) {
+  fun setComponent(newComponent: JComponent, focusComponent: () -> JComponent?) {
+    removeAll()
     add(newComponent, BorderLayout.CENTER)
-    focusComponent = { newComponent }
+    this.focusComponent = focusComponent
   }
 
   override fun requestFocusInWindow(): Boolean = focusComponent()?.requestFocusInWindow() ?: false
