@@ -547,7 +547,7 @@ class MavenProjectReader(private val myProject: Project) {
         problems.add(MavenProjectProblem.createProblem(file.path, e!!.message, type, false))
       }
 
-      override fun onSyntaxError() {
+      override fun onSyntaxError(message: String, startOffset: Int, endOffset: Int) {
         problems.add(MavenProjectProblem.createSyntaxProblem(file.path, type))
       }
     })
