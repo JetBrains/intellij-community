@@ -243,7 +243,7 @@ fun checkVisibilityConflictsForInternalUsages(
 private fun PsiElement.createAccessibilityConflictInternal(
     referencedDeclaration: PsiElement,
     targetModule: Module
-): Pair<PsiElement, String>? {
+): Pair<PsiElement, String> {
     return this to RefactoringBundle.message(
         "0.referenced.in.1.will.not.be.accessible.in.module.2",
         RefactoringUIUtil.getDescription(referencedDeclaration, true),
