@@ -4,9 +4,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.Rectangle
 
 class EditorCellInput(
   private val editor: EditorEx,
@@ -16,10 +18,20 @@ class EditorCellInput(
 
   private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
 
-  val location: Point
-    get() = _component.location
-  val size: Dimension
-    get() = _component.size
+  val bounds: Rectangle
+    get() {
+      val linesRange = intervalPointer.get()!!.lines
+      val startOffset = editor.document.getLineStartOffset(linesRange.first)
+      val endOffset = editor.document.getLineEndOffset(linesRange.last)
+      val bounds = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
+        .asSequence()
+        .filter { it.properties.priority > editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY }
+        .mapNotNull { it.bounds }
+        .fold(Rectangle(_component.location, _component.size)) { b, i ->
+          b.union(i)
+        }
+      return bounds
+    }
 
   private var _component: EditorCellViewComponent = componentFactory(null).also { bind(it) }
     set(value) {
@@ -33,7 +45,7 @@ class EditorCellInput(
   private fun bind(value: EditorCellViewComponent) {
     value.addViewComponentListener(object : EditorCellViewComponentListener {
       override fun componentBoundaryChanged(location: Point, size: Dimension) {
-        cellEventListeners.multicaster.componentBoundaryChanged(location, size)
+        cellEventListeners.multicaster.componentBoundaryChanged(bounds.location, bounds.size)
       }
     })
   }

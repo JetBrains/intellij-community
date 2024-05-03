@@ -18,8 +18,7 @@ import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComp
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.InnerComponent
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.SurroundingComponent
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView.NotebookCellDataProvider
-import java.awt.Dimension
-import java.awt.Point
+import java.awt.Rectangle
 import java.awt.Toolkit
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -50,10 +49,10 @@ class EditorCellOutputs(
   }
   private var inlay: Inlay<*>? = null
 
-  val location: Point
-    get() = outerComponent.location
-  val size: Dimension
-    get() = outerComponent.size
+  val bounds: Rectangle?
+    get() {
+      return inlay?.bounds
+    }
 
   init {
     update()
@@ -65,8 +64,11 @@ class EditorCellOutputs(
   }
 
   fun updatePositions() {
-    cellEventListeners.multicaster.componentBoundaryChanged(location, size)
-    outputs.forEach { it.updatePositions() }
+    val b = bounds
+    if (b != null) {
+      cellEventListeners.multicaster.componentBoundaryChanged(b.location, b.size)
+      outputs.forEach { it.updatePositions() }
+    }
   }
 
   fun onViewportChange() {

@@ -85,15 +85,13 @@ class EditorCellView(
   }
 
   private fun updateBoundaries() {
-    val y = input.location.y
+    val inputBounds = input.bounds
+    val y = inputBounds.y
     _location = Point(0, y)
     val currentOutputs = outputs
     _size = Dimension(
       editor.contentSize.width,
-      if (currentOutputs == null)
-        input.size.height
-      else
-        currentOutputs.size.height + currentOutputs.location.y - y
+      currentOutputs?.bounds?.let { it.height + it.y - y } ?: inputBounds.height
     )
   }
 
@@ -160,7 +158,7 @@ class EditorCellView(
   }
 
   private fun hasOutputs() = interval.type == NotebookCellLines.CellType.CODE
-                           && (editor.editorKind != EditorKind.DIFF || Registry.`is`("jupyter.diff.viewer.output"))
+                             && (editor.editorKind != EditorKind.DIFF || Registry.`is`("jupyter.diff.viewer.output"))
 
   private fun getInputFactories(): Sequence<NotebookCellInlayController.Factory> {
     return NotebookCellInlayController.Factory.EP_NAME.extensionList.asSequence()
