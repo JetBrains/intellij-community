@@ -38,7 +38,7 @@ public abstract class PyEnvTestCase {
   private static final String TAGS_FILE = "tags.txt";
 
   @NotNull
-  protected static final PyEnvTestSettings SETTINGS = new PyEnvTestSettings();
+  protected static final PyEnvTestSettings SETTINGS = PyEnvTestSettings.Companion.fromEnvVariables();
 
 
   /**
