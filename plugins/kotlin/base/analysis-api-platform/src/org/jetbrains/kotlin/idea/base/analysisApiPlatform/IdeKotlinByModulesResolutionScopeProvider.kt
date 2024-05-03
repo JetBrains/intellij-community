@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
@@ -8,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
+import org.jetbrains.kotlin.analysis.project.structure.utils.BuiltInsVirtualFileProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
 import org.jetbrains.kotlin.idea.base.projectStructure.collectDependencies
@@ -27,11 +29,8 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
                 val moduleInfo = module.moduleInfo as ModuleSourceInfo
                 val includeTests = moduleInfo is ModuleTestSourceInfo
                 val scope = excludeIgnoredModulesByKotlinProjectModel(moduleInfo, module, includeTests)
-                return if (module is KtSourceModuleByModuleInfoForOutsider) {
-                    module.adjustContentScope(scope)
-                } else {
-                    scope
-                }
+
+                return adjustScope(scope, module)
             }
 
             is KaDanglingFileModule -> {
@@ -55,6 +54,22 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
                 GlobalSearchScope.union(allModules.map { it.contentScope })
             }
         }
+    }
+
+    private fun adjustScope(baseScope: GlobalSearchScope, module: KtSourceModule): GlobalSearchScope {
+        var scope = baseScope
+        if (module is KtSourceModuleByModuleInfoForOutsider) {
+            scope = module.adjustContentScope(scope)
+        }
+        // every module depends on a builtin module, so builtins are always visible
+        scope = scope.withBuiltInsScope(module.project)
+        return scope
+    }
+
+    private fun GlobalSearchScope.withBuiltInsScope(project: Project): GlobalSearchScope {
+        val builtInFiles = BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()
+        val builtinsScope = GlobalSearchScope.filesScope(project, builtInFiles)
+        return GlobalSearchScope.union(listOf(this, builtinsScope))
     }
 
     /**
