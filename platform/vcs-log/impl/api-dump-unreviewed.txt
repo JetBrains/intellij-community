@@ -1298,6 +1298,11 @@ c:com.intellij.vcs.log.ui.MainVcsLogUiDataRule
 - com.intellij.ide.impl.dataRules.GetDataRule
 - <init>():V
 - getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
+f:com.intellij.vcs.log.ui.VcsBookmarkRef
+- <init>(com.intellij.ide.bookmark.Bookmark,com.intellij.ide.bookmark.BookmarkType,java.lang.String):V
+- f:getBookmark():com.intellij.ide.bookmark.Bookmark
+- f:getText():java.lang.String
+- f:getType():com.intellij.ide.bookmark.BookmarkType
 f:com.intellij.vcs.log.ui.VcsLogActionIds
 - sf:BRANCH_ACTIONS_GROUP:java.lang.String
 - sf:CHANGES_BROWSER_POPUP_ACTION_GROUP:java.lang.String
@@ -1857,6 +1862,7 @@ c:com.intellij.vcs.log.ui.details.commit.ReferencesPanel
 - javax.swing.JPanel
 - sf:H_GAP:I
 - psf:V_GAP:I
+- p:myBookmarks:java.util.List
 - p:myGroupedVisibleReferences:com.intellij.util.containers.MultiMap
 - <init>(I):V
 - <init>(java.awt.LayoutManager,I):V
@@ -1868,6 +1874,7 @@ c:com.intellij.vcs.log.ui.details.commit.ReferencesPanel
 - p:getLabelsFont():java.awt.Font
 - getMaximumSize():java.awt.Dimension
 - setReferences(java.util.List):V
+- setReferences(java.util.List,java.util.List):V
 - update():V
 f:com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider
 - com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
@@ -2329,8 +2336,16 @@ com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
 - a:getId():java.lang.String
 - a:getTitle():java.lang.String
 - a:showMenuItem():Z
+c:com.intellij.vcs.log.ui.render.BookmarkIcon
+- javax.swing.Icon
+- sf:WIDTH:F
+- <init>(javax.swing.JComponent,I,java.awt.Color,com.intellij.vcs.log.ui.VcsBookmarkRef):V
+- getIconHeight():I
+- getIconWidth():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 c:com.intellij.vcs.log.ui.render.GraphCommitCell
-- <init>(java.lang.String,java.util.Collection,java.util.Collection):V
+- <init>(java.lang.String,java.util.Collection,java.util.Collection,java.util.Collection):V
+- getBookmarksToThisCommit():java.util.Collection
 - getPrintElements():java.util.Collection
 - getRefsToThisCommit():java.util.Collection
 - getText():java.lang.String
@@ -2362,6 +2377,7 @@ c:com.intellij.vcs.log.ui.render.LabelPainter
 - <init>(javax.swing.JComponent,com.intellij.vcs.log.ui.render.LabelIconCache):V
 - clear():V
 - customizePainter(java.awt.Color,java.awt.Color,Z,I,java.util.List):V
+- customizePainter(java.awt.Color,java.awt.Color,Z,I,java.util.List,java.util.List):V
 - s:getReferenceFont():java.awt.Font
 - getSize():java.awt.Dimension
 - isCompact():Z
@@ -2385,7 +2401,7 @@ f:com.intellij.vcs.log.ui.render.VcsLogLabelPainter
 - com.intellij.vcs.log.ui.render.LabelPainter
 - sf:Companion:com.intellij.vcs.log.ui.render.VcsLogLabelPainter$Companion
 - <init>(com.intellij.vcs.log.data.VcsLogData,javax.swing.JComponent,com.intellij.vcs.log.ui.render.LabelIconCache):V
-- f:customizePainter(java.util.Collection,java.awt.Color,java.awt.Color,Z,I):V
+- f:customizePainter(java.util.Collection,java.util.Collection,java.awt.Color,java.awt.Color,Z,I):V
 - f:getShowTagNames():Z
 - f:setShowTagNames(Z):V
 f:com.intellij.vcs.log.ui.render.VcsLogLabelPainter$Companion
