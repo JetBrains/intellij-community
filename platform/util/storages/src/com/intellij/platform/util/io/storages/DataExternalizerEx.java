@@ -43,6 +43,11 @@ public interface DataExternalizerEx<T> {
    * Still, one could do better by using more 'idiomatic' API -- but it takes more effort.
    */
   static <K> DataExternalizerEx<K> adapt(@NotNull DataExternalizer<K> oldSchoolDescriptor) {
+
+    if (oldSchoolDescriptor instanceof @NotNull KeyDescriptor<K>) {
+      return KeyDescriptorEx.adapt((KeyDescriptor<K>)oldSchoolDescriptor);
+    }
+
     //Do not wrap, if oldSchoolDescriptor already implements new interface
     // -> allows for 'bilingual' implementation (that implements both old&new
     // ifaces) to work efficiently
