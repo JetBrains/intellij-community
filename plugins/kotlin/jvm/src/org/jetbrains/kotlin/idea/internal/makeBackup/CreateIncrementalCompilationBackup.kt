@@ -72,7 +72,7 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
     private fun createPatches(backupDir: File, project: Project, indicator: ProgressIndicator) {
         runReadAction {
             val localHistoryImpl = LocalHistoryImpl.getInstanceImpl()!!
-            val gateway = localHistoryImpl.gateway!!
+            val gateway = localHistoryImpl.gateway
             val localHistoryFacade = localHistoryImpl.facade
 
             val revisions = RevisionsCollector.collect(

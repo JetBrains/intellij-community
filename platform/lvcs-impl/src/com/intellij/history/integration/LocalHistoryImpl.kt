@@ -55,8 +55,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   var facade: LocalHistoryFacade? = null
     private set
 
-  var gateway: IdeaGateway? = null
-    private set
+  val gateway: IdeaGateway = IdeaGateway()
 
   private var flusherTask: Job? = null
   private val initialFlush = AtomicBoolean(true)
@@ -122,8 +121,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       storage = InMemoryChangeListStorage()
     }
     facade = LocalHistoryFacade(ChangeList(storage))
-    gateway = IdeaGateway()
-    eventDispatcher = LocalHistoryEventDispatcher(facade!!, gateway!!)
+    eventDispatcher = LocalHistoryEventDispatcher(facade!!, gateway)
   }
 
   override fun dispose() {
@@ -186,7 +184,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       return Label.NULL_INSTANCE
     }
 
-    gateway!!.registerUnsavedDocuments(facade!!)
+    gateway.registerUnsavedDocuments(facade!!)
     return label(facade!!.putSystemLabel(name, getProjectId(project), color))
   }
 
@@ -203,7 +201,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
 
       override fun getByteContent(path: String): ByteContent {
         return ApplicationManager.getApplication().runReadAction(Computable {
-          label.getByteContent(gateway!!.createTransientRootEntryForPath(path, false), path)
+          label.getByteContent(gateway.createTransientRootEntryForPath(path, false), path)
         })
       }
     }
@@ -215,7 +213,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     }
 
     return ApplicationManager.getApplication().runReadAction(Computable {
-      if (gateway!!.areContentChangesVersioned(virtualFile)) {
+      if (gateway.areContentChangesVersioned(virtualFile)) {
         ByteContentRetriever(gateway, facade, virtualFile, condition).getResult()
       }
       else {
@@ -224,13 +222,13 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     })
   }
 
-  override fun isUnderControl(file: VirtualFile): Boolean = isInitialized() && gateway!!.isVersioned(file)
+  override fun isUnderControl(file: VirtualFile): Boolean = isInitialized() && gateway.isVersioned(file)
 
   private fun isInitialized(): Boolean = isInitialized.get()
 
   @Throws(LocalHistoryException::class)
   private fun revertToLabel(project: Project, f: VirtualFile, label: LabelImpl) {
-    val path = gateway!!.getPathOrUrl(f)
+    val path = gateway.getPathOrUrl(f)
 
     var targetChangeSet: ChangeSet? = null
     var targetChange: Change? = null
@@ -248,7 +246,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       throw LocalHistoryException("Couldn't find label")
     }
 
-    val rootEntry = runReadAction { gateway!!.createTransientRootEntryForPaths(targetPaths, true) }
+    val rootEntry = runReadAction { gateway.createTransientRootEntryForPaths(targetPaths, true) }
     val leftEntry = facade!!.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet!!.id), path,
                                        /*do not revert the change itself*/false)
     val rightEntry = rootEntry.findEntry(path)

@@ -41,7 +41,7 @@ abstract class ChangeSetSelectionAction : DumbAwareAction() {
 
     val localHistoryImpl = LocalHistoryImpl.getInstanceImpl()
     val facade = localHistoryImpl.facade ?: return
-    val gateway = localHistoryImpl.gateway ?: return
+    val gateway = localHistoryImpl.gateway
 
     val selection = activitySelection.toChangeSetSelection() ?: return
 

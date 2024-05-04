@@ -39,7 +39,7 @@ internal class RevertDifferencesAction : DumbAwareAction() {
 
     val localHistoryImpl = LocalHistoryImpl.getInstanceImpl()
     val facade = localHistoryImpl.facade ?: return
-    val gateway = localHistoryImpl.gateway ?: return
+    val gateway = localHistoryImpl.gateway
 
     LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.RevertChanges, activityScope)
 

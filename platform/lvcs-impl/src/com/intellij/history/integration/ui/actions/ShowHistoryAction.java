@@ -27,7 +27,7 @@ public class ShowHistoryAction extends LocalHistoryAction {
     if (presentation.isEnabled()) {
       IdeaGateway gateway = getGateway();
       Collection<VirtualFile> files = getFiles(e);
-      presentation.setEnabled(gateway != null && isActionEnabled(gateway, files));
+      presentation.setEnabled(isActionEnabled(gateway, files));
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui.actions;
 
@@ -15,8 +15,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 @ApiStatus.Internal
 public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
@@ -28,9 +26,8 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
 
     Project project = e.getProject();
     LocalHistoryFacade vcs = getVcs();
-    IdeaGateway gateway = getGateway();
 
-    e.getPresentation().setEnabled(project != null && vcs != null && gateway != null);
+    e.getPresentation().setEnabled(project != null && vcs != null);
     e.getPresentation().setVisible(project != null);
   }
 
@@ -43,7 +40,7 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
-    actionPerformed(project, Objects.requireNonNull(getGateway()), e);
+    actionPerformed(project, getGateway(), e);
   }
 
   protected abstract void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e);
@@ -52,7 +49,7 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
     return LocalHistoryImpl.getInstanceImpl().getFacade();
   }
 
-  protected @Nullable IdeaGateway getGateway() {
+  protected @NotNull IdeaGateway getGateway() {
     return LocalHistoryImpl.getInstanceImpl().getGateway();
   }
 }
