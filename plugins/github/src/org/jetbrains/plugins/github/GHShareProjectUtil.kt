@@ -181,7 +181,7 @@ object GHShareProjectUtil {
 
         //git push origin master
         LOG.info("Pushing to github master")
-        indicator.text = GithubBundle.message("share.process.pushing.to.github.master")
+        indicator.text = GithubBundle.message("share.process.pushing.to.github.master", repository.currentBranch?.name ?: "")
         if (!pushCurrentBranch(project, repository, remoteName, remoteUrl, name, url)) {
           return
         }
