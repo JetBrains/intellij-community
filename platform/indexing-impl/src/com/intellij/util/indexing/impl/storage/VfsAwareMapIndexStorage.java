@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl.storage;
 
@@ -75,30 +75,26 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   }
 
   @Override
-  public void close() throws StorageException {
+  public void close() throws IOException {
     super.close();
-    try {
-      if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.close();
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    catch (RuntimeException e) {
-      unwrapCauseAndRethrow(e);
+    if (myKeyHashToVirtualFileMapping != null){
+      myKeyHashToVirtualFileMapping.close();
     }
   }
 
   @Override
-  public void clear() throws StorageException{
+  public void clear() throws StorageException {
     try {
       if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.close();
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
     super.clear();
   }
 
   @Override
-  public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
+  public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter)
+    throws StorageException {
     try {
       clearCachedMappings();
 

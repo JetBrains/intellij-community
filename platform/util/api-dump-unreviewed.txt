@@ -4790,6 +4790,7 @@ f:com.intellij.util.indexing.impl.EmptyInputDataDiffBuilder
 - s:processAllKeyValuesAsAdded(I,java.util.Map,com.intellij.util.indexing.impl.KeyValueUpdateProcessor):Z
 - s:processAllKeyValuesAsRemoved(I,java.util.Map,com.intellij.util.indexing.impl.RemovedKeyProcessor):Z
 com.intellij.util.indexing.impl.IndexStorage
+- java.io.Closeable
 - java.io.Flushable
 - a:addValue(java.lang.Object,I,java.lang.Object):V
 - a:clear():V

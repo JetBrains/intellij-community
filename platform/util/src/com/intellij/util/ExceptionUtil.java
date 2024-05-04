@@ -171,10 +171,10 @@ public final class ExceptionUtil {
    * are added to main exception's 'suppressed' list.
    * <p/>
    * More formally:
-   * If the first exception caught is lof type E -> the first exception is rethrown with
+   * If the first exception caught is of type E -> the first exception is rethrown with
    * the following exceptions, if any, attached as 'suppressed'.
-   * If the first exception caught is of type E -> the example exception is thrown, with
-   * the first and following exceptions attached as 'suppressed'.
+   * If the first exception caught is NOT of type E -> the 'example' exception is created
+   * and thrown, with the first and following exceptions attached as 'suppressed'.
    */
   @SafeVarargs
   public static <E extends Exception>
