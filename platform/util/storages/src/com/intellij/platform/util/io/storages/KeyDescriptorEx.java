@@ -43,6 +43,7 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K>, DataExternalizerE
       return (KeyDescriptorEx<K>)oldSchoolDescriptor;
     }
 
+    //FIXME RC: in long term it is better to have EnumeratorIntegerDescriptor implement both KeyDescriptor & KeyDescriptorEx
     if(oldSchoolDescriptor instanceof EnumeratorIntegerDescriptor){
       //noinspection unchecked
       return (KeyDescriptorEx<K>)CommonKeyDescriptors.integer();
