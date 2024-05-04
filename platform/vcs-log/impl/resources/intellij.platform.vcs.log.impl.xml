@@ -275,6 +275,7 @@
            class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.GroupBy"
            popup="true">
+      <separator key="action.vcs.log.show.separator"/>
       <reference id="Vcs.Log.PreferCommitDate"/>
       <reference id="Vcs.Log.ToggleColumns"/>
       <reference id="Vcs.Log.LayoutConfiguration"/>
