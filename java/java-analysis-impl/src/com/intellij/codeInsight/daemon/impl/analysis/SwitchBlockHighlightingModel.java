@@ -1046,7 +1046,12 @@ public class SwitchBlockHighlightingModel {
         description = JavaErrorBundle.message("duplicate.unconditional.pattern.label");
       }
       else {
-        description = JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
+        if (duplicateElement instanceof PsiLiteralExpression literalExpression) {
+          description = JavaErrorBundle.message("duplicate.switch.label", literalExpression.getValue());
+        }
+        else {
+          description = JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
+        }
       }
       HighlightInfo.Builder info = createError(duplicateElement, description);
       PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(duplicateElement, PsiSwitchLabelStatementBase.class);

@@ -101,8 +101,8 @@ public class SwitchConstantPrimitiveSimilar {
         byte o = '1';
         switch (o) {
             case 1 -> System.out.println("1");
-            case <error descr="Duplicate label '97'">'a'</error> -> System.out.println("a");
-            case <error descr="Duplicate label '97'">'a'</error> -> System.out.println("a");// error
+            case <error descr="Duplicate label 'a'">'a'</error> -> System.out.println("a");
+            case <error descr="Duplicate label 'a'">'a'</error> -> System.out.println("a");// error
             case 0xa -> System.out.println("0xa");
             default -> System.out.println("default");
         }
@@ -118,8 +118,8 @@ public class SwitchConstantPrimitiveSimilar {
     private static void testChar() {
         char o = '1';
         switch (o) {
-            case <error descr="Duplicate label ''">1</error> -> System.out.println("1");
-            case <error descr="Duplicate label ''">1</error> -> System.out.println("1");// error
+            case <error descr="Duplicate label '1'">1</error> -> System.out.println("1");
+            case <error descr="Duplicate label '1'">1</error> -> System.out.println("1");// error
             default -> System.out.println("default");
         }
         switch (o) {
@@ -236,8 +236,8 @@ public class SwitchConstantPrimitiveSimilar {
         Byte o = '1';
         switch (o) {
             case 1 -> System.out.println("1");
-            case <error descr="Duplicate label '97'">'a'</error> -> System.out.println("a");
-            case <error descr="Duplicate label '97'">'a'</error> -> System.out.println("a");// error
+            case <error descr="Duplicate label 'a'">'a'</error> -> System.out.println("a");
+            case <error descr="Duplicate label 'a'">'a'</error> -> System.out.println("a");// error
             case 0xa -> System.out.println("0xa");
             default -> System.out.println("default");
         }
@@ -253,8 +253,8 @@ public class SwitchConstantPrimitiveSimilar {
     private static void testCharObject() {
         Character o = '1';
         switch (o) {
-            case <error descr="Duplicate label ''">1</error> -> System.out.println("1");
-            case <error descr="Duplicate label ''">1</error> -> System.out.println("1");// error
+            case <error descr="Duplicate label '1'">1</error> -> System.out.println("1");
+            case <error descr="Duplicate label '1'">1</error> -> System.out.println("1");// error
             default -> System.out.println("default");
         }
         switch (o) {
