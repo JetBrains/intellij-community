@@ -123,7 +123,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     }
     facade = LocalHistoryFacade(ChangeList(storage))
     gateway = IdeaGateway()
-    eventDispatcher = LocalHistoryEventDispatcher(facade, gateway)
+    eventDispatcher = LocalHistoryEventDispatcher(facade!!, gateway!!)
   }
 
   override fun dispose() {
