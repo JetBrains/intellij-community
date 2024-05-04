@@ -311,30 +311,27 @@ internal class WindowsDistributionBuilder(
     return !file.name.contains(customizer.zipArchiveWithoutBundledJreSuffix)
   }
 
-  private suspend fun buildWinLauncher(winDistPath: Path,
-                                       arch: JvmArchitecture,
-                                       additionalNonCustomizableJvmArgs: List<String>,
-                                       context: BuildContext) {
+  private suspend fun buildWinLauncher(
+    winDistPath: Path,
+    arch: JvmArchitecture,
+    additionalNonCustomizableJvmArgs: List<String>,
+    context: BuildContext
+  ) {
     spanBuilder("build Windows executable").useWithScope {
       val executableBaseName = "${context.productProperties.baseFileName}64"
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
       val icoFile = computeIcoPath(context)
 
-    @Suppress("SpellCheckingInspection")
-    val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + listOf("-Dide.native.launcher=true") + 
-                    additionalNonCustomizableJvmArgs
-    val productName = context.applicationInfo.shortProductName
-    val classPath = context.bootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
-    val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
-    val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
-    val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico-${arch.dirName}")
-    val appInfoForLauncher = generateApplicationInfoForLauncher(
-      appInfo = context.appInfoXml,
-      icoFilesDirectory = icoFilesDirectory,
-      icoFile = icoFile,
-    )
-    @Suppress("SpellCheckingInspection")
-    Files.writeString(launcherPropertiesPath, """
+      val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + additionalNonCustomizableJvmArgs +
+                      (if (customizer.useXPlatLauncher) emptyList() else listOf("-Dide.native.launcher=true"))
+      val productName = context.applicationInfo.shortProductName
+      val classPath = context.bootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
+      val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
+      val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
+      val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico-${arch.dirName}")
+      val appInfoForLauncher = generateApplicationInfoForLauncher(context.appInfoXml, icoFilesDirectory, icoFile)
+      @Suppress("SpellCheckingInspection")
+      Files.writeString(launcherPropertiesPath, """
         IDS_JDK_ONLY=${context.productProperties.toolsJarRequired}
         IDS_JDK_ENV_VAR=${envVarBaseName}_JDK
         IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${context.applicationInfo.shortCompanyName}\\\\${context.systemSelector}
@@ -347,8 +344,8 @@ internal class WindowsDistributionBuilder(
         IDS_CLASSPATH_LIBS=${classPath}
         IDS_BOOTCLASSPATH_LIBS=${bootClassPath}
         IDS_INSTANCE_ACTIVATION=${context.productProperties.fastInstanceActivation}
-        IDS_MAIN_CLASS=${context.ideMainClassName.replace('.', '/')}
-        """.trimIndent().trim())
+        IDS_MAIN_CLASS=${context.ideMainClassName.replace('.', '/')}""".trimIndent().trim()
+      )
 
       val communityHome = context.paths.communityHomeDir
       val inputPath = if (customizer.useXPlatLauncher) {
@@ -356,10 +353,10 @@ internal class WindowsDistributionBuilder(
         val licenses = winDistPath.resolve("license/launcher-third-party-libraries.html")
         if (!licenses.exists()) {
           copyFile(licensePath, licenses)
-        } else {
+        }
+        else {
           require(licenses.isRegularFile()) { "$licenses already exists, but is not a file." }
         }
-
         execPath
       }
       else {
@@ -372,43 +369,32 @@ internal class WindowsDistributionBuilder(
       val generatorClasspath = context.getModuleRuntimeClasspath(
         module = context.findRequiredModule("intellij.tools.launcherGenerator"),
         forTests = false)
-      classpath.addAll(generatorClasspath)
+      classpath += generatorClasspath
 
       sequenceOf(context.findApplicationInfoModule(), context.findRequiredModule("intellij.platform.icons"))
         .flatMap { it.sourceRoots }
-        .forEach { root ->
-          classpath.add(root.file.absolutePath)
-        }
+        .forEach { root -> classpath += root.file.absolutePath }
 
       for (p in context.productProperties.brandingResourcePaths) {
-        classpath.add(p.toString())
+        classpath += p.toString()
       }
-      classpath.add(icoFilesDirectory.toString())
 
-      try {
-        runJava(
-          mainClass = "com.pme.launcher.LauncherGeneratorMain",
-          args = listOf(
-                  inputPath.absolutePathString(),
-                  appInfoForLauncher.absolutePathString(),
-                  "$communityHome/native/WinLauncher/resource.h",
-                  launcherPropertiesPath.absolutePathString(),
-                  icoFile?.fileName?.toString() ?: " ",
-                  outputPath.absolutePathString(),
-                ),
-          jvmArgs = listOf("-Djava.awt.headless=true"),
-          classPath = classpath,
-          javaExe = context.stableJavaExecutable
-        )
-      } catch (e: Throwable) {
-        if (!customizer.useXPlatLauncher) throw e
+      classpath += icoFilesDirectory.toString()
 
-        throw IllegalStateException(
-          "Failed to patch resources in the new launcher." +
-          " Most likely `XPLAT_LAUNCHER_EMBED_RESOURCES_AND_MANIFEST` env var was not set to `1` during the cargo build.",
-          e
-        )
-      }
+      runJava(
+        mainClass = "com.pme.launcher.LauncherGeneratorMain",
+        args = listOf(
+          inputPath.absolutePathString(),
+          appInfoForLauncher.absolutePathString(),
+          "${communityHome}/native/WinLauncher/resource.h",
+          launcherPropertiesPath.absolutePathString(),
+          icoFile?.fileName?.toString() ?: " ",
+          outputPath.absolutePathString(),
+        ),
+        jvmArgs = listOf("-Djava.awt.headless=true"),
+        classpath,
+        context.stableJavaExecutable
+      )
     }
   }
 }
