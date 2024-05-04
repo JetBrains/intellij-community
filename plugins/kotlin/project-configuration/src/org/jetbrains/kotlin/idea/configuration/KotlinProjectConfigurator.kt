@@ -143,7 +143,7 @@ interface KotlinProjectConfigurator {
     /**
      * Adds a module-wide opt-in for the given [annotationFqName] in the given [module].
      * 
-     * The [compilerArgument] is a convenience for implementations that use raw compiler arguments, It already contains the correct
+     * The [compilerArgument] is a convenience for implementations that use raw compiler arguments. It already contains the correct
      * compiler argument name for the current Kotlin version (`-Xuse-experimental`, `-Xopt-in`, `-opt-in`) and the annotation name.
      */
     fun addModuleWideOptIn(module: Module, annotationFqName: FqName, compilerArgument: String) {

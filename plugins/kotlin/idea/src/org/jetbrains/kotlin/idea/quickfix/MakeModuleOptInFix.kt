@@ -41,18 +41,17 @@ open class MakeModuleOptInFix(
 
     private val compilerArgument = "$compilerArgName=$annotationFqName"
 
-    override fun getText(): String = KotlinBundle.message("add.0.to.module.1.compiler.arguments", compilerArgument, module.name)
+    override fun getText(): String = KotlinBundle.message("fix.opt_in.text.use.module", annotationFqName.shortName().asString(), module.name)
 
     override fun getFamilyName(): String = KotlinBundle.message("add.an.opt.in.requirement.marker.compiler.argument")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val configurator = allConfigurators().find { it.isApplicable(module) && it.canAddModuleWideOptIn }
-        configurator?.addModuleWideOptIn(module, annotationFqName, compilerArgument)
+        findApplicableConfigurator()?.addModuleWideOptIn(module, annotationFqName, compilerArgument)
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        return allConfigurators().any { it.isApplicable(module) && it.canAddModuleWideOptIn }
-    }
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = findApplicableConfigurator() != null
+
+    private fun findApplicableConfigurator() = allConfigurators().find { it.isApplicable(module) && it.canAddModuleWideOptIn }
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
