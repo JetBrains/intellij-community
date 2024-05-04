@@ -14,14 +14,14 @@ import kotlin.io.path.Path
 class GradleModuleDetector : BuildSystemTypeDetector {
     override fun detectBuildSystemType(module: Module): BuildSystemType? {
         if (module.isGradleModule) {
-            if (FacetManager.getInstance(module).allFacets.any { it.name == "Android" }) {
-                return BuildSystemType.AndroidGradle
-            }
             // We need to detect AmperGradle here (in addition to AmperBuildSystemTypeDetector from the Amper plugin).
-            // If we didn't, we would just return BuildSystemType.Gradle here when the AmperBuildSystemTypeDetector does not run first
-            // (this would depend on the entrypoint order, and on whether the Amper plugin is enabled).
+            // If we didn't, we would just return Gradle or AndroidGradle here when the AmperBuildSystemTypeDetector does not run first
+            // (this would depend on the entrypoint order, and on whether the Amper plugin is enabled at all).
             if (module.isConfiguredViaAmperFiles()) {
                 return BuildSystemType.AmperGradle
+            }
+            if (FacetManager.getInstance(module).allFacets.any { it.name == "Android" }) {
+                return BuildSystemType.AndroidGradle
             }
             return BuildSystemType.Gradle
         }
