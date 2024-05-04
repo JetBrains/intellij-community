@@ -32,7 +32,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.regex.Pattern
 
-open class LocalHistoryFacade(private val changeList: ChangeList) {
+open class LocalHistoryFacade(internal val changeList: ChangeList) {
   private val listeners: MutableList<Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   @get:TestOnly

@@ -52,7 +52,6 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   var isDisabled: Boolean = false
     private set
 
-  private var changeList: ChangeList? = null
   var facade: LocalHistoryFacade? = null
     private set
 
@@ -100,7 +99,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       while (true) {
         delay(1.seconds)
 
-        val changeList = changeList ?: continue
+        val changeList = facade?.changeList ?: continue
         withContext(Dispatchers.IO) {
           if (initialFlush.compareAndSet(true, false)) {
             changeList.purgeObsolete()
@@ -122,8 +121,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       LocalHistoryLog.LOG.warn("cannot create storage, in-memory  implementation will be used", e)
       storage = InMemoryChangeListStorage()
     }
-    changeList = ChangeList(storage)
-    facade = LocalHistoryFacade(changeList!!)
+    facade = LocalHistoryFacade(ChangeList(storage))
     gateway = IdeaGateway()
     eventDispatcher = LocalHistoryEventDispatcher(facade, gateway)
   }
@@ -141,7 +139,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       it.cancel()
       flusherTask = null
     }
-    changeList?.close()
+    facade?.changeList?.close()
     LocalHistoryLog.LOG.debug("Local history storage successfully closed.")
   }
 
