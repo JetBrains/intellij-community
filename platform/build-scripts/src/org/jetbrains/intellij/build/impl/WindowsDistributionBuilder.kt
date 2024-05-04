@@ -40,17 +40,12 @@ internal class WindowsDistributionBuilder(
 
       copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
 
-      copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
+      @Suppress("SpellCheckingInspection")
+      copyDir(sourceBinDir, distBinDir, fileFilter = {
+        file -> context.includeBreakGenLibraries() || !file.name.startsWith("breakgen")
+      })
 
-      FileSet(sourceBinDir)
-        .includeAll()
-        .also {
-          if (!context.includeBreakGenLibraries()) {
-            @Suppress("SpellCheckingInspection")
-            it.exclude("breakgen*.dll")
-          }
-        }
-        .copyToDir(distBinDir)
+      copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
 
       generateBuildTxt(context, targetPath)
       generateLanguagePluginsXml(context, targetPath)
