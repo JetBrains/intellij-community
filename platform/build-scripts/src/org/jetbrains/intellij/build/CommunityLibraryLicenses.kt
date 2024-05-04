@@ -780,6 +780,10 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/ktorio/ktor")
       .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
+    LibraryLicense(libraryName = "ktor-client-java-engine",
+                   url = "https://github.com/ktorio/ktor")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(libraryName = "ktor-client-jvm",
                    url = "https://github.com/ktorio/ktor")
       .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
