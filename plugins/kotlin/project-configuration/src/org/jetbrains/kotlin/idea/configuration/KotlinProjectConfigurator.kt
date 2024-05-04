@@ -103,6 +103,15 @@ interface KotlinProjectConfigurator {
 
     val targetPlatform: TargetPlatform
 
+    /**
+     * The name that the user interacts with through the build system when referring
+     * to the given [module].
+     *
+     * For instance, in KMP we often create IntelliJ modules for each fragment
+     * (`my-module.commonMain`) but users only really see `my-module` as a module.
+     */
+    fun userVisibleNameFor(module: Module) = module.name
+
     fun updateLanguageVersion(
         module: Module,
         languageVersion: String?,

@@ -1,7 +1,7 @@
 // "Opt in for 'MyExperimentalAPI' on containing class 'Bar'" "true"
 // PRIORITY: HIGH
-// ACTION: Add '-opt-in=a.b.ClassUseOptIn.MyExperimentalAPI' to module light_idea_test_case compiler arguments
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'classUseOptIn.kts'
+// ACTION: Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'bar'
 // ACTION: Opt in for 'MyExperimentalAPI' on containing class 'Bar'
 // ACTION: Opt in for 'MyExperimentalAPI' on statement
