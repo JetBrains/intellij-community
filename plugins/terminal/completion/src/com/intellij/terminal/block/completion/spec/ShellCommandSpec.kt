@@ -12,6 +12,6 @@ interface ShellCommandSpec : ShellCompletionSuggestion {
   val parserDirectives: ShellCommandParserDirectives
 
   val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>
-  val optionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>>
-  val argumentsGenerator: ShellRuntimeDataGenerator<List<ShellArgumentSpec>>
+  val options: List<ShellOptionSpec>
+  val arguments: List<ShellArgumentSpec>
 }

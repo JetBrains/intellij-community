@@ -4,20 +4,15 @@ package org.jetbrains.plugins.terminal.exp.completion
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.UnknownFileType
-import com.intellij.terminal.block.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.block.completion.spec.*
 import com.intellij.terminal.block.completion.spec.ShellSuggestionType.*
 import org.jetbrains.plugins.terminal.TerminalIcons
 import javax.swing.Icon
 
 internal object TerminalCompletionUtil {
-  suspend fun getNextSuggestionsString(
-    suggestion: ShellCompletionSuggestion,
-    context: ShellRuntimeContext,
-    generatorsExecutor: ShellDataGeneratorsExecutor
-  ): String {
+  fun getNextSuggestionsString(suggestion: ShellCompletionSuggestion): String {
     val result = when (suggestion) {
-      is ShellCommandSpec -> getNextOptionsAndArgumentsString(suggestion, context, generatorsExecutor)
+      is ShellCommandSpec -> getNextOptionsAndArgumentsString(suggestion)
       is ShellOptionSpec -> getNextArgumentsString(suggestion.arguments)
       else -> ""
     }
@@ -25,15 +20,9 @@ internal object TerminalCompletionUtil {
   }
 
   /** Returns required options and all arguments */
-  private suspend fun getNextOptionsAndArgumentsString(
-    spec: ShellCommandSpec,
-    context: ShellRuntimeContext,
-    generatorsExecutor: ShellDataGeneratorsExecutor
-  ): String {
-    val nextOptions = generatorsExecutor.execute(context, spec.optionsGenerator).filter { it.isRequired }
-    val nextArguments = generatorsExecutor.execute(context, spec.argumentsGenerator)
+  private fun getNextOptionsAndArgumentsString(spec: ShellCommandSpec): String {
     return buildString {
-      for (option in nextOptions) {
+      for (option in spec.options.filter { it.isRequired }) {
         append(option.names.first())
         val arguments = getNextArgumentsString(option.arguments)
         if (arguments.isNotEmpty()) {
@@ -42,7 +31,7 @@ internal object TerminalCompletionUtil {
         }
         append(' ')
       }
-      append(getNextArgumentsString(nextArguments))
+      append(getNextArgumentsString(spec.arguments))
     }.trim()
   }
 

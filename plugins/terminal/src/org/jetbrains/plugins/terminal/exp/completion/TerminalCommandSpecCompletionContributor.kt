@@ -52,10 +52,10 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     }
     else tokens
 
-    val elements = runBlockingCancellable {
-      val suggestions = computeSuggestions(allTokens, context)
-      suggestions.flatMap { it.toLookupElements(context) }
+    val suggestions = runBlockingCancellable {
+      computeSuggestions(allTokens, context)
     }
+    val elements = suggestions.flatMap { it.toLookupElements() }
     resultSet.addAllElements(elements)
 
     if (elements.isNotEmpty()) {
@@ -120,14 +120,11 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     return (expandedTokens ?: completeTokens) + tokens.last() // add incomplete token to the end
   }
 
-  private suspend fun ShellCompletionSuggestion.toLookupElements(context: TerminalCompletionContext): List<LookupElement> {
-    // This context is needed to get the options and arguments in getNextSuggestionsString.
-    // Usually, commandText and typedString are not needed there.
-    val runtimeContext = context.runtimeContextProvider.getContext("", "")
+  private fun ShellCompletionSuggestion.toLookupElements(): List<LookupElement> {
     return names.map { name ->
       val icon = findIconForSuggestion(name, type)
       val realInsertValue = insertValue?.replace("{cursor}", "")
-      val nextSuggestions = getNextSuggestionsString(this, runtimeContext, context.generatorsExecutor).takeIf { it.isNotEmpty() }
+      val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
       val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
       // Remove path separator from insert value, so there will be an exact match
       // if the prefix is the same string, but without path separator.

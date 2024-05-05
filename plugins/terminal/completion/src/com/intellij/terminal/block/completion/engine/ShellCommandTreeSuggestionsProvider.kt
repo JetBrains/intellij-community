@@ -27,8 +27,8 @@ internal class ShellCommandTreeSuggestionsProvider(
     return node.getAvailableArguments(node.spec.arguments)
   }
 
-  private suspend fun getAvailableArguments(node: ShellCommandNode): List<ShellArgumentSpec> {
-    return node.getAvailableArguments(node.spec.getArguments())
+  private fun getAvailableArguments(node: ShellCommandNode): List<ShellArgumentSpec> {
+    return node.getAvailableArguments(node.spec.arguments)
   }
 
   private fun ShellCommandTreeNode<*>.getAvailableArguments(allArgs: List<ShellArgumentSpec>): List<ShellArgumentSpec> {
@@ -80,7 +80,7 @@ internal class ShellCommandTreeSuggestionsProvider(
 
   private suspend fun getAllOptions(node: ShellCommandNode): List<ShellOptionSpec> {
     val options = mutableListOf<ShellOptionSpec>()
-    options.addAll(node.spec.getOptions())
+    options.addAll(node.spec.options)
 
     /**
      * Checks that [parent] command contain the subcommand with the name of [child].
@@ -96,7 +96,7 @@ internal class ShellCommandTreeSuggestionsProvider(
     // parent commands can define 'persistent' options - they can be used in all subcommands
     // but add persistent options from parent, only if it is a direct subcommand
     while (parent is ShellCommandNode && isSubcommand(parent, child)) {
-      val parentOptions = parent.spec.getOptions()
+      val parentOptions = parent.spec.options
       options.addAll(parentOptions.filter { it.isPersistent })
       child = parent
       parent = parent.parent
@@ -132,13 +132,5 @@ internal class ShellCommandTreeSuggestionsProvider(
 
   private suspend fun ShellCommandSpec.getSubcommands(): List<ShellCommandSpec> {
     return generatorsExecutor.execute(context, subcommandsGenerator)
-  }
-
-  private suspend fun ShellCommandSpec.getOptions(): List<ShellOptionSpec> {
-    return generatorsExecutor.execute(context, optionsGenerator)
-  }
-
-  private suspend fun ShellCommandSpec.getArguments(): List<ShellArgumentSpec> {
-    return generatorsExecutor.execute(context, argumentsGenerator)
   }
 }

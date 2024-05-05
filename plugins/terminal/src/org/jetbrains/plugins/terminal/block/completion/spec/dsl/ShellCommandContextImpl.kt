@@ -18,8 +18,8 @@ internal class ShellCommandContextImpl(
   override var parserDirectives: ShellCommandParserDirectives = ShellCommandParserDirectives.DEFAULT
 
   private var subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>? = null
-  private var optionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>>? = null
-  private var argumentsGenerator: ShellRuntimeDataGenerator<List<ShellArgumentSpec>>? = null
+  private var optionsSupplier: () -> List<ShellOptionSpec> = { emptyList() }
+  private val argumentSuppliers: MutableList<() -> ShellArgumentSpec> = mutableListOf()
 
   private val parentNamesWithSelf: List<String> = parentNames + names.first()
 
@@ -32,22 +32,21 @@ internal class ShellCommandContextImpl(
     }
   }
 
-  override fun options(content: suspend ShellChildOptionsContext.(ShellRuntimeContext) -> Unit) {
-    val cacheKey = createCacheKey(parentNamesWithSelf, "options")
-    optionsGenerator = ShellRuntimeDataGenerator(cacheKey) { shellContext ->
+  override fun options(content: ShellChildOptionsContext.() -> Unit) {
+    optionsSupplier = {
       val context = ShellChildOptionsContextImpl(parentNamesWithSelf)
-      content.invoke(context, shellContext)
+      content.invoke(context)
       context.build()
     }
   }
 
-  override fun arguments(content: suspend ShellChildArgumentsContext.(ShellRuntimeContext) -> Unit) {
-    val cacheKey = createCacheKey(parentNamesWithSelf, "arguments")
-    argumentsGenerator = ShellRuntimeDataGenerator(cacheKey) { shellContext ->
-      val context = ShellChildArgumentsContextImpl(parentNamesWithSelf)
-      content.invoke(context, shellContext)
+  override fun argument(content: ShellArgumentContext.() -> Unit) {
+    val supplier = {
+      val context = ShellArgumentContextImpl(parentNamesWithSelf)
+      content.invoke(context)
       context.build()
     }
+    argumentSuppliers.add(supplier)
   }
 
   fun build(): ShellCommandSpec {
@@ -60,8 +59,8 @@ internal class ShellCommandContextImpl(
       requiresSubcommand = requiresSubcommand,
       parserDirectives = parserDirectives,
       subcommandsGenerator = subcommandsGenerator ?: emptyListGenerator(),
-      optionsGenerator = optionsGenerator ?: emptyListGenerator(),
-      argumentsGenerator = argumentsGenerator ?: emptyListGenerator()
+      optionsSupplier = optionsSupplier,
+      argumentsSupplier = { argumentSuppliers.map { it() } }
     )
   }
 }

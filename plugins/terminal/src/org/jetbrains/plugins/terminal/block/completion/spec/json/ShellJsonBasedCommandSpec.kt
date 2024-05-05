@@ -46,16 +46,12 @@ internal class ShellJsonBasedCommandSpec(
   private val subcommands: List<ShellCommandSpec> by lazy {
     data.subcommands.map { ShellJsonBasedCommandSpec(it, parentNamesWithSelf) }
   }
-  private val options: List<ShellOptionSpec> by lazy {
+  override val options: List<ShellOptionSpec> by lazy {
     data.options.map { ShellJsonBasedOptionSpec(it, parentNamesWithSelf) }
   }
-  private val arguments: List<ShellArgumentSpec> by lazy {
+  override val arguments: List<ShellArgumentSpec> by lazy {
     data.args.map { ShellJsonBasedArgumentSpec(it, parentNamesWithSelf) }
   }
 
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = ShellRuntimeDataGenerator { subcommands }
-
-  override val optionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> = ShellRuntimeDataGenerator { options }
-
-  override val argumentsGenerator: ShellRuntimeDataGenerator<List<ShellArgumentSpec>> = ShellRuntimeDataGenerator { arguments }
 }

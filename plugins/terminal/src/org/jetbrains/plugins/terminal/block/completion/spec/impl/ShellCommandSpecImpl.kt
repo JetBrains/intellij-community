@@ -15,10 +15,13 @@ internal class ShellCommandSpecImpl(
   override val requiresSubcommand: Boolean = false,
   override val parserDirectives: ShellCommandParserDirectives = ShellCommandParserDirectives.DEFAULT,
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = emptyListGenerator(),
-  override val optionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> = emptyListGenerator(),
-  override val argumentsGenerator: ShellRuntimeDataGenerator<List<ShellArgumentSpec>> = emptyListGenerator()
+  private val optionsSupplier: () -> List<ShellOptionSpec> = { emptyList() },
+  private val argumentsSupplier: () -> List<ShellArgumentSpec> = { emptyList() }
 ) : ShellCompletionSuggestionBase(names, descriptionSupplier), ShellCommandSpec {
+  override val options: List<ShellOptionSpec> by lazy { optionsSupplier() }
+  override val arguments: List<ShellArgumentSpec> by lazy { argumentsSupplier() }
+
   override fun toString(): String {
-    return "ShellCommandSpecImpl(names=$names, displayName=$displayName, insertValue=$insertValue, priority=$priority, requiresSubcommand=$requiresSubcommand, parserDirectives=$parserDirectives, description=$description, subcommandsGenerator=$subcommandsGenerator, optionsGenerator=$optionsGenerator, argumentsGenerator=$argumentsGenerator)"
+    return "ShellCommandSpecImpl(names=$names, displayName=$displayName, insertValue=$insertValue, priority=$priority, requiresSubcommand=$requiresSubcommand, parserDirectives=$parserDirectives, description=$description, subcommandsGenerator=$subcommandsGenerator, options=$options, arguments=$arguments)"
   }
 }
