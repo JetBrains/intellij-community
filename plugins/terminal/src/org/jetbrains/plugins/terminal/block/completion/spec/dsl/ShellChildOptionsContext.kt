@@ -10,11 +10,14 @@ sealed interface ShellChildOptionsContext {
   fun option(vararg names: String, content: ShellOptionContext.() -> Unit)
 }
 
-internal class ShellChildOptionsContextImpl : ShellChildOptionsContext {
+/**
+ * @param [parentCommandNames] used to build cache key/debug name of the option argument's generators
+ */
+internal class ShellChildOptionsContextImpl(private val parentCommandNames: List<String>) : ShellChildOptionsContext {
   private val options: MutableList<ShellOptionSpec> = mutableListOf()
 
   override fun option(vararg names: String, content: ShellOptionContext.() -> Unit) {
-    val context = ShellOptionContextImpl(names.asList())
+    val context = ShellOptionContextImpl(names.asList(), parentCommandNames)
     content.invoke(context)
     options.add(context.build())
   }

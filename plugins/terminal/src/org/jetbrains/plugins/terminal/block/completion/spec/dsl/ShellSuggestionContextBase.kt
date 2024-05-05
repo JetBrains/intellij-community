@@ -11,4 +11,10 @@ internal abstract class ShellSuggestionContextBase(
   override var description: Supplier<@Nls String>? = null
   override var insertValue: String? = null
   override var priority: Int = 50
+
+  init {
+    if (names.isEmpty()) {
+      error("At least one name must be provided")
+    }
+  }
 }

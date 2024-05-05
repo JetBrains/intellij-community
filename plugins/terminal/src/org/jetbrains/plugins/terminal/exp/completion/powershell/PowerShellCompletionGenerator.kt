@@ -16,7 +16,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 
 internal fun powerShellCompletionGenerator(command: String, caretOffset: Int): ShellRuntimeDataGenerator<CompletionResult> {
-  return ShellRuntimeDataGenerator { context ->
+  return ShellRuntimeDataGenerator(debugName = "powershell completion") { context ->
     assert(context.shellName.isPowerShell())
 
     val commandResult = context.runShellCommand("""__JetBrainsIntellijGetCompletions "$command" $caretOffset""")

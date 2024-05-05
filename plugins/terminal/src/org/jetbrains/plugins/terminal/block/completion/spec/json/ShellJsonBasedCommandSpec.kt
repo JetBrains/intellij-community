@@ -2,10 +2,17 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.json
 
 import com.intellij.terminal.block.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.terminal.completion.ShellCommand
 
-internal class ShellJsonBasedCommandSpec(private val data: ShellCommand) : ShellCommandSpec {
+/**
+ * @param [parentNames] used to build cache key/debug name of the subcommand/option/argument generators
+ */
+internal class ShellJsonBasedCommandSpec(
+  private val data: ShellCommand,
+  parentNames: List<String> = emptyList()
+) : ShellCommandSpec {
   override val names: List<String>
     get() = data.names
 
@@ -35,15 +42,20 @@ internal class ShellJsonBasedCommandSpec(private val data: ShellCommand) : Shell
   val fullSpecRef: String?
     get() = data.loadSpec
 
-  override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = ShellRuntimeDataGenerator {
-    data.subcommands.map { ShellJsonBasedCommandSpec(it) }
-  }
+  private val parentNamesWithSelf: List<String> = parentNames + data.names.first()
 
-  override val optionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> = ShellRuntimeDataGenerator {
-    data.options.map { ShellJsonBasedOptionSpec(it) }
-  }
+  override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> =
+    ShellRuntimeDataGenerator(createCacheKey(parentNamesWithSelf, "subcommands")) {
+      data.subcommands.map { ShellJsonBasedCommandSpec(it, parentNamesWithSelf) }
+    }
 
-  override val argumentsGenerator: ShellRuntimeDataGenerator<List<ShellArgumentSpec>> = ShellRuntimeDataGenerator {
-    data.args.map { ShellJsonBasedArgumentSpec(it) }
-  }
+  override val optionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> =
+    ShellRuntimeDataGenerator(createCacheKey(parentNamesWithSelf, "options")) {
+      data.options.map { ShellJsonBasedOptionSpec(it, parentNamesWithSelf) }
+    }
+
+  override val argumentsGenerator: ShellRuntimeDataGenerator<List<ShellArgumentSpec>> =
+    ShellRuntimeDataGenerator(createCacheKey(parentNamesWithSelf, "arguments")) {
+      data.args.map { ShellJsonBasedArgumentSpec(it, parentNamesWithSelf) }
+    }
 }

@@ -13,9 +13,11 @@ import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 internal object ShellEnvBasedGenerators {
   private val LOG: Logger = logger<ShellEnvBasedGenerators>()
 
-  fun aliasesGenerator(): ShellRuntimeDataGenerator<Map<String, String>> = ShellRuntimeDataGenerator { context ->
-    val shellEnv = getShellEnv(context) ?: return@ShellRuntimeDataGenerator emptyMap()
-    shellEnv.aliases
+  fun aliasesGenerator(): ShellRuntimeDataGenerator<Map<String, String>> {
+    return ShellRuntimeDataGenerator(cacheKeyAndDebugName = "aliases") { context ->
+      val shellEnv = getShellEnv(context) ?: return@ShellRuntimeDataGenerator emptyMap()
+      shellEnv.aliases
+    }
   }
 
   suspend fun getShellEnv(context: ShellRuntimeContext): ShellEnvironment? {

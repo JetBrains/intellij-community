@@ -7,12 +7,19 @@ import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import com.intellij.terminal.block.completion.spec.ShellSuggestionType
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.terminal.completion.ShellArgument
 import java.util.function.Supplier
 
-internal class ShellJsonBasedArgumentSpec(private val data: ShellArgument) : ShellArgumentSpec {
+/**
+ * @param [parentCommandNames] used to build cache key/debug name of the generators
+ */
+internal class ShellJsonBasedArgumentSpec(
+  private val data: ShellArgument,
+  private val parentCommandNames: List<String>
+) : ShellArgumentSpec {
   override val displayName: String?
     get() = data.displayName
 
@@ -31,7 +38,7 @@ internal class ShellJsonBasedArgumentSpec(private val data: ShellArgument) : She
   override val generators: List<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>> by lazy {
     buildList {
       if (data.suggestions.isNotEmpty()) {
-        add(ShellRuntimeDataGenerator {
+        add(ShellRuntimeDataGenerator(createCacheKey(parentCommandNames, "suggestions")) {
           data.suggestions.flatMap { s ->
             val description = s.description?.let { Supplier { it } }
             s.names.map { name ->

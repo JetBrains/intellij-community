@@ -10,11 +10,14 @@ sealed interface ShellChildCommandsContext {
   fun subcommand(vararg names: String, content: ShellCommandContext.() -> Unit)
 }
 
-internal class ShellChildCommandsContextImpl : ShellChildCommandsContext {
+/**
+ * @param [parentNames] used to build cache key/debug name of the subcommand/option/argument generators
+ */
+internal class ShellChildCommandsContextImpl(private val parentNames: List<String>) : ShellChildCommandsContext {
   private val commands: MutableList<ShellCommandSpec> = mutableListOf()
 
   override fun subcommand(vararg names: String, content: ShellCommandContext.() -> Unit) {
-    val context = ShellCommandContextImpl(names.toList())
+    val context = ShellCommandContextImpl(names.toList(), parentNames)
     content.invoke(context)
     commands.add(context.build())
   }

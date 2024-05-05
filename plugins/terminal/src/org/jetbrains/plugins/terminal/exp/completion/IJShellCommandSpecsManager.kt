@@ -146,11 +146,14 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
    *     - sub2.json
    */
   private suspend fun loadFullCommandSpec(specRef: String): ShellCommandSpec? {
-    val (provider, path) = if (specRef.contains('/')) {
+    val mainCommand = if (specRef.contains('/')) {
+      specRef.substringBefore('/')
+    }
+    else null
+    val (provider, path) = if (mainCommand != null) {
       // If it is the reference of the subcommand inside the main command, we first should get the main command spec
       // It is required to get the provider of the main command.
       // This is because the subcommand spec should be loaded using its classloader.
-      val mainCommand = specRef.substringBefore('/')
       val mainCommandInfo = getShellCommandSpecInfo(mainCommand) ?: return null
       mainCommandInfo.provider to getSpecPath(mainCommandInfo.provider, specRef)
     }
@@ -169,7 +172,7 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
     val command: ShellCommand = withContext(Dispatchers.IO) {
       loadAndParseJson(path, provider.javaClass.classLoader)
     } ?: return null
-    return ShellJsonBasedCommandSpec(command)
+    return ShellJsonBasedCommandSpec(command, parentNames = mainCommand?.let { listOf(it) } ?: emptyList())
   }
 
   /**

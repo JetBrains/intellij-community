@@ -5,11 +5,15 @@ import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
 import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellArgumentSpecImpl
 import java.util.function.Supplier
 
-internal class ShellArgumentContextImpl : ShellArgumentContext {
+/**
+ * @param [parentCommandNames] used to build cache key/debug name of the generators
+ */
+internal class ShellArgumentContextImpl(private val parentCommandNames: List<String>) : ShellArgumentContext {
   override var displayName: Supplier<String>? = null
   override var isOptional: Boolean = false
   override var isVariadic: Boolean = false
@@ -19,7 +23,8 @@ internal class ShellArgumentContextImpl : ShellArgumentContext {
   private val generators: MutableList<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>> = mutableListOf()
 
   override fun generator(content: suspend (ShellRuntimeContext) -> List<ShellCompletionSuggestion>) {
-    generators.add(ShellRuntimeDataGenerator { content.invoke(it) })
+    val cacheKey = createCacheKey(parentCommandNames, "arg ${generators.count() + 1}")
+    generators.add(ShellRuntimeDataGenerator(cacheKey) { content.invoke(it) })
   }
 
   fun build(): ShellArgumentSpec {

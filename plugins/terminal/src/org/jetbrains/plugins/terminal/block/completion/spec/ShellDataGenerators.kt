@@ -3,10 +3,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.block.completion.spec.ShellCommandSpec
-import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
-import com.intellij.terminal.block.completion.spec.ShellSuggestionType
+import com.intellij.terminal.block.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCommandSpecImpl
@@ -19,14 +16,21 @@ object ShellDataGenerators {
   private val LOG: Logger = logger<ShellDataGenerators>()
 
   fun fileSuggestionsGenerator(onlyDirectories: Boolean = false): ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> {
-    return ShellRuntimeDataGenerator { context ->
+    fun getBasePath(context: ShellRuntimeContext): String {
       val separator = File.separatorChar
       val adjustedPrefix = context.typedPrefix.removePrefix("\"").removeSuffix("'")
-      val basePath = if (adjustedPrefix.contains(separator)) {
+      return if (adjustedPrefix.contains(separator)) {
         adjustedPrefix.substringBeforeLast(separator) + separator
       }
       else "."
+    }
 
+    return ShellRuntimeDataGenerator(
+      debugName = "files",
+      getCacheKey = { "files:${getBasePath(it)}" }
+    ) { context ->
+      val separator = File.separatorChar
+      val basePath = getBasePath(context)
       val result = context.runShellCommand("__jetbrains_intellij_get_directory_files $basePath")
       if (result.exitCode != 0) {
         LOG.error("Get files command for path '$basePath' failed with exit code ${result.exitCode}, output: ${result.output}")
@@ -46,25 +50,40 @@ object ShellDataGenerators {
     }
   }
 
-  fun availableCommandsGenerator(): ShellRuntimeDataGenerator<List<ShellCommandSpec>> = ShellRuntimeDataGenerator { context ->
-    val shellEnv = ShellEnvBasedGenerators.getShellEnv(context)
-                   ?: return@ShellRuntimeDataGenerator emptyList()
-    val commandSpecManager = IJShellCommandSpecsManager.getInstance()
-    val commands = sequence {
-      yieldAll(shellEnv.keywords)
-      yieldAll(shellEnv.builtins)
-      yieldAll(shellEnv.functions)
-      yieldAll(shellEnv.commands)
-    }.map {
-      commandSpecManager.getLightCommandSpec(it) ?: ShellCommandSpecImpl(listOf(it))
+  fun availableCommandsGenerator(): ShellRuntimeDataGenerator<List<ShellCommandSpec>> {
+    return ShellRuntimeDataGenerator(cacheKeyAndDebugName = "commands") { context ->
+      val shellEnv = ShellEnvBasedGenerators.getShellEnv(context)
+                     ?: return@ShellRuntimeDataGenerator emptyList()
+      val commandSpecManager = IJShellCommandSpecsManager.getInstance()
+      val commands = sequence {
+        yieldAll(shellEnv.keywords)
+        yieldAll(shellEnv.builtins)
+        yieldAll(shellEnv.functions)
+        yieldAll(shellEnv.commands)
+      }.map {
+        commandSpecManager.getLightCommandSpec(it) ?: ShellCommandSpecImpl(listOf(it))
+      }
+      val aliases = shellEnv.aliases.asSequence().map { (alias, command) ->
+        ShellCommandSpecImpl(names = listOf(alias),
+                             descriptionSupplier = TerminalBundle.messagePointer("doc.popup.alias.text", command))
+      }
+      // place aliases first, so the alias will have preference over the command, if there is the command with the same name
+      (aliases + commands).distinctBy { it.names.single() }.toList()
     }
-    val aliases = shellEnv.aliases.asSequence().map { (alias, command) ->
-      ShellCommandSpecImpl(names = listOf(alias),
-                           descriptionSupplier = TerminalBundle.messagePointer("doc.popup.alias.text", command))
-    }
-    // place aliases first, so the alias will have preference over the command, if there is the command with the same name
-    (aliases + commands).distinctBy { it.names.single() }.toList()
   }
 
   fun <T> emptyListGenerator(): ShellRuntimeDataGenerator<List<T>> = ShellRuntimeDataGenerator { emptyList() }
+
+  /**
+   * Creates a cache key or debug name of the generator in the following format:
+   * <command>.<subcommand> <suffix>
+   * For example, `git.checkout branches` (generates branch names for checkout command of Git).
+   * Subcommands can be absent, but the main command should be present.
+   * @param [commandNames] hierarchy of the command names from main command name to subcommand. It describes what command generator belongs to.
+   * @param [suffix] any string describing the meaning of the generator.
+   */
+  fun createCacheKey(commandNames: List<String>, suffix: String): String {
+    assert(commandNames.isNotEmpty())
+    return commandNames.joinToString(".") + " $suffix"
+  }
 }

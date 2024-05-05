@@ -5,7 +5,13 @@ import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
 import com.intellij.terminal.block.completion.spec.ShellOptionSpec
 import org.jetbrains.terminal.completion.ShellOption
 
-internal class ShellJsonBasedOptionSpec(private val data: ShellOption): ShellOptionSpec {
+/**
+ * @param [parentCommandNames] used to build cache key/debug name of the argument's generators
+ */
+internal class ShellJsonBasedOptionSpec(
+  private val data: ShellOption,
+  private val parentCommandNames: List<String>
+) : ShellOptionSpec {
   override val names: List<String>
     get() = data.names
 
@@ -40,6 +46,6 @@ internal class ShellJsonBasedOptionSpec(private val data: ShellOption): ShellOpt
     get() = data.dependsOn
 
   override val arguments: List<ShellArgumentSpec> by lazy {
-    data.args.map { ShellJsonBasedArgumentSpec(it) }
+    data.args.map { ShellJsonBasedArgumentSpec(it, parentCommandNames) }
   }
 }

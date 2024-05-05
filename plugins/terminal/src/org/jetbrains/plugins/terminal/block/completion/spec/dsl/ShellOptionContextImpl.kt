@@ -5,7 +5,13 @@ import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
 import com.intellij.terminal.block.completion.spec.ShellOptionSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellOptionSpecImpl
 
-internal class ShellOptionContextImpl(names: List<String>) : ShellSuggestionContextBase(names), ShellOptionContext {
+/**
+ * @param [parentCommandNames] used to build cache key/debug name of the argument's generators
+ */
+internal class ShellOptionContextImpl(
+  names: List<String>,
+  private val parentCommandNames: List<String>
+) : ShellSuggestionContextBase(names), ShellOptionContext {
   override var isPersistent: Boolean = false
   override var isRequired: Boolean = false
   override var separator: String? = null
@@ -16,7 +22,7 @@ internal class ShellOptionContextImpl(names: List<String>) : ShellSuggestionCont
   private val arguments: MutableList<ShellArgumentSpec> = mutableListOf()
 
   override fun argument(content: ShellArgumentContext.() -> Unit) {
-    val context = ShellArgumentContextImpl()
+    val context = ShellArgumentContextImpl(parentCommandNames)
     content.invoke(context)
     arguments.add(context.build())
   }
