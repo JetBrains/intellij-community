@@ -30,6 +30,14 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
                                                 listOf("-classpath", classpath.distinct().joinToString(File.pathSeparator)), Charsets.UTF_8)
       return classPathArgFile
     }
+
+    fun modulesToScopes(
+      mainModule: String,
+      additionalRuntimeModules: List<String> = emptyList(),
+      additionalTestRuntimeModules: List<String> = emptyList(),
+    ): Map<String, JpsJavaClasspathKind> =
+      (listOf(mainModule) + additionalRuntimeModules).associateWith { JpsJavaClasspathKind.PRODUCTION_RUNTIME } +
+      additionalTestRuntimeModules.associateWith { JpsJavaClasspathKind.TEST_RUNTIME }
   }
 
   private val model = JpsElementFactory.getInstance().createModel() ?: throw Exception("Couldn't create JpsModel")
