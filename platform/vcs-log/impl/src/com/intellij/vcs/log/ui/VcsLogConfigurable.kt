@@ -29,8 +29,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
-private class VcsLogConfigurable(private val project: Project) : BoundConfigurable(VcsLogBundle.message("vcs.log.settings.group.title")),
-                                                                 SearchableConfigurable {
+internal class VcsLogConfigurable(private val project: Project) : BoundConfigurable(VcsLogBundle.message("vcs.log.settings.group.title")),
+                                                                  SearchableConfigurable {
   private val sharedSettings get() = project.service<VcsLogSharedSettings>()
   private val applicationSettings get() = ApplicationManager.getApplication().service<VcsLogApplicationSettings>()
   private val fileHistorySettings get() = project.service<FileHistoryUiProperties>()
