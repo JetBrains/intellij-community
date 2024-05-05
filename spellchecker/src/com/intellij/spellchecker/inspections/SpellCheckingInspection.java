@@ -15,7 +15,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.tokenizer.*;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
@@ -139,15 +138,16 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
     tokenizer.tokenize(element, consumer);
   }
 
-  private static void addBatchDescriptor(PsiElement element,
+  private static void addBatchDescriptor(@NotNull PsiElement element,
                                          @NotNull TextRange textRange,
+                                         @NotNull String word,
                                          @NotNull ProblemsHolder holder) {
-    SpellCheckerQuickFix[] fixes = SpellcheckingStrategy.getDefaultBatchFixes(element);
+    var fixes = SpellcheckingStrategy.getDefaultBatchFixes(element, textRange, word);
     ProblemDescriptor problemDescriptor = createProblemDescriptor(element, textRange, fixes, false);
     holder.registerProblem(problemDescriptor);
   }
 
-  private static void addRegularDescriptor(PsiElement element, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
+  private static void addRegularDescriptor(@NotNull PsiElement element, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
                                            boolean useRename, String wordWithTypo) {
     SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
 
@@ -240,7 +240,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
         }
         else {
           myAlreadyChecked.add(word);
-          addBatchDescriptor(myElement, range, myHolder);
+          addBatchDescriptor(myElement, range, word, myHolder);
         }
       }
     }
