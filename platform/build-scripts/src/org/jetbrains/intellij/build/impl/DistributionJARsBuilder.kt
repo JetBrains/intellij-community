@@ -576,7 +576,7 @@ private suspend fun buildPlugins(
 
   val entries = coroutineScope {
     plugins.map { plugin ->
-      if (plugin.mainModule != "intellij.platform.builtInHelp") {
+      if (plugin.mainModule != BUILT_IN_HELP_MODULE_NAME) {
         checkOutputOfPluginModules(
           mainPluginModule = plugin.mainModule,
           includedModules = plugin.includedModules,

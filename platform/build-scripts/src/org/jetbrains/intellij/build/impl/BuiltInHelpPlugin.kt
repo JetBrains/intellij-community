@@ -15,7 +15,7 @@ import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import java.nio.file.Files
 import java.nio.file.Path
 
-private const val MODULE_NAME = "intellij.platform.builtInHelp"
+internal const val BUILT_IN_HELP_MODULE_NAME = "intellij.platform.builtInHelp"
 private val LUCENE_LIBRARIES = setOf("lucene-queryparser", "lucene-highlighter", "lucene-memory")
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
@@ -26,26 +26,26 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
     return null
   }
 
-  return PluginLayout.plugin(MODULE_NAME) { spec ->
+  return PluginLayout.plugin(BUILT_IN_HELP_MODULE_NAME) { spec ->
     val productLowerCase = productName.replace(' ', '-').lowercase()
     spec.mainJarName = "$productLowerCase-help.jar"
     spec.directoryName = "${productName.replace(" ", "")}Help"
-    spec.excludeFromModule(MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
+    spec.excludeFromModule(BUILT_IN_HELP_MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
     spec.doNotCopyModuleLibrariesAutomatically(listOf("jsoup"))
     spec.withGeneratedResources { targetDir, buildContext ->
       val assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
       buildResourcesForHelpPlugin(
         resourceRoot = resourceRoot,
-        classPath = buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(MODULE_NAME), false),
+        classPath = buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(BUILT_IN_HELP_MODULE_NAME), false),
         assetJar = assetJar,
         context = context,
       )
     }
     spec.withPatch { patcher, buildContext ->
-      patcher.patchModuleOutput(moduleName = MODULE_NAME,
+      patcher.patchModuleOutput(moduleName = BUILT_IN_HELP_MODULE_NAME,
                                 path = "META-INF/services/org.apache.lucene.codecs.Codec",
                                 content = "org.apache.lucene.codecs.lucene50.Lucene50Codec")
-      patcher.patchModuleOutput(moduleName = MODULE_NAME,
+      patcher.patchModuleOutput(moduleName = BUILT_IN_HELP_MODULE_NAME,
                                 path = "META-INF/plugin.xml",
                                 content = pluginXml(buildContext, pluginVersion),
                                 overwrite = true)

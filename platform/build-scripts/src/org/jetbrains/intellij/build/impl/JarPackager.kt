@@ -302,21 +302,13 @@ class JarPackager private constructor(
     }
 
     if (searchableOptionSetDescriptor != null) {
-      if (layout is PluginLayout) {
-        if (moduleName == layout.mainModule) {
-          val pluginId = helper.getPluginIdByModule(module)
-          moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin(pluginId))
-        }
-        else {
-          // is it a product module?
-          context.findFileInModuleSources(module, "$moduleName.xml")?.let {
-            moduleSources.addAll(searchableOptionSetDescriptor.createSourceByModule(moduleName))
-          }
-        }
-      }
-      else if (moduleName == (context.productProperties.productPluginSourceModuleName ?: context.productProperties.applicationInfoModule)) {
-        moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin("com.intellij"))
-      }
+      addSearchableOptionSources(
+        layout = layout,
+        moduleName = moduleName,
+        module = module,
+        moduleSources = moduleSources,
+        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+      )
     }
 
     val excludes = if (extraExcludes.isEmpty()) {
@@ -343,6 +335,34 @@ class JarPackager private constructor(
         asset
       }
       computeSourcesForModuleLibs(item = item, module = module, layout = layout, copiedFiles = copiedFiles, asset = jarAsset)
+    }
+  }
+
+  private fun addSearchableOptionSources(
+    layout: BaseLayout?,
+    moduleName: String,
+    module: JpsModule,
+    moduleSources: MutableList<Source>,
+    searchableOptionSetDescriptor: SearchableOptionSetDescriptor
+  ) {
+    if (layout is PluginLayout) {
+      if (moduleName == BUILT_IN_HELP_MODULE_NAME) {
+        return
+      }
+
+      if (moduleName == layout.mainModule) {
+        val pluginId = helper.getPluginIdByModule(module)
+        moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin(pluginId))
+      }
+      else {
+        // is it a product module?
+        context.findFileInModuleSources(module, "$moduleName.xml")?.let {
+          moduleSources.addAll(searchableOptionSetDescriptor.createSourceByModule(moduleName))
+        }
+      }
+    }
+    else if (moduleName == (context.productProperties.productPluginSourceModuleName ?: context.productProperties.applicationInfoModule)) {
+      moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin("com.intellij"))
     }
   }
 
