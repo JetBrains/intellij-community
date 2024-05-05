@@ -1,6 +1,7 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.ide.ClassPathBuilder
+import com.intellij.tools.launch.os.affixIO
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
@@ -143,18 +144,6 @@ object Launcher {
       logger.info("-- END")
 
       processBuilder.start() to null
-    }
-  }
-
-  fun ProcessBuilder.affixIO(redirectOutputIntoParentProcess: Boolean, logFolder: File) {
-    if (redirectOutputIntoParentProcess) {
-      this.inheritIO()
-    }
-    else {
-      logFolder.mkdirs()
-      val ts = System.currentTimeMillis()
-      this.redirectOutput(logFolder.resolve("out-$ts.log"))
-      this.redirectError(logFolder.resolve("err-$ts.log"))
     }
   }
 

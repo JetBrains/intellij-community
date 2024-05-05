@@ -2,7 +2,7 @@ package com.intellij.tools.launch.docker.cli
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.tools.launch.Launcher.affixIO
+import com.intellij.tools.launch.os.affixIO
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration

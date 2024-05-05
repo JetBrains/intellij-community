@@ -1,7 +1,8 @@
 package com.intellij.tools.launch
 
-import com.intellij.tools.launch.Launcher.affixIO
 import com.intellij.tools.launch.docker.cli.DockerCli
+import com.intellij.tools.launch.os.affixIO
+import com.intellij.tools.launch.os.pathNotResolvingSymlinks
 import com.intellij.util.SystemProperties
 import com.sun.security.auth.module.UnixSystem
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
@@ -13,9 +14,6 @@ import kotlin.math.pow
 class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
   companion object {
     private val logger = Logger.getLogger(DockerLauncher::class.java.name)
-
-    // e.g. ~/.m2/ will be /mnt/cache/.m2 on TC
-    fun File.pathNotResolvingSymlinks(): String = this.absoluteFile.normalize().path
 
     fun MutableList<String>.addVolume(volume: File, isWritable: Boolean) {
       fun volumeParameter(volume: String, isWritable: Boolean) = "--volume=$volume:$volume:${if (isWritable) "rw" else "ro"}"
