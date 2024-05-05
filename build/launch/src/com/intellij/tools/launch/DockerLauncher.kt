@@ -1,6 +1,8 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.docker.cli.DockerCli
+import com.intellij.tools.launch.docker.cli.waitForContainerId
+import com.intellij.tools.launch.docker.cli.waitForContainerToStart
 import com.intellij.tools.launch.os.affixIO
 import com.intellij.tools.launch.os.pathNotResolvingSymlinks
 import com.intellij.util.SystemProperties
@@ -9,7 +11,6 @@ import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.nio.file.Files
 import java.util.logging.Logger
-import kotlin.math.pow
 
 class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
   companion object {
@@ -184,8 +185,6 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     if (containerIdFile.exists())
       assert(containerIdFile.delete())
 
-    val containerIdPath = containerIdFile.pathNotResolvingSymlinks()
-
     val dockerRunPb = ProcessBuilder(dockerCmd)
     dockerRunPb.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
 
@@ -193,41 +192,11 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     val readableCmd = dockerRunPb.command().joinToString("\n")
     logger.info("Docker run cmd=$readableCmd")
-    logger.info("Started docker run, waiting for container ID at ${containerIdPath}")
+    logger.info("Started docker run, waiting for container ID at ${containerIdFile.pathNotResolvingSymlinks()}")
 
-    val startTimestamp = System.currentTimeMillis()
-    val timeoutMs = 40_000
-    while (System.currentTimeMillis() - startTimestamp < timeoutMs) {
-      if (!dockerRun.isAlive) error("docker run exited with code ${dockerRun.exitValue()}")
+    val containerId = waitForContainerId(dockerRun, containerIdFile)
 
-      if (containerIdFile.exists() && containerIdFile.length() > 0) {
-        logger.info("Container ID file with non-zero length detected at ${containerIdPath}")
-        break
-      }
-
-      Thread.sleep(3_000)
-    }
-
-    val containerId = containerIdFile.readText()
-    if (containerId.isEmpty()) error("Started container ID must not be empty")
-    logger.info("Container ID=$containerId")
-
-    fun isInDockerPs() =
-      dockerCli.listContainers()
-        .count { it.contains(containerName) } > 0
-
-    for (i in 1..5) {
-      if (!dockerRun.isAlive) error("docker run exited with code ${dockerRun.exitValue()}")
-
-      if (isInDockerPs()) {
-        logger.info("Container with name $containerName detected in docker ps output")
-        break
-      }
-
-      val sleepMillis = 100L * 2.0.pow(i).toLong()
-      logger.info("No container with name $containerName in docker ps output, sleeping for $sleepMillis")
-      Thread.sleep(sleepMillis)
-    }
+    waitForContainerToStart(dockerCli, containerName, dockerRun)
 
     return dockerRun to containerId
   }
