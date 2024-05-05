@@ -14,20 +14,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.spellchecker.DictionaryLayer;
 import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.spellchecker.quickfixes.ChangeTo;
-import com.intellij.spellchecker.quickfixes.RenameTo;
-import com.intellij.spellchecker.quickfixes.SaveTo;
-import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
+import com.intellij.spellchecker.quickfixes.*;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -119,42 +116,44 @@ public class SpellcheckingStrategy {
            && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element);
   }
 
-  public LocalQuickFix[] getRegularFixes(PsiElement element,
+  public LocalQuickFix[] getRegularFixes(@NotNull PsiElement element,
                                          @NotNull TextRange textRange,
                                          boolean useRename,
                                          String typo) {
     return getDefaultRegularFixes(useRename, typo, element, textRange);
   }
 
-  public static LocalQuickFix[] getDefaultRegularFixes(boolean useRename, String typo, @Nullable PsiElement element,
+  public static LocalQuickFix[] getDefaultRegularFixes(boolean useRename,
+                                                       String typo,
+                                                       @NotNull PsiElement element,
                                                        @NotNull TextRange range) {
     ArrayList<LocalQuickFix> result = new ArrayList<>();
 
     if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
-      result.add(new RenameTo());
-    } else if (element != null) {
-      result.addAll(new ChangeTo(typo, element, range).getAllAsFixes());
-    }
-
-    if (element == null) {
-      result.add(new SaveTo(typo));
-      return result.toArray(LocalQuickFix.EMPTY_ARRAY);
+      result.add(SpellCheckerQuickFixFactory.rename(element));
+    } else {
+      result.addAll(SpellCheckerQuickFixFactory.changeToVariants(element, range, typo));
     }
 
     final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());
     if (settings.isUseSingleDictionaryToSave()) {
-      result.add(new SaveTo(typo, DictionaryLayersProvider.getLayer(element.getProject(), settings.getDictionaryToSave())));
+      DictionaryLayer layer = DictionaryLayersProvider.getLayer(element.getProject(), settings.getDictionaryToSave());
+      result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, layer));
       return result.toArray(LocalQuickFix.EMPTY_ARRAY);
     }
 
-    result.add(new SaveTo(typo));
+    result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo));
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  public static SpellCheckerQuickFix[] getDefaultBatchFixes(PsiElement element) {
+  public static LocalQuickFix[] getDefaultBatchFixes(
+    @NotNull PsiElement element,
+    @NotNull TextRange textRange,
+    @NotNull String word
+  ) {
     return DictionaryLayersProvider.getAllLayers(element.getProject())
-      .stream().map(it -> new SaveTo(it))
-      .toArray(SpellCheckerQuickFix[]::new);
+      .stream().map(it -> SpellCheckerQuickFixFactory.saveTo(element, textRange, word, it))
+      .toArray(LocalQuickFix[]::new);
   }
 
   public boolean isMyContext(@NotNull PsiElement element) {
