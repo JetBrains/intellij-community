@@ -19,6 +19,9 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.history.FileHistoryUiProperties
+import com.intellij.vcs.log.history.isNewFileHistoryAvailable
+import com.intellij.vcs.log.history.isNewHistoryEnabled
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.ui.table.column.*
 import com.intellij.vcsUtil.VcsUtil
@@ -30,28 +33,21 @@ private class VcsLogConfigurable(private val project: Project) : BoundConfigurab
                                                                  SearchableConfigurable {
   private val sharedSettings get() = project.service<VcsLogSharedSettings>()
   private val applicationSettings get() = ApplicationManager.getApplication().service<VcsLogApplicationSettings>()
+  private val fileHistorySettings get() = project.service<FileHistoryUiProperties>()
 
   override fun createPanel(): DialogPanel {
     val vcsNamesToShow = getVcsNames()
     return panel {
       group(VcsLogBundle.message("group.Vcs.Log.PresentationSettings.text")) {
-        booleanPropertyCheckboxRow("vcs.log.action.description.show.compact.references.view", CommonUiProperties.COMPACT_REFERENCES_VIEW)
-        booleanPropertyCheckboxRow("vcs.log.action.description.show.tag.names", CommonUiProperties.SHOW_TAG_NAMES)
-        booleanPropertyCheckboxRow("prefer.commit.timestamp.action.description", CommonUiProperties.PREFER_COMMIT_DATE)
-        booleanPropertyCheckboxRow("vcs.log.action.description.align.labels", CommonUiProperties.LABELS_LEFT_ALIGNED)
+        booleanPropertyCheckboxRow("vcs.log.action.description.show.compact.references.view", CommonUiProperties.COMPACT_REFERENCES_VIEW,
+                                   applicationSettings)
+        booleanPropertyCheckboxRow("vcs.log.action.description.show.tag.names", CommonUiProperties.SHOW_TAG_NAMES, applicationSettings)
+        booleanPropertyCheckboxRow("prefer.commit.timestamp.action.description", CommonUiProperties.PREFER_COMMIT_DATE, applicationSettings)
+        booleanPropertyCheckboxRow("vcs.log.action.description.align.labels", CommonUiProperties.LABELS_LEFT_ALIGNED, applicationSettings)
         booleanPropertyCheckboxRow("vcs.log.action.description.show.all.changes.from.parent",
-                                   MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS)
-        diffPreviewLocationGroup()
-        if (applicationSettings.supportsColumnsToggling()) {
-          group(VcsLogBundle.message("vcs.log.settings.visible.columns")) {
-            val availableColumns = getDynamicColumns().filter {
-              (it !is VcsLogCustomColumn) || it.isAvailable(project, VcsProjectLog.getLogProviders(project).keys)
-            }
-            for (column in availableColumns) {
-              columnCheckboxRow(column)
-            }
-          }
-        }
+                                   MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS, applicationSettings)
+        diffPreviewLocationGroup(applicationSettings)
+        columnVisibilityGroup(applicationSettings)
       }
       if (VcsLogPersistentIndex.getAvailableIndexers(project).isNotEmpty()) {
         group(VcsLogBundle.message("vcs.log.settings.group.indexing.title")) {
@@ -64,49 +60,73 @@ private class VcsLogConfigurable(private val project: Project) : BoundConfigurab
           }
         }
       }
+      if (isNewFileHistoryAvailable()) {
+        group(VcsLogBundle.message("vcs.log.settings.group.file.history.title")) {
+          booleanPropertyCheckboxRow("vcs.log.action.description.show.details", CommonUiProperties.SHOW_DETAILS, fileHistorySettings)
+          booleanPropertyCheckboxRow("vcs.log.settings.show.file.names", CommonUiProperties.SHOW_ROOT_NAMES, fileHistorySettings)
+          diffPreviewLocationGroup(fileHistorySettings)
+          columnVisibilityGroup(fileHistorySettings)
+        }
+      }
     }
   }
 
-  private fun Panel.diffPreviewLocationGroup() {
-    if (!applicationSettings.exists(CommonUiProperties.SHOW_DIFF_PREVIEW)) return
+  private fun Panel.columnVisibilityGroup(properties: VcsLogUiProperties) {
+    if (properties.supportsColumnsToggling()) {
+      group(VcsLogBundle.message("vcs.log.settings.visible.columns")) {
+        val availableColumns = getDynamicColumns().filter {
+          (it !is VcsLogCustomColumn) || it.isAvailable(project, VcsProjectLog.getLogProviders(project).keys)
+        }
+        for (column in availableColumns) {
+          columnCheckboxRow(column, properties)
+        }
+      }
+    }
+  }
+
+  private fun Panel.diffPreviewLocationGroup(properties: VcsLogUiProperties) {
+    if (!properties.exists(CommonUiProperties.SHOW_DIFF_PREVIEW)) return
     lateinit var diffPreviewCheckbox: Cell<JBCheckBox>
     row {
       diffPreviewCheckbox = booleanPropertyCheckbox(VcsLogBundle.message("vcs.log.action.description.show.diff.preview"),
-                                                    CommonUiProperties.SHOW_DIFF_PREVIEW)
+                                                    CommonUiProperties.SHOW_DIFF_PREVIEW, properties)
     }
-    if (applicationSettings.exists(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT)) {
+    if (properties.exists(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT)) {
       buttonsGroup(indent = true) {
         row(VcsLogBundle.message("vcs.log.settings.diff.preview.location")) {
           radioButton(VcsLogBundle.message("action.Vcs.Log.MoveDiffPreviewToBottom.text"), true)
           radioButton(VcsLogBundle.message("action.Vcs.Log.MoveDiffPreviewToRight.text"), false)
         }
-      }.bind({ applicationSettings[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT] },
-             { applicationSettings[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT] = it })
+      }.bind({ properties[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT] },
+             { properties[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT] = it })
         .enabledIf(diffPreviewCheckbox.selected)
     }
   }
 
-  private fun Panel.columnCheckboxRow(column: VcsLogColumn<*>) {
+  private fun Panel.columnCheckboxRow(column: VcsLogColumn<*>, properties: VcsLogUiProperties) {
     row {
       checkBox(CheckboxDescriptor(column.localizedName,
-                                  { column.isVisible(applicationSettings) },
+                                  { column.isVisible(properties) },
                                   {
-                                    if (it) applicationSettings.addColumn(column)
-                                    else applicationSettings.removeColumn(column)
+                                    if (it) properties.addColumn(column)
+                                    else properties.removeColumn(column)
                                   }))
     }
   }
 
   private fun Panel.booleanPropertyCheckboxRow(textKey: @PropertyKey(resourceBundle = VcsLogBundle.BUNDLE) String,
-                                               property: VcsLogUiProperties.VcsLogUiProperty<Boolean>) {
-    if (!applicationSettings.exists(property)) return
+                                               property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
+                                               properties: VcsLogUiProperties) {
+    if (!properties.exists(property)) return
     row {
-      booleanPropertyCheckbox(VcsLogBundle.message(textKey), property)
+      booleanPropertyCheckbox(VcsLogBundle.message(textKey), property, properties)
     }
   }
 
-  private fun Row.booleanPropertyCheckbox(text: @Nls String, property: VcsLogUiProperties.VcsLogUiProperty<Boolean>): Cell<JBCheckBox> {
-    return checkBox(CheckboxDescriptor(text, { applicationSettings[property] }, { applicationSettings[property] = it }))
+  private fun Row.booleanPropertyCheckbox(text: @Nls String,
+                                          property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
+                                          properties: VcsLogUiProperties): Cell<JBCheckBox> {
+    return checkBox(CheckboxDescriptor(text, { properties[property] }, { properties[property] = it }))
   }
 
   private fun getVcsNames(): String {
@@ -116,6 +136,11 @@ private class VcsLogConfigurable(private val project: Project) : BoundConfigurab
       return indexedVcsKeys.mapNotNull { VcsUtil.findVcsByKey(project, it)?.displayName }.joinToString()
     }
     return ""
+  }
+
+  private fun isNewFileHistoryAvailable(): Boolean {
+    if (!isNewHistoryEnabled()) return false
+    return VcsProjectLog.getLogProviders(project).values.any { isNewFileHistoryAvailable(project, it) }
   }
 
   override fun getId(): String = "vcs.log"
