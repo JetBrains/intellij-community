@@ -48,7 +48,7 @@ internal class TerminalPromptController(
 
     val shellRuntimeContextProvider = IJShellRuntimeContextProvider(session)
     editor.putUserData(IJShellRuntimeContextProvider.KEY, shellRuntimeContextProvider)
-    val shellGeneratorsExecutor = IJShellGeneratorsExecutor()
+    val shellGeneratorsExecutor = IJShellGeneratorsExecutor(session)
     editor.putUserData(IJShellGeneratorsExecutor.KEY, shellGeneratorsExecutor)
 
     commandHistoryManager = CommandHistoryManager(session)
