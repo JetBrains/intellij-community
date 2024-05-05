@@ -1,15 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogProperties;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -27,8 +23,8 @@ import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.supportsCo
 
 public class PreferCommitDateAction extends BooleanPropertyToggleAction implements DumbAware {
   public PreferCommitDateAction() {
-    super(VcsBundle.messagePointer("prefer.commit.timestamp.action.text"),
-          VcsBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
+    super(VcsLogBundle.messagePointer("prefer.commit.timestamp.action.text"),
+          VcsLogBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
   }
 
   @Override
