@@ -4,8 +4,24 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
 
-internal class IJShellRuntimeDataGenerator<T>(private val func: suspend (ShellRuntimeContext) -> T) : ShellRuntimeDataGenerator<T> {
+internal interface ShellCacheableDataGenerator<T> : ShellRuntimeDataGenerator<T> {
+  fun getCacheKey(context: ShellRuntimeContext): String?
+}
+
+internal class IJShellRuntimeDataGenerator<T>(
+  private val debugName: String?,
+  private val cacheKeyFunc: (ShellRuntimeContext) -> String?,
+  private val generatorFunc: suspend (ShellRuntimeContext) -> T
+) : ShellCacheableDataGenerator<T> {
   override suspend fun generate(context: ShellRuntimeContext): T {
-    return func(context)
+    return generatorFunc(context)
+  }
+
+  override fun getCacheKey(context: ShellRuntimeContext): String? {
+    return cacheKeyFunc(context)
+  }
+
+  override fun toString(): String {
+    return "IJShellRuntimeDataGenerator${debugName?.let { ": $debugName" } ?: ""}"
   }
 }

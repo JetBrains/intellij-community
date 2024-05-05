@@ -32,6 +32,18 @@ fun ShellCompletionSuggestion(
 }
 
 @ApiStatus.Experimental
-fun <T> ShellRuntimeDataGenerator(generate: suspend (ShellRuntimeContext) -> T): ShellRuntimeDataGenerator<T> {
-  return IJShellRuntimeDataGenerator(generate)
+fun <T> ShellRuntimeDataGenerator(
+  cacheKeyAndDebugName: String? = null,
+  generate: suspend (ShellRuntimeContext) -> T
+): ShellRuntimeDataGenerator<T> {
+  return IJShellRuntimeDataGenerator(cacheKeyAndDebugName, { cacheKeyAndDebugName }, generate)
+}
+
+@ApiStatus.Experimental
+fun <T> ShellRuntimeDataGenerator(
+  debugName: String? = null,
+  getCacheKey: (ShellRuntimeContext) -> String? = { null },
+  generate: suspend (ShellRuntimeContext) -> T
+): ShellRuntimeDataGenerator<T> {
+  return IJShellRuntimeDataGenerator(debugName, getCacheKey, generate)
 }
