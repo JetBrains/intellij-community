@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp.prompt
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
@@ -21,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
 internal class TerminalPromptController(
+  project: Project,
   private val editor: EditorEx,
   session: BlockTerminalSession,
   private val commandExecutor: TerminalCommandExecutor
@@ -46,7 +48,7 @@ internal class TerminalPromptController(
     editor.virtualFile.putUserData(TerminalPromptModel.KEY, model)
     editor.virtualFile.putUserData(ShellType.KEY, session.shellIntegration.shellType)
 
-    val shellRuntimeContextProvider = IJShellRuntimeContextProvider(session)
+    val shellRuntimeContextProvider = IJShellRuntimeContextProvider(project, session)
     editor.putUserData(IJShellRuntimeContextProvider.KEY, shellRuntimeContextProvider)
     val shellGeneratorsExecutor = IJShellGeneratorsExecutor(session)
     editor.putUserData(IJShellGeneratorsExecutor.KEY, shellGeneratorsExecutor)

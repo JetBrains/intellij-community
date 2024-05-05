@@ -1,5 +1,6 @@
 package com.intellij.terminal.block.completion.spec
 
+import com.intellij.openapi.util.Key
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,6 +13,8 @@ interface ShellRuntimeContext {
   val shellName: ShellName
 
   suspend fun runShellCommand(@Language("ShellScript") command: String): ShellCommandResult
+
+  fun <T> getUserData(key: Key<T>): T?
 }
 
 @ApiStatus.Experimental
