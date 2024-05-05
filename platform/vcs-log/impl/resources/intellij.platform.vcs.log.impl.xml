@@ -33,7 +33,11 @@
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
 
-    <generalVcsSettingsExtension instance="com.intellij.vcs.log.ui.VcsLogSharedSettingsConfigurable"/>
+    <projectConfigurable id="vcs.log"
+                         parentId="project.propVCSSupport.Mappings"
+                         provider="com.intellij.vcs.log.ui.VcsLogConfigurableProvider"
+                         key="vcs.log.settings.group.title"
+                         bundle="messages.VcsLogBundle"/>
 
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>

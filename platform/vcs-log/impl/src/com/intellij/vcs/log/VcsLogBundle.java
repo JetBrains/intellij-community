@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class VcsLogBundle {
-  private static final @NonNls String BUNDLE = "messages.VcsLogBundle";
+  public static final @NonNls String BUNDLE = "messages.VcsLogBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(VcsLogBundle.class, BUNDLE);
 
   private VcsLogBundle() {
