@@ -1,4 +1,4 @@
-package com.intellij.tools.launch.impl
+package com.intellij.tools.launch.ide
 
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.io.FileUtil

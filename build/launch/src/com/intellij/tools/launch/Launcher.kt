@@ -1,6 +1,6 @@
 package com.intellij.tools.launch
 
-import com.intellij.tools.launch.impl.ClassPathBuilder
+import com.intellij.tools.launch.ide.ClassPathBuilder
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
