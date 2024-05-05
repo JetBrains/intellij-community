@@ -6,8 +6,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated If really needed use {@link com.intellij.ide.plugins.StandalonePluginUpdateChecker} instead.
+ */
+@Deprecated
 public interface FileTypeStatisticProvider {
-  @NotNull @NonNls
+  @NotNull
+  @NonNls
   String getPluginId();
 
   boolean accept(@NotNull Editor editor, @NotNull FileType fileType);
