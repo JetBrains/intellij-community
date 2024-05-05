@@ -1,5 +1,8 @@
-package com.intellij.tools.launch
+package com.intellij.tools.launch.ide.environments.docker
 
+import com.intellij.tools.launch.DockerLauncherOptions
+import com.intellij.tools.launch.DockerNetworkEntry
+import com.intellij.tools.launch.PathsProvider
 import com.intellij.tools.launch.docker.cli.*
 import com.intellij.tools.launch.os.affixIO
 import com.intellij.tools.launch.os.pathNotResolvingSymlinks
@@ -10,7 +13,7 @@ import java.io.File
 import java.nio.file.Files
 import java.util.logging.Logger
 
-class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
+internal class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
   companion object {
     private val logger = Logger.getLogger(DockerLauncher::class.java.name)
   }

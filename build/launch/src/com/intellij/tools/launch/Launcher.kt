@@ -1,6 +1,7 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.ide.ClassPathBuilder
+import com.intellij.tools.launch.ide.environments.docker.DockerLauncher
 import com.intellij.tools.launch.os.affixIO
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.SystemProperties
