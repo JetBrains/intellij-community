@@ -3,13 +3,17 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.block.completion.ShellRuntimeContextProvider
+import com.intellij.terminal.block.completion.spec.ShellName
 import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
 import com.intellij.util.PathUtil
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptState
+import org.jetbrains.plugins.terminal.util.ShellType
 
 internal class IJShellRuntimeContextProvider(private val session: BlockTerminalSession) : ShellRuntimeContextProvider {
+  private val generatorCommandsRunner: ShellGeneratorCommandsRunner = ShellGeneratorCommandsRunner(session)
+
   @Volatile
   private var curDirectory: String = ""
 
@@ -22,7 +26,17 @@ internal class IJShellRuntimeContextProvider(private val session: BlockTerminalS
   }
 
   override fun getContext(commandText: String, typedPrefix: String): ShellRuntimeContext {
-    return IJShellRuntimeContext(curDirectory, commandText, typedPrefix, session)
+    return IJShellRuntimeContext(
+      curDirectory,
+      commandText,
+      typedPrefix,
+      session.shellIntegration.shellType.toShellName(),
+      generatorCommandsRunner
+    )
+  }
+
+  private fun ShellType.toShellName(): ShellName {
+    return ShellName(this.toString().lowercase())
   }
 
   companion object {
