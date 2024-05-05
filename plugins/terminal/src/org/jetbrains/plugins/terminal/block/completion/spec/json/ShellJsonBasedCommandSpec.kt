@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.json
 
 import com.intellij.terminal.block.completion.spec.*
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.terminal.completion.ShellCommand
 
@@ -44,18 +43,19 @@ internal class ShellJsonBasedCommandSpec(
 
   private val parentNamesWithSelf: List<String> = parentNames + data.names.first()
 
-  override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> =
-    ShellRuntimeDataGenerator(createCacheKey(parentNamesWithSelf, "subcommands")) {
-      data.subcommands.map { ShellJsonBasedCommandSpec(it, parentNamesWithSelf) }
-    }
+  private val subcommands: List<ShellCommandSpec> by lazy {
+    data.subcommands.map { ShellJsonBasedCommandSpec(it, parentNamesWithSelf) }
+  }
+  private val options: List<ShellOptionSpec> by lazy {
+    data.options.map { ShellJsonBasedOptionSpec(it, parentNamesWithSelf) }
+  }
+  private val arguments: List<ShellArgumentSpec> by lazy {
+    data.args.map { ShellJsonBasedArgumentSpec(it, parentNamesWithSelf) }
+  }
 
-  override val optionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> =
-    ShellRuntimeDataGenerator(createCacheKey(parentNamesWithSelf, "options")) {
-      data.options.map { ShellJsonBasedOptionSpec(it, parentNamesWithSelf) }
-    }
+  override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = ShellRuntimeDataGenerator { subcommands }
 
-  override val argumentsGenerator: ShellRuntimeDataGenerator<List<ShellArgumentSpec>> =
-    ShellRuntimeDataGenerator(createCacheKey(parentNamesWithSelf, "arguments")) {
-      data.args.map { ShellJsonBasedArgumentSpec(it, parentNamesWithSelf) }
-    }
+  override val optionsGenerator: ShellRuntimeDataGenerator<List<ShellOptionSpec>> = ShellRuntimeDataGenerator { options }
+
+  override val argumentsGenerator: ShellRuntimeDataGenerator<List<ShellArgumentSpec>> = ShellRuntimeDataGenerator { arguments }
 }
