@@ -3,6 +3,7 @@ package com.intellij.tools.launch.docker.cli
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.launch.os.affixIO
+import com.intellij.tools.launch.os.pathNotResolvingSymlinks
 import java.io.File
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
@@ -73,3 +74,26 @@ internal class DockerCli(
     private val DEFAULT_TIMEOUT: Duration = 1.minutes
   }
 }
+
+fun MutableList<String>.addVolume(volume: File, isWritable: Boolean) {
+  fun volumeParameter(volume: String, isWritable: Boolean) = "--volume=$volume:$volume:${if (isWritable) "rw" else "ro"}"
+
+  val canonical = volume.canonicalPath
+  this.add(volumeParameter(canonical, isWritable))
+
+  // there's no consistency as to whether symlinks are resolved in user code, so we'll try our best and provide both
+  val notResolvingSymlinks = volume.pathNotResolvingSymlinks()
+  if (canonical != notResolvingSymlinks)
+    this.add(volumeParameter(notResolvingSymlinks, isWritable))
+}
+
+fun MutableList<String>.addReadonly(volume: File) = addVolume(volume, false)
+fun MutableList<String>.addReadonlyIfExists(volume: File) {
+  addVolumeIfExists(volume, false)
+}
+
+fun MutableList<String>.addVolumeIfExists(volume: File, isWritable: Boolean) {
+  if (volume.exists()) addVolume(volume, isWritable)
+}
+
+fun MutableList<String>.addWriteable(volume: File) = addVolume(volume, true)

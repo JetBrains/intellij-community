@@ -1,8 +1,6 @@
 package com.intellij.tools.launch
 
-import com.intellij.tools.launch.docker.cli.DockerCli
-import com.intellij.tools.launch.docker.cli.waitForContainerId
-import com.intellij.tools.launch.docker.cli.waitForContainerToStart
+import com.intellij.tools.launch.docker.cli.*
 import com.intellij.tools.launch.os.affixIO
 import com.intellij.tools.launch.os.pathNotResolvingSymlinks
 import com.intellij.util.SystemProperties
@@ -15,30 +13,6 @@ import java.util.logging.Logger
 class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
   companion object {
     private val logger = Logger.getLogger(DockerLauncher::class.java.name)
-
-    fun MutableList<String>.addVolume(volume: File, isWritable: Boolean) {
-      fun volumeParameter(volume: String, isWritable: Boolean) = "--volume=$volume:$volume:${if (isWritable) "rw" else "ro"}"
-
-      val canonical = volume.canonicalPath
-      this.add(volumeParameter(canonical, isWritable))
-
-      // there's no consistency as to whether symlinks are resolved in user code, so we'll try our best and provide both
-      val notResolvingSymlinks = volume.pathNotResolvingSymlinks()
-      if (canonical != notResolvingSymlinks)
-        this.add(volumeParameter(notResolvingSymlinks, isWritable))
-    }
-
-    fun MutableList<String>.addReadonly(volume: File) = addVolume(volume, false)
-    fun MutableList<String>.addReadonlyIfExists(volume: File) {
-      addVolumeIfExists(volume, false)
-    }
-
-    fun MutableList<String>.addVolumeIfExists(volume: File, isWritable: Boolean) {
-      if (volume.exists()) addVolume(volume, isWritable)
-    }
-
-    fun MutableList<String>.addWriteable(volume: File) = addVolume(volume, true)
-
   }
 
   private val dockerCli = DockerCli(workDir = paths.tempFolder, options.redirectOutputIntoParentProcess, paths.logFolder)
