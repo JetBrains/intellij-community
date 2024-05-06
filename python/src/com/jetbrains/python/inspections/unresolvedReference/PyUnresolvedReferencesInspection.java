@@ -151,7 +151,7 @@ public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferenc
       String referencedName = node instanceof PyReferenceExpression refExpr && !refExpr.isQualified() ? refExpr.getReferencedName() : null;
       if (referencedName != null && PythonSdkUtil.findPythonSdk(node) != null) {
         ContainerUtil.addIfNotNull(result, createInstallAndImportQuickFix(referencedName, null));
-        String realPackageName = PyPackageAliasesProvider.commonImportAliases.get(referencedName);
+        String realPackageName = PyCommonImportAliasesKt.PY_COMMON_IMPORT_ALIASES.get(referencedName);
         if (realPackageName != null) {
           ContainerUtil.addIfNotNull(result, createInstallAndImportQuickFix(realPackageName, referencedName));
         }
