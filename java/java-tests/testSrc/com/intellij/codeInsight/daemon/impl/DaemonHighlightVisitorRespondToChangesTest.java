@@ -461,11 +461,15 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     STATE.put("MSG2", new State(new AtomicBoolean(), new AtomicBoolean(true), new AtomicBoolean()));
     myDaemonCodeAnalyzer.restart();
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false);
-    TestTimeOut timeOut = TestTimeOut.setTimeout(2, TimeUnit.MINUTES);
+    TestTimeOut timeOut = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
     myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), TextEditorProvider.getInstance().getTextEditor(getEditor()), ArrayUtilRt.EMPTY_INT_ARRAY, true, () -> {
       if (timeOut.isTimedOut()) {
-          System.err.println("Timed out\n"+ThreadDumper.dumpThreadsToString());
-          fail();
+        System.err.println("Timed out\n"+ThreadDumper.dumpThreadsToString());
+        STATE.get("MSG1").THINK.set(false);
+        STATE.get("MSG2").THINK.set(false);
+        STATE.get("MSG1").THINKING.set(false);
+        STATE.get("MSG2").THINKING.set(false);
+        fail();
       }
       if (visitor1.myState().THINKING.get() && visitor2.myState().THINKING.get()) {
         // if two visitors are paused, it means they both have visited comments. Check that corresponding highlights are in the markup model
