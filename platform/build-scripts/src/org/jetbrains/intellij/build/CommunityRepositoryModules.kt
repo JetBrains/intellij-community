@@ -163,9 +163,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
       spec.withModule("intellij.junit.v5.rt", "junit5-rt.jar")
     },
-    plugin("intellij.java.byteCodeViewer") { spec ->
-      spec.mainJarName = "byteCodeViewer.jar"
-    },
     plugin("intellij.testng") { spec ->
       spec.mainJarName = "testng-plugin.jar"
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
@@ -201,8 +198,7 @@ object CommunityRepositoryModules {
     pluginAuto("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
     },
-    pluginAuto("intellij.textmate") { spec ->
-      spec.withModule("intellij.textmate.core")
+    pluginAuto(listOf("intellij.textmate")) { spec ->
       spec.withResource("lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
