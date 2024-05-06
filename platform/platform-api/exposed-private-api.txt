@@ -6,4 +6,3 @@ com/intellij/ui/ReorderableListController$ActionBehaviour
 com/intellij/ui/components/JBScrollPane$ViewportBorder
 com/intellij/ui/messager/CalloutComponent$Pointer
 com/intellij/util/animation/JBAnimator$Statistic
-com/intellij/util/net/HttpProxySettingsUi

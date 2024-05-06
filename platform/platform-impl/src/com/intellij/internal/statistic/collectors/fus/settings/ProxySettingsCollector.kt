@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.util.net.HttpConfigurable
-import com.intellij.util.net.IdeaWideProxySelector
+import com.intellij.util.net.IdeProxySelector
 
 private class ProxySettingsCollector : ApplicationUsagesCollector() {
   private val GROUP: EventLogGroup = EventLogGroup("proxy.settings", 2)
@@ -33,7 +33,7 @@ private class ProxySettingsCollector : ApplicationUsagesCollector() {
       }
       result.add(TYPE.metric(type.name))
       if (type == ProxyType.Auto) {
-        val autoDetectMs = IdeaWideProxySelector.getProxyAutoDetectDurationMs().takeIf { it != -1L }
+        val autoDetectMs = IdeProxySelector.getProxyAutoDetectDurationMs().takeIf { it != -1L }
         if (autoDetectMs != null) result.add(AUTO_DETECT_DURATION.metric(autoDetectMs))
       }
     }

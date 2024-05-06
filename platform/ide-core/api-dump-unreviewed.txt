@@ -3144,18 +3144,13 @@ f:com.intellij.util.proxy.CommonProxy
 - getAuthenticator():java.net.Authenticator
 - s:getHostNameReliably(java.lang.String,java.net.InetAddress,java.net.URL):java.lang.String
 - s:getInstance():com.intellij.util.proxy.CommonProxy
-- s:getMessageFromProps(java.util.Map):java.lang.String
-- s:getOldStyleProperties():java.util.Map
 - s:isInstalledAssertion():V
 - noAuthentication(java.lang.String,java.lang.String,I):V
-- noProxy(java.lang.String,java.lang.String,I):V
 - removeCustom(java.lang.String):V
 - removeCustomAuth(java.lang.String):V
-- removeNoAuthentication(java.lang.String,java.lang.String,I):V
 - removeNoProxy(java.lang.String,java.lang.String,I):V
 - select(java.net.URI):java.util.List
 - select(java.net.URL):java.util.List
-- setCustom(java.lang.String,java.net.ProxySelector):V
 - setCustomAuth(java.lang.String,com.intellij.util.proxy.NonStaticAuthenticator):V
 f:com.intellij.util.proxy.CommonProxy$HostInfo
 - f:myHost:java.lang.String
@@ -3171,6 +3166,7 @@ com.intellij.util.proxy.JavaProxyProperty
 - sf:HTTPS_HOST:java.lang.String
 - sf:HTTPS_PORT:java.lang.String
 - sf:HTTP_HOST:java.lang.String
+- sf:HTTP_NON_PROXY_HOSTS:java.lang.String
 - sf:HTTP_PASSWORD:java.lang.String
 - sf:HTTP_PORT:java.lang.String
 - sf:HTTP_USERNAME:java.lang.String

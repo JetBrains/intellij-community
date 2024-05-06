@@ -9,6 +9,7 @@ public interface JavaProxyProperty {
   String PROXY_SET = "proxySet";
   String HTTP_HOST = "http.proxyHost";
   String HTTP_PORT = "http.proxyPort";
+  String HTTP_NON_PROXY_HOSTS = "http.nonProxyHosts";
 
   String HTTPS_HOST = "https.proxyHost";
   String HTTPS_PORT = "https.proxyPort";

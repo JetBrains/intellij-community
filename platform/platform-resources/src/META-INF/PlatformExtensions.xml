@@ -119,9 +119,13 @@
 
     <persistentFsConnectionListener implementation="com.intellij.openapi.fileTypes.impl.IgnoredFileCacheCleaner"/>
 
-    <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="true"/>
-    <applicationService serviceInterface="com.intellij.util.net.internal.ProxyNewUserService"
-                        serviceImplementation="com.intellij.util.net.internal.ProxyNewUserServiceImpl" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.util.net.OverrideDefaultJdkProxy" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable"/>
+    <applicationService serviceInterface="com.intellij.util.net.ProxySettings"
+                        serviceImplementation="com.intellij.util.net.OverrideCapableProxySettingsImpl"/>
+    <applicationService serviceInterface="com.intellij.util.net.internal.ProxyMigrationService"
+                        serviceImplementation="com.intellij.util.net.internal.ProxyMigrationServiceImpl"/>
+
     <applicationService serviceImplementation="com.intellij.ide.ClipboardSynchronizer" preload="true"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>

@@ -12466,7 +12466,6 @@ c:com.intellij.util.net.HttpConfigurable
 - USE_PAC_URL:Z
 - USE_PROXY_PAC:Z
 - <init>():V
-- clearGenericPasswords():V
 - dispose():V
 - s:editConfigurable(javax.swing.JComponent):Z
 - getGenericPassword(java.lang.String,I):java.net.PasswordAuthentication
@@ -12493,29 +12492,34 @@ c:com.intellij.util.net.HttpConfigurable
 - setPlainProxyPassword(java.lang.String):V
 - setProxyLogin(java.lang.String):V
 - writeExternal(org.jdom.Element):V
-c:com.intellij.util.net.HttpConfigurable$ProxyInfo
-- myPasswordCrypt:java.lang.String
-- myStore:Z
-- myUsername:java.lang.String
-- <init>():V
-- <init>(Z,java.lang.String,java.lang.String):V
-- getPasswordCrypt():java.lang.String
-- getUsername():java.lang.String
-- isStore():Z
-- setPasswordCrypt(java.lang.String):V
-- setStore(Z):V
-- setUsername(java.lang.String):V
+f:com.intellij.util.net.HttpConnectionUtils
+- sf:INSTANCE:com.intellij.util.net.HttpConnectionUtils
+- sf:openConnection(java.lang.String):java.net.URLConnection
+- sf:openHttpConnection(java.lang.String):java.net.HttpURLConnection
+- sf:prepareUrl(java.lang.String):V
 c:com.intellij.util.net.HttpProxyConfigurable
 - com.intellij.openapi.options.ConfigurableBase
 - com.intellij.openapi.options.Configurable$NoMargin
 - <init>():V
 - <init>(com.intellij.util.net.HttpConfigurable):V
-- p:createUi():com.intellij.util.net.HttpProxySettingsUi
-- p:getSettings():com.intellij.util.net.HttpConfigurable
+- <init>(com.intellij.util.net.ProxySettings):V
+- p:createUi():com.intellij.openapi.options.ConfigurableUi
+- p:getSettings():com.intellij.util.net.ProxySettings
 f:com.intellij.util.net.IOExceptionDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(java.lang.String,java.lang.String):V
 - s:showErrorDialog(java.lang.String,java.lang.String):Z
+f:com.intellij.util.net.IdeProxyAuthenticator
+- java.net.Authenticator
+- <init>(com.intellij.util.net.ProxyAuthentication):V
+- toString():java.lang.String
+f:com.intellij.util.net.IdeProxySelector
+- java.net.ProxySelector
+- sf:Companion:com.intellij.util.net.IdeProxySelector$Companion
+- <init>(com.intellij.util.net.ProxyConfigurationProvider):V
+- connectFailed(java.net.URI,java.net.SocketAddress,java.io.IOException):V
+- select(java.net.URI):java.util.List
+f:com.intellij.util.net.IdeProxySelector$Companion
 f:com.intellij.util.net.IdeaWideAuthenticator
 - com.intellij.util.proxy.NonStaticAuthenticator
 - <init>(com.intellij.util.net.HttpConfigurable):V
@@ -12525,6 +12529,114 @@ f:com.intellij.util.net.IdeaWideProxySelector
 - <init>(com.intellij.util.net.HttpConfigurable):V
 - connectFailed(java.net.URI,java.net.SocketAddress,java.io.IOException):V
 - select(java.net.URI):java.util.List
+com.intellij.util.net.JdkProxyCustomizer
+- sf:Companion:com.intellij.util.net.JdkProxyCustomizer$Companion
+- a:customizeAuthenticator(java.net.Authenticator):com.intellij.openapi.application.AccessToken
+- a:customizeProxySelector(java.net.ProxySelector):com.intellij.openapi.application.AccessToken
+- s:getInstance():com.intellij.util.net.JdkProxyCustomizer
+- *a:getOriginalAuthenticator():java.net.Authenticator
+- *a:getOriginalProxySelector():java.net.ProxySelector
+f:com.intellij.util.net.JdkProxyCustomizer$Companion
+- f:getInstance():com.intellij.util.net.JdkProxyCustomizer
+com.intellij.util.net.JdkProxyProvider
+- sf:Companion:com.intellij.util.net.JdkProxyProvider$Companion
+- s:ensureDefault():V
+- a:getAuthenticator():java.net.Authenticator
+- s:getInstance():com.intellij.util.net.JdkProxyProvider
+- a:getProxySelector():java.net.ProxySelector
+f:com.intellij.util.net.JdkProxyProvider$Companion
+- f:ensureDefault():V
+- f:getInstance():com.intellij.util.net.JdkProxyProvider
+com.intellij.util.net.ProxyAuthentication
+- sf:Companion:com.intellij.util.net.ProxyAuthentication$Companion
+- a:enablePromptedAuthentication(java.lang.String,I):V
+- s:getInstance():com.intellij.util.net.ProxyAuthentication
+- a:getOrPromptAuthentication(java.lang.String,java.lang.String,I):com.intellij.credentialStore.Credentials
+- a:getPromptedAuthentication(java.lang.String,java.lang.String,I):com.intellij.credentialStore.Credentials
+- a:isPromptedAuthenticationCancelled(java.lang.String,I):Z
+f:com.intellij.util.net.ProxyAuthentication$Companion
+- f:getInstance():com.intellij.util.net.ProxyAuthentication
+com.intellij.util.net.ProxyConfiguration
+- sf:Companion:com.intellij.util.net.ProxyConfiguration$Companion
+- s:buildProxyExceptionsMatcher(java.lang.String):java.util.function.Predicate
+- s:getAutodetect():com.intellij.util.net.ProxyConfiguration$AutoDetectProxy
+- s:getDirect():com.intellij.util.net.ProxyConfiguration$DirectProxy
+- s:proxy(com.intellij.util.net.ProxyConfiguration$ProxyProtocol,java.lang.String,I,java.lang.String):com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration
+- s:proxyAutoConfiguration(java.net.URL):com.intellij.util.net.ProxyConfiguration$ProxyAutoConfiguration
+com.intellij.util.net.ProxyConfiguration$AutoDetectProxy
+- com.intellij.util.net.ProxyConfiguration
+f:com.intellij.util.net.ProxyConfiguration$Companion
+- f:buildProxyExceptionsMatcher(java.lang.String):java.util.function.Predicate
+- f:getAutodetect():com.intellij.util.net.ProxyConfiguration$AutoDetectProxy
+- f:getDirect():com.intellij.util.net.ProxyConfiguration$DirectProxy
+- f:proxy(com.intellij.util.net.ProxyConfiguration$ProxyProtocol,java.lang.String,I,java.lang.String):com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration
+- bs:proxy$default(com.intellij.util.net.ProxyConfiguration$Companion,com.intellij.util.net.ProxyConfiguration$ProxyProtocol,java.lang.String,I,java.lang.String,I,java.lang.Object):com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration
+- f:proxyAutoConfiguration(java.net.URL):com.intellij.util.net.ProxyConfiguration$ProxyAutoConfiguration
+com.intellij.util.net.ProxyConfiguration$DirectProxy
+- com.intellij.util.net.ProxyConfiguration
+com.intellij.util.net.ProxyConfiguration$ProxyAutoConfiguration
+- com.intellij.util.net.ProxyConfiguration
+- a:getPacUrl():java.net.URL
+e:com.intellij.util.net.ProxyConfiguration$ProxyProtocol
+- java.lang.Enum
+- sf:HTTP:com.intellij.util.net.ProxyConfiguration$ProxyProtocol
+- sf:SOCKS:com.intellij.util.net.ProxyConfiguration$ProxyProtocol
+- f:getDefaultPort():I
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.util.net.ProxyConfiguration$ProxyProtocol
+- s:values():com.intellij.util.net.ProxyConfiguration$ProxyProtocol[]
+com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration
+- com.intellij.util.net.ProxyConfiguration
+- a:getExceptions():java.lang.String
+- a:getHost():java.lang.String
+- a:getPort():I
+- a:getProtocol():com.intellij.util.net.ProxyConfiguration$ProxyProtocol
+com.intellij.util.net.ProxyConfigurationProvider
+- a:getProxyConfiguration():com.intellij.util.net.ProxyConfiguration
+com.intellij.util.net.ProxyCredentialProvider
+- a:getCredentials(java.lang.String,I):com.intellij.credentialStore.Credentials
+com.intellij.util.net.ProxyCredentialStore
+- sf:Companion:com.intellij.util.net.ProxyCredentialStore$Companion
+- a:areCredentialsRemembered(java.lang.String,I):Z
+- a:clearAllCredentials():V
+- a:clearTransientCredentials():V
+- a:getCredentials(java.lang.String,I):com.intellij.credentialStore.Credentials
+- s:getInstance():com.intellij.util.net.ProxyCredentialStore
+- a:setCredentials(java.lang.String,I,com.intellij.credentialStore.Credentials,Z):V
+f:com.intellij.util.net.ProxyCredentialStore$Companion
+- f:getInstance():com.intellij.util.net.ProxyCredentialStore
+f:com.intellij.util.net.ProxyCredentialStoreKt
+- sf:asProxyCredentialProvider(com.intellij.util.net.ProxyCredentialStore):com.intellij.util.net.ProxyCredentialProvider
+com.intellij.util.net.ProxySettings
+- sf:Companion:com.intellij.util.net.ProxySettings$Companion
+- s:getDefaultProxyConfiguration():com.intellij.util.net.ProxyConfiguration
+- s:getInstance():com.intellij.util.net.ProxySettings
+- a:getProxyConfiguration():com.intellij.util.net.ProxyConfiguration
+- *a:setProxyConfiguration(com.intellij.util.net.ProxyConfiguration):V
+f:com.intellij.util.net.ProxySettings$Companion
+- f:getDefaultProxyConfiguration():com.intellij.util.net.ProxyConfiguration
+- f:getInstance():com.intellij.util.net.ProxySettings
+f:com.intellij.util.net.ProxySettingsKt
+- sf:asConfigurationProvider(com.intellij.util.net.ProxySettings):com.intellij.util.net.ProxyConfigurationProvider
+com.intellij.util.net.ProxySettingsOverrideProvider
+- sf:Companion:com.intellij.util.net.ProxySettingsOverrideProvider$Companion
+- s:areProxySettingsOverridden():Z
+- a:getProxyConfigurationProvider():com.intellij.util.net.ProxyConfigurationProvider
+- a:getShouldUserSettingsBeOverriden():Z
+f:com.intellij.util.net.ProxySettingsOverrideProvider$Companion
+- f:areProxySettingsOverridden():Z
+f:com.intellij.util.net.ProxyUtils
+- sf:NO_PROXY_LIST:java.util.List
+- sf:asJavaProxy(com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration):java.net.Proxy
+- sf:asJvmProperties(com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration,com.intellij.util.net.ProxyCredentialProvider):java.util.Map
+- sf:asJvmProperties(java.net.Proxy):java.util.Map
+- sf:editConfigurable(com.intellij.util.net.ProxySettings,javax.swing.JComponent):Z
+- sf:getApplicableProxiesAsJvmProperties(java.net.URI,com.intellij.util.net.ProxyCredentialProvider,java.net.ProxySelector):java.util.List
+- bs:getApplicableProxiesAsJvmProperties$default(java.net.URI,com.intellij.util.net.ProxyCredentialProvider,java.net.ProxySelector,I,java.lang.Object):java.util.List
+- sf:getHostNameReliably(java.lang.String,java.net.InetAddress,java.net.URL):java.lang.String
+- sf:getStaticProxyCredentials(com.intellij.util.net.ProxySettings,com.intellij.util.net.ProxyCredentialProvider):com.intellij.credentialStore.Credentials
+- sf:isRealProxy(java.net.Proxy):Z
+- sf:setStaticProxyCredentials(com.intellij.util.net.ProxySettings,com.intellij.util.net.ProxyCredentialStore,com.intellij.credentialStore.Credentials,Z):V
 c:com.intellij.util.net.ssl.CertificateInfoPanel
 - javax.swing.JPanel
 - <init>(java.security.cert.X509Certificate):V
