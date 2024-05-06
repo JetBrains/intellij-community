@@ -6739,11 +6739,10 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFacto
 f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer
 - com.intellij.openapi.editor.EditorCustomElementRenderer
 - <init>(com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList,com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage,java.lang.String,com.intellij.codeInsight.hints.declarative.InlayPosition):V
-- <init>(com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList,com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage,java.lang.String,com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.Class):V
 - calcWidthInPixels(com.intellij.openapi.editor.Inlay):I
 - getContextMenuGroupId(com.intellij.openapi.editor.Inlay):java.lang.String
-- f:getCreatedBy():java.lang.Class
 - f:getMouseArea(java.awt.Point):com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
+- f:getPassClass():java.lang.Class
 - f:getPresentationList():com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 - f:getProviderId():java.lang.String
 - f:handleHover(com.intellij.openapi.editor.event.EditorMouseEvent):com.intellij.ui.LightweightHint
@@ -6753,7 +6752,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer
 - f:setInlay(com.intellij.openapi.editor.Inlay):V
 - f:updateState(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z):V
 f:com.intellij.codeInsight.hints.declarative.impl.InlayData
-- <init>(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class):V
+- <init>(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.Class):V
 - f:component1():com.intellij.codeInsight.hints.declarative.InlayPosition
 - f:component2():java.lang.String
 - f:component3():Z
@@ -6762,11 +6761,13 @@ f:com.intellij.codeInsight.hints.declarative.impl.InlayData
 - f:component6():Z
 - f:component7():java.util.List
 - f:component8():java.lang.Class
-- f:copy(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class):com.intellij.codeInsight.hints.declarative.impl.InlayData
-- bs:copy$default(com.intellij.codeInsight.hints.declarative.impl.InlayData,com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.InlayData
+- f:component9():java.lang.Class
+- f:copy(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.Class):com.intellij.codeInsight.hints.declarative.impl.InlayData
+- bs:copy$default(com.intellij.codeInsight.hints.declarative.impl.InlayData,com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.Class,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.InlayData
 - equals(java.lang.Object):Z
 - f:getDisabled():Z
 - f:getHasBackground():Z
+- f:getPassClass():java.lang.Class
 - f:getPayloads():java.util.List
 - f:getPosition():com.intellij.codeInsight.hints.declarative.InlayPosition
 - f:getProviderClass():java.lang.Class
@@ -6789,8 +6790,8 @@ f:com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 - f:getEntries():java.util.List
 f:com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 - sf:Companion:com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList$Companion
-- <init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z,java.util.Map,java.lang.Class,java.lang.String):V
-- b:<init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z,java.util.Map,java.lang.Class,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z,java.util.Map,java.lang.Class,java.lang.String,java.lang.Class):V
+- b:<init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z,java.util.Map,java.lang.Class,java.lang.String,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getEntries():com.intellij.codeInsight.hints.declarative.impl.InlayPresentationEntry[]
 - f:getHasBackground():Z
 - f:getMouseArea(java.awt.Point,com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage):com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
@@ -6821,7 +6822,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.InlayTags
 - sf:TEXT_TAG:B
 f:com.intellij.codeInsight.hints.declarative.impl.InlayTreeSinkImpl
 - com.intellij.codeInsight.hints.declarative.InlayTreeSink
-- <init>(java.lang.String,java.util.Map,Z,Z,java.lang.Class):V
+- <init>(java.lang.String,java.util.Map,Z,Z,java.lang.Class,java.lang.Class):V
 - addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,Z,kotlin.jvm.functions.Function1):V
 - f:finish():java.util.List
 - whenOptionEnabled(java.lang.String,kotlin.jvm.functions.Function0):V
