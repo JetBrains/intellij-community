@@ -576,8 +576,11 @@ object K2SemanticMatcher {
             return true
         }
 
-        override fun visitParenthesizedExpression(expression: KtParenthesizedExpression, data: KtElement): Boolean =
-            expression.deparenthesized().accept(visitor = this, data)
+        override fun visitParenthesizedExpression(expression: KtParenthesizedExpression, data: KtElement): Boolean {
+            val deparenthesized = expression.deparenthesized()
+            if (expression == deparenthesized) return false
+            return deparenthesized.accept(visitor = this, data)
+        }
 
         override fun visitAnonymousInitializer(initializer: KtAnonymousInitializer, data: KtElement): Boolean = false // TODO()
 
