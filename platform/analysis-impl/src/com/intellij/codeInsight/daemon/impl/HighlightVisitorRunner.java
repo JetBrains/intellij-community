@@ -13,9 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.AlreadyDisposedException;
@@ -30,34 +28,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 class HighlightVisitorRunner {
-  private final PsiFile myPsiFile;
-  private @Nullable final TextAttributesScheme myColorsScheme;
+  private final @NotNull Supplier<? extends @NotNull HighlightVisitor @NotNull []> myHighlightVisitorProducer;
 
-  HighlightVisitorRunner(@NotNull PsiFile psiFile, @Nullable TextAttributesScheme scheme) {
-    myPsiFile = psiFile;
-    myColorsScheme = scheme;
-  }
-
-  void setHighlightVisitorProducer(@NotNull Function<? super Boolean, ? extends @NotNull HighlightVisitor @NotNull []> highlightVisitorProducer) {
-    myHighlightVisitorProducer = highlightVisitorProducer;
+  HighlightVisitorRunner(@NotNull PsiFile psiFile, @Nullable TextAttributesScheme scheme, boolean runVisitors, boolean highlightErrorElements) {
+    // "do not run visitors" here means "reduce the set of visitors down to DefaultHighlightVisitor", because it reports error elements
+    myHighlightVisitorProducer = runVisitors ?
+                                 () -> cloneAndFilterHighlightVisitors(psiFile, scheme) :
+                                 () -> new HighlightVisitor[]{new DefaultHighlightVisitor(psiFile.getProject(), highlightErrorElements, false)};
   }
 
   private static final PassRunningAssert HIGHLIGHTING_PERFORMANCE_ASSERT =
     new PassRunningAssert("the expensive method should not be called inside the highlighting pass");
-  private volatile @NotNull Function<? super Boolean, ? extends @NotNull HighlightVisitor @NotNull []> myHighlightVisitorProducer = this::cloneAndFilterHighlightVisitors;
   static void assertHighlightingPassNotRunning() {
     HIGHLIGHTING_PERFORMANCE_ASSERT.assertPassNotRunning();
   }
 
-  private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
-
-  private @NotNull HighlightVisitor @NotNull [] cloneAndFilterHighlightVisitors(boolean mustClone) {
-    Project project = myPsiFile.getProject();
+  private static @NotNull HighlightVisitor @NotNull [] cloneAndFilterHighlightVisitors(@NotNull PsiFile psiFile, @Nullable TextAttributesScheme colorsScheme) {
+    Project project = psiFile.getProject();
     HighlightVisitor[] visitors = HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(project);
     DumbService dumbService = DumbService.getInstance(project);
     int o = 0;
@@ -67,18 +57,18 @@ class HighlightVisitorRunner {
         continue;
       }
       if (visitor instanceof RainbowVisitor
-          && !RainbowHighlighter.isRainbowEnabledWithInheritance(myColorsScheme, myPsiFile.getLanguage())) {
+          && !RainbowHighlighter.isRainbowEnabledWithInheritance(colorsScheme, psiFile.getLanguage())) {
         continue;
       }
-      if (visitor.suitableForFile(myPsiFile)) {
+      if (visitor.suitableForFile(psiFile)) {
         HighlightVisitor cloned;
-        if (mustClone) {
-          cloned = visitor.clone();
-          assert cloned.getClass() == visitor.getClass() : visitor.getClass()+".clone() must return a copy of "+visitor.getClass()+"; but got: "+cloned+" of "+cloned.getClass();
-        }
-        else {
-          cloned = visitor;
-        }
+        // clone highlight visitor because
+        // 1) HighlightVisitor API is non-reentrant (with its weird analyze() method which inits a bunch of instance fields inside) and
+        // 2) the old visitor instance might still be running, albeit in the canceled state.
+        // we could cling to the "do not clone visitor if there's only one instance is running" optimization, but it would require complex RCU readers-style machinery which would track the complete finish of the visitor before reusing it,
+        // or we can just clone the visitor, which is not expensive, given that all overrides are just a single new() call.
+        cloned = visitor.clone();
+        assert cloned.getClass() == visitor.getClass() : visitor.getClass()+".clone() must return a copy of "+visitor.getClass()+"; but got: "+cloned+" ("+cloned.getClass()+")";
         clones[o++] = cloned;
       }
     }
@@ -88,21 +78,10 @@ class HighlightVisitorRunner {
     return ArrayUtil.realloc(clones, o, HighlightVisitor.ARRAY_FACTORY);
   }
 
-  void createHighlightVisitorsFor(@NotNull PsiFile psiFile, @NotNull Consumer<? super HighlightVisitor[]> consumer) {
-    Project project = myPsiFile.getProject();
-    AtomicInteger count = project.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
-    if (count == null) {
-      count = ((UserDataHolderEx)project).putUserDataIfAbsent(HIGHLIGHT_VISITOR_INSTANCE_COUNT, new AtomicInteger(0));
-    }
-    int oldCount = count.getAndIncrement();
+  void createHighlightVisitorsFor(@NotNull Consumer<? super HighlightVisitor[]> consumer) {
     // first ever queried HighlightVisitor can be used as is, but all further HighlightVisitors queried while the previous HighlightVisitor haven't finished, should be cloned to avoid reentrancy issues
-    HighlightVisitor[] filtered = myHighlightVisitorProducer.apply(oldCount != 0);
-    try {
-      consumer.consume(filtered);
-    }
-    finally {
-      count.getAndDecrement();
-    }
+    HighlightVisitor[] filtered = myHighlightVisitorProducer.get();
+    consumer.consume(filtered);
   }
 
   private record VisitorInfo(@NotNull HighlightVisitor visitor,

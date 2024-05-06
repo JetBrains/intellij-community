@@ -88,7 +88,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     TextAttributesKey fragmentKey = EditorColors.createInjectedLanguageFragmentKey(myFile.getLanguage());
     Set<@NotNull PsiFile> injected = ConcurrentCollectionFactory.createConcurrentSet();  // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
     processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, injected,
-                            (injectedPsi, places) -> {
+                            (injectedPsi, places) ->
       runAnnotatorsAndVisitorsOnInjectedPsi(injectedLanguageManager, injectedPsi, places, fragmentKey, (toolId, psiElement, infos) -> {
         myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, infos, getDocument(), injectedPsi, myProject, getHighlightingSession());
         if (!infos.isEmpty()) {
@@ -96,8 +96,8 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
             myHighlights.addAll(infos);
           }
         }
-      });
-    });
+      })
+    );
 
     synchronized (myHighlights) {
       // injections were re-calculated, remove highlights stuck in highlightInfoUpdater from the previous invalid injection fragments
@@ -195,13 +195,9 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
       List<? extends @NotNull PsiElement> inside = dividedElements.inside();
       LongList insideRanges = dividedElements.insideRanges();
       BooleanSupplier runnable = () -> {
-        HighlightVisitorRunner highlightVisitorRunner = new HighlightVisitorRunner(injectedPsi, myGlobalScheme);
-        if (!myRunVisitors) {
-          // "do not run visitors" here means "reduce the set of visitors down to DefaultHighlightVisitor", because it reports error elements
-          highlightVisitorRunner.setHighlightVisitorProducer(__ -> new HighlightVisitor[]{ new DefaultHighlightVisitor(myProject, myHighlightErrorElements, false) });
-        }
+        HighlightVisitorRunner highlightVisitorRunner = new HighlightVisitorRunner(injectedPsi, myGlobalScheme, myRunVisitors, myHighlightErrorElements);
 
-        highlightVisitorRunner.createHighlightVisitorsFor(injectedPsi, visitors -> {
+        highlightVisitorRunner.createHighlightVisitorsFor(visitors -> {
           int chunkSize = Math.max(1, inside.size() / 100); // one percent precision is enough
           highlightVisitorRunner.runVisitors(injectedPsi, injectedPsi.getTextRange(), inside,
                                                insideRanges, List.of(), LongList.of(), visitors, false, chunkSize, true,
