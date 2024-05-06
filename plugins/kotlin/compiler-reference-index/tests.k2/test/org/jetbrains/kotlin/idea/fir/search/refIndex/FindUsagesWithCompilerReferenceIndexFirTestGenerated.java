@@ -2705,6 +2705,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
+            public static class TestPrimaryConstructorOfEnum extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("primaryConstructorOfEnum.0.kt")
+                public void testPrimaryConstructorOfEnum() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorOfEnum.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestPrimaryConstructorWithKeyword extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

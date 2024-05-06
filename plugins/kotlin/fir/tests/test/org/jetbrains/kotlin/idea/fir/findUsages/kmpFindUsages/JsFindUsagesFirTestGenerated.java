@@ -1182,6 +1182,11 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
             runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorNoKeyword.0.kt");
         }
 
+        @TestMetadata("primaryConstructorOfEnum.0.kt")
+        public void testPrimaryConstructorOfEnum() throws Exception {
+            runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorOfEnum.0.kt");
+        }
+
         @TestMetadata("primaryConstructorWithKeyword.0.kt")
         public void testPrimaryConstructorWithKeyword() throws Exception {
             runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorWithKeyword.0.kt");

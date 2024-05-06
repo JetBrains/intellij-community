@@ -35,8 +35,6 @@ import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
-import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
-import org.jetbrains.kotlin.idea.test.util.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.konan.target.TargetSupportException
@@ -64,12 +62,11 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
     }
 
     override fun setUp() {
-        setUpWithKotlinPlugin(isFirPlugin()) {
-            super.setUp()
-            enableKotlinOfficialCodeStyle(project)
+        super.setUp()
+        enableKotlinOfficialCodeStyle(project)
 
-            vfsDisposable = allowProjectRootAccess(this)
-        }
+        vfsDisposable = allowProjectRootAccess(this)
+        assertKotlinPluginMode()
     }
 
     // [TargetSupportException] can be thrown by the multiplatform test setup when a test artifact doesn't exist for the host platform.
