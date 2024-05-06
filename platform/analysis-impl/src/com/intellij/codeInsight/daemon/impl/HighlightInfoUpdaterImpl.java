@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -306,13 +305,6 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       }
       else {
         newInfos = List.of();
-        if (LOG.isDebugEnabled() && toolId instanceof Class<?> c && Annotator.class.isAssignableFrom(c)) {
-          //noinspection removal
-          LOG.debug("psiElementVisited- " + visitedPsiElement + " in " + visitedPsiElement.getTextRange() +
-                    (psiFile.getViewProvider() instanceof InjectedFileViewProvider ?
-                     " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
-                    "; tool:" + toolId + "; infos:" + newInfos + "; oldInfos:" + oldInfos + "; document:" + hostDocument);
-        }
       }
       // store back only after markup model changes are applied to avoid PCE thrown in the middle leaving corrupted data behind
       putInfosForVisitedPsi(data, toolId, visitedPsiElement, newInfos, toolHighlights);
