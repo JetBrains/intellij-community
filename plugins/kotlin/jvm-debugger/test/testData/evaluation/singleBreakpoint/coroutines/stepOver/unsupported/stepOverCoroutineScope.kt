@@ -24,10 +24,10 @@ fun main() = runBlocking {
     //println(1)
     //Breakpoint!
     coroutineScope {
-        delay(100)
+        delay(1)
     }
     coroutineScope {
-        delay(100)
+        delay(1)
     }
     println("Counter = $counter")
 }

@@ -8,7 +8,7 @@ fun main() {
             launch(Dispatchers.Default) {
                 val x = funWithSuspendLast(i)
                 println("x = $x")
-                delay(100)
+                delay(1)
                 println("i = $i")
             }
         }
@@ -26,7 +26,7 @@ suspend fun funWithSuspendLast(i: Int): Int {
 }
 
 suspend fun someInt(): Int {
-    delay(100)
+    delay(1)
     return 42
 }
 

@@ -7,7 +7,7 @@ suspend fun foo(i: Int) {
     //Breakpoint!
     coroutineScope {
         startMethod(i)
-        delay(100)
+        delay(1)
         println("After delay $i")
     }
     println("coroutineScope completed $i")
@@ -15,13 +15,13 @@ suspend fun foo(i: Int) {
 
 suspend fun startMethod(i: Int) {
     if (i == 5) {
-        delay(100)
+        delay(1)
         "".toString()
     }
 }
 
 suspend fun endMethod(i: Int) {
-    delay(100)
+    delay(1)
 }
 
 fun main() {

@@ -31,9 +31,9 @@ fun afterBBB(i: Int) {
 }
 
 suspend fun bbb(i: Int) {
-    delay(100)
+    delay(1)
     ccc(i)
-    delay(100)
+    delay(1)
     println("End bbb")
 }
 

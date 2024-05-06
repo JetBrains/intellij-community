@@ -7,7 +7,7 @@ fun main() {
         launch {
             //Breakpoint!
             println("Before bar")
-            delay(100)
+            delay(1)
             println("After bar")
         }
     }

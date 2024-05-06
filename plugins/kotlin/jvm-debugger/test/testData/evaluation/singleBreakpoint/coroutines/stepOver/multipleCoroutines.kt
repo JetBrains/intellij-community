@@ -10,7 +10,7 @@ fun main() {
                     //Breakpoint!
                     startMethod(i)
                 }
-                delay(100)
+                delay(1)
                 endMethod(i)
                 // EXPRESSION: i
                 // RESULT: 5: I
@@ -22,13 +22,13 @@ fun main() {
 
 suspend fun startMethod(i: Int) {
     if (i == 5) {
-        delay(100)
+        delay(1)
         "".toString()
     }
 }
 
 suspend fun endMethod(i: Int) {
-    delay(100)
+    delay(1)
     println("End")
 }
 

@@ -9,7 +9,7 @@ fun main() = runBlocking  {
             // EXPRESSION: i
             // RESULT: 25: I
             println("x = $x")
-            delay(100)
+            delay(1)
             println("i = $i")
         }
     }
@@ -25,7 +25,7 @@ suspend fun funWithSuspendLast(i: Int): Int {
 }
 
 suspend fun someInt(): Int {
-    delay(100)
+    delay(1)
     return 42
 }
 

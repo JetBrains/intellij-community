@@ -13,25 +13,25 @@ private fun foo(i: Int): Int {
 }
 
 suspend fun fourth(i: Int): Int {
-    delay(100)
+    delay(1)
     foo(i)
     return 5
 }
 
 suspend fun third(i: Int) : Int? {
-    delay(100)
+    delay(1)
     val res = fourth(i)
     println(res)
     return res
 }
 
 suspend fun second(i: Int): Int {
-    delay(100)
+    delay(1)
     return third(i)?.let { return it } ?: 0
 }
 
 suspend fun first(i: Int): Int {
-    delay(100)
+    delay(1)
     second(i)
     // EXPRESSION: i
     // RESULT: 25: I

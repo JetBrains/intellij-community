@@ -8,7 +8,7 @@ fun main() = runBlocking {
     val deferred = GlobalScope.async {
         //Breakpoint!
         println("Throwing exception from async")
-        delay(100)
+        delay(1)
         throw ArithmeticException()
     }
     try {
@@ -21,3 +21,4 @@ fun main() = runBlocking {
 
 // STEP_OVER: 4
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true

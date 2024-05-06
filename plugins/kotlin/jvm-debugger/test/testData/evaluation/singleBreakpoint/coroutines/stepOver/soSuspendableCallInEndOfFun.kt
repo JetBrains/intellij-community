@@ -17,7 +17,7 @@ private fun foo(a: Any) {}
 suspend fun inFun() {
     println("Start")
     //Breakpoint!
-    delay(100)
+    delay(1)
 }
 
 // STEP_OVER: 3

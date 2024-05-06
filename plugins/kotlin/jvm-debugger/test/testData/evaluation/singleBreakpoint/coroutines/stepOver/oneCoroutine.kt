@@ -5,7 +5,7 @@ import kotlinx.coroutines.*
 private suspend fun foo() {
     //Breakpoint!
     println("Before bar")
-    delay(100)
+    delay(1)
     println("After bar")
 }
 

@@ -8,7 +8,7 @@ suspend fun foo(i: Int) {
     println("Start foo")
     coroutineScope { // TODO: hangs if we try to step over from this breakpoint (only in tests)
         //Breakpoint!
-        delay(100)
+        delay(1)
         println("After delay")
     }
     println("coroutineScope completed")
