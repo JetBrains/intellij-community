@@ -3,15 +3,35 @@ package com.intellij.tools.launch.ide.environments.docker
 import com.intellij.tools.launch.DockerLauncherOptions
 import com.intellij.tools.launch.DockerNetworkEntry
 import com.intellij.tools.launch.PathsProvider
-import com.intellij.tools.launch.docker.cli.*
+import com.intellij.tools.launch.docker.BindMount
+import com.intellij.tools.launch.docker.cli.DockerCli
+import com.intellij.tools.launch.docker.cli.dockerRunCliCommand
+import com.intellij.tools.launch.docker.cli.dsl.addVolumeIfExists
+import com.intellij.tools.launch.docker.cli.waitForContainerId
+import com.intellij.tools.launch.docker.cli.waitForContainerToStart
+import com.intellij.tools.launch.environments.LaunchCommand
+import com.intellij.tools.launch.environments.PathInLaunchEnvironment
 import com.intellij.tools.launch.os.affixIO
 import com.intellij.tools.launch.os.pathNotResolvingSymlinks
-import com.intellij.util.SystemProperties
-import com.sun.security.auth.module.UnixSystem
-import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.io.File
-import java.nio.file.Files
 import java.util.logging.Logger
+
+data class DockerContainerOptions(
+  val image: String,
+  val containerName: String,
+  val javaExecutable: PathInLaunchEnvironment,
+  /**
+   * The container path of the ultimate repo bind mount.
+   */
+  val ultimateRepositoryPathInContainer: PathInLaunchEnvironment,
+  val bindMounts: List<BindMount> = emptyList(),
+  /**
+   * `true` value of this flag is incompatible with Docker for Windows.
+   */
+  @Obsolete
+  val legacy: Boolean = false,
+)
 
 internal class DockerLauncher(private val paths: PathsProvider, private val options: DockerLauncherOptions) {
   companion object {
@@ -22,148 +42,116 @@ internal class DockerLauncher(private val paths: PathsProvider, private val opti
 
   fun assertCanRun() = dockerCli.info()
 
-
-  private val uid = UnixSystem().uid.toString()
-  private val gid = UnixSystem().gid.toString()
-  private val userName: String = System.getProperty("user.name")!!
-  private val userHome: String = getCanonicalUserHome(userName)
-
-  fun runInContainer(cmd: List<String>): Pair<Process, String> {
+  /**
+   * We assume that bind mounts are configured
+   */
+  fun runInContainer(
+    dockerContainerEnvironment: DockerContainerEnvironment,
+    launchCommand: LaunchCommand,
+    dockerContainerOptions: DockerContainerOptions
+  ): Pair<Process, String> {
     val containerIdFile = File.createTempFile("cwm.docker.cid", "")
+    val containerName = "${options.containerName}-${System.nanoTime()}"
 
-    val dockerCmd = mutableListOf(
-      "docker",
-      "run",
+    val dockerRunCommand = dockerRunCliCommand {
       // for network configuration (e.g. default gateway)
-      "--cap-add=NET_ADMIN",
+      option("--cap-add=NET_ADMIN")
+      options("--cidfile", containerIdFile.pathNotResolvingSymlinks())
 
-      "--cidfile",
-      containerIdFile.pathNotResolvingSymlinks(),
-    )
+      option("--name=$containerName")
 
-    val containerName = "${options.containerName}-${System.nanoTime()}".let {
-      dockerCmd.add("--name=$it")
-      it
-    }
-
-    // **** RW ****
-    val writeable = listOf(paths.logFolder,
-                           paths.tempFolder,
-                           paths.configFolder,
-                           paths.systemFolder,
-                           paths.communityRootFolder.resolve("build/download") // quiche lib
-    )
-
-    // docker can create these under root, so we create them ourselves
-    writeable.forEach {
-      Files.createDirectories(it.toPath())
-      dockerCmd.addWriteable(it)
-    }
-
-    // **** RO ****
-    dockerCmd.addReadonly(paths.javaHomeFolder)
-    dockerCmd.addReadonly(paths.outputRootFolder)
-
-    // Required to ultimate root detection
-    dockerCmd.addReadonly(paths.ultimateRootMarker)
-
-    // jars
-    dockerCmd.addReadonly(paths.communityBinFolder)
-    dockerCmd.addReadonly(paths.communityRootFolder.resolve("lib"))
-    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("lib"))
-    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("plugins"))
-    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("contrib"))
-
-    // on buildserver agents libraries may be cached in ~/.m2.base
-    if (TeamCityHelper.isUnderTeamCity) {
-      val mavenCache = File(SystemProperties.getUserHome()).resolve(".m2.base")
-      if (mavenCache.isDirectory) {
-        dockerCmd.addReadonlyIfExists(mavenCache)
+      dockerContainerEnvironment.bindMounts.forEach { (hostPath, containerPath) ->
+        assert(hostPath.isAbsolute) { "Host path $hostPath bind mount to $containerPath must be absolute" }
+        bindMount(hostPath.toString(), containerPath, readOnly = false)
       }
+
+      // user-provided volumes
+      paths.dockerVolumesToWritable.forEach { (volume, isWriteable) ->
+        addVolumeIfExists(volume, isWriteable)
+      }
+
+      options.exposedPorts.forEach {
+        option("-p")
+        option("127.0.0.1:$it:$it")
+      }
+
+      // TODO shouldn't here be left only one?
+      (options.environment + launchCommand.environment).forEach {
+        option("--env")
+        option("${it.key}=${it.value}")
+      }
+
+      if (options.network != DockerNetworkEntry.AUTO) {
+        option(listOf(
+          "--network", options.network.name,
+          "--ip", options.network.IPAddress
+        ))
+      }
+
+      image(options.dockerImageName)
+
+      // docker will still have a route for all subnet packets to go through the host, this only affects anything not in the subnet
+      val ipRouteBash = if (options.network != DockerNetworkEntry.AUTO && options.network.defaultGatewayIPv4Address != null) {
+        "sudo ip route change default via ${options.network.defaultGatewayIPv4Address}"
+      }
+      else null
+
+      val uid = dockerContainerEnvironment.uid()
+      val gid = dockerContainerEnvironment.gid()
+      val userName = dockerContainerEnvironment.userName()
+      val userHome = dockerContainerEnvironment.userHome()
+
+      val commands = run {
+        val cmdEscaped = launchCommand.commandLine.joinToString(" ").replace("&", "\\&")
+
+        if (dockerContainerOptions.legacy) {
+          val userAddCommand = if (userName != "root") {
+            // this step is needed to make the user starting autotests owner of the logs files.
+            // by default the logs are mounted with root as owner.
+            // we need to add current user to docker and then chown logs to it, to be able to remove them
+            "groupadd -g $gid $userName && " +
+            "useradd -s /bin/bash -d $userHome -u $uid -g $gid -m $userName"
+          }
+          else null
+
+          val bashCommandToAdd =
+            "echo 'started bash' && " +
+            options.runBashBackgroundBeforeJava?.joinToString("") { " $it & " }.orEmpty() +
+            ipRouteBash?.let { " $it && " }.orEmpty() +
+            userAddCommand?.let { " $it && " }.orEmpty() +
+            options.runBashBeforeJava?.joinToString("") { " $it && " }.orEmpty() +
+            "echo 'finished bash'"
+
+          val chownCmd = if (userName != "root") {
+            //additional wait so all the folders are created before chown
+            "sleep 5; " +
+            //chown for all mounted changed directories
+            (
+              dockerContainerEnvironment.bindMounts.filter { !it.readonly }.map { it.containerPath } +
+              paths.dockerVolumesToWritable.filter { it.value }.keys
+            ).joinToString("") { "chown -R $uid:$gid $it; " }
+          }
+          else null
+
+          "$bashCommandToAdd && $cmdEscaped; ${chownCmd.orEmpty()}"
+        }
+        else {
+          cmdEscaped
+        }
+      }
+
+      cmd("/bin/bash", "-c", commands)
     }
-
-    // a lot of jars in classpaths, /plugins, /xml, so we'll just mount the whole root
-    dockerCmd.addReadonlyIfExists(paths.communityRootFolder)
-
-    // main jar itself
-    dockerCmd.addReadonlyIfExists(paths.launcherFolder)
-
-    // ~/.m2
-    dockerCmd.addReadonlyIfExists(paths.mavenRepositoryFolder)
-
-    // quiche
-    dockerCmd.addReadonlyIfExists(paths.sourcesRootFolder.resolve(".idea"))
-
-    // user-provided volumes
-    paths.dockerVolumesToWritable.forEach { (volume, isWriteable) ->
-      dockerCmd.addVolumeIfExists(volume, isWriteable)
-    }
-
-    options.exposedPorts.forEach {
-      dockerCmd.add("-p")
-      dockerCmd.add("127.0.0.1:$it:$it")
-    }
-
-    options.environment.forEach {
-      dockerCmd.add("--env")
-      dockerCmd.add("${it.key}=${it.value}")
-    }
-
-    if (options.network != DockerNetworkEntry.AUTO) {
-      dockerCmd.addAll(listOf(
-        "--network", options.network.name,
-        "--ip", options.network.IPAddress
-      ))
-    }
-
-    dockerCmd.add(options.dockerImageName)
-
-    // docker will still have a route for all subnet packets to go through the host, this only affects anything not in the subnet
-    val ipRouteBash = if (options.network != DockerNetworkEntry.AUTO && options.network.defaultGatewayIPv4Address != null) {
-      "sudo ip route change default via ${options.network.defaultGatewayIPv4Address}"
-    }
-    else null
-
-    val userAddCommand = if (userName != "root") {
-      // this step is needed to make the user starting autotests owner of the logs files.
-      // by default the logs are mounted with root as owner.
-      // we need to add current user to docker and then chown logs to it, to be able to remove them
-      "groupadd -g $gid $userName && " +
-      "useradd -s /bin/bash -d $userHome -u $uid -g $gid -m $userName"
-    }
-    else null
-
-    val bashCommandToAdd =
-      "echo 'started bash' && " +
-      options.runBashBackgroundBeforeJava?.joinToString("") { " $it & " }.orEmpty() +
-      ipRouteBash?.let { " $it && " }.orEmpty() +
-      userAddCommand?.let { " $it && " }.orEmpty() +
-      options.runBashBeforeJava?.joinToString("") { " $it && " }.orEmpty() +
-      "echo 'finished bash'"
-
-    val cmdEscaped = cmd.joinToString(" ").replace("&", "\\&")
-
-    val chownCmd = if (userName != "root") {
-      //additional wait so all the folders are created before chown
-      "sleep 5; " +
-      //chown for all mounted changed directories
-      (writeable + paths.dockerVolumesToWritable.filter { it.value }.keys).joinToString("") { "chown -R $uid:$gid $it; " }
-    }
-    else null
-
-    dockerCmd.addAll(listOf("/bin/bash", "-c"))
-
-    dockerCmd.add(
-      bashCommandToAdd + " && " +
-      cmdEscaped + "; " +
-      chownCmd.orEmpty()
-    )
 
     if (containerIdFile.exists())
       assert(containerIdFile.delete())
 
-    val dockerRunPb = ProcessBuilder(dockerCmd)
-    dockerRunPb.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
+    val result = dockerRunCommand.launch()
+
+    val dockerRunPb = result.createProcessBuilder()
+    if (dockerContainerOptions.legacy) {
+      dockerRunPb.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
+    }
 
     val dockerRun = dockerRunPb.start()
 
@@ -178,5 +166,3 @@ internal class DockerLauncher(private val paths: PathsProvider, private val opti
     return dockerRun to containerId
   }
 }
-
-private fun getCanonicalUserHome(userName: String): String = if (userName == "root") "/root" else "/home/$userName"

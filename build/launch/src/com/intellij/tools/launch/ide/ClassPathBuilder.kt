@@ -11,6 +11,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.io.File
+import java.nio.file.Path
 import java.util.*
 import java.util.logging.Logger
 import kotlin.io.path.pathString
@@ -43,6 +44,14 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
   private val model = JpsElementFactory.getInstance().createModel() ?: throw Exception("Couldn't create JpsModel")
 
   fun build(logClasspath: Boolean): File {
+    val classpath = buildClasspath(logClasspath)
+
+    return createClassPathArgFile(paths, classpath)
+  }
+
+  fun buildClasspath(logClasspath: Boolean): List<String> = buildClasspath(logClasspath) { it.toRealPath().pathString }
+
+  fun <T : Comparable<T>> buildClasspath(logClasspath: Boolean, mapper: (Path) -> T): List<T> {
     val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
 
     val m2HomePath = File(SystemProperties.getUserHome())
@@ -64,16 +73,16 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
     val startupModules = listOf("intellij.platform.boot", "intellij.configurationScript")
       .associateWith { JpsJavaClasspathKind.PRODUCTION_RUNTIME }
 
-    return createClassPathArgFileForModules(modulesToScopes + startupModules, logClasspath)
+    return buildClasspath(modulesToScopes + startupModules, logClasspath, mapper)
   }
 
-  private fun createClassPathArgFileForModules(modulesToScopes: Map<String, JpsJavaClasspathKind>, logClasspath: Boolean): File {
-    val classpath = mutableListOf<String>()
+  private fun <T : Comparable<T>> buildClasspath(modulesToScopes: Map<String, JpsJavaClasspathKind>, logClasspath: Boolean, mapper: (Path) -> T): List<T> {
+    val classpath = mutableListOf<T>()
     for ((moduleName, jpsJavaClasspathKind) in modulesToScopes) {
       val module = model.project.modules.singleOrNull { it.name == moduleName }
                    ?: throw Exception("Module $moduleName not found")
 
-      classpath.addAll(getClasspathForModule(module, jpsJavaClasspathKind))
+      classpath.addAll(getClasspathForModule(module, jpsJavaClasspathKind, mapper))
     }
 
     // Uncomment for big debug output
@@ -89,14 +98,14 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
       logger.warning("Verbose classpath logging is disabled, set logClasspath to true to see it.")
     }
 
-    return createClassPathArgFile(paths, classpath)
+    return classpath
   }
 
-  private fun getClasspathForModule(module: JpsModule, jpsJavaClasspathKind: JpsJavaClasspathKind): List<String> {
+  private fun <T> getClasspathForModule(module: JpsModule, jpsJavaClasspathKind: JpsJavaClasspathKind, mapper: (Path) -> T): List<T> {
     return JpsJavaExtensionService
       .dependencies(module)
       .recursively()
       .includedIn(jpsJavaClasspathKind)
-      .classes().roots.filter { it.exists() }.map { it.toPath().toRealPath().pathString }.toList()
+      .classes().roots.filter { it.exists() }.map { mapper(it.toPath()) }.toList()
   }
 }

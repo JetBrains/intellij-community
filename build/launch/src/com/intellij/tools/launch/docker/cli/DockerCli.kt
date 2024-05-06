@@ -1,7 +1,6 @@
 package com.intellij.tools.launch.docker.cli
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.launch.os.affixIO
 import com.intellij.tools.launch.os.pathNotResolvingSymlinks
 import java.io.File
@@ -35,9 +34,6 @@ internal class DockerCli(
                      assertSuccess: Boolean,
                      captureOutput: Boolean = false,
                      vararg cmd: String): List<String> {
-    if (!SystemInfo.isLinux)
-      error("We are heavily relaying on paths being the same everywhere and may use networks, so only Linux can be used as a host system.")
-
     val processBuilder = ProcessBuilder(*cmd)
     processBuilder.directory(workDir)
 
