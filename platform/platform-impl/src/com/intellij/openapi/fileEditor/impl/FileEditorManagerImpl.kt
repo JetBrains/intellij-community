@@ -2444,8 +2444,8 @@ private class SelectionHistory {
 private class SelectionState(@JvmField val composite: EditorComposite, @JvmField val fileEditorProvider: FileEditorWithProvider)
 
 @Internal
-suspend fun FileEditorComposite.waitForFullyLoaded() {
-  for (editor in allEditors) {
+suspend fun waitForFullyLoaded(fileEditorComposite: FileEditorComposite) {
+  for (editor in fileEditorComposite.allEditors) {
     if (editor is TextEditor) {
       AsyncEditorLoader.waitForLoaded(editor.editor)
     }
@@ -2565,7 +2565,9 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
   val pinned = window.isFilePinned(oldFile)
   var newOptions = FileEditorOpenOptions(selectAsCurrent = active, requestFocus = active, pin = pinned)
 
-  val isSingletonEditor = window.allComposites.any { it.allEditors.any { it.file == oldFile && isSingletonFileEditor(it) } }
+  val isSingletonEditor = window.allComposites.any { composite ->
+    composite.allEditors.any { it.file == oldFile && isSingletonFileEditor(it) }
+  }
   val dockContainer = DockManager.getInstance(editorManager.project).getContainerFor(window.component) { it is DockableEditorTabbedContainer }
   if (isSingletonEditor && dockContainer != null) {
     window.closeFile(oldFile)

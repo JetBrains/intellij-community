@@ -43,18 +43,15 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       }
     }
 
-    public fun getOptions(arguments: String): OpenFileCommandOptions? {
+    fun getOptions(arguments: String): OpenFileCommandOptions? {
       val myOptions = runCatching {
         OpenFileCommandOptions().apply { Args.parse(this, arguments.split(" ").toTypedArray()) }
       }.getOrNull()
       return myOptions
     }
-
   }
   
-  override fun getName(): String {
-    return NAME
-  }
+  override fun getName(): String = NAME
 
   override suspend fun doExecute(context: PlaybackContext) {
     val myOptions = getOptions(extractCommandArgument(PREFIX))
@@ -82,7 +79,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     val fileEditor = (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
       .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
     if (myOptions != null && !myOptions.disableCodeAnalysis) {
-      fileEditor.waitForFullyLoaded()
+      waitForFullyLoaded(fileEditor)
     }
 
     job.onError {
