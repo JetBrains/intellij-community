@@ -20,5 +20,6 @@ class A(overrid<caret>) : Base2(), I
 // EXIST: { itemText: "override val someVal: Int", tailText: null, typeText: "I", attributes: "bold" }
 // EXIST: { itemText: "override var someVar: Int", tailText: null, typeText: "I", attributes: "bold" }
 // EXIST: { itemText: "override val fromBase: String", tailText: null, typeText: "Base1", attributes: "" }
+// EXIST_NATIVE_ONLY: { itemText:"overrideInit: ObjCObjectBase.OverrideInit" }
 // EXIST_JAVA_ONLY: { itemText: "override: Override" }
 // NOTHING_ELSE
