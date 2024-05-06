@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.nj2k.statements
 import org.jetbrains.kotlin.nj2k.tree.*
 
 class MarkConditionalStatementsWithLiftedReturnsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    override fun isEnabledInBasicMode(): Boolean = false
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKIfElseStatement && element !is JKKtWhenBlock) return recurse(element)

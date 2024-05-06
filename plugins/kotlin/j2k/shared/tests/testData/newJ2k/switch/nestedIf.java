@@ -1,11 +1,10 @@
-// IGNORE_K2
 //method
 public String foo(int i, int j) {
     switch (i) {
         case 0:
             if (j > 0) {
                 return "1"
-            } else{
+            } else {
                 return "2"
             }
         case 1:

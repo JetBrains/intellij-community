@@ -5692,6 +5692,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/switch/nestedSwitchFallback.java");
         }
 
+        @TestMetadata("noLiftedReturnInBasicMode.java")
+        public void testNoLiftedReturnInBasicMode() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/switch/noLiftedReturnInBasicMode.java");
+        }
+
         @TestMetadata("nondefault.java")
         public void testNondefault() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/switch/nondefault.java");

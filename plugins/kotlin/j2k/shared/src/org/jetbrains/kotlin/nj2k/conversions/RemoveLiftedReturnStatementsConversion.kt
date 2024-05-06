@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.nj2k.asStatement
 import org.jetbrains.kotlin.nj2k.tree.*
 
 class RemoveLiftedReturnStatementsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+    override fun isEnabledInBasicMode(): Boolean = false
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKReturnStatement) return recurse(element)
