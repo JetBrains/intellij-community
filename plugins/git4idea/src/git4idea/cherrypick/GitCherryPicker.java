@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.cherrypick;
 
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitActivity;
 import git4idea.GitApplyChangesProcess;
 import git4idea.GitUtil;
@@ -53,7 +52,7 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public void cherryPick(@NotNull List<? extends VcsFullCommitDetails> commits) {
+  public void cherryPick(@NotNull List<? extends VcsCommitMetadata> commits) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setIndeterminate(false);
@@ -126,7 +125,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     return stdout.contains("nothing to commit") || stdout.contains("previous cherry-pick is now empty");
   }
 
-  private @NotNull String createCommitMessage(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
+  private @NotNull String createCommitMessage(@NotNull GitRepository repository, @NotNull VcsCommitMetadata commit) {
     String message = commit.getFullMessage();
     if (shouldAddSuffix(repository, commit.getId())) {
       message += String.format("\n\n(cherry picked from commit %s)", commit.getId().asString()); //NON-NLS Do not i18n commit template

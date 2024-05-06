@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.cherrypick;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
@@ -48,10 +48,10 @@ public class HgCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public void cherryPick(final @NotNull List<? extends VcsFullCommitDetails> commits) {
-    Map<HgRepository, List<VcsFullCommitDetails>> commitsInRoots = DvcsUtil.groupCommitsByRoots(
+  public void cherryPick(final @NotNull List<? extends VcsCommitMetadata> commits) {
+    Map<HgRepository, List<VcsCommitMetadata>> commitsInRoots = DvcsUtil.groupCommitsByRoots(
       HgUtil.getRepositoryManager(myProject), commits);
-    for (Map.Entry<HgRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
+    for (Map.Entry<HgRepository, List<VcsCommitMetadata>> entry : commitsInRoots.entrySet()) {
       processGrafting(entry.getKey(), ContainerUtil.map(entry.getValue(),
                                                         commitDetails -> commitDetails.getId().asString()));
     }
