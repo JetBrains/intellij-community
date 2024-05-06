@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.idea.IJIgnore;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -439,7 +438,6 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
   }
 
-  @IJIgnore(issue = "IDEA-353030")
   public void testHighlightVisitorsMustRunIndependentlyAndInParallel() {
     @Language("JAVA")
     String text = """
