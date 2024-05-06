@@ -326,8 +326,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       var syncResultHandler = new GradleSyncActionResultHandler(resolverCtx);
       var modelFetchResultHandler = new GradleModelFetchActionResultHandler(resolverCtx, buildAction, syncResultHandler);
-      var buildActionResultHandler = new
-        GradleBuildActionResultHandler(resolverCtx, modelFetchResultHandler);
+      var buildActionResultHandler = new GradleBuildActionResultHandler(resolverCtx, modelFetchResultHandler);
       var buildActionRunner = new GradleBuildActionRunner(resolverCtx, buildAction, executionSettings, buildActionResultHandler);
       buildActionRunner.runBuildAction();
 
