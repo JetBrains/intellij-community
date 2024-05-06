@@ -68,7 +68,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
   )
 
   companion object {
-    val instance: JsonSettingsModel = jsonDataToModel(loadFromJson())
+    val instance: JsonSettingsModel by lazy { componentToSettingsModel(loadFromJson()) }
 
     private fun loadFromJson(): ComponentModel {
       return JsonSettingsModel::class.java.getResourceAsStream("/settings/ide-settings-model.json")?.let { input ->
@@ -77,9 +77,9 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
       } ?: ComponentModel()
     }
 
-    fun jsonDataToModel(jsonData: ComponentModel): JsonSettingsModel {
+    fun componentToSettingsModel(componentModel: ComponentModel): JsonSettingsModel {
       val propertyMap = mutableMapOf<String, PropertyDescriptor>()
-      val filteredModel = filterSettings(jsonData)
+      val filteredModel = filterSettings(componentModel)
       filteredModel.components.forEach { componentInfo ->
         componentInfo.properties.forEach { propertyInfo ->
           jsonDataToPropertyDescriptor(componentInfo, propertyInfo)?.let {
@@ -91,10 +91,10 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
       return JsonSettingsModel(propertyMap)
     }
 
-    private fun jsonDataToPropertyDescriptor(componentData: ComponentInfo, propertyData: ComponentPropertyInfo): PropertyDescriptor? {
-      return if (componentData.name != null && componentData.storage != null) {
-        PropertyDescriptor(componentData.name, propertyData.name, propertyData.type, componentData.storage,
-                           propertyData.mapTo ?: propertyData.name, propertyData.variants)
+    private fun jsonDataToPropertyDescriptor(componentInfo: ComponentInfo, propertyInfo: ComponentPropertyInfo): PropertyDescriptor? {
+      return if (componentInfo.name != null && componentInfo.storage != null) {
+        PropertyDescriptor(componentInfo.name, propertyInfo.name, propertyInfo.type, componentInfo.storage,
+                           propertyInfo.mapTo ?: propertyInfo.name, propertyInfo.variants)
       }
       else null
     }

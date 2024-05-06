@@ -8954,8 +8954,8 @@ f:com.intellij.ide.settings.json.JsonSettingsModel
 - <init>(java.util.Map):V
 - f:getPropertyMap():java.util.Map
 f:com.intellij.ide.settings.json.JsonSettingsModel$Companion
+- f:componentToSettingsModel(com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel):com.intellij.ide.settings.json.JsonSettingsModel
 - f:getInstance():com.intellij.ide.settings.json.JsonSettingsModel
-- f:jsonDataToModel(com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel):com.intellij.ide.settings.json.JsonSettingsModel
 f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo
 - sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$Companion
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List):V
