@@ -8,7 +8,6 @@ public final class PyPackageAliasesProvider {
   }
 
   public static final Map<String, String> commonImportAliases = new HashMap<>();
-  public static final Map<String, String> packageAliases = new HashMap<>();
 
   static {
     commonImportAliases.put("np", "numpy");
@@ -24,11 +23,5 @@ public final class PyPackageAliasesProvider {
     commonImportAliases.put("plt", "matplotlib.pyplot");
     commonImportAliases.put("mpimg", "matplotlib.image");
     commonImportAliases.put("mimg", "matplotlib.image");
-  }
-
-  static {
-    packageAliases.put("sklearn", "scikit-learn");
-    packageAliases.put("Crypto", "PyCrypto");
-    packageAliases.put("cv2", "pyopencv");
   }
 }
