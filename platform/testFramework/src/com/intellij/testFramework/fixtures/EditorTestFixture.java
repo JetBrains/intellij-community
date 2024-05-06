@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
@@ -296,10 +297,13 @@ public class EditorTestFixture {
       PsiFile psiFile = getFile();
       int offset = myEditor.getCaretModel().getOffset();
       int expectedCaretOffset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : offset;
-      fail("element not found in file " + psiFile + "(" + psiFile.getClass() + ", " + psiFile.getViewProvider() + ", "+editor.getProject()+")" +
+      fail("element not found in file " + psiFile + "(" + psiFile.getClass() + ", " + psiFile.getViewProvider() + ", " + editor.getProject() + ")" +
            " at caret position offset " + offset + (offset == expectedCaretOffset ? "" : ", expected caret offset: "+expectedCaretOffset) +
            ", psi structure:\n" + DebugUtil.psiToString(psiFile, true, true) +
-           ", elementAt("+offset+")="+psiFile.findElementAt(offset)
+           ", elementAt(" + offset + ")=" + psiFile.findElementAt(offset) +
+           ", editor=" + editor +
+           ", adjusted offset=" + TargetElementUtilBase.adjustOffset(psiFile, editor.getDocument(), offset)+
+           ", TargetElementUtilBase.findTargetElement(editor, flags, offset)=" + TargetElementUtilBase.findTargetElement(editor, findTargetFlags, offset)
       );
     }
     return element;
