@@ -7,6 +7,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
@@ -18,6 +19,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleDslPropertiesFileTest : GradleCodeInsightTestCase() {
+  override fun setUp() {
+    super.setUp()
+    GradleBuildClasspathManager.getInstance(project).reload()
+  }
 
   @ParameterizedTest
   @AllGradleVersionsSource
