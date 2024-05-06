@@ -5,15 +5,15 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus.Experimental
 
+@Experimental
 interface SubprojectHandler {
   companion object {
     val EP_NAME: ExtensionPointName<SubprojectHandler> = ExtensionPointName.create("com.intellij.workspace.subprojectHandler")
   }
 
   fun getSubprojects(project: Project): List<Subproject>
-  fun getSubprojectFor(module: Module): Subproject?
-
   fun canImportFromFile(project: Project, file: VirtualFile): Boolean
   suspend fun importFromFile(project: Project, file: VirtualFile)
   fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings?

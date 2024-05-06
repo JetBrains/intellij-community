@@ -678,21 +678,19 @@ com.intellij.ide.wizard.StepWithSubSteps
 - a:isLast():Z
 com.intellij.ide.workspace.ImportedProjectSettings
 - a:applyTo(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.ide.workspace.Subproject
-- a:getModules():java.util.List
+*:com.intellij.ide.workspace.Subproject
 - a:getName():java.lang.String
 - a:getProjectPath():java.lang.String
 - a:getWorkspace():com.intellij.openapi.project.Project
 - a:removeSubproject():V
-com.intellij.ide.workspace.SubprojectHandler
-- sf:Companion:com.intellij.ide.workspace.SubprojectHandler$Companion
+*:com.intellij.ide.workspace.SubprojectHandler
+- *sf:Companion:com.intellij.ide.workspace.SubprojectHandler$Companion
 - a:canImportFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
-- a:getSubprojectFor(com.intellij.openapi.module.Module):com.intellij.ide.workspace.Subproject
 - a:getSubprojects(com.intellij.openapi.project.Project):java.util.List
 - a:importFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - a:importFromProject(com.intellij.openapi.project.Project,Z):com.intellij.ide.workspace.ImportedProjectSettings
 - suppressGenericImportFor(com.intellij.openapi.module.Module):Z
-f:com.intellij.ide.workspace.SubprojectHandler$Companion
+*f:com.intellij.ide.workspace.SubprojectHandler$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.ide.workspace.WorkspaceSettingsImporter
 - sf:Companion:com.intellij.ide.workspace.WorkspaceSettingsImporter$Companion

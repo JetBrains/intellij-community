@@ -21,11 +21,6 @@ internal class MavenSubprojectHandler : SubprojectHandler {
       .map { MavenSubproject(project, it) }
   }
 
-  override fun getSubprojectFor(module: Module): Subproject? {
-    val mavenProject = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return null
-    return MavenSubproject(module.project, mavenProject)
-  }
-
   override fun canImportFromFile(project: Project, file: VirtualFile): Boolean {
     return MavenOpenProjectProvider().canOpenProject(file)
   }
@@ -81,12 +76,6 @@ private class MavenSubproject(override val workspace: Project, val mavenProject:
     var result = workspace.hashCode()
     result = 31 * result + mavenProject.hashCode()
     return result
-  }
-
-  override fun getModules(): List<Module> {
-    val manager = MavenProjectsManager.getInstance(workspace)
-    val mavenModules = manager.getModules(mavenProject) + mavenProject
-    return mavenModules.mapNotNull { manager.findModule(it) }
   }
 
   override fun removeSubproject() {
