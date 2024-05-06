@@ -559,6 +559,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/It.kt");
         }
 
+        @TestMetadata("javaInnerClassQualifier.kt")
+        public void testJavaInnerClassQualifier() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/javaInnerClassQualifier.kt");
+        }
+
         @TestMetadata("kt10808.kt")
         public void testKt10808() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/kt10808.kt");

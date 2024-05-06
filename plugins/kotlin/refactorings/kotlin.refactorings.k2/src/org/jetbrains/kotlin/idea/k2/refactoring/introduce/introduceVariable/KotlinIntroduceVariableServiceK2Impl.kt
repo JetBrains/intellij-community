@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.util.elementType
@@ -38,11 +39,12 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
             ?: findStringTemplateOrStringTemplateEntryExpression(file, startOffset, endOffset, elementKind)
             ?: findStringTemplateFragment(file, startOffset, endOffset, elementKind)
 
-        if (element is KtSimpleNameExpression) {
+        if (element is KtExpression) {
             val qualifiedExpression = element.parent as? KtDotQualifiedExpression
             if (qualifiedExpression != null && qualifiedExpression.receiverExpression == element) {
-                val resolved = element.mainReference.resolve()
-                if (resolved is PsiPackage || resolved is KtTypeAlias || resolved is KtClassOrObject && resolved.getDeclarationKeyword()?.elementType != KtTokens.OBJECT_KEYWORD) {
+                val resolved = ((element as? KtDotQualifiedExpression)?.selectorExpression ?: element).mainReference?.resolve()
+                if (resolved is PsiPackage || resolved is PsiClass ||
+                    resolved is KtTypeAlias || resolved is KtClassOrObject && resolved.getDeclarationKeyword()?.elementType != KtTokens.OBJECT_KEYWORD) {
                     element = null
                 }
             }
