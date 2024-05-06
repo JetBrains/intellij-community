@@ -307,7 +307,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyType sourceType = context.getType(source);
       final PyType type = getIterationType(sourceType, source, this, context);
       if (type instanceof PyTupleType && target instanceof PyTupleExpression) {
-        return PyTypeChecker.getTargetTypeFromTupleAssignment(this, (PyTupleExpression)target, (PyTupleType)type);
+        return PyTypeChecker.getTargetTypeFromTupleAssignment((PyExpression)this, (PyTupleExpression)target, (PyTupleType)type);
       }
       if (target == this && type != null) {
         return type;

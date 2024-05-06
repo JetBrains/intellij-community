@@ -1464,6 +1464,16 @@ public final class PyTypeChecker {
     return null;
   }
 
+  /**
+   * @deprecated Use {@link PyTypeChecker#getTargetTypeFromTupleAssignment(PyExpression, PyTupleExpression, PyTupleType)}
+   */
+  @Deprecated(forRemoval = true)
+  @Nullable
+  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target, @NotNull PyTupleExpression parentTuple,
+                                                        @NotNull PyTupleType assignedTupleType) {
+    return getTargetTypeFromTupleAssignment((PyExpression)target, parentTuple, assignedTupleType);
+  }
+
   @Nullable
   public static PyType getTargetTypeFromTupleAssignment(@NotNull PyExpression target, @NotNull PyTupleExpression parentTuple,
                                                         @NotNull PyTupleType assignedTupleType) {
