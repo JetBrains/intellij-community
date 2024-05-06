@@ -75,9 +75,8 @@ fn main_os_specific() -> Result<()> {
     link_cef_sandbox(&cef_dir)?;
     write_cef_version(cef_version)?;
 
-    // metadata embedding breaks incremental build due to verbose output of the used tools
-    // for the convenience of the development we'll avoid this
-    // for the builds which are explicitly marked as debug by cargo
+    // Metadata embedding breaks incremental build due to verbose output of used tools.
+    // For the convenience of the development, we'll avoid this in debug builds.
     let is_debug =  env::var("DEBUG")? == "true";
     if !is_debug {
         embed_metadata()?;
