@@ -84,12 +84,16 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         }
     }
 
-    override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
-        if (declaration.isExpectDeclaration() &&
-            reference.unwrappedTargets.any { target -> target is KtDeclaration && ExpectActualSupport.getInstance(declaration.project).expectedDeclarationIfAny(target) == declaration }) {
-            return true
-        }
+    override fun isUsageOfActual(
+        reference: PsiReference,
+        declaration: KtNamedDeclaration
+    ): Boolean = declaration.isExpectDeclaration() &&
+            reference.unwrappedTargets.any { target ->
+                target is KtDeclaration && ExpectActualSupport.getInstance(declaration.project)
+                    .expectedDeclarationIfAny(target) == declaration
+            }
 
+    override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
         fun KtDeclaration.isTopLevelCallable() = when (this) {
             is KtNamedFunction -> isTopLevel
             is KtProperty -> isTopLevel
