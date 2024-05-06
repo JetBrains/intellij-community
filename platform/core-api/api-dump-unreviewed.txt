@@ -3370,6 +3370,7 @@ a:com.intellij.openapi.vfs.WritingAccessProvider
 - requestWriting(com.intellij.openapi.vfs.VirtualFile[]):java.util.Collection
 a:com.intellij.openapi.vfs.encoding.EncodingManager
 - com.intellij.openapi.vfs.encoding.EncodingRegistry
+- sf:PROP_DEFAULT_FILES_ENCODING:java.lang.String
 - sf:PROP_NATIVE2ASCII_SWITCH:java.lang.String
 - sf:PROP_PROPERTIES_FILES_ENCODING:java.lang.String
 - <init>():V
