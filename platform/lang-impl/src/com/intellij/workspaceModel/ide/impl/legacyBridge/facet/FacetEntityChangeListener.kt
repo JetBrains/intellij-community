@@ -48,7 +48,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
           else {
             facetBridgeContributor.createFacetFromEntity(entity, module)
           }
-          builder.mutableFacetMapping().addMapping(entity, newFacetBridge)
+          mutableFacetMapping(builder).addMapping(entity, newFacetBridge)
           return newFacetBridge
         }
 

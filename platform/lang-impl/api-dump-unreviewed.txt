@@ -30204,7 +30204,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge
 - facetsChanged():V
 - getAllFacets():com.intellij.facet.Facet[]
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge$Companion
-- f:mutableFacetMapping(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.MutableExternalEntityMapping
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 - com.intellij.facet.ModifiableFacetModel
 - com.intellij.facet.impl.FacetModelBase
