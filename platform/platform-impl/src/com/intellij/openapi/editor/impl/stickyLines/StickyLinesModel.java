@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.stickyLines;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -32,9 +33,29 @@ public final class StickyLinesModel {
   private static final Key<String> STICKY_LINE_SOURCE = Key.create("editor.sticky.lines.source");
   private static final Key<StickyLinesModel> STICKY_LINES_MODEL_KEY = Key.create("editor.sticky.lines.model");
   private static final Key<StickyLineImpl> STICKY_LINE_IMPL_KEY = Key.create("editor.sticky.line.impl");
+  private static final String STICKY_LINE_MARKER = "STICKY_LINE_MARKER";
   private static final TextAttributesKey STICKY_LINE_ATTRIBUTE = TextAttributesKey.createTextAttributesKey(
-    "STICKY_LINE_MARKER"
+    STICKY_LINE_MARKER
   );
+
+  public static boolean isStickyLine(@NotNull RangeHighlighter highlighter) {
+    TextAttributesKey key = highlighter.getTextAttributesKey();
+    if (key != null && STICKY_LINE_MARKER.equals(key.getExternalName())) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * IJPL-26873 skip sticky line highlighter in all editors.
+   *
+   * <p>Even though the sticky highlighter does not contain text attributes,
+   * {@code highlighter.getTextAttributes(editor.getColorsScheme())} may return non-null attributes.
+   * Which means incorrect text color.
+   */
+  public static void skipInAllEditors(@NotNull RangeHighlighter highlighter) {
+    highlighter.setEditorFilter(StickyLinesModel::alwaysFalsePredicate);
+  }
 
   public static @Nullable StickyLinesModel getModel(@NotNull Project project, @NotNull Document document) {
     if (project.isDisposed()) return null;
@@ -77,6 +98,7 @@ public final class StickyLinesModel {
     StickyLineImpl stickyLine = new StickyLineImpl(highlighter.getDocument(), highlighter, debugText);
     highlighter.putUserData(STICKY_LINE_IMPL_KEY, stickyLine);
     highlighter.putUserData(STICKY_LINE_SOURCE, source);
+    skipInAllEditors(highlighter);
     return stickyLine;
   }
 
@@ -133,6 +155,10 @@ public final class StickyLinesModel {
     for (Listener listener : myListeners) {
       listener.modelChanged();
     }
+  }
+
+  private static boolean alwaysFalsePredicate(@NotNull Editor editor) {
+    return false;
   }
 
   private record StickyLineImpl(
