@@ -746,6 +746,3 @@ c:com.intellij.psi.impl.search.PsiTodoSearchHelperImpl
 - getTodoItemsCount(com.intellij.psi.PsiFile,com.intellij.psi.search.TodoPattern):I
 - processFilesWithTodoItems(com.intellij.util.Processor):Z
 - shouldHighlightInEditor(com.intellij.psi.PsiFile):Z
-c:com.intellij.psi.impl.search.TodoItemsCreator
-- <init>():V
-- createTodo(com.intellij.psi.search.IndexPatternOccurrence):com.intellij.psi.search.TodoItem

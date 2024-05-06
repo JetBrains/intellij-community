@@ -13,15 +13,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * moved from PsiSearchHelperImpl
  */
-public class TodoItemsCreator {
+class TodoItemCreator {
   private final TodoPattern[] myTodoPatterns;
 
-  public TodoItemsCreator() {
+  TodoItemCreator() {
     myTodoPatterns = TodoConfiguration.getInstance().getTodoPatterns();
   }
 
-  public TodoItem createTodo(IndexPatternOccurrence occurrence) {
-    final TextRange occurrenceRange = occurrence.getTextRange();
+  @NotNull
+  TodoItem createTodo(@NotNull IndexPatternOccurrence occurrence) {
+    TextRange occurrenceRange = occurrence.getTextRange();
     return new TodoItemImpl(occurrence.getFile(), occurrenceRange.getStartOffset(), occurrenceRange.getEndOffset(),
                             mapPattern(occurrence.getPattern()), occurrence.getAdditionalTextRanges());
   }

@@ -453,6 +453,7 @@ f:com.intellij.psi.search.TodoAttributes
 - writeExternal(org.jdom.Element):V
 com.intellij.psi.search.TodoItem
 - sf:BY_START_OFFSET:java.util.Comparator
+- sf:EMPTY_ARRAY:com.intellij.psi.search.TodoItem[]
 - getAdditionalTextRanges():java.util.List
 - a:getFile():com.intellij.psi.PsiFile
 - a:getPattern():com.intellij.psi.search.TodoPattern
