@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
+import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.*
@@ -46,7 +47,11 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
     assertNotNull item
     assertInstanceOf item, PostfixTemplateLookupElement.class
     assertInstanceOf((item as PostfixTemplateLookupElement).getPostfixTemplate(), expectedClass)
-    lookup.setCurrentItem(item)
+    ApplicationManager.getApplication().invokeAndWait {
+      ApplicationManager.getApplication().runWriteAction {
+        lookup.setCurrentItem(item)
+      }
+    }
     if (invokeRefactoring) {
       type ' '
       myFixture.checkResult result
