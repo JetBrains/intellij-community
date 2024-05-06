@@ -18,6 +18,8 @@ interface InspectionWidgetActionProvider {
    * All groups will be flattened upon adding to the inspection widget toolbar.
    *
    * May return null if no action should be created for the given editor.
+   *
+   * AnAction may implement Disposable, its `dispose` method will be called on editor disposal on the action unregistration
    */
   @RequiresEdt
   fun createAction(editor: Editor): AnAction?
