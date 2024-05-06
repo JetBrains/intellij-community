@@ -15,6 +15,8 @@ import java.util.List;
 
 @ApiStatus.Internal
 public interface MavenVersionAwareSupportExtension {
+  @NonNls String DEFAULT_MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
+
   ExtensionPointName<MavenVersionAwareSupportExtension> MAVEN_VERSION_SUPPORT
     = new ExtensionPointName<>("org.jetbrains.idea.maven.versionAwareMavenSupport");
 
@@ -27,7 +29,11 @@ public interface MavenVersionAwareSupportExtension {
   List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution);
 
   @NotNull
-  default List<@NonNls String> getAdditionalVmParameters(MavenDistribution distribution) {
+  default List<@NonNls String> getAdditionalVmParameters() {
     return Collections.emptyList();
+  }
+
+  default String getMainClass() {
+    return DEFAULT_MAIN_CLASS;
   }
 }

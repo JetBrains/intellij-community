@@ -45,9 +45,6 @@ public class MavenServerCMDState extends CommandLineState {
     .Logger.getInstance(MavenServerCMDState.class);
   private static boolean setupThrowMainClass = false;
 
-  @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
-  @NonNls private static final String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
-  @NonNls private static final String MAIN_CLASS40 = "com.intellij.maven.server.m40.RemoteMavenServer40";
   @NonNls private static final String MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS =
     "org.jetbrains.idea.maven.server.RemoteMavenServerThrowsExceptionForTests";
 
@@ -145,16 +142,16 @@ public class MavenServerCMDState extends CommandLineState {
     }
     params.getVMParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
 
-    setupMainClass(params, myDistribution.getVersion());
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
     MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(myDistribution);
+    setupMainClass(params, extension);
     checkExtension(extension);
     assert extension != null; //checked in the method above, need to make static analyzer happy
     params.getClassPath().addAllFiles(extension.collectClassPathAndLibsFolder(myDistribution));
 
-    params.getVMParametersList().addAll(extension.getAdditionalVmParameters(myDistribution));
+    params.getVMParametersList().addAll(extension.getAdditionalVmParameters());
 
 
     Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());
@@ -236,19 +233,13 @@ public class MavenServerCMDState extends CommandLineState {
     return classPath;
   }
 
-  private static void setupMainClass(SimpleJavaParameters params, String mavenVersion) {
+  private static void setupMainClass(SimpleJavaParameters params, MavenVersionAwareSupportExtension extension) {
     if (setupThrowMainClass && MavenUtil.isMavenUnitTestModeEnabled()) {
       setupThrowMainClass = false;
       params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
     }
-    else if (StringUtil.compareVersionNumbers(mavenVersion, "4.0") >= 0) {
-      params.setMainClass(MAIN_CLASS40);
-    }
-    else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-      params.setMainClass(MAIN_CLASS36);
-    }
     else {
-      params.setMainClass(MAIN_CLASS);
+      params.setMainClass(extension.getMainClass());
     }
   }
 
