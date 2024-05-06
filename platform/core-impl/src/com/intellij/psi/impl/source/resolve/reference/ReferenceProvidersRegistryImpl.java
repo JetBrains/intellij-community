@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -37,41 +36,17 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
         @Override
         public void extensionAdded(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-          Language language = Language.findLanguageByID(extension.getKey());
-          PsiReferenceContributor instance = extension.getInstance();
-          if (language == Language.ANY) {
-            for (PsiReferenceRegistrarImpl registrar : myRegistrars.values()) {
-              registerContributedReferenceProviders(registrar, instance);
-            }
-          }
-          else if (language != null) {
-            registerContributorForLanguageAndDialects(language, instance);
-            if (language instanceof MetaLanguage) {
-              Collection<Language> matchingLanguages = ((MetaLanguage)language).getMatchingLanguages();
-              for (Language matchingLanguage : matchingLanguages) {
-                registerContributorForLanguageAndDialects(matchingLanguage, instance);
-              }
-            }
-          }
-        }
-
-        private void registerContributorForLanguageAndDialects(@NotNull Language language, @NotNull PsiReferenceContributor instance) {
-          PsiReferenceRegistrarImpl registrar = myRegistrars.get(language);
-          if (registrar != null) {
-            registerContributedReferenceProviders(registrar, instance);
-          }
-          for (Language dialect : language.getTransitiveDialects()) {
-            registrar = myRegistrars.get(dialect);
-            if (registrar != null) {
-              registerContributedReferenceProviders(registrar, instance);
-            }
-          }
+          reset();
         }
 
         @Override
         public void extensionRemoved(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          // it is much easier to just initialize everything next time from scratch
+          reset();
+        }
+
+        private void reset() {
+          // it is much easier to just initialize everything next time from scratch than maintain incremental updates
           for (PsiReferenceRegistrarImpl registrar : myRegistrars.values()) {
             registrar.cleanup();
             registrar.clearBindingsCache();
@@ -182,7 +157,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   }
 
   private static PsiReference @NotNull [] getReferences(@NotNull PsiElement context,
-                                                        @NotNull ProviderBinding.ProviderInfo<? extends ProcessingContext> providerInfo) {
+                                                        @NotNull ProviderBinding.ProviderInfo<ProcessingContext> providerInfo) {
     try {
       return providerInfo.provider.getReferencesByElement(context, providerInfo.processingContext);
     }
