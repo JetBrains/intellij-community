@@ -62,11 +62,10 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
     }
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         enableKotlinOfficialCodeStyle(project)
 
         vfsDisposable = allowProjectRootAccess(this)
-        assertKotlinPluginMode()
     }
 
     // [TargetSupportException] can be thrown by the multiplatform test setup when a test artifact doesn't exist for the host platform.
@@ -124,9 +123,9 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { disposeVfsRootAccess(vfsDisposable) },
-            ThrowableRunnable { disableKotlinOfficialCodeStyle(project) },
-            ThrowableRunnable { super.tearDown() }
+            { disposeVfsRootAccess(vfsDisposable) },
+            { disableKotlinOfficialCodeStyle(project) },
+            { super.tearDown() },
         )
     }
 

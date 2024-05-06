@@ -7,7 +7,7 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleBuildFileHighlightingTest
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.assertKotlinPluginMode
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 
 private const val SCRIPTING_ENABLED_FLAG = "kotlin.k2.scripting.enabled"
@@ -25,8 +25,7 @@ abstract class AbstractK2GradleBuildFileHighlightingTest : AbstractGradleBuildFi
 
         Registry.get(SCRIPTING_ENABLED_FLAG).setValue(true)
 
-        super.setUp()
-        assertKotlinPluginMode()
+        setUpWithKotlinPlugin { super.setUp() }
     }
 
     override fun tearDown() {

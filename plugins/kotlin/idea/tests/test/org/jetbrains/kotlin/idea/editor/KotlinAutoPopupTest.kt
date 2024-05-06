@@ -5,7 +5,7 @@ import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.assertKotlinPluginMode
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import kotlin.test.assertContains
@@ -18,8 +18,7 @@ open class KotlinAutoPopupTest : CompletionAutoPopupTestCase(),
         get() = KotlinPluginMode.K1
 
     override fun setUp() {
-        super.setUp()
-        assertKotlinPluginMode()
+        setUpWithKotlinPlugin { super.setUp() }
     }
 
     fun testAfterLT() {

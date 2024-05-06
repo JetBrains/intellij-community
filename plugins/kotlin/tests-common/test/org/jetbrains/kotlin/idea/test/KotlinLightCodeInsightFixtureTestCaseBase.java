@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
-import org.jetbrains.kotlin.idea.base.plugin.SystemPropertyUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,7 +25,9 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 
-public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJavaCodeInsightFixtureTestCase {
+public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJavaCodeInsightFixtureTestCase
+        implements ExpectedPluginModeProvider {
+
     @NotNull
     @Override
     public Project getProject() {
@@ -49,26 +50,13 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
 
     @Override
     protected void setUp() throws Exception {
-        boolean useK2Plugin = isFirPlugin();
-        SystemPropertyUtils.setUseK2Plugin(useK2Plugin);
-        super.setUp();
-
-        // todo test classes should inherit ExpectedPluginModeProvider directly
-        ExpectedPluginModeProviderKt.assertKotlinPluginMode(new ExpectedPluginModeProvider() {
-
-            @Override
-            public @NotNull KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.of(useK2Plugin);
-            }
-        });
+        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, super::setUp);
     }
 
     @Override
     protected void tearDown() throws Exception {
-        RunAll.runAll(
-                () -> myTempFiles.deleteAll(),
-                () -> super.tearDown()
-        );
+        RunAll.runAll(myTempFiles::deleteAll,
+                      super::tearDown);
     }
 
     @NotNull
@@ -102,7 +90,14 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     }
 
+    // todo replace with getPluginMode overrides
+    // todo remove the method
     protected boolean isFirPlugin() {
         return false;
+    }
+
+    @Override
+    public final @NotNull KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.of(isFirPlugin());
     }
 }

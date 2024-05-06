@@ -155,13 +155,12 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
     protected open val compileWithK2: Boolean get() = false
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
 
         registerEvaluatorBackend()
 
         KotlinEvaluator.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
-        assertKotlinPluginMode()
         atDebuggerTearDown { restoreEvaluatorBackend() }
         atDebuggerTearDown { logPropagator = null }
         atDebuggerTearDown { logPropagator?.detach() }

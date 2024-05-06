@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.*
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.*
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runC
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.WorkspaceChecksDsl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
@@ -130,10 +128,6 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
     // Temporary hack allowing to reuse new test runner in selected smoke tests for runs on linux-hosts
     open val allowOnNonMac: Boolean = false
 
-    // Captures the state of the 'idea.kotlin.plugin.use.k2' system property before the test.
-    // Used for restoring the property's value after the test.
-    private var beforeSetupK2PluginProperty: Boolean? = null
-
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K1
 
@@ -205,8 +199,6 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             assumeTrue("Test is ignored because it requires Mac-host", HostManager.hostIsMac)
         }
 
-        // It is important to set up property before plugin loading as the property affects plugin.xml parsing
-        beforeSetupK2PluginProperty = useK2Plugin
         setUpWithKotlinPlugin {
             // Hack: usually this is set-up by JUnit's Parametrized magic, but
             // our tests source versions from `kotlinTestPropertiesService`, not from
@@ -224,13 +216,6 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             "-XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
     }
 
-    final override fun tearDown() {
-        runAll(
-            { super.tearDown() },
-            { useK2Plugin = beforeSetupK2PluginProperty },
-        )
-    }
-
     override fun setUpFixtures() {
         myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
         context.mutableCodeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
@@ -239,9 +224,9 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
 
     override fun tearDownFixtures() {
         runAll(
-            ThrowableRunnable { context.codeInsightTestFixture.tearDown() },
-            ThrowableRunnable { context.mutableCodeInsightTestFixture = null },
-            ThrowableRunnable { myTestFixture = null },
+            { context.codeInsightTestFixture.tearDown() },
+            { context.mutableCodeInsightTestFixture = null },
+            { myTestFixture = null },
         )
     }
 

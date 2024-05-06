@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
@@ -86,12 +85,16 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase(),
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K1
 
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { unconfigureDefaultModule() },
-            ThrowableRunnable { unconfigureOtherModules() },
-            ThrowableRunnable { configuredModules = emptyList() },
-            ThrowableRunnable { super.tearDown() }
+            { unconfigureDefaultModule() },
+            { unconfigureOtherModules() },
+            { configuredModules = emptyList() },
+            { super.tearDown() },
         )
     }
 
@@ -131,7 +134,6 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase(),
 
             platform.addJdk(testRootDisposable)
             configuredModules = configureModules(projectDir, projectBaseDir, platform)
-            assertKotlinPluginMode()
         }
     }
 

@@ -14,8 +14,8 @@ import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.assertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
 abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase(),
@@ -25,7 +25,8 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
         get() = KotlinPluginMode.K1
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
+
         customToStringProvider = { element ->
             val virtualFile = element.containingFile.virtualFile
             val jarFileSystem = virtualFile.fileSystem as? JarFileSystem
@@ -35,7 +36,6 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
             } ?: virtualFile.name
             "[$path:${if (jarFileSystem != null) "*" else element.startOffset.toString()}]"
         }
-        assertKotlinPluginMode()
     }
 
     override fun tearDown() {

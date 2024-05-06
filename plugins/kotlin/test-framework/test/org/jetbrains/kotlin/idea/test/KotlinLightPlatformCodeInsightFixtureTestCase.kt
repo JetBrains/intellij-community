@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
@@ -16,7 +15,8 @@ abstract class KotlinLightPlatformCodeInsightFixtureTestCase : LightPlatformCode
         get() = KotlinPluginMode.K1
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
+
         enableKotlinOfficialCodeStyle(project)
         VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, KotlinRoot.DIR.path)
 
@@ -24,13 +24,12 @@ abstract class KotlinLightPlatformCodeInsightFixtureTestCase : LightPlatformCode
         if (pluginMode == KotlinPluginMode.K1) {
             invalidateLibraryCache(project)
         }
-        assertKotlinPluginMode()
     }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { disableKotlinOfficialCodeStyle(project) },
-            ThrowableRunnable { super.tearDown() },
+            { disableKotlinOfficialCodeStyle(project) },
+            { super.tearDown() },
         )
     }
 
