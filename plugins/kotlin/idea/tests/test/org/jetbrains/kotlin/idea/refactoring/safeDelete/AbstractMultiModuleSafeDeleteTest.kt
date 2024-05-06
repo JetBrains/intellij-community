@@ -16,10 +16,17 @@ import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.util.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import java.io.File
 
 abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
+    override fun setUp() {
+        setUpWithKotlinPlugin(isFirPlugin()) {
+            super.setUp()
+        }
+    }
+
     object SafeDeleteAction : AbstractMultifileRefactoringTest.RefactoringAction {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
             @Suppress("UNCHECKED_CAST")

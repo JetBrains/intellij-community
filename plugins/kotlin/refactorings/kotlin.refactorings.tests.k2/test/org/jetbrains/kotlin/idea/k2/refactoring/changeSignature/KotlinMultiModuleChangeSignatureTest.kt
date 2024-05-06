@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
+import org.jetbrains.kotlin.idea.test.util.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -22,6 +23,12 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
 
     init {
         isMultiModule = true
+    }
+
+    override fun setUp() {
+        setUpWithKotlinPlugin(true) {
+            super.setUp()
+        }
     }
 
     override fun getTestRoot(): String = "/refactoring/changeSignatureMultiModule/"
