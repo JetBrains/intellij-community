@@ -975,7 +975,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
       TextMergeChange mergeChange = myAllMergeChanges.get(index);
       if (mergeChange.getStartLine() == mergeChange.getEndLine() &&
-          mergeChange.getDiffType() == TextDiffType.DELETED && !mergeChange.isResolved()) {
+          mergeChange.getConflictType().getType() == MergeConflictType.Type.DELETED && !mergeChange.isResolved()) {
         markChangeResolved(mergeChange);
       }
 

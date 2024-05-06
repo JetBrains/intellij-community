@@ -164,6 +164,14 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return myFragment.getEndLine(side);
   }
 
+  @Override
+  public @NotNull TextDiffType getDiffType() {
+    TextDiffType baseType = super.getDiffType();
+    if (!myIsResolvedWithAI) return baseType;
+
+    return new MyAIResolvedDiffType(baseType);
+  }
+
   @NotNull
   @Override
   protected Editor getEditor(@NotNull ThreeSide side) {
@@ -366,4 +374,32 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   private static final JBColor AI_COLOR = new JBColor(0x834DF0, 0xA571E6); // TODO: move to platform utils
+
+  private static class MyAIResolvedDiffType implements TextDiffType {
+    private final TextDiffType myBaseType;
+
+    private MyAIResolvedDiffType(TextDiffType baseType) {
+      myBaseType = baseType;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return myBaseType.getName();
+    }
+
+    @Override
+    public @NotNull Color getColor(@Nullable Editor editor) {
+      return AI_COLOR;
+    }
+
+    @Override
+    public @NotNull Color getIgnoredColor(@Nullable Editor editor) {
+      return myBaseType.getIgnoredColor(editor);
+    }
+
+    @Override
+    public @Nullable Color getMarkerColor(@Nullable Editor editor) {
+      return myBaseType.getMarkerColor(editor);
+    }
+  }
 }
