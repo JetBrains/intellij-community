@@ -159,7 +159,10 @@ public class Maven3XProjectResolver {
             buildingResults, br -> {
               String newDependencyHash = Maven3EffectivePomDumper.dependencyHash(br.getProject());
               if (null != newDependencyHash) {
-                fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
+                File pomFile = br.getPomFile();
+                if (pomFile!=null) {
+                  fileToNewDependencyHash.put(pomFile, newDependencyHash);
+                }
               }
               return br;
             }
