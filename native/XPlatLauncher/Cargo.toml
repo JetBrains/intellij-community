@@ -1,7 +1,7 @@
 [package]
 build = "build.rs"
 name = "xplat-launcher"
-version = "0.9.0"
+version = "1.0.0"
 edition = "2021"
 rust-version = "1.70.0"
 publish = false
@@ -50,8 +50,15 @@ anyhow = { version = "1.0.81", features = ["std", "backtrace"] }
 [target.'cfg(target_os = "windows")'.build-dependencies]
 reqwest = { version = "0.12.0", features = ["blocking"] }
 sha1 = "0.10.6"
-windows = { version = "0.51.1", features = [ "Win32_System_SystemInformation", "Win32_Foundation" ] }
 winresource = "0.1.17"
+
+[package.metadata.winresource]
+CompanyName = "JetBrains s.r.o."
+FileDescription = "IntelliJ Platform Windows Launcher"
+LegalCopyright = "Copyright 2000-2024 JetBrains s.r.o."
+InternalName = "WinLauncher.exe"
+OriginalFilename = "WinLauncher.exe"
+ProductName = "IntelliJ Platform"
 
 [dev-dependencies]
 tempfile = "3.8.0"
