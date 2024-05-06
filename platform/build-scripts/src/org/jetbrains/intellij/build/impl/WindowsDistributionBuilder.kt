@@ -40,9 +40,9 @@ internal class WindowsDistributionBuilder(
 
       copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
 
-      @Suppress("SpellCheckingInspection")
-      copyDir(sourceBinDir, distBinDir, fileFilter = {
-        file -> context.includeBreakGenLibraries() || !file.name.startsWith("breakgen")
+      copyDir(sourceBinDir, distBinDir, dirFilter = { it == sourceBinDir }, fileFilter = { file ->
+        @Suppress("SpellCheckingInspection")
+        context.includeBreakGenLibraries() || !file.name.startsWith("breakgen")
       })
 
       copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
