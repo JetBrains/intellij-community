@@ -37,20 +37,20 @@ class OtherOptions(private val controller: ImportSettingsController) : ProductCh
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val jbProducts = jbDataProvider.other
-    val syncProducts = if (syncDataProvider.settingsService.isSyncEnabled.value) syncDataProvider.other else emptyList()
 
     val arr = mutableListOf<AnAction>()
     if (jb == null && jbProducts != null) {
       jb = addActionList(jbProducts, jbDataProvider, ImportSettingsBundle.message("other.options.sub.title.installed"))
     }
 
-    if (sync == null && syncProducts != null && syncDataProvider.settingsService.isSyncEnabled.value) {
-      sync = addActionList(syncProducts, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync"))
-    }
-
-    sync?.let {
-      if (it.isNotEmpty()) {
-        arr.addAll(it)
+    if(syncDataProvider.settingsService.isSyncEnabled.value) {
+      syncDataProvider.other?.let {
+        sync = addActionList(it, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync"))
+      }
+      sync?.let {
+        if (it.isNotEmpty()) {
+          arr.addAll(it)
+        }
       }
     }
 

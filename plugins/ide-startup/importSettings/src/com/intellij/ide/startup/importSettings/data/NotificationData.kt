@@ -8,7 +8,8 @@ interface NotificationData {
     INFO,
     SUCCESS,
     WARNING,
-    ERROR
+    ERROR,
+    WAITING
   }
 
   val status: NotificationStatus

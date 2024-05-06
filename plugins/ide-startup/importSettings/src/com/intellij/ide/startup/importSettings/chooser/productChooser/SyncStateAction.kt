@@ -41,7 +41,7 @@ class SyncStateAction : ChooseProductActionButton() {
         e.presentation.isEnabled = true
         true
       }
-      SyncService.SYNC_STATE.WAINING_FOR_LOGIN -> {
+      SyncService.SYNC_STATE.WAITING_FOR_LOGIN -> {
         e.presentation.text = ImportSettingsBundle.message("choose.product.log.in.to.setting.sync")
         e.presentation.isEnabled = false
         true

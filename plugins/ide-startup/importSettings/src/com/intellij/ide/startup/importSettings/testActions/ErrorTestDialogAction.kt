@@ -3,6 +3,7 @@
 
 package com.intellij.ide.startup.importSettings.testActions
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.startup.importSettings.data.NotificationData
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.startup.importSettings.data.SyncService
@@ -12,15 +13,14 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rd.util.reactive.Signal
 import javax.swing.JComponent
 
 class ErrorTestDialogAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val settService = SettingsService.getInstance()
-    val error = settService.error
+    val error = settService.notification
 
-    if(error !is Signal) return
+    if(error !is Property) return
 
     val dialog = object : DialogWrapper(null) {
       init {
@@ -34,7 +34,7 @@ class ErrorTestDialogAction : DumbAwareAction() {
         val pane = panel {
           row {
             button( "Error With Actions") {
-              error.fire(object : NotificationData {
+              error.set(object : NotificationData {
                 override val status: NotificationData.NotificationStatus = NotificationData.NotificationStatus.ERROR
                 override val message: String = s
 
@@ -48,7 +48,7 @@ class ErrorTestDialogAction : DumbAwareAction() {
           }
           row {
             button("Error") {
-              error.fire(object : NotificationData {
+              error.set(object : NotificationData {
                 override val status: NotificationData.NotificationStatus = NotificationData.NotificationStatus.WARNING
                 override val message: String = "ага. тогда сигнал. если решим, что неудобно переделаем"
                 override val customActionList: List<NotificationData.Action> = emptyList()
@@ -63,11 +63,14 @@ class ErrorTestDialogAction : DumbAwareAction() {
           }
           row {
             val state = SettingsService.getInstance().getSyncService().syncState
-            if(state is Property<SyncService.SYNC_STATE>) {
 
+
+            if(state is Property<SyncService.SYNC_STATE>) {
               comboBox(SyncService.SYNC_STATE.entries).onChanged {
                 if (it.selectedItem is SyncService.SYNC_STATE) {
                   state.value = it.selectedItem as SyncService.SYNC_STATE
+
+
                 }
               }.applyToComponent {
                 selectedItem = state.value
@@ -77,6 +80,17 @@ class ErrorTestDialogAction : DumbAwareAction() {
               val component = textField().component
               state.advise(Lifetime.Eternal) {
                 component.text = it.toString()
+                if(state.value == com.intellij.ide.startup.importSettings.data.SyncService.SYNC_STATE.WAITING_FOR_LOGIN) {
+                  settService.notification.set(object : NotificationData {
+                    override val status: NotificationData.NotificationStatus  = NotificationData.NotificationStatus.WAITING
+                    override val message: String = IdeBundle.message("login.dialog.waiting.for.login")
+                    override val customActionList = listOf(NotificationData.Action("Log in with token..."){},
+                                                           NotificationData.Action("Log in with token..."){})
+                  })
+                } else {
+                  settService.notification.set(null)
+                }
+
               }
 
             }

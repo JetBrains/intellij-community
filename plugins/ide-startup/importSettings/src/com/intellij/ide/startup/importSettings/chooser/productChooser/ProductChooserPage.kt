@@ -37,14 +37,12 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
     val settService = SettingsService.getInstance()
 
     settService.jbAccount.advise(lifetime) {
-      isVisible = it != null
-      if (!isVisible) {
-        return@advise
-      }
-
       text = it?.loginName
     }
 
+    settService.isSyncEnabled.advise(lifetime) {
+      isVisible = it
+    }
   }
 
   private val pane = object: JPanel(VerticalLayout(JBUI.scale(26), SwingConstants.CENTER)) {
