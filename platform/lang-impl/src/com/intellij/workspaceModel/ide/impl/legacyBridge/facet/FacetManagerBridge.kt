@@ -33,11 +33,15 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   private fun isThisModule(moduleEntity: ModuleEntity) = moduleEntity.name == module.name
 
   override fun checkConsistency() {
-    val entityTypeToFacetContributor = WorkspaceFacetContributor.EP_NAME.extensions.associateBy { it.rootEntityType }
-    val facetRelatedEntities = entityTypeToFacetContributor.flatMap { module.entityStorage.current.entities(it.key) }.filter { entity ->
-      val facetContributor = entityTypeToFacetContributor[entity.getEntityInterface()]!!
-      isThisModule(facetContributor.getParentModuleEntity(entity))
-    }.toList()
+    val entityTypeToFacetContributor = WorkspaceFacetContributor.EP_NAME.extensionList.associateBy { it.rootEntityType }
+    val facetRelatedEntities = entityTypeToFacetContributor
+      .asSequence()
+      .flatMap { module.entityStorage.current.entities(it.key) }
+      .filter { entity ->
+        val facetContributor = entityTypeToFacetContributor[entity.getEntityInterface()]!!
+        isThisModule(facetContributor.getParentModuleEntity(entity))
+      }
+      .toList()
     model.checkConsistency(facetRelatedEntities, entityTypeToFacetContributor)
   }
 
