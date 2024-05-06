@@ -8,6 +8,7 @@ import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -188,7 +189,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       return
     }
 
-    project.coroutineScope.launch(CoroutineName("commit execution") + Dispatchers.EDT) {
+    (project as ComponentManagerEx).getCoroutineScope().launch(CoroutineName("commit execution") + Dispatchers.EDT) {
       try {
         val continueExecution = block()
         if (!continueExecution) endExecution()

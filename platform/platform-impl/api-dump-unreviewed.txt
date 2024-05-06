@@ -12781,7 +12781,6 @@ f:com.intellij.openapi.command.impl.DummyProject
 - getBaseDir():com.intellij.openapi.vfs.VirtualFile
 - getBasePath():java.lang.String
 - getComponent(java.lang.Class):java.lang.Object
-- getCoroutineScope():kotlinx.coroutines.CoroutineScope
 - getDisposed():com.intellij.openapi.util.Condition
 - getExtensionArea():com.intellij.openapi.extensions.ExtensionsArea
 - s:getInstance():com.intellij.openapi.project.Project

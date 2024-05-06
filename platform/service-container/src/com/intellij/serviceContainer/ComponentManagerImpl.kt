@@ -235,7 +235,7 @@ abstract class ComponentManagerImpl(
   @JvmField
   internal var componentContainerIsReadonly: String? = null
 
-  override fun getCoroutineScope(): CoroutineScope {
+  final override fun getCoroutineScope(): CoroutineScope {
     if (parent?.parent == null) {
       return scopeHolder.containerScope
     }
