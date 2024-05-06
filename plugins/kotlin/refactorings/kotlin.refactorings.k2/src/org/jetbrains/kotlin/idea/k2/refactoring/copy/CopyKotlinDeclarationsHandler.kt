@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.SourceDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsages
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsagesForCopyFile
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkAllUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.checkModuleDependencyConflictsForInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.checkVisibilityConflictsForInternalUsages
@@ -237,10 +238,15 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
         val targetFile = runWriteAction { // implicit package prefix may change after copy
             val targetDirectoryFqName = targetDirectory.getFqNameWithImplicitPrefix()
             val copiedFile = targetDirectory.copyFileFrom(targetFileName, fileToCopy)
-            if (copiedFile is KtFile && fileToCopy.packageMatchesDirectoryOrImplicit()) {
-                targetDirectoryFqName?.quoteIfNeeded()?.let { copiedFile.packageFqName = it }
-            }
 
+            if (copiedFile is KtFile) {
+                //set the package statement first to ensure
+                // that the usages from the old package would be explicitly imported by shortenReferences of [retargetInternalUsagesForCopyFile]
+                if (fileToCopy.packageMatchesDirectoryOrImplicit()) {
+                    targetDirectoryFqName?.quoteIfNeeded()?.let { copiedFile.packageFqName = it }
+                }
+                retargetInternalUsagesForCopyFile(fileToCopy, copiedFile)
+            }
             copiedFile
         }
 

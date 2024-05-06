@@ -68,6 +68,8 @@ abstract class AbstractCopyTest : AbstractMultifileRefactoringTest() {
         }
     }
 
+    override fun isEnabled(config: JsonObject): Boolean = config.get("enabledInK1")?.asBoolean != false
+
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
         runCopyRefactoring(path, config, rootDir, project)
     }
