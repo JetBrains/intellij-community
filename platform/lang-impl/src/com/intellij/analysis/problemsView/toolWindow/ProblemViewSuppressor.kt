@@ -3,10 +3,12 @@ package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides utility functions for suppressing particular highlighters in Problems View's Current File tab
  */
+@ApiStatus.Internal
 object ProblemViewSuppressor {
   private val SUPPRESS_IN_PROBLEMS_VIEW: Key<Boolean> = Key.create("SUPPRESS_IN_PROBLEMS_VIEW")
 
