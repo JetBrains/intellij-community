@@ -7,7 +7,8 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.*
-import org.jetbrains.annotations.ApiStatus.*
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -98,6 +99,7 @@ class PluginLayout private constructor(
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
     @JvmStatic
+    @Deprecated("Please use pluginAuto")
     fun plugin(mainModuleName: String, auto: Boolean = false, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       val layout = PluginLayout(mainModuleName, auto = auto)
 
@@ -113,6 +115,12 @@ class PluginLayout private constructor(
       return layout
     }
 
+    // we cannot break compatibility / risk to change existing plugin dir name
+    fun pluginAutoWithDeprecatedCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      @Suppress("DEPRECATION")
+      return plugin(mainModuleName, auto = true, body = body)
+    }
+
     fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
 
     fun pluginAuto(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
@@ -124,6 +132,7 @@ class PluginLayout private constructor(
       return layout
     }
 
+    @Deprecated("Please use pluginAuto")
     fun plugin(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first())
       layout.withModules(moduleNames)
