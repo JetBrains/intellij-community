@@ -10,21 +10,13 @@ import java.lang.reflect.Field
 import java.util.*
 import java.util.function.Consumer
 
-class GradleObjectTraverser : AutoCloseable {
-
-  private val classesToSkip = HashSet<Class<*>>()
-  private val classesToSkipChildren = HashSet<Class<*>>()
+class GradleObjectTraverser(
+  private val classesToSkip: Set<Class<*>> = emptySet(),
+  private val classesToSkipChildren: Set<Class<*>> = emptySet()
+) {
 
   private val classInfoCache = HashMap<Class<*>, ClassInfo>()
   private val visitedObjects = IdentityHashMap<Any, Boolean>()
-
-  fun addClassesToSkip(classesToSkip: Collection<Class<*>>) {
-    this.classesToSkip.addAll(classesToSkip)
-  }
-
-  fun addClassesToSkipChildren(classesToSkipChildren: Collection<Class<*>>) {
-    this.classesToSkipChildren.addAll(classesToSkipChildren)
-  }
 
   fun walk(root: Any, consumer: Consumer<Any>) {
     GradleTreeTraverserUtil.depthFirstTraverseTreeWithPath(root) { path, anObject ->
@@ -37,13 +29,6 @@ class GradleObjectTraverser : AutoCloseable {
         }
       }
     }
-  }
-
-  override fun close() {
-    visitedObjects.clear()
-    classInfoCache.clear()
-    classesToSkip.clear()
-    classesToSkipChildren.clear()
   }
 
   private fun isShouldBeTraversed(anObject: Any): Boolean {
@@ -203,19 +188,6 @@ class GradleObjectTraverser : AutoCloseable {
   companion object {
 
     private val LOG = logger<GradleObjectTraverser>()
-
-    fun traverse(
-      root: Any,
-      classesToSkip: Set<Class<*>> = emptySet(),
-      classesToSkipChildren: Set<Class<*>> = emptySet(),
-      consumer: Consumer<Any>
-    ) {
-      GradleObjectTraverser().use { traverser ->
-        traverser.addClassesToSkip(classesToSkip)
-        traverser.addClassesToSkipChildren(classesToSkipChildren)
-        traverser.walk(root, consumer)
-      }
-    }
 
     private fun logTraverseError(message: String, traverserPath: List<Any>, exception: Throwable) {
       val rawTraverserPath = traverserPath.joinToString("\n") { " - $it" }
