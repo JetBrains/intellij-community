@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.util.UserDataHolderEx;
 import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -104,7 +105,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   String getBuildSrcGroup();
 
   @Nullable
-  String getBuildSrcGroup(IdeaModule module);
+  String getBuildSrcGroup(@NotNull String rootName, @NotNull BuildIdentifier buildIdentifier);
 
   @ApiStatus.Experimental
   void report(@NotNull MessageEvent.Kind kind, @NotNull BuildIssue buildIssue);

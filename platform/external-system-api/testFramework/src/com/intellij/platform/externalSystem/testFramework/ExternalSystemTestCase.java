@@ -361,6 +361,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return file;
   }
 
+  protected Project getProject() {
+    return myProject;
+  }
+
   protected Module getModule(final String name) {
     return getModule(myProject, name);
   }

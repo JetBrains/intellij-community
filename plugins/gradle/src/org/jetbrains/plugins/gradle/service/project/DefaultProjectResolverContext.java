@@ -20,10 +20,10 @@ import com.intellij.util.containers.CollectionFactory;
 import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -308,11 +308,11 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Nullable
   @Override
-  public String getBuildSrcGroup(@NotNull IdeaModule module) {
-    if (!"buildSrc".equals(module.getProject().getName())) {
+  public String getBuildSrcGroup(@NotNull String rootName, @NotNull BuildIdentifier buildIdentifier) {
+    if (!"buildSrc".equals(rootName)) {
       return myBuildSrcGroup;
     }
-    String parentRootDir = module.getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir().getParent();
+    String parentRootDir = buildIdentifier.getRootDir().getParent();
     return getAllBuilds().stream()
       .filter(b -> b.getBuildIdentifier().getRootDir().toString().equals(parentRootDir))
       .findFirst()

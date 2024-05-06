@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
@@ -207,13 +208,15 @@ public final class GradleProjectResolverUtil {
                                       @NotNull ProjectResolverContext resolverCtx) {
     String delimiter;
     StringBuilder moduleName = new StringBuilder();
-    String buildSrcGroup = resolverCtx.getBuildSrcGroup(gradleModule);
+    String rootName = gradleModule.getProject().getName();
+    BuildIdentifier buildIdentifier = gradleModule.getGradleProject().getProjectIdentifier().getBuildIdentifier();
+    String buildSrcGroup = resolverCtx.getBuildSrcGroup(rootName, buildIdentifier);
     if (resolverCtx.isUseQualifiedModuleNames()) {
       delimiter = ".";
       if (StringUtil.isNotEmpty(buildSrcGroup)) {
         moduleName.append(buildSrcGroup).append(delimiter);
       }
-      moduleName.append(gradlePathToQualifiedName(gradleModule.getProject().getName(), externalProject.getQName()));
+      moduleName.append(gradlePathToQualifiedName(rootName, externalProject.getQName()));
     }
     else {
       delimiter = "_";

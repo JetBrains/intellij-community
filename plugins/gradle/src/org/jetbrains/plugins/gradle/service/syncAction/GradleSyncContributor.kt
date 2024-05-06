@@ -84,4 +84,14 @@ interface GradleSyncContributor {
     @JvmField
     val EP_NAME: ExtensionPointName<GradleSyncContributor> = create("org.jetbrains.plugins.gradle.syncContributor")
   }
+
+  object Order {
+
+    /**
+     * The [CONTENT_ROOT_CONTRIBUTOR] configures the IDE project content root structure and their basic module info.
+     *
+     * @see org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor
+     */
+    const val CONTENT_ROOT_CONTRIBUTOR = 1000
+  }
 }
