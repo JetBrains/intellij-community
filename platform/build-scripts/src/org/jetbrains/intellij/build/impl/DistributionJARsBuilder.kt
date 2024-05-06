@@ -1276,11 +1276,7 @@ private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress
   }
 }
 
-private fun archivePlugin(optimized: Boolean,
-                      target: Path,
-                      compress: Boolean,
-                      source: Path,
-                      context: BuildContext) {
+private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, source: Path, context: BuildContext) {
   if (optimized) {
     writeNewZipWithoutIndex(target, compress = compress) { zipCreator ->
       ZipArchiver(zipCreator).use { archiver ->

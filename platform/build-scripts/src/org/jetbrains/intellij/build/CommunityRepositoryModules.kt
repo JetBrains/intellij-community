@@ -66,9 +66,7 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.xpath")) { spec ->
       spec.withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },
-    pluginAuto(listOf("intellij.platform.langInjection")) { spec ->
-      spec.withModule("intellij.java.langInjection", "IntelliLang.jar")
-      spec.withModule("intellij.xml.langInjection", "IntelliLang.jar")
+    pluginAuto(listOf("intellij.platform.langInjection", "intellij.java.langInjection", "intellij.xml.langInjection")) { spec ->
       spec.withModule("intellij.java.langInjection.jps")
     },
     plugin("intellij.tasks.core") { spec ->

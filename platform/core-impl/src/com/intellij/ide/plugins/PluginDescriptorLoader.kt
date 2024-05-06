@@ -779,12 +779,7 @@ private fun loadProductModule(
     )
   }
 
-  val subDescriptor = containerDescriptor.createSub(
-    raw = moduleRaw,
-    descriptorPath = subDescriptorFile,
-    context = context,
-    moduleName = moduleName,
-  )
+  val subDescriptor = containerDescriptor.createSub(raw = moduleRaw, descriptorPath = subDescriptorFile, context = context, moduleName = moduleName)
   subDescriptor.jarFiles = jarFile?.let { Java11Shim.INSTANCE.listOf(it) } ?: Java11Shim.INSTANCE.listOf()
   module.descriptor = subDescriptor
   return true
@@ -859,13 +854,7 @@ fun loadDescriptor(
 ): IdeaPluginDescriptorImpl? {
   DescriptorListLoadingContext().use { context ->
     return runBlocking {
-      loadDescriptorFromFileOrDir(
-        file = file,
-        context = context,
-        pathResolver = pathResolver,
-        isBundled = isBundled,
-        pool = NonShareableJavaZipFilePool(),
-      )
+      loadDescriptorFromFileOrDir(file = file, context = context, pathResolver = pathResolver, isBundled = isBundled, pool = NonShareableJavaZipFilePool())
     }
   }
 }
