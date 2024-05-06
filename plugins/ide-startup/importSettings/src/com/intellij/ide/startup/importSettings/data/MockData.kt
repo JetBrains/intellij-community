@@ -309,9 +309,8 @@ class TestSyncService : SyncService {
 
   override val syncState: Property<SyncService.SYNC_STATE> = Property(SyncService.SYNC_STATE.UNLOGGED)
 
-  override fun tryToLogin(): String? {
+  override fun tryToLogin() {
     LOG.info("${IMPORT_SERVICE} tryToLogin")
-    return null
   }
 
   override fun syncSettings(): DialogImportData {

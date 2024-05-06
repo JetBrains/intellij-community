@@ -56,6 +56,8 @@ class ErrorTestDialogAction : DumbAwareAction() {
               })
             }
           }
+
+
           row {
             button("close dialog") {
               settService.doClose.fire(Unit)
@@ -69,30 +71,30 @@ class ErrorTestDialogAction : DumbAwareAction() {
               comboBox(SyncService.SYNC_STATE.entries).onChanged {
                 if (it.selectedItem is SyncService.SYNC_STATE) {
                   state.value = it.selectedItem as SyncService.SYNC_STATE
-
-
                 }
               }.applyToComponent {
                 selectedItem = state.value
               }
-
-
               val component = textField().component
               state.advise(Lifetime.Eternal) {
                 component.text = it.toString()
-                if(state.value == com.intellij.ide.startup.importSettings.data.SyncService.SYNC_STATE.WAITING_FOR_LOGIN) {
-                  settService.notification.set(object : NotificationData {
-                    override val status: NotificationData.NotificationStatus  = NotificationData.NotificationStatus.WAITING
-                    override val message: String = IdeBundle.message("login.dialog.waiting.for.login")
-                    override val customActionList = listOf(NotificationData.Action("Log in with token..."){},
-                                                           NotificationData.Action("Log in with token..."){})
-                  })
-                } else {
-                  settService.notification.set(null)
-                }
-
               }
+            }
+          }
 
+          row {
+            button("Waiting for login") {
+              settService.notification.set(object : NotificationData {
+                override val status: NotificationData.NotificationStatus  = NotificationData.NotificationStatus.WAITING
+                override val message: String = IdeBundle.message("login.dialog.waiting.for.login")
+                override val customActionList = listOf(NotificationData.Action("Log in with token..."){},
+                                                       NotificationData.Action("Log in with token..."){})
+              })
+
+
+            }
+            button("clear") {
+              settService.notification.set(null)
             }
           }
         }

@@ -169,14 +169,13 @@ private val logger = logger<SettingsServiceImpl>()
 interface SyncService : JbService {
   enum class SYNC_STATE {
     UNLOGGED,
-    WAITING_FOR_LOGIN,
     LOGGED,
     TURNED_OFF,
     NO_SYNC
   }
 
   val syncState: IPropertyView<SYNC_STATE>
-  fun tryToLogin(): String?
+  fun tryToLogin()
   fun syncSettings(): DialogImportData
   fun importSyncSettings(): DialogImportData
   fun getMainProduct(): Product?

@@ -57,9 +57,8 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
   //private val settingSyncControls: SettingsSyncMain.SettingsSyncControls
   //  get() = SettingsSyncMain.getInstance().controls
 
-  override fun tryToLogin(): String? {
+  override fun tryToLogin() {
     accountInfoService?.invokeJBALogin({ loadAmbientSyncState() }, ::loadAmbientSyncState)
-    return null
   }
 
   override fun syncSettings(): DialogImportData {
