@@ -1923,6 +1923,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
+    protected void resumeAction() {
+      myProject.getMessageBus().syncPublisher(DebuggerActionListener.TOPIC).onRunToCursor();
+      super.resumeAction();
+    }
+
+    @Override
     public void contextAction(@NotNull SuspendContextImpl context) {
       showStatusText(JavaDebuggerBundle.message("status.run.to.cursor"));
       cancelRunToCursorBreakpoint();
