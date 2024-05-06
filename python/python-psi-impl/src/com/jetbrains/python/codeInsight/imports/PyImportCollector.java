@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
+import com.jetbrains.python.inspections.unresolvedReference.PyCommonImportAliasesKt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -114,7 +114,7 @@ public class PyImportCollector {
     symbols.addAll(PyVariableNameIndex.find(myRefText, project, scope));
     if (isPossibleModuleReference()) {
       symbols.addAll(findImportableModules(myRefText, false, scope));
-      String packageQName = PyPackageAliasesProvider.commonImportAliases.get(myRefText);
+      String packageQName = PyCommonImportAliasesKt.PY_COMMON_IMPORT_ALIASES.get(myRefText);
       if (packageQName != null) {
         symbols.addAll(findImportableModules(packageQName, true, scope));
       }
