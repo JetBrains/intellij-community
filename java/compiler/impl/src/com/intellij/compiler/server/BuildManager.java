@@ -148,7 +148,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 
 public final class BuildManager implements Disposable {
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
-  private static final Key<String> COMPILER_PROCESS_DEBUG_PORT = Key.create("_compiler_process_debug_port_");
+  private static final Key<String> COMPILER_PROCESS_DEBUG_HOST_PORT = Key.create("_compiler_process_debug_host_port_");
   private static final Key<CharSequence> STDERR_OUTPUT = Key.create("_process_launch_errors_");
   private static final SimpleDateFormat USAGE_STAMP_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -994,7 +994,7 @@ public final class BuildManager implements Disposable {
                 processHandler.startNotify();
               }
 
-              @NlsSafe String debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_PORT);
+              @NlsSafe String debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_HOST_PORT);
               if (debugPort != null) {
                 messageHandler.handleCompileMessage(
                   sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse("Build: waiting for debugger connection on port " + debugPort //NON-NLS
@@ -1513,6 +1513,8 @@ public final class BuildManager implements Disposable {
         }
       }
       cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+      // Both formats "<host>:<port>" and "<port>" are accepted.
+      // https://docs.oracle.com/en/java/javase/11/docs/specs/jpda/conninv.html#socket-transport
       cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
     }
 
@@ -1677,7 +1679,7 @@ public final class BuildManager implements Disposable {
       }
     });
     if (debugPort != null) {
-      processHandler.putUserData(COMPILER_PROCESS_DEBUG_PORT, debugPort);
+      processHandler.putUserData(COMPILER_PROCESS_DEBUG_HOST_PORT, debugPort);
     }
 
     if (SystemInfo.isWindows && lowPriority) {
