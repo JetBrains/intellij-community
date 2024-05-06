@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
@@ -116,5 +117,12 @@ class GradleBuildActionResultHandler(
     catch (ignored: ProcessCanceledException) {
       // Gradle TAPI cannot handle ProcessCanceledException
     }
+    catch (throwable: Throwable) {
+      LOG.error(throwable)
+    }
+  }
+
+  companion object {
+    private val LOG = logger<GradleBuildActionResultHandler>()
   }
 }

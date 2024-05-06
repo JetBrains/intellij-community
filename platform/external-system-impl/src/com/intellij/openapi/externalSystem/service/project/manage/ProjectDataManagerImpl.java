@@ -196,6 +196,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       errorsCount += 1;
       topic.onImportFailed(projectPath, t);
       ExternalSystemSyncActionsCollector.logError(null, activityId, t);
+      LOG.error(t);
       //noinspection ConstantConditions
       ExceptionUtil.rethrowAllAsUnchecked(t);
     }
