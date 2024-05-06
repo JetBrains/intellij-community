@@ -61,6 +61,7 @@ object DistributedTestModel : Ext(TestRoot) {
     signal("exitApp", void).async
     signal("showNotification", string)
     call("closeProject", void, bool).async
+    call("forceLeaveAllModals", void, void).async
     call("closeProjectIfOpened", void, bool).async
     call("runNextAction", string, string.nullable).async
     call("requestFocus", string, bool).async
