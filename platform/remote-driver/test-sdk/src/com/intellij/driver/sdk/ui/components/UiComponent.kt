@@ -114,6 +114,16 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }.isNotEmpty()
   }
 
+  fun hasTextSequence(vararg texts: String,indexOffset: Int = 0): Boolean {
+    require(indexOffset >= 0) { "Value must be non-negative" }
+    val stringList = texts.toList()
+    val uiTextList = findAllText()
+    return stringList.indices.all { index ->
+      val uiTextIndex = index + indexOffset
+      uiTextIndex in uiTextList.indices && stringList[index] == uiTextList[uiTextIndex].text
+    }
+  }
+
   fun hasSubtext(subtext: String): Boolean {
     return findAllText {
       it.text.contains(subtext)

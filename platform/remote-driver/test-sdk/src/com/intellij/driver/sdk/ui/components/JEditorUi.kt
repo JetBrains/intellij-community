@@ -86,6 +86,10 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
   fun getIconName(line: Int) =
     icons.firstOrNull { it.line == line - 1 }?.mark?.getIcon().toString().substringAfterLast("/")
 
+  fun hoverOverIcon(line: Int) {
+    moveMouse(icons.firstOrNull { it.line == line - 1 }!!.location)
+  }
+
   inner class GutterIcon(private val data: GutterIconWithLocation) {
     val line: Int
       get() = data.getLine()
@@ -98,9 +102,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
       click(location)
     }
 
-    fun hoverOver() {
-      moveMouse(location)
-    }
+
 
 
 
