@@ -6,7 +6,6 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.isFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
-import org.jetbrains.kotlin.idea.refactoring.copy.AbstractCopyKotlinDeclarationsHandler.Companion.newName
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.utils.ifEmpty
@@ -55,7 +53,7 @@ private enum class CopyAction : AbstractMultifileRefactoringTest.RefactoringActi
                     runWriteAction { MultipleRootsMoveDestination(packageWrapper).getTargetDirectory(mainFile) }
                 }
 
-            project.newName = config.getNullableString("newName")
+            project.copyNewName = config.getNullableString("newName")
 
             CopyHandler.doCopy(elementsToCopy, targetDirectory)
         }

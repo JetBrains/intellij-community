@@ -14,7 +14,6 @@ import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -165,7 +164,12 @@ sealed class K2MoveRenameUsageInfo(
                     refExpr.internalUsageInfo = usageInfo
                 }
 
-        fun unMarkNonUpdatableUsages(containing: Iterable<PsiElement>) = containing.forEach {
+        fun unMarkAllUsages(containing: KtElement) =
+                containing.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
+                    refExpr.internalUsageInfo = null
+                }
+
+        fun unMarkNonUpdatableUsages(containing: Iterable<KtElement>) = containing.forEach {
             unMarkNonUpdatableUsages(it)
         }
 
@@ -175,7 +179,7 @@ sealed class K2MoveRenameUsageInfo(
          * Like, for example, instance methods.
          */
         @OptIn(KtAllowAnalysisFromWriteAction::class)
-        fun unMarkNonUpdatableUsages(containing: PsiElement) = allowAnalysisFromWriteAction {
+        fun unMarkNonUpdatableUsages(containing: KtElement) = allowAnalysisFromWriteAction {
             containing.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
                 if (!refExpr.isImportable()) refExpr.internalUsageInfo = null
             }

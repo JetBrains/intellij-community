@@ -12,8 +12,6 @@ abstract class AbstractMultiModuleCopyTest : KotlinMultiFileTestCase() {
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
 
-    //protected open fun isFirPlugin(): Boolean = false
-
     fun doTest(path: String) {
         val config = loadTestConfiguration(File(path))
 

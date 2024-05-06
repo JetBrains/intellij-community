@@ -22,24 +22,21 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
+val copyCommandName get() = RefactoringBundle.message("copy.handler.copy.files.directories")
+
+@set:TestOnly
+var Project.copyNewName: String? by UserDataProperty(Key.create("NEW_NAME"))
+
+fun PsiElement.getCopyableElement() =
+    parentsWithSelf.firstOrNull { it is KtFile || (it is KtNamedDeclaration && it.parent is KtFile) } as? KtElement
+
+private fun PsiElement.getDeclarationsToCopy(): List<KtElement> = when (val declarationOrFile = getCopyableElement()) {
+    is KtFile -> declarationOrFile.declarations.filterIsInstance<KtNamedDeclaration>().ifEmpty { listOf(declarationOrFile) }
+    is KtNamedDeclaration -> listOf(declarationOrFile)
+    else -> emptyList()
+}
+
 abstract class AbstractCopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
-    companion object {
-
-        val commandName get() = RefactoringBundle.message("copy.handler.copy.files.directories")
-
-        @set:TestOnly
-        var Project.newName: String? by UserDataProperty(Key.create("NEW_NAME"))
-
-        fun PsiElement.getCopyableElement() =
-            parentsWithSelf.firstOrNull { it is KtFile || (it is KtNamedDeclaration && it.parent is KtFile) } as? KtElement
-
-        private fun PsiElement.getDeclarationsToCopy(): List<KtElement> = when (val declarationOrFile = getCopyableElement()) {
-            is KtFile -> declarationOrFile.declarations.filterIsInstance<KtNamedDeclaration>().ifEmpty { listOf(declarationOrFile) }
-            is KtNamedDeclaration -> listOf(declarationOrFile)
-            else -> emptyList()
-        }
-    }
-
     protected val copyFilesHandler by lazy { CopyFilesOrDirectoriesHandler() }
 
     protected fun getSourceFiles(elements: Array<out PsiElement>): Array<PsiFileSystemItem>? {
@@ -116,7 +113,7 @@ abstract class AbstractCopyKotlinDeclarationsHandler : CopyHandlerDelegateBase()
 
             val answer = Messages.showOkCancelDialog(
                 message,
-                commandName,
+                copyCommandName,
                 KotlinBundle.message("action.text.overwrite"),
                 KotlinBundle.message("action.text.cancel"),
                 Messages.getQuestionIcon()
@@ -127,7 +124,7 @@ abstract class AbstractCopyKotlinDeclarationsHandler : CopyHandlerDelegateBase()
 
             val answer = Messages.showYesNoCancelDialog(
                 message,
-                commandName,
+                copyCommandName,
                 KotlinBundle.message("action.text.append"),
                 KotlinBundle.message("action.text.overwrite"),
                 KotlinBundle.message("action.text.cancel"),

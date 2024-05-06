@@ -61,7 +61,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
     private fun getTargetDataForUnitTest(sourceData: SourceData): TargetData? {
         with(sourceData) {
             val targetSourceRoot: VirtualFile = initialTargetDirectory.sourceRoot ?: return null
-            val newName: String = project.newName ?: singleElementToCopy?.name ?: originalFile.name
+            val newName: String = project.copyNewName ?: singleElementToCopy?.name ?: originalFile.name
             if (singleElementToCopy != null && newName.isEmpty()) return null
             return TargetData(
                 openInEditor = false,
@@ -83,7 +83,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         if (singleNamedSourceElement !== null) {
             val dialog = CopyKotlinDeclarationDialog(singleNamedSourceElement, sourceData.initialTargetDirectory, sourceData.project)
-            dialog.title = commandName
+            dialog.title = copyCommandName
             if (!dialog.showAndGet()) return null
 
             openInEditor = dialog.openInEditor
@@ -165,7 +165,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
         val project = filesToCopy[0].project
         val psiManager = PsiManager.getInstance(project)
 
-        project.executeCommand(commandName) {
+        project.executeCommand(copyCommandName) {
             val copiedFiles = trackedCopyFiles(filesToCopy, initialTargetDirectory)
 
             copiedFiles.forEach { copiedFile ->
@@ -222,7 +222,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         project.checkConflictsInteractively(conflicts) {
             try {
-                project.executeCommand(commandName) {
+                project.executeCommand(copyCommandName) {
                     doRefactor(sourceData, targetData)
                 }
             } finally {
