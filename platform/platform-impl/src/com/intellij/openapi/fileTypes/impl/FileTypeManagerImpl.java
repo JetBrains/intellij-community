@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.Language;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -703,6 +704,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   public void removePlainTextAssociationsForFile(@NotNull CharSequence fileName) {
     ThreadingAssertions.assertEventDispatchThread();
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
     myPendingInitializationLock.writeLock().lock();
     try {
       makeFileTypesChange("removePlainTextAssociationsForFile("+fileName+")", () ->
