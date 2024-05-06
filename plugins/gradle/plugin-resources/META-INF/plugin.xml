@@ -84,6 +84,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeProjectDataService"/>
+
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleVersionUpdateStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleHeadlessLoggingProjectActivity"/>
