@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -147,21 +148,21 @@ public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferenc
           result.add(importFix.forLocalImport());
         }
       }
-      else {
-        String referencedName = node instanceof PyReferenceExpression refExpr && !refExpr.isQualified() ? refExpr.getReferencedName() : null;
-        if (referencedName != null && PythonSdkUtil.findPythonSdk(node) != null) {
-          if (PyPIPackageUtil.INSTANCE.isInPyPI(referencedName)) {
-            result.add(new PyPackageRequirementsInspection.InstallAndImportPackageQuickFix(referencedName, null));
-          }
-          else {
-            String realPackageName = PyPackageAliasesProvider.commonImportAliases.get(referencedName);
-            if (realPackageName != null && PyPIPackageUtil.INSTANCE.isInPyPI(realPackageName)) {
-              result.add(new PyPackageRequirementsInspection.InstallAndImportPackageQuickFix(realPackageName, referencedName));
-            }
-          }
+      String referencedName = node instanceof PyReferenceExpression refExpr && !refExpr.isQualified() ? refExpr.getReferencedName() : null;
+      if (referencedName != null && PythonSdkUtil.findPythonSdk(node) != null) {
+        ContainerUtil.addIfNotNull(result, createInstallAndImportQuickFix(referencedName, null));
+        String realPackageName = PyPackageAliasesProvider.commonImportAliases.get(referencedName);
+        if (realPackageName != null) {
+          ContainerUtil.addIfNotNull(result, createInstallAndImportQuickFix(realPackageName, referencedName));
         }
       }
       return result;
+    }
+
+    private static @Nullable LocalQuickFix createInstallAndImportQuickFix(@NotNull String packageName, @Nullable String asName) {
+      return PyPIPackageUtil.INSTANCE.isInPyPI(packageName)
+             ? new PyPackageRequirementsInspection.InstallAndImportPackageQuickFix(packageName, asName)
+             : null;
     }
 
     private static boolean suppressHintForAutoImport(PyElement node, AutoImportQuickFix importFix) {

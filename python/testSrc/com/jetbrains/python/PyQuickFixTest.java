@@ -15,6 +15,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.packaging.PyPIPackageCache;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest;
 import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection;
@@ -60,6 +61,17 @@ public class PyQuickFixTest extends PyTestCase {
   public void testAddImportDocComment() {
     doInspectionTest(new String[]{"AddImportDocComment.py", "ImportTarget.py"}, PyUnresolvedReferencesInspection.class,
                      "Import 'ImportTarget'", true, true);
+  }
+
+  // PY-42307
+  public void testInstallAndImportPackageByNameAlias() {
+    //noinspection removal
+    PyPIPackageCache.reload(List.of("pandas", "pd"));
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.configureByText(PythonFileType.INSTANCE, "pd<caret>.array()");
+    myFixture.findSingleIntention("Import 'turtle.pd'"); // standard library
+    myFixture.findSingleIntention("Install and import package 'pd'"); // PyPI
+    myFixture.findSingleIntention("Install and import package 'pandas'"); // 'pd' is a common import alias for 'pandas' from PyPI
   }
 
   public void testImportFromModule() {
