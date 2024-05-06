@@ -75,8 +75,7 @@ public class HighlightInfo implements Segment {
   // this HighlightInfo was created during visiting PsiElement with this range
   private RangeMarker visitingRange;
 
-  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK,
-    UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
+  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK, UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
   private @interface FlagConstant {
   }
 
@@ -346,6 +345,8 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
+  // todo remove along with DefaultHighlightInfoProcessor
+  @Deprecated
   void setVisitingTextRange(@NotNull PsiFile psiFile, @NotNull Document document, long range) {
     if (document instanceof DocumentWindow window) {
       range = TextRangeScalarUtil.toScalarRange(window.injectedToHost(TextRangeScalarUtil.create(range)));
@@ -355,6 +356,8 @@ public class HighlightInfo implements Segment {
     visitingRange = HighlightingSessionImpl.getOrCreateVisitingRangeMarker(psiFile, document, range);
   }
 
+  // todo remove along with DefaultHighlightInfoProcessor
+  @Deprecated
   @NotNull
   Segment getVisitingTextRange() {
     RangeMarker visitingRange = this.visitingRange;
