@@ -162,11 +162,7 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
     }
 
     if (mappings.isNotEmpty()) {
-      updateDiffOrStorage { mapping ->
-        for ((entity, data) in mappings) {
-          mapping.addIfAbsent(entity, data)
-        }
-      }
+      updateDiffOrStorage(mappings)
     }
   }
 
@@ -263,22 +259,28 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
     return moduleBridge.diff?.facetMapping() ?: moduleBridge.entityStorage.current.facetMapping()
   }
 
-  private inline fun updateDiffOrStorage(crossinline updater: (mapping: MutableExternalEntityMapping<Facet<*>>) -> Unit) {
+  private fun updateDiffOrStorage(mappings: List<Pair<WorkspaceEntity, Facet<*>>>) {
     val diff = moduleBridge.diff
     if (diff != null) {
       synchronized(diff) {
-        updater(mutableFacetMapping(diff))
+        mergeMappings(mappings, mutableFacetMapping(diff))
       }
     }
     else {
       (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent("Facet manager update storage") {
-        updater(mutableFacetMapping(it))
+        mergeMappings(mappings, mutableFacetMapping(it))
       }
     }
   }
 
   companion object {
     private val FACET_BRIDGE_MAPPING_ID = ExternalMappingKey.create<Facet<*>>("intellij.facets.bridge")
+
+    private fun mergeMappings(mappings: List<Pair<WorkspaceEntity, Facet<*>>>, mapping: MutableExternalEntityMapping<Facet<*>>) {
+      for ((entity, data) in mappings) {
+        mapping.addIfAbsent(entity, data)
+      }
+    }
 
     internal fun EntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
       return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
