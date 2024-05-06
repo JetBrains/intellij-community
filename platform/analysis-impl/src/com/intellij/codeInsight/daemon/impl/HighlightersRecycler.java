@@ -42,6 +42,7 @@ final class HighlightersRecycler implements HighlighterRecyclerPickup {
   }
 
   // null means no highlighter found in the cache
+  @Override
   @Nullable
   public RangeHighlighterEx pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
