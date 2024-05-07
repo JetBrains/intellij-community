@@ -33,7 +33,6 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
@@ -229,25 +228,12 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                            filesToUpdate: List<VirtualFile>,
                                            filesToDelete: List<VirtualFile>) {
 
-    val lockSucceed = importMutex.tryLock()
-    try {
-      if (MavenLog.LOG.isDebugEnabled) {
-        MavenLog.LOG.debug("Update maven requested. lock=${lockSucceed}, coroutines dump: ${dumpCoroutines()}")
-      }
-      if (lockSucceed) {
-        withContext(tracer.span("updateMavenProjects")) {
-          MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
-          doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
-          MavenLog.LOG.warn("updateMavenProjects finished: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
-        }
-      }
-      else {
-        MavenLog.LOG.info("Maven import already is in progress")
-      }
-    }
-    finally {
-      if (lockSucceed) {
-        importMutex.unlock()
+    updateMavenProjectsUnderLock {
+      return@updateMavenProjectsUnderLock withContext(tracer.span("updateMavenProjects")) {
+        MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
+        doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
+        MavenLog.LOG.warn("updateMavenProjects finished: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
+        return@withContext emptyList<Module>()
       }
     }
   }
@@ -307,12 +293,33 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   private suspend fun updateAllMavenProjects(spec: MavenSyncSpec,
                                              modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    return importMutex.withLock {
+    return updateMavenProjectsUnderLock {
       withContext(tracer.span("updateAllMavenProjects")) {
         MavenLog.LOG.warn("updateAllMavenProjects started: $spec ${myProject.name}")
         val result = doUpdateAllMavenProjects(spec, modelsProvider)
         MavenLog.LOG.warn("updateAllMavenProjects finished: $spec ${myProject.name}")
         result
+      }
+    }
+  }
+
+  private suspend fun <T> updateMavenProjectsUnderLock(update: suspend () -> List<T>): List<T> {
+    val lockSucceed = importMutex.tryLock()
+    try {
+      if (MavenLog.LOG.isDebugEnabled) {
+        MavenLog.LOG.debug("Update maven requested. lock=${lockSucceed}, coroutines dump: ${dumpCoroutines()}")
+      }
+      if (lockSucceed) {
+        return update()
+      }
+      else {
+        MavenLog.LOG.info("Maven import is already in progress")
+        return emptyList()
+      }
+    }
+    finally {
+      if (lockSucceed) {
+        importMutex.unlock()
       }
     }
   }
