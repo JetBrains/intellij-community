@@ -18,6 +18,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGroup
 import com.intellij.openapi.actionSystem.util.ActionSystem
@@ -727,6 +728,9 @@ object Utils {
 
   @JvmStatic
   fun isMultiChoiceGroup(actionGroup: ActionGroup): Boolean {
+    if (ActionUtil.isMakeAllToggleActionsMultiChoice()) {
+      return false
+    }
     val p = actionGroup.getTemplatePresentation()
     if (p.isMultiChoice) return true
     if (p.icon === AllIcons.Actions.GroupBy || p.icon === AllIcons.Actions.Show || p.icon === AllIcons.General.GearPlain || p.icon === AllIcons.Debugger.RestoreLayout) {
