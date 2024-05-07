@@ -27,7 +27,7 @@ object Launcher {
     val ideLaunchContext = IdeLaunchContext(
       classpathCollector = classpathCollector,
       localPaths = paths,
-      ideDebugOptions = options.debugPort?.let { debugPort -> IdeDebugOptions(debugPort, options.debugSuspendOnStart, "*") },
+      ideDebugOptions = options.debugPort?.let { debugPort -> IdeDebugOptions(debugPort, options.debugSuspendOnStart, "*:") },
       platformPrefix = options.platformPrefix,
       productMode = options.productMode,
       xmx = options.xmx,
