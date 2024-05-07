@@ -79,7 +79,7 @@ private suspend fun buildPlugin(
         moduleOutputPatcher = moduleOutputPatcher,
         includedModules = plugin.layout.includedModules,
         copyFiles = copyFiles,
-        jarsWithSearchableOptions = jarsWithSearchableOptions,
+        searchableOptionSet = jarsWithSearchableOptions,
         context = context,
       )
       pluginEntries

@@ -294,18 +294,16 @@ object CommunityRepositoryModules {
     plugin(mainModuleName, auto = true) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
-      spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
-        override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
-          val text = Files.readString(pluginXml)
-          if (text.indexOf("<version>") != -1) {
-            val declaredVersion = text.substring(text.indexOf("<version>") + "<version>".length, text.indexOf("</version>"))
-            return "$declaredVersion.$ideBuildVersion"
-          }
-          else {
-            return ideBuildVersion
-          }
+      spec.withCustomVersion { pluginXml, ideBuildVersion, _ ->
+        val text = Files.readString(pluginXml)
+        if (text.indexOf("<version>") != -1) {
+          val declaredVersion = text.substring(text.indexOf("<version>") + "<version>".length, text.indexOf("</version>"))
+          "$declaredVersion.$ideBuildVersion"
         }
-      })
+        else {
+          ideBuildVersion
+        }
+      }
 
       spec.excludeProjectLibrary("Gradle")
 

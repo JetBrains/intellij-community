@@ -4,15 +4,11 @@ package org.jetbrains.intellij.build.kotlin
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.LibraryPackMode
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.consumeDataByPrefix
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -321,25 +317,23 @@ object KotlinPluginBuilder {
 
       spec.withKotlincInPluginDirectory()
 
-      spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
-        override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
-          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
-          if (ijBuildNumber.matches()) {
-            // IJ installer configurations.
-            return "$ideBuildVersion-$kind"
-          }
-
-          if (ideBuildVersion.contains("IJ")) {
-            // TC configurations that are inherited from AbstractKotlinIdeArtifact.
-            // In this environment, ideBuildVersion equals to build number.
-            // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
-            val version = ideBuildVersion.replace("IJ", kind.toString())
-            Span.current().addEvent("Kotlin plugin IJ version: $version")
-            return version
-          }
-
-          throw IllegalStateException("Can't parse build number: $ideBuildVersion")
+      spec.withCustomVersion(PluginVersionEvaluator { _, ideBuildVersion, _ ->
+        val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
+        if (ijBuildNumber.matches()) {
+          // IJ installer configurations.
+          return@PluginVersionEvaluator "$ideBuildVersion-$kind"
         }
+
+        if (ideBuildVersion.contains("IJ")) {
+          // TC configurations that are inherited from AbstractKotlinIdeArtifact.
+          // In this environment, ideBuildVersion equals to build number.
+          // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
+          val version = ideBuildVersion.replace("IJ", kind.toString())
+          Span.current().addEvent("Kotlin plugin IJ version: $version")
+          return@PluginVersionEvaluator version
+        }
+
+        throw IllegalStateException("Can't parse build number: $ideBuildVersion")
       })
 
       spec.withPluginXmlPatcher { rawText ->

@@ -42,11 +42,10 @@ class PluginLayout private constructor(
   var directoryName: String = mainJarNameWithoutExtension
     private set
 
-  var versionEvaluator: VersionEvaluator = object : VersionEvaluator {
-    override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext) = ideBuildVersion
-  }
+  var versionEvaluator: PluginVersionEvaluator = PLUGIN_VERSION_AS_IDE
 
   var pluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
+
   var directoryNameSetExplicitly: Boolean = false
   var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
     internal set
@@ -302,7 +301,7 @@ class PluginLayout private constructor(
      * By default, a version of a plugin is equal to the build number of the IDE it's built with.
      * This method allows specifying custom version evaluator.
      */
-    fun withCustomVersion(versionEvaluator: VersionEvaluator) {
+    fun withCustomVersion(versionEvaluator: PluginVersionEvaluator) {
       layout.versionEvaluator = versionEvaluator
     }
 
@@ -444,10 +443,12 @@ class PluginLayout private constructor(
       layout.enableSymlinksAndExecutableResources = true
     }
   }
+}
 
-  interface VersionEvaluator {
-    fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String
-  }
+private val PLUGIN_VERSION_AS_IDE = PluginVersionEvaluator { _, ideBuildVersion, _ -> ideBuildVersion }
+
+fun interface PluginVersionEvaluator {
+  fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String
 }
 
 private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

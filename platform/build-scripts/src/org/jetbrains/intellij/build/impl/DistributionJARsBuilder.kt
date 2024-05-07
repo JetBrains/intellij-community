@@ -289,7 +289,7 @@ private suspend fun doBuildBundledPlugins(
         state = state,
         context = context,
         buildPlatformJob = buildPlatformJob,
-        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+        searchableOptionSet = searchableOptionSetDescriptor,
       )
 
       buildPlatformSpecificPluginResources(
@@ -342,7 +342,7 @@ private suspend fun buildOsSpecificBundledPlugins(
                 state = state,
                 context = context,
                 buildPlatformJob = buildPlatformJob,
-                searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+                searchableOptionSet = searchableOptionSetDescriptor,
               )
             }
         }
@@ -411,7 +411,7 @@ suspend fun buildNonBundledPlugins(
       plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
       targetDir = stageDir,
       state = state,
-      searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+      searchableOptionSet = searchableOptionSetDescriptor,
       context = context,
       buildPlatformJob = buildPlatformLibJob,
     ) { plugin, pluginDirOrFile ->
@@ -510,7 +510,7 @@ private suspend fun buildHelpPlugin(
       targetDir = pluginsToPublishDir.resolve(directory),
       state = state,
       context = context,
-      searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+      searchableOptionSet = searchableOptionSetDescriptor,
       buildPlatformJob = null,
     )
     zipWithCompression(targetFile = destFile, dirs = mapOf(pluginsToPublishDir.resolve(directory) to ""))
@@ -548,7 +548,7 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
           copyFiles = false,
           moduleOutputPatcher = moduleOutputPatcher,
           includedModules = plugin.includedModules,
-          jarsWithSearchableOptions = null,
+          searchableOptionSet = null,
           context = context,
         ).first)
       }
@@ -564,7 +564,7 @@ private suspend fun buildPlugins(
   state: DistributionBuilderState,
   context: BuildContext,
   buildPlatformJob: Job?,
-  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> Unit)? = null,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
@@ -577,12 +577,7 @@ private suspend fun buildPlugins(
   val entries = coroutineScope {
     plugins.map { plugin ->
       if (plugin.mainModule != BUILT_IN_HELP_MODULE_NAME) {
-        checkOutputOfPluginModules(
-          mainPluginModule = plugin.mainModule,
-          includedModules = plugin.includedModules,
-          moduleExcludes = plugin.moduleExcludes,
-          context = context,
-        )
+        checkOutputOfPluginModules(mainPluginModule = plugin.mainModule, includedModules = plugin.includedModules, moduleExcludes = plugin.moduleExcludes, context = context)
         patchPluginXml(
           moduleOutputPatcher = moduleOutputPatcher,
           plugin = plugin,
@@ -604,7 +599,7 @@ private suspend fun buildPlugins(
             copyFiles = true,
             moduleOutputPatcher = moduleOutputPatcher,
             includedModules = plugin.includedModules,
-            jarsWithSearchableOptions = searchableOptionSetDescriptor,
+            searchableOptionSet = searchableOptionSet,
             context = context,
           )
           pluginBuilt?.invoke(plugin, file)
@@ -615,8 +610,7 @@ private suspend fun buildPlugins(
       if (!plugin.pathsToScramble.isEmpty()) {
         val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
         if (scrambleTool == null) {
-          Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled",
-                                  attributes)
+          Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled", attributes)
         }
         else if (isScramblingSkipped) {
           Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
@@ -769,7 +763,7 @@ suspend fun layoutPlatformDistribution(
         copyFiles = copyFiles,
         moduleOutputPatcher = moduleOutputPatcher,
         includedModules = platform.includedModules,
-        jarsWithSearchableOptions = searchableOptionSetDescriptor,
+        searchableOptionSet = searchableOptionSetDescriptor,
         context = context,
       ).first
     }
@@ -1010,7 +1004,7 @@ suspend fun layoutDistribution(
   copyFiles: Boolean = true,
   moduleOutputPatcher: ModuleOutputPatcher,
   includedModules: Collection<ModuleItem>,
-  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
@@ -1047,7 +1041,7 @@ suspend fun layoutDistribution(
           layout = layout,
           platformLayout = platformLayout,
           moduleOutputPatcher = moduleOutputPatcher,
-          jarsWithSearchableOptions = jarsWithSearchableOptions,
+          jarsWithSearchableOptions = searchableOptionSet,
           dryRun = !copyFiles,
           context = context,
         )
