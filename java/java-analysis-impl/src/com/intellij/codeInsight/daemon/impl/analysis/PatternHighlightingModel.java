@@ -90,6 +90,11 @@ final class PatternHighlightingModel {
           }
 
           if (builder == null) {
+            if (IncompleteModelUtil.isIncompleteModel(deconstructionPattern) &&
+                (IncompleteModelUtil.hasUnresolvedComponent(substitutedRecordComponentType) ||
+                 IncompleteModelUtil.hasUnresolvedComponent(deconstructionComponentType))) {
+              continue;
+            }
             builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
                                                                         deconstructionComponent.getTextRange(), 0);
           }
@@ -370,7 +375,8 @@ final class PatternHighlightingModel {
                                             @NotNull PsiType patternType,
                                             @NotNull PsiType itemType,
                                             @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (!TypeConversionUtil.areTypesConvertible(itemType, patternType)) {
+    if (!TypeConversionUtil.areTypesConvertible(itemType, patternType) &&
+        (!IncompleteModelUtil.isIncompleteModel(pattern) || !IncompleteModelUtil.isPotentiallyConvertible(patternType, itemType, pattern))) {
       errorSink.accept(HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, patternType, pattern.getTextRange(), 0));
       return;
     }

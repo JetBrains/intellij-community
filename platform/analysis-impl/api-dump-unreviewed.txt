@@ -754,6 +754,7 @@ com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:INJECTED_LANGUAGE_BACKGROUND:com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:INJECTED_LANGUAGE_FRAGMENT:com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:MARKED_FOR_REMOVAL:com.intellij.codeInsight.daemon.impl.HighlightInfoType
+- sf:PENDING_REFERENCE:com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:POSSIBLE_PROBLEM:com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:SYMBOL_TYPE_SEVERITY:com.intellij.lang.annotation.HighlightSeverity
 - sf:TEXT_ATTRIBUTES:com.intellij.codeInsight.daemon.impl.HighlightInfoType

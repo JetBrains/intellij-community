@@ -887,7 +887,7 @@ public final class HighlightClassUtil {
     if (aClass.getExtendsList() != parent && aClass.getImplementsList() != parent) {
       return null;
     }
-    if (!(resolved instanceof PsiClass)) {
+    if (resolved != null && !(resolved instanceof PsiClass)) {
       String description = JavaErrorBundle.message("class.name.expected");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(extendRef).descriptionAndTooltip(description);
     }

@@ -772,11 +772,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     PsiElement referenceNameElement = ref.getReferenceNameElement();
     if (results.length == 0) {
-      String description = JavaErrorBundle.message("cannot.resolve.symbol", refName);
       assert referenceNameElement != null : ref;
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(referenceNameElement).descriptionAndTooltip(description);
-      add(info);
+      if (IncompleteModelUtil.isIncompleteModel(ref) && ref.getClassReference().resolve() == null) {
+        add(IncompleteModelUtil.getPendingReferenceHighlightInfo(referenceNameElement));
+      } else {
+        String description = JavaErrorBundle.message("cannot.resolve.symbol", refName);
+        HighlightInfo.Builder info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(referenceNameElement).descriptionAndTooltip(description);
+        add(info);
+      }
     }
     else {
       PsiManager manager = ref.getManager();

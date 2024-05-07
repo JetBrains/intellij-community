@@ -840,10 +840,13 @@ public class SwitchBlockHighlightingModel {
              !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, label)) &&
             //null type is applicable to any class type
             !mySelectorType.equals(PsiTypes.nullType())) {
-          HighlightInfo.Builder error =
-            HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
-          errorSink.accept(error);
-          return true;
+          if (!IncompleteModelUtil.isIncompleteModel(label) ||
+              (!IncompleteModelUtil.isPotentiallyConvertible(mySelectorType, patternType, label))) {
+            HighlightInfo.Builder error =
+              HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
+            errorSink.accept(error);
+            return true;
+          }
         }
         HighlightInfo.Builder error = getUncheckedPatternConversionError(elementToReport);
         if (error != null) {
