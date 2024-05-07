@@ -39,7 +39,7 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
     }
 
     val command = promptModel.commandText
-    val caretPosition = parameters.editor.caretModel.offset - promptModel.commandStartOffset
+    val caretPosition = parameters.editor.caretModel.offset - promptModel.commandStartOffset  // relative to command start
     val completionResult: CompletionResult? = runBlockingCancellable {
       shellCommandExecutor.executeCommand(GetShellCompletionsCommand(command, caretPosition))
     }
@@ -58,6 +58,7 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
 
     val endIndex = min(caretPosition, replacementIndex + replacementLength)
     val initialPrefix = command.substring(replacementIndex, endIndex)
+    val actualReplaceIndex = promptModel.commandStartOffset + replacementIndex  // relative to document start
     // Heuristic: if the initial prefix contains file separator, then we're probably completing the file names.
     // And since powershell provides an absolute file path as the completion item,
     // we need to shorten the prefix to show completion popup near the last file path part.
@@ -67,12 +68,12 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
       val shortenedPrefix = initialPrefix.substringAfterLast(File.separatorChar)
       shortenedPrefix to completionResult.matches.map {
         val lookupString = it.value.removeSurrounding("'").removeSurrounding("\"").substringAfterLast(File.separatorChar)
-        CompletionItemInfo(lookupString, it.presentableText, it.type, replacementIndex, replacementString = it.value)
+        CompletionItemInfo(lookupString, it.presentableText, it.type, actualReplaceIndex, replacementString = it.value)
       }
     }
     else {
       initialPrefix to completionResult.matches.map {
-        CompletionItemInfo(lookupString = it.value, it.presentableText, it.type, replacementIndex, replacementString = it.value)
+        CompletionItemInfo(lookupString = it.value, it.presentableText, it.type, actualReplaceIndex, replacementString = it.value)
       }
     }
 
