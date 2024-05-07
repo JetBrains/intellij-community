@@ -18,6 +18,12 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * Designed as a part of MVC pattern.
+ * @see TerminalOutputModel
+ * @see TerminalOutputView
+ * @see TerminalOutputController
+ */
 internal class TerminalOutputModel(val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters

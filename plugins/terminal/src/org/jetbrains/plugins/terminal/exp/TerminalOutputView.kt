@@ -23,6 +23,12 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.min
 
+/**
+ * Designed as a part of MVC pattern.
+ * @see TerminalOutputModel
+ * @see TerminalOutputView
+ * @see TerminalOutputController
+ */
 internal class TerminalOutputView(
   private val project: Project,
   session: BlockTerminalSession,
