@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.startup.multiProcess;
 
+import com.intellij.openapi.application.CustomConfigMigrationOption;
 import com.intellij.openapi.application.PathCustomizer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.impl.P3SupportInstaller;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -66,7 +68,7 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
     }
 
     Path newSystem = tempFolder.resolve("per_process_system_" + directoryCounter);
-    Path baseLogDir = PathManager.getLogDir();
+    Path baseLogDir = getBaseLogDir();
     Path newLog = computeLogDirPath(baseLogDir, directoryCounter);
     if (newLog == null) {
       System.err.println("Can't create log directory in " + baseLogDir);
@@ -75,12 +77,40 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
     cleanDirectory(newConfig);
     cleanDirectory(newSystem);
 
-    prepareConfig(newConfig, PathManager.getConfigDir());
+    String originalPluginsPath = PathManager.getPluginsPath();
+    boolean customizePluginsPath = useCustomPluginsPath(originalPluginsPath);
+    String pluginsPath = customizePluginsPath ? originalPluginsPath + File.separator + "frontend" : originalPluginsPath;
+    boolean migratePlugins = customizePluginsPath && !Files.exists(Paths.get(pluginsPath));
+    prepareConfig(newConfig, PathManager.getConfigDir(), migratePlugins);
 
-    Path startupScriptDir = getStartupScriptDir();
+    Path startupScriptDir = isInFrontendMode() ? getStartupScriptDir().resolve("frontend") : getStartupScriptDir();
     P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
     enabled = true;
-    return new CustomPaths(newConfig.toString(), newSystem.toString(), PathManager.getPluginsPath(), newLog.toString(), startupScriptDir);
+    return new CustomPaths(newConfig.toString(), newSystem.toString(), pluginsPath, newLog.toString(), startupScriptDir);
+  }
+
+  private static @NotNull Path getBaseLogDir() {
+    String baseLogDirPath = PathManager.getLogPath();
+    String pathsSelector = PathManager.getPathsSelector();
+    if (pathsSelector != null && baseLogDirPath.equals(PathManager.getDefaultLogPathFor(pathsSelector)) && isInFrontendMode() &&
+        !pathsSelector.startsWith("JetBrainsClient")) {
+      return Paths.get(baseLogDirPath, "frontend");
+    }
+    return Paths.get(baseLogDirPath);
+  }
+
+  private static boolean useCustomPluginsPath(String originalPluginsPath) {
+    if (!isInFrontendMode()) return false;
+    
+    String pathsSelector = PathManager.getPathsSelector();
+    if (pathsSelector == null || pathsSelector.startsWith("JetBrainsClient")) return false;
+
+    return originalPluginsPath.equals(PathManager.getDefaultPluginPathFor(pathsSelector));
+  }
+
+  //todo move logic specific for frontend processes to a separate class
+  private static boolean isInFrontendMode() {
+    return "frontend".equals(System.getProperty("intellij.platform.product.mode"));
   }
 
   public static boolean isEnabled() {
@@ -91,11 +121,17 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
     return PathManager.getSystemDir().resolve("startup-script");
   }
 
-  public static void prepareConfig(Path newConfig, Path oldConfigPath) {
+  public static void prepareConfig(Path newConfig, Path oldConfigPath, boolean migratePlugins) {
     if (isConfigImportNeeded(oldConfigPath)) {
       customTargetDirectoryToImportConfig = oldConfigPath;
     }
-
+    else if (migratePlugins) {
+      /* The config directory exists, but the plugins for the frontend process weren't migrated, so we trigger importing of config from the 
+         local IDE to migrate the plugins. */
+      customTargetDirectoryToImportConfig = newConfig;
+      new CustomConfigMigrationOption.MigrateFromCustomPlace(oldConfigPath).writeConfigMarkerFile(newConfig);
+    }
+    
     try {
       CustomConfigFiles.prepareConfigDir(newConfig, oldConfigPath);
     }

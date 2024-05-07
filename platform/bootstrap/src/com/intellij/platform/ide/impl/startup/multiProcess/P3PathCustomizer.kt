@@ -36,7 +36,7 @@ class P3PathCustomizer : PathCustomizer {
     val paths = P3PathsEx(projectStoreBaseDir)
     Files.createDirectories(paths.getConfigDir())
 
-    PerProcessPathCustomizer.prepareConfig(paths.getConfigDir(), PathManager.getConfigDir())
+    PerProcessPathCustomizer.prepareConfig(paths.getConfigDir(), PathManager.getConfigDir(), false)
 
     if (ApplicationManagerEx.isInIntegrationTest()) {
       // write current PID to file to kill the process if it hangs
