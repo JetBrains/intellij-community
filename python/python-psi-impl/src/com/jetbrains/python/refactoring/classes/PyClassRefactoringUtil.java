@@ -166,7 +166,7 @@ public final class PyClassRefactoringUtil {
     }
 
     //We should find appropriate place for init
-    for (final PsiElement element : destStatementList.getChildren()) {
+    for (final PsiElement element : destStatementList.getStatements()) {
       final boolean elementComment = element instanceof PyExpressionStatement;
       final boolean elementClassField = element instanceof PyAssignmentStatement;
 
