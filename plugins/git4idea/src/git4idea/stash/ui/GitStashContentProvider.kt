@@ -46,9 +46,6 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
 
     val disposable = Disposer.newDisposable("Git Stash Content Provider")
     val savedPatchesUi = GitSavedPatchesUi(GitStashProvider(project, disposable), ShelfProvider(project, disposable), disposable)
-    project.messageBus.connect(disposable).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
-      override fun toolWindowMappingChanged() = savedPatchesUi.updateLayout()
-    })
     project.messageBus.connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun stateChanged(toolWindowManager: ToolWindowManager) = savedPatchesUi.updateLayout()
     })
@@ -59,7 +56,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
 
   private inner class GitSavedPatchesUi(private val stashProvider: GitStashProvider, private val shelfProvider: ShelfProvider,
                                         parentDisposable: Disposable) :
-    SavedPatchesUi(project, listOf(stashProvider, shelfProvider), isVertical = ::isVertical, isEditorDiffPreview = ::isEditorDiffPreview,
+    SavedPatchesUi(project, listOf(stashProvider, shelfProvider), isVertical = ::isVertical, isWithSplitDiffPreview = ::isWithSplitDiffPreview,
                    isShowDiffWithLocal = ::isShowDiffWithLocal, focusMainUi = ::returnFocusToToolWindow, parentDisposable) {
 
     init {
@@ -92,8 +89,6 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
 
   private fun isVertical() = ChangesViewContentManager.getToolWindowFor(project, TAB_NAME)?.anchor?.isHorizontal == false
 
-  private fun isEditorDiffPreview() = ChangesViewContentManager.isCommitToolWindowShown(project)
-
   private fun returnFocusToToolWindow(componentToFocus: Component?) {
     val toolWindow = ChangesViewContentManager.getToolWindowFor(project, TAB_NAME) ?: return
 
@@ -109,6 +104,10 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
 
   private fun isShowDiffWithLocal(): Boolean {
     return GitVcsApplicationSettings.getInstance().isCompareWithLocalInStashesEnabled
+  }
+
+  private fun isWithSplitDiffPreview(): Boolean {
+    return true
   }
 
   companion object {

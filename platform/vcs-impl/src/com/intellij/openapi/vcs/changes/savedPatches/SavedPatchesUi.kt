@@ -27,9 +27,9 @@ import javax.swing.border.CompoundBorder
 open class SavedPatchesUi(project: Project,
                           @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
                           private val isVertical: () -> Boolean,
-                          private val isEditorDiffPreview: () -> Boolean,
+                          private val isWithSplitDiffPreview: () -> Boolean,
                           private val isShowDiffWithLocal: () -> Boolean,
-                          private val focusMainUi: (Component?) -> Unit,
+                          focusMainUi: (Component?) -> Unit,
                           disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
@@ -40,7 +40,7 @@ open class SavedPatchesUi(project: Project,
 
   private val visibleProviders = providers.toMutableSet()
 
-  private var editorTabPreview: SavedPatchesEditorDiffPreview? = null
+  private val editorTabPreview: SavedPatchesEditorDiffPreview
   private var splitDiffProcessor: SavedPatchesDiffProcessor? = null
 
   init {
@@ -49,6 +49,9 @@ open class SavedPatchesUi(project: Project,
 
     changesBrowser = SavedPatchesChangesBrowser(project, isShowDiffWithLocal, this)
     CombinedSpeedSearch(changesBrowser.viewer, patchesTree.speedSearch)
+
+    editorTabPreview = SavedPatchesEditorDiffPreview(changesBrowser, focusMainUi, isShowDiffWithLocal)
+    changesBrowser.setShowDiffActionPreview(editorTabPreview)
 
     patchesTree.doubleClickHandler = Processor { e ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(patchesTree, e)) return@Processor false
@@ -138,42 +141,32 @@ open class SavedPatchesUi(project: Project,
 
   private fun updateLayout(isInitial: Boolean) {
     val isVertical = isVertical()
-    val isEditorDiffPreview = isEditorDiffPreview()
-    val isInEditor = isEditorDiffPreview || isVertical
-    val isChangesSplitterVertical = !isEditorDiffPreview || isVertical
+    val isWithSplitPreview = !isVertical && isWithSplitDiffPreview()
+    val isChangesSplitterVertical = isVertical || isWithSplitPreview
     if (treeChangesSplitter.orientation != isChangesSplitterVertical) {
       treeChangesSplitter.orientation = isChangesSplitterVertical
     }
-    setDiffPreviewInEditor(isInEditor, isInitial)
+    setWithSplitDiffPreview(isWithSplitPreview, isInitial)
   }
 
-  private fun setDiffPreviewInEditor(isInEditor: Boolean, isInitial: Boolean) {
-    val needUpdatePreviews = isInEditor != (editorTabPreview != null)
+  private fun setWithSplitDiffPreview(isWithSplitPreview: Boolean, isInitial: Boolean) {
+    val needUpdatePreviews = isWithSplitPreview != (splitDiffProcessor != null)
     if (!isInitial && !needUpdatePreviews) return
 
-    if (isInEditor) {
-      val diffPreview = SavedPatchesEditorDiffPreview(changesBrowser, focusMainUi, isShowDiffWithLocal)
-      changesBrowser.setShowDiffActionPreview(diffPreview)
-      editorTabPreview = diffPreview
-
-      splitDiffProcessor?.let { Disposer.dispose(it) }
-      splitDiffProcessor = null
-      treeDiffSplitter.secondComponent = null
-    }
-    else {
-      changesBrowser.setShowDiffActionPreview(null)
-      editorTabPreview?.let { Disposer.dispose(it) }
-      editorTabPreview = null
-
+    if (isWithSplitPreview) {
       val processor = SavedPatchesDiffProcessor(changesBrowser.viewer, false, isShowDiffWithLocal)
       splitDiffProcessor = processor
       treeDiffSplitter.secondComponent = processor.component
     }
+    else {
+      splitDiffProcessor?.let { Disposer.dispose(it) }
+      splitDiffProcessor = null
+      treeDiffSplitter.secondComponent = null
+    }
   }
 
   override fun dispose() {
-    editorTabPreview?.let { Disposer.dispose(it) }
-    editorTabPreview = null
+    Disposer.dispose(editorTabPreview)
 
     splitDiffProcessor?.let { Disposer.dispose(it) }
     splitDiffProcessor = null
