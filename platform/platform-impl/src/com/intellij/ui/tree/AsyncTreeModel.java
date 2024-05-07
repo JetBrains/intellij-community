@@ -2,6 +2,7 @@
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.CachedTreePresentation;
+import com.intellij.ide.util.treeView.CachedTreePresentationNode;
 import com.intellij.ide.util.treeView.CachedTreePresentationSupport;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -267,7 +268,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   }
 
   private @Nullable Collection<@NotNull Node> getChildrenForWalker(@NotNull Node node, TreeWalkerBase<Node> walker, boolean allowLoading) {
-    if (node.leafState == LeafState.ALWAYS || !allowLoading) return node.getChildren();
+    if (node.leafState == LeafState.ALWAYS || !allowLoading) return ContainerUtil.filter(node.getChildren(), Node::isLoaded);
     promiseChildren(node)
       .onSuccess(parent -> walker.setChildren(parent.getChildren()))
       .onError(walker::setError);
@@ -917,6 +918,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     private Node(@NotNull Object object, @NotNull LeafState leafState) {
       this.object = object;
       this.leafState = leafState;
+    }
+
+    boolean isLoaded() {
+      return !(object instanceof CachedTreePresentationNode);
     }
 
     private void setLeafState(@NotNull LeafState leafState) {
