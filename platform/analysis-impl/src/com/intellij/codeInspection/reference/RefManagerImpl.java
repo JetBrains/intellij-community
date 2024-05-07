@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -679,11 +679,6 @@ public class RefManagerImpl extends RefManager {
 
     @Override
     public void visitFile(@NotNull PsiFile file) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        String relative = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myProject, true, false);
-        myContext.incrementJobDoneAmount(myContext.getStdJobDescriptors().BUILD_GRAPH, relative);
-      }
       if (file instanceof PsiBinaryFile || file.getFileType().isBinary()) {
         return;
       }
@@ -706,6 +701,13 @@ public class RefManagerImpl extends RefManager {
         }
       }
       myPsiManager.dropResolveCaches();
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        executeTask(() -> {
+          String relative = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myProject, true, false);
+          myContext.incrementJobDoneAmount(myContext.getStdJobDescriptors().BUILD_GRAPH, relative);
+        });
+      }
     }
   }
 
