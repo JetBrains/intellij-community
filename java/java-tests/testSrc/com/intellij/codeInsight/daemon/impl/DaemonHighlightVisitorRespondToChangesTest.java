@@ -462,11 +462,19 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     TestTimeOut timeOut = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
     myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), TextEditorProvider.getInstance().getTextEditor(getEditor()), ArrayUtilRt.EMPTY_INT_ARRAY, true, () -> {
       if (timeOut.isTimedOut()) {
-        System.err.println("Timed out\n"+ThreadDumper.dumpThreadsToString());
-        STATE.get("MSG1").THINK.set(false);
-        STATE.get("MSG2").THINK.set(false);
-        STATE.get("MSG1").THINKING.set(false);
-        STATE.get("MSG2").THINKING.set(false);
+        List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
+        System.err.println("Timed out\ninfos="+infos+"\n"
+                           +";visitor1.myState().THINKING.get()="+visitor1.myState().THINKING.get()
+                           +";visitor2.myState().THINKING.get()="+visitor2.myState().THINKING.get()
+                           +";visitor1.myState().THINK.get()="+visitor1.myState().THINK.get()
+                           +";visitor2.myState().THINK.get()="+visitor2.myState().THINK.get()
+                           +";visitor1.myState().COMMENT_HIGHLIGHTED.get()="+visitor1.myState().COMMENT_HIGHLIGHTED.get()
+                           +";visitor2.myState().COMMENT_HIGHLIGHTED.get()="+visitor2.myState().COMMENT_HIGHLIGHTED.get()
+                           +"\n"+ThreadDumper.dumpThreadsToString());
+        visitor1.myState().THINK.set(false);
+        visitor2.myState().THINK.set(false);
+        visitor1.myState().THINKING.set(false);
+        visitor2.myState().THINKING.set(false);
         fail();
       }
       if (visitor1.myState().THINKING.get() && visitor2.myState().THINKING.get()) {

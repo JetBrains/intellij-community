@@ -105,29 +105,40 @@ class HighlightVisitorRunner {
     LongList ranges = new LongArrayList();
     ranges.addAll(ranges1);
     ranges.addAll(ranges2);
-    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(visitorInfos, ProgressManager.getGlobalProgressIndicator(), visitorInfo -> {
-      try {
-        int[] sizeAfterRunVisitor = new int[1];
-        boolean result = visitorInfo.visitor().analyze(psiFile, myUpdateAll, visitorInfo.holder(), () -> {
-          reportOutOfRunVisitorInfos(visitorInfo, 0, ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT, resultSink);
-          runVisitor(psiFile, myRestrictRange, elements, ranges, chunkSize, visitorInfo.skipParentsSet(), visitorInfo.holder(), forceHighlightParents, visitorInfo.visitor(), resultSink);
-          sizeAfterRunVisitor[0] = visitorInfo.holder().size();
-        });
-        reportOutOfRunVisitorInfos(visitorInfo, sizeAfterRunVisitor[0], ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT, resultSink);
-        if (!result) {
-          if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-            GeneralHighlightingPass.LOG.debug("GHP: visitor " + visitorInfo.visitor() + "(" + visitorInfo.visitor().getClass() + ") returned false");
+    if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
+      GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: visitors: " + Arrays.toString(visitors)+"; myRestrictRange="+myRestrictRange+"; psiFile="+psiFile);
+    }
+    boolean res =
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(visitorInfos, ProgressManager.getGlobalProgressIndicator(), visitorInfo -> {
+        HighlightVisitor visitor = visitorInfo.visitor();
+        try {
+          int[] sizeAfterRunVisitor = new int[1];
+          HighlightInfoHolder holder = visitorInfo.holder();
+          boolean result = visitor.analyze(psiFile, myUpdateAll, holder, () -> {
+            reportOutOfRunVisitorInfos(0, ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT, holder, visitor, resultSink);
+            runVisitor(psiFile, myRestrictRange, elements, ranges, chunkSize, visitorInfo.skipParentsSet(), holder, forceHighlightParents, visitor, resultSink);
+            sizeAfterRunVisitor[0] = holder.size();
+          });
+          reportOutOfRunVisitorInfos(sizeAfterRunVisitor[0], ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT, holder, visitor, resultSink);
+          if (!result) {
+            if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
+              GeneralHighlightingPass.LOG.debug("GHP: visitor " + visitor + "(" + visitor.getClass() + ") returned false");
+            }
           }
+          return result;
         }
-        return result;
-      }
-      catch (Exception e) {
-        if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-          GeneralHighlightingPass.LOG.debug("GHP: visitor " + visitorInfo.visitor() + "(" + visitorInfo.visitor().getClass() + ") threw " + ExceptionUtil.getThrowableText(e));
+        catch (Exception e) {
+          if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
+            GeneralHighlightingPass.LOG.debug(
+              "GHP: visitor " + visitor + "(" + visitor.getClass() + ") threw " + ExceptionUtil.getThrowableText(e));
+          }
+          throw e;
         }
-        throw e;
-      }
-    });
+      });
+    if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
+      GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: visitors ran; result="+res+" visitorInfos="+visitorInfos);
+    }
+    return res;
   }
 
   private static final PsiElement ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightInfoUpdaterImpl.createFakePsiElement();
@@ -135,13 +146,15 @@ class HighlightVisitorRunner {
   /**
    * report infos created outside the {@link #runVisitor} call (either before or after, inside the {@link HighlightVisitor#analyze} method), starting from the {@param fromIndex}
    */
-  private static void reportOutOfRunVisitorInfos(@NotNull VisitorInfo visitorInfo, int fromIndex, @NotNull PsiElement fakePsiElement,
+  private static void reportOutOfRunVisitorInfos(int fromIndex,
+                                                 @NotNull PsiElement fakePsiElement,
+                                                 @NotNull HighlightInfoHolder holder,
+                                                 @NotNull HighlightVisitor visitor,
                                                  @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
-    HighlightInfoHolder holder = visitorInfo.holder();
     List<HighlightInfo> newInfos;
     if (holder.size() > fromIndex) {
       newInfos = new ArrayList<>(holder.size() - fromIndex);
-      for (int i=fromIndex; i<holder.size(); i++) {
+      for (int i = fromIndex; i < holder.size(); i++) {
         HighlightInfo info = holder.get(i);
         newInfos.add(info);
       }
@@ -149,7 +162,7 @@ class HighlightVisitorRunner {
     else {
       newInfos = List.of();
     }
-    resultSink.accept(visitorInfo.visitor().getClass(), fakePsiElement, newInfos);
+    resultSink.accept(visitor.getClass(), fakePsiElement, newInfos);
   }
 
    private static void runVisitor(@NotNull PsiFile psiFile,
