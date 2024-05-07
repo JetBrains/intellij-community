@@ -26,9 +26,6 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void stop() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Stopping daemon progress indicator " + this);
-    }
     boolean cancelled = false;
     synchronized (getLock()) {
       super.stop();
@@ -38,9 +35,6 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     }
     if (cancelled) {
       onStop();
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Stopping daemon progress indicator; was cancelled=" + cancelled + "; " + this);
     }
   }
 
@@ -100,9 +94,6 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
         myTraceableDisposable.killExceptionally(cause);
       }
       ProgressManager.getInstance().executeNonCancelableSection(() -> onCancelled(reason));
-    }
-    else if (LOG.isDebugEnabled()) {
-      LOG.debug("doCancel on already cancelled(" + this + ")");
     }
   }
 
