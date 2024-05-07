@@ -270,7 +270,7 @@ impl RemoteDevLaunchConfiguration {
 
         // TODO: use IDE-specific properties file
         let dist_properties_path = self.default.ide_home.join("bin").join("idea.properties");
-        let dist_properties_file = File::open(&dist_properties_path).context("Failed to open IDE properties file")?;
+        let dist_properties_file = File::open(dist_properties_path).context("Failed to open IDE properties file")?;
 
         for l in BufReader::new(dist_properties_file).lines() {
             writeln!(&mut writer, "{}", l.context("Failed to read IDE properties file")?)?;
@@ -303,13 +303,13 @@ fn get_temp_system_like_path() -> Result<PathBuf> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn setup_font_config(_ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+fn setup_font_config(_ide_home_path: &Path) -> Result<Option<(String, String)>> {
     // fontconfig is Linux-specific
     Ok(None)
 }
 
 #[cfg(target_os = "linux")]
-fn setup_font_config(ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+fn setup_font_config(ide_home_path: &Path) -> Result<Option<(String, String)>> {
     use std::hash::{Hash, Hasher};
 
     let source_font_config_file = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts.conf");
@@ -378,7 +378,7 @@ impl std::fmt::Display for IjStarterCommand {
 }
 
 fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
-    std::collections::HashMap::from([
+    HashMap::from([
         ("run", IjStarterCommand {ij_command: "remoteDevHost".to_string(), is_project_path_required: false, is_arguments_required: true}),
         ("status", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
@@ -454,7 +454,7 @@ fn print_help() {
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
-fn init_env_vars(ide_home_path: &PathBuf) -> Result<()> {
+fn init_env_vars(ide_home_path: &Path) -> Result<()> {
     let mut remote_dev_env_var_values = Vec::new();
 
     if !std::io::stdout().is_terminal() {
@@ -465,7 +465,7 @@ fn init_env_vars(ide_home_path: &PathBuf) -> Result<()> {
         remote_dev_env_var_values.extend(os_spec);
     }
 
-    // required for the most basic launch (e.g. showing help)
+    // required for the most basic launch (e.g., showing help)
     // as there may be nothing on a user system and we'll crash
     let font_config_env = setup_font_config(ide_home_path).context("Preparing fontconfig override")?;
     if let Some(vars) = &font_config_env {
@@ -511,7 +511,7 @@ fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn preload_native_libs(_ide_home_dir: &PathBuf) -> Result<()> {
+fn preload_native_libs(_ide_home_dir: &Path) -> Result<()> {
     // We don't ship self-contained libraries outside of Linux
     Ok(())
 }
@@ -553,8 +553,8 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
         }
     }
 
-    let provided_libs_inital_len = provided_libs.len();
-    debug!("Provided libraries count: {provided_libs_inital_len}");
+    let provided_libs_initial_len = provided_libs.len();
+    debug!("Provided libraries count: {provided_libs_initial_len}");
 
     let file = File::open(lib_load_order_file)?;
     let lines = BufReader::new(file).lines();
@@ -604,7 +604,7 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
 
     // we should have more detailed logs in this count,
     // but just to be safe we'll do this simple assertion
-    if ordered_libs_to_load.len() != provided_libs_inital_len {
+    if ordered_libs_to_load.len() != provided_libs_initial_len {
         bail!("Library count mismatch");
     }
 
