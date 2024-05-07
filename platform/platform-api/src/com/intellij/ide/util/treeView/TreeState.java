@@ -3,7 +3,6 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
@@ -42,6 +41,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static com.intellij.ide.util.treeView.CachedTreePresentationData.createFromTree;
 
@@ -729,7 +729,17 @@ public final class TreeState implements JDOMExternalizable {
       return promise;
     }
     else {
-      return TreeUtil.promiseExpand(tree, myExpandedPaths.stream().map(elements -> new Visitor(elements)));
+      Stream<Visitor> visitors = myExpandedPaths.stream().map(elements -> new Visitor(elements));
+      if (myPresentationData == null) {
+        return TreeUtil.promiseExpand(tree, visitors);
+      }
+      else {
+        // If we have cached presentation data, then everything is already shown and expanded,
+        // and if the user collapses one of those nodes, we don't want to expand it again here,
+        // as that looks and feels weird.
+        // So instead, only load these nodes so they can replace the cached ones.
+        return TreeUtil.promiseVisit(tree, visitors, null);
+      }
     }
   }
 
