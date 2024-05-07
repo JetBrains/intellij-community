@@ -37,10 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
@@ -58,7 +55,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
   private final boolean myUpdateAll;
   final @NotNull ProperTextRange myPriorityRange;
 
-  final List<HighlightInfo> myHighlights = new ArrayList<>();
+  final List<HighlightInfo> myHighlights = Collections.synchronizedList(new ArrayList<>());
 
   protected volatile boolean myHasErrorElement;
   private volatile boolean myHasErrorSeverity;
@@ -212,9 +209,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
 
   @Override
   public final @NotNull List<HighlightInfo> getInfos() {
-    synchronized (myHighlights) {
-      return myHighlights;
-    }
+    return myHighlights;
   }
 
   private boolean collectHighlights(@NotNull List<? extends PsiElement> elements1,
