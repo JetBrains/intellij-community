@@ -1048,18 +1048,46 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Starting code cleanup");
     }
+    Runnable retryRunnable = () -> codeCleanup(scope, profile, commandName, postRunnable, modal, shouldApplyFix);
 
+    class TaskDelegate {
+      CleanupProblems problems;
+      String noProblemsMessage;
+
+      void run(@NotNull ProgressIndicator indicator) {
+        problems = findProblems(scope, profile, indicator, shouldApplyFix);
+        if (problems.files().isEmpty()) {
+          noProblemsMessage =
+            commandName == null ? null :
+            InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName());
+        }
+      }
+
+      void onSuccess() {
+        boolean isFinished;
+        if (problems.files().isEmpty()) {
+          isFinished = reportNoProblemsFound(scope, noProblemsMessage, retryRunnable);
+        }
+        else {
+          isFinished = applyFixes(problems);
+        }
+        if (isFinished && postRunnable != null) {
+          postRunnable.run();
+        }
+      }
+    }
+
+    TaskDelegate delegate = new TaskDelegate();
     Task task = modal ? new Task.Modal(getProject(), title, true) {
-      private CleanupProblems problems;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        problems = findProblems(scope, profile, indicator, shouldApplyFix);
+        delegate.run(indicator);
       }
 
       @Override
       public void onSuccess() {
-        applyFixes(scope, problems, commandName, postRunnable, profile, true, shouldApplyFix);
+        delegate.onSuccess();
       }
 
       @Override
@@ -1084,16 +1112,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         }
       }
     } : new Task.Backgroundable(getProject(), title, true) {
-      private CleanupProblems problems;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        problems = findProblems(scope, profile, indicator, shouldApplyFix);
+        delegate.run(indicator);
       }
 
       @Override
       public void onSuccess() {
-        applyFixes(scope, problems, commandName, postRunnable, profile, false, shouldApplyFix);
+        delegate.onSuccess();
       }
 
       @Override
@@ -1265,44 +1292,34 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  private void applyFixes(@NotNull AnalysisScope scope,
-                          @NotNull CleanupProblems problems,
-                          @Nullable String commandName,
-                          @Nullable Runnable postRunnable,
-                          @NotNull InspectionProfile profile,
-                          boolean modal,
-                          @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    if (problems.files().isEmpty()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("No problems found during code inspection, nothing to cleanup");
-      }
-
-      if (commandName != null) {
-        var notification = new Notification(
-          NOTIFICATION_GROUP,
-          InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()),
-          NotificationType.INFORMATION);
-        if (!scope.isIncludeTestSource()) {
-          addRepeatWithTestsAction(scope, notification, () -> codeCleanup(scope, profile, commandName, postRunnable, modal, shouldApplyFix));
-        }
-        notification.notify(getProject());
-      }
-      if (postRunnable != null) {
-        postRunnable.run();
-      }
-      return;
+  private boolean reportNoProblemsFound(@NotNull AnalysisScope scope,
+                                        @Nullable @NlsContexts.NotificationContent String message,
+                                        @NotNull Runnable retryRunnable) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("No problems found during code inspection, nothing to cleanup");
     }
+    if (message != null) {
+      var notification = new Notification(
+        NOTIFICATION_GROUP,
+        message,
+        NotificationType.INFORMATION);
+      if (!scope.isIncludeTestSource()) {
+        addRepeatWithTestsAction(scope, notification, retryRunnable);
+      }
+      notification.notify(getProject());
+    }
+    return true;
+  }
 
+  private boolean applyFixes(@NotNull CleanupProblems problems) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Applying fixes");
     }
 
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.files())) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.files())) return false;
     CleanupInspectionUtil.getInstance().applyFixesNoSort(
       getProject(), LangBundle.message("code.cleanup"), problems.problemDescriptors(), null, false, problems.isGlobalScope());
-    if (postRunnable != null) {
-      postRunnable.run();
-    }
+    return true;
   }
 
   @SuppressWarnings("IdentifierGrammar")
