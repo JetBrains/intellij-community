@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import org.jetbrains.annotations.NonNls;
@@ -25,6 +25,7 @@ public final class GitCommand {
   public static final GitCommand BRANCH = read("branch");
   public static final GitCommand CAT_FILE = read("cat-file");
   public static final GitCommand CHECKOUT = write("checkout");
+  public static final GitCommand SPARSE_CHECKOUT = write("sparse-checkout");
   public static final GitCommand CHECK_ATTR = read("check-attr");
   public static final GitCommand CHECK_IGNORE = read("check-ignore");
   public static final GitCommand COMMIT = write("commit");

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines
 
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -21,7 +20,6 @@ internal class ToggleShowStickyLinesGloballyAction : ToggleAction(), DumbAware {
     val shown = settings.areStickyLinesShown()
     if (shown != isSelected) {
       settings.setStickyLinesShown(isSelected)
-      UISettings.getInstance().fireUISettingsChanged()
     }
   }
 

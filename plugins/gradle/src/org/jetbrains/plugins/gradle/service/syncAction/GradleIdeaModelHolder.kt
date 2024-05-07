@@ -32,6 +32,10 @@ class GradleIdeaModelHolder(
   private val buildIdMapping: MutableMap<String, String> = LinkedHashMap()
 
   private val serializer = if (useCustomSerialization) ToolingSerializer() else null
+  private val modelPathConverter = GradleObjectTraverser(
+    classesToSkip = setOf(String::class.java),
+    classesToSkipChildren = setOf(Object::class.java, File::class.java)
+  )
 
   fun getBuildEnvironment(): BuildEnvironment? {
     return buildEnvironment
@@ -160,7 +164,7 @@ class GradleIdeaModelHolder(
 
   private fun convertModelPathsInPlace(model: Any) {
     if (pathMapper == null) return
-    GradleObjectTraverser.traverse(model, setOf(String::class.java), setOf(Object::class.java, File::class.java)) { remoteFile ->
+    modelPathConverter.walk(model) { remoteFile ->
       if (remoteFile is File) {
         val remotePath = remoteFile.path
         if (pathMapper.canReplaceRemote(remotePath)) {

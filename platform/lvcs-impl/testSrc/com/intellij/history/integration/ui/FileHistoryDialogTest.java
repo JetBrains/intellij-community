@@ -18,7 +18,6 @@ package com.intellij.history.integration.ui;
 
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.FileHistoryDialog;
@@ -29,6 +28,8 @@ import com.intellij.util.text.DateFormatUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+
+import static com.intellij.history.integration.ui.HistoryDialogModelsKt.createFileModel;
 
 public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   public void testDialogWorks() {
@@ -122,12 +123,8 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     return m.getDifferenceModel().getRightDiffContent(RevisionProcessingProgress.EMPTY);
   }
 
-  private FileHistoryDialogModel createFileModel(VirtualFile f) {
-    return new EntireFileHistoryDialogModel(myProject, myGateway, getVcs(), f);
-  }
-
   private FileHistoryDialogModel createFileModelAndSelectRevisions(VirtualFile f, int first, int second) {
-    FileHistoryDialogModel m = createFileModel(f);
+    FileHistoryDialogModel m = createFileModel(this, f);
     m.selectRevisions(first, second);
     return m;
   }

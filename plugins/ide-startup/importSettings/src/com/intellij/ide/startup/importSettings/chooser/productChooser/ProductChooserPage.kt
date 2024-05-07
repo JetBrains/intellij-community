@@ -37,17 +37,19 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
     val settService = SettingsService.getInstance()
 
     settService.jbAccount.advise(lifetime) {
-      isVisible = it != null
-      if (!isVisible) {
-        return@advise
-      }
-
       text = it?.loginName
     }
 
+    settService.isSyncEnabled.advise(lifetime) {
+      isVisible = it
+    }
   }
 
-  private val pane = JPanel(VerticalLayout(JBUI.scale(26), SwingConstants.CENTER)).apply {
+  private val pane = object: JPanel(VerticalLayout(JBUI.scale(26), SwingConstants.CENTER)) {
+    override fun getComponentGraphics(g: Graphics?): Graphics {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
+    }
+  }.apply {
     add(JLabel(ImportSettingsBundle.message("choose.product.title")).apply {
       font = JBFont.h1()
     })

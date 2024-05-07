@@ -79,8 +79,8 @@ class YAMLDuplicatedKeysInspection : LocalInspectionTool() {
     }
 
     private fun mergeMappings(mapping: YAMLMapping,
-                  it: YAMLKeyValue,
-                  generator: YAMLElementGenerator): Boolean {
+                              it: YAMLKeyValue,
+                              generator: YAMLElementGenerator): Boolean {
       val currentMapping = it.value as? YAMLMapping ?: return false
       currentMapping.keyValues.forEach { pp ->
         mapping.getKeyValueByKey(pp.keyText)?.let {
@@ -102,8 +102,8 @@ class YAMLDuplicatedKeysInspection : LocalInspectionTool() {
     }
 
     private fun mergeSequences(sequence: YAMLSequence,
-                              it: YAMLKeyValue,
-                              generator: YAMLElementGenerator): Boolean {
+                               it: YAMLKeyValue,
+                               generator: YAMLElementGenerator): Boolean {
       val currentSequence = it.value as? YAMLSequence ?: return false
       currentSequence.items.forEach { pp ->
         if (pp.value != null) {

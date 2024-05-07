@@ -417,7 +417,8 @@ f:org.jetbrains.jps.model.serialization.java.compiler.RmicCompilerOptionsSeriali
 a:org.jetbrains.jps.model.serialization.library.JpsLibraryPropertiesSerializer
 - org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer
 - <init>(org.jetbrains.jps.model.library.JpsLibraryType,java.lang.String):V
-- a:loadProperties(org.jdom.Element):org.jetbrains.jps.model.JpsElement
+- loadProperties(org.jdom.Element):org.jetbrains.jps.model.JpsElement
+- loadProperties(org.jdom.Element,org.jetbrains.jps.model.serialization.JpsPathMapper):org.jetbrains.jps.model.JpsElement
 f:org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer
 - java.lang.Comparable
 - <init>(java.lang.String,org.jetbrains.jps.model.library.JpsOrderRootType,Z):V

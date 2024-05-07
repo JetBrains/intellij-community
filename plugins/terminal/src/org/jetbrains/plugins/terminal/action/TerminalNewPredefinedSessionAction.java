@@ -103,14 +103,13 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
   private static @NotNull List<OpenShellAction> detectShells() {
     List<OpenShellAction> actions = new ArrayList<>();
     if (SystemInfo.isUnix) {
-      ContainerUtil.addIfNotNull(actions, create("/bin/bash", List.of(), "bash"));
-      if (Files.exists(Path.of("/usr/local/bin/zsh"))) {
-        ContainerUtil.addIfNotNull(actions, create("/usr/local/bin/zsh", List.of(), "zsh"));
-      }
-      else {
-        ContainerUtil.addIfNotNull(actions, create("/usr/bin/zsh", List.of(), "zsh"));
-      }
-      ContainerUtil.addIfNotNull(actions, create("/usr/bin/fish", List.of(), "fish"));
+      ContainerUtil.addIfNotNull(actions, create("/bin/bash", List.of(), "bash (/bin)"));
+      ContainerUtil.addIfNotNull(actions, create("/opt/homebrew/bin/bash", List.of(), "bash (/opt/homebrew/bin)"));
+      ContainerUtil.addIfNotNull(actions, create("/bin/zsh", List.of(), "zsh (/bin)"));
+      ContainerUtil.addIfNotNull(actions, create("/usr/bin/zsh", List.of(), "zsh (/usr/bin)"));
+      ContainerUtil.addIfNotNull(actions, create("/usr/local/bin/zsh", List.of(), "zsh (/usr/local/bin)"));
+      ContainerUtil.addIfNotNull(actions, create("/opt/homebrew/bin/zsh", List.of(), "zsh (/opt/homebrew/bin)"));
+      ContainerUtil.addIfNotNull(actions, create("/usr/bin/fish", List.of(), "fish (/usr/bin)"));
     }
     else if (SystemInfo.isWindows) {
       File powershell = PathEnvironmentVariableUtil.findInPath("powershell.exe");

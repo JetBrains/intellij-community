@@ -561,6 +561,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/It.kt");
             }
 
+            @TestMetadata("javaInnerClassQualifier.kt")
+            public void testJavaInnerClassQualifier() throws Exception {
+                runTest("testData/refactoring/introduceVariable/javaInnerClassQualifier.kt");
+            }
+
             @TestMetadata("kt10808.kt")
             public void testKt10808() throws Exception {
                 runTest("testData/refactoring/introduceVariable/kt10808.kt");
@@ -1930,6 +1935,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testSingleExpression() throws Exception {
                 runTest("testData/refactoring/extractFunction/duplicates/singleExpression.kt");
             }
+
+            @TestMetadata("syntheticJavaReference.kt")
+            public void testSyntheticJavaReference() throws Exception {
+                runTest("testData/refactoring/extractFunction/duplicates/syntheticJavaReference.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -2850,6 +2860,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         public static class TypeParameters extends AbstractExtractionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("definitelyNotNullType.kt")
+            public void testDefinitelyNotNullType() throws Exception {
+                runTest("testData/refactoring/extractFunction/typeParameters/definitelyNotNullType.kt");
             }
 
             @TestMetadata("localClassInBound.kt")

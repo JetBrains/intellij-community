@@ -160,8 +160,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
     for (RefParameter parameter : result) {
       if (parameter != null && !PsiUtil.isIgnoredName(parameter.getName()) &&
-          !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspection.UNUSED_PARAMETERS_SHORT_NAME,
-                                                    UnusedSymbolLocalInspection.UNUSED_ID)) {
+          !parameter.isSuppressed(UnusedSymbolLocalInspection.UNUSED_PARAMETERS_SHORT_NAME, UnusedSymbolLocalInspection.UNUSED_ID)) {
         res.add(parameter);
       }
     }

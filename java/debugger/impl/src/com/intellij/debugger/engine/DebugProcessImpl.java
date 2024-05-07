@@ -2364,6 +2364,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                 boolean terminated =
                   processHandler != null && (processHandler.isProcessTerminating() || processHandler.isProcessTerminated());
 
+                try {
+                  myDebugProcessDispatcher.getMulticaster().attachException(null, e, myConnection);
+                }
+                catch (Exception ex) {
+                  LOG.debug(ex);
+                }
                 fail();
                 DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
                   // propagate exception only in case we succeeded to obtain execution result,

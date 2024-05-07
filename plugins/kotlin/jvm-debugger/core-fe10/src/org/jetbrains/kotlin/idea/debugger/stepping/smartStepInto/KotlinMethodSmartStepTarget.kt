@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
+import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
@@ -42,7 +43,7 @@ class KotlinMethodSmartStepTarget(
     declaration: KtDeclaration?,
     val ordinal: Int,
     val methodInfo: CallableMemberInfo
-) : KotlinSmartStepTarget(label, highlightElement, false, lines) {
+) : KotlinSmartStepTarget(label, highlightElement, false, lines), ForceSmartStepIntoSource {
     companion object {
         private val renderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
             annotationRenderer = annotationRenderer.with {
@@ -78,6 +79,8 @@ class KotlinMethodSmartStepTarget(
 
     override fun getIcon(): Icon = if (methodInfo.isExtension) KotlinIcons.EXTENSION_FUNCTION else KotlinIcons.FUNCTION
     override fun getClassName(): String? = runReadAction { declarationPtr?.element?.getClassName() }
+
+    override fun needForceSmartStepInto() = methodInfo.isInvoke && methodInfo.isSuspend
 
     fun getDeclaration(): KtDeclaration? =
         declarationPtr.getElementInReadAction()

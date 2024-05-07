@@ -92,11 +92,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
     // initial guess to show correct progress in the traffic light icon
     setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
     EditorColorsScheme globalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
-    myHighlightVisitorRunner = new HighlightVisitorRunner(myProject, globalScheme);
-    if (!runVisitors) {
-      // "do not run visitors" here means "reduce the set of visitors down to DefaultHighlightVisitor", because it reports error elements
-      myHighlightVisitorRunner.setHighlightVisitorProducer(__ -> List.of(new DefaultHighlightVisitor(psiFile.getProject(), highlightErrorElements, false)));
-    }
+    myHighlightVisitorRunner = new HighlightVisitorRunner(psiFile, globalScheme, runVisitors, highlightErrorElements);
   }
 
   private @NotNull PsiFile getFile() {
@@ -111,7 +107,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    myHighlightVisitorRunner.createHighlightVisitorsFor(getFile(), filteredVisitors->{
+    myHighlightVisitorRunner.createHighlightVisitorsFor(filteredVisitors->{
       List<Divider.DividedElements> dividedElements = new ArrayList<>();
       List<Divider.DividedElements> notVisitableElements = new ArrayList<>();
       Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, psiFile -> true,
@@ -188,6 +184,7 @@ public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHi
           for (HighlightInfo info : newInfos) {
             if (info.getSeverity() == HighlightSeverity.ERROR) {
               myHasErrorSeverity = true;
+              break;
             }
           }
         });

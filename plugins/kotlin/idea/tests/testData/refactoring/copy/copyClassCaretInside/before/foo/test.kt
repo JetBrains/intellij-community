@@ -1,7 +1,7 @@
 package foo
 
 class A {
-    val a: <caret>A = A()
+    val a: A = A<caret>()
     val b: B = B()
 }
 

@@ -68,17 +68,17 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject()) = 
   }
   else {
     val service = service(GuestNavigationService::class, project)
-    service.navigateViaBackend(relativePath, 0)
-    waitFor(errorMessage = "Fail to open file $relativePath", duration = 30.seconds,
-            getter = {
-              withContext(OnDispatcher.EDT) {
+    withContext(OnDispatcher.EDT) {
+      service.navigateViaBackend(relativePath, 0)
+      waitFor(errorMessage = "Fail to open file $relativePath", duration = 30.seconds,
+              getter = {
                 service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
-              }
-            },
-            checker = { virtualFile ->
-              virtualFile != null &&
-              virtualFile.getPath().contains(relativePath)
-            })!!
+              },
+              checker = { virtualFile ->
+                virtualFile != null &&
+                virtualFile.getPath().contains(relativePath)
+              })!!
+    }
   }
   waitForCodeAnalysis(file = openedFile)
 }

@@ -1151,14 +1151,17 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
 
     showLicensePanel();
+    String homepage = MarketplaceUrls.getPluginHomepage(myPlugin.getPluginId());
 
-    if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate() || !isPluginFromMarketplace()) {
+    if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate()
+        || !isPluginFromMarketplace()
+        || homepage == null) {
       myHomePage.hide();
     } else {
       myHomePage.showWithBrowseUrl(
         IdeBundle.message("plugins.configurable.plugin.homepage.link"),
         true,
-        () -> MarketplaceUrls.getPluginHomepage(myPlugin.getPluginId())
+        () -> homepage
       );
     }
 

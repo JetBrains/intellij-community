@@ -6,22 +6,37 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
+import java.io.File
 
 abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleFindUsages")
+
+    override fun setUp() {
+        setUpWithKotlinPlugin {
+            super.setUp()
+        }
+    }
+
+    protected fun getTestdataFile(): File =
+        File(testDataPath + getTestName(true).removePrefix("test"))
 
     protected val mainFile: KtFile
         get() = project.allKotlinFiles().single { file ->
             file.text.contains("// ")
         }
 
-    protected open fun doFindUsagesTest() {
+    protected open fun doTest(path: String) {
+        setupMppProjectFromDirStructure(File(path))
+
         val virtualFile = mainFile.virtualFile!!
         configureByExistingFile(virtualFile)
 
@@ -44,6 +59,11 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
         UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
         val options = parser?.parse(mainFileText, project)
+        val testType = when (pluginMode) {
+            KotlinPluginMode.K1 -> FindUsageTestType.DEFAULT
+            KotlinPluginMode.K2 -> FindUsageTestType.FIR
+        }
+
         findUsagesAndCheckResults(
             mainFileText,
             prefix,
@@ -52,7 +72,7 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
             options,
             project,
             alwaysAppendFileName = true,
-            testType = if (isFirPlugin()) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
+            testType = testType,
         )
     }
 }

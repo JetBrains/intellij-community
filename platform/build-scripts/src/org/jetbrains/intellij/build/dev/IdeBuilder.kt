@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.dev
 
 import com.dynatrace.hash4j.hashing.HashFunnel
@@ -19,6 +21,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildOptions.Companion.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -109,13 +112,15 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
   }
 
   val runDir = buildDir.resolve(productDirNameWithoutClassifier)
-  val context = createBuildContext(createProductProperties, request, runDir, request.jarCacheDir, buildDir)
+  val context = createBuildContext(createProductProperties = createProductProperties, request = request, runDir = runDir, jarCacheDir = request.jarCacheDir, buildDir = buildDir)
   compileIfNeeded(context)
 
   coroutineScope {
     val platformLayout = async {
       createPlatformLayout(pluginsToPublish = emptySet(), context = context)
     }
+
+    val searchableOptionSetDescriptor = getJarsWithSearchableOptions(context)
 
     val platformDistributionEntriesDeferred = async {
       launch(Dispatchers.IO) {
@@ -131,7 +136,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
 
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").useWithScope {
-        layoutPlatform(runDir = runDir, platformLayout = platformLayout.await(), context = context)
+        layoutPlatform(runDir = runDir, platformLayout = platformLayout.await(), searchableOptionSetDescriptor = searchableOptionSetDescriptor, context = context)
       }
 
       launch(Dispatchers.IO) {
@@ -154,7 +159,14 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     val pluginDistributionEntriesDeferred = async {
-      buildPlugins(request, context, runDir, platformLayout, artifactTask)
+      buildPlugins(
+        request = request,
+        context = context,
+        runDir = runDir,
+        platformLayout = platformLayout,
+        artifactTask = artifactTask,
+        jarsWithSearchableOptions = searchableOptionSetDescriptor,
+      )
     }
 
     launch {
@@ -179,7 +191,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
                                      pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
         spanBuilder("generate runtime repository").useWithScope(Dispatchers.IO) {
-          generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context)
+          generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
         }
       }
     }
@@ -198,6 +210,17 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       context.messages.close()
     }
   return runDir
+}
+
+private suspend fun getJarsWithSearchableOptions(context: BuildContext): SearchableOptionSetDescriptor? {
+  return withContext(Dispatchers.IO) {
+    try {
+      readSearchableOptionIndex(context.paths.searchableOptionDir)
+    }
+    catch (_: NoSuchFileException) {
+      null
+    }
+  }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalSerializationApi::class)
@@ -295,7 +318,8 @@ private suspend fun buildPlugins(
   context: BuildContext,
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
-  artifactTask: Job
+  artifactTask: Job,
+  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
 ): Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?> {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
 
@@ -314,11 +338,7 @@ private suspend fun buildPlugins(
       .distinct()
       .filter { it == plugin.mainModule || !context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
       .toList()
-    val pluginBuildDescriptor = PluginBuildDescriptor(
-      dir = pluginRootDir.resolve(plugin.directoryName),
-      layout = plugin,
-      moduleNames = modules,
-    )
+    val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName), layout = plugin, moduleNames = modules)
     for (name in modules) {
       moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
     }
@@ -331,7 +351,12 @@ private suspend fun buildPlugins(
 
   artifactTask.join()
 
-  val pluginEntries = buildPlugins(pluginBuildDescriptors, platformLayout.await(), context)
+  val pluginEntries = buildPlugins(
+    pluginBuildDescriptors = pluginBuildDescriptors,
+    platformLayout = platformLayout.await(),
+    context = context,
+    jarsWithSearchableOptions = jarsWithSearchableOptions,
+  )
   val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)
   return pluginEntries to additionalPlugins
 }
@@ -394,6 +419,18 @@ internal suspend fun createBuildContext(
 
         options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
 
+        val tempDir = buildDir.resolve("temp")
+        val result = BuildPaths(
+          communityHomeDirRoot = COMMUNITY_ROOT,
+          buildOutputDir = runDir,
+          logDir = options.logDir!!,
+          projectHome = request.projectDir,
+          tempDir = tempDir,
+          artifactDir = buildDir.resolve("artifacts"),
+          searchableOptionDir = request.projectDir.normalize().toAbsolutePath().resolve("out/dev-data/searchable-options"),
+        )
+        Files.createDirectories(tempDir)
+
         CompilationContextImpl.createCompilationContext(
           projectHome = request.projectDir,
           buildOutputRootEvaluator = { _ -> runDir },
@@ -401,6 +438,7 @@ internal suspend fun createBuildContext(
           // will be enabled later in [com.intellij.platform.ide.bootstrap.enableJstack] instead
           enableCoroutinesDump = false,
           options = options,
+          customBuildPaths = result
         )
       }
     }
@@ -434,8 +472,8 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
     return true
   }
 
-  return satisfiesBundlingRequirements(plugin, OsFamily.currentOs, JvmArchitecture.currentJvmArch, context) ||
-         satisfiesBundlingRequirements(plugin, osFamily = null, JvmArchitecture.currentJvmArch, context)
+  return satisfiesBundlingRequirements(plugin = plugin, osFamily = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, context = context) ||
+         satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
 }
 
 internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, request: BuildRequest): ProductProperties {
@@ -474,14 +512,16 @@ private fun getBuildModules(productConfiguration: ProductConfiguration): Sequenc
 private suspend fun layoutPlatform(
   runDir: Path,
   platformLayout: PlatformLayout,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Set<Path>> {
   val entries = layoutPlatformDistribution(
     moduleOutputPatcher = ModuleOutputPatcher(),
     targetDirectory = runDir,
     platform = platformLayout,
-    context = context,
+    searchableOptionSetDescriptor = searchableOptionSetDescriptor,
     copyFiles = true,
+    context = context,
   )
   lateinit var sortedClassPath: Set<Path>
   coroutineScope {

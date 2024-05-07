@@ -53,15 +53,13 @@ public final class CopyHandler {
     Project project = elements[0].getProject();
     for(CopyHandlerDelegate delegate: CopyHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canCopy(elements)) {
-        if (DumbService.isDumb(project)) {
-          if (!DumbService.isDumbAware(delegate)) {
-            DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
-              RefactoringBundle.message("refactoring.dumb.mode.notification"),
-              DumbModeBlockedFunctionality.Refactoring);
-            return;
-          }
-          //todo warn that something can be broken https://youtrack.jetbrains.com/issue/IJPL-402
+        if (!DumbService.getInstance(project).isUsableInCurrentContext(delegate)) {
+          DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+            RefactoringBundle.message("refactoring.dumb.mode.notification"),
+            DumbModeBlockedFunctionality.Refactoring);
+          return;
         }
+        //todo warn that something can be broken https://youtrack.jetbrains.com/issue/IJPL-402
         delegate.doCopy(elements, defaultTargetDirectory);
         break;
       }

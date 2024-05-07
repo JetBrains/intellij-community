@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +48,19 @@ public abstract class PyPackageManager implements Disposable {
     return true;
   }
 
+  @ApiStatus.Internal
+  public static boolean shouldSubscribeToLocalChanges(@NotNull PyPackageManager manager) {
+    return manager.shouldSubscribeToLocalChanges();
+  }
+
   @NotNull
   protected final Sdk getSdk() {
     return mySdk;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Sdk getSdk(@NotNull PyPackageManager manager) {
+    return manager.getSdk();
   }
 
   public abstract void installManagement() throws ExecutionException;

@@ -850,6 +850,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "MyEnum.bar", "MyEnum", "MyEnum.foo");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testPreferExpectedTypeFieldOverUnexpectedLocalVariables() {
     checkPreferredItems(0, "field", "local");
   }

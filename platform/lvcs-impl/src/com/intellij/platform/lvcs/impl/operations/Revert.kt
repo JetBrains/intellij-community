@@ -9,6 +9,7 @@ import com.intellij.history.integration.revertion.DifferenceReverter
 import com.intellij.history.integration.revertion.Reverter
 import com.intellij.history.integration.revertion.SelectionReverter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.platform.lvcs.impl.diff.getDiff
 import com.intellij.platform.lvcs.impl.diff.getEntryPath
@@ -49,8 +50,11 @@ internal fun LocalHistoryFacade.createDifferenceReverter(project: Project, gatew
 
 private fun getRevertCommandName(item: ChangeSetActivityItem?, isOldContentUsed: Boolean): @Nls String? {
   if (item == null) return LocalHistoryBundle.message("system.label.revert")
-  val name = item.name
-  val date = DateFormatUtil.formatDateTime(item.timestamp)
+  return getRevertCommandName(item.name, item.timestamp, isOldContentUsed)
+}
+
+internal fun getRevertCommandName(name: @NlsSafe String?, timestamp: Long, isOldContentUsed: Boolean): @Nls String? {
+  val date = DateFormatUtil.formatDateTime(timestamp)
   if (isOldContentUsed) {
     if (name != null) {
       return LocalHistoryBundle.message("system.label.revert.change.date", name, date)

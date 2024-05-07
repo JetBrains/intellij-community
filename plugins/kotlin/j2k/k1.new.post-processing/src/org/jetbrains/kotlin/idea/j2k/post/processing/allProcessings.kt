@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTran
 import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix.ReturnTypeMismatchOnOverrideFactory
-import org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix.SetExplicitVisibilityFactory
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup
 import org.jetbrains.kotlin.j2k.NamedPostProcessingGroup
 import org.jetbrains.kotlin.j2k.postProcessings.*
@@ -52,11 +51,6 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.EXPOSED_TYPE_PARAMETER_BOUND
     ),
     diagnosticBasedProcessing(
-        SetExplicitVisibilityFactory,
-        Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE,
-        Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING,
-    ),
-    diagnosticBasedProcessing(
         ConvertToIsArrayOfCallFix,
         Errors.CANNOT_CHECK_FOR_ERASED,
     ),
@@ -66,6 +60,8 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
 private val addOrRemoveModifiersProcessingGroup = InspectionLikeProcessingGroup(
     runSingleTime = true,
     processings = listOf(
+        // This is left for copy-paste conversion.
+        // On regular conversion, redundant modifiers are removed during JK tree processing.
         RemoveRedundantVisibilityModifierProcessing(),
     )
 )

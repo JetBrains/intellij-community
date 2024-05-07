@@ -122,13 +122,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       return scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
     }
 
-    return loadFromPluginClasspathDescriptor(
-      data = data,
-      context = context,
-      zipFilePool = zipFilePool,
-      bundledPluginDir = effectiveBundledPluginDir,
-      scope = scope,
-    ).asList()
+    return loadFromPluginClasspathDescriptor(data = data, context = context, zipFilePool = zipFilePool, bundledPluginDir = effectiveBundledPluginDir, scope = scope).asList()
   }
 
   override fun loadCustomPluginDescriptors(
@@ -221,13 +215,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       )
     }
 
-    val descriptor = IdeaPluginDescriptorImpl(
-      raw = raw,
-      path = pluginDir,
-      isBundled = true,
-      id = null,
-      moduleName = null,
-    )
+    val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginDir, isBundled = true, id = null, moduleName = null)
     context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)
     for (module in descriptor.content.modules) {
       val subDescriptorFile = module.configFile ?: "${module.name}.xml"
@@ -255,12 +243,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
         )
       }
 
-      val subDescriptor = descriptor.createSub(
-        raw = subRaw,
-        descriptorPath = subDescriptorFile,
-        context = context,
-        moduleName = module.name,
-      )
+      val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
       if (classPath != null) {
         subDescriptor.jarFiles = classPath
       }

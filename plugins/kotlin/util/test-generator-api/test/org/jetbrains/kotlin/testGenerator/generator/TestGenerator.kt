@@ -174,3 +174,6 @@ internal fun write(file: File, content: String, isUpToDateCheck: Boolean) {
 }
 
 internal fun normalizeContent(content: String): String = content.replace(Regex("\\R"), "\n")
+    // workaround for KTIJ-29790
+    .lineSequence().filterNot { it.contains("IJIgnore") }
+    .joinToString(separator = "\n")

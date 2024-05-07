@@ -95,6 +95,19 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return filteredTexts.first()
   }
 
+  fun findOneContainsText(text: String, ignoreCase: Boolean = true, duration: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds): UiText {
+    var allTexts = emptyList<UiText>()
+    waitFor(duration, errorMessage = "Can't find '$text' in ${data.parentSearchContext.context}") {
+      allTexts = findAllText()
+      allTexts.any { it.text.contains(text, ignoreCase = ignoreCase) }
+    }
+    val filteredTexts = allTexts.filter { it.text.contains(text, ignoreCase = ignoreCase)}
+    if (filteredTexts.size > 1) {
+      throw AssertionError("Found ${filteredTexts.size} texts '$text', expected 1")
+    }
+    return filteredTexts.first()
+  }
+
   fun hasText(text: String): Boolean {
     return findAllText {
       it.text == text

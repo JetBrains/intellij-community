@@ -11,9 +11,11 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class ShellCommandOutputScraper(private val session: BlockTerminalSession,
-                                         textBuffer: TerminalTextBuffer,
-                                         parentDisposable: Disposable) {
+internal class ShellCommandOutputScraper(
+  private val session: BlockTerminalSession,
+  textBuffer: TerminalTextBuffer,
+  parentDisposable: Disposable
+) {
 
   constructor(session: BlockTerminalSession) : this(session, session.model.textBuffer, session)
 

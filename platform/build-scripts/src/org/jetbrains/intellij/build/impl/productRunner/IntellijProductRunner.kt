@@ -8,8 +8,7 @@ import org.jetbrains.intellij.build.BuildContext
  * This can be used to obtain some resources and include them in the distribution.
  */
 internal interface IntellijProductRunner {
-  suspend fun runProduct(arguments: List<String>, additionalSystemProperties: Map<String, String> = emptyMap(),
-                         isLongRunning: Boolean = false)
+  suspend fun runProduct(arguments: List<String>, additionalSystemProperties: Map<String, String> = emptyMap(), isLongRunning: Boolean = false)
   
   companion object {
     suspend fun createRunner(context: BuildContext): IntellijProductRunner {

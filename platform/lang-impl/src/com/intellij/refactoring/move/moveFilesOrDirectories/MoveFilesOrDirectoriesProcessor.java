@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -136,6 +137,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(UsageInfo @NotNull [] _usages) {
     try {
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      progressIndicator.setIndeterminate(myElementsToMove.length <= 1); // only show progress when moving multiple elements
+      progressIndicator.setFraction(0.0);
       List<PsiElement> toChange = new ArrayList<>();
       Collections.addAll(toChange, myElementsToMove);
 
@@ -174,13 +178,16 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       List<SmartPsiElementPointer<PsiFile>> movedFiles = new ArrayList<>();
       for (int i = 0; i < myElementsToMove.length; i++) {
         PsiElement element = toChange.get(i);
-        if (element instanceof PsiDirectory) {
-          MoveFilesOrDirectoriesUtil.doMoveDirectory((PsiDirectory)element, newParent);
-          for (PsiElement psiElement : element.getChildren()) {
+        progressIndicator.setFraction((double)i / myElementsToMove.length);
+        if (element instanceof PsiDirectory directory) {
+          progressIndicator.setText2(directory.getVirtualFile().getPresentableUrl());
+          MoveFilesOrDirectoriesUtil.doMoveDirectory(directory, newParent);
+          for (PsiElement psiElement : directory.getChildren()) {
             processDirectoryFiles(movedFiles, oldToNewMap, psiElement);
           }
         }
         else if (element instanceof PsiFile movedFile) {
+          progressIndicator.setText2(movedFile.getVirtualFile().getPresentableUrl());
           MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, newParent, oldToNewMap);
 
           PsiFile moving = newParent.findFile(movedFile.getName());
@@ -204,6 +211,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           });
         }
       }
+      progressIndicator.setText2("");
+      progressIndicator.setFraction(1.0);
       // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
       UsageInfo[] usages = codeUsages.toArray(UsageInfo.EMPTY_ARRAY);
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);

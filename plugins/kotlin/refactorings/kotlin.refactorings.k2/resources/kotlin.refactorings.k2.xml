@@ -2,9 +2,15 @@
   <resource-bundle>messages.KotlinBundle</resource-bundle>
   <dependencies>
     <module name="kotlin.searching.k2"/>
+    <module name="kotlin.refactorings.move.k2"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.KotlinIntroduceVariableServiceK2Impl"
+    />
+
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.K2CommonRefactoringSettings"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings"/>
@@ -25,6 +31,13 @@
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlinePropertyHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineFunctionHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionHandler"/>
+
+    <refactoring.copyHandler
+            id="kotlinClass"
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.copy.CopyKotlinDeclarationsHandler"
+            order="first" />
+    <updateAddedFileProcessor implementation="org.jetbrains.kotlin.idea.k2.refactoring.copy.KotlinUpdateAddedFileProcessor" order="first"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -47,8 +60,7 @@
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
       <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first"/>
     </action>
-    <action id="ExtractFunctionToScope" class="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractK2FunctionToScopeAction"
-            use-shortcut-of="ExtractMethod">
+    <action id="ExtractFunctionToScope" class="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractK2FunctionToScopeAction">
       <keyboard-shortcut keymap="$default" first-keystroke="control alt shift M"/>
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractFunction"/>
     </action>

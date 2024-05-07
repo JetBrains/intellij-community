@@ -5,7 +5,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -24,11 +23,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class CaretPositionKeeper {
 
-  Editor      myEditor;
-  Document    myDocument;
-  CaretModel  myCaretModel;
+  Editor myEditor;
+  Document myDocument;
+  CaretModel myCaretModel;
   RangeMarker myBeforeCaretRangeMarker;
-  String      myCaretIndentToRestore;
+  String myCaretIndentToRestore;
   int myVisualColumnToRestore = -1;
   boolean myBlankLineIndentPreserved;
 
@@ -38,10 +37,19 @@ public final class CaretPositionKeeper {
     myDocument = editor.getDocument();
     myBlankLineIndentPreserved = isBlankLineIndentPreserved(settings, language);
 
+    Project project = myEditor.getProject();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitDocument(myDocument);
+    }
+
     int caretOffset = getCaretOffset();
-    int lineStartOffset = getLineStartOffsetByTotalOffset(caretOffset);
-    int lineEndOffset = getLineEndOffsetByTotalOffset(caretOffset);
-    boolean shouldFixCaretPosition = CharArrayUtil.isEmptyOrSpaces(myDocument.getCharsSequence(), lineStartOffset, lineEndOffset);
+    CaretRestorationDecider decider = CaretRestorationDecider.Companion.forLanguage(language);
+
+    if (decider == null) {
+      decider = DefaultCaretRestorationDecider.INSTANCE;
+    }
+
+    boolean shouldFixCaretPosition = decider.shouldRestoreCaret(myDocument, myEditor, caretOffset);
 
     if (shouldFixCaretPosition) {
       initRestoreInfo(caretOffset);
@@ -55,7 +63,7 @@ public final class CaretPositionKeeper {
   }
 
   private void initRestoreInfo(int caretOffset) {
-    int lineStartOffset = getLineStartOffsetByTotalOffset(caretOffset);
+    int lineStartOffset = getLineStartOffsetByTotalOffset(myDocument, caretOffset);
 
     myVisualColumnToRestore = myCaretModel.getVisualPosition().column;
     myCaretIndentToRestore = myDocument.getText(TextRange.create(lineStartOffset, caretOffset));
@@ -103,8 +111,9 @@ public final class CaretPositionKeeper {
 
   private void insertWhiteSpaceIndentIfNeeded(int caretLineOffset) {
     int lineToInsertIndent = myDocument.getLineNumber(caretLineOffset);
-    if (!lineContainsWhiteSpaceSymbolsOnly(lineToInsertIndent))
+    if (!lineContainsWhiteSpaceSymbolsOnly(lineToInsertIndent)) {
       return;
+    }
 
     int lineToInsertStartOffset = myDocument.getLineStartOffset(lineToInsertIndent);
 
@@ -117,16 +126,6 @@ public final class CaretPositionKeeper {
 
   private boolean isVirtualSpaceEnabled() {
     return myEditor.getSettings().isVirtualSpace();
-  }
-
-  private int getLineStartOffsetByTotalOffset(int offset) {
-    int line = myDocument.getLineNumber(offset);
-    return myDocument.getLineStartOffset(line);
-  }
-
-  private int getLineEndOffsetByTotalOffset(int offset) {
-    int line = myDocument.getLineNumber(offset);
-    return myDocument.getLineEndOffset(line);
   }
 
   private int getCaretOffset() {
@@ -144,5 +143,15 @@ public final class CaretPositionKeeper {
 
   private int getCurrentCaretLine() {
     return myDocument.getLineNumber(myCaretModel.getOffset());
+  }
+
+  static int getLineStartOffsetByTotalOffset(Document document, int offset) {
+    int line = document.getLineNumber(offset);
+    return document.getLineStartOffset(line);
+  }
+
+  static int getLineEndOffsetByTotalOffset(Document document, int offset) {
+    int line = document.getLineNumber(offset);
+    return document.getLineEndOffset(line);
   }
 }

@@ -1,4 +1,4 @@
-// "Add '-opt-in=test.MyExperimentalAPI' to module light_idea_test_case compiler arguments" "true"
+// "Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'" "true"
 // IGNORE_K2
 // PRIORITY: LOW
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn

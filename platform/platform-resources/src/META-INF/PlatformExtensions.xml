@@ -494,6 +494,9 @@
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginInfoProvider"
                         serviceImplementation="com.intellij.ide.plugins.marketplace.MarketplaceRequests"
                         preload="true"/>
+    <applicationService serviceInterface="com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService"
+                        serviceImplementation="com.intellij.ide.plugins.marketplace.utils.ApplicationInfoMarketplaceCustomizationService"
+                        preload="true"/>
     <applicationService serviceInterface="com.intellij.ide.ConsentOptionsProvider"
                         serviceImplementation="com.intellij.ide.gdpr.ConsentOptionsProviderImpl"/>
     <applicationService serviceInterface="com.intellij.ide.StatisticsNotificationManager"
@@ -1785,6 +1788,8 @@
     <applicationService serviceImplementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences" />
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.KeymapFlagsStorage" />
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings" />
+    <applicationService serviceImplementation="com.intellij.openapi.wm.impl.WindowButtonsConfiguration" headlessImplementation=""
+                        preload="await" os="linux"/>
   </extensions>
 
   <applicationListeners>

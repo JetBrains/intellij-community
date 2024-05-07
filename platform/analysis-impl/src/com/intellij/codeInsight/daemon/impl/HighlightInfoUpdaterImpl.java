@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -211,7 +210,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
                   if (LOG.isDebugEnabled()) {
                     LOG.debug("removeInvalidPsiElements: " + info + " for invalid " + element + " from " + requestor);
                   }
-                  disposeWithFileLevel(info, highlighter, highlightingSession);
+                  UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, highlightingSession);
                 }
               }
               iterator.remove();
@@ -232,7 +231,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         for (HighlightInfo info : list) {
           RangeHighlighterEx highlighter = info.highlighter;
           if (highlighter != null) {
-            disposeWithFileLevel(info, highlighter, highlightingSession);
+            UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, highlightingSession);
             removed++;
           }
         }
@@ -241,16 +240,6 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     if (LOG.isDebugEnabled()) {
       LOG.debug("removeAllHighlighterInsideFile: removed invalid file: " + psiFile + " (" + removed + " highlighters removed); from " + requestor);
     }
-  }
-
-  // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
-  private static void disposeWithFileLevel(@NotNull HighlightInfo info,
-                                           @NotNull RangeHighlighterEx highlighter,
-                                           @NotNull HighlightingSession highlightingSession) {
-    if (info.isFileLevelAnnotation()) {
-      ((HighlightingSessionImpl)highlightingSession).removeFileLevelHighlight(info);
-    }
-    highlighter.dispose();
   }
 
   private static void putInfosForVisitedPsi(@NotNull Map<Object, ToolHighlights> data,
@@ -316,13 +305,6 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       }
       else {
         newInfos = List.of();
-        if (LOG.isDebugEnabled() && toolId instanceof Class<?> c && Annotator.class.isAssignableFrom(c)) {
-          //noinspection removal
-          LOG.debug("psiElementVisited- " + visitedPsiElement + " in " + visitedPsiElement.getTextRange() +
-                    (psiFile.getViewProvider() instanceof InjectedFileViewProvider ?
-                     " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
-                    "; tool:" + toolId + "; infos:" + newInfos + "; oldInfos:" + oldInfos + "; document:" + hostDocument);
-        }
       }
       // store back only after markup model changes are applied to avoid PCE thrown in the middle leaving corrupted data behind
       putInfosForVisitedPsi(data, toolId, visitedPsiElement, newInfos, toolHighlights);
@@ -357,7 +339,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           RangeHighlighterEx salvagedHighlighter = toReuse.pickupHighlighterFromGarbageBin(0, psiFile.getTextLength(), -409423948);
           HighlightInfo oldFileInfo = salvagedHighlighter == null ? null : HighlightInfo.fromRangeHighlighter(salvagedHighlighter);
           if (oldFileInfo != null) {
-            ((HighlightingSessionImpl)session).removeFileLevelHighlight(oldFileInfo);
+            UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(salvagedHighlighter, oldFileInfo, session);
             salvagedHighlighter = null;
           }
           ((HighlightingSessionImpl)session).addFileLevelHighlight(info, salvagedHighlighter);
@@ -404,7 +386,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
               if (LOG.isTraceEnabled()) {
                 LOG.trace("removeHighlightsForObsoleteTools: " + highlighter);
               }
-              disposeWithFileLevel(info, highlighter, highlightingSession);
+              UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, highlightingSession);
             }
           }
         }

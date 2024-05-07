@@ -180,9 +180,16 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
             doCheck("uast-kotlin/tests/testData/LambdaParameters.kt", ::checkCallbackForLambdaParameters)
         }
 
+        @TestMetadata("ComplicatedTypes.kt")
+        fun testComplicatedTypes() {
+            doCheck("uast-kotlin/tests/testData/ComplicatedTypes.kt", ::checkCallbackForComplicatedTypes)
+        }
+
         @TestMetadata("SAM.kt")
         fun testSAM() {
-            doCheck("uast-kotlin/tests/testData/SAM.kt") { uFilePath, uFile -> checkCallbackForSAM(uFilePath, uFile, "java.lang.String", "java.lang.String") }
+            doCheck("uast-kotlin/tests/testData/SAM.kt") { uFilePath, uFile ->
+                checkCallbackForSAM(uFilePath, uFile, "java.lang.String", "java.lang.String")
+            }
         }
 
         @TestMetadata("Simple.kt")

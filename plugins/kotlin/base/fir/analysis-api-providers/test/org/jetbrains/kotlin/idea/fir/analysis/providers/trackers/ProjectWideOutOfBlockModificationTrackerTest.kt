@@ -5,15 +5,18 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.junit.Assert
 import java.io.File
 
 class ProjectWideOutOfBlockModificationTrackerTest : AbstractMultiModuleTest() {
+
     override fun getTestDataDirectory(): File = error("Should not be called")
 
-    override fun isFirPlugin(): Boolean = true
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     fun `test that the project-wide out-of-block modification tracker remains unchanged after changing a non-physical file`() {
         val moduleA = createModuleInTmpDir("a") {

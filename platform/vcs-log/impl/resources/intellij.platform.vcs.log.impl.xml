@@ -105,6 +105,8 @@
   <projectListeners>
     <listener topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"
               class="com.intellij.vcs.log.impl.VcsLogToolwindowManagerListener"/>
+    <listener class="com.intellij.vcs.log.ui.VcsLogBookmarksListener"
+              topic="com.intellij.ide.bookmark.BookmarksListener"/>
   </projectListeners>
 
   <actions resource-bundle="messages.VcsLogBundle">
@@ -167,6 +169,7 @@
       <action class="com.intellij.vcs.log.ui.actions.InvalidateVcsLogCaches" id="Vcs.Log.InvalidateCaches" internal="true"/>
       <action class="com.intellij.vcs.log.ui.actions.CheckSelectedCommits" id="Vcs.Log.CheckSelectedCommitsIndexData" internal="true"/>
       <action class="com.intellij.vcs.log.ui.actions.CheckOldCommits" id="Vcs.Log.CheckFirstCommitsIndexData" internal="true"/>
+      <action class="com.intellij.vcs.log.ui.actions.VcsLogShowBigRepositoriesList" id="Vcs.Log.ShowBigRepositories" internal="true"/>
       <action class="com.intellij.vcs.log.ui.actions.ShowCommitInLogAction" id="Vcs.Log.SelectInLog"
               icon="AllIcons.Toolwindows.ToolWindowChanges">
         <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="after" relative-to-action="Vcs.CopyRevisionNumberAction"/>
@@ -273,6 +276,7 @@
            class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.GroupBy"
            popup="true">
+      <separator key="action.vcs.log.show.separator"/>
       <reference id="Vcs.Log.PreferCommitDate"/>
       <reference id="Vcs.Log.ToggleColumns"/>
       <reference id="Vcs.Log.LayoutConfiguration"/>
@@ -295,6 +299,7 @@
       <reference id="Vcs.Log.InvalidateCaches"/>
       <reference id="Vcs.Log.CheckFirstCommitsIndexData"/>
       <reference id="Vcs.Log.CheckSelectedCommitsIndexData"/>
+      <reference id="Vcs.Log.ShowBigRepositories"/>
       <add-to-group group-id="Internal"/>
     </group>
 

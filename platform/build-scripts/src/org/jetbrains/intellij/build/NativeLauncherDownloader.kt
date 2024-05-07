@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants.INTE
 
 object NativeLauncherDownloader {
   /**
-   * Attempts to locate a local debug build of cross-platform launcher when in the development mode
+   * Attempts to locate a local release build of cross-platform launcher when in the development mode
    * and [org.jetbrains.intellij.build.BuildOptions.useLocalLauncher] is set to `true`.
    *
    * Otherwise, Downloads and unpacks the launcher tarball.
@@ -50,7 +50,7 @@ object NativeLauncherDownloader {
   private fun findLocalLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Pair<Path, Path>? {
     check(os to arch in PLATFORMS) { "Unknown platform: ${os} / ${arch}" }
 
-    val targetDir = context.paths.communityHomeDirRoot.communityRoot.resolve("native/XPlatLauncher/target/debug")
+    val targetDir = context.paths.communityHomeDirRoot.communityRoot.resolve("native/XPlatLauncher/target/release")
     if (Files.isDirectory(targetDir)) {
       val executableName = executableName(os)
       val executableFile = targetDir.resolve(executableName)

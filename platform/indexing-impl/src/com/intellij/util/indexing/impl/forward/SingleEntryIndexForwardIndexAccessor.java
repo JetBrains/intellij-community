@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -18,36 +17,27 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+/**
+ * Single-entry index is when the Indexer maps a file to a single value V -- i.e. the index is basically a (fileId->V) cache.
+ * <p/>
+ * Naturally it should be just forwardIndex, without inverted index -- but we process it in a different way:
+ * Indexer maps a fileId => singletonMap(key: fileId, value: V), and we create regular _inverted_ index from that mapping
+ * -- which will be exactly (fileId -> ValueContainer(V, fileId) ) mapping. This is done, probably, to keep generic Index interface,
+ * there forward index is always an implementation detail?
+ * <p/>
+ * In this setup, forwardIndex become totally useless: we could use inverted index mapping for updates. Hence
+ * DataType=Void: nothing to save in forwardIndex.
+ */
 public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardIndexAccessor<Integer, V, Void> {
-  private static final Logger LOG = Logger.getInstance(SingleEntryIndexForwardIndexAccessor.class);
+
   private final NotNullLazyValue<UpdatableIndex<Integer, V, ?, ?>> myIndex;
 
-  @SuppressWarnings("unchecked")
-  public SingleEntryIndexForwardIndexAccessor(IndexExtension<Integer, V, ?> extension) {
+  public SingleEntryIndexForwardIndexAccessor(SingleEntryFileBasedIndexExtension<V> extension) {
     super(VoidDataExternalizer.INSTANCE);
-    LOG.assertTrue(extension instanceof SingleEntryFileBasedIndexExtension);
-    IndexId<?, ?> name = extension.getName();
+    ID<Integer, V> name = extension.getName();
     FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
-    myIndex = NotNullLazyValue.volatileLazy(() -> fileBasedIndex.getIndex((ID<Integer, V>)name));
+    myIndex = NotNullLazyValue.volatileLazy(() -> fileBasedIndex.getIndex(name));
   }
-
-  @Override
-  public final @NotNull InputDataDiffBuilder<Integer, V> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
-    Map<Integer, V> data;
-    try {
-      data = ProgressManager.getInstance().computeInNonCancelableSection(() -> myIndex.getValue().getIndexedFileData(inputId));
-    }
-    catch (StorageException e) {
-      throw new IOException(e);
-    }
-    return createDiffBuilderByMap(inputId, data);
-  }
-
-  @Override
-  public @Nullable Void convertToDataType(@NotNull InputData<Integer, V> data) {
-    return null;
-  }
-
 
   @Override
   public @NotNull InputDataDiffBuilder<Integer, V> createDiffBuilderByMap(int inputId, @Nullable Map<Integer, V> map) throws IOException {
@@ -55,18 +45,34 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
   }
 
   @Override
-  public final @Nullable ByteArraySequence serializeIndexedData(@NotNull InputData<Integer, V> data) {
-    return null;
+  public final @NotNull InputDataDiffBuilder<Integer, V> getDiffBuilder(int inputId,
+                                                                        @Nullable ByteArraySequence sequence) throws IOException {
+      Map<Integer, V> data = fetchInputDataFromIndex(inputId);
+      return createDiffBuilderByMap(inputId, data);
   }
 
   @Override
   protected @Nullable Map<Integer, V> convertToMap(int inputId, @Nullable Void inputData) throws IOException {
+    return fetchInputDataFromIndex(inputId);
+  }
+
+  private Map<Integer, V> fetchInputDataFromIndex(int inputId) throws IOException {
     try {
       return ProgressManager.getInstance().computeInNonCancelableSection(() -> myIndex.getValue().getIndexedFileData(inputId));
     }
     catch (StorageException e) {
       throw new IOException(e);
     }
+  }
+
+  @Override
+  public @Nullable Void convertToDataType(@NotNull InputData<Integer, V> data) {
+    return null;
+  }
+
+  @Override
+  public final @Nullable ByteArraySequence serializeIndexedData(@NotNull InputData<Integer, V> data) {
+    return null;
   }
 
   public static final class SingleValueDiffBuilder<V> extends DirectInputDataDiffBuilder<Integer, V> {
@@ -99,17 +105,21 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
         if (!newValueExists) {
           removeProcessor.process(myInputId, myInputId);
           return true;
-        } else if (Comparing.equal(myCurrentValue, newValue)) {
+        }
+        else if (Comparing.equal(myCurrentValue, newValue)) {
           return false;
-        } else {
+        }
+        else {
           updateProcessor.process(myInputId, newValue, myInputId);
           return true;
         }
-      } else {
+      }
+      else {
         if (newValueExists) {
           addProcessor.process(myInputId, newValue, myInputId);
           return true;
-        } else {
+        }
+        else {
           return false;
         }
       }

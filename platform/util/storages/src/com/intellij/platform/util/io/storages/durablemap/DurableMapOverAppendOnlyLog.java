@@ -312,6 +312,10 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
     );
   }
 
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "[" + keyValuesLog + "]";
+  }
 
   // ============================= infrastructure: ============================================================================ //
 

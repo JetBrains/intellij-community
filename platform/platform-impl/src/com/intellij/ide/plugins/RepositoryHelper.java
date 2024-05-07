@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -103,7 +104,7 @@ public final class RepositoryHelper {
       if (ApplicationInfoImpl.getShadowInstance().usesJetBrainsPluginRepository()) {
         LOG.error("Using deprecated API for getting plugins from Marketplace");
       }
-      var base = ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
+      var base = MarketplaceCustomizationService.getInstance().getPluginsListUrl();
       url = Urls.newFromEncoded(base).addParameters(Map.of("uuid", PluginDownloader.getMarketplaceDownloadsUUID()));
       pluginListFile = Paths.get(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     }

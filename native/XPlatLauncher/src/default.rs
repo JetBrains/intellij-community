@@ -10,9 +10,9 @@ use log::debug;
 #[cfg(target_os = "windows")]
 use {
     std::os::windows::ffi::OsStrExt,
+    windows::Win32::Foundation::{BOOL, FALSE, GetLastError},
     windows::Win32::Globalization::{GetACP, WC_ERR_INVALID_CHARS, WC_NO_BEST_FIT_CHARS, WideCharToMultiByte},
-    windows::core::PCSTR,
-    windows::core::imp::GetLastError,
+    windows::core::PCSTR
 };
 
 use crate::*;
@@ -244,7 +244,7 @@ impl DefaultLaunchConfiguration {
     #[cfg(target_os = "windows")]
     fn assert_valid_in_system_default_ansi_codepage(path: &Path) -> Result<()> {
         let path_wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
-        let mut used_default_char: i32 = -1;
+        let mut used_default_char: BOOL = FALSE;
 
         let acp = unsafe {
             GetACP()
@@ -276,15 +276,12 @@ impl DefaultLaunchConfiguration {
         };
 
         if result == 0 {
-            let error = unsafe {
-                GetLastError()
-            };
-
+            let error = unsafe { GetLastError() }.to_hresult().0;
             let path = path.to_string_checked()?;
             bail!("Failed to determined if path can be represented using the system default ANSI codepage. Win32 error: {error}, ACP: {acp}, Path: {path}")
         }
 
-        if used_default_char > 0 {
+        if used_default_char.as_bool() {
             let path = path.to_string_checked()?;
             bail!("Path cannot be represented using the system default ANSI codepage. ACP: {acp}, Path: {path}")
         }

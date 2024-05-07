@@ -173,7 +173,6 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
     List<TextEditorHighlightingPass> result = new ArrayList<>(frozenPassConfigs.length);
     IntList passesRefusedToCreate = new IntArrayList();
-    boolean isDumb = DumbService.getInstance(myProject).isDumb();
     try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
       for (int passId = 1; passId < frozenPassConfigs.length; passId++) {
         PassConfig passConfig = frozenPassConfigs[passId];
@@ -182,9 +181,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
           continue;
         }
         TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-        TextEditorHighlightingPass pass = (!isDumb || DumbService.isDumbAware(factory))
+        TextEditorHighlightingPass pass = DumbService.getInstance(myProject).isUsableInCurrentContext(factory)
           && ProblemHighlightFilter.shouldHighlightFile(psiFile) ? factory.createHighlightingPass(psiFile, editor) : null;
-        if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
+        if (pass == null || !DumbService.getInstance(myProject).isUsableInCurrentContext(pass)) {
           passesRefusedToCreate.add(passId);
         }
         else {

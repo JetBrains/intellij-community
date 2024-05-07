@@ -107,13 +107,15 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (!myManager.isDeclarationsFound()) return;
 
     setInterface(uClass.isInterface());
+    setAnnotationType(uClass.isAnnotationType());
+    setAnonymous(uClass instanceof UAnonymousClass);
     final PsiClass psiClass = uClass.getJavaPsi();
-    setRecord(psiClass.isRecord());
-    setAnnotationType(psiClass.isAnnotationType());
-    setEnum(psiClass.isEnum());
-    setAbstract(psiClass.hasModifier(JvmModifier.ABSTRACT));
-    setAnonymous(uClass.getName() == null);
-    setLocal(!isAnonymous() && parent != null && !(parent instanceof UClass));
+    if (!isAnonymous()) {
+      setRecord(psiClass.isRecord());
+      setEnum(psiClass.isEnum());
+      setAbstract(psiClass.hasModifier(JvmModifier.ABSTRACT));
+      setLocal(parent != null && !(parent instanceof UClass));
+    }
 
     initializeSuperReferences(uClass);
 
@@ -160,7 +162,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
-    if (!memberSeen || uClass.isInterface() || psiClass.isRecord() || psiClass instanceof PsiAnonymousClass) {
+    if (!memberSeen || isInterface() || isRecord() || isAnonymous()) {
       utilityClass = false;
     }
     if (!utilityClass && psiClass.getLanguage().isKindOf("kotlin")) {
@@ -174,7 +176,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
-    if (!isInterface() && !isAnonymous() && !isEnum() && !constructorSeen) {
+    if (!isInterface() && !isAnonymous() && !isEnum() && !isRecord() && !constructorSeen) {
       setDefaultConstructor(new RefImplicitConstructorImpl(this));
     }
 
@@ -201,19 +203,17 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   private void initializeSuperReferences(UClass uClass) {
-    if (!isSelfInheritor(uClass)) {
-        uClass.getUastSuperTypes().stream()
-        .map(t -> PsiUtil.resolveClassInClassTypeOnly(t.getType()))
-        .filter(Objects::nonNull)
-        .filter(c -> getRefJavaManager().belongsToScope(c))
-        .forEach(c -> {
-          RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(c);
-          if (refClass != null) {
-            addBaseClass(refClass);
-            getRefManager().executeTask(() -> refClass.addDerivedReference(this));
-          }
-        });
-    }
+    uClass.getUastSuperTypes().stream()
+      .map(t -> PsiUtil.resolveClassInClassTypeOnly(t.getType()))
+      .filter(Objects::nonNull)
+      .filter(c -> getRefJavaManager().belongsToScope(c))
+      .forEach(c -> {
+        RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(c);
+        if (refClass != null) {
+          addBaseClass(refClass);
+          getRefManager().executeTask(() -> refClass.addDerivedReference(this));
+        }
+      });
   }
 
   @Override

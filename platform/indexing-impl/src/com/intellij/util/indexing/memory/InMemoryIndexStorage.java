@@ -23,6 +23,8 @@ import java.util.Map;
 public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
   private final Map<K, ValueContainerImpl<V>> myMap;
 
+  private volatile boolean closed = false;
+
   public InMemoryIndexStorage(@NotNull KeyDescriptor<K> keyDescriptor) {
     myMap = ConcurrentCollectionFactory.createConcurrentMap(IndexStorageUtil.adaptKeyDescriptorToStrategy(keyDescriptor));
   }
@@ -64,7 +66,13 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
 
   @Override
   public void close() {
+    closed = true;
+  }
 
+  @Override
+  @ApiStatus.Internal
+  public boolean isClosed() {
+    return closed;
   }
 
   @Override

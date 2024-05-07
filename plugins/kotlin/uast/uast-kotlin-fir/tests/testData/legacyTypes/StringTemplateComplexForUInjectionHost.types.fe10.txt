@@ -42,7 +42,6 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                         USimpleNameReferenceExpression (identifier = case4) [case4] : java.lang.String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [repeat(4)] : java.lang.String
                         UIdentifier (Identifier (repeat)) [UIdentifier (Identifier (repeat))]
-                        USimpleNameReferenceExpression (identifier = repeat, resolvesTo = null) [repeat] : java.lang.String
                         ULiteralExpression (value = 4) [4] : int
                 ULiteralExpression (value = " z") [" z"] : java.lang.String
         UField (name = empty) [@org.jetbrains.annotations.NotNull private static final var empty: java.lang.String = ""]
@@ -67,7 +66,6 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
             UBlockExpression [{...}] : void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] : kotlin.Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : kotlin.Unit
                     UPolyadicExpression (operator = +) [baz] : java.lang.String
                         USimpleNameReferenceExpression (identifier = baz) [baz] : kotlin.Unit
                 UDeclarationsExpression [var template1: java.lang.String = simpleForTemplate()]
@@ -75,14 +73,12 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                         UPolyadicExpression (operator = +) [simpleForTemplate()] : java.lang.String
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] : java.lang.String
                                 UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
-                                USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] : java.lang.String
                 UDeclarationsExpression [var template2: java.lang.String = "." + simpleForTemplate()]
                     ULocalVariable (name = template2) [var template2: java.lang.String = "." + simpleForTemplate()]
                         UPolyadicExpression (operator = +) ["." + simpleForTemplate()] : java.lang.String
                             ULiteralExpression (value = ".") ["."] : java.lang.String
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] : java.lang.String
                                 UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
-                                USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] : java.lang.String
         UMethod (name = baz) [public static final fun baz() : void {...}]
             UBlockExpression [{...}] : void
                 UDeclarationsExpression [var trimA: java.lang.String = "\n" + "        text=text" + "\n" + "    ".trimIndent()]
@@ -95,7 +91,6 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                                 ULiteralExpression (value = "    ") ["    "] : java.lang.String
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [trimIndent()] : java.lang.String
                                 UIdentifier (Identifier (trimIndent)) [UIdentifier (Identifier (trimIndent))]
-                                USimpleNameReferenceExpression (identifier = trimIndent, resolvesTo = null) [trimIndent] : java.lang.String
                 UDeclarationsExpression [var trimB: java.lang.String = "\n" + "        | margined" + "\n" + "    ".trimMargin()]
                     ULocalVariable (name = trimB) [var trimB: java.lang.String = "\n" + "        | margined" + "\n" + "    ".trimMargin()]
                         UQualifiedReferenceExpression ["\n" + "        | margined" + "\n" + "    ".trimMargin()] : java.lang.String
@@ -106,7 +101,6 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                                 ULiteralExpression (value = "    ") ["    "] : java.lang.String
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [trimMargin()] : java.lang.String
                                 UIdentifier (Identifier (trimMargin)) [UIdentifier (Identifier (trimMargin))]
-                                USimpleNameReferenceExpression (identifier = trimMargin, resolvesTo = null) [trimMargin] : java.lang.String
                 UDeclarationsExpression [var c: boolean = "bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()]
                     ULocalVariable (name = c) [var c: boolean = "bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()]
                         UBinaryExpression (operator = ==) ["bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()] : boolean
@@ -120,7 +114,6 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                                     ULiteralExpression (value = "    ") ["    "] : java.lang.String
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [trimIndent()] : java.lang.String
                                     UIdentifier (Identifier (trimIndent)) [UIdentifier (Identifier (trimIndent))]
-                                    USimpleNameReferenceExpression (identifier = trimIndent, resolvesTo = null) [trimIndent] : java.lang.String
                 UDeclarationsExpression [var concat: java.lang.String = "abc" + "cde" + "efg"]
                     ULocalVariable (name = concat) [var concat: java.lang.String = "abc" + "cde" + "efg"]
                         UBinaryExpression (operator = +) ["abc" + "cde" + "efg"] : java.lang.String

@@ -107,7 +107,6 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                                 USimpleNameReferenceExpression (identifier = out)
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                 UIdentifier (Identifier (println))
-                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                 """.trimIndent(), lambda.putIntoFunctionBody().asRecursiveLogString().trim())
     }
 
@@ -158,7 +157,6 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                                 USimpleNameReferenceExpression (identifier = out)
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                 UIdentifier (Identifier (println))
-                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
         """.trimIndent(), lambda.putIntoFunctionBody().asRecursiveLogString().trim())
     }
 
@@ -193,7 +191,6 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                 UBinaryExpression (operator = +)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (f))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         USimpleNameReferenceExpression (identifier = a)
                     ULiteralExpression (value = 1)
         """.trimIndent(), variable.asRecursiveLogString().trim())
@@ -240,7 +237,6 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                     USimpleNameReferenceExpression (identifier = Collections)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                     UIdentifier (Identifier (emptyMap))
-                    USimpleNameReferenceExpression (identifier = emptyMap, resolvesTo = null)
                     """.trimIndent(), methodCall.uastParent?.asRecursiveLogString()?.trim()
         )
     }
@@ -269,7 +265,6 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                 USimpleNameReferenceExpression (identifier = A)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (kek))
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                     UPolyadicExpression (operator = +)
                         ULiteralExpression (value = "a")
         """.trimIndent(), methodCall.uastParent?.asRecursiveLogString()?.trim()
@@ -310,7 +305,6 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
             USimpleNameReferenceExpression (identifier = a)
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                 UIdentifier (Identifier (method))
-                USimpleNameReferenceExpression (identifier = method, resolvesTo = null)
         """.trimIndent(), callExpression.uastParent?.asRecursiveLogString()?.trim()
         )
     }
@@ -349,7 +343,6 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                 USimpleNameReferenceExpression (identifier = a)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (method))
-                    USimpleNameReferenceExpression (identifier = method, resolvesTo = null)
                     ULiteralExpression (value = 1)
         """.trimIndent(), callExpression.uastParent?.asRecursiveLogString()?.trim()
         )
@@ -434,11 +427,9 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                         UBlockExpression
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                 UIdentifier (Identifier (println))
-                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                                 USimpleNameReferenceExpression (identifier = it)
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                 UIdentifier (Identifier (println))
-                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                                 ULiteralExpression (value = 2)
                             UPolyadicExpression (operator = +)
                                 ULiteralExpression (value = "abc")
@@ -570,7 +561,6 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                 UBlockExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (println))
-                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                         USimpleNameReferenceExpression (identifier = a)
                     UReturnExpression
                         UBinaryExpression (operator = +)

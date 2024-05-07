@@ -10,9 +10,19 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.platform.lvcs.impl.diff.getEntryPath
 
+internal val AFFECTED_PATHS: Key<Collection<String>> = Key.create("Lvcs.Affected.Paths")
+
 private val ROOT_ENTRY: Key<RootEntry> = Key.create("Lvcs.Root.Entry")
 internal fun ActivityData.getRootEntry(gateway: IdeaGateway): RootEntry {
-  return getOrCreateUserData(ROOT_ENTRY) { runReadAction { gateway.createTransientRootEntry() } }
+  return getOrCreateUserData(ROOT_ENTRY) {
+    runReadAction {
+      val affectedPaths = getUserData(AFFECTED_PATHS)
+      if (!affectedPaths.isNullOrEmpty()) {
+        return@runReadAction gateway.createTransientRootEntryForPaths(affectedPaths, true)
+      }
+      gateway.createTransientRootEntry()
+    }
+  }
 }
 
 private val SELECTION_CALCULATOR: Key<SelectionCalculator> = Key.create("Lvcs.Selection.Calculator")

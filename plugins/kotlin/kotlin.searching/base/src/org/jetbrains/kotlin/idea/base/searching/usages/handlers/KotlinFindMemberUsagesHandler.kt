@@ -338,7 +338,9 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                 if (element is KtConstructor<*>) {
                     addTask(
                         element.buildProcessDelegationCallKotlinConstructorUsagesTask(options.searchScope) { callElement ->
-                            callElement.calleeExpression?.let { referenceProcessor.process(it.mainReference) } != false
+                            callElement.calleeExpression?.let { callee ->
+                                val reference = callee.mainReference
+                                reference == null || referenceProcessor.process(reference) } != false
                         }
                     )
                 }

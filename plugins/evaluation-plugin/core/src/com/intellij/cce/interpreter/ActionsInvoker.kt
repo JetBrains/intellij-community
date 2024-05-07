@@ -6,6 +6,7 @@ interface ActionsInvoker {
   fun rename(text: String)
   fun printText(text: String)
   fun deleteRange(begin: Int, end: Int)
+  fun selectRange(begin: Int, end: Int)
   fun openFile(file: String): String
   fun closeFile(file: String)
   fun isOpen(file: String): Boolean

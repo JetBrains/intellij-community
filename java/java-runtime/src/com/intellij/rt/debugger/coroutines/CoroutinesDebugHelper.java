@@ -1,25 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.debugger.coroutines;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class CoroutinesDebugHelper {
 
-  private static final String GET_CALLER_FRAME_METHOD = "getCallerFrame";
-  private static final String DUMP_COROUTINES_INFO_METHOD = "dumpCoroutinesInfo";
-  private static final String GET_LAST_OBSERVED_THREAD_METHOD = "getLastObservedThread";
-  private static final String GET_SEQUENCE_NUMBER_METHOD = "getSequenceNumber";
   private static final String COROUTINE_OWNER_CLASS = "CoroutineOwner";
-  private static final String DEBUG_COROUTINE_INFO_FIELD = "info";
-  private static final String SEQUENCE_NUMBER_FIELD = "sequenceNumber";
 
   public static long[] getCoroutinesRunningOnCurrentThread(Object debugProbes, Thread currentThread) throws ReflectiveOperationException {
     List<Long> coroutinesIds = new ArrayList<>();
-    List infos = (List)invoke(debugProbes, DUMP_COROUTINES_INFO_METHOD);
+    List infos = (List)invoke(debugProbes, "dumpCoroutinesInfo");
     for (Object info : infos) {
-      if (invoke(info, GET_LAST_OBSERVED_THREAD_METHOD) == currentThread) {
-        coroutinesIds.add((Long)invoke(info, GET_SEQUENCE_NUMBER_METHOD));
+      if (invoke(info, "getLastObservedThread") == currentThread) {
+        coroutinesIds.add((Long)invoke(info, "getSequenceNumber"));
       }
     }
     long[] res = new long[coroutinesIds.size()];
@@ -30,27 +26,45 @@ public final class CoroutinesDebugHelper {
   }
 
   public static long tryGetContinuationId(Object continuation) throws ReflectiveOperationException {
-    Object rootContinuation = getCoroutineOwner(continuation);
+    Object rootContinuation = getCoroutineOwner(continuation, true);
     if (rootContinuation.getClass().getSimpleName().contains(COROUTINE_OWNER_CLASS)) {
-      Object debugCoroutineInfo = getField(rootContinuation, DEBUG_COROUTINE_INFO_FIELD);
-      return (long) getField(debugCoroutineInfo, SEQUENCE_NUMBER_FIELD);
+      Object debugCoroutineInfo = getField(rootContinuation, "info");
+      return (long) getField(debugCoroutineInfo, "sequenceNumber");
     }
     return -1;
   }
 
   // This method tries to extract CoroutineOwner as a root coroutine frame,
   // it is invoked when kotlinx-coroutines debug agent is enabled.
-  private static Object getCoroutineOwner(Object stackFrame) throws ReflectiveOperationException {
-    if (stackFrame.getClass().getSimpleName().equals(COROUTINE_OWNER_CLASS)) return stackFrame;
-    Object parentFrame = invoke(stackFrame, GET_CALLER_FRAME_METHOD);
-    return (parentFrame != null) ? getCoroutineOwner(parentFrame) : stackFrame;
+  private static Object getCoroutineOwner(Object continuation, boolean checkForCoroutineOwner) throws ReflectiveOperationException {
+    Method getCallerFrame = Class.forName("kotlin.coroutines.jvm.internal.CoroutineStackFrame", false, continuation.getClass().getClassLoader())
+      .getDeclaredMethod("getCallerFrame");
+    getCallerFrame.setAccessible(true);
+    Object current = continuation;
+    while (true) {
+      if (checkForCoroutineOwner && current.getClass().getSimpleName().equals(COROUTINE_OWNER_CLASS)) return current;
+      Object parentFrame = getCallerFrame.invoke(current);
+      if ((parentFrame != null)) {
+        current = parentFrame;
+      } else {
+        return current;
+      }
+    }
+  }
+
+  public static Object getRootContinuation(Object continuation) throws ReflectiveOperationException {
+    return getCoroutineOwner(continuation, false);
   }
 
   private static Object getField(Object object, String fieldName) throws ReflectiveOperationException {
-    return object.getClass().getField(fieldName).get(object);
+    Field field = object.getClass().getField(fieldName);
+    field.setAccessible(true);
+    return field.get(object);
   }
 
   private static Object invoke(Object object, String methodName) throws ReflectiveOperationException {
-    return object.getClass().getMethod(methodName).invoke(object);
+    Method method = object.getClass().getMethod(methodName);
+    method.setAccessible(true);
+    return method.invoke(object);
   }
 }

@@ -1,18 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.LibraryPackMode
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.consumeDataByPrefix
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -24,7 +22,7 @@ object KotlinPluginBuilder {
   const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
   const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend"
 
-  val MODULES: List<String> = persistentListOf(
+  val MODULES: List<String> = java.util.List.of(
     "kotlin.plugin.common",
     "kotlin.plugin.k1",
     "kotlin.plugin.k2",
@@ -189,7 +187,6 @@ object KotlinPluginBuilder {
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
     "kotlin.refactorings.common",
-    "kotlin.refactorings.introduce.k2",
     "kotlin.refactorings.k2",
     "kotlin.refactorings.move.k2",
     "kotlin.refactorings.rename.k2",
@@ -198,19 +195,19 @@ object KotlinPluginBuilder {
     "kotlin.jsr223"
   )
 
-  private val KOTLIN_SCRIPTING_LIBRARIES = persistentListOf(
+  private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
     "kotlinc.kotlin-script-runtime",
     "kotlinc.kotlin-scripting-jvm"
   )
 
-  private val MODULES_SHARED_WITH_CLIENT = persistentListOf(
+  private val MODULES_SHARED_WITH_CLIENT = java.util.List.of(
     "kotlin.base.resources",
     "kotlin.base.code-insight.minimal",
     "kotlin.highlighting.minimal",
     "kotlin.formatter.minimal"
     )
 
-  private val LIBRARIES = persistentListOf(
+  private val LIBRARIES = java.util.List.of(
     "kotlinc.analysis-api-providers",
     "kotlinc.analysis-project-structure",
     "kotlinc.high-level-api",
@@ -225,18 +222,18 @@ object KotlinPluginBuilder {
     "kotlinc.symbol-light-classes",
   ) + KOTLIN_SCRIPTING_LIBRARIES
 
-  private val GRADLE_TOOLING_MODULES = persistentListOf(
+  private val GRADLE_TOOLING_MODULES = java.util.List.of(
     "kotlin.base.project-model",
     "kotlin.gradle.gradle-tooling.impl",
   )
 
-  private val GRADLE_TOOLING_LIBRARIES = persistentListOf(
+  private val GRADLE_TOOLING_LIBRARIES = java.util.List.of(
     "kotlin-gradle-plugin-idea",
     "kotlin-gradle-plugin-idea-proto",
     "kotlin-tooling-core",
   )
 
-  private val COMPILER_PLUGINS = persistentListOf(
+  private val COMPILER_PLUGINS = java.util.List.of(
     "kotlinc.android-extensions-compiler-plugin",
     "kotlinc.allopen-compiler-plugin",
     "kotlinc.noarg-compiler-plugin",
@@ -248,7 +245,6 @@ object KotlinPluginBuilder {
     "kotlinc.lombok-compiler-plugin",
   )
 
-  @JvmStatic
   fun kotlinPlugin(ultimateSources: KotlinUltimateSources, addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return kotlinPlugin(
       kind = KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
@@ -257,7 +253,6 @@ object KotlinPluginBuilder {
     )
   }
 
-  @JvmStatic
   fun kotlinPlugin(kind: KotlinPluginKind, ultimateSources: KotlinUltimateSources, addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) { spec ->
       spec.directoryName = "Kotlin"
@@ -309,7 +304,7 @@ object KotlinPluginBuilder {
         spec.withModules(ultimateModules)
       }
 
-      spec.withKotlincKotlinCompilerCommonLibrary(MAIN_KOTLIN_PLUGIN_MODULE)
+      withKotlincKotlinCompilerCommonLibrary(spec, MAIN_KOTLIN_PLUGIN_MODULE)
 
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       spec.withProjectLibrary("kotlinc.kotlin-compiler-ir")
@@ -320,55 +315,47 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("javaslang")
       spec.withProjectLibrary("javax-inject")
 
-      spec.withKotlincInPluginDirectory()
+      withKotlincInPluginDirectory(spec)
 
-      spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
-        override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
-          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
-          if (ijBuildNumber.matches()) {
-            // IJ installer configurations.
-            return "$ideBuildVersion-$kind"
-          }
-
-          if (ideBuildVersion.contains("IJ")) {
-            // TC configurations that are inherited from AbstractKotlinIdeArtifact.
-            // In this environment, ideBuildVersion equals to build number.
-            // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
-            val version = ideBuildVersion.replace("IJ", kind.toString())
-            Span.current().addEvent("Kotlin plugin IJ version: $version")
-            return version
-          }
-
-          throw IllegalStateException("Can't parse build number: $ideBuildVersion")
-        }
-      })
-
-      spec.withPluginXmlPatcher { rawText ->
+      spec.withCustomVersion(PluginVersionEvaluator { _, ideBuildVersion, _ ->
+        // in kt-branches we have own since and until versions
         val sinceBuild = System.getProperty("kotlin.plugin.since")
         val untilBuild = System.getProperty("kotlin.plugin.until")
+        val sinceUntil = if (sinceBuild != null && untilBuild != null) sinceBuild to untilBuild else null
 
-        val text = if (sinceBuild != null && untilBuild != null) {
-          // In kt-branches we have own since and until versions
-          replace(rawText, "<idea-version.*?\\/>", "<idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>")
-        }
-        else {
-          rawText
+        val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
+        if (ijBuildNumber.matches()) {
+          // IJ installer configurations.
+          return@PluginVersionEvaluator PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion-$kind", sinceUntil = sinceUntil)
         }
 
+        if (ideBuildVersion.contains("IJ")) {
+          // TC configurations that are inherited from AbstractKotlinIdeArtifact.
+          // In this environment, ideBuildVersion equals to build number.
+          // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
+          val version = ideBuildVersion.replace("IJ", kind.toString())
+          Span.current().addEvent("Kotlin plugin IJ version: $version")
+          return@PluginVersionEvaluator PluginVersionEvaluatorResult(pluginVersion = version, sinceUntil = sinceUntil)
+        }
+
+        throw IllegalStateException("Can't parse build number: $ideBuildVersion")
+      })
+
+      spec.withRawPluginXmlPatcher { text ->
         when (kind) {
           KotlinPluginKind.IJ, KotlinPluginKind.Fleet ->
             //noinspection SpellCheckingInspection
             replace(
-              text,
-              "<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->",
-              "<incompatible-with>com.intellij.modules.androidstudio</incompatible-with>"
+              oldText = text,
+              regex = "<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->",
+              newText = "<incompatible-with>com.intellij.modules.androidstudio</incompatible-with>",
             )
           KotlinPluginKind.AS ->
             //noinspection SpellCheckingInspection
             replace(
-              text,
-              "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
-              "<plugin id=\"com.intellij.modules.androidstudio\"/>"
+              oldText = text,
+              regex = "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
+              newText = """<plugin id="com.intellij.modules.androidstudio"/>""",
             )
           else -> throw IllegalStateException("Unknown kind = $kind")
         }
@@ -397,25 +384,12 @@ object KotlinPluginBuilder {
     }
   }
 
-  private fun replace(oldText: String, regex: String, newText: String): String {
-    val result = oldText.replaceFirst(Regex(regex), newText)
-    if (result == oldText) {
-      if (oldText.contains(newText) && !TeamCityHelper.isUnderTeamCity) {
-        // Locally, e.g., in 'Update IDE from Sources' allow data to be already present
-        return result
-      }
-
-      throw IllegalStateException("Cannot find '$regex' in '$oldText'")
-    }
-    return result
-  }
-
   suspend fun build(home: Path, properties: ProductProperties) {
     val context = BuildContextImpl.createContext(
       setupTracer = true,
-                                                      projectHome = home,
-                                                      productProperties = properties,
-      options = BuildOptions(enableEmbeddedJetBrainsClient = false),
+      projectHome = home,
+      productProperties = properties,
+      options = BuildOptions(enableEmbeddedJetBrainsClient = false)
     )
     createBuildTasks(context).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }
@@ -439,7 +413,6 @@ object KotlinPluginBuilder {
     }
   }
 
-  @JvmStatic
   fun kotlinScriptingPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     val mainModuleName = "kotlin.scripting-plugin"
     return PluginLayout.plugin(mainModuleName) { spec ->
@@ -451,40 +424,53 @@ object KotlinPluginBuilder {
       for (libraryName in KOTLIN_SCRIPTING_LIBRARIES) {
         spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
       }
-      spec.withKotlincKotlinCompilerCommonLibrary(mainModuleName)
+      withKotlincKotlinCompilerCommonLibrary(spec, mainModuleName)
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
-      spec.withKotlincInPluginDirectory()
+      withKotlincInPluginDirectory(spec)
 
       addition?.invoke(spec)
     }
   }
+}
 
-  private fun PluginLayout.PluginLayoutSpec.withKotlincKotlinCompilerCommonLibrary(mainPluginModule: String) {
-    val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-    withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
+private fun replace(oldText: String, regex: String, newText: String): String {
+  val result = oldText.replaceFirst(Regex(regex), newText)
+  if (result == oldText) {
+    if (oldText.contains(newText) && !TeamCityHelper.isUnderTeamCity) {
+      // Locally, e.g., in 'Update IDE from Sources' allow data to be already present
+      return result
+    }
 
-    withPatch { patcher, context ->
-      val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
-      val jars = library.getPaths(JpsOrderRootType.COMPILED)
-      if (jars.size != 1) {
-        throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
-      }
+    throw IllegalStateException("Cannot find '$regex' in '$oldText'")
+  }
+  return result
+}
 
-      consumeDataByPrefix(jars[0], "META-INF/extensions/") { name, data ->
-        patcher.patchModuleOutput(moduleName = mainPluginModule, path = name, content = data)
-      }
+private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
+  val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
+  spec.withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
+
+  spec.withPatch { patcher, context ->
+    val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
+    val jars = library.getPaths(JpsOrderRootType.COMPILED)
+    if (jars.size != 1) {
+      throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
+    }
+
+    consumeDataByPrefix(jars[0], "META-INF/extensions/") { name, data ->
+      patcher.patchModuleOutput(moduleName = mainPluginModule, path = name, content = data)
     }
   }
+}
 
-  private fun PluginLayout.PluginLayoutSpec.withKotlincInPluginDirectory() {
-    withGeneratedResources { targetDir, context ->
-      val distLibName = "kotlinc.kotlin-dist"
-      val library = context.project.libraryCollection.findLibrary(distLibName)!!
-      val jars = library.getPaths(JpsOrderRootType.COMPILED)
-      if (jars.size != 1) {
-        throw IllegalStateException("$distLibName is expected to have only one jar")
-      }
-      Decompressor.Zip(jars[0]).extract(targetDir.resolve("kotlinc"))
+private fun withKotlincInPluginDirectory(spec: PluginLayout.PluginLayoutSpec) {
+  spec.withGeneratedResources { targetDir, context ->
+    val distLibName = "kotlinc.kotlin-dist"
+    val library = context.project.libraryCollection.findLibrary(distLibName)!!
+    val jars = library.getPaths(JpsOrderRootType.COMPILED)
+    if (jars.size != 1) {
+      throw IllegalStateException("$distLibName is expected to have only one jar")
     }
+    Decompressor.Zip(jars[0]).extract(targetDir.resolve("kotlinc"))
   }
 }

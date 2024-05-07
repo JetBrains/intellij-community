@@ -88,23 +88,15 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     StyleManager.applyStyle(closeButton, if(isSelected) activeCloseStyle else inactiveCloseStyle)
   }
 
-  protected fun createChildren() {
-    fillButtonPane()
-    addCloseButton()
+  protected open fun createChildren() {
+    addComponent(closeButton)
     updateVisibility()
     updateStyles()
   }
 
   fun getView(): JComponent = panel
 
-  protected open fun fillButtonPane() {
-  }
-
   open fun updateVisibility() {
-  }
-
-  private fun addCloseButton() {
-    addComponent(closeButton)
   }
 
   protected fun addComponent(component: JComponent) {

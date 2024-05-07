@@ -316,8 +316,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     Set<VirtualFile> localScopeFiles = searchScope instanceof LocalSearchScope ? new HashSet<>() : null;
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
-      GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
-      tool.inspectionStarted(inspectionManager, this, getPresentation(toolWrapper));
+      if (toolWrapper.getTool() instanceof  GlobalSimpleInspectionTool tool) {
+        tool.inspectionStarted(inspectionManager, this, getPresentation(toolWrapper));
+      }
     }
 
     boolean headlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment();
@@ -378,9 +379,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
-      GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
-      ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
-      tool.inspectionFinished(inspectionManager, this, problemDescriptionProcessor);
+      if (toolWrapper.getTool() instanceof GlobalSimpleInspectionTool tool) {
+        ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
+        tool.inspectionFinished(inspectionManager, this, problemDescriptionProcessor);
+      }
     }
 
     addProblemsToView(globalSimpleTools);
@@ -555,7 +557,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
         JobLauncher.getInstance()
           .invokeConcurrentlyUnderProgress(globalSimpleTools, progressIndicator, toolWrapper -> {
-            GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
+            GlobalInspectionTool tool = toolWrapper.getTool();
             ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
             ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
             InspectionEventsKt.reportToQodanaWhenInspectionFinished(
@@ -904,11 +906,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           if (batchTool instanceof LocalInspectionTool) {
             localTools.add(newTool);
           }
-          else if (batchTool instanceof GlobalSimpleInspectionTool) {
-            globalSimpleTools.add(newTool);
-          }
-          else if (batchTool instanceof GlobalInspectionTool) {
-            globalTools.add(newTool);
+          else if (batchTool instanceof GlobalInspectionTool globalTool) {
+            if (globalTool.isGlobalSimpleInspectionTool()) {
+              globalSimpleTools.add(newTool);
+            }
+            else {
+              globalTools.add(newTool);
+            }
           }
           else {
             throw new AssertionError(batchTool);

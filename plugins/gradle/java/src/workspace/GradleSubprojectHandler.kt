@@ -8,14 +8,16 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.service.project.open.canLinkAndRefreshGradleProject
-import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.service.project.open.canOpenGradleProject
+import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -37,12 +39,13 @@ internal class GradleSubprojectHandler : SubprojectHandler {
   }
 
   override fun canImportFromFile(project: Project, file: VirtualFile): Boolean {
-    return canLinkAndRefreshGradleProject(file.path, project)
+    return canOpenGradleProject(file)
   }
 
-  override fun importFromFile(project: Project, file: VirtualFile) {
-    ExternalSystemUtil.confirmLoadingUntrustedProject(project, GradleConstants.SYSTEM_ID)
-    linkAndRefreshGradleProject(file.path, project)
+  override suspend fun importFromFile(project: Project, file: VirtualFile) {
+    if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProjectAsync(project, GradleConstants.SYSTEM_ID)) {
+      linkAndSyncGradleProject(project, file)
+    }
   }
 
   override fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings = GradleImportedProjectSettings(project)
@@ -54,8 +57,13 @@ internal class GradleSubprojectHandler : SubprojectHandler {
 
 private class GradleImportedProjectSettings(project: Project) : ImportedProjectSettings {
   private val gradleProjectsSettings: Collection<GradleProjectSettings> = GradleSettings.getInstance(project).linkedProjectsSettings
+  private val projectDir = project.guessProjectDir()
 
-  override fun applyTo(workspace: Project) {
+  override suspend fun applyTo(workspace: Project) {
+    if (gradleProjectsSettings.isEmpty() && projectDir != null && canOpenGradleProject(projectDir)) {
+      linkAndSyncGradleProject(workspace, projectDir)
+      return
+    }
     val targetGradleSettings = GradleSettings.getInstance(workspace)
 
     val specBuilder = ImportSpecBuilder(workspace, GradleConstants.SYSTEM_ID)

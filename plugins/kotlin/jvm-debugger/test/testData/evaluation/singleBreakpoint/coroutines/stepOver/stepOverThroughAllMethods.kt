@@ -28,14 +28,14 @@ fun beforeBBB(i: Int) {
 }
 
 suspend fun afterBBB(i: Int) {
-    delay(10)
+    delay(1)
     println("afterBBB: $i")
 }
 
 suspend fun bbb(i: Int) {
-    delay(10)
+    delay(1)
     ccc(i)
-    delay(10)
+    delay(1)
     println("End bbb")
 }
 

@@ -314,7 +314,7 @@ public final class BackgroundTaskUtil {
     }
     catch (ExecutionException e) {
       Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException || cause instanceof CancellationException) {
+      if (cause instanceof CancellationException) {
         // ignore: expected cancellation
       }
       else {

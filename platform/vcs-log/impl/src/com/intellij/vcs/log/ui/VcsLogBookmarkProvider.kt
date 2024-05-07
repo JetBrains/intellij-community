@@ -1,23 +1,32 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui
 
-import com.intellij.ide.bookmark.Bookmark
-import com.intellij.ide.bookmark.BookmarkProvider
+import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.Alarm
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
+import kotlinx.coroutines.FlowPreview
+import org.jetbrains.annotations.Nls
 import java.util.*
 
 private const val ROOT_KEY = "root"
@@ -61,7 +70,17 @@ internal class VcsLogBookmark(override val provider: VcsLogBookmarkProvider,
   override fun canNavigate(): Boolean = true
   override fun canNavigateToSource(): Boolean = false
   override fun navigate(requestFocus: Boolean) {
-    VcsLogNavigationUtil.jumpToRevisionAsync(provider.project, root, hash)
+    VcsLogNavigationUtil.jumpToRevisionAsync(provider.project, root, hash).whenComplete { result: Boolean?, error ->
+      if (result != true) {
+        val commitPresentation = VcsLogBundle.message("vcs.log.commit.prefix", hash)
+        val message = VcsLogBundle.message("vcs.log.commit.not.found", commitPresentation)
+        VcsNotifier.getInstance(provider.project).notifyWarning(VcsLogNotificationIdsHolder.COMMIT_NOT_FOUND, "", message);
+      }
+    }
+  }
+
+  override fun prepareDefaultDescription(): String? {
+    return getDefaultBookmarkDescription(provider.project, root, hash)
   }
 
   override fun hashCode(): Int = Objects.hash(provider, root, hash)
@@ -103,7 +122,72 @@ internal class VcsLogBookmarkNode(project: Project, bookmark: VcsLogBookmark) : 
 private fun getDefaultBookmarkDescription(project: Project, root: VirtualFile, hash: Hash): String? {
   val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return null
   val commitId = dataManager.getCommitIndex(hash, root)
-  val details = dataManager.miniDetailsGetter.getCommitData(commitId, listOf(commitId))
+  val details = dataManager.miniDetailsGetter.getCachedDataOrPlaceholder(commitId)
   if (details is LoadingDetails) return null
   return details.subject.ifBlank { VcsLogBundle.message("vcs.log.bookmark.description.empty.subject") }
 }
+
+@OptIn(FlowPreview::class)
+@Service(Service.Level.PROJECT)
+internal class VcsLogBookmarkReferenceProvider(val project: Project) : Disposable {
+  companion object {
+    @JvmStatic
+    fun getBookmarkRefs(project: Project, hash: Hash, root: VirtualFile): List<VcsBookmarkRef> {
+      return project.service<VcsLogBookmarkReferenceProvider>().getBookmarkRefs(hash, root)
+    }
+  }
+
+  private val queue = MergingUpdateQueue("VcsLogBookmarkReferenceProvider", 300, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
+
+  override fun dispose() {
+  }
+
+  fun updateVcsLogBookmarks(root: VirtualFile) {
+    queue.queue(Update.create(root) {
+      val logManager = VcsProjectLog.getInstance(project).logManager ?: return@create
+      logManager.dataManager.refresh(listOf(root), true)
+    })
+  }
+
+  fun getBookmarkRefs(hash: Hash, root: VirtualFile): List<VcsBookmarkRef> {
+    val bookmarksManager = BookmarksManager.getInstance(project) ?: return emptyList()
+    val factory = project.service<VcsLogObjectsFactory>()
+    return bookmarksManager.bookmarks
+      .filterIsInstance<VcsLogBookmark>()
+      .filter { it.hash == hash && it.root == root }
+      .map { logBookmark ->
+        val type = bookmarksManager.getType(logBookmark) ?: BookmarkType.DEFAULT
+        val text = when {
+          type != BookmarkType.DEFAULT -> VcsLogBundle.message("vcs.log.bookmark.label.mnemonic", type.mnemonic)
+          else -> VcsLogBundle.message("vcs.log.bookmark.label")
+        }
+        VcsBookmarkRef(logBookmark, type, text)
+      }
+  }
+}
+
+internal class VcsLogBookmarksListener(val project: Project) : BookmarksListener {
+  private fun updateBookmark(bookmark: Bookmark) {
+    if (bookmark is VcsLogBookmark) {
+      project.service<VcsLogBookmarkReferenceProvider>().updateVcsLogBookmarks(bookmark.root)
+    }
+  }
+
+  override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark) {
+    updateBookmark(bookmark)
+  }
+
+  override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark) {
+    updateBookmark(bookmark)
+  }
+
+  override fun bookmarkChanged(group: BookmarkGroup, bookmark: Bookmark) {
+    updateBookmark(bookmark)
+  }
+
+  override fun bookmarkTypeChanged(bookmark: Bookmark) {
+    updateBookmark(bookmark)
+  }
+}
+
+class VcsBookmarkRef(val bookmark: Bookmark, val type: BookmarkType, val text: @Nls String)

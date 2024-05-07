@@ -22,7 +22,8 @@ internal class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider 
 
   override fun <K, V> getLayout(extension: FileBasedIndexExtension<K, V>): VfsAwareIndexStorageLayout<K, V> {
     if (extension is SingleEntryFileBasedIndexExtension<V>) {
-      return SingleEntryStorageLayout(extension as FileBasedIndexExtension<K, V>)
+      @Suppress("UNCHECKED_CAST")
+      return SingleEntryStorageLayout(extension) as VfsAwareIndexStorageLayout<K, V>
     }
     return DefaultStorageLayout(extension)
   }
@@ -58,11 +59,11 @@ internal class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider 
     }
   }
 
-  internal class SingleEntryStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
+  internal class SingleEntryStorageLayout<V> internal constructor(private val extension: SingleEntryFileBasedIndexExtension<V>) : VfsAwareIndexStorageLayout<Int, V> {
     private val storageLockContext = newStorageLockContext()
 
     @Throws(IOException::class)
-    override fun openIndexStorage(): IndexStorage<K, V> {
+    override fun openIndexStorage(): IndexStorage<Int, V> {
       return createIndexStorage(extension, storageLockContext)
     }
 
@@ -70,8 +71,8 @@ internal class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider 
       return EmptyForwardIndex()
     }
 
-    override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
-      return SingleEntryIndexForwardIndexAccessor(extension as IndexExtension<Int, V, *>) as ForwardIndexAccessor<K, V>
+    override fun getForwardIndexAccessor(): ForwardIndexAccessor<Int, V> {
+      return SingleEntryIndexForwardIndexAccessor(extension)
     }
 
     override fun clearIndexData() {

@@ -666,9 +666,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         IntSet orphanDirtyFilesFromThisSession = getAllDirtyFiles(null);
-        if (orphanDirtyFileIds != null) {
-          orphanDirtyFileIds.plus(orphanDirtyFilesFromThisSession).store(vfsCreationStamp);
-        }
+        orphanDirtyFileIds.plus(orphanDirtyFilesFromThisSession).store(vfsCreationStamp);
         // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
         getChangedFilesCollector().clear();
         myFilesToUpdateCollector.clear();

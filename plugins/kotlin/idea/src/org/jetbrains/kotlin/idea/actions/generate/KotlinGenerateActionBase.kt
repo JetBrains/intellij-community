@@ -26,7 +26,7 @@ abstract class KotlinGenerateActionBase : CodeInsightAction(), CodeInsightAction
         actionPlace: String?
     ) {
         super.update(presentation, project, editor, file, dataContext, actionPlace)
-        val actionHandler = handler
+        val actionHandler = getHandler(dataContext)
         if (actionHandler is ContextAwareActionHandler && presentation.isEnabled) {
             presentation.isEnabled = actionHandler.isAvailableForQuickList(editor, file, dataContext)
         }

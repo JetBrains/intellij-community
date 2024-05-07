@@ -12,16 +12,14 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
-import org.jetbrains.kotlin.analysis.api.annotations.KtArrayAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -54,6 +52,7 @@ import org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtBreakExpression
@@ -227,7 +226,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
             returnType = returnType,
             modifiers = if (hasSuspendReference(extractionData)) listOf(KtTokens.SUSPEND_KEYWORD) else emptyList(),
             optInMarkers = experimentalMarkers.optInMarkers,
-            annotations = experimentalMarkers.propagatingMarkerDescriptors
+            annotationClassIds = experimentalMarkers.propagatingMarkerClassIds
         )
         for (analyser in ExtractFunctionDescriptorModifier.EP_NAME.extensionList) {
             descriptor = analyser.modifyDescriptor(descriptor)
@@ -248,11 +247,11 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
 }
 
 private data class ExperimentalMarkers(
-    val propagatingMarkerDescriptors: List<KtAnnotationApplicationWithArgumentsInfo>,
+    val propagatingMarkerClassIds: Set<ClassId>,
     val optInMarkers: List<FqName>
 ) {
     companion object {
-        val empty = ExperimentalMarkers(emptyList(), emptyList())
+        val empty = ExperimentalMarkers(emptySet(), emptyList())
     }
 }
 
@@ -273,15 +272,24 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
         val fqName = annotationEntry.classId?.asSingleFqName() ?: continue
 
         if (fqName in FqNames.OptInFqNames.OPT_IN_FQ_NAMES) {
-            for (argument in annotationEntry.arguments) {
-                val expression = argument.expression
-                if (expression is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue) {
-                    optInMarkerNames.add(expression.classId.asSingleFqName())
-                } else if (expression is KtArrayAnnotationValue) {
-                    expression.values.filterIsInstance<KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue>()
-                        .forEach { optInMarkerNames.add(it.classId.asSingleFqName()) }
+            fun processValue(value: KtAnnotationValue, isRecursive: Boolean) {
+                when (value) {
+                    is KtKClassAnnotationValue -> {
+                        val classId = (value.type as? KtNonErrorClassType)?.classId?.takeUnless { it.isLocal }
+                        if (classId != null) {
+                            optInMarkerNames.add(classId.asSingleFqName())
+                        }
+                    }
+                    is KtArrayAnnotationValue -> {
+                        if (isRecursive) {
+                            value.values.forEach { processValue(it, isRecursive = false) }
+                        }
+                    }
+                    else -> {}
                 }
             }
+
+            annotationEntry.arguments.forEach { processValue(it.expression, isRecursive = true) }
         } else if (annotationEntry.isExperimentalMarker()) {
             propagatingMarkerDescriptors.add(annotationEntry)
         }
@@ -313,11 +321,12 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
         }
     }
 
+    val propagatingMarkerClassIds = propagatingMarkerDescriptors
+        .mapNotNull { it.classId }
+        .filterTo(LinkedHashSet()) { it.asSingleFqName() in requiredMarkers }
+
     return ExperimentalMarkers(
-        propagatingMarkerDescriptors.filter {
-            val classId = it.classId
-            classId != null && classId.asSingleFqName() in requiredMarkers
-        },
+        propagatingMarkerClassIds,
         optInMarkerNames.filter { it in requiredMarkers }
     )
 }

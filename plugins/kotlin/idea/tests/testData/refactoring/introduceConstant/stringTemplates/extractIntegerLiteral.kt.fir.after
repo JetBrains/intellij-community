@@ -1,0 +1,12 @@
+// EXTRACTION_TARGET: property with initializer
+val a = 1
+
+private const val i = 123
+
+fun foo(): String {
+    val x = "a1234_"
+    val y = "-4123a"
+    val z = "+1243a"
+    val u = i
+    return "ab${i}def"
+}

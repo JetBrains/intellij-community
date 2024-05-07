@@ -7,7 +7,8 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.*
-import org.jetbrains.annotations.ApiStatus.*
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -18,7 +19,6 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.function.UnaryOperator
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 
@@ -41,11 +41,12 @@ class PluginLayout private constructor(
   var directoryName: String = mainJarNameWithoutExtension
     private set
 
-  var versionEvaluator: VersionEvaluator = object : VersionEvaluator {
-    override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext) = ideBuildVersion
-  }
+  var versionEvaluator: PluginVersionEvaluator = PLUGIN_VERSION_AS_IDE
+
+  internal var rawPluginXmlPatcher: (String) -> String = { it }
 
   var pluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
+
   var directoryNameSetExplicitly: Boolean = false
   var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
     internal set
@@ -98,6 +99,7 @@ class PluginLayout private constructor(
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
     @JvmStatic
+    @Deprecated("Please use pluginAuto")
     fun plugin(mainModuleName: String, auto: Boolean = false, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       val layout = PluginLayout(mainModuleName, auto = auto)
 
@@ -113,6 +115,12 @@ class PluginLayout private constructor(
       return layout
     }
 
+    // we cannot break compatibility / risk to change existing plugin dir name
+    fun pluginAutoWithDeprecatedCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      @Suppress("DEPRECATION")
+      return plugin(mainModuleName, auto = true, body = body)
+    }
+
     fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
 
     fun pluginAuto(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
@@ -124,6 +132,7 @@ class PluginLayout private constructor(
       return layout
     }
 
+    @Deprecated("Please use pluginAuto")
     fun plugin(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first())
       layout.withModules(moduleNames)
@@ -293,12 +302,12 @@ class PluginLayout private constructor(
      * By default, a version of a plugin is equal to the build number of the IDE it's built with.
      * This method allows specifying custom version evaluator.
      */
-    fun withCustomVersion(versionEvaluator: VersionEvaluator) {
+    fun withCustomVersion(versionEvaluator: PluginVersionEvaluator) {
       layout.versionEvaluator = versionEvaluator
     }
 
-    fun withPluginXmlPatcher(pluginXmlPatcher: UnaryOperator<String>) {
-      layout.pluginXmlPatcher = { text, _ -> pluginXmlPatcher.apply(text) }
+    fun withRawPluginXmlPatcher(pluginXmlPatcher: (String) -> String) {
+      layout.rawPluginXmlPatcher = pluginXmlPatcher
     }
 
     /**
@@ -435,10 +444,17 @@ class PluginLayout private constructor(
       layout.enableSymlinksAndExecutableResources = true
     }
   }
+}
 
-  interface VersionEvaluator {
-    fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String
-  }
+private val PLUGIN_VERSION_AS_IDE = PluginVersionEvaluator { _, ideBuildVersion, _ -> PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion) }
+
+data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @JvmField val sinceUntil: Pair<String, String>? = null)
+
+/**
+ * Think twice before using this API.
+ */
+fun interface PluginVersionEvaluator {
+  fun evaluate(pluginXmlSupplier: () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
 }
 
 private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

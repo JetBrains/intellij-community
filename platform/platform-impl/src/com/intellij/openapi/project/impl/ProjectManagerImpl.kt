@@ -738,14 +738,14 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project = result!!
     if (!app.isUnitTestMode) {
       val openTimestamp = System.currentTimeMillis()
-      (project as ComponentManagerEx).getCoroutineScope().launch {
+      (project as ProjectImpl).getCoroutineScope().launch {
         (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
         dispatchEarlyNotifications()
       }
     }
 
     if (isRunStartUpActivitiesEnabled(project)) {
-      (StartupManager.getInstance(project) as StartupManagerImpl).runPostStartupActivities()
+      (project.serviceAsync<StartupManager>() as StartupManagerImpl).runPostStartupActivities()
     }
     blockingContext {
       LifecycleUsageTriggerCollector.onProjectOpened(project)

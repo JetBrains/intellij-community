@@ -677,7 +677,7 @@ com.intellij.ide.wizard.StepWithSubSteps
 - a:isFirst():Z
 - a:isLast():Z
 com.intellij.ide.workspace.ImportedProjectSettings
-- a:applyTo(com.intellij.openapi.project.Project):V
+- a:applyTo(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.ide.workspace.Subproject
 - a:getModules():java.util.List
 - a:getName():java.lang.String
@@ -689,7 +689,7 @@ com.intellij.ide.workspace.SubprojectHandler
 - a:canImportFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - a:getSubprojectFor(com.intellij.openapi.module.Module):com.intellij.ide.workspace.Subproject
 - a:getSubprojects(com.intellij.openapi.project.Project):java.util.List
-- a:importFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
+- a:importFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - a:importFromProject(com.intellij.openapi.project.Project,Z):com.intellij.ide.workspace.ImportedProjectSettings
 - suppressGenericImportFor(com.intellij.openapi.module.Module):Z
 f:com.intellij.ide.workspace.SubprojectHandler$Companion
@@ -972,6 +972,7 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:COMPOSER_LOG_RERUN:java.lang.String
 - sf:CONTEXT_TOOLBAR:java.lang.String
 - sf:COPY_REFERENCE_POPUP:java.lang.String
+- sf:CUSTOMIZE_ACTIONS_PANEL:java.lang.String
 - sf:DATABASE_VIEW_POPUP:java.lang.String
 - sf:DATABASE_VIEW_TOOLBAR:java.lang.String
 - sf:DEBUGGER_TOOLBAR:java.lang.String
@@ -2287,6 +2288,7 @@ f:com.intellij.openapi.util.registry.RegistryKeyBean
 - defaultValue:java.lang.String
 - description:java.lang.String
 - key:java.lang.String
+- overrides:Z
 - restartRequired:Z
 f:com.intellij.openapi.util.registry.RegistryKeyBean$Companion
 com.intellij.openapi.vcs.FilePath

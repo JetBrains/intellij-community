@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.analysis.problemsView.ProblemsProvider
+import com.intellij.analysis.problemsView.toolWindow.ProblemViewSuppressor.isSuppressedInProblemsView
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
@@ -98,7 +99,6 @@ internal class ProblemsViewHighlightingWatcher(
 
   private fun isValid(highlighter: RangeHighlighter): Boolean {
     val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return false
-    return info.description != null && info.severity.myVal >= level
+    return info.description != null && info.severity.myVal >= level && !highlighter.isSuppressedInProblemsView()
   }
-
 }

@@ -16,7 +16,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.ExceptionDebugHelper
-import com.intellij.rt.debugger.coroutines.ContinuationExtractorHelper
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -117,10 +116,10 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     ): CoroutineFilter? {
         // if continuation cannot be extracted, fall to CoroutineIdFilter
         val currentContinuation = extractContinuation(frameProxy) ?: return null
-        val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
         // First try to get a ContinuationFilter from helper
-        getContinuationFilterFromHelper(currentContinuation, debugProbesImpl, defaultExecutionContext)?.let { return it }
+        getContinuationFilterFromHelper(currentContinuation, defaultExecutionContext)?.let { return it }
         // If helper class failed
+        val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
         if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
             extractContinuationId(currentContinuation, defaultExecutionContext)?.let { return it }
         }
@@ -174,17 +173,11 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         }
     }
 
-    private fun getContinuationFilterFromHelper(
-        currentContinuation: ObjectReference,
-        debugProbesImpl: DebugProbesImpl?,
-        context: DefaultExecutionContext
-    ): CoroutineFilter? {
-        if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
-            val continuationIdValue = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "tryGetContinuationId", listOf(currentContinuation))
-            (continuationIdValue as? LongValue)?.value()?.let { if (it != -1L) return CoroutineIdFilter(setOf(it)) }
-            thisLogger().warn("[coroutine filter]: Could not extract continuation ID, location = ${context.frameProxy?.location()}")
-        }
-        val rootContinuation = callMethodFromHelper(ContinuationExtractorHelper::class.java, context, "getRootContinuation", listOf(currentContinuation))
+    private fun getContinuationFilterFromHelper(currentContinuation: ObjectReference, context: DefaultExecutionContext): CoroutineFilter? {
+        val continuationIdValue = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "tryGetContinuationId", listOf(currentContinuation))
+        (continuationIdValue as? LongValue)?.value()?.let { if (it != -1L) return CoroutineIdFilter(setOf(it)) }
+        thisLogger().warn("[coroutine filter]: Could not extract continuation ID, location = ${context.frameProxy?.location()}")
+        val rootContinuation = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getRootContinuation", listOf(currentContinuation))
         if (rootContinuation == null) thisLogger().warn("[coroutine filter]: Could not extract continuation instance")
         return rootContinuation?.let { ContinuationObjectFilter(it as ObjectReference) }
     }

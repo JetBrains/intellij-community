@@ -36,12 +36,6 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   var language: String? = null
 
   /**
-   * If the provider is enabled/disabled by some external config, not from Editor | Inlay Hints
-   */
-  @Attribute
-  var isInvisible: Boolean = false
-
-  /**
    * Whether it will be enabled by default in settings.
    */
   @RequiredElement
@@ -50,8 +44,8 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
 
   /**
    * Key of the group, one of [com.intellij.codeInsight.hints.InlayGroup] values.
-   * Required if not [isInvisible]
    */
+  @RequiredElement
   @Attribute
   @JvmField
   var group: InlayGroup? = null
@@ -76,7 +70,6 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
 
   /**
    * Name will be displayed in settings and in some other actions (e.g., to enable/disable).
-   * If [isInvisible] still required.
    */
   @RequiredElement
   @Attribute

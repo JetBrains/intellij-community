@@ -403,8 +403,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       AnalyzerStatus result = new AnalyzerStatus(statusItems.get(0).getIcon(), title, "", myUIController).
         withNavigation().
         withState(state).
-        withExpandedStatus(ContainerUtil.map(statusItems, i ->
-          new StatusItem(Integer.toString(i.getProblemCount()), i.getIcon(), i.getCountMessage())));
+        withExpandedStatus(ContainerUtil.map(statusItems, i -> {
+          TrafficLightStatusItemMetadata metadata = new TrafficLightStatusItemMetadata(i.getProblemCount(), i.getSeverity());
+          return new StatusItem(Integer.toString(i.getProblemCount()), i.getIcon(), i.getCountMessage(), metadata);
+        }));
 
       return status.errorAnalyzingFinished ? result :
              result.withAnalyzingType(AnalyzingType.PARTIAL).

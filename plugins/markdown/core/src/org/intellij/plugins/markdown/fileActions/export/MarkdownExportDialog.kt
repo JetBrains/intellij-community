@@ -69,7 +69,7 @@ internal class MarkdownExportDialog(
     supportedExportProviders
       .mapNotNull {
         with(it) {
-          val file = VfsUtil.findFileByIoFile(File(suggestedFilePath), false)
+          val file = VfsUtil.findFileByIoFile(File(suggestedFilePath), true)
           if (file != null) {
             createSettingsComponent(project, file)?.visibleIf(fileTypeSelector.selectedValueIs(it))
           }

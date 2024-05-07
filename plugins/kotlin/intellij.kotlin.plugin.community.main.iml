@@ -201,7 +201,6 @@
     <orderEntry type="module" module-name="kotlin.searching.base" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" exported="" />
-    <orderEntry type="module" module-name="kotlin.refactorings.introduce.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" exported="" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
     <orderEntry type="module" module-name="kotlin.onboarding" exported="" />

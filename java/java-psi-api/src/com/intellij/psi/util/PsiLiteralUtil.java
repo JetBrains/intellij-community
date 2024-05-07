@@ -419,6 +419,16 @@ public final class PsiLiteralUtil {
   }
 
   /**
+   * Retrieves the indent string of a text block literal expression.
+   * @param expression The text block literal expression.
+   * @return The indent string of the text block, or null if it is impossible to determine indent string.
+   * @see #getTextBlockIndent(PsiLiteralExpression)
+   */
+  public static @Nullable String getTextBlockIndentString(@NotNull PsiLiteralExpression expression) {
+    return BasicLiteralUtil.getTextBlockIndentString(expression);
+  }
+
+  /**
    * @see #getTextBlockIndent(PsiLiteralExpression)
    */
   public static int getTextBlockIndent(String @NotNull [] lines) {

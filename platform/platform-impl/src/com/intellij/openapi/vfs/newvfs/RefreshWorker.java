@@ -5,8 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -124,7 +123,7 @@ final class RefreshWorker {
           processQueue(threadEvents);
         }
         catch (RefreshCancelledException ignored) { }
-        catch (ProcessCanceledException | CancellationException e) {
+        catch (CancellationException e) {
           myCancelled = true;
         }
         catch (Throwable t) {
@@ -398,14 +397,14 @@ final class RefreshWorker {
    * In the future, it should be removed in favor of non-blocking or suspending IO.
    */
   private static @Nullable FileAttributes computeAttributesForFile(NewVirtualFileSystem fs, VirtualFile file) {
-    return ProgressManager.getInstance().computeInNonCancelableSection(() -> fs.getAttributes(file));
+    return Cancellation.computeInNonCancelableSection(() -> fs.getAttributes(file));
   }
 
   /**
    * See documentation for {@link RefreshWorker#computeAttributesForFile(NewVirtualFileSystem, VirtualFile)}
    */
   private static String @NotNull [] computeListWithCaching(LocalFileSystemImpl fs, VirtualFile dir, Set<String> filter) {
-    return ProgressManager.getInstance().computeInNonCancelableSection(() -> fs.listWithCaching(dir, filter));
+    return Cancellation.computeInNonCancelableSection(() -> fs.listWithCaching(dir, filter));
   }
 
   private ChildInfo childRecord(NewVirtualFileSystem fs, FakeVirtualFile child, FileAttributes attributes, boolean canonicalize) {

@@ -2,7 +2,6 @@ package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterToolbar
@@ -17,15 +16,12 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
   private val actionGroup = createActionGroup()
 
   init {
-    if (editor.editorKind != EditorKind.DIFF) {
+    if (!editor.editorKind.isDiff()) {
       isOpaque = false
       border = JBUI.Borders.empty(editor.notebookAppearance.CELL_BORDER_HEIGHT)
+      addComponentListeners()
+      recreateToolbar()
     }
-  }
-
-  fun initialize() {
-    addComponentListeners()
-    recreateToolbar()  // this toolbar is special - persistent and unique
   }
 
   private fun recreateToolbar() {
@@ -55,9 +51,8 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
     recreateToolbar()
   }
 
-  private fun createActionGroup(): ActionGroup? {
-    return CustomActionsSchema.getInstance().getCorrectedAction(ACTION_GROUP_ID) as? ActionGroup
-  }
+  private fun createActionGroup(): ActionGroup? =
+    CustomActionsSchema.getInstance().getCorrectedAction(ACTION_GROUP_ID) as? ActionGroup
 
   private fun adjustToolbarBounds() {
     toolbar?.let { tb ->

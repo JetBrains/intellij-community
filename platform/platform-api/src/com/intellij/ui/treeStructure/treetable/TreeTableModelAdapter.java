@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.treeStructure.TreeBulkExpansionEvent;
 import com.intellij.ui.treeStructure.TreeBulkExpansionListener;
 import org.jetbrains.annotations.NotNull;
@@ -32,13 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * This is a wrapper class takes a TreeTableModel and implements
  * the table model interface. The implementation is trivial, with
- * all of the event dispatching support provided by the superclass:
+ * all the event dispatching support provided by the superclass:
  * the AbstractTableModel.
- *
- * @version 1.2 10/27/98
- *
- * @author Philip Milne
- * @author Scott Violet
  */
 public class TreeTableModelAdapter extends AbstractTableModel {
   private final AtomicInteger modificationStamp = new AtomicInteger();
@@ -54,8 +34,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
     this.treeTableModel.setTree(tree);
 
     tree.addTreeExpansionListener(new TreeBulkExpansionListener() {
-      // Don't use fireTableRowsInserted() here; the selection model
-      // would get updated twice.
+      // don't use fireTableRowsInserted() here; the selection model would get updated twice.
       @Override
       public void treeExpanded(TreeExpansionEvent event) {
         if (!isBulkOperationInProgress(event)) {
@@ -85,10 +64,8 @@ public class TreeTableModelAdapter extends AbstractTableModel {
       }
     });
 
-    // Install a TreeModelListener that can update the table when
-    // tree changes. We use delayedFireTableDataChanged as we can
-    // not be guaranteed the tree will have finished processing
-    // the event before us.
+    // Install a TreeModelListener that can update the table when a tree changes.
+    // We use delayedFireTableDataChanged as we cannot be guaranteed the tree will have finished processing the event before us.
     treeTableModel.addTreeModelListener(new TreeModelListener() {
       @Override
       public void treeNodesChanged(TreeModelEvent e) {
@@ -126,7 +103,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
   }
 
   @Override
-  public Class getColumnClass(int column) {
+  public Class<?> getColumnClass(int column) {
     return treeTableModel.getColumnClass(column);
   }
 
@@ -160,20 +137,21 @@ public class TreeTableModelAdapter extends AbstractTableModel {
 
   /**
    * Invokes fireTableDataChanged after all the pending events have been
-   * processed. SwingUtilities.invokeLater is used to handle this.
+   * processed.
    */
   protected void delayedFireTableDataChanged() {
     long stamp = modificationStamp.incrementAndGet();
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (stamp != modificationStamp.get()) return;
-      fireTableDataChanged();
-    }, ModalityState.any());
+      if (stamp == modificationStamp.get()) {
+        fireTableDataChanged();
+      }
+    });
   }
 
   @Override
   public void fireTableDataChanged() {
     // have to restore table selection since AbstractDataModel.fireTableDataChanged() clears all selection
-    final TreePath[] treePaths = tree.getSelectionPaths();
+    TreePath[] treePaths = tree.getSelectionPaths();
     super.fireTableDataChanged();
     if (treePaths != null) {
       for (TreePath treePath : treePaths) {
@@ -182,5 +160,4 @@ public class TreeTableModelAdapter extends AbstractTableModel {
       }
     }
   }
-
 }

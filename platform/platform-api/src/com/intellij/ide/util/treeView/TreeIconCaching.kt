@@ -2,7 +2,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView
 
-import com.intellij.ui.*
+import com.intellij.icons.AllIcons
+import com.intellij.ui.IconManager
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.ReplaceableIcon
@@ -42,38 +46,27 @@ private fun getBiggestRow(icon: RowIcon): Icon? =
 private val Icon.size: Int
   get() = min(iconWidth, iconHeight)
 
-internal fun getLoadingIcon(iconData: CachedIconPresentation?): Icon? {
-  if (iconData == null) return null
+private val DEFAULT_ICON = AllIcons.FileTypes.Unknown
+
+@get:Internal
+val CachedPresentationData.icon: Icon get() = getLoadingIcon(iconData)
+
+private fun getLoadingIcon(iconData: CachedIconPresentation?): Icon {
+  if (iconData == null) return DEFAULT_ICON
   val iconManager = IconManager.getInstance()
   return iconManager.createDeferredIcon(
-    AnimatedIcon.Default.INSTANCE,
+    DEFAULT_ICON,
     iconData,
   ) {
     val classLoader = iconManager.getClassLoader(iconData.plugin, iconData.module)
     if (classLoader == null) {
-      AnimatedIcon.Default.INSTANCE
+      DEFAULT_ICON
     }
     else try {
-      LoadingIcon(iconManager.getIcon(iconData.path, classLoader))
+      iconManager.getIcon(iconData.path, classLoader)
     }
     catch (e: Exception) {
-      AnimatedIcon.Default.INSTANCE
-    }
-  }
-}
-
-private class LoadingIcon(private val delegate: Icon) : Icon, RetrievableIcon, ReplaceableIcon {
-  override fun retrieveIcon(): Icon = delegate
-
-  override fun replaceBy(replacer: IconReplacer): Icon = LoadingIcon(replacer.replaceIcon(delegate))
-
-  override fun getIconWidth(): Int = delegate.iconWidth
-
-  override fun getIconHeight(): Int = delegate.iconHeight
-
-  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    GraphicsUtil.paintWithAlpha(g, 0.5f) {
-      delegate.paintIcon(c, g, x, y)
+      DEFAULT_ICON
     }
   }
 }

@@ -1,4 +1,3 @@
-// IGNORE_K2
 enum Color implements Runnable {
   WHITE, BLACK, RED, YELLOW, BLUE;
 

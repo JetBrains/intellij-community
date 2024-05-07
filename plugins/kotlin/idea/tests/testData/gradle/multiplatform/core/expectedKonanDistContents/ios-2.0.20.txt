@@ -162,3 +162,4 @@ Kotlin/Native: iconv
 Kotlin/Native: objc
 Kotlin/Native: posix
 Kotlin/Native: zlib
+Kotlin/Native: Matter

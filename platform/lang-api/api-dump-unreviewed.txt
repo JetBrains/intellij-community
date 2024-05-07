@@ -385,6 +385,7 @@ a:com.intellij.codeInsight.actions.CodeInsightAction
 - p:getCommandName():java.lang.String
 - p:getEditor(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project,Z):com.intellij.openapi.editor.Editor
 - pa:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
+- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:update(com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
@@ -493,6 +494,7 @@ a:com.intellij.codeInsight.completion.NextPrevParameterAction
 - com.intellij.openapi.project.DumbAware
 - p:<init>(Z):V
 - getHandler():com.intellij.codeInsight.CodeInsightActionHandler
+- getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - s:hasSuitablePolicy(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 c:com.intellij.codeInsight.completion.NextPrevParameterAction$Next
@@ -1315,14 +1317,12 @@ f:com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean
 - f:getProviderId():java.lang.String
 - f:getProviderName():java.lang.String
 - f:isEnabledByDefault():Z
-- f:isInvisible():Z
 - f:requiredGroup():com.intellij.codeInsight.hints.InlayGroup
 - f:requiredProviderId():java.lang.String
 - f:setBundle(java.lang.String):V
 - f:setDescriptionKey(java.lang.String):V
 - f:setEnabledByDefault(Z):V
 - f:setImplementationClass(java.lang.String):V
-- f:setInvisible(Z):V
 - f:setLanguage(java.lang.String):V
 - f:setNameKey(java.lang.String):V
 - f:setOptions(java.util.List):V
@@ -2853,6 +2853,7 @@ com.intellij.ide.bookmark.Bookmark
 - a:getAttributes():java.util.Map
 - a:getProvider():com.intellij.ide.bookmark.BookmarkProvider
 - a:hashCode():I
+- prepareDefaultDescription():java.lang.String
 com.intellij.ide.bookmark.BookmarkGroup
 - a:add(com.intellij.ide.bookmark.Bookmark,com.intellij.ide.bookmark.BookmarkType,java.lang.String):Z
 - bs:add$default(com.intellij.ide.bookmark.BookmarkGroup,com.intellij.ide.bookmark.Bookmark,com.intellij.ide.bookmark.BookmarkType,java.lang.String,I,java.lang.Object):Z

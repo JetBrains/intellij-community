@@ -6,6 +6,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Simple timer for checking timeouts in tests. How to use:
+ * <pre>
+ * {@code
+ *   TestTimeOut timer = TestTimeOut.setTimeout(2, TimeUnit.SECONDS);
+ *   // ... later in the test:
+ *   if (timer.isTimedOut()) fail();
+ * }
+ * </pre>
+ */
 public final class TestTimeOut {
   private final long endTime;
 

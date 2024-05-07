@@ -164,6 +164,11 @@ class IjentNioPath internal constructor(
       nioFs = nioFs,
     )
 
+  /**
+   * Commonly, instances of Path are not considered as equal if they actually represent the same path but come from different file systems.
+   *
+   * See [sun.nio.fs.UnixPath.equals] and [sun.nio.fs.WindowsPath#equals].
+   */
   override fun equals(other: Any?): Boolean =
     other is IjentNioPath &&
     ijentPath == other.ijentPath &&

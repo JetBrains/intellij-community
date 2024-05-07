@@ -24,7 +24,7 @@ document.addEventListener("click", function (e) {
       }
     }
   }
-  else if (e.target.classList.contains("completion")) {
+  else if (e.target.classList.contains("session")) {
     updatePopup(e.target)
   }
   else if (suggestionDiv != null) {
@@ -122,7 +122,11 @@ function updatePopup(sessionDiv) {
   popup.setAttribute("class", "autocomplete-items")
   const prefixDiv = document.createElement("DIV")
   prefixDiv.setAttribute("style", "background-color: lightgrey;")
-  prefixDiv.innerHTML = `prefix: &quot;${lookup["prefix"]}&quot;; latency: ${lookup["latency"]}`
+  if ("aia_user_prompt" in lookup["additionalInfo"]) {
+    prefixDiv.innerHTML = `user prompt: &quot;${lookup["additionalInfo"]["aia_user_prompt"]}&quot;; latency: ${lookup["latency"]}`
+  } else {
+    prefixDiv.innerHTML = `prefix: &quot;${lookup["prefix"]}&quot;; latency: ${lookup["latency"]}`
+  }
   popup.appendChild(prefixDiv)
   const needAddFeatures = sessionDiv.classList.contains("suggestions")
   closeAllLists()
@@ -399,14 +403,14 @@ function updateMultilinePopup(event) {
   }
   const suggestionDiv = target.closest(".suggestion")
   const attachmentsDiv = target.closest(".attachments")
-  const showSuggestion =  attachmentsDiv != null || target.classList.contains("completion")
+  const showSuggestion =  attachmentsDiv != null || target.classList.contains("session")
   if (suggestionDiv == null && !showSuggestion) {
     if (target.closest(".autocomplete-items") == null) {
       closeAllLists();
     }
     return
   }
-  const sessionDiv = target.closest(".completion")
+  const sessionDiv = target.closest(".session")
   closeAllLists()
   const lookup = getLookup(sessionDiv)
   const popup = document.createElement("DIV")
@@ -497,7 +501,7 @@ function addMultilineExpectedText(popup, expectedText) {
 }
 
 function showMultilinePrefixAndSuffix(event) {
-  if (event.target.classList.contains("completion")) {
+  if (event.target.classList.contains("session")) {
     const sessionDiv = event.target
     sessionDiv.parentNode.style.display = "none"
     const newCode = document.createElement("pre")

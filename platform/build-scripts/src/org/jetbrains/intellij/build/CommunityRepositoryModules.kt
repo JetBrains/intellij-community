@@ -16,7 +16,6 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -25,6 +24,9 @@ object CommunityRepositoryModules {
    * Specifies non-trivial layout for all plugins that sources are located in 'community' and 'contrib' repositories
    */
   val COMMUNITY_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
+    pluginAuto("intellij.yaml") { spec ->
+      spec.withModule("intellij.yaml.editing", "yaml-editing.jar")
+    },
     plugin("intellij.ant") { spec ->
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
@@ -63,9 +65,7 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.xpath")) { spec ->
       spec.withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },
-    pluginAuto(listOf("intellij.platform.langInjection")) { spec ->
-      spec.withModule("intellij.java.langInjection", "IntelliLang.jar")
-      spec.withModule("intellij.xml.langInjection", "IntelliLang.jar")
+    pluginAuto(listOf("intellij.platform.langInjection", "intellij.java.langInjection", "intellij.xml.langInjection")) { spec ->
       spec.withModule("intellij.java.langInjection.jps")
     },
     plugin("intellij.tasks.core") { spec ->
@@ -162,9 +162,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
       spec.withModule("intellij.junit.v5.rt", "junit5-rt.jar")
     },
-    plugin("intellij.java.byteCodeViewer") { spec ->
-      spec.mainJarName = "byteCodeViewer.jar"
-    },
     plugin("intellij.testng") { spec ->
       spec.mainJarName = "testng-plugin.jar"
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
@@ -200,8 +197,7 @@ object CommunityRepositoryModules {
     pluginAuto("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
     },
-    pluginAuto("intellij.textmate") { spec ->
-      spec.withModule("intellij.textmate.core")
+    pluginAuto(listOf("intellij.textmate")) { spec ->
       spec.withResource("lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
@@ -221,7 +217,7 @@ object CommunityRepositoryModules {
     pluginAuto(
       listOf(
         "intellij.performanceTesting",
-        "intellij.performanceTesting.remoteDriver",
+        "intellij.tools.ide.starter.bus",
         "intellij.driver.model",
         "intellij.driver.impl",
         "intellij.driver.client"
@@ -297,18 +293,16 @@ object CommunityRepositoryModules {
     plugin(mainModuleName, auto = true) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
-      spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
-        override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
-          val text = Files.readString(pluginXml)
-          if (text.indexOf("<version>") != -1) {
-            val declaredVersion = text.substring(text.indexOf("<version>") + "<version>".length, text.indexOf("</version>"))
-            return "$declaredVersion.$ideBuildVersion"
-          }
-          else {
-            return ideBuildVersion
-          }
+      spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
+        val pluginXml = pluginXmlSupplier()
+        if (pluginXml.indexOf("<version>") != -1) {
+          val declaredVersion = pluginXml.substring(pluginXml.indexOf("<version>") + "<version>".length, pluginXml.indexOf("</version>"))
+          PluginVersionEvaluatorResult(pluginVersion = "$declaredVersion.$ideBuildVersion")
         }
-      })
+        else {
+          PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion)
+        }
+      }
 
       spec.excludeProjectLibrary("Gradle")
 

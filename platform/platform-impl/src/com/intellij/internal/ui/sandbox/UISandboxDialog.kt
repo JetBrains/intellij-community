@@ -8,6 +8,9 @@ import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.internal.showSources
 import com.intellij.internal.ui.sandbox.components.*
 import com.intellij.internal.ui.sandbox.dsl.*
+import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrComboBoxPanel
+import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrListPanel
+import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrOthersPanel
 import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -62,13 +65,18 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       JBTabsPanel())),
 
     Group("Kotlin UI DSL", children = listOf(
+      Group("ListCellRenderer", children = listOf(
+        LcrListPanel(),
+        LcrComboBoxPanel(),
+        LcrOthersPanel()
+      )),
+
       CellsWithSubPanelsPanel(),
       CheckBoxRadioButtonPanel(),
       CommentsPanel(),
       DeprecatedApiPanel(),
       GroupsPanel(),
       LabelsPanel(),
-      ListCellRendererPanel(),
       LongTextsPanel(),
       OnChangePanel(),
       OthersPanel(),

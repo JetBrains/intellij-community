@@ -1,4 +1,3 @@
-// IGNORE_K2
 // !ADD_KOTLIN_API
 import kotlinApi.KotlinInterface;
 import org.jetbrains.annotations.NotNull;

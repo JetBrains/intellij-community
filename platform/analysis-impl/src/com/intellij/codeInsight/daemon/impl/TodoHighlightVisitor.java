@@ -53,7 +53,7 @@ final class TodoHighlightVisitor implements HighlightVisitor {
   @Override
   public void visit(@NotNull PsiElement element) {
     if (element instanceof PsiFile psiFile && psiFile.getViewProvider().getAllFiles().get(0) == psiFile) {
-      highlightTodos(psiFile, psiFile.getText(), 0, psiFile.getTextLength(), myHolder);
+      highlightTodos(psiFile, psiFile.getText(), myHolder);
     }
   }
 
@@ -65,12 +65,10 @@ final class TodoHighlightVisitor implements HighlightVisitor {
 
   private static void highlightTodos(@NotNull PsiFile file,
                                      @NotNull CharSequence text,
-                                     int startOffset,
-                                     int endOffset,
                                      @NotNull HighlightInfoHolder holder) {
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.getInstance(file.getProject());
     if (helper == null || !shouldHighlightTodos(helper, file)) return;
-    TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
+    TodoItem[] todoItems = helper.findTodoItems(file);
 
     for (TodoItem todoItem : todoItems) {
       ProgressManager.checkCanceled();
@@ -87,12 +85,12 @@ final class TodoHighlightVisitor implements HighlightVisitor {
       String tooltip = XmlStringUtil.escapeString(StringUtil.shortenPathWithEllipsis(description, 1024)).replace("\n", "<br>");
 
       TextAttributes attributes = todoPattern.getAttributes().getTextAttributes();
-      addTodoItem(startOffset, endOffset, holder, attributes, description, tooltip, textRange);
+      addTodoItem(holder, attributes, description, tooltip, textRange);
       if (!additionalRanges.isEmpty()) {
         TextAttributes attributesForAdditionalLines = attributes.clone();
         attributesForAdditionalLines.setErrorStripeColor(null);
         for (TextRange range: additionalRanges) {
-          addTodoItem(startOffset, endOffset, holder, attributesForAdditionalLines, description, tooltip, range);
+          addTodoItem(holder, attributesForAdditionalLines, description, tooltip, range);
         }
       }
     }
@@ -107,14 +105,11 @@ final class TodoHighlightVisitor implements HighlightVisitor {
     return joiner.toString();
   }
 
-  private static void addTodoItem(int restrictStartOffset,
-                                  int restrictEndOffset,
-                                  @NotNull HighlightInfoHolder holder,
+  private static void addTodoItem(@NotNull HighlightInfoHolder holder,
                                   @NotNull TextAttributes attributes,
                                   @NotNull @NlsContexts.DetailedDescription String description,
                                   @NotNull @NlsContexts.Tooltip String tooltip,
                                   @NotNull TextRange range) {
-    if (range.getStartOffset() >= restrictEndOffset || range.getEndOffset() <= restrictStartOffset) return;
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO)
       .range(range)
       .textAttributes(attributes)

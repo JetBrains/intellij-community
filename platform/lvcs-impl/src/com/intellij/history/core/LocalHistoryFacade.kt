@@ -188,25 +188,48 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
   }
 }
 
-@ApiStatus.Experimental
-fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, patternString: String?, consumer: (ChangeSet) -> Unit) {
-  val pattern = patternString?.let { Pattern.compile(NameUtil.buildRegexp(it, 0, true, true), Pattern.CASE_INSENSITIVE) }
+@ApiStatus.Internal
+interface ChangeProcessor {
+  fun process(changeSet: ChangeSet, change: Change, changePath: String)
+}
 
-  val processedChangesSets = mutableSetOf<Long>()
-  val processChangeSet = fun(changeSet: ChangeSet, change: Change, changePath: String) {
+@ApiStatus.Experimental
+open class ChangeProcessorBase(private val projectId: String?, patternString: String?,
+                               private val consumer: (ChangeSet) -> Unit) : ChangeProcessor {
+  private val pattern = patternString.toPattern()
+  private val processedChangesSets = mutableSetOf<Long>()
+
+  override fun process(changeSet: ChangeSet, change: Change, changePath: String) {
     if (!processedChangesSets.contains(changeSet.id) && change.matches(projectId, changePath, pattern)) {
       processedChangesSets.add(changeSet.id)
       consumer(changeSet)
     }
   }
+}
 
+@ApiStatus.Internal
+class ChangeAndPathProcessor(projectId: String?, patternString: String?, private val pathConsumer: (String) -> Unit,
+                             changeConsumer: (ChangeSet) -> Unit) : ChangeProcessorBase(projectId, patternString, changeConsumer) {
+  override fun process(changeSet: ChangeSet, change: Change, changePath: String) {
+    pathConsumer(changePath)
+    super.process(changeSet, change, changePath)
+  }
+}
+
+@ApiStatus.Experimental
+fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, patternString: String?, consumer: (ChangeSet) -> Unit) {
+  collectChanges(startPath, ChangeProcessorBase(projectId, patternString, consumer))
+}
+
+@ApiStatus.Internal
+fun LocalHistoryFacade.collectChanges(startPath: String, processor: ChangeProcessor) {
   var path = startPath
   var pathExists = true
   for (changeSet in changes) {
     val changeSetChanges = changeSet.changes
     val singleLabel = changeSetChanges.singleOrNull() as? PutLabelChange
     if (singleLabel != null) {
-      if (pathExists) processChangeSet(changeSet, singleLabel, path)
+      if (pathExists) processor.process(changeSet, singleLabel, path)
     }
     else {
       for (change in changeSetChanges.reversed()) {
@@ -214,12 +237,12 @@ fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, pat
         if (!pathExists) {
           if (change is StructuralChange) path = change.revertPath(path)
           if (change is DeleteChange && change.isDeletionOf(path)) {
-            processChangeSet(changeSet, change, path)
+            processor.process(changeSet, change, path)
             pathExists = true
           }
         }
         else {
-          processChangeSet(changeSet, change, path)
+          processor.process(changeSet, change, path)
           if (change is StructuralChange) path = change.revertPath(path)
           if (change is CreateEntryChange && change.isCreationalFor(path)) pathExists = false
         }
@@ -228,7 +251,12 @@ fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, pat
   }
 }
 
-fun Change.matches(projectId: String?, path: String, pattern: Pattern?): Boolean {
+internal fun String?.toPattern(): Pattern? {
+  if (this == null) return null
+  return Pattern.compile(NameUtil.buildRegexp(this, 0, true, true), Pattern.CASE_INSENSITIVE)
+}
+
+internal fun Change.matches(projectId: String?, path: String, pattern: Pattern?): Boolean {
   if (!affectsPath(path) && !affectsProject(projectId)) return false
   if (pattern != null && !affectsMatching(pattern)) return false
   return true

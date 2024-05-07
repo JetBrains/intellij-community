@@ -15,7 +15,6 @@ import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.util.ui.JBUI
-import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
 import git4idea.ui.toolbar.GitToolbarWidgetAction
 import git4idea.ui.toolbar.GitToolbarWidgetAction.GitWidgetState
@@ -36,11 +35,10 @@ open class GitWidgetStep : NewUiOnboardingStep {
     val action = ClientProperty.get(button, CustomComponentAction.ACTION_KEY) as GitToolbarWidgetAction
     val popup = NewUiOnboardingUtil.showToolbarComboButtonPopup(button, action, disposable) ?: return null
 
-    val context = DataManager.getInstance().getDataContext(button)
+    val dataContext = DataManager.getInstance().getDataContext(button)
     val state = withContext(Dispatchers.Default) {
       readAction {
-        val gitRepository = GitBranchUtil.guessWidgetRepository(project, context)
-        GitToolbarWidgetAction.getWidgetState(project, gitRepository)
+        GitToolbarWidgetAction.getWidgetState(project, dataContext)
       }
     }
 

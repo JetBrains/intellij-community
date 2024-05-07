@@ -29,10 +29,10 @@ public class Incompatible {
       case RecordWithInterface(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'com.test.I'">Integer x</error>, D y) when true -> {}
       case RecordWithInterface(I x, D y) when true -> {}
       case <error descr="Deconstruction pattern can only be applied to a record, 'java.lang.Integer' is not a record">Integer</error>(double x) -> {}
-      case PrimitiveRecord(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'int'">Integer x</error>) when true -> {}
+      case PrimitiveRecord(<error descr="Primitive types in patterns, instanceof and switch are not supported at language level '21'">Integer x</error>) when true -> {}
       case PrimitiveRecord(int x) when true -> {}
       case IntegerRecord(Integer x) when true -> {}
-      case IntegerRecord(<error descr="Incompatible types. Found: 'int', required: 'java.lang.Integer'">int x</error>) when true -> {}
+      case IntegerRecord(<error descr="Primitive types in patterns, instanceof and switch are not supported at language level '21'">int x</error>) when true -> {}
       case <error descr="'Object' cannot be safely cast to 'T'">T(Integer x)</error> -> {}
 
     }

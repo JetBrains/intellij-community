@@ -100,7 +100,7 @@ object PyTypeShed {
         return true
       }
       val possiblePackage = name.firstComponent ?: return false
-      val alternativePossiblePackages = PyPsiPackageUtil.PACKAGES_TOPLEVEL[possiblePackage] ?: ""
+      val alternativePossiblePackages = PyPsiPackageUtil.moduleToPackageName(possiblePackage, default = "")
 
       val packageManager = PyPackageManagers.getInstance().forSdk(sdk)
       val installedPackages = if (ApplicationManager.getApplication().isHeadlessEnvironment && !PlatformUtils.isFleetBackend()) {

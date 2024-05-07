@@ -1299,7 +1299,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     DaemonProgressIndicator progress = new MyDaemonProgressIndicator(myProject, fileEditor);
     progress.setModalityProgress(null);
     progress.start();
-    myDaemonListenerPublisher.daemonStarting(List.of(fileEditor));
     if (isRestartToCompleteEssentialHighlightingRequested()) {
       progress.putUserData(COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY, true);
     }
@@ -1310,6 +1309,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     else if (PassExecutorService.LOG.isDebugEnabled()) {
       PassExecutorService.LOG.debug("Old indicator is " + (old == null ? "null" : "already cancelled"));
     }
+    myDaemonListenerPublisher.daemonStarting(List.of(fileEditor));
     return progress;
   }
 

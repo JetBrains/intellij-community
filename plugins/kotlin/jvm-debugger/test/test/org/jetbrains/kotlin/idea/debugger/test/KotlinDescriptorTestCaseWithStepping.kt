@@ -294,7 +294,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
         // the resulting order is different from the order in code when stepping some methods are filtered
         // due to de-prioritisation in JvmSmartStepIntoHandler.reorderWithSteppingFilters
-        if (stepTargets.none { DebugProcessImpl.isClassFiltered(it.className)}) {
+        if (runReadAction { stepTargets.none { DebugProcessImpl.isClassFiltered(it.className)} }) {
             try {
                 assertEquals("Smart step targets are not sorted by position in tree",
                              stepTargets.sortedByPositionInTree().map { runReadAction { it.presentation } },

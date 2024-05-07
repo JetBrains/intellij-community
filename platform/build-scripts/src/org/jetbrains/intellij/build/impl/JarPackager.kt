@@ -10,7 +10,6 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.lang.ImmutableZipFile
-import com.intellij.util.xml.dom.readXmlAsModel
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
@@ -138,7 +137,7 @@ class JarPackager private constructor(
       platformLayout: PlatformLayout?,
       moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
       dryRun: Boolean,
-      jarsWithSearchableOptions: Set<String> = emptySet(),
+      jarsWithSearchableOptions: SearchableOptionSetDescriptor? = null,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
       val packager = JarPackager(outDir = outputDir, platformLayout = platformLayout, isRootDir = isRootDir, context = context)
@@ -233,17 +232,12 @@ class JarPackager private constructor(
     includedModules: Collection<ModuleItem>,
     moduleOutputPatcher: ModuleOutputPatcher,
     layout: BaseLayout?,
-    jarsWithSearchableOptions: Set<String>,
+    jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
   ) {
     val addedModules = HashSet<String>()
 
     for (item in includedModules) {
-      computeSourcesForModule(
-        item = item,
-        moduleOutputPatcher = moduleOutputPatcher,
-        layout = layout,
-        jarsWithSearchableOptions = jarsWithSearchableOptions,
-      )
+      computeSourcesForModule(item = item, moduleOutputPatcher = moduleOutputPatcher, layout = layout, searchableOptionSetDescriptor = jarsWithSearchableOptions)
 
       addedModules.add(item.moduleName)
     }
@@ -252,90 +246,27 @@ class JarPackager private constructor(
       return
     }
 
-    // for now, check only direct dependencies of the main plugin module
-    val childPrefix = "${layout.mainModule}."
-    for (name in helper.getModuleDependencies(layout.mainModule)) {
-      if ((!name.startsWith(childPrefix) && name != "intellij.platform.commercial.verifier") || addedModules.contains(name)) {
-        continue
-      }
-
-      val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
-      addedModules.add(name)
-      if (platformLayout!!.includedModules.contains(moduleItem)) {
-        continue
-      }
-
-      computeSourcesForModule(
-        item = moduleItem,
-        moduleOutputPatcher = moduleOutputPatcher,
-        layout = layout,
-        jarsWithSearchableOptions = jarsWithSearchableOptions,
-      )
-    }
-
-    if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter") {
-      // todo PyCharm team why this module is being incorrectly published
-      return
-    }
-
-    // check content
-    readPluginDependenciesFromXml(context, context.findRequiredModule(layout.mainModule))
-      .filterNot { d -> !addedModules.add(d) }
-      .forEach { moduleName ->
-        val descriptor = readXmlAsModel(context.findFileInModuleSources(moduleName, "$moduleName.xml")!!)
-
-        computeSourcesForModule(
-          item = ModuleItem(
-            moduleName = moduleName,
-            // relative path with `/` is always packed by dev-mode, so, we don't need to fix resolving for now and can improve it later
-            relativeOutputFile = if (descriptor.getAttributeValue("package") == null) "modules/$moduleName.jar" else layout.getMainJarName(),
-            reason = "<- ${layout.mainModule} (plugin content)",
-          ),
-          moduleOutputPatcher = moduleOutputPatcher,
-          layout = layout,
-          jarsWithSearchableOptions = jarsWithSearchableOptions,
-        )
-      }
-
-    // check verifier in all included modules
-    val effectiveIncludedNonMainModules = LinkedHashSet<String>(layout.includedModules.size + addedModules.size)
-    layout.includedModules.mapTo(effectiveIncludedNonMainModules) { it.moduleName }
-    effectiveIncludedNonMainModules.remove(layout.mainModule)
-    effectiveIncludedNonMainModules.addAll(addedModules)
-    for (moduleName in effectiveIncludedNonMainModules) {
-      for (name in helper.getModuleDependencies(moduleName)) {
-        if (name != "intellij.platform.commercial.verifier" || addedModules.contains(name)) {
-          continue
-        }
-
-        val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
-        addedModules.add(name)
-        computeSourcesForModule(
-          item = moduleItem,
-          moduleOutputPatcher = moduleOutputPatcher,
-          layout = layout,
-          jarsWithSearchableOptions = jarsWithSearchableOptions,
-        )
-      }
-    }
+    inferModuleSources(
+      layout = layout,
+      platformLayout = platformLayout!!,
+      addedModules = addedModules,
+      helper = helper,
+      moduleOutputPatcher = moduleOutputPatcher,
+      jarsWithSearchableOptions = jarsWithSearchableOptions,
+      jarPackager = this,
+      context = context,
+    )
   }
 
-  private suspend fun computeSourcesForModule(
+  internal suspend fun computeSourcesForModule(
     item: ModuleItem,
     moduleOutputPatcher: ModuleOutputPatcher,
     layout: BaseLayout?,
-    jarsWithSearchableOptions: Set<String>,
+    searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   ) {
     val moduleName = item.moduleName
     val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
-
-    val searchableOptionsJarDir = if (jarsWithSearchableOptions.contains(item.relativeOutputFile)) {
-      context.paths.searchableOptionDir.resolve(item.relativeOutputFile)
-    }
-    else {
-      null
-    }
 
     val module = context.findRequiredModule(moduleName)
     val moduleOutDir = context.getModuleOutputDir(module)
@@ -355,13 +286,7 @@ class JarPackager private constructor(
     }
     else {
       assets.computeIfAbsent(outFile) { file ->
-        createAssetDescriptor(
-          outDir = outDir,
-          targetFile = file,
-          relativeOutputFile = item.relativeOutputFile,
-          context = context,
-          metaInfDir = moduleOutDir.resolve("META-INF"),
-        )
+        createAssetDescriptor(outDir = outDir, targetFile = file, relativeOutputFile = item.relativeOutputFile, context = context, metaInfDir = moduleOutDir.resolve("META-INF"))
       }
     }
 
@@ -376,8 +301,14 @@ class JarPackager private constructor(
       moduleSources.add(DirSource(dir = dir))
     }
 
-    if (searchableOptionsJarDir != null) {
-      moduleSources.add(DirSource(dir = searchableOptionsJarDir))
+    if (searchableOptionSetDescriptor != null) {
+      addSearchableOptionSources(
+        layout = layout,
+        moduleName = moduleName,
+        module = module,
+        moduleSources = moduleSources,
+        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+      )
     }
 
     val excludes = if (extraExcludes.isEmpty()) {
@@ -407,6 +338,34 @@ class JarPackager private constructor(
     }
   }
 
+  private fun addSearchableOptionSources(
+    layout: BaseLayout?,
+    moduleName: String,
+    module: JpsModule,
+    moduleSources: MutableList<Source>,
+    searchableOptionSetDescriptor: SearchableOptionSetDescriptor
+  ) {
+    if (layout is PluginLayout) {
+      if (moduleName == BUILT_IN_HELP_MODULE_NAME) {
+        return
+      }
+
+      if (moduleName == layout.mainModule) {
+        val pluginId = helper.getPluginIdByModule(module)
+        moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin(pluginId))
+      }
+      else {
+        // is it a product module?
+        context.findFileInModuleSources(module, "$moduleName.xml")?.let {
+          moduleSources.addAll(searchableOptionSetDescriptor.createSourceByModule(moduleName))
+        }
+      }
+    }
+    else if (moduleName == (context.productProperties.productPluginSourceModuleName ?: context.productProperties.applicationInfoModule)) {
+      moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin("com.intellij"))
+    }
+  }
+
   private suspend fun computeSourcesForModuleLibs(
     item: ModuleItem,
     layout: BaseLayout,
@@ -431,11 +390,7 @@ class JarPackager private constructor(
             continue
           }
 
-          if (helper.hasLibraryInDependencyChainOfModuleDependencies(
-              dependentModule = module,
-              libraryName = libName,
-              siblings = layout.includedModules,
-            )) {
+          if (helper.hasLibraryInDependencyChainOfModuleDependencies(dependentModule = module, libraryName = libName, siblings = layout.includedModules)) {
             continue
           }
 
@@ -1069,6 +1024,10 @@ private fun computeDistributionFileEntries(
 private fun updateModuleSourceHash(asset: AssetDescriptor) {
   for (sources in asset.includedModules.values) {
     for (source in sources) {
+      if (source is FileSource) {
+        continue
+      }
+
       check(source is DirSource)
       if (source.hash == 0L) {
         source.hash = computeHashForModuleOutput(source)

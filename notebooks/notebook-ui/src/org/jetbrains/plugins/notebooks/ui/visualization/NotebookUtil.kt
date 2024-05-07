@@ -46,7 +46,7 @@ inline fun paintNotebookCellBackgroundGutter(
   if (editor.getUserData(isFoldingEnabledKey) != true) {
     if (editor.editorKind == EditorKind.DIFF) return
     if (stripe != null) {
-      paintCellStripe(appearance, g, r, stripe, top, height)
+      paintCellStripe(appearance, g, r, stripe, top, height, editor)
     }
     if (stripeHover != null) {
       g.color = stripeHover
@@ -62,9 +62,10 @@ fun paintCellStripe(
   stripe: Color,
   top: Int,
   height: Int,
+  editor: Editor,
 ) {
   g.color = stripe
-  g.fillRect(r.width - appearance.getLeftBorderWidth(), top, appearance.getCellLeftLineWidth(), height)
+  g.fillRect(r.width - appearance.getLeftBorderWidth(), top, appearance.getCellLeftLineWidth(editor), height)
 }
 
 /**
@@ -77,7 +78,7 @@ fun paintCellGutter(inlayBounds: Rectangle,
                     r: Rectangle) {
   val appearance = editor.notebookAppearance
   appearance.getCellStripeColor(editor, lines)?.let { stripeColor ->
-    paintCellStripe(appearance, g, r, stripeColor, inlayBounds.y, inlayBounds.height)
+    paintCellStripe(appearance, g, r, stripeColor, inlayBounds.y, inlayBounds.height, editor)
   }
 }
 
@@ -108,3 +109,5 @@ fun installNotebookEditorView(editor: Editor) {
 }
 
 fun getJupyterCellSpacing(editor: Editor): Int = editor.getLineHeight()
+
+internal fun EditorKind.isDiff(): Boolean = this === EditorKind.DIFF

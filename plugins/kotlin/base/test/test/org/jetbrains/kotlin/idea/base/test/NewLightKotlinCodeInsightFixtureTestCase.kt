@@ -8,7 +8,8 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
@@ -21,8 +22,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.*
 
-abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
-    protected abstract val pluginKind: KotlinPluginMode
+abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase(),
+                                                          ExpectedPluginModeProvider {
 
     private val testRoot: String by lazy {
         val testClassPath = javaClass.getAnnotation(TestMetadata::class.java)?.value
@@ -67,10 +68,7 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     }
 
     override fun setUp() {
-        val isK2Plugin = pluginKind == KotlinPluginMode.K2
-        System.setProperty("idea.kotlin.plugin.use.k2", isK2Plugin.toString())
-        super.setUp()
-        checkKotlinPluginMode(pluginKind)
+        setUpWithKotlinPlugin { super.setUp() }
     }
 
     override fun tearDown() {
@@ -108,7 +106,7 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false) {
         val expectedPathString = getExpectedPath(expectedSuffix, addSuffixAfterExtension)
 
-        if (pluginKind == KotlinPluginMode.K2) {
+        if (pluginMode == KotlinPluginMode.K2) {
             val expectedPath = Paths.get(testDataPath, expectedPathString)
 
             val k2ExpectedPathString = getExpectedPath(".$K2_TEST_FILE_EXTENSION$expectedSuffix", addSuffixAfterExtension)

@@ -266,6 +266,25 @@ private fun doesMethodHaveSwitcher(location: Location): Boolean {
     return result
 }
 
+fun isOneLineMethod(location: Location): Boolean {
+    val method = location.safeMethod() ?: return false
+    val allLineLocations = method.safeAllLineLocations()
+    if (allLineLocations.isEmpty()) return false
+    if (allLineLocations.size == 1) return true
+
+    val inlineFunctionBorders = method.getInlineFunctionAndArgumentVariablesToBordersMap().values
+    return allLineLocations
+        .mapNotNull { loc ->
+            if (!isKotlinFakeLineNumber(loc) &&
+                !inlineFunctionBorders.any { loc in it })
+                loc.lineNumber()
+            else
+                null
+        }
+        .toHashSet()
+        .size == 1
+}
+
 fun findElementAtLine(file: KtFile, line: Int): PsiElement? {
     val lineStartOffset = file.getLineStartOffset(line) ?: return null
     val lineEndOffset = file.getLineEndOffset(line) ?: return null

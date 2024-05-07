@@ -1,6 +1,6 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.idea.IJIgnore
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
@@ -13,7 +13,6 @@ import org.junit.jupiter.params.ParameterizedTest
  * Tests for navigation to Gradle plugin source from a string literal with plugin ID in `plugins` closure.
  * @see <a href="https://docs.gradle.org/current/userguide/custom_plugins.html#sec:precompile_script_plugin">Gradle Precompiled plugins</a>
  */
-@IJIgnore(issue = "IDEA-352806")
 class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest

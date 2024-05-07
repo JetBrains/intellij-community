@@ -10,7 +10,7 @@ plugins {
 }
 
 enum class PythonType { PYTHON, CONDA }
-
+// If you decided to change a default path, make sure to update in `community/python/testSrc/com/jetbrains/env/PyEnvTestSettings.kt`
 val pythonsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHONS", File(buildDir, "pythons").path))
 val venvsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", File(buildDir, "envs").path))
 

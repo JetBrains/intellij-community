@@ -3,11 +3,9 @@ package com.intellij.platform.lvcs.impl
 
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.history.ActivityPresentationProvider
-import com.intellij.history.core.LocalHistoryFacade
+import com.intellij.history.core.*
 import com.intellij.history.core.changes.ChangeSet
-import com.intellij.history.core.collectChanges
 import com.intellij.history.core.matches
-import com.intellij.history.core.processContents
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -29,41 +27,53 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return facade.onChangeSetFinished(project, gateway, scope)
   }
 
-  override fun loadActivityList(scope: ActivityScope, scopeFilter: String?): List<ActivityItem> {
-    val result = mutableListOf<ActivityItem>()
+  override fun loadActivityList(scope: ActivityScope, scopeFilter: String?): ActivityData {
+    gateway.registerUnsavedDocuments(facade)
+
     val projectId = project.locationHash
     if (scope is ActivityScope.File) {
-      val path = gateway.getPathOrUrl(scope.file)
-      gateway.registerUnsavedDocuments(facade)
-      var lastLabel: ChangeSet? = null
-      facade.collectChanges(projectId, path, scopeFilter) { changeSet ->
-        if (changeSet.isSystemLabelOnly) return@collectChanges
-        if (changeSet.isLabelOnly) {
-          lastLabel = changeSet
-        }
-        else {
-          if (lastLabel != null) {
-            result.add(lastLabel!!.toActivityItem(scope))
-            lastLabel = null
-          }
-          result.add(changeSet.toActivityItem(scope))
-        }
-      }
+      return loadFileActivityList(projectId, scope, scopeFilter)
     }
-    else {
-      val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
-      for (changeSet in facade.changes) {
-        if (changeSet.isSystemLabelOnly) continue
-        if (changeSet.isLabelOnly) {
-          if (!changeSet.changes.any { it.affectsProject(projectId) }) continue
-        }
-        else {
-          if (!changeSet.changes.any { change -> paths.any { path -> change.affectsPath(path) } }) continue
-        }
-        result.add(changeSet.toActivityItem(scope))
+    return loadRecentActivityList(projectId, scope)
+  }
+
+  private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: String?): ActivityData {
+    val path = gateway.getPathOrUrl(scope.file)
+    val activityItems = mutableListOf<ActivityItem>()
+    val affectedPaths = mutableSetOf(path)
+
+    var lastLabel: ChangeSet? = null
+    facade.collectChanges(path, ChangeAndPathProcessor(projectId, scopeFilter, affectedPaths::add) { changeSet ->
+      if (changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
+      if (changeSet.isLabelOnly) {
+        lastLabel = changeSet
       }
+      else {
+        if (lastLabel != null) {
+          activityItems.add(lastLabel!!.toActivityItem(scope))
+          lastLabel = null
+        }
+        activityItems.add(changeSet.toActivityItem(scope))
+      }
+    })
+
+    return ActivityData(activityItems).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
+  }
+
+  private fun loadRecentActivityList(projectId: String, scope: ActivityScope): ActivityData {
+    val result = mutableListOf<ActivityItem>()
+    val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
+    for (changeSet in facade.changes) {
+      if (changeSet.isSystemLabelOnly) continue
+      if (changeSet.isLabelOnly) {
+        if (!changeSet.changes.any { it.affectsProject(projectId) }) continue
+      }
+      else {
+        if (!changeSet.changes.any { change -> paths.any { path -> change.affectsPath(path) } }) continue
+      }
+      result.add(changeSet.toActivityItem(scope))
     }
-    return result
+    return ActivityData(result).also { it.putUserData(AFFECTED_PATHS, paths) }
   }
 
   override fun filterActivityList(scope: ActivityScope, data: ActivityData, activityFilter: String?): Set<ActivityItem>? {

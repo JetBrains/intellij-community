@@ -6,11 +6,13 @@ import com.intellij.debugger.engine.ExtraSteppingFilter
 import com.intellij.debugger.engine.SuspendContext
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.application.runReadAction
-import com.sun.jdi.Location
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
-import org.jetbrains.kotlin.idea.debugger.base.util.*
-import org.jetbrains.kotlin.idea.debugger.core.*
+import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
+import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
+import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
 
 class KotlinExtraSteppingFilter : ExtraSteppingFilter {
     override fun isApplicable(context: SuspendContext?): Boolean {
@@ -19,16 +21,6 @@ class KotlinExtraSteppingFilter : ExtraSteppingFilter {
 
         if (!location.isInKotlinSources()) {
             return false
-        }
-
-        if (isInSuspendMethod(location) && isOnSuspendReturnOrReenter(location) && !isOneLineMethod(location)) {
-            return true
-        }
-
-        //stepped out from suspend function
-        val method = location.safeMethod()
-        if (method != null && isInvokeSuspendMethod(method) && location.safeLineNumber() < 0) {
-            return true
         }
 
         return runReadAction {
@@ -57,23 +49,4 @@ class KotlinExtraSteppingFilter : ExtraSteppingFilter {
     override fun getStepRequestDepth(context: SuspendContext?): Int {
         return StepRequest.STEP_INTO
     }
-}
-
-private fun isOneLineMethod(location: Location): Boolean {
-    val method = location.safeMethod() ?: return false
-    val allLineLocations = method.safeAllLineLocations()
-    if (allLineLocations.isEmpty()) return false
-    if (allLineLocations.size == 1) return true
-
-    val inlineFunctionBorders = method.getInlineFunctionAndArgumentVariablesToBordersMap().values
-    return allLineLocations
-        .mapNotNull { loc ->
-            if (!isKotlinFakeLineNumber(loc) &&
-                !inlineFunctionBorders.any { loc in it })
-                loc.lineNumber()
-            else
-                null
-        }
-        .toHashSet()
-        .size == 1
 }

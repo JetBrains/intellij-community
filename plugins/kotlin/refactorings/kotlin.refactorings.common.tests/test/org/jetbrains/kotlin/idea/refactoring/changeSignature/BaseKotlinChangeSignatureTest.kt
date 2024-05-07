@@ -99,6 +99,16 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     override fun setUp() {
         super.setUp()
+        myFixture.addClass(
+            """package org.jetbrains.annotations;
+import java.lang.annotation.*;
+@Documented
+@Retention(RetentionPolicy.CLASS)
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+public @interface NotNull {
+  String value() default "";
+}"""
+        )
         CodeStyle.getSettings(project).clearCodeStyleSettings()
     }
 
@@ -1525,6 +1535,12 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     fun testSAMRenameParam() = doJavaTest { newParameters[0].name = "p" }
 
     fun testSAMChangeParamType() = doJavaTest { newParameters[0].setType(objectPsiType) }
+
+    fun testJavaParameterToNotNull() = doJavaTest {
+        val notNullString =
+            JavaPsiFacade.getElementFactory(project).createTypeFromText("@org.jetbrains.annotations.NotNull String", method)
+        newParameters[0].setType(notNullString)
+    }
 
     fun testSAMRenameMethod() = doJavaTest { newName = "bar" }
 

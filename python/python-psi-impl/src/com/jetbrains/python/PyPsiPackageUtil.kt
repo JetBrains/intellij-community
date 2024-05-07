@@ -17,8 +17,7 @@ object PyPsiPackageUtil {
   /**
    * Contains mapping "importable top-level package" -> "package names on PyPI".
    */
-  @JvmField
-  val PACKAGES_TOPLEVEL: Map<String, String> = loadPackageAliases()
+  private val PACKAGES_TOPLEVEL: Map<String, String> = loadPackageAliases()
 
   @JvmStatic
   fun findPackage(packages: List<PyPackage>, name: String): PyPackage? {
@@ -31,8 +30,8 @@ object PyPsiPackageUtil {
     return null
   }
 
-  fun moduleToPackageName(module: String): String {
-    return PACKAGES_TOPLEVEL.getOrDefault(module, module)
+  fun moduleToPackageName(module: String, default: String = module): String {
+    return PACKAGES_TOPLEVEL.getOrDefault(module, default)
   }
 
   private fun loadPackageAliases(): Map<String, String> {

@@ -6,6 +6,7 @@
     <setupSdkStep implementation="com.intellij.cce.evaluation.SetupJDKStep"/>
     <lineCompletionVisitorFactory implementation="com.intellij.cce.visitor.JavaLineCompletionVisitorFactory"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaTestGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCodeGenerationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCompletionContextEvaluationVisitor"/>
   </extensions>
 </idea-plugin>

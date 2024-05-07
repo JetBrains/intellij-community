@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 abstract class AbstractK1PostfixTemplateTest : AbstractKotlinPostfixTemplateTestBase() {
-    override val pluginKind: KotlinPluginMode
+
+    override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K1
 }

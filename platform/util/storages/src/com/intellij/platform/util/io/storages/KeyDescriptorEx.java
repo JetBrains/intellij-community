@@ -43,11 +43,6 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K>, DataExternalizerE
       return (KeyDescriptorEx<K>)oldSchoolDescriptor;
     }
 
-    if(oldSchoolDescriptor instanceof EnumeratorIntegerDescriptor){
-      //noinspection unchecked
-      return (KeyDescriptorEx<K>)CommonKeyDescriptors.integer();
-    }
-
     return new KeyDescriptorEx<>() {
       @Override
       public int getHashCode(K value) { return oldSchoolDescriptor.getHashCode(value); }

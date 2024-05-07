@@ -13,8 +13,6 @@ import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -39,7 +37,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
-import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -51,7 +48,6 @@ import java.util.function.Predicate
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
 import kotlin.io.path.useLines
 
 /**
@@ -78,7 +74,7 @@ internal suspend fun buildDistribution(
   val traceContext = Context.current().asContextElement()
   val entries = coroutineScope {
     // must be completed before plugin building
-    context.executeStep(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) {
+    val searchableOptionSetDescriptor = context.executeStep(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) {
       buildSearchableOptions(productRunner = productRunner, context = context)
     }
 
@@ -89,7 +85,12 @@ internal suspend fun buildDistribution(
     val moduleOutputPatcher = ModuleOutputPatcher()
     val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext) {
       spanBuilder("build platform lib").useWithScope {
-        val result = buildLib(moduleOutputPatcher = moduleOutputPatcher, platform = state.platform, context = context)
+        val result = buildLib(
+          moduleOutputPatcher = moduleOutputPatcher,
+          platform = state.platform,
+          searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+          context = context
+        )
         if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
           scramble(state.platform, context)
         }
@@ -112,6 +113,7 @@ internal suspend fun buildDistribution(
         compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles,
         buildPlatformLibJob = buildPlatformJob,
         state = state,
+        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
         context = context,
       )
     }
@@ -121,6 +123,7 @@ internal suspend fun buildDistribution(
       pluginLayouts = pluginLayouts,
       isUpdateFromSources = isUpdateFromSources,
       buildPlatformJob = buildPlatformJob,
+      searchableOptionSetDescriptor = searchableOptionSetDescriptor,
       context = context,
     )
 
@@ -158,20 +161,36 @@ private suspend fun buildBundledPluginsForAllPlatforms(
   pluginLayouts: MutableSet<PluginLayout>,
   isUpdateFromSources: Boolean,
   buildPlatformJob: Deferred<List<DistributionFileEntry>>,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): List<DistributionFileEntry> {
   return coroutineScope {
     val commonDeferred = async {
-      doBuildBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context)
+      doBuildBundledPlugins(
+        state = state,
+        plugins = pluginLayouts,
+        isUpdateFromSources = isUpdateFromSources,
+        buildPlatformJob = buildPlatformJob,
+        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+        context = context,
+      )
     }
 
     val additionalDeferred = async {
-      copyAdditionalPlugins(context, context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
+      copyAdditionalPlugins(context = context, pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
     }
 
     val pluginDirs = getPluginDirs(context, isUpdateFromSources)
     val specificDeferred = async {
-      buildOsSpecificBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context, pluginDirs)
+      buildOsSpecificBundledPlugins(
+        state = state,
+        plugins = pluginLayouts,
+        isUpdateFromSources = isUpdateFromSources,
+        buildPlatformJob = buildPlatformJob,
+        context = context,
+        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+        pluginDirs = pluginDirs,
+      )
     }
 
     val common = commonDeferred.await()
@@ -230,9 +249,17 @@ suspend fun buildBundledPlugins(
   plugins: Collection<PluginLayout>,
   isUpdateFromSources: Boolean,
   buildPlatformJob: Job?,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ) {
-  doBuildBundledPlugins(state, plugins, isUpdateFromSources, buildPlatformJob, context)
+  doBuildBundledPlugins(
+    state = state,
+    plugins = plugins,
+    isUpdateFromSources = isUpdateFromSources,
+    buildPlatformJob = buildPlatformJob,
+    searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+    context = context,
+  )
 }
 
 private suspend fun doBuildBundledPlugins(
@@ -240,6 +267,7 @@ private suspend fun doBuildBundledPlugins(
   plugins: Collection<PluginLayout>,
   isUpdateFromSources: Boolean,
   buildPlatformJob: Job?,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build bundled plugins")
@@ -261,6 +289,7 @@ private suspend fun doBuildBundledPlugins(
         state = state,
         context = context,
         buildPlatformJob = buildPlatformJob,
+        searchableOptionSet = searchableOptionSetDescriptor,
       )
 
       buildPlatformSpecificPluginResources(
@@ -279,6 +308,7 @@ private suspend fun buildOsSpecificBundledPlugins(
   isUpdateFromSources: Boolean,
   buildPlatformJob: Job?,
   context: BuildContext,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
 ): Map<SupportedDistribution, List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>> {
   return spanBuilder("build os-specific bundled plugins")
@@ -312,6 +342,7 @@ private suspend fun buildOsSpecificBundledPlugins(
                 state = state,
                 context = context,
                 buildPlatformJob = buildPlatformJob,
+                searchableOptionSet = searchableOptionSetDescriptor,
               )
             }
         }
@@ -349,6 +380,7 @@ suspend fun buildNonBundledPlugins(
   compressPluginArchive: Boolean,
   buildPlatformLibJob: Job?,
   state: DistributionBuilderState,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): List<DistributionFileEntry> {
   return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope { span ->
@@ -373,24 +405,27 @@ suspend fun buildNonBundledPlugins(
     val autoPublishPluginChecker = loadPluginAutoPublishList(context)
     val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                         !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
-    // we don't simplify the layout for non-bundled plugins, because PluginInstaller not ready for this (see rootEntryName)
     val mappings = buildPlugins(
       moduleOutputPatcher = moduleOutputPatcher,
       plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
       targetDir = stageDir,
       state = state,
+      searchableOptionSet = searchableOptionSetDescriptor,
       context = context,
       buildPlatformJob = buildPlatformLibJob,
     ) { plugin, pluginDirOrFile ->
-      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
-      val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
-      val pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
-      val pluginVersion = if (Files.exists(pluginXmlPath)) {
-        plugin.versionEvaluator.evaluate(pluginXmlPath, context.pluginBuildNumber, context)
-      }
-      else {
+      val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
         context.buildNumber
       }
+      else {
+        plugin.versionEvaluator.evaluate(
+          pluginXmlSupplier = { (context as BuildContextImpl).jarPackagerDependencyHelper.getPluginXmlContent(context.findRequiredModule(plugin.mainModule)) },
+          ideBuildVersion = context.pluginBuildNumber,
+          context = context,
+        ).pluginVersion
+      }
+
+      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
       val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
       val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
       pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
@@ -407,6 +442,7 @@ suspend fun buildNonBundledPlugins(
         targetDir = autoUploadingDir,
         moduleOutputPatcher = moduleOutputPatcher,
         state = state,
+        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
         context = context,
       )
       pluginSpecs.add(spec)
@@ -458,12 +494,15 @@ private suspend fun validatePlugin(path: Path, context: BuildContext) {
   }
 }
 
-private suspend fun buildHelpPlugin(helpPlugin: PluginLayout,
-                                    pluginsToPublishDir: Path,
-                                    targetDir: Path,
-                                    moduleOutputPatcher: ModuleOutputPatcher,
-                                    state: DistributionBuilderState,
-                                    context: BuildContext): PluginRepositorySpec {
+private suspend fun buildHelpPlugin(
+  helpPlugin: PluginLayout,
+  pluginsToPublishDir: Path,
+  targetDir: Path,
+  moduleOutputPatcher: ModuleOutputPatcher,
+  state: DistributionBuilderState,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  context: BuildContext,
+): PluginRepositorySpec {
   val directory = helpPlugin.directoryName
   val destFile = targetDir.resolve("$directory.zip")
   spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope {
@@ -473,6 +512,7 @@ private suspend fun buildHelpPlugin(helpPlugin: PluginLayout,
       targetDir = pluginsToPublishDir.resolve(directory),
       state = state,
       context = context,
+      searchableOptionSet = searchableOptionSetDescriptor,
       buildPlatformJob = null,
     )
     zipWithCompression(targetFile = destFile, dirs = mapOf(pluginsToPublishDir.resolve(directory) to ""))
@@ -481,10 +521,7 @@ private suspend fun buildHelpPlugin(helpPlugin: PluginLayout,
   return PluginRepositorySpec(pluginZip = destFile, pluginXml = moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
 }
 
-internal suspend fun generateProjectStructureMapping(
-  context: BuildContext,
-  platformLayout: PlatformLayout,
-): Pair<List<DistributionFileEntry>, List<DistributionFileEntry>> {
+internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLayout, context: BuildContext): Pair<List<DistributionFileEntry>, List<DistributionFileEntry>> {
   return coroutineScope {
     val moduleOutputPatcher = ModuleOutputPatcher()
     val libDirLayout = async {
@@ -493,6 +530,7 @@ internal suspend fun generateProjectStructureMapping(
         targetDirectory = context.paths.distAllDir,
         platform = platformLayout,
         context = context,
+        searchableOptionSetDescriptor = null,
         copyFiles = false,
       )
     }
@@ -512,7 +550,7 @@ internal suspend fun generateProjectStructureMapping(
           copyFiles = false,
           moduleOutputPatcher = moduleOutputPatcher,
           includedModules = plugin.includedModules,
-          jarsWithSearchableOptions = emptySet(),
+          searchableOptionSet = null,
           context = context,
         ).first)
       }
@@ -528,6 +566,7 @@ private suspend fun buildPlugins(
   state: DistributionBuilderState,
   context: BuildContext,
   buildPlatformJob: Job?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> Unit)? = null,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
@@ -537,16 +576,10 @@ private suspend fun buildPlugins(
 
   val scrambleTasks = mutableListOf<ScrambleTask>()
 
-  val jarsWithSearchableOptions = getJarsWithSearchableOptions(context)
   val entries = coroutineScope {
     plugins.map { plugin ->
-      if (plugin.mainModule != "intellij.platform.builtInHelp") {
-        checkOutputOfPluginModules(
-          mainPluginModule = plugin.mainModule,
-          includedModules = plugin.includedModules,
-          moduleExcludes = plugin.moduleExcludes,
-          context = context,
-        )
+      if (plugin.mainModule != BUILT_IN_HELP_MODULE_NAME) {
+        checkOutputOfPluginModules(mainPluginModule = plugin.mainModule, includedModules = plugin.includedModules, moduleExcludes = plugin.moduleExcludes, context = context)
         patchPluginXml(
           moduleOutputPatcher = moduleOutputPatcher,
           plugin = plugin,
@@ -554,6 +587,7 @@ private suspend fun buildPlugins(
           releaseVersion = context.applicationInfo.releaseVersionForLicensing,
           pluginsToPublish = state.pluginsToPublish,
           context = context,
+          helper = (context as BuildContextImpl).jarPackagerDependencyHelper,
         )
       }
 
@@ -568,7 +602,7 @@ private suspend fun buildPlugins(
             copyFiles = true,
             moduleOutputPatcher = moduleOutputPatcher,
             includedModules = plugin.includedModules,
-            jarsWithSearchableOptions = jarsWithSearchableOptions,
+            searchableOptionSet = searchableOptionSet,
             context = context,
           )
           pluginBuilt?.invoke(plugin, file)
@@ -579,8 +613,7 @@ private suspend fun buildPlugins(
       if (!plugin.pathsToScramble.isEmpty()) {
         val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
         if (scrambleTool == null) {
-          Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled",
-                                  attributes)
+          Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled", attributes)
         }
         else if (isScramblingSkipped) {
           Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
@@ -616,24 +649,6 @@ private suspend fun buildPlugins(
     }
   }
   return entries
-}
-
-private suspend fun getJarsWithSearchableOptions(context: BuildContext): Set<String> {
-  return withContext(Dispatchers.IO) {
-    try {
-      val result = HashSet<String>()
-      val dir = context.paths.searchableOptionDir
-      Files.newDirectoryStream(dir).use { stream ->
-        for (file in stream) {
-          result.add(file.fileName.toString())
-        }
-      }
-      result
-    }
-    catch (_: IOException) {
-      emptySet()
-    }
-  }
 }
 
 private suspend fun buildPlatformSpecificPluginResources(
@@ -698,23 +713,32 @@ private fun basePath(buildContext: BuildContext, moduleName: String): Path {
   return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
 }
 
-suspend fun buildLib(moduleOutputPatcher: ModuleOutputPatcher,
-                     platform: PlatformLayout,
-                     context: BuildContext): List<DistributionFileEntry> {
-  val libDirMappings = layoutPlatformDistribution(moduleOutputPatcher = moduleOutputPatcher,
-                                                  targetDirectory = context.paths.distAllDir,
-                                                  platform = platform,
-                                                  context = context,
-                                                  copyFiles = true)
+suspend fun buildLib(
+  moduleOutputPatcher: ModuleOutputPatcher,
+  platform: PlatformLayout,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  context: BuildContext,
+): List<DistributionFileEntry> {
+  val libDirMappings = layoutPlatformDistribution(
+    moduleOutputPatcher = moduleOutputPatcher,
+    targetDirectory = context.paths.distAllDir,
+    platform = platform,
+    copyFiles = true,
+    searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+    context = context,
+  )
   context.proprietaryBuildTools.scrambleTool?.validatePlatformLayout(platform.includedModules, context)
   return libDirMappings
 }
 
-suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
-                                       targetDirectory: Path,
-                                       platform: PlatformLayout,
-                                       context: BuildContext,
-                                       copyFiles: Boolean): List<DistributionFileEntry> {
+suspend fun layoutPlatformDistribution(
+  moduleOutputPatcher: ModuleOutputPatcher,
+  targetDirectory: Path,
+  platform: PlatformLayout,
+  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  copyFiles: Boolean,
+  context: BuildContext,
+): List<DistributionFileEntry> {
   if (copyFiles) {
     coroutineScope {
       createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher = moduleOutputPatcher, context = context)
@@ -742,7 +766,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
         copyFiles = copyFiles,
         moduleOutputPatcher = moduleOutputPatcher,
         includedModules = platform.includedModules,
-        jarsWithSearchableOptions = if (copyFiles) getJarsWithSearchableOptions(context) else emptySet(),
+        searchableOptionSet = searchableOptionSetDescriptor,
         context = context,
       ).first
     }
@@ -983,7 +1007,7 @@ suspend fun layoutDistribution(
   copyFiles: Boolean = true,
   moduleOutputPatcher: ModuleOutputPatcher,
   includedModules: Collection<ModuleItem>,
-  jarsWithSearchableOptions: Set<String>,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
@@ -1013,15 +1037,17 @@ suspend fun layoutDistribution(
     tasks.add(async {
       val outputDir = targetDirectory.resolve(LIB_DIRECTORY)
       spanBuilder("pack").setAttribute("outputDir", outputDir.toString()).useWithScope {
-        JarPackager.pack(includedModules = includedModules,
-                         outputDir = outputDir,
-                         isRootDir = layout is PlatformLayout,
-                         layout = layout,
-                         platformLayout = platformLayout,
-                         moduleOutputPatcher = moduleOutputPatcher,
-                         jarsWithSearchableOptions = jarsWithSearchableOptions,
-                         dryRun = !copyFiles,
-                         context = context)
+        JarPackager.pack(
+          includedModules = includedModules,
+          outputDir = outputDir,
+          isRootDir = layout is PlatformLayout,
+          layout = layout,
+          platformLayout = platformLayout,
+          moduleOutputPatcher = moduleOutputPatcher,
+          jarsWithSearchableOptions = searchableOptionSet,
+          dryRun = !copyFiles,
+          context = context,
+        )
       }
     })
 
@@ -1247,11 +1273,7 @@ private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress
   }
 }
 
-private fun archivePlugin(optimized: Boolean,
-                      target: Path,
-                      compress: Boolean,
-                      source: Path,
-                      context: BuildContext) {
+private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, source: Path, context: BuildContext) {
   if (optimized) {
     writeNewZipWithoutIndex(target, compress = compress) { zipCreator ->
       ZipArchiver(zipCreator).use { archiver ->
@@ -1350,94 +1372,4 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
     }
   }
   return classPath
-}
-
-suspend fun buildSearchableOptions(
-  context: BuildContext,
-  systemProperties: Map<String, String> = emptyMap(),
-): Path? {
-  return buildSearchableOptions(
-    productRunner = IntellijProductRunner.createRunner(context),
-    context = context,
-    systemProperties = systemProperties,
-  )
-}
-
-/**
- * Build index which is used to search options in the Settings dialog.
- */
-private suspend fun buildSearchableOptions(
-  productRunner: IntellijProductRunner,
-  context: BuildContext,
-  systemProperties: Map<String, String> = emptyMap(),
-): Path? {
-  val span = Span.current()
-  if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
-    span.addEvent("skip building searchable options index")
-    return null
-  }
-
-  val targetDirectory = context.paths.searchableOptionDir
-  NioFiles.deleteRecursively(targetDirectory)
-
-  val locales = mutableListOf(SearchableOptionLocalization(Locale.ENGLISH.toLanguageTag()))
-
-  // bundled maven is also downloaded during traverseUI execution in an external process,
-  // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
-  // so it's pre-downloaded with proper synchronization
-  coroutineScope {
-    launch {
-      BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
-    }
-    launch {
-      BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
-    }
-    launch {
-      BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-    }
-    launch {
-      BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-    }
-  }
-  val modules = withContext(Dispatchers.IO) {
-    coroutineScope {
-      locales.forEach { locale: SearchableOptionLocalization ->
-        launch {
-          // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-          // It'll process all UI elements in the `Settings` dialog and build an index for them.
-          productRunner.runProduct(
-            arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
-            additionalSystemProperties = systemProperties +
-                                         locale.systemProperties,
-            isLongRunning = true,
-          )
-        }
-      }
-    }
-    check(Files.isDirectory(targetDirectory)) {
-      "Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run."
-    }
-    Files.newDirectoryStream(targetDirectory).use { it.toList() }
-  }
-  check(!modules.isEmpty()) {
-    "Failed to build searchable options index: $targetDirectory is empty. See log above for error output from traverseUI run."
-  }
-
-  span.setAttribute(AttributeKey.longKey("moduleCountWithSearchableOptions"), modules.size)
-  span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"), modules.map { targetDirectory.relativize(it).toString() })
-
-  return targetDirectory
-}
-
-private class SearchableOptionLocalization(langTag: String) {
-  private val isEng = Locale.ENGLISH.toLanguageTag().equals(langTag)
-  val systemProperties = if (isEng) {
-    emptyMap()
-  }
-  else {
-    mapOf(
-      "intellij.searchableOptions.i18n.enabled" to "true",
-      "intellij.searchableOptions.i18n.locale" to langTag //TODO: use corresponding property after IJPL-148813
-    )
-  }
 }

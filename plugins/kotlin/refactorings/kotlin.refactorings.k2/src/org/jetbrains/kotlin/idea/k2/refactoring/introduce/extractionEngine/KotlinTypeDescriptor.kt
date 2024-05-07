@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -158,6 +159,9 @@ fun isResolvableInScope(typeToCheck: KtType, scope: KtElement, typeParameters: M
     }
     if (typeToCheck is KtIntersectionType) {
         return false
+    }
+    if (typeToCheck is KtDefinitelyNotNullType) {
+        if (!isResolvableInScope(typeToCheck.original, scope, typeParameters)) return false
     }
     return true
 }

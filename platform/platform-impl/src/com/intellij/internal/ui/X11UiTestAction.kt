@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.X11UiUtil
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.SimpleListCellRenderer
@@ -150,6 +151,20 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
             withContext(Dispatchers.EDT) {
               label.text = theme
             }
+          }
+        }
+        row("Window buttons layout:") {
+          val state = WindowButtonsConfiguration.getInstance()?.state
+          val text = if (state == null) "Cannot parse" else "rightPosition = ${state.rightPosition}, buttons = ${state.buttons}"
+          val label = label(text)
+            .comment("")
+          scope.launch {
+            val config = X11UiUtil.getWindowButtonsConfig()
+            withContext(Dispatchers.EDT) {
+              label.comment?.text = "Parsed from gsettings value: $config"
+            }
+          }
+          WindowButtonsConfiguration.getInstance()?.state?.let {
           }
         }
       }

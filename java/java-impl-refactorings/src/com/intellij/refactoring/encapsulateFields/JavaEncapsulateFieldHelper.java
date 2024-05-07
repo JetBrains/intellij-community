@@ -92,8 +92,8 @@ public final class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
 
     final FieldDescriptor fieldDescriptor = usage.getFieldDescriptor();
     PsiField field = fieldDescriptor.getField();
-    boolean processGet = descriptor.isToEncapsulateGet();
-    boolean processSet = descriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL);
+    boolean processGet = descriptor.isToEncapsulateGet() && getter != null;
+    boolean processSet = descriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL) && setter != null;
     if (!processGet && !processSet) return true;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(descriptor.getTargetClass().getProject());
 

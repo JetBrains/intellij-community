@@ -8,9 +8,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 
-internal class CommandSearchPresenter(private val project: Project,
-                             private val editor: Editor,
-                             private val promptModel: TerminalPromptModel) {
+internal class CommandSearchPresenter(
+  private val project: Project,
+  private val editor: Editor,
+  private val promptModel: TerminalPromptModel
+) {
   fun showCommandSearch(history: List<String>) {
     val command = promptModel.commandText
     // Reverse the history to move the most recent values to the top.
@@ -29,4 +31,5 @@ internal class CommandSearchPresenter(private val project: Project,
     val Lookup.isTerminalCommandSearch: Boolean
       get() = (this as? UserDataHolder)?.getUserData(IS_COMMAND_SEARCH_LOOKUP_KEY) == true
   }
+
 }

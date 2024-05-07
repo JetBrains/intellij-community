@@ -58,7 +58,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     configureVcsIndexing(commandArgs)
 
     runWarmupActivity {
-      initLogger(args)
+      val loggingJob = initLogger(args)
       waitIndexInitialization()
       val project = try {
         importOrOpenProjectAsync(commandArgs)
@@ -79,6 +79,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
         waitForRefreshQueue()
       }
       ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = true)
+      loggingJob.cancel()
     }
 
     exitApplication()
@@ -225,7 +226,7 @@ private suspend fun buildProject(project: Project, commandArgs: WarmupProjectArg
   }
 }
 
-private suspend fun runWarmupActivity(action: suspend () -> Unit) {
+private suspend fun runWarmupActivity(action: suspend CoroutineScope.() -> Unit) {
   val indexedFiles = installStatisticsCollector()
   WarmupStatus.statusChanged(WarmupStatus.InProgress)
   try {

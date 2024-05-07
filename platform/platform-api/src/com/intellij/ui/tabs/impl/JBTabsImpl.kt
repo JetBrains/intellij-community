@@ -2437,7 +2437,8 @@ open class JBTabsImpl(
     relayout(forced, layoutNow)
   }
 
-  private fun updateEntryPointToolbar() {
+  @Internal
+  fun updateEntryPointToolbar() {
     entryPointToolbar?.let {
       remove(it.component)
     }
@@ -3097,7 +3098,7 @@ open class JBTabsImpl(
   val tabHGap: Int
     get() = -myBorder.thickness
 
-  fun getDecoration(): UiDecoration? = uiDecorator?.getDecoration() ?: defaultDecorator.getDecoration()
+  fun getDecoration(): UiDecoration = uiDecorator?.getDecoration() ?: defaultDecorator.getDecoration()
 
   override fun toString(): String = "JBTabs visible=$visibleInfos selected=$mySelectedInfo"
 

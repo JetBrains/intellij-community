@@ -330,7 +330,7 @@ data class BuildOptions(
   }
 
   /**
-   * When `true`, attempts to locate a local debug build of cross-platform launcher.
+   * When `true`, attempts to locate a local release build of cross-platform launcher.
    */
   var useLocalLauncher: Boolean = false
 

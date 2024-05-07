@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
@@ -53,7 +53,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
       additionalJobs = additionalJobs.length == 0 ? stdJobDescriptors.BUILD_GRAPH_ONLY :
                        ArrayUtil.append(additionalJobs, stdJobDescriptors.BUILD_GRAPH);
     }
-    if (tool instanceof GlobalSimpleInspectionTool) {
+    if (tool.isGlobalSimpleInspectionTool()) {
       // if we run e.g., just "Annotator" simple global tool then myJobDescriptors are empty but LOCAL_ANALYSIS is used from inspectFile()
       additionalJobs = additionalJobs.length == 0 ? stdJobDescriptors.LOCAL_ANALYSIS_ARRAY :
                        ArrayUtil.contains(stdJobDescriptors.LOCAL_ANALYSIS, additionalJobs) ? additionalJobs :

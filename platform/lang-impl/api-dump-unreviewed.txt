@@ -4021,6 +4021,7 @@ f:com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorPanel
 c:com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler
 - com.intellij.codeInsight.CodeInsightActionHandler
 - <init>(Z):V
+- <init>(Z,com.intellij.lang.annotation.HighlightSeverity):V
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - startInWriteAction():Z
 f:com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor
@@ -4390,6 +4391,11 @@ pc:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$DefaultUIController
 com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createRenderer(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
+f:com.intellij.codeInsight.daemon.impl.TrafficLightStatusItemMetadata
+- com.intellij.openapi.editor.markup.StatusItemMetadata
+- <init>(I,com.intellij.lang.annotation.HighlightSeverity):V
+- f:getCount():I
+- f:getSeverity():com.intellij.lang.annotation.HighlightSeverity
 f:com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl
 - com.intellij.problems.WolfTheProblemSolver
 - com.intellij.openapi.Disposable
@@ -4421,6 +4427,7 @@ c:com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
+- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - p:isValidForLookup():Z
 f:com.intellij.codeInsight.daemon.impl.actions.GotoPrevElementUnderCaretUsageAction
@@ -4435,6 +4442,7 @@ c:com.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:getHandler():com.intellij.codeInsight.CodeInsightActionHandler
+- p:getHandler(com.intellij.openapi.actionSystem.DataContext):com.intellij.codeInsight.CodeInsightActionHandler
 - p:isValidForFile(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - p:isValidForLookup():Z
 f:com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction
@@ -6734,6 +6742,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer
 - calcWidthInPixels(com.intellij.openapi.editor.Inlay):I
 - getContextMenuGroupId(com.intellij.openapi.editor.Inlay):java.lang.String
 - f:getMouseArea(java.awt.Point):com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
+- f:getPassClass():java.lang.Class
 - f:getPresentationList():com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 - f:getProviderId():java.lang.String
 - f:handleHover(com.intellij.openapi.editor.event.EditorMouseEvent):com.intellij.ui.LightweightHint
@@ -6743,7 +6752,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer
 - f:setInlay(com.intellij.openapi.editor.Inlay):V
 - f:updateState(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z):V
 f:com.intellij.codeInsight.hints.declarative.impl.InlayData
-- <init>(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class):V
+- <init>(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.Class):V
 - f:component1():com.intellij.codeInsight.hints.declarative.InlayPosition
 - f:component2():java.lang.String
 - f:component3():Z
@@ -6752,11 +6761,13 @@ f:com.intellij.codeInsight.hints.declarative.impl.InlayData
 - f:component6():Z
 - f:component7():java.util.List
 - f:component8():java.lang.Class
-- f:copy(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class):com.intellij.codeInsight.hints.declarative.impl.InlayData
-- bs:copy$default(com.intellij.codeInsight.hints.declarative.impl.InlayData,com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.InlayData
+- f:component9():java.lang.Class
+- f:copy(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.Class):com.intellij.codeInsight.hints.declarative.impl.InlayData
+- bs:copy$default(com.intellij.codeInsight.hints.declarative.impl.InlayData,com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,Z,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.Class,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.InlayData
 - equals(java.lang.Object):Z
 - f:getDisabled():Z
 - f:getHasBackground():Z
+- f:getPassClass():java.lang.Class
 - f:getPayloads():java.util.List
 - f:getPosition():com.intellij.codeInsight.hints.declarative.InlayPosition
 - f:getProviderClass():java.lang.Class
@@ -6779,8 +6790,8 @@ f:com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 - f:getEntries():java.util.List
 f:com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 - sf:Companion:com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList$Companion
-- <init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z,java.util.Map,java.lang.Class,java.lang.String):V
-- b:<init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z,java.util.Map,java.lang.Class,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z,java.util.Map,java.lang.Class,java.lang.String,java.lang.Class):V
+- b:<init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,Z,java.util.Map,java.lang.Class,java.lang.String,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getEntries():com.intellij.codeInsight.hints.declarative.impl.InlayPresentationEntry[]
 - f:getHasBackground():Z
 - f:getMouseArea(java.awt.Point,com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage):com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
@@ -6811,7 +6822,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.InlayTags
 - sf:TEXT_TAG:B
 f:com.intellij.codeInsight.hints.declarative.impl.InlayTreeSinkImpl
 - com.intellij.codeInsight.hints.declarative.InlayTreeSink
-- <init>(java.lang.String,java.util.Map,Z,Z,java.lang.Class):V
+- <init>(java.lang.String,java.util.Map,Z,Z,java.lang.Class,java.lang.Class):V
 - addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,Z,kotlin.jvm.functions.Function1):V
 - f:finish():java.util.List
 - whenOptionEnabled(java.lang.String,kotlin.jvm.functions.Function0):V
@@ -10278,7 +10289,6 @@ f:com.intellij.codeInspection.ui.InspectionTree
 - getToolTipText(java.awt.event.MouseEvent):java.lang.String
 - removeSelectedProblems():V
 - selectNode(com.intellij.codeInspection.ui.InspectionTreeNode):V
-- setQueueUpdate(Z):V
 com.intellij.codeInspection.ui.InspectionTreeLoadingProgressAware
 - com.intellij.openapi.Disposable
 - dispose():V
@@ -15584,6 +15594,7 @@ f:com.intellij.ide.fileTemplates.impl.BundledFileTemplate
 - getDescription():java.lang.String
 - getExtension():java.lang.String
 - getName():java.lang.String
+- getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - isDefault():Z
 - isLiveTemplateEnabled():Z
 - isLiveTemplateEnabledByDefault():Z
@@ -15601,13 +15612,11 @@ f:com.intellij.ide.fileTemplates.impl.CustomFileTemplate
 - setExtension(java.lang.String):V
 - setName(java.lang.String):V
 f:com.intellij.ide.fileTemplates.impl.DefaultTemplate
-- <init>(java.lang.String,java.lang.String,java.net.URL,java.net.URL):V
-- <init>(java.lang.String,java.lang.String,java.util.function.Function,java.util.function.Function,java.lang.String,java.nio.file.Path):V
+- <init>(java.lang.String,java.lang.String,java.util.function.Function,java.util.function.Function,java.lang.String,java.nio.file.Path,com.intellij.openapi.extensions.PluginDescriptor):V
 - f:getDescriptionText():java.lang.String
 - f:getExtension():java.lang.String
 - f:getName():java.lang.String
 - f:getQualifiedName():java.lang.String
-- f:getTemplateURL():java.net.URL
 - f:getText():java.lang.String
 - toString():java.lang.String
 a:com.intellij.ide.fileTemplates.impl.FileTemplateBase
@@ -17938,6 +17947,7 @@ a:com.intellij.ide.todo.TodoPanel
 - sf:TODO_PANEL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - pf:myProject:com.intellij.openapi.project.Project
 - pf:myTodoView:com.intellij.ide.todo.TodoView
+- <init>(com.intellij.ide.todo.TodoView,com.intellij.ide.todo.TodoPanelSettings,Z,com.intellij.ui.content.Content):V
 - p:createAutoScrollToSourceAction():com.intellij.openapi.actionSystem.AnAction
 - p:createCenterComponent():javax.swing.JComponent
 - p:createGroupByActionGroup():com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -17993,6 +18003,7 @@ a:com.intellij.ide.todo.TodoTreeBuilder
 - pf:myFile2Highlighter:java.util.Map
 - pf:myFileTree:com.intellij.ide.todo.FileTree
 - pf:myProject:com.intellij.openapi.project.Project
+- <init>(javax.swing.JTree,com.intellij.openapi.project.Project):V
 - pf:clearCache():V
 - p:collectFiles(java.util.function.Consumer):V
 - pa:createTreeStructure():com.intellij.ide.todo.TodoTreeStructure
@@ -18190,14 +18201,11 @@ c:com.intellij.ide.todo.nodes.TodoTreeHelper
 - getProject():com.intellij.openapi.project.Project
 - getSelectedElement(java.lang.Object):com.intellij.psi.PsiElement
 - skipDirectory(com.intellij.psi.PsiDirectory):Z
-f:com.intellij.ide.ui.search.TraverseUIStarter
-- com.intellij.openapi.application.ApplicationStarter
-- <init>():V
-- getRequiredModality():I
-- main(java.util.List):V
-- premain(java.util.List):V
-- s:startup(java.nio.file.Path,Z):V
-- s:startup(java.nio.file.Path,Z,Z):V
+f:com.intellij.ide.ui.search.TraverseUIStarterKt
+- sf:buildSearchableOptions(java.nio.file.Path,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:buildSearchableOptions$default(java.nio.file.Path,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:doBuildSearchableOptions(java.util.Map,java.nio.file.Path,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:doBuildSearchableOptions$default(java.util.Map,java.nio.file.Path,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 a:com.intellij.ide.util.AbstractTreeClassChooserDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.ide.util.TreeChooser
@@ -25917,6 +25925,7 @@ c:com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler
 - getActionName(com.intellij.psi.PsiElement[]):java.lang.String
 - s:resolveDirectory(com.intellij.psi.PsiDirectory):com.intellij.psi.PsiDirectory
 - s:updateAddedFiles(java.util.List):V
+- s:updateAddedFiles(java.util.List,java.util.List):V
 f:com.intellij.refactoring.copy.CopyHandler
 - s:canClone(com.intellij.psi.PsiElement[]):Z
 - s:canCopy(com.intellij.psi.PsiElement[]):Z
@@ -28874,8 +28883,6 @@ f:com.intellij.util.PatternValuesIndex
 - <init>():V
 - s:buildStringIndex(java.util.Collection):java.util.Set
 - s:processStringValues(java.util.Collection,com.intellij.util.PairProcessor):Z
-f:com.intellij.util.ProjectConfigurationUtil
-- sf:awaitCompleteProjectConfiguration(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.util.TextFieldCompletionProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - com.intellij.util.textCompletion.TextCompletionProvider
@@ -29248,23 +29255,19 @@ com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator
 - getIndexingProgressText():java.lang.String
 - a:getOrigin():com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOrigin
 - getRootsScanningProgressText():java.lang.String
-f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
+*f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 - com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
+- *sf:Companion:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
 - <init>():V
 - <init>(java.nio.file.Path):V
 - dispose():V
 - f:getCurrent():com.intellij.util.indexing.dependencies.AppIndexingDependenciesToken
 - f:getCurrentTokenInTest():com.intellij.util.indexing.dependencies.AppIndexingDependenciesToken
 - f:invalidateAllStamps(java.lang.String):V
-f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
+*f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
 com.intellij.util.indexing.dependencies.FileIndexingStamp
 - a:isSame(I):Z
 - a:store(java.util.function.IntConsumer):V
-f:com.intellij.util.indexing.dependencies.FutureScanningRequestToken
-- <init>():V
-- f:isSuccessful():Z
-- f:markSuccessful():V
 com.intellij.util.indexing.dependencies.IndexingRequestToken
 - a:getFileIndexingStamp(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.dependencies.FileIndexingStamp
 f:com.intellij.util.indexing.dependencies.IndexingRequestTokenImpl
@@ -29279,25 +29282,6 @@ f:com.intellij.util.indexing.dependencies.IndexingRequestTokenImpl
 - getFileIndexingStamp(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.dependencies.FileIndexingStamp
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
-- com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService$Companion
-- <init>(com.intellij.openapi.project.Project):V
-- <init>(java.nio.file.Path,com.intellij.util.indexing.dependencies.AppIndexingDependenciesService):V
-- f:completeToken(com.intellij.util.indexing.dependencies.FutureScanningRequestToken):V
-- f:completeToken(com.intellij.util.indexing.dependencies.ScanningRequestToken,Z):V
-- dispose():V
-- f:getAppIndexingRequestIdOfLastScanning():I
-- f:getLatestIndexingRequestToken():com.intellij.util.indexing.dependencies.IndexingRequestToken
-- sf:getNULL_STAMP():com.intellij.util.indexing.dependencies.FileIndexingStamp
-- f:getReadOnlyTokenForTest():com.intellij.util.indexing.dependencies.ScanningRequestToken
-- f:isScanningCompleted():Z
-- f:newFutureScanningToken():com.intellij.util.indexing.dependencies.FutureScanningRequestToken
-- f:newScanningToken():com.intellij.util.indexing.dependencies.ScanningRequestToken
-- f:newScanningTokenOnProjectOpen():com.intellij.util.indexing.dependencies.ScanningRequestToken
-- f:requestHeavyScanningOnProjectOpen(java.lang.String):V
-f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService$Companion
-- f:getNULL_STAMP():com.intellij.util.indexing.dependencies.FileIndexingStamp
 f:com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
 - com.intellij.util.indexing.dependencies.FileIndexingStamp
 - <init>(I):V
@@ -30221,7 +30205,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge
 - facetsChanged():V
 - getAllFacets():com.intellij.facet.Facet[]
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge$Companion
-- f:mutableFacetMapping(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.MutableExternalEntityMapping
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 - com.intellij.facet.ModifiableFacetModel
 - com.intellij.facet.impl.FacetModelBase

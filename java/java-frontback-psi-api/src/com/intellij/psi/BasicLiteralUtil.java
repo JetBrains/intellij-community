@@ -9,6 +9,19 @@ public final class BasicLiteralUtil {
   }
 
   /**
+   * Returns the indent string for a text block expression. The indent string is calculated based on the indentation
+   * of the text block lines.
+   *
+   * @param expression the text block expression to calculate indent for
+   * @return The indent string of the text block, or null if it is impossible to determine indent string.
+   */
+  public static @Nullable String getTextBlockIndentString(@NotNull PsiElement expression) {
+    String[] lines = getTextBlockLines(expression.getText(), true);
+    if (lines == null) return null;
+    return getTextBlockIndentString(lines);
+  }
+
+  /**
    * @param expression text block expression to calculate indent for
    * @return the indent of text block lines; may return -1 if text block is heavily malformed
    */
@@ -17,7 +30,6 @@ public final class BasicLiteralUtil {
     if (lines == null) return -1;
     return getTextBlockIndent(lines);
   }
-
 
   /**
    * Returns the lines of text inside the quotes of a text block. No further processing is performed.
@@ -65,17 +77,48 @@ public final class BasicLiteralUtil {
   }
 
   public static int getTextBlockIndent(String @NotNull [] lines, boolean preserveContent, boolean ignoreLastLine) {
+    return getTextBlockIndentInner(lines, preserveContent, ignoreLastLine).indentSize;
+  }
+
+  private static @NotNull IndentResult getTextBlockIndentInner(String @NotNull[] lines, boolean preserveContent, boolean ignoreLastLine) {
     int prefix = Integer.MAX_VALUE;
+    int position = -1;
     for (int i = 0; i < lines.length && prefix != 0; i++) {
       String line = lines[i];
       int indent = 0;
       while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
       if (indent == line.length() && (i < lines.length - 1 || ignoreLastLine)) {
         if (!preserveContent) lines[i] = "";
-        if (lines.length == 1) prefix = indent;
+        if (lines.length == 1) {
+          prefix = indent;
+          position = i;
+        }
       }
-      else if (indent < prefix) prefix = indent;
+      else if (indent < prefix) {
+        prefix = indent;
+        position = i;
+      }
     }
-    return prefix;
+    return new IndentResult(prefix, position);
+  }
+
+  private static @NotNull String getTextBlockIndentString(String @NotNull [] lines) {
+    IndentResult result = getTextBlockIndentInner(lines, true, false);
+    String restorationLine = lines[result.indentLineNumber];
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < result.indentSize; ++i) {
+      builder.append(restorationLine.charAt(i));
+    }
+    return builder.toString();
+  }
+
+  private static class IndentResult {
+    private final int indentSize;
+    private final int indentLineNumber;
+
+    private IndentResult(int indentSize, int indentLineNumber) {
+      this.indentSize = indentSize;
+      this.indentLineNumber = indentLineNumber;
+    }
   }
 }

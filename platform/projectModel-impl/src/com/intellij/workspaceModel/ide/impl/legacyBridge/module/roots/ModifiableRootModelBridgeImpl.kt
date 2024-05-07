@@ -24,6 +24,7 @@ import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntitySource
@@ -45,7 +46,6 @@ import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
-import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
 
 class ModifiableRootModelBridgeImpl(
   diff: MutableEntityStorage,
@@ -104,7 +104,7 @@ class ModifiableRootModelBridgeImpl(
 
   // It's needed to track changed dependency to create new instance of Library if e.g dependency scope was changed
   private val changedLibraryDependency = mutableSetOf<LibraryId>()
-  private val moduleLibraryTable: Lazy<ModifiableModuleLibraryTableBridge> = lazy { ModifiableModuleLibraryTableBridge(this) }
+  private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this)
 
   /**
    * Contains instances of OrderEntries edited via [ModifiableRootModel] interfaces; we need to keep references to them to update their indices;
@@ -256,7 +256,7 @@ class ModifiableRootModelBridgeImpl(
     when (orderEntry) {
       is LibraryOrderEntryBridge -> {
         if (orderEntry.isModuleLevel) {
-          moduleLibraryTable.value.addLibraryCopy(orderEntry.library as LibraryBridgeImpl, orderEntry.isExported,
+          moduleLibraryTable.addLibraryCopy(orderEntry.library as LibraryBridgeImpl, orderEntry.isExported,
                                             orderEntry.libraryDependencyItem.scope)
         }
         else {
@@ -443,7 +443,7 @@ class ModifiableRootModelBridgeImpl(
     }
 
     if (orderEntry is LibraryOrderEntryBridge && orderEntry.isModuleLevel) {
-      moduleLibraryTable.value.removeLibrary(orderEntry.library as LibraryBridge)
+      moduleLibraryTable.removeLibrary(orderEntry.library as LibraryBridge)
     }
     else {
       val itemIndex = entryImpl.currentIndex
@@ -470,8 +470,8 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun clear() {
-    for (library in moduleLibraryTable.value.libraries) {
-      moduleLibraryTable.value.removeLibrary(library)
+    for (library in moduleLibraryTable.libraries) {
+      moduleLibraryTable.removeLibrary(library)
     }
 
     val currentSdk = sdk
@@ -491,11 +491,9 @@ class ModifiableRootModelBridgeImpl(
 
   fun collectChangesAndDispose(): MutableEntityStorage? {
     assertModelIsLive()
-    if (moduleLibraryTable.isInitialized()) {
-      Disposer.dispose(moduleLibraryTable.value)
-    }
-    if (!isChanged && moduleLibraryTable.isInitialized()) {
-      moduleLibraryTable.value.restoreLibraryMappingsAndDisposeCopies()
+    Disposer.dispose(moduleLibraryTable)
+    if (!isChanged) {
+      moduleLibraryTable.restoreLibraryMappingsAndDisposeCopies()
       disposeWithoutLibraries()
       return null
     }
@@ -556,10 +554,7 @@ class ModifiableRootModelBridgeImpl(
       }
     }
 
-    // library dependency might be changed without moduleLibraryTable modification; explicit changedLibraryDependency check is required
-    if (changedLibraryDependency.isNotEmpty() || moduleLibraryTable.isInitialized()) {
-      moduleLibraryTable.value.restoreMappingsForUnchangedLibraries(changedLibraryDependency)
-    }
+    moduleLibraryTable.restoreMappingsForUnchangedLibraries(changedLibraryDependency)
     disposeWithoutLibraries()
     return diff
   }
@@ -592,18 +587,13 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun postCommit() {
-    // if moduleLibraryTable is not initialized, there are no changes in LibraryTableBridge#copyToOriginal -> nothing to dispose/update
-    if (moduleLibraryTable.isInitialized()) {
-      moduleLibraryTable.value.disposeOriginalLibrariesAndUpdateCopies()
-    }
+    moduleLibraryTable.disposeOriginalLibrariesAndUpdateCopies()
   }
 
   override fun dispose() {
     disposeWithoutLibraries()
-    if (moduleLibraryTable.isInitialized()) {
-      moduleLibraryTable.value.restoreLibraryMappingsAndDisposeCopies()
-      Disposer.dispose(moduleLibraryTable.value)
-    }
+    moduleLibraryTable.restoreLibraryMappingsAndDisposeCopies()
+    Disposer.dispose(moduleLibraryTable)
   }
 
   private fun disposeWithoutLibraries() {
@@ -615,7 +605,7 @@ class ModifiableRootModelBridgeImpl(
     modelIsCommittedOrDisposed = true
   }
 
-  override fun getModuleLibraryTable(): LibraryTable = moduleLibraryTable.value
+  override fun getModuleLibraryTable(): LibraryTable = moduleLibraryTable
 
   override fun setSdk(jdk: Sdk?) {
     if (jdk == null) {

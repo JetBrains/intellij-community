@@ -1,14 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import de.pdark.decentxml.*
+import com.intellij.openapi.util.JDOMUtil
 import io.opentelemetry.api.trace.Span
+import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
-import java.nio.file.Files
+import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 
-private val buildNumberRegex = Regex("(\\d+\\.)+\\d+")
+private val buildNumberRegex = Regex("""(\d+\.)+\d+""")
+private val digitDotDigitRegex = Regex("""\d+\.\d+""")
 
 fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange, buildNumber: String): Pair<String, String> {
   if (compatibleBuildRange == CompatibleBuildRange.EXACT || !buildNumber.matches(buildNumberRegex)) {
@@ -22,29 +24,29 @@ fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange
     untilBuild = buildNumber.substring(0, buildNumber.indexOf(".")) + ".*"
   }
   else {
-    sinceBuild = if (buildNumber.matches(Regex("\\d+\\.\\d+"))) buildNumber else buildNumber.substring(0, buildNumber.lastIndexOf("."))
+    sinceBuild = if (buildNumber.matches(digitDotDigitRegex)) buildNumber else buildNumber.substring(0, buildNumber.lastIndexOf("."))
     val end = if ((compatibleBuildRange == CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE)) {
-      if (buildNumber.matches(Regex("\\d+\\.\\d+"))) buildNumber.length else buildNumber.lastIndexOf(".")
+      if (buildNumber.matches(digitDotDigitRegex)) buildNumber.length else buildNumber.lastIndexOf(".")
     }
     else {
-      buildNumber.indexOf(".")
+      buildNumber.indexOf('.')
     }
     untilBuild = "${buildNumber.substring(0, end)}.*"
   }
   return Pair(sinceBuild, untilBuild)
 }
 
-internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
-                            plugin: PluginLayout,
-                            releaseDate: String,
-                            releaseVersion: String,
-                            pluginsToPublish: Set<PluginLayout?>,
-                            context: BuildContext) {
-  val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
-  val pluginXmlFile = moduleOutput.resolve("META-INF/plugin.xml")
-  if (Files.notExists(pluginXmlFile)) {
-    context.messages.error("plugin.xml not found in ${plugin.mainModule} module: $pluginXmlFile")
-  }
+internal fun patchPluginXml(
+  moduleOutputPatcher: ModuleOutputPatcher,
+  plugin: PluginLayout,
+  releaseDate: String,
+  releaseVersion: String,
+  pluginsToPublish: Set<PluginLayout?>,
+  context: BuildContext,
+  helper: JarPackagerDependencyHelper,
+) {
+  val pluginModule = context.findRequiredModule(plugin.mainModule)
+  val descriptorContent = plugin.rawPluginXmlPatcher(helper.getPluginXmlContent(pluginModule))
 
   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                          context.proprietaryBuildTools.artifactsServer != null
@@ -55,42 +57,44 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlFile, context.pluginBuildNumber, context)
-  val sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber)
-  @Suppress("TestOnlyProblems") val content = try {
+  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
+  @Suppress("TestOnlyProblems")
+  val content = try {
     plugin.pluginXmlPatcher(
-      // using input stream allows us to support BOM
-      doPatchPluginXml(document = Files.newInputStream(pluginXmlFile).use { XMLParser().parse(XMLIOSource(it)) },
-                       pluginModuleName = plugin.mainModule,
-                       pluginVersion = pluginVersion,
-                       releaseDate = releaseDate,
-                       releaseVersion = releaseVersion,
-                       compatibleSinceUntil = sinceUntil,
-                       toPublish = pluginsToPublish.contains(plugin),
-                       retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
-                       isEap = context.applicationInfo.isEAP,
-                       productName = context.applicationInfo.fullProductName),
+      doPatchPluginXml(
+        rootElement = JDOMUtil.load(descriptorContent),
+        pluginModuleName = plugin.mainModule,
+        pluginVersion = pluginVersion.pluginVersion,
+        releaseDate = releaseDate,
+        releaseVersion = releaseVersion,
+        compatibleSinceUntil = pluginVersion.sinceUntil ?: getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber),
+        toPublish = pluginsToPublish.contains(plugin),
+        retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
+        isEap = context.applicationInfo.isEAP,
+        productName = context.applicationInfo.fullProductName,
+      ),
       context,
     )
   }
   catch (e: Throwable) {
-    throw RuntimeException("Could not patch $pluginXmlFile", e)
+    throw RuntimeException("Could not patch descriptor (module=${plugin.mainModule})", e)
   }
-  moduleOutputPatcher.patchModuleOutput(plugin.mainModule, "META-INF/plugin.xml", content)
+  moduleOutputPatcher.patchModuleOutput(moduleName = plugin.mainModule, path = "META-INF/plugin.xml", content = content)
 }
 
 @TestOnly
-fun doPatchPluginXml(document: Document,
-                     pluginModuleName: String,
-                     pluginVersion: String?,
-                     releaseDate: String,
-                     releaseVersion: String,
-                     compatibleSinceUntil: Pair<String, String>,
-                     toPublish: Boolean,
-                     retainProductDescriptorForBundledPlugin: Boolean,
-                     isEap: Boolean,
-                     productName: String): String {
-  val rootElement = document.rootElement
+fun doPatchPluginXml(
+  rootElement: Element,
+  pluginModuleName: String,
+  pluginVersion: String?,
+  releaseDate: String,
+  releaseVersion: String,
+  compatibleSinceUntil: Pair<String, String>,
+  toPublish: Boolean,
+  retainProductDescriptorForBundledPlugin: Boolean,
+  isEap: Boolean,
+  productName: String,
+): String {
   val ideaVersionElement = getOrCreateTopElement(rootElement, "idea-version", listOf("id", "name"))
   ideaVersionElement.setAttribute("since-build", compatibleSinceUntil.first)
   ideaVersionElement.setAttribute("until-build", compatibleSinceUntil.second)
@@ -100,8 +104,7 @@ fun doPatchPluginXml(document: Document,
   if (productDescriptor != null) {
     if (!toPublish && !retainProductDescriptorForBundledPlugin) {
       Span.current().addEvent("skip $pluginModuleName <product-descriptor/>")
-      removeTextBeforeElement(productDescriptor)
-      productDescriptor.remove()
+      productDescriptor.detach()
     }
     else {
       Span.current().addEvent("patch $pluginModuleName <product-descriptor/>")
@@ -119,10 +122,10 @@ fun doPatchPluginXml(document: Document,
     check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }
     pluginName.text = "Database Tools and SQL for WebStorm"
     val description = rootElement.getChild("description")
-    val replaced = replaceInElementText(description, "IntelliJ-based IDEs", "WebStorm")
+    val replaced = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm")
     check(replaced) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
   }
-  return document.toXML()
+  return JDOMUtil.write(rootElement)
 }
 
 fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<String>): Element {
@@ -133,49 +136,29 @@ fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<S
   val newElement = Element(tagName)
   val anchor = anchors.asSequence().mapNotNull { rootElement.getChild(it) }.firstOrNull()
   if (anchor == null) {
-    rootElement.addNode(0, newElement)
-    rootElement.addNode(0, Text("\n  "))
+    rootElement.addContent(0, newElement)
   }
   else {
-    val anchorIndex = rootElement.nodeIndexOf(anchor)
+    val anchorIndex = rootElement.indexOf(anchor)
     // should not happen
     check(anchorIndex >= 0) {
-      "anchor < 0 when getting child index of \'${anchor.name}\' in root element of ${rootElement.toXML()}"
+      "anchor < 0 when getting child index of \'${anchor.name}\' in root element of ${JDOMUtil.write(rootElement)}"
     }
-    var indent = rootElement.getNode(anchorIndex - 1)
-    indent = if (indent is Text) indent.copy() else Text("")
-    rootElement.addNode(anchorIndex + 1, newElement)
-    rootElement.addNode(anchorIndex + 1, indent)
+    rootElement.addContent(anchorIndex + 1, newElement)
   }
   return newElement
 }
 
-private fun removeTextBeforeElement(element: Element) {
-  val parentElement = element.parentElement ?: throw IllegalStateException("Could not find parent of \'${element.toXML()}\'")
-  val elementIndex = parentElement.nodeIndexOf(element)
-  check(elementIndex >= 0) { "Could not find element index \'${element.toXML()}\' in parent \'${parentElement.toXML()}\'" }
-  if (elementIndex > 0) {
-    val text = parentElement.getNode(elementIndex - 1)
-    if (text is Text) {
-      parentElement.removeNode(elementIndex - 1)
-    }
-  }
-}
-
 @Suppress("SameParameterValue")
 private fun replaceInElementText(element: Element, oldText: String, newText: String): Boolean {
-  var replaced = false
-  for (node in element.nodes) {
-    if (node is Text) {
-      val textBefore = node.text
-      val text = textBefore.replace(oldText, newText)
-      if (textBefore != text) {
-        replaced = true
-        node.text = text
-      }
-    }
+  val textBefore = element.text
+  val text = textBefore.replace(oldText, newText)
+  if (textBefore == text) {
+    return false
   }
-  return replaced
+
+  element.text = text
+  return true
 }
 
 private fun setProductDescriptorEapAttribute(productDescriptor: Element, isEap: Boolean) {

@@ -386,6 +386,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractKotlinScriptFindUsagesFirTest> {
             model("kotlinScript", pattern = Patterns.forRegex("""^(.+)\.0\.kts$"""))
         }
+
+        testClass<AbstractFindUsagesMultiModuleFirTest> {
+            model("../multiModuleFindUsages", isRecursive = false, pattern = DIRECTORY)
+        }
     }
 
     testGroup("fir/tests", category = CODE_INSIGHT) {

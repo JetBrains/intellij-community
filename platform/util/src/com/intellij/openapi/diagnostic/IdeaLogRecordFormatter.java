@@ -10,13 +10,11 @@ import java.io.StringWriter;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 public class IdeaLogRecordFormatter extends Formatter {
   private static final String LINE_SEPARATOR = System.lineSeparator();
-  private static final DateTimeFormatter timestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   private final long logCreation;
   private final boolean withDateTime;
@@ -40,31 +38,35 @@ public class IdeaLogRecordFormatter extends Formatter {
 
   @Override
   public String format(LogRecord record) {
-    String loggerName = record.getLoggerName();
-    if (loggerName != null) {
-      loggerName = smartAbbreviate(loggerName);
-    }
-    long startedMillis = getStartedMillis();
-    long recordMillis = record.getMillis();
-    LocalDateTime date = LocalDateTime.ofInstant(Instant.ofEpochMilli(recordMillis), ZoneId.systemDefault());
-    String relativeToStartedMillis = (startedMillis == 0) ? "-------" : String.valueOf(recordMillis - startedMillis);
-    String prettyLevelName = LogLevel.getPrettyLevelName(record.getLevel());
+    long recordMillis = record.getMillis(), startedMillis = getStartedMillis();
     StringBuilder sb = new StringBuilder();
+
     if (withDateTime) {
-      timestampFormat.formatTo(date, sb);
+      LocalDateTime date = LocalDateTime.ofInstant(Instant.ofEpochMilli(recordMillis), ZoneId.systemDefault());
+      sb.append(date.getYear());
+      sb.append('-');
+      appendWithPadding(sb, Integer.toString(date.getMonthValue()), 2, '0');
+      sb.append('-');
+      appendWithPadding(sb, Integer.toString(date.getDayOfMonth()), 2, '0');
+      sb.append(' ');
+      appendWithPadding(sb, Integer.toString(date.getHour()), 2, '0');
+      sb.append(':');
+      appendWithPadding(sb, Integer.toString(date.getMinute()), 2, '0');
+      sb.append(':');
+      appendWithPadding(sb, Integer.toString(date.getSecond()), 2, '0');
       sb.append(',');
-      pad(Long.toString(recordMillis % 1000), sb, 3, '0');
-      pad(relativeToStartedMillis, sb, 7, '0');
+      appendWithPadding(sb, Long.toString(recordMillis % 1000), 3, '0');
       sb.append(' ');
     }
 
-    sb.append("[");
-    pad(relativeToStartedMillis, sb, 7, ' ');
+    sb.append('[');
+    appendWithPadding(sb, startedMillis == 0 ? "-------" : String.valueOf(recordMillis - startedMillis), 7, ' ');
     sb.append("] ");
 
-    pad(prettyLevelName, sb, 6, ' ');
+    appendWithPadding(sb, LogLevel.getPrettyLevelName(record.getLevel()), 6, ' ');
+
     sb.append(" - ")
-      .append(loggerName)
+      .append(smartAbbreviate(record.getLoggerName()))
       .append(" - ")
       .append(formatMessage(record))
       .append(LINE_SEPARATOR);
@@ -72,38 +74,33 @@ public class IdeaLogRecordFormatter extends Formatter {
     if (record.getThrown() != null) {
       appendThrowable(record.getThrown(), sb);
     }
+
     return sb.toString();
   }
 
-  private static void pad(String s, StringBuilder sb, int width, char pad) {
-    int paddingNeeded = width - s.length();
-    for (int i = 0; i < paddingNeeded; i++) {
-      sb.append(pad);
-    }
+  private static void appendWithPadding(StringBuilder sb, String s, int width, char padChar) {
+    for (int i = 0, padding = width - s.length(); i < padding; i++) sb.append(padChar);
     sb.append(s);
   }
 
-  private static String smartAbbreviate(String loggerName) {
+  private static String smartAbbreviate(String category) {
+    if (category == null) return null;
+
     StringBuilder result = new StringBuilder();
-    int pos = 0;
-    if (loggerName.startsWith("#")) {
+    int pos = 0, nextDot;
+    if (category.startsWith("#")) {
       result.append('#');
       pos++;
     }
-    if (!loggerName.startsWith("com.intellij", pos) &&
-        !loggerName.startsWith("com.jetbrains", pos) &&
-        !loggerName.startsWith("org.jetbrains", pos)) {
-      return loggerName;
+    if (!(category.startsWith("com.intellij", pos) || category.startsWith("com.jetbrains", pos) || category.startsWith("org.jetbrains", pos))) {
+      return category;
     }
-    while (true) {
-      int nextDot = loggerName.indexOf('.', pos);
-      if (nextDot < 0) {
-        result.append(loggerName.substring(pos));
-        return result.toString();
-      }
-      result.append(loggerName.charAt(pos)).append('.');
+    while ((nextDot = category.indexOf('.', pos)) >= 0) {
+      result.append(category.charAt(pos)).append('.');
       pos = nextDot + 1;
     }
+    result.append(category.substring(pos));
+    return result.toString();
   }
 
   public static @NotNull String formatThrowable(@NotNull Throwable thrown) {
@@ -112,12 +109,11 @@ public class IdeaLogRecordFormatter extends Formatter {
     return sb.toString();
   }
 
-  private static void appendThrowable(@NotNull Throwable thrown, @NotNull StringBuilder sb) {
+  private static void appendThrowable(Throwable thrown, StringBuilder sb) {
     StringWriter stringWriter = new StringWriter();
     thrown.printStackTrace(new PrintWriter(stringWriter));
     String[] lines = StringUtil.splitByLines(stringWriter.toString());
-    int maxStackSize = 1024;
-    int maxExtraSize = 256;
+    int maxStackSize = 1024, maxExtraSize = 256;
     if (lines.length > maxStackSize + maxExtraSize) {
       String[] res = new String[maxStackSize + maxExtraSize + 1];
       System.arraycopy(lines, 0, res, 0, maxStackSize);

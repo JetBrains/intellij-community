@@ -37,7 +37,7 @@ fun createBuildOptionsForTest(
     cleanOutDir = false,
     useCompiledClassesFromProjectOutput = true,
     // todo enable once sync issues will be fixed
-    //jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
+    jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
   )
   customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup)
   return options

@@ -3,10 +3,11 @@
 // technically we shouldn't use #cfg in build.rs due to cross-compilation,
 // but the only we do is windows x64 -> arm64, so it's fine for our purposes
 
-use anyhow::{Context, Result};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
+
+use anyhow::{Context, Result};
 
 #[cfg(target_os = "windows")]
 use {
@@ -14,10 +15,9 @@ use {
     reqwest::blocking::Client,
     sha1::{Digest, Sha1},
     std::env,
-    std::io::{BufRead, BufReader, Read},
+    std::io::Read,
     std::path::Path,
     std::process::Command,
-    windows::Win32::System::SystemInformation::GetLocalTime,
     winresource::WindowsResource,
 };
 
@@ -75,9 +75,8 @@ fn main_os_specific() -> Result<()> {
     link_cef_sandbox(&cef_dir)?;
     write_cef_version(cef_version)?;
 
-    // metadata embedding breaks incremental build due to verbose output of the used tools
-    // for the convenience of the development we'll avoid this
-    // for the builds which are explicitly marked as debug by cargo
+    // Metadata embedding breaks incremental build due to verbose output of used tools.
+    // For the convenience of the development, we'll avoid this in debug builds.
     let is_debug =  env::var("DEBUG")? == "true";
     if !is_debug {
         embed_metadata()?;
@@ -303,75 +302,18 @@ fn embed_metadata() -> Result<()> {
     let cargo_root_env_var = env::var("CARGO_MANIFEST_DIR")?;
     let cargo_root = PathBuf::from(cargo_root_env_var);
 
-    let manifest_relative_to_root = "resources/windows/WinLauncher.manifest";
-    cargo!("rerun-if-changed={manifest_relative_to_root}");
-
-    let manifest_file = cargo_root.join(manifest_relative_to_root);
-    assert_exists_and_file(&manifest_file)?;
-
+    let manifest_relative_path = "resources/windows/WinLauncher.manifest";
+    assert_exists_and_file(&cargo_root.join(manifest_relative_path))?;
+    cargo!("rerun-if-changed={manifest_relative_path}");
     cargo!("rustc-link-arg-bins=/MANIFEST:EMBED");
-    cargo!("rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_to_root}");
+    cargo!("rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_path}");
 
-    let rc_template_relative_to_root = "resources/windows/WinLauncher.rc";
-    cargo!("rerun-if-changed={rc_template_relative_to_root}");
-
-    let rc_template_file = PathBuf::from(rc_template_relative_to_root);
-    assert_exists_and_file(&rc_template_file)?;
-
-    let rc_file = process_rc_template(&rc_template_file)?;
+    let icon_relative_path = "resources/windows/WinLauncher.ico";
+    assert_exists_and_file(&cargo_root.join(icon_relative_path))?;
 
     let mut res = WindowsResource::new();
-    res.set_resource_file(&get_non_unc_string(&rc_file)?);
-    res.compile().context("Failed to embed resource table")
-}
-
-#[cfg(target_os = "windows")]
-fn process_rc_template(template: &Path) -> Result<PathBuf> {
-    let file = File::open(template)?;
-
-    let current_year = get_current_year();
-    let package_name = env::var("CARGO_PKG_NAME")?;
-
-
-    let mut processed_lines = Vec::with_capacity(60);
-    for line in BufReader::new(file).lines() {
-        let processed_line = line?
-            .replace("@YEAR@", &current_year)
-            .replace("@FILE_NAME@", &package_name);
-        processed_lines.push(processed_line)
-    }
-
-    let out_dir = PathBuf::from(env::var("OUT_DIR")?);
-
-    let out_file_path = out_dir.join("xplat-launcher.rc");
-    let out_file = File::create(&out_file_path)?;
-
-    let mut buf_writer = BufWriter::new(out_file);
-
-    for line in processed_lines {
-        writeln!(buf_writer, "{line}")?;
-    }
-
-    buf_writer.flush()?;
-
-    let rc_dependencies = vec!["resource.h", "WinLauncher.ico"];
-    for dep in rc_dependencies {
-        let src = PathBuf::from(format!("./resources/windows/{dep}"));
-        let dest = out_dir.join(dep);
-        std::fs::copy(&src, &dest)?;
-    }
-
-    Ok(out_file_path)
-}
-
-#[cfg(target_os = "windows")]
-fn get_current_year() -> String {
-    let system_time = unsafe {
-        GetLocalTime()
-    };
-
-    let current_year = system_time.wYear as u32;
-    current_year.to_string()
+    res.set_icon_with_id(icon_relative_path, "2000");  // see `resources/windows/resource.h`
+    res.compile().context("Failed to embed resources")
 }
 
 #[cfg(target_os = "windows")]

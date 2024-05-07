@@ -24,6 +24,8 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import com.intellij.platform.uast.testFramework.env.findElementByText
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import org.jetbrains.uast.util.isConstructorCall
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import org.junit.Test
 
@@ -230,5 +232,48 @@ class JavaUastApiTest : AbstractJavaUastTest() {
                           file.findElementByTextFromPsi<UInjectionHost>("\"Hello \"").getStringRoomExpression().sourcePsi?.text)
     TestCase.assertEquals("\"Hello again \" + s1 + \" world\"",
                           file.findElementByTextFromPsi<UInjectionHost>("\"Hello again \"").getStringRoomExpression().sourcePsi?.text)
+  }
+
+  @Test
+  fun testNameReferenceVisitInConstructorCall() {
+    val file = myFixture.configureByText(
+      "Test.java",
+      """
+        class Test {
+          static class Foo
+          static void test() {
+            Foo foo = new Foo();
+          }
+        }
+      """.trimIndent()
+    )
+    val uFile = file.toUElementOfType<UFile>()!!
+    var count = 0
+    uFile.accept(
+      object : AbstractUastVisitor() {
+        var inConstructorCall: Boolean = false
+
+        override fun visitCallExpression(node: UCallExpression): Boolean {
+          if (node.isConstructorCall()) {
+            inConstructorCall = true
+          }
+          return super.visitCallExpression(node)
+        }
+
+        override fun afterVisitCallExpression(node: UCallExpression) {
+          inConstructorCall = false
+          super.afterVisitCallExpression(node)
+        }
+
+        override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+          if (inConstructorCall) {
+            count++
+            TestCase.assertEquals("Foo", node.resolvedName)
+          }
+          return super.visitSimpleNameReferenceExpression(node)
+        }
+      }
+    )
+    TestCase.assertEquals(1, count)
   }
 }

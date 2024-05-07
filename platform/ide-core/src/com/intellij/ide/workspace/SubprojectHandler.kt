@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.Topic
 
 interface SubprojectHandler {
   companion object {
@@ -16,7 +15,7 @@ interface SubprojectHandler {
   fun getSubprojectFor(module: Module): Subproject?
 
   fun canImportFromFile(project: Project, file: VirtualFile): Boolean
-  fun importFromFile(project: Project, file: VirtualFile)
+  suspend fun importFromFile(project: Project, file: VirtualFile)
   fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings?
 
   fun suppressGenericImportFor(module: Module): Boolean = false
@@ -31,5 +30,5 @@ interface WorkspaceSettingsImporter {
 }
 
 interface ImportedProjectSettings {
-  fun applyTo(workspace: Project)
+  suspend fun applyTo(workspace: Project)
 }

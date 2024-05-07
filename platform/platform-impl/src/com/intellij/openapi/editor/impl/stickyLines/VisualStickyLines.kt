@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.collections.HashSet
+import kotlin.math.max
 
 @Internal
 class VisualStickyLines(
@@ -76,7 +77,7 @@ class VisualStickyLines(
       if (!DocumentUtil.isValidLine(startLine, editor.document)) {
         return
       }
-      endLine = editor.document.lineCount - 1
+      endLine = max(editor.document.lineCount - 1, 0)
     }
     val startOffset: Int = editor.document.getLineStartOffset(startLine)
     val endOffset: Int = editor.document.getLineEndOffset(endLine)

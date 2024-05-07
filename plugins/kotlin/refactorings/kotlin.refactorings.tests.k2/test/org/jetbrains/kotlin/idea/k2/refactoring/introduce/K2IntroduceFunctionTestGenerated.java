@@ -1093,6 +1093,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         public void testSingleExpression() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/singleExpression.kt");
         }
+
+        @TestMetadata("syntheticJavaReference.kt")
+        public void testSyntheticJavaReference() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/syntheticJavaReference.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -2013,6 +2018,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     public static class TypeParameters extends AbstractK2IntroduceFunctionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("definitelyNotNullType.kt")
+        public void testDefinitelyNotNullType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/typeParameters/definitelyNotNullType.kt");
         }
 
         @TestMetadata("localClassInBound.kt")

@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.frame
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.data.VcsCommitExternalStatus
 import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
@@ -43,7 +44,7 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
 
     val logColumn: VcsLogColumn<T> = ExternalStatusLogColumn()
 
-    open fun isColumnAvailable(project: Project): Boolean = true
+    open fun isColumnAvailable(project: Project, roots: Collection<VirtualFile>): Boolean = true
 
     /**
      * Localized column name
@@ -81,7 +82,7 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
       override val isDynamic = true
       override val isResizable = false
 
-      override fun isAvailable(project: Project) = isColumnAvailable(project)
+      override fun isAvailable(project: Project, roots: Collection<VirtualFile>) = isColumnAvailable(project, roots)
 
       override fun isEnabledByDefault() = isColumnEnabledByDefault
 
@@ -112,10 +113,6 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
       override fun getCellController() = ClickController()
 
       private inner class ClickController : VcsLogCellController {
-        override fun shouldSelectCell(row: Int, e: MouseEvent): Boolean {
-          return true
-        }
-
         //todo hand cursor works initially but then stops
         override fun performMouseMove(row: Int, e: MouseEvent): VcsLogCellController.MouseMoveResult {
           val presentation = getStatusPresentation(row)

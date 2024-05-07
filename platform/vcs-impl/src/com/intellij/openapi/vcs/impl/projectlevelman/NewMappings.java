@@ -333,7 +333,7 @@ public final class NewMappings implements Disposable {
     ApplicationManager.getApplication().invokeLater(() -> {
       ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(myProject);
       if (frame != null) {
-        // GitToolbarWidgetFactory handles update in a new UI
+        // GitToolbarWidgetAction handles update in a new UI
         if (ExperimentalUI.isNewUI()) {
           frame.rootPane.updateMainMenuActions();
         }

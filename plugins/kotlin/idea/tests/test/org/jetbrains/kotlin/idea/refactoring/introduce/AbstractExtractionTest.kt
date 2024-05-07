@@ -388,7 +388,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         }
     }
 
-    protected fun doIntroduceConstantTest(unused: String) {
+    protected open fun doIntroduceConstantTest(unused: String) {
         doTest { file ->
             file as KtFile
 

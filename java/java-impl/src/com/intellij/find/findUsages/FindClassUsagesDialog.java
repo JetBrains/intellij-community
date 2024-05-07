@@ -99,12 +99,7 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
   @Override
   protected void update() {
     if(myCbToSearchForTextOccurrences != null){
-      if (isSelected(myCbUsages)){
-        myCbToSearchForTextOccurrences.makeSelectable();
-      }
-      else{
-        myCbToSearchForTextOccurrences.makeUnselectable(false);
-      }
+      updateStateOnUsagesStateChange(myCbToSearchForTextOccurrences);
     }
 
     boolean hasSelected = isSelected(myCbUsages) ||
@@ -116,4 +111,12 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
     setOKActionEnabled(hasSelected);
   }
 
+  protected void updateStateOnUsagesStateChange(StateRestoringCheckBox dependantCb) {
+    if (isSelected(myCbUsages)){
+      dependantCb.makeSelectable();
+    }
+    else{
+      dependantCb.makeUnselectable(false);
+    }
+  }
 }

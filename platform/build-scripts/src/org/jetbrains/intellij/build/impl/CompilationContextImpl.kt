@@ -76,20 +76,17 @@ suspend fun createCompilationContext(
   )
 }
 
-internal fun computeBuildPaths(options: BuildOptions, project: JpsProject, buildOutputRootEvaluator: (JpsProject) -> Path,
-  artifactPathSupplier: (() -> Path)?,
-  projectHome: Path,
-): BuildPaths {
-  val buildOut = options.outRootDir ?: buildOutputRootEvaluator(project)
-  val logDir = options.logDir ?: buildOut.resolve("log")
+internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, artifactDir: Path? = null, projectHome: Path): BuildPaths {
+  val tempDir = buildOut.resolve("temp")
   val result = BuildPaths(
     communityHomeDirRoot = COMMUNITY_ROOT,
     buildOutputDir = buildOut,
-    logDir = logDir,
+    logDir = options.logDir ?: buildOut.resolve("log"),
     projectHome = projectHome,
-    artifactDir = artifactPathSupplier?.invoke() ?: buildOut.resolve("artifacts"),
+    tempDir = tempDir,
+    artifactDir = artifactDir ?: buildOut.resolve("artifacts"),
   )
-  Files.createDirectories(result.tempDir)
+  Files.createDirectories(tempDir)
   return result
 }
 
@@ -166,6 +163,7 @@ class CompilationContextImpl private constructor(
       options: BuildOptions,
       setupTracer: Boolean,
       enableCoroutinesDump: Boolean = true,
+      customBuildPaths: BuildPaths? = null,
     ): CompilationContextImpl {
       check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
         Files.exists(COMMUNITY_ROOT.communityRoot.resolve(it))
@@ -192,13 +190,7 @@ class CompilationContextImpl private constructor(
         isCompilationRequired = CompiledClasses.isCompilationRequired(options),
       )
 
-      val buildPaths = computeBuildPaths(
-        project = model.project,
-        options = options,
-        buildOutputRootEvaluator = buildOutputRootEvaluator,
-        projectHome = projectHome,
-        artifactPathSupplier = null,
-      )
+      val buildPaths = customBuildPaths ?: computeBuildPaths(buildOut = options.outRootDir ?: buildOutputRootEvaluator(model.project), options = options, projectHome = projectHome)
 
       // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
       // (see createCopyForProduct)

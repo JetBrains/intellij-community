@@ -597,6 +597,7 @@ f:com.intellij.ide.plugins.PluginXmlPathResolver
 - resolvePath(com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor):com.intellij.ide.plugins.RawPluginDescriptor
 f:com.intellij.ide.plugins.PluginXmlPathResolver$Companion
 - f:toLoadPath(java.lang.String,java.lang.String):java.lang.String
+- bs:toLoadPath$default(com.intellij.ide.plugins.PluginXmlPathResolver$Companion,java.lang.String,java.lang.String,I,java.lang.Object):java.lang.String
 com.intellij.ide.plugins.ReadModuleContext
 - a:getInterner():com.intellij.util.xml.dom.XmlInterner
 - isMissingIncludeIgnored():Z
@@ -3158,7 +3159,7 @@ a:com.intellij.psi.impl.file.UpdateAddedFileProcessor
 - a:canProcessElement(com.intellij.psi.PsiFile):Z
 - s:forElement(com.intellij.psi.PsiFile):com.intellij.psi.impl.file.UpdateAddedFileProcessor
 - a:update(com.intellij.psi.PsiFile,com.intellij.psi.PsiFile):V
-- s:updateAddedFiles(java.lang.Iterable):V
+- s:updateAddedFiles(java.lang.Iterable,java.lang.Iterable):V
 com.intellij.psi.impl.file.impl.FileManager
 - a:cleanupForNextTest():V
 - a:createFileViewProvider(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.psi.FileViewProvider

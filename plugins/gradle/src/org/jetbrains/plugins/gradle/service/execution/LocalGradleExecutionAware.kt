@@ -91,18 +91,18 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     taskNotificationListener: ExternalSystemTaskNotificationListener,
     project: Project
   ): SdkInfo? {
-    val settings = use(project) { GradleSettings.getInstance(it) }
+    val settings = project.lock { GradleSettings.getInstance(it) }
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return null
 
     val originalGradleJvm = projectSettings.gradleJvm
-    val provider = use(project) { getGradleJvmLookupProvider(it, projectSettings) }
-    var sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, originalGradleJvm) }
+    val provider = project.lock { getGradleJvmLookupProvider(it, projectSettings) }
+    var sdkInfo = project.lock { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, originalGradleJvm) }
     if (sdkInfo is SdkInfo.Undefined || sdkInfo is SdkInfo.Unresolved || sdkInfo is SdkInfo.Resolving) {
       waitForGradleJvmResolving(provider, task, taskNotificationListener)
       if (projectSettings.gradleJvm == null) {
         projectSettings.gradleJvm = originalGradleJvm ?: ExternalSystemJdkUtil.USE_PROJECT_JDK
       }
-      sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, projectSettings.gradleJvm) }
+      sdkInfo = project.lock { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, projectSettings.gradleJvm) }
     }
 
     val gradleJvm = projectSettings.gradleJvm
@@ -155,12 +155,16 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       }
     else null
 
-  private fun <R> use(project: Project, action: (Project) -> R): R {
+  /**
+   * Critical execution section.
+   * An explicit WriteAction is required to prevent the project from disposing.
+   */
+  private fun <R> Project.lock(action: (Project) -> R): R {
     return invokeAndWaitIfNeeded {
       runWriteAction {
-        when (project.isDisposed) {
+        when (isDisposed) {
           true -> throw ProcessCanceledException()
-          else -> action(project)
+          else -> action(this)
         }
       }
     }

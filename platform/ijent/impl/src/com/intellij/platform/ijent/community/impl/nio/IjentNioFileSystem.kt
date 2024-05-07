@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.ijent.IjentInfo
 import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.IjentWindowsInfo
 import com.intellij.platform.ijent.fs.*
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.runBlocking
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
 import java.nio.file.PathMatcher
@@ -90,9 +90,8 @@ class IjentNioFileSystem internal constructor(
     TODO("Not yet implemented")
   }
 
-  // TODO runBlockingCancellable?
   internal fun <T> fsBlocking(body: suspend () -> T): T =
-    runBlocking {
+    runBlockingMaybeCancellable {
       body()
     }
 

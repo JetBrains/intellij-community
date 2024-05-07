@@ -21,6 +21,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -115,9 +116,11 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
 
     for (PsiNewExpression newExpression : writableUsages) {
       var factoryCall = (PsiMethodCallExpression)factory.createExpressionFromText(factoryName + "()", newExpression);
-      factoryCall.getArgumentList().replace(Objects.requireNonNull(newExpression.getArgumentList()));
+      CommentTracker ct = new CommentTracker();
+      
+      factoryCall.getArgumentList().replace(Objects.requireNonNull(ct.markUnchanged(newExpression.getArgumentList())));
 
-      PsiExpression newQualifier = newExpression.getQualifier();
+      PsiExpression newQualifier = ct.markUnchanged(newExpression.getQualifier());
 
       PsiReferenceExpression factoryCallRef = factoryCall.getMethodExpression();
       PsiElement resolvedFactoryMethod = factoryCallRef.resolve();
@@ -127,7 +130,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
         Objects.requireNonNull(factoryCallRef.getQualifierExpression()).replace(qualifier);
       }
 
-      newExpression.replace(factoryCall);
+      ct.replaceAndRestoreComments(newExpression, factoryCall);
     }
     updater.rename(factoryMethod, names);
   }

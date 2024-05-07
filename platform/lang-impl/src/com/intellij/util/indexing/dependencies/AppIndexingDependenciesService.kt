@@ -11,6 +11,7 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint.Companion.NULL_FINGERPRINT
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.deleteIfExists
 import kotlin.math.max
 
+@Experimental
 @Service(Service.Level.APP)
 class AppIndexingDependenciesService @NonInjectable @VisibleForTesting constructor(storagePath: Path) : Disposable {
   companion object {

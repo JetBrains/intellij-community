@@ -115,6 +115,8 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
 
   private @Nullable SelectionSnapshot mySelectionSnapshot = null;
 
+  private boolean myDisposed = false;
+
   public VcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
                           @NotNull Runnable requestMore, @NotNull Disposable disposable) {
@@ -177,6 +179,7 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
 
   @Override
   public void dispose() {
+    myDisposed = true;
   }
 
   @Override
@@ -228,9 +231,8 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
       }
 
       for (VcsLogColumn<?> column : columnOrder) {
-        boolean isAvailable = column instanceof VcsLogCustomColumn<?> customColumn
-                              ? customColumn.isAvailable(myLogData.getProject())
-                              : true;
+        boolean isAvailable = !(column instanceof VcsLogCustomColumn<?> customColumn) ||
+                              VcsLogCustomColumn.isAvailable(customColumn, myLogData);
         if (isAvailable) {
           myTableColumns.computeIfAbsent(column, (k) -> createTableColumn(column));
           columnModel.addColumn(myTableColumns.get(column));
@@ -1040,7 +1042,7 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
     public void columnAvailabilityChanged() {
       ApplicationManager.getApplication().invokeLater(() -> {
         onColumnOrderSettingChanged();
-      });
+      }, o -> myDisposed);
     }
   }
 

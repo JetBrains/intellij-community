@@ -237,8 +237,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
         // causes problems if not scheduled on ui thread
         session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
-          ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
-          ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
+            ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
+            ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
+          }
         }
         /**
          * Includes closing the project

@@ -1,4 +1,4 @@
-// "Add '-opt-in=kotlin.RequiresOptIn' to module light_idea_test_case compiler arguments" "true"
+// "Opt in for 'RequiresOptIn' in module 'light_idea_test_case'" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:-OptInRelease
 // COMPILER_ARGUMENTS_AFTER: -XXLanguage:-OptInRelease -opt-in=kotlin.RequiresOptIn
 // DISABLE-ERRORS

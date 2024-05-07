@@ -25,7 +25,6 @@ fun test() {
     B("")
 }
 
-// IGNORE_PLATFORM_JS: KTIJ-29704
-// IGNORE_PLATFORM_NATIVE: KTIJ-29704
-
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code
 

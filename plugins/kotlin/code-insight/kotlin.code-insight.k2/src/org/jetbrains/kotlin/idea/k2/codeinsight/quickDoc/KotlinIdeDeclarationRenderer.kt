@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
+import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationValue
@@ -64,13 +66,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.api.types.KtClassType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -85,6 +81,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.renderer.render as renderName
 
@@ -724,7 +721,7 @@ internal class KotlinIdeDeclarationRenderer(
                 renderConstantAnnotationValue(value)
             }
 
-            KtUnsupportedAnnotationValue -> {
+            is KtUnsupportedAnnotationValue -> {
                 append("error(\"non-annotation value\")")
             }
 
@@ -735,13 +732,44 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     private fun PrettyPrinter.renderKClassAnnotationValue(value: KtKClassAnnotationValue) {
-        when (value) {
-            is KtKClassAnnotationValue.KtErrorClassAnnotationValue -> append("UNRESOLVED_CLASS")
-            is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> append(value.ktClass.nameAsName?.renderName())
-            is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue -> append(value.classId.asSingleFqName().renderName())
+        renderType(value.type)
+        append("::class")
+    }
+
+    private fun PrettyPrinter.renderType(type: KtType) {
+        if (type.annotations.isNotEmpty()) {
+            for (annotation in type.annotations) {
+                append('@')
+                renderAnnotationApplication(annotation)
+                append(' ')
+            }
         }
-        append(highlight("::") { asColon })
-        append(highlight("class") { asKeyword })
+
+        when (type) {
+            is KtUsualClassType -> {
+                val classId = type.classId
+                if (classId.isLocal) {
+                    append(classId.shortClassName.render())
+                } else {
+                    append(classId.asSingleFqName().render())
+                }
+
+                if (type.ownTypeArguments.isNotEmpty()) {
+                    printCollection(type.ownTypeArguments, ", ", prefix = "<", postfix = ">") { typeProjection ->
+                        when (typeProjection) {
+                            is KtStarTypeProjection -> append('*')
+                            is KtTypeArgumentWithVariance -> renderType(typeProjection.type)
+                        }
+                    }
+                }
+            }
+            is KtClassErrorType -> {
+                append("UNRESOLVED_CLASS")
+            }
+            else -> {
+                append(type.asStringForDebugging())
+            }
+        }
     }
 
     private fun PrettyPrinter.renderConstantAnnotationValue(value: KtConstantAnnotationValue) {

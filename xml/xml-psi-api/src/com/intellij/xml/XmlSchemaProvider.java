@@ -27,9 +27,8 @@ public abstract class XmlSchemaProvider implements PossiblyDumbAware {
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String namespace, @Nullable Module module, @NotNull PsiFile file) {
     if (file.getProject().isDefault()) return null;
-    final boolean dumb = DumbService.getInstance(file.getProject()).isDumb();
     for (XmlSchemaProvider provider : EP_NAME.getExtensionList()) {
-      if (dumb && !DumbService.isDumbAware(provider)) {
+      if (!DumbService.getInstance(file.getProject()).isUsableInCurrentContext(provider)) {
         continue;
       }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl.storage;
 
@@ -9,6 +9,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -98,14 +99,21 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
       for (ChangeTrackingValueContainer<Value> v : myMap.values()) {
         v.dropMergedData();
       }
-    } finally {
+    }
+    finally {
       myBackendStorage.clearCaches();
     }
   }
 
   @Override
-  public void close() throws StorageException {
+  public void close() throws IOException {
     myBackendStorage.close();
+  }
+
+  @Override
+  @Internal
+  public boolean isClosed() {
+    return myBackendStorage.isClosed();
   }
 
   @Override
@@ -125,7 +133,8 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   }
 
   @Override
-  public boolean processKeys(final @NotNull Processor<? super Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
+  public boolean processKeys(final @NotNull Processor<? super Key> processor, GlobalSearchScope scope, IdFilter idFilter)
+    throws StorageException {
     final Set<Key> stopList = new HashSet<>();
 
     Processor<Key> decoratingProcessor = key -> {

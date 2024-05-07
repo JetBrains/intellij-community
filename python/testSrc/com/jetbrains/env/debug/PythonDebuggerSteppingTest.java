@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.jetbrains.TestEnv;
+import com.jetbrains.env.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.settings.PySteppingFilter;

@@ -3,8 +3,8 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -120,8 +120,8 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
 
     private boolean isColumnAvailable(@NotNull AnActionEvent e) {
       if (myColumn instanceof VcsLogCustomColumn<?> customColumn) {
-        Project project = e.getProject();
-        return project != null && customColumn.isAvailable(project);
+        VcsLogData logData = e.getData(VcsLogInternalDataKeys.LOG_DATA);
+        return logData != null && VcsLogCustomColumn.isAvailable(customColumn, logData);
       }
       return true;
     }

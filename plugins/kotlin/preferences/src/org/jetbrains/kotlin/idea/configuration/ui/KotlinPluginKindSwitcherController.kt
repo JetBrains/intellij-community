@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.configuration.ui
 
+import com.intellij.diagnostic.VMOptions
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
@@ -13,15 +14,16 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindSwitcher
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.base.plugin.getPluginModeDescription
+import org.jetbrains.kotlin.idea.base.plugin.USE_K2_PLUGIN_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import javax.swing.JComponent
 
 class KotlinPluginKindSwitcherController {
-    private val initialValue: KotlinPluginMode = KotlinPluginKindSwitcher.getPluginKindByVmOptions()
+
+    private val initialValue: KotlinPluginMode = getPluginKindByVmOptions()
     private var chosenKind: KotlinPluginMode = initialValue
 
     private val pluginKindWillBeSwitchedAfterRestart: Boolean
@@ -35,12 +37,11 @@ class KotlinPluginKindSwitcherController {
     private val productName: @NlsSafe String
         get() = ApplicationNamesInfo.getInstance().fullProductName
 
-    fun isModified(): Boolean {
-        return KotlinPluginKindSwitcher.getPluginKindByVmOptions() != chosenKind
-    }
+    fun isModified(): Boolean =
+        getPluginKindByVmOptions() != chosenKind
 
     fun applyChanges() {
-        KotlinPluginKindSwitcher.setPluginKindByVmOptions(chosenKind)
+        useK2Plugin = chosenKind == KotlinPluginMode.K2
         updatePanels()
         if (pluginKindWillBeSwitchedAfterRestart) {
             suggestRestart()
@@ -50,19 +51,27 @@ class KotlinPluginKindSwitcherController {
 
     fun reset() {
         if (!isModified()) return
-        chosenKind = KotlinPluginKindSwitcher.getPluginKindByVmOptions()
+        chosenKind = getPluginKindByVmOptions()
         updateCheckBoxToChosenKind()
         updatePanels()
     }
 
     fun createComponent(): JComponent = panel {
         currentPluginPanel = panel {
+            val currentPluginMode = KotlinPluginModeProvider.currentPluginMode
             row {
-                text(KotlinPreferencesBundle.message("label.your.current.plugin", KotlinPluginModeProvider.currentPluginMode.getPluginModeDescription()))
+                val text = KotlinPreferencesBundle.message(
+                    "label.your.current.plugin",
+                    currentPluginMode.pluginModeDescription,
+                )
+                text(text)
             }
             row {
-                val otherPlugin = KotlinPluginModeProvider.currentPluginMode.other()
-                text(KotlinPreferencesBundle.message("label.plugin.will.be.switched.after.ide.restart", otherPlugin.getPluginModeDescription()))
+                val text = KotlinPreferencesBundle.message(
+                    "label.plugin.will.be.switched.after.ide.restart",
+                    currentPluginMode.other.pluginModeDescription,
+                )
+                text(text)
             }
             row {
                 link(
@@ -82,7 +91,7 @@ class KotlinPluginKindSwitcherController {
                 checkBox(KotlinPreferencesBundle.message("checkbox.enable.k2.based.kotlin.plugin")).also {
                     checkBox = it.component
                 }.onChanged {
-                    chosenKind = if (it.isSelected) KotlinPluginMode.K2 else KotlinPluginMode.K1
+                    chosenKind = KotlinPluginMode.of(it.isSelected)
                 }.gap(RightGap.SMALL)
                 icon(AllIcons.General.Alpha).align(AlignY.BOTTOM)
                 updateCheckBoxToChosenKind()
@@ -138,9 +147,21 @@ class KotlinPluginKindSwitcherController {
     }
 
     companion object {
+
         fun createIfPluginSwitchIsPossible(): KotlinPluginKindSwitcherController? {
-            if (!KotlinPluginKindSwitcher.canPluginBeSwitchedByVmOptions()) return null
-            return KotlinPluginKindSwitcherController()
+            return if (VMOptions.canWriteOptions()) KotlinPluginKindSwitcherController()
+            else null
         }
     }
 }
+
+private const val USE_K2_PLUGIN_VM_OPTION_PREFIX: @NonNls String = "-D$USE_K2_PLUGIN_PROPERTY_NAME="
+
+private var useK2Plugin: Boolean?
+    get() = VMOptions.readOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, /*effective=*/ false)?.toBoolean()
+    set(value) {
+        VMOptions.setOption(USE_K2_PLUGIN_VM_OPTION_PREFIX, value?.toString())
+    }
+
+private fun getPluginKindByVmOptions(): KotlinPluginMode =
+    KotlinPluginMode.of(useK2Plugin = useK2Plugin == true)

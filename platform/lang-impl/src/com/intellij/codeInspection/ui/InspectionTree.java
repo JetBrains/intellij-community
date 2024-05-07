@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -24,6 +23,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
@@ -69,7 +69,6 @@ public final class InspectionTree extends Tree {
 
   private final InspectionTreeModel myModel;
 
-  private boolean myQueueUpdate;
   private final OccurenceNavigator myOccurenceNavigator = new MyOccurrenceNavigator();
   private final InspectionResultsView myView;
   private final Map<ProblemDescriptionNode, CancellablePromise<String>> scheduledTooltipTasks = new ConcurrentHashMap<>();
@@ -89,7 +88,6 @@ public final class InspectionTree extends Tree {
     setRootVisible(true);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getSelectionModel().addTreeSelectionListener(e -> {
-        if (isUnderQueueUpdate()) return;
         if (!myView.isDisposed()) {
           myView.syncRightPanel();
           if (myView.isAutoScrollMode()) {
@@ -130,14 +128,6 @@ public final class InspectionTree extends Tree {
 
   public InspectionTreeModel getInspectionTreeModel() {
     return myModel;
-  }
-
-  public void setQueueUpdate(boolean queueUpdate) {
-    myQueueUpdate = queueUpdate;
-  }
-
-  private boolean isUnderQueueUpdate() {
-    return myQueueUpdate;
   }
 
   void removeAllNodes() {
@@ -301,7 +291,7 @@ public final class InspectionTree extends Tree {
     return myOccurenceNavigator;
   }
 
-  public void selectNode(InspectionTreeNode node) {
+  public void selectNode(@NotNull InspectionTreeNode node) {
     TreePath path = TreePathUtil.pathToTreeNode(node);
     if (path != null) TreeUtil.promiseSelect(this, path);
   }
@@ -624,17 +614,21 @@ public final class InspectionTree extends Tree {
 
     @Override
     public OccurenceInfo goNextOccurence() {
-      InspectionTreeNode node = getNextNode(true);
-      if (node == null) return null;
-      selectNode(node);
-      return new OccurenceInfo(createDescriptorForNode(node), -1, -1);
+      return goNextOccurrence(true);
     }
 
     @Override
     public OccurenceInfo goPreviousOccurence() {
-      InspectionTreeNode node = getNextNode(false);
+      return goNextOccurrence(false);
+    }
+
+    private @Nullable OccurenceInfo goNextOccurrence(boolean next) {
+      InspectionTreeNode node = getNextNode(next);
+      if (node == null) return null;
       selectNode(node);
-      return node == null ? null : new OccurenceInfo(createDescriptorForNode(node), -1, -1);
+      return Registry.is("ide.usages.next.previous.occurrence.only.show.in.preview") && InspectionTree.this.isShowing()
+             ? null
+             : new OccurenceInfo(createDescriptorForNode(node), -1, -1);
     }
 
     @NotNull
@@ -724,5 +718,7 @@ public final class InspectionTree extends Tree {
       }
       return false;
     }
+    
+    public void asdfasdfasdfasdf() {}
   }
 }

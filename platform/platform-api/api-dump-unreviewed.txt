@@ -1320,7 +1320,6 @@ a:com.intellij.ide.ui.search.SearchableOptionsRegistrar
 - s:getInstance():com.intellij.ide.ui.search.SearchableOptionsRegistrar
 - a:getProcessedWords(java.lang.String):java.util.Set
 - a:getProcessedWordsWithoutStemming(java.lang.String):java.util.Set
-- s:getSearchableOptionsXmlName():java.lang.String
 - a:isStopWord(java.lang.String):Z
 - a:replaceSynonyms(java.util.Set,com.intellij.openapi.options.SearchableConfigurable):java.util.Set
 com.intellij.ide.ui.search.SearchableOptionsRegistrar$AdditionalLocationProvider
@@ -1411,17 +1410,6 @@ com.intellij.ide.warmup.WarmupConfigurator
 - a:runWarmup(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.warmup.WarmupConfigurator$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-com.intellij.ide.warmup.WarmupLogger
-- sf:Companion:com.intellij.ide.warmup.WarmupLogger$Companion
-- a:logError(java.lang.String,java.lang.Throwable):V
-- a:logFatalError(java.lang.String,java.lang.Throwable):V
-- a:logInfo(java.lang.String):V
-f:com.intellij.ide.warmup.WarmupLogger$Companion
-- f:error(java.lang.String,java.lang.Throwable):V
-- bs:error$default(com.intellij.ide.warmup.WarmupLogger$Companion,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
-- f:fatalError(java.lang.String,java.lang.Throwable):V
-- bs:fatalError$default(com.intellij.ide.warmup.WarmupLogger$Companion,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
-- f:message(java.lang.String):V
 com.intellij.ide.warmup.WarmupStatus
 - sf:Companion:com.intellij.ide.warmup.WarmupStatus$Companion
 f:com.intellij.ide.warmup.WarmupStatus$Companion
@@ -3494,6 +3482,71 @@ a:com.intellij.openapi.project.ProjectReloadState
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.project.ProjectReloadState
 - a:isAfterAutomaticReload():Z
 - a:onBeforeAutomaticProjectReload():V
+f:com.intellij.openapi.project.configuration.HeadlessLogging
+- sf:INSTANCE:com.intellij.openapi.project.configuration.HeadlessLogging
+- f:logFatalError(java.lang.String):V
+- f:logFatalError(java.lang.Throwable):V
+- f:logMessage(java.lang.String):V
+- f:logWarning(java.lang.String):V
+- f:logWarning(java.lang.Throwable):V
+- f:loggingFlow():kotlinx.coroutines.flow.SharedFlow
+com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService
+- sf:Companion:com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService$Companion
+- a:logEntry(com.intellij.openapi.project.configuration.HeadlessLogging$LogEntry):V
+- a:loggingFlow():kotlinx.coroutines.flow.SharedFlow
+f:com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService$Companion
+- f:getInstance():com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService
+f:com.intellij.openapi.project.configuration.HeadlessLogging$LogEntry
+- <init>(com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind,com.intellij.openapi.project.configuration.HeadlessLogging$Message):V
+- f:component1():com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind
+- f:component2():com.intellij.openapi.project.configuration.HeadlessLogging$Message
+- f:copy(com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind,com.intellij.openapi.project.configuration.HeadlessLogging$Message):com.intellij.openapi.project.configuration.HeadlessLogging$LogEntry
+- bs:copy$default(com.intellij.openapi.project.configuration.HeadlessLogging$LogEntry,com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind,com.intellij.openapi.project.configuration.HeadlessLogging$Message,I,java.lang.Object):com.intellij.openapi.project.configuration.HeadlessLogging$LogEntry
+- equals(java.lang.Object):Z
+- f:getMessage():com.intellij.openapi.project.configuration.HeadlessLogging$Message
+- f:getSeverity():com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind
+- hashCode():I
+- toString():java.lang.String
+com.intellij.openapi.project.configuration.HeadlessLogging$Message
+- a:representation():java.lang.String
+f:com.intellij.openapi.project.configuration.HeadlessLogging$Message$Exception
+- com.intellij.openapi.project.configuration.HeadlessLogging$Message
+- bsf:box-impl(java.lang.Throwable):com.intellij.openapi.project.configuration.HeadlessLogging$Message$Exception
+- s:constructor-impl(java.lang.Throwable):java.lang.Throwable
+- equals(java.lang.Object):Z
+- s:equals-impl(java.lang.Throwable,java.lang.Object):Z
+- sf:equals-impl0(java.lang.Throwable,java.lang.Throwable):Z
+- f:getException():java.lang.Throwable
+- hashCode():I
+- s:hashCode-impl(java.lang.Throwable):I
+- representation():java.lang.String
+- s:representation-impl(java.lang.Throwable):java.lang.String
+- toString():java.lang.String
+- s:toString-impl(java.lang.Throwable):java.lang.String
+- bf:unbox-impl():java.lang.Throwable
+f:com.intellij.openapi.project.configuration.HeadlessLogging$Message$Plain
+- com.intellij.openapi.project.configuration.HeadlessLogging$Message
+- bsf:box-impl(java.lang.String):com.intellij.openapi.project.configuration.HeadlessLogging$Message$Plain
+- s:constructor-impl(java.lang.String):java.lang.String
+- equals(java.lang.Object):Z
+- s:equals-impl(java.lang.String,java.lang.Object):Z
+- sf:equals-impl0(java.lang.String,java.lang.String):Z
+- f:getMessage():java.lang.String
+- hashCode():I
+- s:hashCode-impl(java.lang.String):I
+- representation():java.lang.String
+- s:representation-impl(java.lang.String):java.lang.String
+- toString():java.lang.String
+- s:toString-impl(java.lang.String):java.lang.String
+- bf:unbox-impl():java.lang.String
+e:com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind
+- java.lang.Enum
+- sf:Fatal:com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind
+- sf:Info:com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind
+- sf:Warning:com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind
+- s:values():com.intellij.openapi.project.configuration.HeadlessLogging$SeverityKind[]
 com.intellij.openapi.project.impl.ProjectLifecycleListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - afterProjectClosed(com.intellij.openapi.project.Project):V
@@ -9565,9 +9618,11 @@ f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - f:getFont():java.awt.Font
 - f:getForeground():java.awt.Color
 - f:getGreyForeground():java.awt.Color
+- f:getSpeedSearchHighlighting():Z
 - f:setAttributes(com.intellij.ui.SimpleTextAttributes):V
 - f:setFont(java.awt.Font):V
 - f:setForeground(java.awt.Color):V
+- f:setSpeedSearchHighlighting(Z):V
 f:com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt
 - sf:stripHorizontalInsets(javax.swing.JComponent):V
 com.intellij.ui.dsl.listCellRenderer.UiDslRendererProvider

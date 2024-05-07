@@ -22,7 +22,7 @@ abstract class LinuxDistributionCustomizer {
   /**
    * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of hardcoding into a script).
    */
-  var useXPlatLauncher = false
+  var useXPlatLauncher = true
 
   /**
    * Relative paths to files in Linux distribution which should take 'executable' permissions

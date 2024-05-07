@@ -14,6 +14,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.plugin.SystemPropertyUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,8 +25,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
-
-import static org.jetbrains.kotlin.idea.test.util.JetTestUtils.setUpWithKotlinPlugin;
 
 public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJavaCodeInsightFixtureTestCase {
     @NotNull
@@ -49,7 +49,18 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
 
     @Override
     protected void setUp() throws Exception {
-        setUpWithKotlinPlugin(isFirPlugin(), super::setUp);
+        boolean useK2Plugin = isFirPlugin();
+        SystemPropertyUtils.setUseK2Plugin(useK2Plugin);
+        super.setUp();
+
+        // todo test classes should inherit ExpectedPluginModeProvider directly
+        ExpectedPluginModeProviderKt.assertKotlinPluginMode(new ExpectedPluginModeProvider() {
+
+            @Override
+            public @NotNull KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.of(useK2Plugin);
+            }
+        });
     }
 
     @Override

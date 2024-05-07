@@ -1,7 +1,7 @@
 [package]
 build = "build.rs"
 name = "xplat-launcher"
-version = "0.9.0"
+version = "1.0.0"
 edition = "2021"
 rust-version = "1.70.0"
 publish = false
@@ -13,9 +13,9 @@ lto = true
 codegen-units = 1
 
 [dependencies]
-log = { version = "0.4.20", features = ["std"] }
-serde = { version = "1.0.197", features = ["derive"] }
-serde_json = "1.0.114"
+log = { version = "0.4.21", features = ["std"] }
+serde = { version = "1.0.200", features = ["derive"] }
+serde_json = "1.0.116"
 jni = "0.21.1"
 libloading = "0.8.0"
 anyhow = { version = "1.0.81", features = ["std", "backtrace"] }
@@ -24,7 +24,7 @@ anyhow = { version = "1.0.81", features = ["std", "backtrace"] }
 va_list = "0.1.4"
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
-version = "0.51.1"
+version = "0.56.0"
 features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Environment", "Win32_System_Services", "Win32_Security", "Win32_System_Console", "Win32_System_LibraryLoader", "Win32_Globalization"]
 
 [target.'cfg(target_family = "unix")'.dependencies]
@@ -34,24 +34,29 @@ libc = "0.2.142"
 core-foundation = "0.9.3"
 
 [target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
-native-dialog = "0.6.3"
+native-dialog = "0.7.0"
 
-# cargo-deny and cargo-about are used implicitly by the Kotlin counterpart responsible for building this
-# relies on the simplest syntax (packageName = "version")
-# (build/src/BuildXPlatLaunchersBuildTarget.kt)
-# we don't need to actually build them (it's +300 crates), but having them in Cargo.toml shows if any updates are available
+# `cargo-deny` and `cargo-about` are used in separate build steps
+# we don't have to actually build them, but having them in the manifest shows if any updates are available
 [target.'cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))'.build-dependencies]
 cargo-deny = "0.14.21"  # checks licenses and problematic dependencies
 cargo-about = "0.6.1"   # generates license report
 
 [build-dependencies]
-anyhow = { version = "1.0.81", features = ["std", "backtrace"] }
+anyhow = { version = "1.0.82", features = ["std", "backtrace"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 reqwest = { version = "0.12.0", features = ["blocking"] }
 sha1 = "0.10.6"
-windows = { version = "0.51.1", features = [ "Win32_System_SystemInformation", "Win32_Foundation" ] }
 winresource = "0.1.17"
 
+[package.metadata.winresource]
+CompanyName = "JetBrains s.r.o."
+FileDescription = "IntelliJ Platform Windows Launcher"
+LegalCopyright = "Copyright 2000-2024 JetBrains s.r.o."
+InternalName = "WinLauncher.exe"
+OriginalFilename = "WinLauncher.exe"
+ProductName = "IntelliJ Platform"
+
 [dev-dependencies]
-tempfile = "3.8.0"
+tempfile = "3.10.1"

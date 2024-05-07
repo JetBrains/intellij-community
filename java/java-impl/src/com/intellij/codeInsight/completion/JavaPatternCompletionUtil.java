@@ -97,14 +97,13 @@ public final class JavaPatternCompletionUtil {
     PsiRecordComponent component = getRecordComponentForDeconstructionComponent(currentPosition);
     if (component == null) return;
     PsiType type = component.getType();
-    if (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, currentPosition)) {
-      if (type instanceof PsiPrimitiveType) {
-        LookupElement lookupItem = BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, type.getCanonicalText());
-        result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
-      }
-    }
-    else {
+    if (PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, currentPosition)) {
       suggestPrimitiveTypesForPattern(currentPosition, type, result);
+      return;
+    }
+    if (type instanceof PsiPrimitiveType) {
+      LookupElement lookupItem = BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, type.getCanonicalText());
+      result.accept(new JavaKeywordCompletion.OverridableSpace(lookupItem, TailTypes.spaceType()));
     }
   }
 

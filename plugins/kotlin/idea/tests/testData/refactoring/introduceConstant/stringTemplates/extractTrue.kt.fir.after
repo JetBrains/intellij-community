@@ -1,0 +1,11 @@
+// EXTRACTION_TARGET: property with initializer
+val a = 1
+
+private const val bool = true
+
+fun foo(): String {
+    val x = "atrue123"
+    val x = "aTRUE123"
+    val z = bool
+    return "ab${bool}def"
+}

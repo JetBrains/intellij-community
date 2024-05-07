@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines
 
-import com.intellij.ide.ui.UISettings
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -21,13 +20,11 @@ internal class StickyLinesSettingsDisableAction : StickyLinesAbstractAction() {
     val settings = EditorSettingsExternalizable.getInstance()
     if (settings.areStickyLinesShown()) {
       settings.setStickyLinesShown(false)
-      UISettings.getInstance().fireUISettingsChanged()
       stickyLinesDisabledNotification(e.project).notify(e.project)
     }
   }
 
   private fun stickyLinesDisabledNotification(project: Project?): Notification {
-    @Suppress("DialogTitleCapitalization")
     return Notification(
       "Sticky Lines",
       ApplicationBundle.message("settings.editor.sticky.lines.disabled.title"),

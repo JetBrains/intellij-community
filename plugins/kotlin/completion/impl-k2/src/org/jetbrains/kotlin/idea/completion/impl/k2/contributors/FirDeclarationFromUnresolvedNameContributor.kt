@@ -95,13 +95,13 @@ internal class FirDeclarationFromUnresolvedNameContributor(
                     val expectedReceiverType = getReceiverType(symbol) ?: return false
 
                     // FIXME: this check does not work with generic types (i.e. List<String> and List<T>)
-                    actualReceiverType isSubTypeOf expectedReceiverType
+                    actualReceiverType.isSubTypeOf(expectedReceiverType)
                 }
                 else -> {
                     // If there is no explicit receiver at call-site, we check if any implicit receiver at call-site matches the extension
                     // receiver type for the current declared symbol
                     val extensionReceiverType = symbol.receiverType ?: return true
-                    getImplicitReceiverTypesAtPosition(unresolvedRef).any { it isSubTypeOf extensionReceiverType }
+                    getImplicitReceiverTypesAtPosition(unresolvedRef).any { it.isSubTypeOf(extensionReceiverType) }
                 }
             }
             is KtClassOrObjectSymbol -> when {

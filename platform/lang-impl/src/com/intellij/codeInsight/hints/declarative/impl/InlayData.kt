@@ -24,10 +24,8 @@ data class InlayData(
   val providerId: String,
   val disabled: Boolean,
   val payloads: List<InlayPayload>?,
-  /**
-   * Just for debugging purposes
-   */
-  val providerClass: Class<*>,
+  val providerClass: Class<*>, // Just for debugging purposes
+  val passClass: Class<*>,
 ) {
 
   class Externalizer : VersionedExternalizer<InlayData> {
@@ -35,7 +33,7 @@ data class InlayData(
 
     companion object {
       // increment on format changed
-      private const val SERDE_VERSION = 0
+      private const val SERDE_VERSION = 1
     }
 
     override fun serdeVersion(): Int = SERDE_VERSION + treeExternalizer.serdeVersion()
@@ -49,6 +47,7 @@ data class InlayData(
       output.writeBoolean(inlayData.disabled)
       writePayloads(output, inlayData.payloads)
       writeProviderClass(output, inlayData.providerClass)
+      writePassClass(output, inlayData.passClass)
     }
 
     override fun read(input: DataInput): InlayData {
@@ -60,7 +59,8 @@ data class InlayData(
       val disabled: Boolean             = input.readBoolean()
       val payloads: List<InlayPayload>? = readPayloads(input)
       val providerClass: Class<*>       = readProviderClass(input)
-      return InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass)
+      val passClass: Class<*>           = readPassClass(input)
+      return InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass, passClass)
     }
 
     private fun writePosition(output: DataOutput, position: InlayPosition) {
@@ -153,6 +153,20 @@ data class InlayData(
     private fun readProviderClass(input: DataInput): Class<*> {
       readUTF(input) // TODO: remove when format changed
       return ZombieInlayHintsProvider::class.java
+    }
+
+    private fun writePassClass(output: DataOutput, passClass: Class<*>) {
+      writeUTF(output, passClass.name)
+    }
+
+    private fun readPassClass(input: DataInput): Class<*> {
+      val className = readUTF(input)
+      try {
+        return Class.forName(className)
+      }
+      catch (e: ClassNotFoundException) {
+        return DeclarativeInlayHintsPass::class.java
+      }
     }
   }
 }

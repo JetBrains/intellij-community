@@ -46,7 +46,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
   private fun libraryEntities(): Sequence<LibraryEntity> {
     val moduleLibraryTableId = getTableId()
     return modifiableModel.entityStorageOnDiff.current
-      .entities(LibraryEntity::class.java)
+      .referrers(moduleLibraryTableId.moduleId, LibraryEntity::class.java)
       .filter { it.tableId == moduleLibraryTableId }
   }
 

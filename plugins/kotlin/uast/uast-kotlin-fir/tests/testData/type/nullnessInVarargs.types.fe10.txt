@@ -2,19 +2,19 @@ UFile (package = test.pkg) [package test.pkg...]
     UClass (name = NullnessInVarargsKt) [public final class NullnessInVarargsKt {...}]
         UMethod (name = arrayMapOf) [public static final fun arrayMapOf() : test.pkg.ArrayMap<K,V> {...}]
             UBlockExpression [{...}]
-                UReturnExpression [return <init>()]
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : test.pkg.ArrayMap<K, V>
+                UReturnExpression [return ArrayMap()]
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [ArrayMap()] : test.pkg.ArrayMap<K, V>
                         UIdentifier (Identifier (ArrayMap)) [UIdentifier (Identifier (ArrayMap))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: ArrayMap) [<init>] : test.pkg.ArrayMap<K, V>
+                        USimpleNameReferenceExpression (identifier = ArrayMap, resolvesTo = PsiClass: ArrayMap) [ArrayMap]
         UMethod (name = arrayMapOf) [public static final fun arrayMapOf(@org.jetbrains.annotations.NotNull pairs: kotlin.Pair<? extends K,? extends V>...) : test.pkg.ArrayMap<K,V> {...}]
             UParameter (name = pairs) [@org.jetbrains.annotations.NotNull var pairs: kotlin.Pair<? extends K,? extends V>...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : java.lang.Void
-                UDeclarationsExpression [var map: test.pkg.ArrayMap<K,V> = <init>(pairs.size)]
-                    ULocalVariable (name = map) [var map: test.pkg.ArrayMap<K,V> = <init>(pairs.size)]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(pairs.size)] : test.pkg.ArrayMap<K, V>
+                UDeclarationsExpression [var map: test.pkg.ArrayMap<K,V> = ArrayMap(pairs.size)]
+                    ULocalVariable (name = map) [var map: test.pkg.ArrayMap<K,V> = ArrayMap(pairs.size)]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [ArrayMap(pairs.size)] : test.pkg.ArrayMap<K, V>
                             UIdentifier (Identifier (ArrayMap)) [UIdentifier (Identifier (ArrayMap))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: ArrayMap) [<init>] : test.pkg.ArrayMap<K, V>
+                            USimpleNameReferenceExpression (identifier = ArrayMap, resolvesTo = PsiClass: ArrayMap) [ArrayMap]
                             UQualifiedReferenceExpression [pairs.size] : int
                                 USimpleNameReferenceExpression (identifier = pairs) [pairs] : kotlin.Pair<? extends K, ? extends V>[]
                                 USimpleNameReferenceExpression (identifier = size) [size] : int
@@ -41,6 +41,6 @@ UFile (package = test.pkg) [package test.pkg...]
     UClass (name = ArrayMap) [public final class ArrayMap : java.util.HashMap<K,V> {...}]
         UMethod (name = ArrayMap) [public fun ArrayMap() {...}]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [HashMap()]
                     UIdentifier (Identifier (HashMap)) [UIdentifier (Identifier (HashMap))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: HashMap) [<init>]
+                    USimpleNameReferenceExpression (identifier = HashMap, resolvesTo = PsiClass: HashMap) [HashMap]

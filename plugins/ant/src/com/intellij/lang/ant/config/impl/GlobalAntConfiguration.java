@@ -8,6 +8,7 @@ import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -19,7 +20,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.PathUtil;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -93,17 +93,18 @@ public final class GlobalAntConfiguration implements PersistentStateComponent<El
   }
 
   private static @NotNull File getBundledAntHome() {
+    File distDir = PluginPathManager.getPluginResource(AntInstallation.class, "dist");
+    if (distDir != null && distDir.exists()) {
+      return distDir;
+    }
+
+    // probably running from source
     File antFile = PathManager.findFileInLibDirectory(ANT_FILE);
     if (antFile.exists()) {
-      // probably running from source
       return antFile;
     }
 
-    String pluginJarPath = PathUtil.getJarPathForClass(AntInstallation.class);
-    File pluginLibRoot = new File(pluginJarPath).getParentFile();
-    File pluginRoot = pluginLibRoot.getParentFile();
-
-    return new File(pluginRoot, "dist");
+    throw new IllegalStateException("Unable to find bundled Ant");
   }
 
   @Override

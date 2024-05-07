@@ -466,7 +466,7 @@ public final class UndoManagerImpl extends UndoManager {
 
   @Nullable
   @ApiStatus.Internal
-  public ResetUndoHistoryToken createResetUndoHistoryToken(FileEditor editor) {
+  public ResetUndoHistoryToken createResetUndoHistoryToken(@NotNull FileEditor editor) {
     Collection<DocumentReference> references = getDocumentReferences(editor);
     if (references.size() != 1)
       return null;
@@ -519,9 +519,11 @@ public final class UndoManagerImpl extends UndoManager {
       return;
     }
     state.myCurrentOperationState = isUndo ? OperationState.UNDO : OperationState.REDO;
+    Disposable disposable = Disposer.newDisposable();
     try {
       final RuntimeException[] exception = new RuntimeException[1];
       Runnable executeUndoOrRedoAction = () -> {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(UndoRedoListener.Companion.getTOPIC()).undoRedoStarted(myProject, this, editor, isUndo, disposable);
         try {
           CopyPasteManager.getInstance().stopKillRings();
           state.myMerger.undoOrRedo(editor, isUndo);
@@ -536,6 +538,7 @@ public final class UndoManagerImpl extends UndoManager {
       if (exception[0] != null) throw exception[0];
     }
     finally {
+      Disposer.dispose(disposable);
       state.myCurrentOperationState = OperationState.NONE;
     }
   }

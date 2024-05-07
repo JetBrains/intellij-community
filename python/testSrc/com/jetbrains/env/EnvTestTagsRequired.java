@@ -15,7 +15,6 @@
  */
 package com.jetbrains.env;
 
-import com.jetbrains.TestEnv;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 import java.lang.annotation.ElementType;

@@ -236,7 +236,7 @@ class EditorNotificationsImpl(private val project: Project,
 
           val result = readAction {
             if (file.isValid && !project.isDisposed &&
-                (!DumbService.isDumb(project) || DumbService.isDumbAware(provider))) {
+                DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
               Optional.ofNullable(provider.collectNotificationData(project, file))
             }
             else {

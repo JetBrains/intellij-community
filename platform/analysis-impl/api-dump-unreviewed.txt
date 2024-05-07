@@ -797,6 +797,8 @@ com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
 - a:isForceHighlightParents(com.intellij.psi.PsiFile):Z
 com.intellij.codeInsight.daemon.impl.HighlightVisitor
 - com.intellij.openapi.project.PossiblyDumbAware
+- sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
+- sf:EMPTY_ARRAY:com.intellij.codeInsight.daemon.impl.HighlightVisitor[]
 - sf:EP_HIGHLIGHT_VISITOR:com.intellij.openapi.extensions.ExtensionPointName
 - a:analyze(com.intellij.psi.PsiFile,Z,com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder,java.lang.Runnable):Z
 - a:clone():com.intellij.codeInsight.daemon.impl.HighlightVisitor

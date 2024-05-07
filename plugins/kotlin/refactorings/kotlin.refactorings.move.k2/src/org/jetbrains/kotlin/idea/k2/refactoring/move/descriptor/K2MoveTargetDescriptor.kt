@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
-import org.jetbrains.kotlin.idea.k2.refactoring.getOrCreateKotlinFile
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.getOrCreateKotlinFile
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 

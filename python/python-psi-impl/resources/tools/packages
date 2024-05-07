@@ -4773,10 +4773,11 @@ bson pymongo
 dotenv python-dotenv
 avro avro-python3
 modeltranslation django-modeltranslation
-torch torch-nightly
 can python-can
 github PyGithub
 gitlab python-gitlab
-tensorflow tensorflow-gpu
 aocd advent-of-code-data
 slugify python-slugify
+huggingface_hub huggingface-hub
+tensorflow_text tensorflow-text
+tensorflow_graphics tensorflow-graphics

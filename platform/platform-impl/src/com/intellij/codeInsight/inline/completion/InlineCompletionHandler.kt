@@ -293,8 +293,17 @@ class InlineCompletionHandler(
     val currentCustomDocumentChangesAllowed = customDocumentChangesAllowed
     customDocumentChangesAllowed = true
     val result = block()
+    check(customDocumentChangesAllowed) { "The state of disabling document changes tracker is switched outside." }
     customDocumentChangesAllowed = currentCustomDocumentChangesAllowed
     return result
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @RequiresEdt
+  fun setIgnoringDocumentChanges(value: Boolean) {
+    ThreadingAssertions.assertEventDispatchThread()
+    customDocumentChangesAllowed = value
   }
 
   private suspend fun request(

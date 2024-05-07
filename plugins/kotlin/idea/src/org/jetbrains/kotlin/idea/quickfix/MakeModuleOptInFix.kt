@@ -27,6 +27,10 @@ open class MakeModuleOptInFix(
     private val annotationFqName: FqName,
 ) : KotlinQuickFixAction<KtFile>(file) {
 
+    private val configurator by lazy {
+        allConfigurators().find { it.isApplicable(module) && it.canAddModuleWideOptIn }
+    }
+
     /**
      * The actual name of the opt-in compiler argument depends on the Kotlin compiler version:
      * * `-opt-in` (since Kotlin 1.6) https://youtrack.jetbrains.com/issue/KT-47099
@@ -41,18 +45,19 @@ open class MakeModuleOptInFix(
 
     private val compilerArgument = "$compilerArgName=$annotationFqName"
 
-    override fun getText(): String = KotlinBundle.message("add.0.to.module.1.compiler.arguments", compilerArgument, module.name)
+    override fun getText(): String = KotlinBundle.message(
+        "fix.opt_in.text.use.module",
+        annotationFqName.shortName().asString(),
+        configurator?.userVisibleNameFor(module) ?: module.name
+    )
 
     override fun getFamilyName(): String = KotlinBundle.message("add.an.opt.in.requirement.marker.compiler.argument")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val configurator = allConfigurators().find { it.isApplicable(module) && it.canAddModuleWideOptIn }
         configurator?.addModuleWideOptIn(module, annotationFqName, compilerArgument)
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        return allConfigurators().any { it.isApplicable(module) && it.canAddModuleWideOptIn }
-    }
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = configurator != null
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {

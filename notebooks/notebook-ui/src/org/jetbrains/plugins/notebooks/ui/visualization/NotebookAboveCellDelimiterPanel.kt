@@ -13,6 +13,7 @@ import javax.swing.JPanel
 
 internal typealias BackgroundColorToCellRoofColor = Pair<Color, Color?>
 
+@Deprecated("See PY-71646")
 class NotebookAboveCellDelimiterPanel(val editor: Editor) : JPanel(GridBagLayout()) {
 
   internal inner class ColorsChangeListenerAdapter {

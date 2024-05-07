@@ -133,7 +133,7 @@ class NotebookTextCellBackgroundLineMarkerRenderer(private val highlighter: Rang
     if (editor.getUserData(isFoldingEnabledKey) != true) {
       val appearance = editor.notebookAppearance
       appearance.getCellStripeColor(editor, lines)?.let {
-        paintCellStripe(appearance, g, r, it, top, height)
+        paintCellStripe(appearance, g, r, it, top, height, editor)
       }
     }
   }

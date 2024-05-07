@@ -1114,4 +1114,43 @@ interface UastApiFixtureTestBase : UastPluginSelection {
 
         TestCase.assertNotSame(localPsiVariable.textRange, uNameReferenceExpression.textRange)
     }
+
+    fun checkNameReferenceVisitInConstructorCall(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Foo
+                fun test() {
+                  val foo = Foo()
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                var inConstructorCall: Boolean = false
+
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    if (node.isConstructorCall()) {
+                        inConstructorCall = true
+                    }
+                    return super.visitCallExpression(node)
+                }
+
+                override fun afterVisitCallExpression(node: UCallExpression) {
+                    inConstructorCall = false
+                    super.afterVisitCallExpression(node)
+                }
+
+                override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+                    if (inConstructorCall) {
+                        count++
+                        TestCase.assertEquals("Foo", node.resolvedName)
+                    }
+                    return super.visitSimpleNameReferenceExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(1, count)
+    }
 }

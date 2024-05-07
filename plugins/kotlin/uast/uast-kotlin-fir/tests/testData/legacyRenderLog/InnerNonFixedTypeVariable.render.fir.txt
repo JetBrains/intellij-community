@@ -1,6 +1,6 @@
 public final class InnerNonFixedTypeVariableKt {
     public static final fun test(@org.jetbrains.annotations.NotNull list: java.util.List<? extends java.lang.Object>) : void {
-        list.<anonymous class>().<anonymous class>(mutableSetOf(), {
+        list.UIdentifier (Identifier (filterIsInstance))().UIdentifier (Identifier (mapTo))(mutableSetOf(), {
 
         })
     }

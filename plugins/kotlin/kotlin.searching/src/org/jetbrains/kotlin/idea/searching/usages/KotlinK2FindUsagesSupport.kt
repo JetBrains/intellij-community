@@ -15,8 +15,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
@@ -108,8 +109,13 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
                 is KtFunctionCall<*> -> {
                     val constructorSymbol = call.symbol as? KtConstructorSymbol ?: return@withResolvedCall false
                     val constructedClassSymbol =
-                        constructorSymbol.getContainingSymbol() as? KtClassifierSymbol ?: return@withResolvedCall false
-                    constructedClassSymbol == ktClassOrObject.getClassOrObjectSymbol()
+                        constructorSymbol.getContainingSymbol() as? KtClassLikeSymbol ?: return@withResolvedCall false
+                    val classOrObjectSymbol = ktClassOrObject.getClassOrObjectSymbol()
+
+                    fun KtClassLikeSymbol.getExpectsOrSelf(): List<KtDeclarationSymbol> = (listOf(this).takeIf { isExpect } ?: getExpectsForActual())
+
+                    constructedClassSymbol == classOrObjectSymbol ||
+                            constructedClassSymbol.getExpectsOrSelf() == classOrObjectSymbol?.getExpectsOrSelf()
                 }
 
                 else -> false

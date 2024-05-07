@@ -6,7 +6,9 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object InspectionsFUS : CounterUsagesCollector() {
   enum class Navigation {
     NEXT,
@@ -18,7 +20,18 @@ object InspectionsFUS : CounterUsagesCollector() {
     SHOW_POPUP
   }
 
-  private val eventLogGroup: EventLogGroup = EventLogGroup("new.inspections.widget", 2)
+  enum class InspectionSegmentType {
+    Error,
+    Warning,
+    WeakWarning,
+    Information,
+    InformationDeprecated,
+    Consideration,
+    ServerProblem,
+    Other
+  }
+
+  private val eventLogGroup: EventLogGroup = EventLogGroup("new.inspections.widget", 4)
 
   private val actionIdField = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
   private val startAction = eventLogGroup.registerEvent("action_started", EventFields.Int("tabId"), actionIdField)
@@ -29,6 +42,10 @@ object InspectionsFUS : CounterUsagesCollector() {
 
   private val event = eventLogGroup.registerEvent("action_occurred", EventFields.Int("tabId"), EventFields.Enum(("event"), InspectionsEvent::class.java))
 
+  private val segmentClickedEvent = InspectionsFUS.group.registerEvent("segment_clicked",
+                                                                       EventFields.Enum(("type"), InspectionSegmentType::class.java),
+                                                                       EventFields.Int("count"),
+                                                                       EventFields.Boolean("forward"))
 
   fun infoStateDetected(project: Project?, id: Int, state: InspectionsState) {
     infoState.log(project, id, state)
@@ -48,6 +65,10 @@ object InspectionsFUS : CounterUsagesCollector() {
 
   fun currentFileLevelChanged(project: Project?, id: Int, level: InspectionsLevel) {
     currentFileLevelChanged.log(project, id, level)
+  }
+
+  fun segmentClick(project: Project?, type: InspectionSegmentType, count: Int, forward: Boolean) {
+    segmentClickedEvent.log(project, type, count, forward)
   }
 
   override fun getGroup(): EventLogGroup {

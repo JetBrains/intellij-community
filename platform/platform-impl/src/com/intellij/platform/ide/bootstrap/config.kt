@@ -4,7 +4,6 @@ package com.intellij.platform.ide.bootstrap
 import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.idea.AppMode
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -51,8 +50,9 @@ internal suspend fun importConfigIfNeeded(isHeadless: Boolean,
     euaDocumentDeferred = euaDocumentDeferred,
   )
 
-  enableNewUi(logDeferred)
-  if (ConfigImportHelper.isNewUser()) {
+  val isNewUser = ConfigImportHelper.isNewUser()
+  enableNewUi(logDeferred, isNewUser)
+  if (isNewUser) {
     if (isIdeStartupDialogEnabled) {
       log.info("Will enter initial app wizard flow.")
       val result = CompletableDeferred<Boolean>()
@@ -92,12 +92,12 @@ private suspend fun importConfig(args: List<String>,
   }
 }
 
-private suspend fun enableNewUi(logDeferred: Deferred<Logger>, isHeadless: Boolean = false) {
+private suspend fun enableNewUi(logDeferred: Deferred<Logger>, isBackgroundSwitch: Boolean = false) {
   try {
     val shouldEnableNewUi = !EarlyAccessRegistryManager.getBoolean("ide.experimental.ui") && !EarlyAccessRegistryManager.getBoolean("moved.to.new.ui")
     if (shouldEnableNewUi) {
       EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true", "moved.to.new.ui" to "true"))
-      if (!(isHeadless || ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode)) {
+      if (!isBackgroundSwitch) {
         EarlyAccessRegistryManager.setAndFlush(mapOf(ExperimentalUI.FORCED_SWITCH_TO_NEW_UI to "true"))
       }
     }

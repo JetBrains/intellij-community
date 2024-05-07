@@ -5,22 +5,26 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
 import java.io.File
 
-abstract class KotlinLightPlatformCodeInsightFixtureTestCase : LightPlatformCodeInsightFixtureTestCase() {
-    protected open fun isFirPlugin(): Boolean = false
+abstract class KotlinLightPlatformCodeInsightFixtureTestCase : LightPlatformCodeInsightFixtureTestCase(),
+                                                               ExpectedPluginModeProvider {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun setUp() {
         super.setUp()
         enableKotlinOfficialCodeStyle(project)
         VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, KotlinRoot.DIR.path)
 
-        if (!isFirPlugin()) {
+        // TODO override in KotlinFirBreadcrumbsTestGenerated?
+        if (pluginMode == KotlinPluginMode.K1) {
             invalidateLibraryCache(project)
         }
-        checkPluginIsCorrect(isFirPlugin())
+        assertKotlinPluginMode()
     }
 
     override fun tearDown() {

@@ -9,17 +9,22 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import com.intellij.testFramework.PlatformTestUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import java.io.File
 
-abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
+abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase(),
+                                                   ExpectedPluginModeProvider {
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     object SafeDeleteAction : AbstractMultifileRefactoringTest.RefactoringAction {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
             @Suppress("UNCHECKED_CAST")
@@ -50,7 +55,8 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
     override fun getTestRoot(): String = "/refactoring/safeDeleteMultiModule/"
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
 
-    protected open fun isFirPlugin(): Boolean = false
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     protected open fun getAlternativeConflictsFile(): String? = null
 
@@ -58,7 +64,12 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
         val config = loadTestConfiguration(File(path))
 
         isMultiModule = true
-        val isEnabled = config.get(if (isFirPlugin()) "enabledInK2" else "enabledInK1")?.asBoolean != false
+
+        val pluginMode = when (pluginMode) {
+            KotlinPluginMode.K1 -> "K1"
+            KotlinPluginMode.K2 -> "K2"
+        }
+        val isEnabled = config.get("enabledIn$pluginMode")?.asBoolean != false
 
         val results = runCatching {
             doTestCommittingDocuments { rootDir, _ ->

@@ -19,8 +19,6 @@ import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.nio.file.Paths
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
-import kotlin.let
-import kotlin.text.replace
 
 abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsightFixtureTestCase() {
     override fun setUp() {
@@ -33,7 +31,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
     }
 
     protected fun performTest() {
-        val disableDirective = when (pluginKind) {
+        val disableDirective = when (pluginMode) {
             KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
             KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
         }

@@ -454,6 +454,7 @@
     <action id="Git.Stash.Apply" class="git4idea.stash.ui.GitApplyStashAction"/>
     <action id="Git.Stash.UnstashAs" class="git4idea.stash.ui.GitUnstashAsAction"/>
     <action id="Git.Stash.Drop" class="git4idea.stash.ui.GitDropStashAction" use-shortcut-of="$Delete"/>
+    <action id="Git.Stash.Clear" class="git4idea.stash.ui.GitClearStashesAction"/>
     <action id="Git.Show.Stash" class="git4idea.stash.ui.GitShowStashToolWindowTabAction">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
       <add-to-group group-id="Git.MainMenu.LocalChanges" relative-to-action="Vcs.Show.Shelf" anchor="after"/>
@@ -465,6 +466,7 @@
       <reference id="Git.Stash.Apply"/>
       <reference id="Git.Stash.UnstashAs"/>
       <reference id="Git.Stash.Drop"/>
+      <reference id="Git.Stash.Clear"/>
       <add-to-group group-id="Vcs.SavedPatches.ContextMenu" anchor="first"/>
     </group>
 

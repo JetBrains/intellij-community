@@ -7,11 +7,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.close
+import io.ktor.utils.io.*
 import io.ktor.utils.io.jvm.javaio.toByteReadChannel
-import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import java.io.IOException
@@ -53,17 +50,15 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
 
 
     suspend fun connectChannels(source: ByteReadChannel, dest: ByteWriteChannel) {
-      val buffer = ByteBuffer.allocate(4096)
+      val buffer = ByteArray(64800)
       while (coroutineContext.isActive) {
-        buffer.rewind()
         val bytesRead = source.readAvailable(buffer)
         if (bytesRead < 1) {
           dest.close()
           return
         }
-        buffer.rewind()
         try {
-          dest.writeFully(buffer.array(), 0, bytesRead)
+          dest.writeFully(buffer, 0, bytesRead)
         }
         catch (e: IOException) {
           dest.close()
@@ -96,7 +91,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
 
   val wslIngressPort: Int
   private var wslLinuxIp: String
-  private val scope = CoroutineScope(Dispatchers.IO)
+  private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
   private suspend fun readToBuffer(channel: ByteReadChannel, bufferSize: Int): ByteBuffer {
     val buffer = ByteBuffer.allocate(bufferSize).order(ByteOrder.LITTLE_ENDIAN)
@@ -156,9 +151,10 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
   }
 
   private suspend fun clientConnected(linuxEgressPort: Int) {
+    val selector = ActorSelectorManager(scope.coroutineContext)
     val winToLin = scope.async {
       thisLogger().info("Connecting to WSL: $wslLinuxIp:$linuxEgressPort")
-      val socket = aSocket(ActorSelectorManager(scope.coroutineContext)).tcp().tryConnect(wslLinuxIp, linuxEgressPort)
+      val socket = aSocket(selector).tcp().tryConnect(wslLinuxIp, linuxEgressPort)
       thisLogger().info("Connected to WSL")
       socket
     }
@@ -171,12 +167,16 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
     scope.launch {
       val winToLinSocket = winToLin.await()
       val winToWinSocket = winToWin.await()
+      val closeSockets = {
+        winToWinSocket.close()
+        winToLinSocket.close()
+      }
       launch(CoroutineName("WinWin->WinLin $linuxEgressPort")) {
         connectChannels(winToWinSocket.openReadChannel(), winToLinSocket.openWriteChannel(true))
-      }
+      }.invokeOnCompletion { closeSockets() }
       launch(CoroutineName("WinLin->WinWin $applicationPort")) {
         connectChannels(winToLinSocket.openReadChannel(), winToWinSocket.openWriteChannel(true))
-      }
+      }.invokeOnCompletion { closeSockets() }
     }
   }
 

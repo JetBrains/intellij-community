@@ -22,7 +22,7 @@ import git4idea.index.GitStageTracker
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.ui.NodeKind
 import git4idea.stash.GitStashOperations
-import git4idea.stash.createStashPushHandler
+import git4idea.stash.createStashHandler
 import git4idea.stash.refreshStash
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -41,7 +41,7 @@ object GitStashOperation : StagingAreaOperation {
     DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.stash"), GitActivity.Stash).use {
       val activity = GitStashUsageCollector.logStashPush(project)
       try {
-        val handler = createStashPushHandler(project, root, nodes.map { it.filePath }, "-u")
+        val handler = createStashHandler(project, root, nodes.map { it.filePath }, "-u")
         Git.getInstance().runCommand(handler).throwOnError()
       }
       finally {

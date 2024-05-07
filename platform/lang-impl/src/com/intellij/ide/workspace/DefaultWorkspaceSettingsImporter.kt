@@ -3,7 +3,7 @@ package com.intellij.ide.workspace
 
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.impl.setTrusted
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
@@ -34,13 +34,13 @@ private class DefaultImportedProjectSettings(project: Project) : ImportedProject
     }
   }
 
-  override fun applyTo(workspace: Project) {
+  override suspend fun applyTo(workspace: Project) {
     if (isTrusted) {
       workspace.setTrusted(isTrusted)
     }
 
     if (projectSdk != null) {
-      runWriteAction {
+      writeAction {
         ProjectRootManager.getInstance(workspace).projectSdk = projectSdk
       }
     }

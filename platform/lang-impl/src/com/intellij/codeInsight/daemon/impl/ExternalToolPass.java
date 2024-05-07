@@ -122,7 +122,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
       for (ExternalAnnotator<?,?> annotator : annotators) {
         progress.checkCanceled();
 
-        if (dumbService.isDumb() && !DumbService.isDumbAware(annotator)) {
+        if (!dumbService.isUsableInCurrentContext(annotator)) {
           continue;
         }
         Object collectedInfo = null;

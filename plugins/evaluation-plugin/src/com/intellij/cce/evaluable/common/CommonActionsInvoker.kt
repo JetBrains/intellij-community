@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable.common
 
 import com.intellij.cce.interpreter.ActionsInvoker
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
@@ -82,6 +83,15 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
     if (editor.caretModel.offset != begin) {
       editor.caretModel.moveToOffset(begin)
     }
+  }
+
+  override fun selectRange(begin: Int, end: Int) = onEdt {
+    val editor = getEditorSafe(project)
+    LOG.info("Select range. Begin: ${positionToString(editor)}, end: ${positionToString(editor)}")
+    val startOffset = editor.offsetToLogicalPosition(begin)
+    val endOffset = editor.offsetToLogicalPosition(end)
+    editor.caretModel.setCaretsAndSelections(listOf(CaretState(startOffset, startOffset, endOffset)))
+    editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
   }
 
   override fun openFile(file: String): String = readActionInSmartMode(project) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,9 @@ import java.util.function.Predicate;
 /**
  * Extension point that helps prepare project for opening in headless or automated environments.
  * Implementation must be stateless.
+ * Consider using com.intellij.platform.backend.observation.ActivityTracker
  */
+@ApiStatus.Obsolete(since = "2024.1")
 public interface CommandLineInspectionProjectConfigurator {
   ExtensionPointName<CommandLineInspectionProjectConfigurator> EP_NAME = ExtensionPointName.create("com.intellij.commandLineInspectionProjectConfigurator");
 

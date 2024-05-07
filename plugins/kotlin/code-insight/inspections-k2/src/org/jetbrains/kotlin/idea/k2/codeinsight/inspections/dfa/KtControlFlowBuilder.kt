@@ -835,11 +835,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
         val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
         val functionName = target.name.asString()
-        if (functionName != "let" && functionName != "run") return null
+        if (functionName != LET && functionName != RUN) return null
         if (StandardNames.BUILT_INS_PACKAGE_FQ_NAME != target.callableIdIfNonLocal?.packageName) return null
         var outerExpr: KtExpression = call.parent as? KtQualifiedExpression ?: return null
         var outerExprParent = outerExpr.parent
-        while (outerExprParent is KtBinaryExpression && ANDOR_TOKENS.contains(outerExprParent.operationToken) && 
+        while (outerExprParent is KtBinaryExpression && AND_OR_ELVIS_TOKENS.contains(outerExprParent.operationToken) && 
             outerExprParent.right == outerExpr) {
             outerExpr = outerExprParent
             outerExprParent = outerExpr.parent
@@ -1531,8 +1531,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val receiver = (expr.parent as? KtQualifiedExpression)?.receiverExpression
         if (packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME && resolvedCall.argumentMapping.size == 1) {
             val name = symbol.name.asString()
-            if (name == "let" || name == "also" || name == "takeIf" || name == "takeUnless" || name == "apply" || name == "run") {
-                val parameter = (if (name == "apply" || name == "run")
+            if (name == LET || name == ALSO || name == TAKE_IF || name == TAKE_UNLESS || name == APPLY || name == RUN) {
+                val parameter = (if (name == APPLY || name == RUN)
                     KtVariableDescriptor.getLambdaReceiver(factory, lambda)
                 else
                     KtVariableDescriptor.getSingleLambdaParameter(factory, lambda)) ?: return false
@@ -1544,7 +1544,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 addInstruction(JvmAssignmentInstruction(null, parameter))
                 val functionLiteral = lambda.functionLiteral
                 when (name) {
-                    "let", "run" -> {
+                    LET, RUN -> {
                         addInstruction(PopInstruction())
                         val lambdaResultType = (functionLiteral.getFunctionalType() as? KtFunctionalType)?.returnType
                         val result = flow.createTempVariable(lambdaResultType.toDfType())
@@ -1558,7 +1558,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addImplicitConversion(lambdaResultType, expr.getKotlinType())
                     }
 
-                    "also", "apply" -> {
+                    ALSO, APPLY -> {
                         inlinedBlock(lambda) {
                             processExpression(bodyExpression)
                             flow.finishElement(functionLiteral)
@@ -1568,7 +1568,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
                     }
 
-                    "takeIf", "takeUnless" -> {
+                    TAKE_IF, TAKE_UNLESS -> {
                         val result = flow.createTempVariable(DfTypes.BOOLEAN)
                         inlinedBlock(lambda) {
                             processExpression(bodyExpression)
@@ -1578,7 +1578,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         }
                         addInstruction(JvmPushInstruction(result, null))
                         val offset = DeferredOffset()
-                        addInstruction(ConditionalGotoInstruction(offset, DfTypes.booleanValue(name == "takeIf")))
+                        addInstruction(ConditionalGotoInstruction(offset, DfTypes.booleanValue(name == TAKE_IF)))
                         addInstruction(PopInstruction())
                         addInstruction(PushValueInstruction(DfTypes.NULL))
                         val endOffset = DeferredOffset()
@@ -1806,8 +1806,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val descriptor =
             ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol() as? KtReceiverParameterSymbol
         if (descriptor != null && exprType != null) {
-            val function =
-                (descriptor as? KtReceiverParameterSymbol)?.psi as? KtFunctionLiteral //(descriptor.toSourceElement as? KotlinSourceElement)?.psi as? KtFunctionLiteral
+            val function = descriptor.psi as? KtFunctionLiteral
             val declType = descriptor.type
             val varDesc = if (function != null) {
                 KtLambdaThisVariableDescriptor(function, declType.toDfType())
@@ -1908,7 +1907,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         private val LOG = logger<KtControlFlowBuilder>()
         private val ASSIGNMENT_TOKENS =
             TokenSet.create(KtTokens.EQ, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ)
-        private val ANDOR_TOKENS = TokenSet.create(KtTokens.ANDAND, KtTokens.OROR)
+        private val AND_OR_ELVIS_TOKENS = TokenSet.create(KtTokens.ANDAND, KtTokens.OROR, KtTokens.ELVIS)
         private val unsupported = ConcurrentHashMap.newKeySet<String>()
+        private const val LET = "let"
+        private const val RUN = "run"
+        private const val ALSO = "also"
+        private const val APPLY = "apply"
+        private const val TAKE_IF = "takeIf"
+        private const val TAKE_UNLESS = "takeUnless"
     }
 }

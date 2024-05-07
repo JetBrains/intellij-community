@@ -20,8 +20,6 @@ object JavaPluginLayout {
       spec.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
       spec.withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
-      spec.withModule("intellij.java.resources")
-      spec.withModule("intellij.java.resources.en")
 
       for (moduleName in listOf(
         "intellij.java.compiler.antTasks",

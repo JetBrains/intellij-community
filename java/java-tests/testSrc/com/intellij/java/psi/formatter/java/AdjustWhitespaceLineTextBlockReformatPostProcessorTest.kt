@@ -30,6 +30,11 @@ class AdjustWhitespaceLineTextBlockReformatPostProcessorTest : LightPlatformCode
     doTest()
   }
 
+  fun testNonIntegerNumberOfTabs() {
+    getCommonSettings().indentOptions?.USE_TAB_CHARACTER = true
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
 
   fun testAlignTextBlockWhitespacesLessThanAlignment() {
     getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
@@ -37,6 +42,31 @@ class AdjustWhitespaceLineTextBlockReformatPostProcessorTest : LightPlatformCode
   }
 
   fun testAlignTextBlockWhitespacesMoreThanAlignment() {
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
+
+  fun testCaretInWhitespaceLineBeforeAlignment() {
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
+
+  fun testCaretInWhitespaceLineAfterAlignment() {
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
+
+  fun testCaretInWhitespaceLineInBeginning() {
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
+
+  fun testCaretInWhitespaceLineInMiddleAfterAlignment() {
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
+
+  fun testCaretInWhitespaceLineInMiddleBeforeAlignment() {
     getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
     doTest()
   }

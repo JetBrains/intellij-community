@@ -147,4 +147,3 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}] : java.lang.Void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [TODO()] : java.lang.Void
                     UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
-                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : java.lang.Void

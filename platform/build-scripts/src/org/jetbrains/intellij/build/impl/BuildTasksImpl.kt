@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -10,7 +12,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
-import com.intellij.util.xml.dom.readXmlAsModel
 import com.jetbrains.plugin.structure.base.utils.toList
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -91,7 +92,7 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
       "intellij.tools.launcherGenerator"
     ).let {
       compilationTasks.compileModules(moduleNames = it)
-      localizeModules(context, moduleNames = it)
+      localizeModules(context = context, moduleNames = it)
     }
 
     buildProjectArtifacts(
@@ -103,12 +104,13 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
       compilationTasks = compilationTasks,
       context = context,
     )
-    buildSearchableOptions(context)
+    val searchableOptionSetDescriptor = buildSearchableOptions(context)
     buildNonBundledPlugins(
       pluginsToPublish = pluginsToPublish,
       compressPluginArchive = context.options.compressZipFiles,
       buildPlatformLibJob = null,
       state = distState,
+      searchableOptionSetDescriptor = searchableOptionSetDescriptor,
       context = context
     )
   }
@@ -186,10 +188,11 @@ private suspend fun localizeModules(context: BuildContext, moduleNames: Collecti
 
   val modules = if (moduleNames.isEmpty()) {
     context.project.modules
-  } else {
+  }
+  else {
     moduleNames.asSequence().mapNotNull { context.findModule(it) }
       .flatMap { m ->
-        readPluginDependenciesFromXml(context, m).mapNotNull { context.findModule(it) } + sequenceOf(m)
+        (context as BuildContextImpl).jarPackagerDependencyHelper.readPluginContentFromDescriptor(m).mapNotNull { context.findModule(it) } + sequenceOf(m)
       }.flatMap { m ->
         m.dependenciesList.dependencies.asSequence().filterIsInstance<JpsModuleDependency>().mapNotNull { it.module } + sequenceOf(m)
       }.distinctBy { m -> m.name }.toList()
@@ -760,12 +763,12 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
       Span.current().addEvent(
         "skip building product distributions because 'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'"
       )
-      buildSearchableOptions(context)
       buildNonBundledPlugins(
         pluginsToPublish = pluginsToPublish,
         compressPluginArchive = context.options.compressZipFiles,
         buildPlatformLibJob = null,
         state = distributionState,
+        searchableOptionSetDescriptor = buildSearchableOptions(context),
         context = context
       )
       return@coroutineScope
@@ -989,7 +992,8 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
     val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
     for (libraryName in value) {
       check(libraries.any { getLibraryFileName(it) == libraryName }) {
-        "Cannot find library \'$libraryName\' in \'$key\' (used in \'excludedModuleLibraries\' in $description)"
+        val where = key?.let { "module \'$it\'" } ?: "project"
+        "Cannot find library \'$libraryName\' in $where (used in \'excludedModuleLibraries\' in $description)"
       }
     }
   }
@@ -1447,11 +1451,7 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
 /**
  * @return list of all modules which output is included in the plugin's JARs
  */
-internal fun collectIncludedPluginModules(
-  enabledPluginModules: Collection<String>,
-  product: ProductModulesLayout,
-  result: MutableSet<String>
-) {
+internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>, product: ProductModulesLayout, result: MutableSet<String>) {
   result.addAll(enabledPluginModules)
   val enabledPluginModuleSet = if (enabledPluginModules is Set<String> || enabledPluginModules.size < 2) {
     enabledPluginModules
@@ -1462,24 +1462,6 @@ internal fun collectIncludedPluginModules(
   product.pluginLayouts.asSequence()
     .filter { enabledPluginModuleSet.contains(it.mainModule) }
     .flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
-}
-
-internal fun readPluginDependenciesFromXml(context: BuildContext, module: JpsModule) : Sequence<String> {
-  return sequence {
-    context.findFileInModuleSources(module, "META-INF/plugin.xml")?.let { pluginXml ->
-      readXmlAsModel(pluginXml).children("content").let { contents ->
-        contents.forEach { content ->
-          for (depModule in content.children("module")) {
-            val moduleName = depModule.attributes["name"]
-            if (moduleName == null || moduleName.contains('/')) {
-              continue
-            }
-            yield(moduleName)
-          }
-        }
-      }
-    }
-  }
 }
 
 fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
@@ -1590,6 +1572,14 @@ private fun buildInBundlePropertiesLocalization(
     }
 
     Files.walkFileTree(resourceRoot.path, object : SimpleFileVisitor<Path>() {
+      override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+        val dirName = dir.fileName.toString()
+        if (dirName == "fileTemplates" || dirName == "META-INF" || dirName == "inspections" || dirName == "icons") {
+          return FileVisitResult.SKIP_SUBTREE
+        }
+        return FileVisitResult.CONTINUE
+      }
+
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         val fileName = file.fileName
         if (fileName.toString().endsWith("Bundle.properties")) {

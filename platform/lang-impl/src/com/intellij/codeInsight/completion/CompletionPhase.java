@@ -115,6 +115,7 @@ public abstract class CompletionPhase implements Disposable {
 
     @Override
     public void dispose() {
+      LOG.debug("Dispose completion phase: " + this, new Throwable());
       myRequestCount = 0;
       if (!replaced && indicator != null) {
         indicator.closeAndFinish(true);
@@ -161,12 +162,14 @@ public abstract class CompletionPhase implements Disposable {
         .expireWith(phase)
         .finishOnUiThread(ModalityState.current(), completionEditor -> {
           if (completionEditor != null && !phase.isExpired()) {
+            LOG.trace("Starting completion phase, completionEditor=" + completionEditor);
             phase.requestCompleted();
             int time = prevIndicator == null ? 0 : prevIndicator.getInvocationCount();
             CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false);
             handler.invokeCompletion(project, completionEditor, time, false);
           }
           else if (phase == CompletionServiceImpl.getCompletionPhase()) {
+            LOG.trace("Setting NoCompletion phase, completionEditor=" + completionEditor + ", isExpired=" + phase.isExpired());
             phase.decrementRequestCount();
             if (phase.isExpired()) {
               CompletionServiceImpl.setCompletionPhase(NoCompletion);

@@ -26,7 +26,8 @@ internal class LcrSimpleColoredTextImpl(initParams: LcrTextInitParams, baselineA
     component as SimpleColoredComponent
     component.clear()
     component.font = initParams.font
-    val attributes = if (selected) SimpleTextAttributes(initParams.attributes!!.style, rowForeground) else initParams.attributes!!
+    val baseAttributes = initParams.attributes ?: SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, initParams.foreground)
+    val attributes = if (selected) SimpleTextAttributes(baseAttributes.style, rowForeground) else baseAttributes
     component.append(text, attributes)
     component.accessibleContext.accessibleName = initParams.accessibleName
   }

@@ -255,4 +255,14 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   public final void clearArchiveCache(@NotNull VirtualFile sampleEntry) {
     getHandler(sampleEntry).clearCaches();
   }
+
+  @ApiStatus.Internal
+  public static @NotNull String getLocalPath(@NotNull ArchiveFileSystem vfs, @NotNull String entryPath) {
+    return vfs.extractLocalPath(entryPath);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull String composeRootPath(@NotNull ArchiveFileSystem fileSystem, @NotNull String localPath) {
+    return fileSystem.composeRootPath(localPath);
+  }
 }

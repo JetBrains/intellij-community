@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.SpecialNames
 
 class KotlinClassNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginMode
+    override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
     fun testTopLevelClass() = test("x/y/Foo", "foo")

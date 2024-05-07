@@ -99,7 +99,7 @@ internal fun findAllMoveConflicts(
  * Creates a non-physical file that contains the moved elements with all references retargeted.
  * This non-physical file can be used to analyze for conflicts without modifying the file on the disk.
  */
-private fun createCopyTarget(
+fun createCopyTarget(
     declarationsToMove: Set<KtNamedDeclaration>,
     targetDir: PsiDirectory,
     targetPkg: FqName,
@@ -221,7 +221,7 @@ private fun checkVisibilityConflictForNonMovedUsages(
 /**
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
-private fun checkVisibilityConflictsForInternalUsages(
+fun checkVisibilityConflictsForInternalUsages(
     allDeclarationsToMove: Set<KtNamedDeclaration>,
     fakeTarget: KtFile
 ): MultiMap<PsiElement, String> {
@@ -243,7 +243,7 @@ private fun checkVisibilityConflictsForInternalUsages(
 private fun PsiElement.createAccessibilityConflictInternal(
     referencedDeclaration: PsiElement,
     targetModule: Module
-): Pair<PsiElement, String>? {
+): Pair<PsiElement, String> {
     return this to RefactoringBundle.message(
         "0.referenced.in.1.will.not.be.accessible.in.module.2",
         RefactoringUIUtil.getDescription(referencedDeclaration, true),
@@ -287,7 +287,7 @@ private fun checkModuleDependencyConflictsForNonMovedUsages(
         }.toMultiMap()
 }
 
-private fun checkModuleDependencyConflictsForInternalUsages(
+fun checkModuleDependencyConflictsForInternalUsages(
     allDeclarationsToMove: Set<KtNamedDeclaration>,
     fakeTarget: KtFile
 ): MultiMap<PsiElement, String> {

@@ -57,6 +57,7 @@
 package org.jdom.output;
 
 import org.jdom.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.List;
@@ -67,7 +68,7 @@ import java.util.List;
 @Deprecated
 public class XMLOutputter implements Cloneable {
   // For normal output
-  private Format userFormat = Format.getRawFormat();
+  private Format userFormat;
 
   // For xml:space="preserve"
   private static final Format preserveFormat = Format.getRawFormat();
@@ -76,6 +77,7 @@ public class XMLOutputter implements Cloneable {
   protected Format currentFormat = userFormat;
 
   public XMLOutputter() {
+    this((Format)null);
   }
 
   /**
@@ -83,8 +85,8 @@ public class XMLOutputter implements Cloneable {
    * format characteristics.  Note the format object is cloned internally
    * before use.
    */
-  public XMLOutputter(Format format) {
-    userFormat = format.clone();
+  public XMLOutputter(@Nullable Format format) {
+    userFormat = format == null ? Format.getRawFormat() : format.clone();
     currentFormat = userFormat;
   }
 

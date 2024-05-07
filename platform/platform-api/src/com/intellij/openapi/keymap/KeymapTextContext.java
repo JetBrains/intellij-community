@@ -7,6 +7,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,13 +27,13 @@ public class KeymapTextContext {
   private static final @NonNls String ALT_GRAPH = "altGraph";
   private static final @NonNls String DOUBLE_CLICK = "doubleClick";
 
-  public @NlsSafe @NotNull String getShortcutText(@NotNull @NonNls String actionId) {
+  public @Nls @NotNull String getShortcutText(@NotNull @NonNls String actionId) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
-    if (shortcut == null) return "<no shortcut>";
+    if (shortcut == null) return KeyMapBundle.message("no.shortcut");
     return getShortcutText(shortcut);
   }
 
-  public @NotNull @NlsSafe String getShortcutText(@NotNull Shortcut shortcut) {
+  public @Nls @NotNull String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";
 
     if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
@@ -51,8 +52,9 @@ public class KeymapTextContext {
       s = getMouseShortcutText((MouseShortcut)shortcut);
     }
     else if (shortcut instanceof KeyboardModifierGestureShortcut gestureShortcut) {
-      s = gestureShortcut.getType() == KeyboardGestureAction.ModifierType.dblClick ? "Press, release and hold " : "Hold ";
-      s += getKeystrokeText(gestureShortcut.getStroke());
+      s = gestureShortcut.getType() == KeyboardGestureAction.ModifierType.dblClick ? KeyMapBundle.message("press.release.and.hold")
+                                                                                   : KeyMapBundle.message("hold");
+      s += " " + getKeystrokeText(gestureShortcut.getStroke());
     }
     else {
       throw new IllegalArgumentException("unknown shortcut class: " + shortcut.getClass().getCanonicalName());
@@ -60,8 +62,8 @@ public class KeymapTextContext {
     return s;
   }
 
-  public @NotNull String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
-    if (shortcut instanceof PressureShortcut) return shortcut.toString();
+  public @Nls @NotNull String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
+    if (shortcut instanceof PressureShortcut) return shortcut.toString();  //NON-NLS
     return getMouseShortcutText(shortcut.getButton(), shortcut.getModifiers(), shortcut.getClickCount());
   }
 
@@ -71,7 +73,7 @@ public class KeymapTextContext {
    * @param clickCount    target clicks count
    * @return string representation of passed mouse shortcut.
    */
-  private @NotNull String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
+  private @Nls @NotNull String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
     String resource;
     if (button == MouseShortcut.BUTTON_WHEEL_UP) {
       resource = "mouse.wheel.rotate.up.shortcut.text";

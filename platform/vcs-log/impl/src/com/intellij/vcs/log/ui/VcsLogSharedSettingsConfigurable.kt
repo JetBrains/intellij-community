@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -17,8 +17,9 @@ import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcsUtil.VcsUtil
 
-class VcsLogSharedSettingsConfigurable(private val project: Project) : DslConfigurableBase() {
-  private val settings get() = project.service<VcsLogSharedSettings>()
+private class VcsLogSharedSettingsConfigurable(private val project: Project) : DslConfigurableBase() {
+  private val settings
+    get() = project.service<VcsLogSharedSettings>()
 
   override fun createPanel(): DialogPanel {
     val allVcsKeys = ProjectLevelVcsManager.getInstance(project).allActiveVcss.mapTo(mutableSetOf()) { it.keyInstanceMethod }
@@ -26,7 +27,9 @@ class VcsLogSharedSettingsConfigurable(private val project: Project) : DslConfig
     val vcsNamesToShow = if (indexedVcsKeys != allVcsKeys) {
       indexedVcsKeys.mapNotNull { VcsUtil.findVcsByKey(project, it)?.displayName }.joinToString()
     }
-    else ""
+    else {
+      ""
+    }
     return panel {
       group(VcsLogBundle.message("vcs.log.settings.group.title")) {
         row {
@@ -41,7 +44,8 @@ class VcsLogSharedSettingsConfigurable(private val project: Project) : DslConfig
 }
 
 private class VcsLogIndexAvailabilityPredicate(private val project: Project, private val disposable: Disposable) : ComponentPredicate() {
-  private val isVcsLogIndexAvailable get() = VcsLogPersistentIndex.getAvailableIndexers(project).isNotEmpty()
+  private val isVcsLogIndexAvailable
+    get() = VcsLogPersistentIndex.getAvailableIndexers(project).isNotEmpty()
 
   override fun addListener(listener: (Boolean) -> Unit) {
     project.messageBus.connect(disposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED,

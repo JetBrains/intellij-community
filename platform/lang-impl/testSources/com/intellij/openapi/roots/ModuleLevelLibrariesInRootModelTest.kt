@@ -209,7 +209,6 @@ class ModuleLevelLibrariesInRootModelTest {
   @ValueSource(booleans = [false, true])
   @ParameterizedTest(name = "obtainViaLibraryTable = {0}")
   fun `discard changes in library on disposing modifiable root model`(obtainViaLibraryTable: Boolean) {
-    assumeTrue(obtainViaLibraryTable, "Will fail until IDEA-352499 is fixed properly")
     addLibrary("foo")
     val model = createModifiableModel(module)
     val library =

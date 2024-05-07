@@ -41,7 +41,6 @@ final class AnnotatorRunner {
   private final AnnotationSession myAnnotationSession;
   private final DumbService myDumbService;
   private final boolean myBatchMode;
-  private boolean myDumb;
   private final AnnotatorStatisticsCollector myAnnotatorStatisticsCollector = new AnnotatorStatisticsCollector();
   private final List<HighlightInfo> results = Collections.synchronizedList(new ArrayList<>());
 
@@ -59,8 +58,6 @@ final class AnnotatorRunner {
                              @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-
-    myDumb = myDumbService.isDumb();
 
     // TODO move inside Divider to calc only once
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
@@ -130,7 +127,7 @@ final class AnnotatorRunner {
         if (!supported.contains(psiElement.getLanguage())) {
           continue;
         }
-        if (myDumb && !DumbService.isDumbAware(annotator)) {
+        if (!myDumbService.isUsableInCurrentContext(annotator)) {
           continue;
         }
         ProgressManager.checkCanceled();
@@ -229,10 +226,5 @@ final class AnnotatorRunner {
       return null;
     }
     return annotator;
-  }
-
-  @NotNull
-  List<HighlightInfo> getResults() {
-    return results;
   }
 }

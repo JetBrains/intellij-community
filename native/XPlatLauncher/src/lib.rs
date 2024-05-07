@@ -48,6 +48,7 @@ use {
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
+
 use crate::cef_generated::CEF_VERSION;
 use crate::cef_sandbox::CefScopedSandboxInfo;
 use crate::default::DefaultLaunchConfiguration;
@@ -74,8 +75,12 @@ pub fn main_lib() {
     let remote_dev = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
 
     let debug_mode = remote_dev || env::var(DEBUG_MODE_ENV_VAR).is_ok();
-    if debug_mode {
-        attach_console();
+
+    #[cfg(target_os = "windows")]
+    {
+        if debug_mode {
+            attach_console();
+        }
     }
 
     if let Err(e) = main_impl(exe_path, remote_dev, debug_mode) {
@@ -93,9 +98,6 @@ fn attach_console() {
         }
     }
 }
-
-#[cfg(not(target_os = "windows"))]
-fn attach_console() { }
 
 fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()> {
     let level = if debug_mode { LevelFilter::Debug } else { LevelFilter::Error };
@@ -139,10 +141,10 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
 #[cfg(target_os = "windows")]
 fn ensure_env_vars_set() -> Result<()> {
     let app_data = get_known_folder_path(&Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")?;
-    env::set_var("APPDATA", &app_data.strip_ns_prefix()?.to_string_checked()?);
+    env::set_var("APPDATA", app_data.strip_ns_prefix()?.to_string_checked()?);
 
     let local_app_data = get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")?;
-    env::set_var("LOCALAPPDATA", &local_app_data.strip_ns_prefix()?.to_string_checked()?);
+    env::set_var("LOCALAPPDATA", local_app_data.strip_ns_prefix()?.to_string_checked()?);
 
     Ok(())
 }
@@ -260,16 +262,15 @@ fn get_launch_scope_or_launch_subprocess(configuration: &dyn LaunchConfiguration
 #[cfg(target_os = "windows")]
 unsafe fn launch_cef_subprocess(jre_home: &Path, cef_sandbox: &CefScopedSandboxInfo) -> Result<i32> {
     unsafe {
-        let mut h_instance = GetModuleHandleW(PCWSTR(std::ptr::null_mut()))?;
-
         let helper_path = jre_home.join("bin\\jcef_helper.dll");
         let lib = libloading::Library::new(&helper_path)
-            .with_context(|| format!("Can't load jcef_helper, path='{:#?}'", helper_path))?;
+            .with_context(|| format!("Cannot load '{:#?}'", helper_path))?;
 
         let proc: libloading::Symbol<'_, unsafe extern "system" fn(*mut std::os::raw::c_void, *mut std::os::raw::c_void) -> i32> =
             lib.get(b"execute_subprocess\0")
-                .context("Can't load execute_subprocess from jcef_helper")?;
+                .context("Cannot find 'execute_subprocess' in 'jcef_helper.dll'")?;
 
+        let mut h_instance = GetModuleHandleW(PCWSTR(std::ptr::null_mut()))?;
         let exit_code = proc(&mut h_instance as *mut _ as *mut std::os::raw::c_void, cef_sandbox.ptr);
 
         Ok(exit_code)
@@ -341,7 +342,7 @@ fn get_xdg_dir(env_var_name: &str, fallback: &str) -> Result<PathBuf> {
 fn get_user_home() -> Result<PathBuf> {
     env::var("USERPROFILE")
         .or_else(|_| win_user_profile_dir())
-        .map(|s| PathBuf::from(s))
+        .map(PathBuf::from)
         .context("Cannot detect a user home directory")
 }
 
@@ -425,10 +426,10 @@ impl PathExt for Path {
     fn strip_ns_prefix(&self) -> Result<PathBuf> {
         let path_str = self.to_string_checked()?;
         // Windows namespace prefixes are misunderstood both by JVM and classloaders
-        Ok(if path_str.starts_with("\\\\?\\UNC\\") {
-            PathBuf::from("\\\\".to_string() + &path_str[8..])
-        } else if path_str.starts_with("\\\\?\\") {
-            PathBuf::from(&path_str[4..])
+        Ok(if let Some(tail) = path_str.strip_prefix("\\\\?\\UNC\\") {
+            PathBuf::from("\\\\".to_string() + tail)
+        } else if let Some(tail) = path_str.strip_prefix("\\\\?\\") {
+            PathBuf::from(tail)
         } else {
             self.to_path_buf()
         })

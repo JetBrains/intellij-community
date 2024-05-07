@@ -126,6 +126,11 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
       public @NotNull MouseMoveResult performMouseMove(int row, @NotNull MouseEvent e) {
         return MouseMoveResult.fromCursor(Cursor.HAND_CURSOR);
       }
+
+      @Override
+      public boolean shouldSelectCell(int row, @NotNull MouseEvent e) {
+        return false;
+      }
     };
   }
 

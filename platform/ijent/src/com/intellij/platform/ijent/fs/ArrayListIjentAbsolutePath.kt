@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.fs
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ijent.fs.IjentPathResult.Err
 import com.intellij.platform.ijent.fs.IjentPathResult.Ok
 
@@ -311,7 +310,6 @@ internal class ArrayListIjentAbsolutePath private constructor(
           if (raw.isEmpty())
             "Empty path"
           else {
-            logger<ArrayListIjentRelativePath>().error("Failed to parse a path: $raw")
             "Unknown error during parsing"
           }
         }

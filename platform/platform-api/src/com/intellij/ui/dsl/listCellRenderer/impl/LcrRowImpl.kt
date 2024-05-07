@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.*
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
+import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -72,12 +73,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       initParams.init()
     }
 
-    if (initParams.attributes == null) {
-      add(LcrTextImpl(initParams, true, gap, text, selected, foreground))
-    }
-    else {
-      add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
-    }
+    add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
   override fun getListCellRendererComponent(list: JList<out T>,
@@ -137,6 +133,10 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       }
       else {
         result.contentLayout.rootGrid.resizableColumns -= i
+      }
+
+      if (cell is LcrSimpleColoredTextImpl && cell.initParams.speedSearchHighlighting) {
+        SpeedSearchUtil.applySpeedSearchHighlighting(list, component as SimpleColoredComponent, true, isSelected)
       }
     }
 

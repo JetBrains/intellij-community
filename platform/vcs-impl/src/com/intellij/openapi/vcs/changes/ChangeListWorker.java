@@ -616,6 +616,12 @@ public final class ChangeListWorker {
       // We can't take CLM.LOCK here, so LocalChangeList will be created in delayed notificator itself
       myDelayedNotificator.changeListsForFileChanged(path, removed, added);
     }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[notifyChangelistsChanged] path: %s, old lists: %s, new lists: %s", path,
+                              beforeChangeListsIds, afterChangeListsIds),
+                LOG.isTraceEnabled() ? new Throwable() : null);
+    }
   }
 
 
@@ -1251,7 +1257,7 @@ public final class ChangeListWorker {
       for (ChangeListWorker.ListData list : myWorker.myLists) {
         Set<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
         if (changesBeforeUpdate.contains(change)) {
-          LOG.debug("[addChangeToCorrespondingList] matched by change: ", list.name);
+          LOG.debug("[addChangeToCorrespondingList] matched by change: ", list.id);
           return list;
         }
       }
@@ -1260,7 +1266,7 @@ public final class ChangeListWorker {
       if (listId != null) {
         ListData list = myWorker.getDataById(listId);
         if (list != null) {
-          LOG.debug("[addChangeToCorrespondingList] matched by paths: ", list.name);
+          LOG.debug("[addChangeToCorrespondingList] matched by paths: ", list.id);
           return list;
         }
       }
@@ -1271,7 +1277,7 @@ public final class ChangeListWorker {
       if (assignedChangeListId != null) {
         ListData list = myWorker.getDataById(assignedChangeListId);
         if (list != null) {
-          LOG.debug("[addChangeToCorrespondingList] added to list from assigner: ", list.name);
+          LOG.debug("[addChangeToCorrespondingList] added to list from assigner: ", list.id);
           return list;
         }
         else {
@@ -1285,7 +1291,7 @@ public final class ChangeListWorker {
         return null;
       }
 
-      LOG.debug("[addChangeToCorrespondingList] added to default list " + myWorker.myDefault.name);
+      LOG.debug("[addChangeToCorrespondingList] added to default list " + myWorker.myDefault.id);
       return myWorker.myDefault;
     }
 

@@ -1,25 +1,18 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.pme.util;
 
 import java.io.*;
 
 public final class StreamUtil {
   public static long getOffset(DataInput stream) throws IOException {
-    if (stream instanceof OffsetTrackingInputStream) {
-      return ((OffsetTrackingInputStream)stream).getOffset();
-    }
-    if (stream instanceof RandomAccessFile) {
-      return ((RandomAccessFile)stream).getFilePointer();
-    }
+    if (stream instanceof OffsetTrackingInputStream otis) return otis.getOffset();
+    if (stream instanceof RandomAccessFile raf) return raf.getFilePointer();
     throw new IOException("OffsetTrackingInputStream or RandomAccessFile expected, got " + stream.getClass().getName());
   }
 
   public static long getOffset(DataOutput stream) throws IOException {
-    if (stream instanceof RandomAccessFile) {
-      return ((RandomAccessFile)stream).getFilePointer();
-    }
-    if (stream instanceof DataOutputStream) {
-      return ((DataOutputStream)stream).size();
-    }
+    if (stream instanceof RandomAccessFile raf) return raf.getFilePointer();
+    if (stream instanceof DataOutputStream dos) return dos.size();
     throw new IOException("RandomAccessFile or DataOutputStream expected, got " + stream.getClass().getName());
   }
 
@@ -33,8 +26,8 @@ public final class StreamUtil {
       }
       return;
     }
-    if (stream instanceof RandomAccessFile) {
-      ((RandomAccessFile)stream).seek(pos);
+    if (stream instanceof RandomAccessFile raf) {
+      raf.seek(pos);
       return;
     }
     throw new IOException("OffsetTrackingInputStream or RandomAccessFile expected, got " + stream.getClass().getName());

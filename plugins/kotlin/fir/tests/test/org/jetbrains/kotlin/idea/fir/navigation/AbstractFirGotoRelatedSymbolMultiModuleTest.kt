@@ -3,12 +3,15 @@ package org.jetbrains.kotlin.idea.fir.navigation
 
 
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoRelatedSymbolMultiModuleTest
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractFirGotoRelatedSymbolMultiModuleTest: AbstractKotlinGotoRelatedSymbolMultiModuleTest() {
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun tearDown() {
         runAll(

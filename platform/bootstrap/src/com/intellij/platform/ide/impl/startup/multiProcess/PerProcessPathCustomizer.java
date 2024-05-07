@@ -44,11 +44,6 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
 
   @Override
   public CustomPaths customizePaths() {
-    String isEnabled = System.getenv("JBC_SEPARATE_CONFIG");
-    if ("false".equalsIgnoreCase(isEnabled)) {
-      return null;
-    }
-    
     Path newConfig;
     Path tempFolder = Paths.get(PathManager.getTempPath());
 

@@ -308,8 +308,11 @@ public final class TerminalSettingsPanel {
     List<String> shells = new ArrayList<>();
     if (SystemInfo.isUnix) {
       addIfExists(shells, "/bin/bash");
+      addIfExists(shells, "/opt/homebrew/bin/bash");
+      addIfExists(shells, "/bin/zsh");
       addIfExists(shells, "/usr/bin/zsh");
       addIfExists(shells, "/usr/local/bin/zsh");
+      addIfExists(shells, "/opt/homebrew/bin/zsh");
       addIfExists(shells, "/usr/bin/fish");
       addIfExists(shells, "/usr/local/bin/fish");
     }

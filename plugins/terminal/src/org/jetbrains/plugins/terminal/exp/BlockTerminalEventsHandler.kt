@@ -4,11 +4,16 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import java.awt.event.KeyEvent
 
+/**
+ * Block Terminal Keyboard And Mouse Events Handler.
+ * Reuses most parts of `SimpleTerminalEventsHandler`.
+ */
 internal class BlockTerminalEventsHandler(
   session: BlockTerminalSession,
   settings: JBTerminalSystemSettingsProviderBase,
   private val outputController: TerminalOutputController
 ) : SimpleTerminalEventsHandler(session, settings, outputController.outputModel) {
+
   override fun keyTyped(e: KeyEvent) {
     // Clear the block selection on typing
     val selectionModel = outputController.selectionModel
@@ -27,4 +32,5 @@ internal class BlockTerminalEventsHandler(
       super.keyPressed(e)
     }
   }
+
 }

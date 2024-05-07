@@ -11,6 +11,7 @@ import com.intellij.history.core.tree.RootEntry;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -40,12 +41,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class IdeaGateway {
+  private static final Logger LOG = Logger.getInstance(IdeaGateway.class);
   private static final Key<ContentAndTimestamps> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
     = Key.create("LocalHistory.SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY");
 
@@ -252,6 +251,21 @@ public class IdeaGateway {
     return root;
   }
 
+  @RequiresReadLock
+  public @NotNull RootEntry createTransientRootEntryForPaths(@NotNull Collection<String> paths, boolean includeChildren) {
+    if (paths.isEmpty()) return new RootEntry();
+
+    String singlePath = ContainerUtil.getOnlyItem(paths);
+    if (singlePath != null) {
+      return createTransientRootEntryForPath(singlePath, includeChildren);
+    }
+
+    RootEntry root = new RootEntry();
+    List<SinglePathVisitor> visitors = ContainerUtil.map(paths, s -> new SinglePathVisitor(s, includeChildren));
+    doCreateChildren(root, getLocalRoots(), false, new MergingPathVisitor(visitors));
+    return root;
+  }
+
   private static @NotNull List<VirtualFile> getLocalRoots() {
     List<VirtualFile> roots = new SmartList<>();
 
@@ -343,17 +357,27 @@ public class IdeaGateway {
     List<Entry> entries = ContainerUtil.mapNotNull(children, each -> {
       if (visitor != null && !visitor.before(each)) return null;
 
-      Entry entry = doCreateEntry(each, forDeletion, visitor);
+      Entry newEntry = null;
+      Entry existingEntry = parent.findEntry(each.getName());
+      if (existingEntry != null) {
+        if (existingEntry instanceof DirectoryEntry existingDirectoryEntry) {
+          doCreateChildren(existingDirectoryEntry, iterateDBChildren(each), forDeletion, visitor);
+        }
+      }
+      else {
+        newEntry = doCreateEntry(each, forDeletion, visitor);
+      }
 
       if (visitor != null) visitor.after(each);
 
-      return entry;
+      return newEntry;
     });
     parent.addChildren(entries);
   }
 
   private interface FileTreeVisitor {
     boolean before(@NotNull VirtualFile file);
+
     void after(@NotNull VirtualFile file);
   }
 
@@ -390,6 +414,63 @@ public class IdeaGateway {
     @Override
     public void after(@NotNull VirtualFile file) {
       myPathsStack.remove(myPathsStack.size() - 1);
+    }
+  }
+
+  private static class MergingPathVisitor implements FileTreeVisitor {
+    private final List<? extends FileTreeVisitor> myVisitors;
+
+    private final int[] myTerminatedAtDepth;
+    private int myDepth = 1; // not 0 to simplify array initialization
+
+    private MergingPathVisitor(@NotNull List<? extends FileTreeVisitor> visitors) {
+      myVisitors = visitors;
+      myTerminatedAtDepth = new int[visitors.size()];
+    }
+
+    @Override
+    public boolean before(@NotNull VirtualFile file) {
+      boolean result = false;
+      for (int i = 0; i < myVisitors.size(); i++) {
+        int terminatedAt = myTerminatedAtDepth[i];
+        if (terminatedAt != 0) continue;
+
+        if (myVisitors.get(i).before(file)) {
+          result = true;
+        }
+        else {
+          myTerminatedAtDepth[i] = myDepth;
+        }
+      }
+      if (result) {
+        myDepth++;
+        return true;
+      }
+      else {
+        for (int i = 0; i < myVisitors.size(); i++) {
+          int terminatedAt = myTerminatedAtDepth[i];
+          if (terminatedAt == myDepth) {
+            myTerminatedAtDepth[i] = 0; // rollback because 'after' won't be called
+          }
+        }
+        return false;
+      }
+    }
+
+    @Override
+    public void after(@NotNull VirtualFile file) {
+      myDepth--;
+      LOG.assertTrue(myDepth >= 1);
+
+      for (int i = 0; i < myVisitors.size(); i++) {
+        int terminatedAt = myTerminatedAtDepth[i];
+        if (terminatedAt == myDepth) {
+          myTerminatedAtDepth[i] = 0;
+        }
+        else if (terminatedAt == 0) {
+          myVisitors.get(i).after(file);
+        }
+      }
     }
   }
 

@@ -1,0 +1,2 @@
+[common.kt] New instance creation 2 val ac = Clazz004()
+[js.kt] New instance creation 4 val a1 = Clazz004()

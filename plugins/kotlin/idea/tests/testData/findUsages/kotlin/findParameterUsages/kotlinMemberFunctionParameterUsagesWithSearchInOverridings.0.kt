@@ -19,6 +19,3 @@ class F : MyClass() {
 
     fun <T> foo(t: T, t2: T) {}
 }
-
-// IGNORE_PLATFORM_JS: KTIJ-29711
-// IGNORE_PLATFORM_NATIVE: KTIJ-29711

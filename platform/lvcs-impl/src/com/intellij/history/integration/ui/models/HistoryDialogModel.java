@@ -6,8 +6,10 @@ import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.Reverter;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
@@ -66,7 +68,11 @@ public abstract class HistoryDialogModel {
   }
 
   protected @NotNull RevisionData collectRevisionData() {
-    return RevisionDataKt.collectRevisionData(myProject, myGateway, myVcs, myFile, myFilter, myBefore);
+    return RevisionDataKt.collectRevisionData(myProject, myGateway, myVcs, createRootEntry(), myFile, myFilter, myBefore);
+  }
+
+  protected @NotNull RootEntry createRootEntry() {
+    return ReadAction.compute(() -> myGateway.createTransientRootEntry());
   }
 
   public void processContents(@NotNull PairProcessor<? super Revision, ? super String> processor) {

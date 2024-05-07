@@ -16,24 +16,18 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.rd.createLifetime
-import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
-import com.jetbrains.rd.swing.proxyProperty
-import com.jetbrains.rd.util.reactive.IPropertyView
-import com.jetbrains.rd.util.reactive.ISignal
-import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rd.util.reactive.Signal
-import kotlinx.coroutines.*
+import com.jetbrains.rd.util.reactive.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
@@ -58,7 +52,7 @@ interface SettingsService {
 
   val importCancelled: Signal<Unit>
 
-  val error: ISignal<NotificationData>
+  val notification: IProperty<NotificationData?>
 
   val jbAccount: IPropertyView<JBAccountInfoService.JBAData?>
 
@@ -69,14 +63,12 @@ interface SettingsService {
   val pluginIdsPreloaded: Boolean
 
   fun configChosen()
-
-  fun isLoggedIn(): Boolean = jbAccount.value != null
 }
 
 class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : SettingsService, Disposable.Default {
 
   override fun getSyncService() =
-    if (useMockDataForStartupWizard) TestSyncService()
+    if (useMockDataForStartupWizard) TestSyncService.getInstance()
     else SyncServiceImpl.getInstance()
 
   override fun getJbService() =
@@ -84,7 +76,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     else JbImportServiceImpl.getInstance()
 
   override fun getExternalService(): ExternalService =
-    if (useMockDataForStartupWizard) TestExternalService()
+    if (useMockDataForStartupWizard) TestExternalService.getInstance()
     else SettingTransferService.getInstance()
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -131,7 +123,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     }
   }
 
-  override val error = Signal<NotificationData>()
+  override val notification = Property<NotificationData?>(null)
 
   override val jbAccount = Property<JBAccountInfoService.JBAData?>(null)
 
@@ -151,7 +143,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
         if (ConfigImportHelper.findConfigDirectoryByPath(prevPath) != null) {
           getJbService().importFromCustomFolder(prevPath)
         } else {
-          error.fire(object : NotificationData {
+          notification.set(object : NotificationData {
             override val status = NotificationData.NotificationStatus.ERROR
             override val message = BootstrapBundle.message("import.chooser.error.unrecognized", selectedDir,
                                                            IDEData.getSelf()?.fullName ?: "Current IDE")
@@ -162,22 +154,8 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     }
   }
 
-  private fun unloggedSyncHide(): IPropertyView<Boolean> {
-    fun getValue(): Boolean = Registry.`is`("import.setting.unlogged.sync.hide")
-
-    return proxyProperty(getValue()) { lifetime, set ->
-      val listener = object : RegistryValueListener {
-        override fun afterValueChanged(value: RegistryValue) {
-          set(value.asBoolean())
-        }
-      }
-
-      Registry.get("import.setting.unlogged.sync.hide").addListener(listener, lifetime.createNestedDisposable())
-    }
-  }
-
-  override val isSyncEnabled = Property(
-    useMockDataForStartupWizard) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+  // override val isSyncEnabled = jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+  override val isSyncEnabled = jbAccount.compose(getSyncService().syncState) { account, state -> account != null && state == SyncService.SYNC_STATE.LOGGED }
 
   init {
     if (useMockDataForStartupWizard) {
@@ -191,20 +169,16 @@ private val logger = logger<SettingsServiceImpl>()
 interface SyncService : JbService {
   enum class SYNC_STATE {
     UNLOGGED,
-    WAINING_FOR_LOGIN,
-    LOGIN_FAILED,
     LOGGED,
     TURNED_OFF,
-    NO_SYNC,
-    GENERAL
+    NO_SYNC
   }
 
   val syncState: IPropertyView<SYNC_STATE>
-  fun tryToLogin(): String?
+  fun tryToLogin()
   fun syncSettings(): DialogImportData
   fun importSyncSettings(): DialogImportData
   fun getMainProduct(): Product?
-  fun generalSync()
 }
 
 interface ExternalService {

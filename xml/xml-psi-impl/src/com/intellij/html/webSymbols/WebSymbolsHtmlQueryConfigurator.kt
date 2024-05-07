@@ -10,8 +10,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.xml.XmlAttribute
-import com.intellij.psi.xml.XmlAttributeValue
+import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
@@ -34,9 +35,9 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
                         location: PsiElement?,
                         context: WebSymbolsContext,
                         allowResolve: Boolean): List<WebSymbolsScope> =
-    if (location is XmlAttributeValue || location is XmlAttribute || location is XmlTag) {
+    if (location is XmlElement) {
       listOfNotNull(
-        location.takeIf { it is XmlAttributeValue || it is XmlAttribute }?.parent?.let { HtmlContextualWebSymbolsScope(it) },
+        location.takeIf { it !is XmlTag }?.let { HtmlContextualWebSymbolsScope(it) },
         location.parentOfType<XmlTag>(withSelf = true)?.let { StandardHtmlSymbolsScope(it) },
       )
     }
@@ -47,23 +48,22 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     : WebSymbolsCompoundScope(), WebSymbolsPrioritizedScope {
 
     init {
-      assert(location is XmlTag || location is XmlAttribute) {
-        "HtmlContextualWebSymbolsScope needs to be created on XmlTag or XmlAttribute"
-      }
+      assert(location !is XmlTag) { "Cannot create HtmlContextualWebSymbolsScope on a tag." }
     }
 
     override val priority: WebSymbol.Priority
       get() = WebSymbol.Priority.HIGHEST
 
     override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (WebSymbolsScope) -> Unit) {
-      val element = (location as? XmlTag) ?: (location as? XmlAttribute)?.parent ?: return
+      val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
+      val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope = element.takeIf { queryExecutor.allowResolve }
                            ?.descriptor?.asSafely<WebSymbolElementDescriptor>()?.symbol?.let { listOf(it) }
                          ?: queryExecutor.runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, element.name)
 
       elementScope.forEach(consumer)
 
-      val attribute = location as? XmlAttribute ?: return
+      val attribute = context as? XmlAttribute ?: return
       attribute.takeIf { queryExecutor.allowResolve }
         ?.descriptor?.asSafely<WebSymbolAttributeDescriptor>()?.symbol?.let(consumer)
       ?: queryExecutor.runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTES,

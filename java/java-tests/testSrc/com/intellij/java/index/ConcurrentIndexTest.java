@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.index;
 
+import com.intellij.idea.IJIgnore;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FCTSBackedLighterAST;
 import com.intellij.openapi.application.ApplicationManager;
@@ -152,6 +153,7 @@ public class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  @IJIgnore(issue = "IDEA-352828")
   public void test_forceUpdateAffectsReadOfDataForUnsavedDocuments() throws ExecutionException, InterruptedException {
     int N = Math.max(2, Runtime.getRuntime().availableProcessors());
     int halfN = N / 2;

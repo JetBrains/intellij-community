@@ -103,6 +103,15 @@ interface KotlinProjectConfigurator {
 
     val targetPlatform: TargetPlatform
 
+    /**
+     * The name that the user interacts with through the build system when referring
+     * to the given [module].
+     *
+     * For instance, in KMP we often create IntelliJ modules for each fragment
+     * (`my-module.commonMain`) but users only really see `my-module` as a module.
+     */
+    fun userVisibleNameFor(module: Module) = module.name
+
     fun updateLanguageVersion(
         module: Module,
         languageVersion: String?,
@@ -143,7 +152,7 @@ interface KotlinProjectConfigurator {
     /**
      * Adds a module-wide opt-in for the given [annotationFqName] in the given [module].
      * 
-     * The [compilerArgument] is a convenience for implementations that use raw compiler arguments, It already contains the correct
+     * The [compilerArgument] is a convenience for implementations that use raw compiler arguments. It already contains the correct
      * compiler argument name for the current Kotlin version (`-Xuse-experimental`, `-Xopt-in`, `-opt-in`) and the annotation name.
      */
     fun addModuleWideOptIn(module: Module, annotationFqName: FqName, compilerArgument: String) {

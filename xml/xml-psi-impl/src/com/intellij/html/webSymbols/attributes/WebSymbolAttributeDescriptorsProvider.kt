@@ -28,7 +28,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       XmlAttributeDescriptor.EMPTY
     else {
       val queryExecutor = WebSymbolsQueryExecutorFactory.create(context)
-      val additionalScope = listOf(WebSymbolsHtmlQueryConfigurator.HtmlContextualWebSymbolsScope(context))
+      val additionalScope = listOf(WebSymbolsHtmlQueryConfigurator.HtmlContextualWebSymbolsScope(context.firstChild))
       queryExecutor
         .runListSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true, additionalScope = additionalScope, virtualSymbols = false)
         .asSequence()
@@ -48,7 +48,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val additionalScope = if (attribute != null)
         emptyList()
       else
-        listOf(WebSymbolsHtmlQueryConfigurator.HtmlContextualWebSymbolsScope(context))
+        listOf(WebSymbolsHtmlQueryConfigurator.HtmlContextualWebSymbolsScope(context.firstChild))
 
       queryExecutor
         .runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, attributeName, additionalScope = additionalScope)
