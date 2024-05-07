@@ -347,6 +347,18 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ActualAnnotationsNotMatchExpectFixFactory.factory)
     }
 
+    private val surroundWithNullCheck = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerFactory(SurroundWithNullCheckFixFactory.argumentTypeMismatchFactory)
+        registerFactory(SurroundWithNullCheckFixFactory.assignmentTypeMismatchFactory)
+        registerFactory(SurroundWithNullCheckFixFactory.iteratorOnNullableFactory)
+        registerFactory(SurroundWithNullCheckFixFactory.nullabilityMismatchBasedOnJavaAnnotationsFactory)
+        registerFactory(SurroundWithNullCheckFixFactory.receiverNullabilityMismatchBasedOnJavaAnnotationsFactory)
+        registerFactory(SurroundWithNullCheckFixFactory.unsafeCallFactory)
+        registerFactory(SurroundWithNullCheckFixFactory.unsafeImplicitInvokeCallFactory)
+        registerFactory(SurroundWithNullCheckFixFactory.unsafeInfixCallFactory)
+        registerFactory(SurroundWithNullCheckFixFactory.unsafeOperatorCallFactory)
+    }
+
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
         keywords,
         addAbstract,
@@ -361,6 +373,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         typeMismatch,
         needExplicitType,
         superKeyword,
+        surroundWithNullCheck,
         vararg,
         visibility,
         other,

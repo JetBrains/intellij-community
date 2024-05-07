@@ -5653,7 +5653,133 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/surroundWithNullCheck")
+    public static class SurroundWithNullCheck extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("argumentNullable.kt")
+        public void testArgumentNullable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/argumentNullable.kt");
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/assignment.kt");
+        }
+
+        @TestMetadata("chainedUnsafeCall.kt")
+        public void testChainedUnsafeCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/chainedUnsafeCall.kt");
+        }
+
+        @TestMetadata("expressionUnsafeCall.kt")
+        public void testExpressionUnsafeCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/expressionUnsafeCall.kt");
+        }
+
+        @TestMetadata("in.kt")
+        public void testIn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/in.kt");
+        }
+
+        @TestMetadata("inLambda.kt")
+        public void testInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/inLambda.kt");
+        }
+
+        @TestMetadata("inLambda2.kt")
+        public void testInLambda2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/inLambda2.kt");
+        }
+
+        @TestMetadata("inLambda3.kt")
+        public void testInLambda3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/inLambda3.kt");
+        }
+
+        @TestMetadata("infixUnsafeCall.kt")
+        public void testInfixUnsafeCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/infixUnsafeCall.kt");
+        }
+
+        @TestMetadata("invokeFuncUnsafe.kt")
+        public void testInvokeFuncUnsafe() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/invokeFuncUnsafe.kt");
+        }
+
+        @TestMetadata("invokeUnsafe.kt")
+        public void testInvokeUnsafe() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/invokeUnsafe.kt");
+        }
+
+        @TestMetadata("iteratorUnsafe.kt")
+        public void testIteratorUnsafe() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/iteratorUnsafe.kt");
+        }
+
+        @TestMetadata("nullableInCondition.kt")
+        public void testNullableInCondition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/nullableInCondition.kt");
+        }
+
+        @TestMetadata("objectNestedQualifiers.kt")
+        public void testObjectNestedQualifiers() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/objectNestedQualifiers.kt");
+        }
+
+        @TestMetadata("objectQualifier.kt")
+        public void testObjectQualifier() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/objectQualifier.kt");
+        }
+
+        @TestMetadata("simpleUnsafeCall.kt")
+        public void testSimpleUnsafeCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/simpleUnsafeCall.kt");
+        }
+
+        @TestMetadata("unsafeCallInBinary.kt")
+        public void testUnsafeCallInBinary() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/unsafeCallInBinary.kt");
+        }
+
+        @TestMetadata("unsafeCallInDeclaration.kt")
+        public void testUnsafeCallInDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/unsafeCallInDeclaration.kt");
+        }
+
+        @TestMetadata("unsafeCallInGetter.kt")
+        public void testUnsafeCallInGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/unsafeCallInGetter.kt");
+        }
+
+        @TestMetadata("unsafeCallInsideAnonymous.kt")
+        public void testUnsafeCallInsideAnonymous() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/unsafeCallInsideAnonymous.kt");
+        }
+
+        @TestMetadata("unsafeCallInsideIf.kt")
+        public void testUnsafeCallInsideIf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/unsafeCallInsideIf.kt");
+        }
+
+        @TestMetadata("unsafeCallInsideWhen.kt")
+        public void testUnsafeCallInsideWhen() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/unsafeCallInsideWhen.kt");
+        }
+
+        @TestMetadata("unsafeCallInsideWhile.kt")
+        public void testUnsafeCallInsideWhile() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/unsafeCallInsideWhile.kt");
+        }
+
+        @TestMetadata("unstableValue.kt")
+        public void testUnstableValue() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/unstableValue.kt");
+        }
+    }
 
 
 
