@@ -1,35 +1,35 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl
 
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.BooleanEventField
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.IntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.Version
 import com.intellij.platform.ml.*
-import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startMLSession
-import com.intellij.platform.ml.impl.apiPlatform.CodeLikePrinter
-import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
-import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
-import com.intellij.platform.ml.impl.logs.AnalysisMethods
-import com.intellij.platform.ml.impl.logs.EntireSessionLoggingStrategy
-import com.intellij.platform.ml.impl.logs.registerMLTaskLogging
-import com.intellij.platform.ml.impl.model.MLModel
-import com.intellij.platform.ml.impl.monitoring.MLApproachInitializationListener
-import com.intellij.platform.ml.impl.monitoring.MLApproachListener
-import com.intellij.platform.ml.impl.monitoring.MLSessionListener
-import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
-import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachToListener.Companion.monitoredBy
-import com.intellij.platform.ml.impl.session.*
-import com.intellij.platform.ml.impl.session.analysis.LanguageSpecific
-import com.intellij.platform.ml.impl.session.analysis.SessionAnalyser
-import com.intellij.platform.ml.impl.session.analysis.StructureAnalyser
-import com.intellij.platform.ml.impl.session.analysis.Versioned
+import com.intellij.platform.ml.analysis.SessionAnalyser
+import com.intellij.platform.ml.analysis.StructureAnalyser
+import com.intellij.platform.ml.environment.Environment
+import com.intellij.platform.ml.environment.get
+import com.intellij.platform.ml.feature.Feature
+import com.intellij.platform.ml.feature.FeatureDeclaration
+import com.intellij.platform.ml.feature.FeatureFilter
+import com.intellij.platform.ml.feature.FeatureSelector
+import com.intellij.platform.ml.impl.logs.LanguageSpecific
+import com.intellij.platform.ml.impl.logs.Versioned
+import com.intellij.platform.ml.logs.AnalysisMethods
+import com.intellij.platform.ml.logs.EntireSessionLoggingStrategy
+import com.intellij.platform.ml.logs.schema.BooleanEventField
+import com.intellij.platform.ml.logs.schema.EventField
+import com.intellij.platform.ml.logs.schema.EventPair
+import com.intellij.platform.ml.logs.schema.IntEventField
+import com.intellij.platform.ml.monitoring.MLApproachInitializationListener
+import com.intellij.platform.ml.monitoring.MLApproachListener
+import com.intellij.platform.ml.monitoring.MLSessionListener
+import com.intellij.platform.ml.monitoring.MLTaskGroupListener
+import com.intellij.platform.ml.monitoring.MLTaskGroupListener.ApproachToListener.Companion.monitoredBy
+import com.intellij.platform.ml.session.*
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -70,12 +70,12 @@ private class MockTaskFusLogger : CounterUsagesCollector() {
     val GROUP = EventLogGroup("mock-task", 1).also {
       it.registerMLTaskLogging("finished", MockTask, EntireSessionLoggingStrategy.DOUBLE,
                                AnalysisMethods(
-                                        sessionAnalysers = listOf(FailureLogger(),
-                                                                  ExceptionLogger(),
-                                                                  RandomModelSeedAnalyser,
-                                                                  VeryUselessSessionAnalyser()),
-                                        structureAnalysers = listOf(SomeStructureAnalyser())
-                                      ))
+                                 sessionAnalysers = listOf(FailureLogger(),
+                                                           ExceptionLogger(),
+                                                           RandomModelSeedAnalyser,
+                                                           VeryUselessSessionAnalyser()),
+                                 structureAnalysers = listOf(SomeStructureAnalyser())
+                               ))
     }
   }
 
@@ -101,11 +101,6 @@ private object ThisTestApiPlatform : TestApiPlatform() {
     SomeListener("Nika"),
     SomeListener("Alex"),
   )
-
-  override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) {
-    val printer = CodeLikePrinter()
-    println("$descriptor is missing the following declaration: ${printer.printCodeLikeString(nonDeclaredFeatures.map { it.declaration })}")
-  }
 }
 
 object MockTask : MLTask<Double>(
@@ -159,7 +154,7 @@ class SomeStructureAnalyser<M : MLModel<Double>> : StructureAnalyser<M, Double> 
 }
 
 object RandomModelSeedAnalyser : SessionAnalyser.Default<RandomModel, Double>() {
-  private val SEED = IntEventField("random_seed")
+  private val SEED = IntEventField("random_seed", null)
 
   override suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<Double>, mlModel: RandomModel): List<EventPair<*>> {
     return listOf(SEED with mlModel.seed)
@@ -234,9 +229,9 @@ private class MockTaskApproachBuilder : LogDrivenModelInference.Builder<RandomMo
 
 private class VeryUselessSessionAnalyser : SessionAnalyser.Default<RandomModel, Double>() {
   companion object {
-    val ON_BEFORE_STARTED = BooleanEventField("on_before_started")
-    val ON_SESSION_STARTED = BooleanEventField("on_session_started")
-    val ON_SESSION_FINISHED = BooleanEventField("on_session_finished")
+    val ON_BEFORE_STARTED = BooleanEventField("on_before_started", null)
+    val ON_SESSION_STARTED = BooleanEventField("on_session_started", null)
+    val ON_SESSION_FINISHED = BooleanEventField("on_session_finished", null)
   }
 
   override val declaration: List<EventField<*>> = listOf(

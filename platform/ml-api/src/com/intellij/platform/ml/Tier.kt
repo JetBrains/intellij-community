@@ -12,20 +12,21 @@ import org.jetbrains.annotations.ApiStatus
  * There are two categories of tiers when it comes to description:
  *
  *  - Main tiers:
- *  the ones that are declared in an [com.intellij.platform.ml.impl.MLTask] and provided at the problem's application point,
+ *  the ones that are declared in an [com.intellij.platform.ml.MLTask] and provided at the problem's application point,
  *  when [com.intellij.platform.ml.NestableMLSession.createNestedSession] is called.
  *  They exist in each session.
  *
- *  - Additional tiers: the ones that are declared in [com.intellij.platform.ml.impl.approach.LogDrivenModelInference].
- *  They are provided by various [EnvironmentExtender]s occasionally when an [com.intellij.platform.ml.impl.environment.ExtendedEnvironment]
- *  is crated, and they could be absent, as it was not able to satisfy extenders' requirements, or a tier instance was simply not
- *  present this time.
+ *  - Additional tiers: the ones that are declared in [com.intellij.platform.ml.LogDrivenModelInference].
+ *  They are provided by various [com.intellij.platform.ml.environment.EnvironmentExtender]s occasionally
+ *  when an [com.intellij.platform.ml.environment.ExtendedEnvironment] is crated,
+ *  and they could be absent, as it was not able to satisfy extenders' requirements, or a tier instance was simply not present this time.
  *  So we can't rely on their existence.
  *
- * On the top of that, tiers could serve as helper objects for other user-defined objects, as [TierDescriptor]s and [EnvironmentExtender]s.
+ * On the top of that, tiers could serve as helper objects for other user-defined objects,
+ * as [TierDescriptor]s and [com.intellij.platform.ml.environment.EnvironmentExtender]s.
  * The listed interfaces are [TierRequester]s, which means that they require other tiers for proper functioning.
- * You could create additional [EnvironmentExtender]s to create new tiers, or to define other ways to instantiate existing tiers, but
- * from other sources.
+ * You could create additional [com.intellij.platform.ml.environment.EnvironmentExtender]s to create new tiers,
+ * or to define other ways to instantiate existing tiers, but from other sources.
  */
 @ApiStatus.Internal
 abstract class Tier<T : Any> {
@@ -39,17 +40,20 @@ abstract class Tier<T : Any> {
   override fun toString(): String = name
 }
 
+@ApiStatus.Internal
 infix fun <T : Any> Tier<T>.with(instance: T) = TierInstance(this, instance)
 
 /**
  * A helper class to type-safely handle pairs of [tier] and the corresponding [instance].
  */
+@ApiStatus.Internal
 data class TierInstance<T : Any>(val tier: Tier<T>, val instance: T)
 
 typealias PerTier<T> = Map<Tier<*>, T>
 
 typealias PerTierInstance<T> = Map<TierInstance<*>, T>
 
+@ApiStatus.Internal
 fun <T> Iterable<PerTier<T>>.joinByUniqueTier(): PerTier<T> {
   val joinedPerTier = mutableMapOf<Tier<*>, T>()
 
@@ -63,6 +67,7 @@ fun <T> Iterable<PerTier<T>>.joinByUniqueTier(): PerTier<T> {
   return joinedPerTier
 }
 
+@ApiStatus.Internal
 fun <T, CI : Iterable<T>, CO : MutableCollection<T>> Iterable<PerTier<CI>>.mergePerTier(createCollection: () -> CO): PerTier<CO> {
   val joinedPerTier = mutableMapOf<Tier<*>, CO>()
   for (perTierMapping in this) {
