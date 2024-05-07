@@ -318,10 +318,15 @@ object KotlinPluginBuilder {
       withKotlincInPluginDirectory(spec)
 
       spec.withCustomVersion(PluginVersionEvaluator { _, ideBuildVersion, _ ->
+        // in kt-branches we have own since and until versions
+        val sinceBuild = System.getProperty("kotlin.plugin.since")
+        val untilBuild = System.getProperty("kotlin.plugin.until")
+        val sinceUntil = if (sinceBuild != null && untilBuild != null) sinceBuild to untilBuild else null
+
         val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
         if (ijBuildNumber.matches()) {
           // IJ installer configurations.
-          return@PluginVersionEvaluator "$ideBuildVersion-$kind"
+          return@PluginVersionEvaluator PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion-$kind", sinceUntil = sinceUntil)
         }
 
         if (ideBuildVersion.contains("IJ")) {
@@ -330,38 +335,27 @@ object KotlinPluginBuilder {
           // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
           val version = ideBuildVersion.replace("IJ", kind.toString())
           Span.current().addEvent("Kotlin plugin IJ version: $version")
-          return@PluginVersionEvaluator version
+          return@PluginVersionEvaluator PluginVersionEvaluatorResult(pluginVersion = version, sinceUntil = sinceUntil)
         }
 
         throw IllegalStateException("Can't parse build number: $ideBuildVersion")
       })
 
-      spec.withPluginXmlPatcher { rawText ->
-        val sinceBuild = System.getProperty("kotlin.plugin.since")
-        val untilBuild = System.getProperty("kotlin.plugin.until")
-
-        val text = if (sinceBuild != null && untilBuild != null) {
-          // In kt-branches we have own since and until versions
-          replace(oldText = rawText, regex = "<idea-version.*?\\/>", newText = "<idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>")
-        }
-        else {
-          rawText
-        }
-
+      spec.withRawPluginXmlPatcher { text ->
         when (kind) {
           KotlinPluginKind.IJ, KotlinPluginKind.Fleet ->
             //noinspection SpellCheckingInspection
             replace(
               oldText = text,
               regex = "<!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->",
-              newText = "<incompatible-with>com.intellij.modules.androidstudio</incompatible-with>"
+              newText = "<incompatible-with>com.intellij.modules.androidstudio</incompatible-with>",
             )
           KotlinPluginKind.AS ->
             //noinspection SpellCheckingInspection
             replace(
               oldText = text,
               regex = "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
-              newText = "<plugin id=\"com.intellij.modules.androidstudio\"/>"
+              newText = """<plugin id="com.intellij.modules.androidstudio"/>""",
             )
           else -> throw IllegalStateException("Unknown kind = $kind")
         }

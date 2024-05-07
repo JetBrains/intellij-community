@@ -4,13 +4,13 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.JDOMUtil
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
-import org.jdom.Text
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 
-private val buildNumberRegex = Regex("(\\d+\\.)+\\d+")
+private val buildNumberRegex = Regex("""(\d+\.)+\d+""")
+private val digitDotDigitRegex = Regex("""\d+\.\d+""")
 
 fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange, buildNumber: String): Pair<String, String> {
   if (compatibleBuildRange == CompatibleBuildRange.EXACT || !buildNumber.matches(buildNumberRegex)) {
@@ -24,12 +24,12 @@ fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange
     untilBuild = buildNumber.substring(0, buildNumber.indexOf(".")) + ".*"
   }
   else {
-    sinceBuild = if (buildNumber.matches(Regex("\\d+\\.\\d+"))) buildNumber else buildNumber.substring(0, buildNumber.lastIndexOf("."))
+    sinceBuild = if (buildNumber.matches(digitDotDigitRegex)) buildNumber else buildNumber.substring(0, buildNumber.lastIndexOf("."))
     val end = if ((compatibleBuildRange == CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE)) {
-      if (buildNumber.matches(Regex("\\d+\\.\\d+"))) buildNumber.length else buildNumber.lastIndexOf(".")
+      if (buildNumber.matches(digitDotDigitRegex)) buildNumber.length else buildNumber.lastIndexOf(".")
     }
     else {
-      buildNumber.indexOf(".")
+      buildNumber.indexOf('.')
     }
     untilBuild = "${buildNumber.substring(0, end)}.*"
   }
@@ -46,7 +46,7 @@ internal fun patchPluginXml(
   helper: JarPackagerDependencyHelper,
 ) {
   val pluginModule = context.findRequiredModule(plugin.mainModule)
-  val descriptorContent = helper.getPluginXmlContent(pluginModule)
+  val descriptorContent = plugin.rawPluginXmlPatcher(helper.getPluginXmlContent(pluginModule))
 
   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                          context.proprietaryBuildTools.artifactsServer != null
@@ -58,16 +58,16 @@ internal fun patchPluginXml(
   }
 
   val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
-  val sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber)
-  @Suppress("TestOnlyProblems") val content = try {
+  @Suppress("TestOnlyProblems")
+  val content = try {
     plugin.pluginXmlPatcher(
       doPatchPluginXml(
         rootElement = JDOMUtil.load(descriptorContent),
         pluginModuleName = plugin.mainModule,
-        pluginVersion = pluginVersion,
+        pluginVersion = pluginVersion.pluginVersion,
         releaseDate = releaseDate,
         releaseVersion = releaseVersion,
-        compatibleSinceUntil = sinceUntil,
+        compatibleSinceUntil = pluginVersion.sinceUntil ?: getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber),
         toPublish = pluginsToPublish.contains(plugin),
         retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
         isEap = context.applicationInfo.isEAP,
@@ -77,9 +77,9 @@ internal fun patchPluginXml(
     )
   }
   catch (e: Throwable) {
-    throw RuntimeException("Could not patch descriptor (module=${pluginModule.name})", e)
+    throw RuntimeException("Could not patch descriptor (module=${plugin.mainModule})", e)
   }
-  moduleOutputPatcher.patchModuleOutput(plugin.mainModule, "META-INF/plugin.xml", content)
+  moduleOutputPatcher.patchModuleOutput(moduleName = plugin.mainModule, path = "META-INF/plugin.xml", content = content)
 }
 
 @TestOnly
@@ -122,7 +122,7 @@ fun doPatchPluginXml(
     check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }
     pluginName.text = "Database Tools and SQL for WebStorm"
     val description = rootElement.getChild("description")
-    val replaced = replaceInElementText(description, "IntelliJ-based IDEs", "WebStorm")
+    val replaced = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm")
     check(replaced) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
   }
   return JDOMUtil.write(rootElement)
@@ -151,18 +151,14 @@ fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<S
 
 @Suppress("SameParameterValue")
 private fun replaceInElementText(element: Element, oldText: String, newText: String): Boolean {
-  var replaced = false
-  for (node in element.content) {
-    if (node is Text) {
-      val textBefore = node.text
-      val text = textBefore.replace(oldText, newText)
-      if (textBefore != text) {
-        replaced = true
-        node.text = text
-      }
-    }
+  val textBefore = element.text
+  val text = textBefore.replace(oldText, newText)
+  if (textBefore == text) {
+    return false
   }
-  return replaced
+
+  element.text = text
+  return true
 }
 
 private fun setProductDescriptorEapAttribute(productDescriptor: Element, isEap: Boolean) {

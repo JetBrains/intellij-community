@@ -297,10 +297,10 @@ object CommunityRepositoryModules {
         val pluginXml = pluginXmlSupplier()
         if (pluginXml.indexOf("<version>") != -1) {
           val declaredVersion = pluginXml.substring(pluginXml.indexOf("<version>") + "<version>".length, pluginXml.indexOf("</version>"))
-          "$declaredVersion.$ideBuildVersion"
+          PluginVersionEvaluatorResult(pluginVersion = "$declaredVersion.$ideBuildVersion")
         }
         else {
-          ideBuildVersion
+          PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion)
         }
       }
 

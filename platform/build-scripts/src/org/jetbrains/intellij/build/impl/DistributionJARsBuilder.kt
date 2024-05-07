@@ -422,7 +422,7 @@ suspend fun buildNonBundledPlugins(
           pluginXmlSupplier = { (context as BuildContextImpl).jarPackagerDependencyHelper.getPluginXmlContent(context.findRequiredModule(plugin.mainModule)) },
           ideBuildVersion = context.pluginBuildNumber,
           context = context,
-        )
+        ).pluginVersion
       }
 
       val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts

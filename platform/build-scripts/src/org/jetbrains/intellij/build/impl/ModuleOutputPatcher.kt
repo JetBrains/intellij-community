@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.impl
@@ -18,7 +18,7 @@ class ModuleOutputPatcher {
   private val patches = ConcurrentHashMap<String, MutableMap<String, ByteArray>>()
 
   fun patchModuleOutput(moduleName: String, path: String, content: String, overwrite: Boolean = false) {
-    patchModuleOutput(moduleName, path, content.toByteArray(StandardCharsets.UTF_8), overwrite)
+    patchModuleOutput(moduleName = moduleName, path = path, content = content.toByteArray(StandardCharsets.UTF_8), overwrite = overwrite)
   }
 
   fun patchModuleOutput(moduleName: String, path: String, content: ByteArray, overwrite: Boolean = false) {

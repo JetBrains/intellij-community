@@ -19,7 +19,6 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.function.UnaryOperator
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 
@@ -43,6 +42,8 @@ class PluginLayout private constructor(
     private set
 
   var versionEvaluator: PluginVersionEvaluator = PLUGIN_VERSION_AS_IDE
+
+  internal var rawPluginXmlPatcher: (String) -> String = { it }
 
   var pluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
 
@@ -305,8 +306,8 @@ class PluginLayout private constructor(
       layout.versionEvaluator = versionEvaluator
     }
 
-    fun withPluginXmlPatcher(pluginXmlPatcher: UnaryOperator<String>) {
-      layout.pluginXmlPatcher = { text, _ -> pluginXmlPatcher.apply(text) }
+    fun withRawPluginXmlPatcher(pluginXmlPatcher: (String) -> String) {
+      layout.rawPluginXmlPatcher = pluginXmlPatcher
     }
 
     /**
@@ -445,10 +446,15 @@ class PluginLayout private constructor(
   }
 }
 
-private val PLUGIN_VERSION_AS_IDE = PluginVersionEvaluator { _, ideBuildVersion, _ -> ideBuildVersion }
+private val PLUGIN_VERSION_AS_IDE = PluginVersionEvaluator { _, ideBuildVersion, _ -> PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion) }
 
+data class PluginVersionEvaluatorResult(@JvmField val pluginVersion: String, @JvmField val sinceUntil: Pair<String, String>? = null)
+
+/**
+ * Think twice before using this API.
+ */
 fun interface PluginVersionEvaluator {
-  fun evaluate(pluginXmlSupplier: () -> String, ideBuildVersion: String, context: BuildContext): String
+  fun evaluate(pluginXmlSupplier: () -> String, ideBuildVersion: String, context: BuildContext): PluginVersionEvaluatorResult
 }
 
 private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
