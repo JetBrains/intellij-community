@@ -98,6 +98,7 @@ class EditorCellOutputs(
       ?: emptyList()
     updateData(outputDataKeys)
     recreateInlayIfNecessary()
+    onViewportChange()
   }
 
   private fun recreateInlayIfNecessary() {
@@ -116,6 +117,7 @@ class EditorCellOutputs(
     }
     else {
       inlay?.let { Disposer.dispose(it) }
+      inlay = null
     }
   }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
+import java.awt.Container
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.HierarchyEvent
@@ -112,3 +113,11 @@ fun JComponent.yOffsetFromEditor(editor: Editor): Int? =
   SwingUtilities.convertPoint(this, 0, 0, editor.contentComponent).y
     .takeIf { it >= 0 }
     ?.let { it + insets.top }
+
+fun validateComponent(c: Container) {
+  var validationRoot = c
+  while (!validationRoot.isValidateRoot && validationRoot.parent != null) {
+    validationRoot = validationRoot.parent
+  }
+  validationRoot.validate()
+}

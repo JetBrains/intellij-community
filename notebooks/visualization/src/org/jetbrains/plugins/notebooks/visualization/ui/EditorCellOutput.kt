@@ -69,8 +69,8 @@ class EditorCellOutput internal constructor(private val editor: EditorEx, privat
 
   fun onViewportChange() {
       val component = component.mainComponent as? NotebookOutputInlayShowable ?: return
-      if (component !is Component) return
-
+      if (component !is JComponent) return
+      validateComponent(component)
       val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
       component.shown = editor.scrollPane.viewport.viewRect.intersects(componentRect)
   }
