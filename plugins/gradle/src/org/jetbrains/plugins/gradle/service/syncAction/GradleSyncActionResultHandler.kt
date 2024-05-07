@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
-import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
@@ -27,7 +29,7 @@ class GradleSyncActionResultHandler(
 
   override suspend fun onModelFetchPhaseCompleted(phase: GradleModelFetchPhase) {
     configureProject(phase.name) { storage ->
-      GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { extension ->
+      forEachGradleSyncContributor { extension ->
         checkCanceled()
         telemetry.spanBuilder(extension.name).use {
           extension.onModelFetchPhaseCompleted(resolverContext, storage, phase)
@@ -38,7 +40,7 @@ class GradleSyncActionResultHandler(
 
   override suspend fun onModelFetchCompleted() {
     configureProject("MODEL_FETCH_COMPLETED") { storage ->
-      GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { extension ->
+      forEachGradleSyncContributor { extension ->
         checkCanceled()
         telemetry.spanBuilder(extension.name).use {
           extension.onModelFetchCompleted(resolverContext, storage)
@@ -49,7 +51,7 @@ class GradleSyncActionResultHandler(
 
   override suspend fun onModelFetchFailed(exception: Throwable) {
     configureProject("MODEL_FETCH_FAILED") { storage ->
-      GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { extension ->
+      forEachGradleSyncContributor { extension ->
         checkCanceled()
         telemetry.spanBuilder(extension.name).use { span ->
           span.setAttribute("exception", exception.javaClass.name)
@@ -62,7 +64,7 @@ class GradleSyncActionResultHandler(
 
   override suspend fun onProjectLoadedActionCompleted() {
     configureProject("PROJECT_LOADED_ACTION") { storage ->
-      GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { extension ->
+      forEachGradleSyncContributor { extension ->
         checkCanceled()
         telemetry.spanBuilder(extension.name).use {
           extension.onProjectLoadedActionCompleted(resolverContext, storage)
@@ -95,7 +97,20 @@ class GradleSyncActionResultHandler(
     }
   }
 
+  private suspend fun forEachGradleSyncContributor(
+    action: suspend (GradleSyncContributor) -> Unit
+  ) {
+    val contributors = GradleSyncContributor.EP_NAME.extensionList.toMutableList()
+    ExternalSystemApiUtil.orderAwareSort(contributors)
+    for (contributor in contributors) {
+      runCatching { action(contributor) }
+        .getOrLogException(LOG)
+    }
+  }
+
   companion object {
+
+    private val LOG = logger<GradleSyncActionResultHandler>()
 
     suspend fun ProjectResolverContext.project(): Project {
       return externalSystemTaskId.project()

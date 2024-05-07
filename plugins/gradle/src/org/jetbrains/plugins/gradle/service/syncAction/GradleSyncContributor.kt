@@ -8,6 +8,14 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
+/**
+ * The [GradleSyncContributor] is used for the IDE project configuration in the [com.intellij.platform.backend.workspace.WorkspaceModel].
+ *
+ * The [com.intellij.openapi.externalSystem.util.Order] annotation defines the execution order for these contributors.
+ *
+ * @see com.intellij.platform.backend.workspace.WorkspaceModel
+ * @see com.intellij.openapi.externalSystem.util.Order
+ */
 interface GradleSyncContributor {
 
   val name: String
