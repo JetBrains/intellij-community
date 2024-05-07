@@ -2,11 +2,14 @@
 package org.jetbrains.idea.devkit.util
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfo
+import kotlinx.coroutines.delay
 import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.Socket
 import java.net.URL
+import kotlin.time.Duration.Companion.seconds
 
 object DebuggerUtil {
   private val LOG = logger<DebuggerUtil>()
@@ -20,8 +23,14 @@ object DebuggerUtil {
    * We are going to send http request to the IDE that has started the test
    * to attach a new debug session with debug name debugSessionName and port debuggerPort
    */
-  fun attachDebuggerToProcess(debuggerPort: Int, debugSessionName: String): Boolean =
-    waitABitForPortOpening(debuggerPort) && tryAttachDebuggerToProcess(debuggerPort, debugSessionName)
+  suspend fun attachDebuggerToProcess(debuggerPort: Int, debugSessionName: String): Boolean {
+    if (!waitABitForPortOpening(debuggerPort)) return false
+    if (SystemInfo.isWindows) {
+      // apply additional delay, otherwise the debugger fails to connect with "handshake failed - connection prematurally closed" message
+      delay(10.seconds)
+    }
+    return tryAttachDebuggerToProcess(debuggerPort, debugSessionName)
+  }
 
   /**
    * Requests IDE to attach debugger to JAVA process which agent listens on specified port

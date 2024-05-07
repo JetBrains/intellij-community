@@ -12,7 +12,7 @@ interface LaunchRemoteDevBuilder {
 }
 
 interface IdeBuilder {
-  fun attachDebugger(callback: (Int) -> Unit)
+  fun attachDebugger(callback: suspend (Int) -> Unit)
 }
 
 enum class Product(val mainModule: String) {

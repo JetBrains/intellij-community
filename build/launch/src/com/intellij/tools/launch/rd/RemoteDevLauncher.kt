@@ -78,10 +78,10 @@ internal data class BackendInDockerContainer(
 ) : BackendInEnvDescription
 
 private abstract class IdeBuilderImpl : IdeBuilder {
-  protected var attachDebuggerCallback: ((Int) -> Unit)? = null
+  protected var attachDebuggerCallback: (suspend (Int) -> Unit)? = null
     private set
 
-  override fun attachDebugger(callback: (Int) -> Unit) {
+  override fun attachDebugger(callback: suspend (Int) -> Unit) {
     attachDebuggerCallback = callback
   }
 }
@@ -89,7 +89,7 @@ private abstract class IdeBuilderImpl : IdeBuilder {
 private class JetBrainsClientBuilderImpl : IdeBuilderImpl(), JetBrainsClientBuilder {
   fun build(): Result = Result(attachDebuggerCallback)
 
-  data class Result(val attachDebuggerCallback: ((Int) -> Unit)?)
+  data class Result(val attachDebuggerCallback: (suspend (Int) -> Unit)?)
 }
 
 private class DockerBuilderImpl : DockerBuilder {
@@ -129,7 +129,7 @@ internal data class BackendDescription(
   val product: Product,
   val launchInDocker: Boolean,
   val projectPath: String,
-  val attachDebuggerCallback: ((Int) -> Unit)?,
+  val attachDebuggerCallback: (suspend (Int) -> Unit)?,
 )
 
 private class DockerBackendBuilderImpl(product: Product) : BackendBuilderImpl(product, launchInDocker = true), DockerBackendBuilder
