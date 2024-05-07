@@ -157,10 +157,6 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       return project.getService(serviceClass)
     }
 
-    override fun getToolingExtensionsClasses(): Set<Class<*>> {
-      return getService().getToolingExtensionsClasses()
-    }
-
     override fun getModelProviders(): List<ProjectImportModelProvider> {
       return getService().getModelProviders()
     }
@@ -168,22 +164,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
   abstract class AbstractTestProjectResolverService {
 
-    private val toolingExtensionClasses = DisposableWrapperList<Class<*>>()
     private val modelProviders = DisposableWrapperList<ProjectImportModelProvider>()
-
-    fun getToolingExtensionsClasses(): Set<Class<*>> {
-      return toolingExtensionClasses.toSet()
-    }
-
-    fun addToolingExtensionClasses(parentDisposable: Disposable, vararg toolingExtensionClasses: Class<*>) {
-      addToolingExtensionClasses(parentDisposable, toolingExtensionClasses.toList())
-    }
-
-    fun addToolingExtensionClasses(parentDisposable: Disposable, toolingExtensionClasses: List<Class<*>>) {
-      for (toolingExtensionClass in toolingExtensionClasses) {
-        this.toolingExtensionClasses.add(toolingExtensionClass, parentDisposable)
-      }
-    }
 
     fun getModelProviders(): List<ProjectImportModelProvider> {
       return modelProviders
