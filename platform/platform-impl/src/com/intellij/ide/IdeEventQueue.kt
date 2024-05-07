@@ -567,7 +567,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     if (e is WindowEvent) {
-      processAppActivationEvent(e)
+      // Activation can call methods which needs WriteIntent, like saving project
+      threadingSupport.runWriteIntentReadAction<Unit, Throwable> { processAppActivationEvent(e) }
     }
     if (dispatchByCustomDispatchers(e)) {
       return
@@ -577,8 +578,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     when {
-      e is MouseEvent -> threadingSupport.runWithImplicitRead { dispatchMouseEvent(e) }
-      e is KeyEvent -> threadingSupport.runWithImplicitRead { dispatchKeyEvent(e) }
+      e is MouseEvent -> threadingSupport.runWriteIntentReadAction<Unit, Throwable> { dispatchMouseEvent(e) }
+      e is KeyEvent -> threadingSupport.runWriteIntentReadAction<Unit, Throwable> { dispatchKeyEvent(e) }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
         if (e is ComponentEvent) {
@@ -942,7 +943,7 @@ typealias PostEventHook = (event: AWTEvent) -> Boolean
 
 private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
 
-private const val defaultEventWithWrite = true
+private const val defaultEventWithWrite = false
 
 private val isSkipMetaPressOnLinux = java.lang.Boolean.getBoolean("keymap.skip.meta.press.on.linux")
 
@@ -1031,7 +1032,8 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
     runnable()
   }
   else {
-    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnable)
+    val runnableWithWIL = {  WriteIntentReadAction.run(runnable) }
+    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnableWithWIL)
   }
 }
 

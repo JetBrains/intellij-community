@@ -5,6 +5,7 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -80,7 +81,7 @@ public final class LaterInvocator {
     if (expired.value(null)) {
       return;
     }
-    ourEdtQueue.push(modalityState, expired, runnable);
+    ourEdtQueue.push(modalityState, expired, wrapWithRunIntendedWriteAction(runnable));
   }
 
   static void invokeAndWait(@NotNull ModalityState modalityState, final @NotNull Runnable runnable) {
@@ -360,6 +361,21 @@ public final class LaterInvocator {
   public static void purgeExpiredItems() {
     ThreadingAssertions.assertEventDispatchThread();
     ourEdtQueue.purgeExpiredItems();
+  }
+
+  private static @NotNull Runnable wrapWithRunIntendedWriteAction(@NotNull Runnable runnable) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        // TODO: Replace with direct access to ThreadingSupport instance
+        ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(runnable);
+      }
+
+      @Override
+      public String toString() {
+        return runnable.toString();
+      }
+    };
   }
 
   /**
