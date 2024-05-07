@@ -1716,8 +1716,8 @@
 
     <group id="WorkspaceProjectGroup">
       <separator/>
-      <group id="ImportSubprojectGroup" class="com.intellij.ide.workspace.ImportSubprojectActionGroup" popup="true"/>
-      <group id="RemoveSubprojectGroup" class="com.intellij.ide.workspace.RemoveSubprojectActionGroup" popup="true"/>
+      <action id="ManageWorkspace" class="com.intellij.ide.workspace.ManageWorkspaceAction"/>
+      <action id="CreateWorkspace" class="com.intellij.ide.workspace.CreateWorkspaceAction"/>
       <separator/>
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </group>

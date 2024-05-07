@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 interface SubprojectHandler {
   companion object {
     val EP_NAME: ExtensionPointName<SubprojectHandler> = ExtensionPointName.create("com.intellij.workspace.subprojectHandler")
+    fun getAllSubprojects(project: Project): List<Subproject> = EP_NAME.extensionList.flatMap { it.getSubprojects(project) }
   }
 
   fun getSubprojects(project: Project): List<Subproject>

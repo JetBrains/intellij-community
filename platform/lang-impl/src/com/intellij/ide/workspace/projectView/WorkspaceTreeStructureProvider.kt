@@ -5,9 +5,8 @@ import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.ide.workspace.WorkspaceSettings
+import com.intellij.ide.workspace.isWorkspace
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -21,7 +20,7 @@ class WorkspaceTreeStructureProvider(val project: Project) : TreeStructureProvid
                       children: Collection<AbstractTreeNode<*>>,
                       settings: ViewSettings): Collection<AbstractTreeNode<*>> {
 
-    if (parent is ProjectViewProjectNode && WorkspaceSettings.getInstance(project).isWorkspace) {
+    if (parent is ProjectViewProjectNode && project.isWorkspace) {
       return overrideWorkspaceDirectory(children, settings, parent) ?: return children
     }
     return children

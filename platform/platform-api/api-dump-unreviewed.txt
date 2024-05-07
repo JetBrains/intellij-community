@@ -6171,7 +6171,9 @@ c:com.intellij.ui.CheckBoxList
 - clear():V
 - p:findPointRelativeToCheckBox(I,I,javax.swing.JCheckBox,I):java.awt.Point
 - p:findPointRelativeToCheckBoxWithAdjustedRendering(I,I,javax.swing.JCheckBox,I):java.awt.Point
+- getAllItems():java.util.Set
 - p:getBackground(Z):java.awt.Color
+- getCheckedItems():java.util.List
 - p:getForeground(Z):java.awt.Color
 - getItemAt(I):java.lang.Object
 - p:getSecondaryText(I):java.lang.String
