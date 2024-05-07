@@ -238,10 +238,7 @@ fn get_launch_scope_or_launch_subprocess(_configuration: &dyn LaunchConfiguratio
 fn get_launch_scope_or_launch_subprocess(configuration: &dyn LaunchConfiguration, jre_home: &Path) -> Result<JvmLaunchScope> {
     let cef_sandbox = CefScopedSandboxInfo::new();
 
-    let is_sandbox_subprocess = configuration.get_args()
-        .iter()
-        .any(|arg| arg.contains("--type"));
-
+    let is_sandbox_subprocess = configuration.get_args().iter().any(|arg| arg.contains("--type="));
     if is_sandbox_subprocess {
         let exit_code = unsafe {
             launch_cef_subprocess(jre_home, &cef_sandbox)?
