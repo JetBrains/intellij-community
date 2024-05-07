@@ -611,7 +611,6 @@ a:com.intellij.util.gist.GistManager
 - a:newVirtualFileGist(java.lang.String,I,com.intellij.util.io.DataExternalizer,com.intellij.util.gist.VirtualFileGist$GistCalculator):com.intellij.util.gist.VirtualFileGist
 com.intellij.util.gist.PsiFileGist
 - a:getFileData(com.intellij.psi.PsiFile):java.lang.Object
-- a:getUpToDateOrNull(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):java.util.function.Supplier
 com.intellij.util.gist.VirtualFileGist
 - a:getFileData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Object
 - a:getUpToDateOrNull(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Supplier

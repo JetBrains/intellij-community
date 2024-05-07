@@ -24,8 +24,6 @@ import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
-
 final class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
   private static final ModificationTracker ourReindexTracker = () -> ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
   private final VirtualFileGist<Data> myPersistence;
@@ -42,11 +40,6 @@ final class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
     };
     myPersistence = GistManager.getInstance().newVirtualFileGist(id, version, externalizer, myCalculator);
     myCacheKey = Key.create("PsiFileGist " + id);
-  }
-
-  @Override
-  public @Nullable Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull PsiFile file) {
-    return myPersistence.getUpToDateOrNull(file.getProject(), getVirtualFile(file));
   }
 
   @Override
