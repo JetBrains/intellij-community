@@ -745,7 +745,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("layoutinspector-view-proto")
       //spec.withProjectLibrary("libadb-server-proto")
       spec.withProjectLibrary("libam-instrumentation-data-proto")
-      //spec.withProjectLibrary("libapp-processes-proto")
+      spec.withProjectLibrary("libapp-processes-proto")
       spec.withProjectLibrary("network_inspector_java_proto")
       //spec.withProjectLibrary("oauth2")
       spec.withProjectLibrary("perfetto-proto")
@@ -761,6 +761,7 @@ object CommunityRepositoryModules {
       //spec.withModuleLibrary("libandroid-core-proto", "intellij.android.projectSystem.gradle", "")
       spec.withModuleLibrary("libstudio.android-test-plugin-host-retention-proto", "intellij.android.core", "")
       //tools/adt/idea/android/lib:android-sdk-tools-jps <= this is jarutils.jar
+      spec.withModuleLibrary("instantapps-api", "intellij.android.core", "")
       spec.withModuleLibrary("background-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.model", "")
       spec.withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.model", "")
       spec.withModuleLibrary("background-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.view", "")
