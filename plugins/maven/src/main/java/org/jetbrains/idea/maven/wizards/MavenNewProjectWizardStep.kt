@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -19,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.whenItemSelectedFromUi
 import com.intellij.ui.layout.ValidationInfoBuilder
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.model.MavenId
@@ -41,6 +44,8 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(this, sdkProperty, sdkDownloadTaskProperty)
+        .whenItemSelectedFromUi { logSdkChanged(sdk) }
+        .onApply { logSdkFinished(sdk) }
     }.bottomGap(BottomGap.SMALL)
   }
 

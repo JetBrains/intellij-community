@@ -33,7 +33,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 31)
+  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 32)
 
   private val LANGUAGES = listOf(
     NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -92,10 +92,12 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
   private val locationChanged = GROUP.registerVarargEvent("project.location.changed", *baseFields, EventFields.PluginInfo)
   private val nameChanged = GROUP.registerVarargEvent("project.name.changed", *baseFields, EventFields.PluginInfo)
-  private val gitChanged = GROUP.registerVarargEvent("git.changed", *baseFields)
+  private val gitChanged = GROUP.registerVarargEvent("git.changed", *baseFields, gitField)
   private val gitFinish = GROUP.registerVarargEvent("git.finished", *baseFields, gitField)
-  private val addSampleCodeChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.code.changed", *buildSystemFields, addSampleCodeField)
-  private val addSampleOnboardingTipsChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.onboarding.tips.changed", *buildSystemFields, addSampleOnboardingTipsField)
+  private val addSampleCodeChanged = GROUP.registerVarargEvent("build.system.add.sample.code.changed", *buildSystemFields, addSampleCodeField)
+  private val addSampleCodeFinished = GROUP.registerVarargEvent("build.system.add.sample.code.finished", *buildSystemFields, addSampleCodeField)
+  private val addSampleOnboardingTipsChanged = GROUP.registerVarargEvent("build.system.add.sample.onboarding.tips.changed", *buildSystemFields, addSampleOnboardingTipsField)
+  private val addSampleOnboardingTipsFinished = GROUP.registerVarargEvent("build.system.add.sample.onboarding.tips.finished", *buildSystemFields, addSampleOnboardingTipsField)
 
   private val buildSystemChangedEvent = GROUP.registerVarargEvent("build.system.changed", *baseFields, buildSystemField)
   private val buildSystemFinishedEvent = GROUP.registerVarargEvent("build.system.finished", *baseFields, buildSystemField)
@@ -115,7 +117,8 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   private val groovyLibraryChanged = GROUP.registerVarargEvent("groovy.lib.changed", *buildSystemFields, groovySourceTypeField, groovyVersionField)
   private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", *buildSystemFields, groovySourceTypeField, groovyVersionField)
 
-  private val useCompactProjectStructureChangedEvent = GROUP.registerVarargEvent("build.system.use.compact.project.structure.changed", *buildSystemFields, useCompactProjectStructureField)
+  private val useCompactProjectStructureChanged = GROUP.registerVarargEvent("build.system.use.compact.project.structure.changed", *buildSystemFields, useCompactProjectStructureField)
+  private val useCompactProjectStructureFinished = GROUP.registerVarargEvent("build.system.use.compact.project.structure.finished", *buildSystemFields, useCompactProjectStructureField)
   private val kotlinClickKmpWizardLinkEvent = GROUP.registerVarargEvent("kotlin.kmp.wizard.link.clicked", *buildSystemFields)
   // @formatter:on
 
@@ -206,17 +209,33 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
     fun NewProjectWizardStep.logLocationChanged(): Unit =
       locationChanged.logBaseEvent(context)
 
-    fun NewProjectWizardStep.logGitChanged(): Unit =
-      gitChanged.logBaseEvent(context)
+    fun NewProjectWizardStep.logGitChanged(git: Boolean): Unit =
+      gitChanged.logBaseEvent(context, gitField with git)
 
     fun NewProjectWizardStep.logGitFinished(git: Boolean): Unit =
       gitFinish.logBaseEvent(context, gitField with git)
 
     fun NewProjectWizardStep.logAddSampleCodeChanged(isSelected: Boolean): Unit =
-      addSampleCodeChangedEvent.logBuildSystemEvent(this, addSampleCodeField with isSelected)
+      addSampleCodeChanged.logBuildSystemEvent(this, addSampleCodeField with isSelected)
 
+    fun NewProjectWizardStep.logAddSampleCodeFinished(isSelected: Boolean): Unit =
+      addSampleCodeFinished.logBuildSystemEvent(this, addSampleCodeField with isSelected)
+
+    fun NewProjectWizardStep.logAddSampleOnboardingTipsChanged(isSelected: Boolean): Unit =
+      addSampleOnboardingTipsChanged.logBuildSystemEvent(this, addSampleOnboardingTipsField with isSelected)
+
+    fun NewProjectWizardStep.logAddSampleOnboardingTipsFinished(isSelected: Boolean): Unit =
+      addSampleOnboardingTipsFinished.logBuildSystemEvent(this, addSampleOnboardingTipsField with isSelected)
+
+    @Deprecated(
+      "Moved. Please use the same function NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged",
+      ReplaceWith(
+        "logAddSampleOnboardingTipsChanged(isSelected)",
+        "com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged"
+      ),
+    )
     fun NewProjectWizardStep.logAddSampleOnboardingTipsChangedEvent(isSelected: Boolean): Unit =
-      addSampleOnboardingTipsChangedEvent.logBuildSystemEvent(this, addSampleOnboardingTipsField with isSelected)
+      logAddSampleOnboardingTipsChanged(isSelected)
   }
 
   object BuildSystem {
@@ -239,8 +258,13 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
     fun NewProjectWizardStep.logParentFinished(isNone: Boolean): Unit =
       parentFinishedEvent.logBuildSystemEvent(this, buildSystemParentField with isNone)
 
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @Deprecated("Moved. Please use same function NewProjectWizardCollector.Base.logAddSampleCodeChanged")
+    @Deprecated(
+      "Moved. Please use the same function NewProjectWizardCollector.Base.logAddSampleCodeChanged",
+      ReplaceWith(
+        "logAddSampleCodeChangedImpl(isSelected)",
+        "com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged"
+      )
+    )
     fun NewProjectWizardStep.logAddSampleCodeChanged(isSelected: Boolean): Unit = logAddSampleCodeChangedImpl(isSelected)
   }
 
@@ -288,7 +312,10 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   object Kotlin {
 
     fun NewProjectWizardStep.logUseCompactProjectStructureChanged(isSelected: Boolean): Unit =
-      useCompactProjectStructureChangedEvent.logBuildSystemEvent(this, useCompactProjectStructureField with isSelected)
+      useCompactProjectStructureChanged.logBuildSystemEvent(this, useCompactProjectStructureField with isSelected)
+
+    fun NewProjectWizardStep.logUseCompactProjectStructureFinished(isSelected: Boolean): Unit =
+      useCompactProjectStructureFinished.logBuildSystemEvent(this, useCompactProjectStructureField with isSelected)
 
     fun NewProjectWizardStep.logKmpWizardLinkClicked(): Unit =
       kotlinClickKmpWizardLinkEvent.logBuildSystemEvent(this)

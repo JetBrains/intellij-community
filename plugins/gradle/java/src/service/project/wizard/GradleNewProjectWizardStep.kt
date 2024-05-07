@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.CommonBundle
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -117,6 +119,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       projectWizardJdkComboBox(this, sdkProperty, sdkDownloadTaskProperty)
         .validationOnInput { validateJavaSdk(withDialog = false) }
         .validationOnApply { validateJavaSdk(withDialog = true) }
+        .whenItemSelectedFromUi { logSdkChanged(sdk) }
+        .onApply { logSdkFinished(sdk) }
     }.bottomGap(BottomGap.SMALL)
   }
 
