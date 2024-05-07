@@ -457,7 +457,17 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             assert(codeFragment.viewProvider.isEventSystemEnabled)
 
             val codeFragmentModule = ProjectStructureProvider.getModule(project, codeFragment, contextualModule = null)
-            val codeFragmentTracker = createTracker(codeFragmentModule, "code fragment")
+            val codeFragmentTracker = createTracker(
+                codeFragmentModule,
+                "code fragment",
+
+                // Any in-block modification may cause a code fragment context modification event for the modified module. This is expected
+                // for a dangling file module as well, because it may be a context module of another dangling file module. Hence, we need to
+                // allow `CODE_FRAGMENT_CONTEXT_MODIFICATION`.
+                //
+                // Note that we don't allow a code fragment context modification event for the context module, which would indeed be wrong.
+                additionalAllowedEventKinds = setOf(KotlinModificationEventKind.CODE_FRAGMENT_CONTEXT_MODIFICATION),
+            )
 
             allowAnalysisOnEdt {
                 analyze(codeFragment) {
