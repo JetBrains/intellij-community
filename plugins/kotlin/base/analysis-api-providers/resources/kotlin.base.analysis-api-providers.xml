@@ -4,6 +4,9 @@
             serviceInterface="org.jetbrains.kotlin.analysis.providers.permissions.KotlinAnalysisPermissionOptions"
             serviceImplementation="org.jetbrains.kotlin.analysis.providers.permissions.KotlinDefaultAnalysisPermissionOptions"/>
     <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.lifetime.KtLifetimeTokenProvider"
+            serviceImplementation="org.jetbrains.kotlin.analysis.providers.lifetime.KtReadActionConfinementLifetimeTokenProvider"/>
+    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinDeclarationProviderFactory"/>
     <projectService
