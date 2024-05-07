@@ -78,7 +78,7 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
 
   private static Collection<String> suggestKeywords(PsiElement position) {
     TextRange posRange = position.getTextRange();
-    ShFile posFile = (ShFile) position.getContainingFile();
+    PsiFile posFile = position.getContainingFile();
     ShCommandsList parent = PsiTreeUtil.getTopmostParentOfType(position, ShCommandsList.class);
     TextRange range = new TextRange(parent == null ? 0 : parent.getTextRange().getStartOffset(), posRange.getStartOffset());
     String text = range.isEmpty() ? CompletionInitializationContext.DUMMY_IDENTIFIER : range.substring(posFile.getText());
