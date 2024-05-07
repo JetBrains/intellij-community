@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
 import java.nio.file.Path
@@ -204,12 +205,15 @@ private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescripto
 }
 
 /**
- * Some project-level libraries and modules are copied to multiple places in the distribution. 
+ * Some libraries and modules are copied to multiple places in the distribution. 
  * In order to decide which location should be specified in the runtime descriptor, this method determines the main location used the
  * following heuristics:
  *   * the entry from IDE_HOME/lib is preferred (unless it's also included in a separate JAR in the split frontend part and scrambled there);
  *   * otherwise, the entry which is put to a separate JAR file is preferred;
  *   * otherwise, a JAR included in JetBrains Client is preferred.
+ *   * otherwise, a JAR located in a directory named 'client' or 'frontend' is preferred.
+ * 
+ * This heuristic is verified by RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct.  
  */
 private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<RuntimeModuleRepositoryEntry>,
                                                                context: BuildContext): Map<RuntimeModuleId, String> {
@@ -221,10 +225,20 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
                                                     || data.packMode == LibraryPackMode.MERGED 
                                                     || data.packMode == LibraryPackMode.STANDALONE_MERGED
   
+  fun ModuleLibraryFileEntry.isPackedIntoSingleJar(): Boolean {
+    val library = context.findRequiredModule(moduleName).libraryCollection.libraries.find { LibraryLicensesListGenerator.getLibraryName(it) == libraryName }
+    require(library != null) { "Cannot find module-level library '$libraryName' in '$moduleName'" }
+    return library.getFiles(JpsOrderRootType.COMPILED).size == 1 
+  }
+  
   val pathToEntries = entries.groupBy { it.relativePath }
 
+  //exclude libraries which may be packed in multiple JARs from consideration, because multiple entries may not indicate that a library is copied to multiple places in such cases,
+  //and all resource roots should be kept
   val moduleIdsToPaths = entries.asSequence()
-    .filter { entry -> entry.origin is ProjectLibraryEntry && entry.origin.isPackedIntoSingleJar() || entry.origin is ModuleOutputEntry }
+    .filter { entry -> entry.origin is ProjectLibraryEntry && entry.origin.isPackedIntoSingleJar()
+                       || entry.origin is ModuleLibraryFileEntry && entry.origin.isPackedIntoSingleJar()                   
+                       || entry.origin is ModuleOutputEntry }
     .groupBy({ it.origin.runtimeModuleId }, { it.relativePath })
 
   fun DistributionFileEntry.isIncludedInJetBrainsClient() = 
@@ -233,7 +247,8 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
   fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<String>): String {
     val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
-                       paths.singleOrNull { pathToEntries[it]?.any { entry -> entry.origin.isIncludedInJetBrainsClient() } == true }
+                       paths.singleOrNull { pathToEntries[it]?.any { entry -> entry.origin.isIncludedInJetBrainsClient() } == true } ?:
+                       paths.singleOrNull { it.substringBeforeLast("/").substringAfterLast("/") in setOf("client", "frontend") }
     if (mainLocation != null) {
       return mainLocation
     }
