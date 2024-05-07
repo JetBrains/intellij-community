@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml
 
+import com.intellij.platform.ml.environment.Environment
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -15,8 +16,10 @@ interface MutableEnvironment : Environment {
   fun <T : Any> putTierInstance(tier: Tier<T>, instance: T)
 }
 
+@ApiStatus.Internal
 operator fun <T : Any> MutableEnvironment.set(tier: Tier<T>, instance: T) = putTierInstance(tier, instance)
 
+@ApiStatus.Internal
 fun <T : Any> MutableEnvironment.putTierInstance(tierInstance: TierInstance<T>) {
   this[tierInstance.tier] = tierInstance.instance
 }

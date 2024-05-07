@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl
 
-import com.intellij.internal.statistic.eventLog.events.ClassEventField
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors.COUNTER_EP_NAME
 import com.intellij.lang.Language
@@ -13,8 +10,16 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.platform.ml.*
-import com.intellij.platform.ml.impl.model.MLModel
-import com.intellij.platform.ml.impl.session.analysis.SessionAnalyser
+import com.intellij.platform.ml.analysis.SessionAnalyser
+import com.intellij.platform.ml.environment.Environment
+import com.intellij.platform.ml.environment.EnvironmentExtender
+import com.intellij.platform.ml.environment.get
+import com.intellij.platform.ml.feature.Feature
+import com.intellij.platform.ml.feature.FeatureDeclaration
+import com.intellij.platform.ml.feature.FeatureFilter
+import com.intellij.platform.ml.logs.schema.ClassEventField
+import com.intellij.platform.ml.logs.schema.EventField
+import com.intellij.platform.ml.logs.schema.EventPair
 import com.intellij.testFramework.ParsingTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.application
@@ -142,7 +147,7 @@ class GitInformant : EnvironmentExtender<GitRepository> {
 }
 
 class ExceptionLogger<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>() {
-  private val THROWABLE_CLASS = ClassEventField("throwable_class")
+  private val THROWABLE_CLASS = ClassEventField("throwable_class", null)
 
   override val declaration: List<EventField<*>> = listOf(THROWABLE_CLASS)
   override suspend fun onSessionFailedWithException(callParameters: Environment, sessionEnvironment: Environment, exception: Throwable): List<EventPair<*>> {
@@ -151,7 +156,7 @@ class ExceptionLogger<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>()
 }
 
 class FailureLogger<M : MLModel<P>, P : Any> : SessionAnalyser.Default<M, P>() {
-  private val REASON = ClassEventField("reason")
+  private val REASON = ClassEventField("reason", null)
 
   override val declaration: List<EventField<*>> = listOf(REASON)
 

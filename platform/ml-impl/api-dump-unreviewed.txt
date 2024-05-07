@@ -132,10 +132,6 @@ f:com.intellij.internal.ml.ngram.VocabularyWithLimit
 - f:toIndicesWithLimit(java.util.List,com.intellij.completion.ngram.slp.modeling.ngram.NGramModel):java.util.List
 - writeExternal(java.io.ObjectOutput):V
 f:com.intellij.internal.ml.ngram.VocabularyWithLimit$Companion
-com.intellij.platform.ml.impl.apiPlatform.MLTaskGroupListenerProvider
-- sf:Companion:com.intellij.platform.ml.impl.apiPlatform.MLTaskGroupListenerProvider$Companion
-f:com.intellij.platform.ml.impl.apiPlatform.MLTaskGroupListenerProvider$Companion
-- f:getTOPIC():com.intellij.util.messages.Topic
 a:com.intellij.platform.ml.impl.ngram.model.NGramModel
 - <init>(com.intellij.platform.ml.impl.ngram.model.counter.NGramCounter,I):V
 - f:getAllNGramsWithCount():java.util.Map

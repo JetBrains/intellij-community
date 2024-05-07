@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.ml.Feature
-import com.intellij.platform.ml.FeatureDeclaration
+import com.intellij.platform.ml.feature.Feature
+import com.intellij.platform.ml.feature.FeatureDeclaration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.KeyAdapter

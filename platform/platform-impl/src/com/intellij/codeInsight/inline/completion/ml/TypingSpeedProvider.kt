@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.inline.completion.ml
 
 import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
-import com.intellij.platform.ml.Environment
-import com.intellij.platform.ml.EnvironmentExtender
 import com.intellij.platform.ml.Tier
+import com.intellij.platform.ml.environment.Environment
+import com.intellij.platform.ml.environment.EnvironmentExtender
 
 internal class TypingSpeedProvider : EnvironmentExtender<TypingSpeedTracker> {
   override val extendingTier: Tier<TypingSpeedTracker> = TierTyping

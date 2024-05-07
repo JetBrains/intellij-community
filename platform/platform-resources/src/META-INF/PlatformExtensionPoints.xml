@@ -520,13 +520,13 @@
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.platform.ml.environmentExtender"
-                    interface="com.intellij.platform.ml.EnvironmentExtender"
+                    interface="com.intellij.platform.ml.environment.EnvironmentExtender"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ml.descriptor"
                     interface="com.intellij.platform.ml.TierDescriptor"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ml.taskListener"
-                    interface="com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener"
+                    interface="com.intellij.platform.ml.monitoring.MLTaskGroupListener"
                     dynamic="true"/>
 
     <extensionPoint name="defender.config" interface="com.intellij.diagnostic.WindowsDefenderChecker$Extension" dynamic="true" />
