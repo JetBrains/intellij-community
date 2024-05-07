@@ -75,8 +75,8 @@ object NativeLauncherDownloader {
     (OsFamily.WINDOWS to JvmArchitecture.aarch64) to "aarch64-pc-windows-msvc",
     (OsFamily.MACOS to JvmArchitecture.x64) to "x86_64-apple-darwin",
     (OsFamily.MACOS to JvmArchitecture.aarch64) to "aarch64-apple-darwin",
-    (OsFamily.LINUX to JvmArchitecture.x64) to "x86_64-unknown-gnu-linux",
-    (OsFamily.LINUX to JvmArchitecture.aarch64) to "aarch64-unknown-gnu-linux"
+    (OsFamily.LINUX to JvmArchitecture.x64) to "x86_64-unknown-linux-gnu",
+    (OsFamily.LINUX to JvmArchitecture.aarch64) to "aarch64-unknown-linux-gnu"
   )
 
   private fun executableName(osFamily: OsFamily) = when(osFamily) {
