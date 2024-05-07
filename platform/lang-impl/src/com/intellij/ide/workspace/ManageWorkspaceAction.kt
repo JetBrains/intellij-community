@@ -11,8 +11,7 @@ internal class ManageWorkspaceAction: BaseWorkspaceAction() {
     val dialog = NewWorkspaceDialog(project, subprojectPaths)
     if (!dialog.showAndGet()) return
 
-    val added = dialog.selectedPaths.toMutableSet()
-    added.removeAll(subprojectPaths)
+    val added = dialog.selectedPaths.filter { !subprojectPaths.contains(it) }
     added.forEach { s ->
       linkToWorkspace(project, s)
     }
@@ -22,5 +21,10 @@ internal class ManageWorkspaceAction: BaseWorkspaceAction() {
     removed.forEach {
       it.removeSubproject()
     }
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && e.project?.isWorkspace == true
   }
 }

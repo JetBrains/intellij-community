@@ -28,7 +28,10 @@ import java.nio.file.Path
 internal abstract class BaseWorkspaceAction: DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = Registry.`is`("ide.enable.project.workspaces", false)
+    val project = e.project
+    e.presentation.isEnabledAndVisible = Registry.`is`("ide.enable.project.workspaces", false) &&
+                                         project != null &&
+                                         SubprojectHandler.getAllSubprojects(project).isNotEmpty()
   }
 }
 
@@ -40,7 +43,7 @@ internal open class CreateWorkspaceAction: BaseWorkspaceAction() {
 }
 
 internal fun createWorkspace(project: Project): Boolean {
-  val dialog = NewWorkspaceDialog(project, listOf(requireNotNull (project.basePath)))
+  val dialog = NewWorkspaceDialog(project, listOf(requireNotNull(project.basePath)))
   if (!dialog.showAndGet()) return false
   val settings = importSettingsFromProject(project, true)
   project.service<MyCoroutineScopeService>().scope.launch {
