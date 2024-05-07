@@ -274,7 +274,8 @@ fun configureFacetByGradleModule(
         platform = platform,
         modelsProvider = modelsProvider,
         //TODO ychernyshev: compute additionalVisibleModuleNames for all modules at once to avoid square complexity
-        additionalVisibleModuleNames = sourceSetName?.let { getAdditionalVisibleModuleNames(moduleNode, it) }.orEmpty()
+        additionalVisibleModuleNames = sourceSetName?.let { getAdditionalVisibleModuleNames(moduleNode, it) }.orEmpty(),
+        pureKotlinSourceFolders = kotlinGradleProjectData?.pureKotlinSourceFolders?.toList() ?: emptyList()
     )
 
     if (sourceSetNode == null) {
