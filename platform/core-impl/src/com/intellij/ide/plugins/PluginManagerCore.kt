@@ -329,10 +329,13 @@ object PluginManagerCore {
         .map { Supplier { HtmlChunk.text(it!!.get()) } }
         .toList()
     }
+    else if (PlatformUtils.isFleetBackend() && !SystemInfo.isMac) {
+      logger.warn(logMessage) // some Mercury backend plugins cannot be loaded on Windows and Linux
+    }
     else {
       logger.error(logMessage)
-      return emptyList()
     }
+    return emptyList()
   }
 
   fun getLoadingError(pluginId: PluginId): PluginLoadingError? = pluginLoadingErrors!!.get(pluginId)
