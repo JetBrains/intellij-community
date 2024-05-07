@@ -133,14 +133,14 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
                 pattern = KT_WITHOUT_DOTS,
                 testMethodName = "doTestCopy",
                 testClassName = "Copy",
-                isRecursive = false
+                isRecursive = true,
             )
             model(
                 "../../../idea/tests/testData/copyPaste/imports",
                 pattern = KT_WITHOUT_DOTS,
                 testMethodName = "doTestCut",
                 testClassName = "Cut",
-                isRecursive = false
+                isRecursive = true,
             )
         }
     }

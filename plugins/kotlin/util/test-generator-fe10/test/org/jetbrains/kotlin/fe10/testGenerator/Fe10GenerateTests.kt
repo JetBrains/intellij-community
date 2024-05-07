@@ -907,14 +907,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractInsertImportOnPasteTest> {
-            model(
-                "copyPaste/imports",
-                pattern = KT_WITHOUT_DOTS,
-                testMethodName = "doTestCopy",
-                testClassName = "Copy",
-                isRecursive = false
-            )
-            model("copyPaste/imports", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestCut", testClassName = "Cut", isRecursive = false)
+            model("copyPaste/imports", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestCopy", testClassName = "Copy", isRecursive = true)
+            model("copyPaste/imports", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestCut", testClassName = "Cut", isRecursive = true)
         }
 
         testClass<AbstractMoveOnCutPasteTest> {
