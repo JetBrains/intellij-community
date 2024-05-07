@@ -755,6 +755,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("findUsages/propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""))
         }
 
+        testClass<AbstractFindUsagesMultiModuleTest> {
+            model("multiModuleFindUsages", isRecursive = false, pattern = DIRECTORY)
+        }
+
         testClass<AbstractKotlinScriptFindUsagesTest> {
             model("findUsages/kotlinScript", pattern = Patterns.forRegex("""^(.+)\.0\.kts$"""))
         }
