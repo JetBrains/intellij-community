@@ -20,7 +20,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
   private val logger = Logger.getLogger(ClassPathBuilder::class.java.name)
 
   companion object {
-    fun createClassPathArgFile(paths: PathsProvider, classpath: List<String>): File {
+    fun createClassPathArgFile(paths: PathsProvider, classpath: List<String>, pathSeparator: String = File.pathSeparator): File {
       val logFolder = paths.logFolder
       if (!logFolder.exists()) {
         logFolder.mkdirs()
@@ -28,7 +28,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modulesToSc
 
       val classPathArgFile = logFolder.resolve("Launcher_${UUID.randomUUID().toString().take(4)}.classpath")
       CommandLineWrapperUtil.writeArgumentsFile(classPathArgFile,
-                                                listOf("-classpath", classpath.distinct().joinToString(File.pathSeparator)), Charsets.UTF_8)
+                                                listOf("-classpath", classpath.distinct().joinToString(pathSeparator)), Charsets.UTF_8)
       return classPathArgFile
     }
 

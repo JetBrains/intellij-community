@@ -51,7 +51,7 @@ class DockerRunCliCommandLauncherFactory(
     val classpathInDocker = classpathCollector.collect(dockerContainerEnvironment)
     // create the classpath file locally, later it will be mounted inside the Docker container
     // at this point we know that the file is going to be created inside `localPaths.logFolder` directory
-    val classPathArgFile = ClassPathBuilder.createClassPathArgFile(localPaths, classpathInDocker)
+    val classPathArgFile = ClassPathBuilder.createClassPathArgFile(localPaths, classpathInDocker, UNIX_PATH_SEPARATOR.toString())
     assert(classPathArgFile.startsWith(localPaths.logFolder)) {
       "IDE's classpath arg file '$classPathArgFile' is expected to be created within the log folder '${localPaths.logFolder}'"
     }
