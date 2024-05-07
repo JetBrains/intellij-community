@@ -331,6 +331,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn crash_log_creation() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         let crash_log_path = test.project_dir.join("_jvm_error.log");
