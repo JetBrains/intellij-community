@@ -2,10 +2,9 @@
 package org.jetbrains.plugins.terminal.block.completion.spec
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.terminal.block.completion.spec.ShellCommandSpec
 
 interface ShellCommandSpecsProvider {
-  fun getCommandSpecs(): List<ShellCommandSpec>
+  fun getCommandSpecs(): List<ShellCommandSpecInfo>
 
   companion object {
     internal val EP_NAME: ExtensionPointName<ShellCommandSpecsProvider> = ExtensionPointName.create("org.jetbrains.plugins.terminal.commandSpecsProvider")

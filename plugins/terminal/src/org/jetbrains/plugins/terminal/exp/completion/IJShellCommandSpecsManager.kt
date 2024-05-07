@@ -7,13 +7,16 @@ import com.github.benmanes.caffeine.cache.Scheduler
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.terminal.block.completion.ShellCommandSpecsManager
 import com.intellij.terminal.block.completion.spec.ShellCommandSpec
+import com.intellij.util.containers.MultiMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.json.ShellJsonBasedCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.json.ShellJsonCommandSpecsProvider
@@ -44,7 +47,7 @@ import java.time.Duration
 @Service
 internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
   /** Cache for all command specs with their providers. Key is the name of the command. */
-  private val specsInfoCache: Cache<String, ShellCommandSpecInfo> = Caffeine.newBuilder()
+  private val specsDataCache: Cache<String, ShellCommandSpecData> = Caffeine.newBuilder()
     .expireAfterAccess(Duration.ofMinutes(5))
     .scheduler(Scheduler.systemScheduler())
     .build()
@@ -59,12 +62,12 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
   init {
     ShellCommandSpecsProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ShellCommandSpecsProvider> {
       override fun extensionAdded(extension: ShellCommandSpecsProvider, pluginDescriptor: PluginDescriptor) {
-        specsInfoCache.invalidateAll()
+        specsDataCache.invalidateAll()
         fullSpecsCache.invalidateAll()
       }
 
       override fun extensionRemoved(extension: ShellCommandSpecsProvider, pluginDescriptor: PluginDescriptor) {
-        specsInfoCache.invalidateAll()
+        specsDataCache.invalidateAll()
         fullSpecsCache.invalidateAll()
       }
     })
@@ -110,27 +113,53 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
     return getShellCommandSpecInfo(commandName)?.spec
   }
 
-  private fun getShellCommandSpecInfo(commandName: String): ShellCommandSpecInfo? {
-    if (specsInfoCache.estimatedSize() == 0L) {
+  private fun getShellCommandSpecInfo(commandName: String): ShellCommandSpecData? {
+    if (specsDataCache.estimatedSize() == 0L) {
       val specsInfoMap = loadCommandSpecs()
-      specsInfoCache.putAll(specsInfoMap)
+      specsDataCache.putAll(specsInfoMap)
     }
-    return specsInfoCache.getIfPresent(commandName)
+    return specsDataCache.getIfPresent(commandName)
   }
 
-  private fun loadCommandSpecs(): Map<String, ShellCommandSpecInfo> {
-    val specsInfoMap = mutableMapOf<String, ShellCommandSpecInfo>()
+  private fun loadCommandSpecs(): Map<String, ShellCommandSpecData> {
+    val specsDataMap = MultiMap<String, ShellCommandSpecData>()
     for (provider in ShellCommandSpecsProvider.EP_NAME.extensionList) {
-      val specs = provider.getCommandSpecs()
-      for (spec in specs) {
-        for (name in spec.names) {
-          // TODO: now only the last spec with the given name is effective, others are just skipped.
-          //  We need a strategy of explicit merging / replacing the specs.
-          specsInfoMap[name] = ShellCommandSpecInfo(spec, provider)
+      val specInfos = provider.getCommandSpecs()
+      for (specInfo in specInfos) {
+        val specData = ShellCommandSpecData(specInfo.spec, specInfo.conflictStrategy, provider)
+        for (name in specData.spec.names) {
+          specsDataMap.putValue(name, specData)
         }
       }
     }
-    return specsInfoMap
+    return specsDataMap.entrySet().associateByTo(HashMap(), keySelector = { it.key }) {
+      val specs = it.value
+      if (specs.size > 1) {
+        resolveSpecsConflict(specs)
+      }
+      else specs.first()
+    }
+  }
+
+  private fun resolveSpecsConflict(specs: Collection<ShellCommandSpecData>): ShellCommandSpecData {
+    assert(specs.size > 1)
+    val replaceSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.REPLACE }
+    if (replaceSpecs.isNotEmpty()) {
+      if (replaceSpecs.size > 1) {
+        LOG.warn(conflictMessage(ShellCommandSpecConflictStrategy.REPLACE, specs))
+      }
+      return replaceSpecs.first()
+    }
+    if (specs.size > 1) {
+      // TODO: raise the level to warning once all conflicts of existing json-based specs will be resolved.
+      LOG.debug { conflictMessage(ShellCommandSpecConflictStrategy.DEFAULT, specs) }
+    }
+    return specs.first()
+  }
+
+  private fun conflictMessage(strategy: ShellCommandSpecConflictStrategy, specs: Collection<ShellCommandSpecData>): String {
+    return "There are more than one shell command spec with ${strategy.name} conflict strategy for the same command: $specs\n" +
+           "Taking only the first one."
   }
 
   /**
@@ -189,7 +218,11 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
     return "$basePath$specRef.json"
   }
 
-  private data class ShellCommandSpecInfo(val spec: ShellCommandSpec, val provider: ShellCommandSpecsProvider)
+  private data class ShellCommandSpecData(
+    val spec: ShellCommandSpec,
+    val conflictStrategy: ShellCommandSpecConflictStrategy,
+    val provider: ShellCommandSpecsProvider
+  )
 
   companion object {
     @JvmStatic
