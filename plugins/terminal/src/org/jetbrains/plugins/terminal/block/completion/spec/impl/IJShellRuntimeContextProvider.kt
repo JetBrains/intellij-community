@@ -17,7 +17,7 @@ internal class IJShellRuntimeContextProvider(
   private val project: Project,
   private val session: BlockTerminalSession
 ) : ShellRuntimeContextProvider {
-  private val generatorCommandsRunner: ShellGeneratorCommandsRunner = ShellGeneratorCommandsRunner(session)
+  private val generatorCommandsRunner: ShellGeneratorCommandsRunner = ShellCachingGeneratorCommandsRunner(session)
 
   @Volatile
   private var curDirectory: String = ""
