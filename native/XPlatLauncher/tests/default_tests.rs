@@ -10,9 +10,6 @@ mod tests {
     use xplat_launcher::jvm_property;
     use crate::utils::*;
 
-    #[cfg(target_os = "windows")]
-    use xplat_launcher::cef_generated::CEF_VERSION;
-
     #[test]
     fn correct_launcher_startup_test() {
         run_launcher(LauncherRunSpec::standard().assert_status());
@@ -95,7 +92,7 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::Standard);
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
-        assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={CEF_VERSION}").as_ref());
+        assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={}", env!("CEF_VERSION")).as_ref());
         dump.vmOptions.iter().find(|s| s.starts_with("-Djcef.sandbox.ptr="))
             .unwrap_or_else(|| panic!("'-Djcef.sandbox.ptr=' is not in {:?}", dump.vmOptions));
     }

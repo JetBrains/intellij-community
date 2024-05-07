@@ -3,20 +3,15 @@
 // technically we shouldn't use #cfg in build.rs due to cross-compilation,
 // but the only we do is windows x64 -> arm64, so it's fine for our purposes
 
-use std::fs::File;
-use std::io::{BufWriter, Write};
-use std::path::PathBuf;
-
-use anyhow::{Context, Result};
-
 #[cfg(target_os = "windows")]
 use {
-    anyhow::bail,
+    anyhow::{bail, Context, Result},
     reqwest::blocking::Client,
     sha1::{Digest, Sha1},
     std::env,
+    std::fs::File,
     std::io::Read,
-    std::path::Path,
+    std::path::{Path, PathBuf},
     std::process::Command,
     winresource::WindowsResource,
 };
@@ -28,6 +23,7 @@ macro_rules! trace {
     };
 }
 
+#[cfg(target_os = "windows")]
 macro_rules! cargo {
     ($($arg:tt)*) => {
         println!("cargo:{}", format_args!($($arg)*));
@@ -35,50 +31,29 @@ macro_rules! cargo {
 }
 
 fn main() {
-    cargo!("rerun-if-changed=build.rs");
-    main_os_specific()
-        .expect("Failed to execute buildscript");
-}
-
-#[cfg(not(target_os = "windows"))]
-fn main_os_specific() -> Result<()> {
-    write_cef_version("NOT_SUPPORTED")
-}
-
-fn write_cef_version(cef_version: &str) -> Result<()> {
-    let generated_file = PathBuf::from("./src/cef_generated.rs");
-    let out_file = File::create(&generated_file)?;
-
-    let mut buf_writer = BufWriter::new(out_file);
-
-    writeln!(buf_writer, "pub static CEF_VERSION: &str = \"{cef_version}\";")?;
-
-    buf_writer.flush()
-        .context(format!("Failed to write CEF version to {generated_file:?}"))
+    #[cfg(target_os = "windows")]
+    {
+        cargo!("rerun-if-changed=build.rs");
+        link_cef().expect("Failed to link with CEF");
+        embed_metadata().expect("Failed to embed metadata");
+    }
 }
 
 #[cfg(target_os = "windows")]
-fn main_os_specific() -> Result<()> {
+fn link_cef() -> Result<()> {
+    let cef_version = "122.1.9+gd14e051+chromium-122.0.6261.94";
+
     let cef_arch_string = match env::var("CARGO_CFG_TARGET_ARCH")?.as_str() {
         "x86_64" => "windows64",
         "aarch64" => "windowsarm64",
-        e => bail!("Unknown target arch: {e}")
+        e => panic!("Unsupported arch: {}", e)
     };
-
-    let cef_version = "122.1.9+gd14e051+chromium-122.0.6261.94";
 
     let cef_download_root = PathBuf::from("./deps/cef");
     let cef_dir = download_cef(cef_version, cef_arch_string, &cef_download_root)?;
-
     link_cef_sandbox(&cef_dir)?;
-    write_cef_version(cef_version)?;
 
-    // Metadata embedding breaks incremental build due to verbose output of used tools.
-    // For the convenience of the development, we'll avoid this in debug builds.
-    let is_debug =  env::var("DEBUG")? == "true";
-    if !is_debug {
-        embed_metadata()?;
-    }
+    cargo!("rustc-env=CEF_VERSION={cef_version}");
 
     Ok(())
 }

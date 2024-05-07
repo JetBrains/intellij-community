@@ -49,7 +49,6 @@ use {
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
 
-use crate::cef_generated::CEF_VERSION;
 use crate::cef_sandbox::CefScopedSandboxInfo;
 use crate::default::DefaultLaunchConfiguration;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
@@ -61,7 +60,6 @@ pub mod remote_dev;
 pub mod java;
 pub mod docker;
 pub mod cef_sandbox;
-pub mod cef_generated;
 
 pub const DEBUG_MODE_ENV_VAR: &str = "IJ_LAUNCHER_DEBUG";
 
@@ -277,7 +275,7 @@ unsafe fn launch_cef_subprocess(jre_home: &Path, cef_sandbox: &CefScopedSandboxI
     }
 }
 
-fn get_full_vm_options(configuration: &dyn LaunchConfiguration, jvm_launch_scope: &JvmLaunchScope) -> Result<Vec<String>> {
+fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _jvm_launch_scope: &JvmLaunchScope) -> Result<Vec<String>> {
     let mut vm_options = configuration.get_vm_options()?;
 
     debug!("Looking for custom properties environment variable");
@@ -293,9 +291,12 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration, jvm_launch_scope
     let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
     vm_options.push(jvm_property!("java.class.path", class_path));
 
-    if let Some(cef_sandbox) = &jvm_launch_scope.cef_sandbox {
-        vm_options.push(jvm_property!("jcef.sandbox.ptr", format!("{:016X}", cef_sandbox.ptr as usize)));
-        vm_options.push(jvm_property!("jcef.sandbox.cefVersion", CEF_VERSION));
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(cef_sandbox) = &_jvm_launch_scope.cef_sandbox {
+            vm_options.push(jvm_property!("jcef.sandbox.ptr", format!("{:016X}", cef_sandbox.ptr as usize)));
+            vm_options.push(jvm_property!("jcef.sandbox.cefVersion", env!("CEF_VERSION")));
+        }
     }
 
     Ok(vm_options)
