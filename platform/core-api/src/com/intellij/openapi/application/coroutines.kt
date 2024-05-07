@@ -150,7 +150,7 @@ sealed interface ReadAndWriteScope {
 
 /**
  * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
- * **without** preventing write actions. If given [action] returns [write action][ReadAndWriteScope#writeAction]
+ * **without** preventing write actions. If given [action] returns [write action][ReadAndWriteScope.writeAction]
  * as result, this write action will be run under [write lock][com.intellij.openapi.application.Application.runWriteAction]
  * if no other write actions intertwines between read action and returned write action. Read action will be re-run if a concurrent
  * write action happens after the read completion but before the returned write action was able to run.
