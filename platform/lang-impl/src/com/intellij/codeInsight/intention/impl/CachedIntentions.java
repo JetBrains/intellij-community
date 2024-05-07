@@ -169,9 +169,10 @@ public final class CachedIntentions implements IntentionContainer {
     Predicate<IntentionAction> filter = action -> ContainerUtil.and(
       IntentionActionFilter.EXTENSION_POINT_NAME.getExtensionList(), f -> f.accept(action, myFile, myOffset));
 
+    DefaultActionGroup group = new DefaultActionGroup(new ArrayList<>(new LinkedHashSet<>(myGuttersRaw)));
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
-      new DefaultActionGroup(myGuttersRaw), presentationFactory,
+      group, presentationFactory,
       EditorUtil.getEditorDataContext(myEditor), ActionPlaces.INTENTION_MENU);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;
