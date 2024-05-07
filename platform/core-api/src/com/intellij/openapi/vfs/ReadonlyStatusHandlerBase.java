@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.core.CoreBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notebook.editor.BackedVirtualFile;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -80,28 +82,24 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
         realFiles.add(file);
       }
     }
-    Collection<? extends VirtualFile> files = new ArrayList<>(realFiles);
 
-    if (!myProject.isDefault()) {
-      OperationStatusImpl status = WritingAccessProvider.EP.computeSafeIfAny(myProject, provider -> {
+    try (AccessToken ignore = SlowOperations.knownIssue("EA-1051315, IJPL-149483")) {
+      Collection<? extends VirtualFile> files = new ArrayList<>(realFiles);
+      OperationStatusImpl status = myProject.isDefault() ? null : WritingAccessProvider.EP.computeSafeIfAny(myProject, provider -> {
         Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !provider.isPotentiallyWritable(virtualFile));
-
         if (denied.isEmpty()) {
           denied = provider.requestWriting(files);
         }
-        if (!denied.isEmpty()) {
-          return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied),
-                                         provider.getReadOnlyMessage(),
-                                         provider.getHyperlinkListener());
-        }
-        return null;
+        return denied.isEmpty() ? null : new OperationStatusImpl(
+          VfsUtilCore.toVirtualFileArray(denied),
+          provider.getReadOnlyMessage(),
+          provider.getHyperlinkListener());
       });
       if (status != null) {
         return status;
       }
+      return ensureFilesWritable(originalFiles, files);
     }
-
-    return ensureFilesWritable(originalFiles, files);
   }
 
   protected @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles,

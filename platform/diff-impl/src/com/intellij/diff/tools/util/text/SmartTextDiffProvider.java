@@ -13,10 +13,12 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,10 +153,12 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
   private static DiffIgnoredRangeProvider getIgnoredRangeProvider(@Nullable Project project,
                                                                   @NotNull DiffContent content1,
                                                                   @NotNull DiffContent content2) {
-    for (DiffIgnoredRangeProvider provider : DiffIgnoredRangeProvider.EP_NAME.getExtensions()) {
-      if (provider.accepts(project, content1) &&
-          provider.accepts(project, content2)) {
-        return provider;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-339105, EA-832803")) {
+      for (DiffIgnoredRangeProvider provider : DiffIgnoredRangeProvider.EP_NAME.getExtensionList()) {
+        if (provider.accepts(project, content1) &&
+            provider.accepts(project, content2)) {
+          return provider;
+        }
       }
     }
     return null;

@@ -90,6 +90,12 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   private void updateChangesForDocument(@NotNull Document document) {
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-353199, EA-773261")) {
+      updateChangesForDocumentInner(document);
+    }
+  }
+
+  private void updateChangesForDocumentInner(@NotNull Document document) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (myProject.isDisposed()) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);

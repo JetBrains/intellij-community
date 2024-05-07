@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import org.jetbrains.annotations.VisibleForTesting
@@ -403,15 +404,12 @@ private class EditorSelectInContext(
   }
 
   override fun getSelectorInFile(): Any? {
-    val file = psiFile
-    if (file != null) {
-      val offset: Int = editor.caretModel.offset
-      val manager = PsiDocumentManager.getInstance(project)
-      LOG.assertTrue(manager.isCommitted(editor.document))
-      val element = file.findElementAt(offset)
-      if (element != null) return element
-    }
-    return file
+    val file = SlowOperations.knownIssue("IDEA-347342, EA-841926").use { psiFile ?: return null }
+    val offset: Int = editor.caretModel.offset
+    val manager = PsiDocumentManager.getInstance(project)
+    LOG.assertTrue(manager.isCommitted(editor.document))
+    val element = file.findElementAt(offset)
+    return element ?: file
   }
 
   override fun toString(): String {

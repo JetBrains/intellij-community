@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -341,7 +343,9 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   @Override
   public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
-    return doArrangeItems((LookupElementListPresenter)lookup, onExplicitAction);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-347942, EA-661843")) {
+      return doArrangeItems((LookupElementListPresenter)lookup, onExplicitAction);
+    }
   }
 
   private synchronized @NotNull Pair<List<LookupElement>, Integer> doArrangeItems(@NotNull LookupElementListPresenter lookup,
