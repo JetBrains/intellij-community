@@ -106,6 +106,11 @@ public final class TerminalUtil {
     }
   }
 
+  /**
+   * Sends command to TTY.
+   * Does not wait for running command to finish.
+   * Non-Blocking operation.
+   */
   public static void sendCommandToExecute(@NotNull String shellCommand, @NotNull TerminalStarter terminalStarter) {
     StringBuilder result = new StringBuilder();
     if (terminalStarter.isLastSentByteEscape()) {
