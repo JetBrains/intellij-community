@@ -465,6 +465,8 @@
                  description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
     <registryKey key="python.type.hints.literal.string" defaultValue="true"
                  description="When enabled, activates LiteralString inference for Python string literals" />
+    <registryKey key="python.statement.lists.incremental.reparse" defaultValue="true"
+                 description="Enables incremental reparse for statement lists"/>
 
   </extensions>
 

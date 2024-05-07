@@ -23,7 +23,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   protected int myBraceLevel;
   protected boolean myLineHasSignificantTokens;
   protected int myLastNewLineIndent = -1;
-  private int myCurrentNewLineIndent = 0;
+  protected int myCurrentNewLineIndent = 0;
 
   protected List<PendingToken> myTokenQueue = new ArrayList<>();
   private int myLineBreakBeforeFirstCommentIndex = -1;
