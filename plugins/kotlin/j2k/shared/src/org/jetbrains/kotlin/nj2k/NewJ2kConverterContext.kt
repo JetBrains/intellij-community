@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
@@ -17,7 +18,7 @@ data class NewJ2kConverterContext(
     val importStorage: JKImportStorage,
     val elementsInfoStorage: JKElementInfoStorage,
     val externalCodeProcessor: NewExternalCodeProcessing,
-    val functionalInterfaceConversionEnabled: Boolean,
+    val languageVersionSettings: LanguageVersionSettings,
     val settings: ConverterSettings
 ) : ConverterContext {
     val project: Project
