@@ -6,11 +6,12 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.DictionaryLayer
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 abstract class SpellCheckerQuickFixFactory {
   companion object {
-    val EP_NAME = ExtensionPointName.create<SpellCheckerQuickFixFactory>("com.intellij.spellchecker.quickFixFactory")
+    private val EP_NAME = ExtensionPointName.create<SpellCheckerQuickFixFactory>("com.intellij.spellchecker.quickFixFactory")
 
     @JvmStatic
     fun rename(element: PsiElement): LocalQuickFix {
