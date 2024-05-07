@@ -30,6 +30,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageInfo2UsageAdapter
+import com.intellij.usages.impl.FileStructureGroupRuleProvider
 import com.intellij.usages.impl.rules.UsageType
 import com.intellij.usages.impl.rules.UsageTypeProvider
 import com.intellij.usages.rules.ImportFilteringRule
@@ -341,13 +342,13 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
             return UsageTypeProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getUsageType(element) } ?: UsageType.UNCLASSIFIED
         }
 
-        internal fun <T> instantiateClasses(mainFileText: String, directive: String): Collection<T> {
-            val filteringRuleClassNames = InTextDirectivesUtils.findLinesWithPrefixesRemoved(mainFileText, directive)
-            return filteringRuleClassNames.map {
-                @Suppress("UNCHECKED_CAST")
-                (Class.forName(it).getDeclaredConstructor().newInstance() as T)
+        internal fun <T> instantiateClasses(mainFileText: String, directive: String, mapper: (Any) -> T = {
+            @Suppress("UNCHECKED_CAST")
+            it as T
+        }): Collection<T> =
+            InTextDirectivesUtils.findLinesWithPrefixesRemoved(mainFileText, directive).map {
+                mapper(Class.forName(it).getDeclaredConstructor().newInstance())
             }
-        }
     }
 }
 
@@ -392,7 +393,10 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     }
 
     val filteringRules = AbstractFindUsagesTest.instantiateClasses<ImportFilteringRule>(mainFileText, "// FILTERING_RULES: ")
-    val groupingRules = AbstractFindUsagesTest.instantiateClasses<UsageGroupingRule>(mainFileText, "// GROUPING_RULES: ")
+    val groupingRules =
+        AbstractFindUsagesTest.instantiateClasses<UsageGroupingRule>(mainFileText, "// GROUPING_RULES: ") {
+            (it as? UsageGroupingRule) ?: (it as? FileStructureGroupRuleProvider)?.getUsageGroupingRule(project) ?: error("UsageGroupingRule is expected, actual is ${it.javaClass.name}")
+        }
 
     val filteredUsages = AbstractFindUsagesTest.getUsageAdapters(filteringRules, usageInfos)
 
