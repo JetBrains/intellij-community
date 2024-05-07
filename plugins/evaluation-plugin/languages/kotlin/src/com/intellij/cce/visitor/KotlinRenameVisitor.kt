@@ -4,9 +4,10 @@ package com.intellij.cce.visitor
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.*
+import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinRecursiveElementWalkingVisitor
 import org.jetbrains.kotlin.psi.*
 
-class KotlinRenameVisitor : EvaluationVisitor, KtTreeVisitorVoid(){
+class KotlinRenameVisitor : EvaluationVisitor, KotlinRecursiveElementWalkingVisitor(){
   private var codeFragment: CodeFragment? = null
 
   override val language: Language = Language.KOTLIN
@@ -20,33 +21,26 @@ class KotlinRenameVisitor : EvaluationVisitor, KtTreeVisitorVoid(){
     super.visitKtFile(file)
   }
 
-  fun visitFunction(function: KtNamedFunction) {
-    val token = createCodeToken(function, TypeProperty.FUNCTION)
-    if (token != null)
-      codeFragment?.addChild(token)
-    super.visitNamedFunction(function)
-  }
+  //fun visitFunction(function: KtNamedFunction) {
+  //  val token = createCodeToken(function, TypeProperty.FUNCTION)
+  //  if (token != null)
+  //    codeFragment?.addChild(token)
+  //  super.visitNamedFunction(function)
+  //}
 
-  fun visitMethod(method: KtNamedFunction) {
-    val token = createCodeToken(method, TypeProperty.METHOD)
-    if (token != null)
-      codeFragment?.addChild(token)
-    super.visitNamedFunction(method)
-  }
+  //fun visitMethod(method: KtNamedFunction) {
+  //  val token = createCodeToken(method, TypeProperty.METHOD)
+  //  if (token != null)
+  //    codeFragment?.addChild(token)
+  //  super.visitNamedFunction(method)
+  //}
 
-  fun visitVariable(variable: KtObjectDeclaration) {
-    val token = createCodeToken(variable, TypeProperty.VARIABLE)
-    if (token != null)
-      codeFragment?.addChild(token)
-    super.visitObjectDeclaration(variable)
-  }
-
-  fun visitLocalVariable(variable: KtObjectDeclaration) {
-    val token = createCodeToken(variable, TypeProperty.LOCAL_VARIABLE)
-    if (token != null)
-      codeFragment?.addChild(token)
-    super.visitObjectDeclaration(variable)
-  }
+  //fun visitVariable(variable: KtObjectDeclaration) {
+  //  val token = createCodeToken(variable, TypeProperty.VARIABLE)
+  //  if (token != null)
+  //    codeFragment?.addChild(token)
+  //  super.visitObjectDeclaration(variable)
+  //}
 
   override fun visitClass(aClass: KtClass) {
     val token = createCodeToken(aClass, TypeProperty.CLASS)
@@ -55,12 +49,12 @@ class KotlinRenameVisitor : EvaluationVisitor, KtTreeVisitorVoid(){
     super.visitClass(aClass)
   }
 
-  fun visitField(field: KtProperty) {
-    val token = createCodeToken(field, TypeProperty.FIELD)
-    if (token != null)
-      codeFragment?.addChild(token)
-    super.visitProperty(field)
-  }
+  //fun visitField(field: KtProperty) {
+  //  val token = createCodeToken(field, TypeProperty.FIELD)
+  //  if (token != null)
+  //    codeFragment?.addChild(token)
+  //  super.visitProperty(field)
+  //}
 
   override fun visitParameter(parameter: KtParameter) {
     val token = createCodeToken(parameter, TypeProperty.PARAMETER)
