@@ -28326,6 +28326,7 @@ c:com.intellij.tools.ToolAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:getToolDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
+- s:runTool(java.lang.String,com.intellij.openapi.actionSystem.DataContext):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.tools.ToolBeforeRunTask
 - com.intellij.tools.AbstractToolBeforeRunTask

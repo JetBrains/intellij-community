@@ -27,10 +27,20 @@ public abstract class ChangeListTodosPanel extends TodoPanel {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   }
 
+  private void rebuildWithAlarm() {
+    rebuildWithAlarm(myAlarm);
+  }
+
+  private void updateTabName() {
+    AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+      setDisplayName(getTabName(myProject));
+    });
+  }
+
   private final class MyChangeListManagerListener extends ChangeListAdapter {
     @Override
     public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
-      rebuildWithAlarm(myAlarm);
+      rebuildWithAlarm();
       updateTabName();
     }
 
@@ -41,18 +51,12 @@ public abstract class ChangeListTodosPanel extends TodoPanel {
 
     @Override
     public void changesMoved(final Collection<? extends Change> changes, final ChangeList fromList, final ChangeList toList) {
-      rebuildWithAlarm(myAlarm);
+      rebuildWithAlarm();
     }
 
     @Override
     public void allChangeListsMappingsChanged() {
       updateTabName();
-    }
-
-    private void updateTabName() {
-      AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
-        setDisplayName(getTabName(myProject));
-      });
     }
   }
 

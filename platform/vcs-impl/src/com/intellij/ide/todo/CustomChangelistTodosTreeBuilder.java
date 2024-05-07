@@ -43,6 +43,10 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   @NotNull
   protected abstract Set<TodoItem> doFindTodoForFile(@NotNull PsiFile file, @Nullable TodoFilter todoFilter);
 
+  private boolean isFileDirty(@NotNull PsiFile file) {
+    return myDirtyFileSet.contains(file.getVirtualFile());
+  }
+
   private class MyPsiTodoSearchHelper implements PsiTodoSearchHelper {
     private final MultiMap<PsiFile, TodoItem> myMap = new MultiMap<>();
 
@@ -122,7 +126,7 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     }
 
     private TodoItem[] findPatternedTodoItems(PsiFile file, final TodoFilter todoFilter) {
-      if (myDirtyFileSet.contains(file.getVirtualFile())) {
+      if (isFileDirty(file)) {
         Set<TodoItem> todoItems = doFindTodoForFile(file, todoFilter);
         synchronized (myMap) {
           myMap.remove(file);
