@@ -18,7 +18,7 @@ fun classpathCollector(
   val modulesToScopes = modulesToScopes(mainModule, additionalRuntimeModules, additionalTestRuntimeModules)
   return object : ClasspathCollector {
     override fun collect(launchEnvironment: LaunchEnvironment): List<PathInLaunchEnvironment> {
-      return ClassPathBuilder(localPaths, modulesToScopes).buildClasspath(logClasspath = true) {
+      return ClassPathBuilder(localPaths, modulesToScopes).buildClasspath(logClasspath = false) {
         launchEnvironment.fsCorrespondence().tryResolve(it) ?: error("Unable to resolve $it to the path within $launchEnvironment")
       }
     }
