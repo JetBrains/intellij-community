@@ -2,7 +2,7 @@
 
 fun foo(arg: Int?) {
     if (arg != null) {
-        arg.hashCode()
+        arg.inc()
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix
