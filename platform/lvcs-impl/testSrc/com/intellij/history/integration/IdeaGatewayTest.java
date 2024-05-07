@@ -12,8 +12,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class IdeaGatewayTest extends IntegrationTestCase {
   public void testFindingFile() {
@@ -141,21 +143,20 @@ public class IdeaGatewayTest extends IntegrationTestCase {
 
     Collection<String> paths = ContainerUtil.map(Arrays.asList(directory2, directory3), directory -> myGateway.getPathOrUrl(directory));
     RootEntry rootEntry = myGateway.createTransientRootEntryForPaths(paths, true);
-    assertEquals(StringUtil.join(Arrays.asList(file1, file2, directory4, file3), file -> myGateway.getPathOrUrl(file), "\n"),
+    assertEquals(StringUtil.join(Arrays.asList(file1, file2, file3, directory4), file -> myGateway.getPathOrUrl(file), "\n"),
                  getAllPaths(rootEntry));
   }
 
   public static @NotNull String getAllPaths(@NotNull RootEntry rootEntry) {
-    StringBuilder result = new StringBuilder();
+    List<String> result = new ArrayList<>();
     printAllPaths(rootEntry, result);
-    return result.toString();
+    return StringUtil.join(ContainerUtil.sorted(result), "\n");
   }
 
-  private static void printAllPaths(@NotNull Entry parentEntry, @NotNull StringBuilder result) {
+  private static void printAllPaths(@NotNull Entry parentEntry, @NotNull List<String> result) {
     for (Entry entry : parentEntry.getChildren()) {
       if (entry.getChildren().isEmpty()) {
-        if (!result.isEmpty()) result.append("\n");
-        result.append(entry.getPath());
+        result.add(entry.getPath());
         continue;
       }
       printAllPaths(entry, result);
