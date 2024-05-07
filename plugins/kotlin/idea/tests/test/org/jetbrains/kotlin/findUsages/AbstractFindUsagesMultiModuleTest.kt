@@ -12,19 +12,13 @@ import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
-    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleFindUsages")
 
-    override fun setUp() {
-        setUpWithKotlinPlugin {
-            super.setUp()
-        }
-    }
+    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleFindUsages")
 
     protected fun getTestdataFile(): File =
         File(testDataPath + getTestName(true).removePrefix("test"))
