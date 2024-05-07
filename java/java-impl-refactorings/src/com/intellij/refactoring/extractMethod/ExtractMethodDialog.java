@@ -115,7 +115,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     mySignature.setMinimumSize(JBUI.size(500, 100));
     setTitle(title);
 
-    myNameField = new NameSuggestionsField(suggestMethodNames(), myProject);
+    myNameField = new NameSuggestionsField(suggestMethodNames(), myProject, JavaFileType.INSTANCE);
 
     myMakeStatic = new NonFocusableCheckBox();
     myMakeStatic.setText(JavaRefactoringBundle.message("declare.static.checkbox"));

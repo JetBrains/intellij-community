@@ -49,6 +49,10 @@ public class NameSuggestionsField extends JPanel {
     setupComboBox(comboBox, StdFileTypes.JAVA);
   }
 
+  /**
+   * @deprecated specify the file type explicitly as the third constructor argument 
+   */
+  @Deprecated
   public NameSuggestionsField(String[] nameSuggestions, Project project) {
     this(nameSuggestions, project, StdFileTypes.JAVA);
   }
