@@ -382,7 +382,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (model != null) {
       for (int i = 0; i < model.getColumnCount(); i++) {
         TableColumn column = model.getColumn(i);
-        if (column != null) width += Math.max(column.getWidth(), column.getPreferredWidth());
+        if (column != null) width += column.getPreferredWidth();
       }
     }
     return width > 0 ? width : JBUI.scale(100);
