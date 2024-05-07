@@ -59,8 +59,6 @@ fn write_cef_version(cef_version: &str) -> Result<()> {
 
 #[cfg(target_os = "windows")]
 fn main_os_specific() -> Result<()> {
-    cargo!("rustc-link-lib=legacy_stdio_definitions");
-
     let cef_arch_string = match env::var("CARGO_CFG_TARGET_ARCH")?.as_str() {
         "x86_64" => "windows64",
         "aarch64" => "windowsarm64",
