@@ -10,13 +10,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.loadSvgPainter
@@ -24,7 +21,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.CircularProgressStyle
 import org.jetbrains.jewel.ui.theme.circularProgressStyle
@@ -73,17 +70,13 @@ private fun CircularProgressIndicatorImpl(
     frameRetriever: (Color) -> List<String>,
 ) {
     val defaultColor = if (JewelTheme.isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD)
-    val frames = remember { mutableStateListOf<Painter>() }
 
     val density = LocalDensity.current
-    LaunchedEffect(density, style.color, defaultColor) {
-        launch(dispatcher) {
-            frames.clear()
-            frames.addAll(
-                frameRetriever(style.color.takeOrElse { defaultColor }).map {
-                    loadSvgPainter(it.byteInputStream(), density)
-                },
-            )
+    val frames by produceState(emptyList(), density, style.color, defaultColor, dispatcher) {
+        value = withContext(dispatcher) {
+            frameRetriever(style.color.takeOrElse { defaultColor }).map {
+                loadSvgPainter(it.byteInputStream(), density)
+            }
         }
     }
 
