@@ -1098,6 +1098,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         public void testSyntheticJavaReference() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/syntheticJavaReference.kt");
         }
+
+        @TestMetadata("unrelatedSignature.kt")
+        public void testUnrelatedSignature() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/unrelatedSignature.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

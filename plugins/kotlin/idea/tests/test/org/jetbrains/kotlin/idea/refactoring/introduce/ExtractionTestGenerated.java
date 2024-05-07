@@ -1940,6 +1940,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testSyntheticJavaReference() throws Exception {
                 runTest("testData/refactoring/extractFunction/duplicates/syntheticJavaReference.kt");
             }
+
+            @TestMetadata("unrelatedSignature.kt")
+            public void testUnrelatedSignature() throws Exception {
+                runTest("testData/refactoring/extractFunction/duplicates/unrelatedSignature.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
