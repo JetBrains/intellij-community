@@ -3481,6 +3481,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/classUsedParameter.kt");
             }
 
+            @TestMetadata("conflictingName.kt")
+            public void testConflictingName() throws Exception {
+                runTest("testData/refactoring/introduceParameter/conflictingName.kt");
+            }
+
             @TestMetadata("defaultParameter.kt")
             public void testDefaultParameter() throws Exception {
                 runTest("testData/refactoring/introduceParameter/defaultParameter.kt");

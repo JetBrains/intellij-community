@@ -1,9 +1,9 @@
 fun foo() {
     val a = 1
     // SIBLING:
-    fun b(): Boolean = a > 0
+    fun bool1(): Boolean = a > 0
 
-    if (b()) {
+    if (bool1()) {
         fun bool(): Int { return 0 }
         println(bool())
     }

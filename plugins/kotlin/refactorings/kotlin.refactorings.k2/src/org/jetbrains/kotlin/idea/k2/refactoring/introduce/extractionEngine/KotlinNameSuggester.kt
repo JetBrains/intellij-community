@@ -19,8 +19,9 @@ object KotlinNameSuggester : IExtractionNameSuggester<KtType> {
         if (kotlinType.isUnit) emptyList()
         else KotlinNameSuggester()
             .suggestTypeNames(kotlinType)
-            .filter(validator)
+            .map { KotlinNameSuggester.suggestNameByName(it, validator) }
             .toList()
+            .takeIf { it.isNotEmpty() } ?: listOf(KotlinNameSuggester.suggestNameByName(defaultName ?: "p", validator))
     }
 
     override fun suggestNameByName(
