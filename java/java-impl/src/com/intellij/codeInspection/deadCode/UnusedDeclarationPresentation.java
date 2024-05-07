@@ -56,7 +56,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
@@ -363,7 +363,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       Document doc = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiFile);
       if (doc != null) {
         TextRange textRange = psiElement.getTextRange();
-        String date = DateTimeFormatter.ISO_DATE_TIME.format(LocalTime.now());
+        String date = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.now());
 
         int startOffset = textRange.getStartOffset();
         CharSequence chars = doc.getCharsSequence();
