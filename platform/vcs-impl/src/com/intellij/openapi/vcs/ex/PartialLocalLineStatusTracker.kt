@@ -15,6 +15,7 @@ import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.DefaultLineFlags
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
@@ -560,20 +561,24 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
     return object : PartialCommitHelper(contentToCommit) {
       override fun applyChanges() {
-        if (isReleased) return
-
-        val success = updateDocument(side) { doc ->
-          documentTracker.doFrozen(side) {
-            documentTracker.partiallyApplyBlocks(side, toCommitCondition)
-
-            doc.setText(contentToCommit)
-          }
-        }
-
-        if (!success) {
-          LOG.warn("Can't update document state on partial commit: $virtualFile")
-        }
+        applyPartialCommitChanges(side, toCommitCondition, contentToCommit)
       }
+    }
+  }
+
+  private fun applyPartialCommitChanges(side: Side, toCommitCondition: ToCommitCondition, contentToCommit: String) {
+    if (isReleased) return
+
+    val success = updateDocument(side) { doc ->
+      documentTracker.doFrozen(side) {
+        documentTracker.partiallyApplyBlocks(side, toCommitCondition)
+
+        doc.setText(contentToCommit)
+      }
+    }
+
+    if (!success) {
+      LOG.warn("Can't update document state on partial commit: $virtualFile")
     }
   }
 
@@ -1054,6 +1059,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
 
   companion object {
+    private val LOG: Logger = Logger.getInstance(ChangelistsLocalLineStatusTracker::class.java)
+
     @JvmStatic
     internal fun createTracker(project: Project,
                                document: Document,
