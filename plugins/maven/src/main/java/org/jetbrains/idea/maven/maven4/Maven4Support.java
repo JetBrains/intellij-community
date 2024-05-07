@@ -125,7 +125,7 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
   }
 
   @Override
-  public String getMainClass() {
+  public String getMainClass(MavenDistribution distribution) {
     return MAIN_CLASS40;
   }
 }

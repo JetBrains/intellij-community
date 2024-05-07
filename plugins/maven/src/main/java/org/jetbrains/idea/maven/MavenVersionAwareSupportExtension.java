@@ -33,7 +33,7 @@ public interface MavenVersionAwareSupportExtension {
     return Collections.emptyList();
   }
 
-  default String getMainClass() {
+  default String getMainClass(MavenDistribution distribution) {
     return DEFAULT_MAIN_CLASS;
   }
 }

@@ -233,13 +233,13 @@ public class MavenServerCMDState extends CommandLineState {
     return classPath;
   }
 
-  private static void setupMainClass(SimpleJavaParameters params, MavenVersionAwareSupportExtension extension) {
+  private void setupMainClass(SimpleJavaParameters params, MavenVersionAwareSupportExtension extension) {
     if (setupThrowMainClass && MavenUtil.isMavenUnitTestModeEnabled()) {
       setupThrowMainClass = false;
       params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
     }
     else {
-      params.setMainClass(extension.getMainClass());
+      params.setMainClass(extension.getMainClass(myDistribution));
     }
   }
 

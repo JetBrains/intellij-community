@@ -132,7 +132,12 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
   }
 
   @Override
-  public String getMainClass() {
-    return MAIN_CLASS36;
+  public String getMainClass(MavenDistribution distribution) {
+    if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3.6") >= 0) {
+      return MAIN_CLASS36;
+    } else {
+      return DEFAULT_MAIN_CLASS;
+    }
+
   }
 }
