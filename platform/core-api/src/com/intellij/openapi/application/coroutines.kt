@@ -228,6 +228,8 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
  * The implementation will change once running write actions would be allowed on other threads.
  * This function exists to make it possible to use it in suspending contexts
  * before the platform is ready to handle write actions differently.
+ *
+ * @see readAndWriteAction
  */
 @Experimental
 suspend fun <T> writeAction(action: () -> T): T {
