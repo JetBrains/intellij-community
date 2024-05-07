@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
 class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
     override fun createFile(
@@ -263,13 +264,19 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
         val restoredInternalUsages = ArrayList<UsageInfo>()
         val oldToNewElementsMapping = HashMap<KtNamedDeclaration, KtNamedDeclaration>()
 
-        runWriteAction {
+        val copiedDeclaration = runWriteAction {
             val newElements = sourceData.elementsToCopy.map { targetFile.add(it.copy()) as KtNamedDeclaration }
-            sourceData.elementsToCopy.zip(newElements).toMap(oldToNewElementsMapping)
-            retargetInternalUsages(oldToNewElementsMapping, fromCopy = true)
-        }
 
-        val copiedDeclaration = oldToNewElementsMapping.values.singleOrNull()
+            sourceData.elementsToCopy.zip(newElements).forEach { (original, newElement) ->
+                original.collectDescendantsOfType<KtNamedDeclaration>()
+                    .zip(newElement.collectDescendantsOfType<KtNamedDeclaration>())
+                    .toMap(oldToNewElementsMapping)
+            }
+
+            retargetInternalUsages(oldToNewElementsMapping, fromCopy = true)
+
+            newElements.singleOrNull()
+        }
 
         return RefactoringResult(targetFile, copiedDeclaration, restoredInternalUsages)
     }

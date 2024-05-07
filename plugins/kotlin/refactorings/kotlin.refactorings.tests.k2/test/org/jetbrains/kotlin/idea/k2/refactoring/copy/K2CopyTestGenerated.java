@@ -53,6 +53,11 @@ public class K2CopyTestGenerated extends AbstractK2CopyTest {
         runTest("../../idea/tests/testData/refactoring/copy/copyClassWithRename/copyClassWithRename.test");
     }
 
+    @TestMetadata("copyClassWithSmartCast/copyClassWithSmartCast.test")
+    public void testCopyClassWithSmartCast_CopyClassWithSmartCast() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/copy/copyClassWithSmartCast/copyClassWithSmartCast.test");
+    }
+
     @TestMetadata("copyFIleFromDefaultPackage/copyFIleFromDefaultPackage.test")
     public void testCopyFIleFromDefaultPackage_CopyFIleFromDefaultPackage() throws Exception {
         runTest("../../idea/tests/testData/refactoring/copy/copyFIleFromDefaultPackage/copyFIleFromDefaultPackage.test");
