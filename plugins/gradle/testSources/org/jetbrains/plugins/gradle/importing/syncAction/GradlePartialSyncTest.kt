@@ -22,10 +22,10 @@ class GradlePartialSyncTest : GradlePartialSyncTestCase() {
       val defaultModelClass = TestModel.Model1::class.java
       val partialModelClass = TestModel.Model2::class.java
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
-        addModelProviders(disposable, TestModelProvider(defaultModelClass))
+        addModelProviders(TestModelProvider(defaultModelClass))
       }
       addProjectResolverExtension(TestPartialProjectResolverExtension::class.java, disposable) {
-        addModelProviders(disposable, TestModelProvider(partialModelClass))
+        addModelProviders(TestModelProvider(partialModelClass))
       }
       whenModelFetchCompleted(disposable) { resolverContext ->
         modelFetchCompletionAssertion.trace {

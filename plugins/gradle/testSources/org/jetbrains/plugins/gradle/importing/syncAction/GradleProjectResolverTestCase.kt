@@ -3,12 +3,9 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.registerOrReplaceServiceInstance
-import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
@@ -57,7 +54,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
   fun addProjectResolverExtension(
     projectResolverExtensionClass: Class<out AbstractTestProjectResolverExtension>,
     parentDisposable: Disposable,
-    configure: AbstractTestProjectResolverService.() -> Unit = {}
+    configure: AbstractTestProjectResolverService.() -> Unit
   ) {
     val projectResolverExtension = registerProjectResolverExtension(projectResolverExtensionClass, parentDisposable)
     val projectResolverService = registerProjectResolverService(projectResolverExtension.serviceClass, parentDisposable)
@@ -140,13 +137,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     override val serviceClass = TestProjectResolverService::class.java
   }
 
-  class TestProjectResolverService : AbstractTestProjectResolverService() {
-    companion object {
-      fun getInstance(project: Project): TestProjectResolverService {
-        return project.service<TestProjectResolverService>()
-      }
-    }
-  }
+  class TestProjectResolverService : AbstractTestProjectResolverService()
 
   abstract class AbstractTestProjectResolverExtension : AbstractProjectResolverExtension() {
 
@@ -164,20 +155,18 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
   abstract class AbstractTestProjectResolverService {
 
-    private val modelProviders = DisposableWrapperList<ProjectImportModelProvider>()
+    private val modelProviders = CopyOnWriteArrayList<ProjectImportModelProvider>()
 
     fun getModelProviders(): List<ProjectImportModelProvider> {
       return modelProviders
     }
 
-    fun addModelProviders(parentDisposable: Disposable, vararg modelProviders: ProjectImportModelProvider) {
-      addModelProviders(parentDisposable, modelProviders.toList())
+    fun addModelProviders(vararg modelProviders: ProjectImportModelProvider) {
+      addModelProviders(modelProviders.toList())
     }
 
-    fun addModelProviders(parentDisposable: Disposable, modelProviders: Collection<ProjectImportModelProvider>) {
-      for (modelProvider in modelProviders) {
-        this.modelProviders.add(modelProvider, parentDisposable)
-      }
+    fun addModelProviders(modelProviders: Collection<ProjectImportModelProvider>) {
+      this.modelProviders.addAll(modelProviders)
     }
   }
 
