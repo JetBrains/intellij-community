@@ -31,7 +31,7 @@ internal abstract class BaseWorkspaceAction: DumbAwareAction() {
     val project = e.project
     e.presentation.isEnabledAndVisible = Registry.`is`("ide.enable.project.workspaces", false) &&
                                          project != null &&
-                                         SubprojectHandler.getAllSubprojects(project).isNotEmpty()
+                                         (project.isWorkspace || SubprojectHandler.getAllSubprojects(project).isNotEmpty())
   }
 }
 
