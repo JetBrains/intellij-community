@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -121,12 +122,8 @@ object CreateFromUsageUtil {
             }
 
             container is KtClassOrObject -> {
-                var sibling: PsiElement? = container.declarations.lastOrNull { it::class == declaration::class }
-                if (sibling == null && declaration is KtProperty) {
-                    sibling = container.body?.lBrace
-                }
-
-                org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat(null, container, declaration, sibling)
+                val sibling: PsiElement? = container.declarations.lastOrNull { it::class == declaration::class }
+                insertMembersAfterAndReformat(null, container, declaration, sibling)
             }
             else -> throw KotlinExceptionWithAttachments("Unknown containing element: ${container::class.java}")
                 .withPsiAttachment("container", container)

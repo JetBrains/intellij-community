@@ -5,9 +5,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPropertyAccessor
 
 object CreateLocalVariableUtil {
     fun convert(declaration: KtDeclarationWithBody, withReformat: Boolean = false): KtDeclarationWithBody {
@@ -24,7 +21,7 @@ object CreateLocalVariableUtil {
         return ConvertToBlockBodyContext(
           returnTypeIsUnit = false,
           returnTypeIsNothing = false,
-          returnTypeString = "",//IdeDescriptorRenderers.SOURCE_CODE.renderType(returnType),
+          returnTypeString = "",
           bodyTypeIsUnit = false,
           bodyTypeIsNothing = false,
           reformat = reformat,

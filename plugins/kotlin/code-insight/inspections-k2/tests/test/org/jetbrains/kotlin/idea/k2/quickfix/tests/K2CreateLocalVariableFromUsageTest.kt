@@ -13,7 +13,7 @@ abstract class K2CreateLocalVariableFromUsageTest : K2AbstractCreateFromUsageTes
 
     /**
      * Class names correspond to the testData directories inside [getTestDataPath]
-     * E.g. test class [Call.Abstract] will find all test files inside `[getTestDataPath]/call/abstract` and execute corresponding tests on them
+     * E.g. test class [LocalVariable] will find all test files inside `[getTestDataPath]/localVariable` and execute corresponding tests on them
      */
     class LocalVariable : K2CreateLocalVariableFromUsageTest()
 }

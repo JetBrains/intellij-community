@@ -116,7 +116,7 @@ object K2CreateFromUsageUtil {
     // Given: `println("a = ${A().foo()}")`
     // Expected type of `foo()` is `String`
     context (KtAnalysisSession)
-    fun getExpectedTypeByStringTemplateEntry(expression: KtExpression): KtType? {
+    private fun getExpectedTypeByStringTemplateEntry(expression: KtExpression): KtType? {
         var e:PsiElement = expression
         while (e is KtExpression && e !is KtStringTemplateEntry) {
             val parent = e.parent
@@ -144,10 +144,10 @@ object K2CreateFromUsageUtil {
     }
 
     context (KtAnalysisSession)
-    internal fun KtType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
+    private fun KtType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
     context (KtAnalysisSession)
-    internal fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
+    private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
         //is KtCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
         is KtClassLikeSymbol -> symbol // When the receiver is an object
         else -> getKtType()?.expandedClassSymbol
@@ -230,7 +230,7 @@ object K2CreateFromUsageUtil {
     }
 
     context (KtAnalysisSession)
-    internal fun JvmType.toKtType(useSitePosition: PsiElement): KtType? = when (this) {
+    private fun JvmType.toKtType(useSitePosition: PsiElement): KtType? = when (this) {
         is PsiType -> if (isValid) {
             try {
                 asKtType(useSitePosition)
@@ -286,20 +286,20 @@ object K2CreateFromUsageUtil {
     }
 
     /**
-     * return [type] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null if can't figure out which type to use
+     * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null if can't figure out which type to use
      */
     context (KtAnalysisSession)
-    fun makeAccessibleInCreationPlace(ktType: KtType, call: KtElement): KtType? {
+    private fun makeAccessibleInCreationPlace(ktType: KtType, call: KtElement): KtType? {
         var type = ktType
         do {
             if (allTypesInsideAreAccessible(type, call)) return ktType
             type = type.expandedClassSymbol?.superTypes?.firstOrNull() ?: return null
         }
-        while(true);
+        while(true)
     }
 
     context (KtAnalysisSession)
-    fun allTypesInsideAreAccessible(ktType: KtType, call: KtElement) : Boolean {
+    private fun allTypesInsideAreAccessible(ktType: KtType, call: KtElement) : Boolean {
         fun KtTypeParameter.getOwningTypeParameterOwner(): KtTypeParameterListOwner? {
             val parameterList = parent as? KtTypeParameterList ?: return null
             return parameterList.parent as? KtTypeParameterListOwner
