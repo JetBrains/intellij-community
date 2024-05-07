@@ -10,10 +10,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -232,7 +229,8 @@ public final class FileGroup {
     return null;
   }
 
-  static final class UpdatedFile {
+  @ApiStatus.Internal
+  public static final class UpdatedFile {
     private final String myPath;
     private final String myVcsName;
     private final String myRevision;

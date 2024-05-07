@@ -79,7 +79,7 @@ public class ToolAction extends AnAction implements DumbAware {
     return null;
   }
 
-  static void runTool(@NotNull String actionId, @NotNull DataContext context) {
+  public static void runTool(@NotNull String actionId, @NotNull DataContext context) {
     runTool(actionId, context, null, 0L, null);
   }
 
