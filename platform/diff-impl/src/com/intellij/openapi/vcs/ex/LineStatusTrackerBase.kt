@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.command.undo.UndoUtil
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -280,8 +279,6 @@ abstract class LineStatusTrackerBase<R : Range>(
   protected abstract val Block.ourData: DocumentTracker.BlockData
 
   companion object {
-    @JvmStatic
-    protected val LOG: Logger = Logger.getInstance(LineStatusTrackerBase::class.java)
     private val VCS_DOCUMENT_KEY: Key<Boolean> = Key.create("LineStatusTrackerBase.VCS_DOCUMENT_KEY")
     val SEPARATE_UNDO_STACK: Key<Boolean> = Key.create("LineStatusTrackerBase.SEPARATE_UNDO_STACK")
 

@@ -4283,7 +4283,6 @@ a:com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 - f:getDisposable():com.intellij.openapi.Disposable
 - f:getDocument():com.intellij.openapi.editor.Document
 - f:getDocumentTracker():com.intellij.openapi.vcs.ex.DocumentTracker
-- psf:getLOG():com.intellij.openapi.diagnostic.Logger
 - pf:getListeners():com.intellij.util.EventDispatcher
 - getNextRange(I):com.intellij.openapi.vcs.ex.Range
 - pa:getOurData(com.intellij.openapi.vcs.ex.DocumentTracker$Block):com.intellij.openapi.vcs.ex.DocumentTracker$BlockData
