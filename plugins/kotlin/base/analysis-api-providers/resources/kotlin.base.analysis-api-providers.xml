@@ -1,5 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.analysisApiProviders">
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.permissions.KotlinAnalysisPermissionOptions"
+            serviceImplementation="org.jetbrains.kotlin.analysis.providers.permissions.KotlinDefaultAnalysisPermissionOptions"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiProviders.IdeKotlinDeclarationProviderFactory"/>
