@@ -4,7 +4,7 @@ val a = 1
 private const val bool = false
 
 fun foo(): String {
-    val x = "xyfalsez"
+    val x = "xy${bool}z"
     val y = "xyFalsez"
     val z = bool
     return "ab${bool}def"

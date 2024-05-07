@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.StrictSuccess
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.Success
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.findRelevantLoopForExpression
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -44,7 +45,7 @@ object K2SemanticMatcher {
                     when {
                         element == substringInfo?.template -> matches.add(patternElement)
                         element is KtStringTemplateExpression && substringInfo != null -> {
-                            val extractableSubstringInfo = getMatchedStringFragmentsOrNull(element, substringInfo)
+                            val extractableSubstringInfo = getMatchedStringFragmentsOrNull(element, substringInfo, MatchingContext())
                             when {
                                 extractableSubstringInfo != null -> {
                                     matches.add(extractableSubstringInfo.createExpression())
@@ -96,22 +97,38 @@ object K2SemanticMatcher {
 
         val matchingContext = MatchingContext(parameterSubstitution = substitution)
 
+        fun prepareResult(
+            target: KotlinPsiRange,
+            substitution: MutableMap<PsiNamedElement, KtElement?>
+        ): StrictSuccess<PsiNamedElement>? {
+            val result = mutableMapOf<PsiNamedElement, KtElement>()
+            substitution.entries.forEach { (parameter, argument) ->
+                if (argument == null) {
+                    return null
+                }
+                result.put(parameter, argument)
+            }
+            return StrictSuccess(target, result)
+        }
+
         target.elements.zip(pattern.elements) { t, p ->
             if (p !is KtElement) return@zip
 
-            if ((t as? KtElement)?.isSemanticMatch(p, matchingContext) != true) {
-                return null
+            val substringInfo = (p as? KtExpression)?.extractableSubstringInfo as? K2ExtractableSubstringInfo
+
+            if (t is KtStringTemplateExpression && substringInfo != null) {
+                val extractableSubstringInfo = getMatchedStringFragmentsOrNull(t, substringInfo, matchingContext)
+                if (extractableSubstringInfo != null) {
+                    return prepareResult(extractableSubstringInfo.createExpression().toRange(), substitution)
+                } else {
+                    return null
+                }
             }
+
+            if (((t as? KtElement)?.isSemanticMatch(p, matchingContext) != true)) return null
         }
 
-        val result = mutableMapOf<PsiNamedElement, KtElement>()
-        substitution.entries.forEach { (parameter, argument) ->
-            if (argument == null) {
-                return null
-            }
-            result.put(parameter, argument)
-        }
-        return StrictSuccess(target, result)
+        return prepareResult(target, substitution)
     }
 
     context(KtAnalysisSession)
@@ -124,7 +141,9 @@ object K2SemanticMatcher {
     ): Boolean = this == patternElement || accept(VisitingMatcher(this@KtAnalysisSession, context), patternElement)
 
     context(KtAnalysisSession)
-    private fun getMatchedStringFragmentsOrNull(target: KtStringTemplateExpression, patternInfo: K2ExtractableSubstringInfo): K2ExtractableSubstringInfo? {
+    private fun getMatchedStringFragmentsOrNull(
+        target: KtStringTemplateExpression, patternInfo: K2ExtractableSubstringInfo, matchingContext: MatchingContext
+    ): K2ExtractableSubstringInfo? {
         val prefixLength = patternInfo.prefix.length
         val suffixLength = patternInfo.suffix.length
         val targetEntries = target.entries
@@ -172,7 +191,7 @@ object K2SemanticMatcher {
             val status = (fromIndex..toIndex).fold(true) { status, patternEntryIndex ->
                 val targetEntryToUnify = targetEntries[index + patternEntryIndex]
                 val patternEntryToUnify = patternEntries[patternEntryIndex]
-                status && targetEntryToUnify.isSemanticMatch(patternEntryToUnify)
+                status && targetEntryToUnify.isSemanticMatch(patternEntryToUnify, matchingContext)
             }
             if (!status) continue
             return K2ExtractableSubstringInfo(targetEntry, lastTargetEntry, targetPrefix, targetSuffix, patternInfo.isString)

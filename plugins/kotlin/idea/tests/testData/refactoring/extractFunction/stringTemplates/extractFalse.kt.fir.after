@@ -1,6 +1,6 @@
 // SUGGESTED_NAMES: b, getX
 fun foo(param: Int): String {
-    val x = "xyfalsez"
+    val x = "xy${bool()}z"
     val y = "xyFalsez"
     val z = bool()
     return "ab${bool()}def"

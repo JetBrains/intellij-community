@@ -4,8 +4,8 @@ val a = 1
 private const val string = "abc"
 
 fun foo(): String {
-    val x = "xabc$a"
-    val y = "${a}abcx"
+    val x = "x$string$a"
+    val y = "${a}${string}x"
     val z = "xacb$a"
     return "${string}def"
 }

@@ -1,7 +1,7 @@
 // SUGGESTED_NAMES: s, getX
 fun foo(a: Int): String {
-    val x = "xabc$a"
-    val y = "${a}abcx"
+    val x = "x${string()}$a"
+    val y = "${a}${string()}x"
     val z = "xacb$a"
     return "${string()}def"
 }
