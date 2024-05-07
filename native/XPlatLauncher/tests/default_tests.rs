@@ -289,6 +289,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn reporting_vm_creation_failures() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-XX:+UseG1GC\n-XX:+UseZGC\n");
@@ -309,6 +310,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn reporting_vm_creation_panics() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-Xms2g\n-Xmx1g\n");
