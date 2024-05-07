@@ -1,5 +1,6 @@
 package com.intellij.tools.launch.ide
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.tools.launch.PathsProvider
 import com.intellij.tools.launch.environments.LaunchCommand
@@ -32,6 +33,9 @@ data class IdeDebugOptions(val debugPort: Int, val debugSuspendOnStart: Boolean,
 
 private const val STRACE_PROPERTY_KEY = "com.intellij.tools.launch.Launcher.run.under.strace"
 
+@Suppress("SameParameterValue")
+private fun quote(s: String): String = if (SystemInfo.isWindows) "'$s'" else "\"$s\""
+
 /**
  * The IDE launcher:
  * - **knows** how to build the command line to launch the IDE;
@@ -47,7 +51,7 @@ object IdeLauncher {
         add("-ea")
         add("-Dfus.internal.test.mode=true")
         add("-Didea.updates.url=http://127.0.0.1") // we should not spoil jetstat, which relies on update requests
-        add("-Djb.privacy.policy.text=\"<!--999.999-->\"")
+        add("-Djb.privacy.policy.text=${quote("<!--999.999-->")}")
         add("-Djb.consents.confirmation.enabled=false")
         add("-Didea.suppress.statistics.report=true")
         add("-Drsch.send.usage.stat=false")
