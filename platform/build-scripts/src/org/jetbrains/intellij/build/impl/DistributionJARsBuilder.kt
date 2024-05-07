@@ -405,7 +405,6 @@ suspend fun buildNonBundledPlugins(
     val autoPublishPluginChecker = loadPluginAutoPublishList(context)
     val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                         !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
-    // we don't simplify the layout for non-bundled plugins, because PluginInstaller not ready for this (see rootEntryName)
     val mappings = buildPlugins(
       moduleOutputPatcher = moduleOutputPatcher,
       plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
@@ -415,15 +414,18 @@ suspend fun buildNonBundledPlugins(
       context = context,
       buildPlatformJob = buildPlatformLibJob,
     ) { plugin, pluginDirOrFile ->
-      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
-      val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
-      val pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
-      val pluginVersion = if (Files.exists(pluginXmlPath)) {
-        plugin.versionEvaluator.evaluate(pluginXmlPath, context.pluginBuildNumber, context)
-      }
-      else {
+      val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
         context.buildNumber
       }
+      else {
+        plugin.versionEvaluator.evaluate(
+          pluginXmlSupplier = { (context as BuildContextImpl).jarPackagerDependencyHelper.getPluginXmlContent(context.findRequiredModule(plugin.mainModule)) },
+          ideBuildVersion = context.pluginBuildNumber,
+          context = context,
+        )
+      }
+
+      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
       val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
       val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
       pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
@@ -585,6 +587,7 @@ private suspend fun buildPlugins(
           releaseVersion = context.applicationInfo.releaseVersionForLicensing,
           pluginsToPublish = state.pluginsToPublish,
           context = context,
+          helper = (context as BuildContextImpl).jarPackagerDependencyHelper,
         )
       }
 

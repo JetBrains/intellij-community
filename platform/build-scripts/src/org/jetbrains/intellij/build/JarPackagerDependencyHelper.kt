@@ -11,6 +11,8 @@ import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import java.io.StringReader
+import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
 // production-only - JpsJavaClasspathKind.PRODUCTION_RUNTIME
@@ -23,11 +25,20 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     return getModuleDependencies(context.findRequiredModule(moduleName)).map { it.moduleReference.moduleName }
   }
 
+  fun getPluginXmlContent(pluginModule: JpsModule): String {
+    val moduleOutput = context.getModuleOutputDir(pluginModule)
+    val pluginXmlFile = moduleOutput.resolve("META-INF/plugin.xml")
+    try {
+      return Files.readString(pluginXmlFile)
+    }
+    catch (e: NoSuchFileException) {
+      throw IllegalStateException("${pluginXmlFile.fileName} not found in ${pluginModule.name} module (file=$pluginXmlFile)")
+    }
+  }
+
   fun getPluginIdByModule(pluginModule: JpsModule): String {
-    val fileName = "META-INF/plugin.xml"
-    val file = context.findFileInModuleSources(pluginModule, fileName) ?: throw IllegalStateException("Cannot find $fileName in $pluginModule")
-    val root = readXmlAsModel(file)
-    val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot attribute id or name in $file")
+    val root = readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
+    val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")
     return element.content!!
   }
 

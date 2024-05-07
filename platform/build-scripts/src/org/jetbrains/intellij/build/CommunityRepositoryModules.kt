@@ -16,7 +16,6 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -294,10 +293,10 @@ object CommunityRepositoryModules {
     plugin(mainModuleName, auto = true) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
-      spec.withCustomVersion { pluginXml, ideBuildVersion, _ ->
-        val text = Files.readString(pluginXml)
-        if (text.indexOf("<version>") != -1) {
-          val declaredVersion = text.substring(text.indexOf("<version>") + "<version>".length, text.indexOf("</version>"))
+      spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
+        val pluginXml = pluginXmlSupplier()
+        if (pluginXml.indexOf("<version>") != -1) {
+          val declaredVersion = pluginXml.substring(pluginXml.indexOf("<version>") + "<version>".length, pluginXml.indexOf("</version>"))
           "$declaredVersion.$ideBuildVersion"
         }
         else {

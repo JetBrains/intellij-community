@@ -448,7 +448,7 @@ class PluginLayout private constructor(
 private val PLUGIN_VERSION_AS_IDE = PluginVersionEvaluator { _, ideBuildVersion, _ -> ideBuildVersion }
 
 fun interface PluginVersionEvaluator {
-  fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String
+  fun evaluate(pluginXmlSupplier: () -> String, ideBuildVersion: String, context: BuildContext): String
 }
 
 private fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

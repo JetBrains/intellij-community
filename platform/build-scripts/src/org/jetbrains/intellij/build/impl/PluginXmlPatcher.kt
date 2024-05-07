@@ -8,7 +8,7 @@ import org.jdom.Text
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
-import java.nio.file.Files
+import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 
 private val buildNumberRegex = Regex("(\\d+\\.)+\\d+")
 
@@ -43,12 +43,10 @@ internal fun patchPluginXml(
   releaseVersion: String,
   pluginsToPublish: Set<PluginLayout?>,
   context: BuildContext,
+  helper: JarPackagerDependencyHelper,
 ) {
-  val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
-  val pluginXmlFile = moduleOutput.resolve("META-INF/plugin.xml")
-  if (Files.notExists(pluginXmlFile)) {
-    context.messages.error("plugin.xml not found in ${plugin.mainModule} module: $pluginXmlFile")
-  }
+  val pluginModule = context.findRequiredModule(plugin.mainModule)
+  val descriptorContent = helper.getPluginXmlContent(pluginModule)
 
   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                          context.proprietaryBuildTools.artifactsServer != null
@@ -59,12 +57,12 @@ internal fun patchPluginXml(
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlFile, context.pluginBuildNumber, context)
+  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
   val sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber)
   @Suppress("TestOnlyProblems") val content = try {
     plugin.pluginXmlPatcher(
       doPatchPluginXml(
-        rootElement = JDOMUtil.load(pluginXmlFile),
+        rootElement = JDOMUtil.load(descriptorContent),
         pluginModuleName = plugin.mainModule,
         pluginVersion = pluginVersion,
         releaseDate = releaseDate,
@@ -79,7 +77,7 @@ internal fun patchPluginXml(
     )
   }
   catch (e: Throwable) {
-    throw RuntimeException("Could not patch $pluginXmlFile", e)
+    throw RuntimeException("Could not patch descriptor (module=${pluginModule.name})", e)
   }
   moduleOutputPatcher.patchModuleOutput(plugin.mainModule, "META-INF/plugin.xml", content)
 }
