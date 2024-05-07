@@ -84,7 +84,19 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   protected static <T> T callWithAlternateResolver(Project project, Callable<? extends T> callable, T defaultValue) {
     try {
-      return DumbService.getInstance(project)
+      DumbService dumbService = DumbService.getInstance(project);
+      if (dumbService.isAlternativeResolveEnabled()) {
+        try {
+          return callable.call();
+        }
+        catch (Exception e) {
+          if (e instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+          }
+          throw new RuntimeException(e);
+        }
+      }
+      return dumbService
         .computeWithAlternativeResolveEnabled((ThrowableComputable<T, Throwable>)() -> callable.call());
     }
     catch (IndexNotReadyException e) {
