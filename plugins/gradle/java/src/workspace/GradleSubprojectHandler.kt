@@ -7,11 +7,11 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.platform.externalSystem.impl.workspace.ExternalSubprojectHandler
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.externalSystem.impl.workspace.ExternalSubprojectHandler
 import org.jetbrains.plugins.gradle.service.project.open.canOpenGradleProject
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -51,6 +51,9 @@ private class GradleImportedProjectSettings(project: Project) : ImportedProjectS
     val specBuilder = ImportSpecBuilder(workspace, GradleConstants.SYSTEM_ID)
       .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
     for (setting in gradleProjectsSettings) {
+      if (targetGradleSettings.getLinkedProjectSettings(setting.externalProjectPath) != null) {
+        continue // already linked
+      }
       targetGradleSettings.linkProject(setting)
       ExternalSystemUtil.refreshProject(setting.externalProjectPath, specBuilder)
     }
