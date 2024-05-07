@@ -12530,6 +12530,7 @@ c:com.intellij.util.net.HttpConfigurable$ProxyInfo
 - setUsername(java.lang.String):V
 c:com.intellij.util.net.HttpProxyConfigurable
 - com.intellij.openapi.options.ConfigurableBase
+- com.intellij.openapi.options.Configurable$NoMargin
 - <init>():V
 - <init>(com.intellij.util.net.HttpConfigurable):V
 - p:createUi():com.intellij.util.net.HttpProxySettingsUi

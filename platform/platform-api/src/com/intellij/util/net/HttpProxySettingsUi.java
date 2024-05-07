@@ -22,6 +22,7 @@ import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -339,6 +340,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
   @Override
   public @NotNull JComponent getComponent() {
+    myMainPanel.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
     JBScrollPane scrollPane = new JBScrollPane(myMainPanel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(null);
     return scrollPane;
