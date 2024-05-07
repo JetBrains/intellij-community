@@ -39,11 +39,9 @@ private class PyLiteralTypeCompletionProvider : CompletionProvider<CompletionPar
 
     val callSiteExpr = PsiTreeUtil.getParentOfType(position, PyCallSiteExpression::class.java)
     if (callSiteExpr != null) {
-      val parent = position.parent
-      val argumentExpr = if (parent is PyKeywordArgument && parent.valueExpression == position) parent else position
       val types = PyCallExpressionHelper
-        .mapArguments(callSiteExpr, PyResolveContext.defaultContext(typeEvalContext))
-        .mapNotNull { it.mappedParameters[argumentExpr]?.getArgumentType(typeEvalContext) }
+        .getMappedParameters(position, PyResolveContext.defaultContext(typeEvalContext))
+        .mapNotNull { it.getArgumentType(typeEvalContext) }
       addToResult(position, types, result)
       return
     }

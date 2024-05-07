@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -748,6 +749,33 @@ public final class PyCallExpressionHelper {
       return PyUnionType.union(superTypes);
     }
     return null;
+  }
+
+  /**
+   * {@code argument} can be (parenthesized) expression or a value of a {@link PyKeywordArgument}
+   */
+  @ApiStatus.Internal
+  @NotNull
+  public static List<PyCallableParameter> getMappedParameters(@NotNull PyExpression argument,
+                                                              @NotNull PyResolveContext resolveContext) {
+    while (argument.getParent() instanceof PyParenthesizedExpression parenthesizedExpr) {
+      argument = parenthesizedExpr;
+    }
+
+    if (argument.getParent() instanceof PyKeywordArgument keywordArgument && keywordArgument.getValueExpression() == argument) {
+      argument = keywordArgument;
+    }
+
+    PsiElement parent = argument.getParent();
+    if (parent instanceof PyArgumentList) {
+      parent = parent.getParent();
+    }
+    if (!(parent instanceof PyCallSiteExpression callSite)) {
+      return Collections.emptyList();
+    }
+
+    PyExpression finalArgument = argument;
+    return ContainerUtil.mapNotNull(mapArguments(callSite, resolveContext), mapping -> mapping.getMappedParameters().get(finalArgument));
   }
 
   /**
