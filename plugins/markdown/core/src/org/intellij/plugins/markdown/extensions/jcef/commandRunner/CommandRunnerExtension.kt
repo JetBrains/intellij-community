@@ -34,6 +34,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 
 internal class CommandRunnerExtension(
   val panel: MarkdownHtmlPanel,
@@ -112,6 +113,7 @@ internal class CommandRunnerExtension(
     }
     catch (e: Exception) {
       if (e is ControlFlowException) throw e
+      if (e is CancellationException) throw e
 
       LOG.warn(e)
       return null
@@ -148,6 +150,9 @@ internal class CommandRunnerExtension(
              "</a>"
     }
     catch (e: Exception) {
+      if (e is ControlFlowException) throw e
+      if (e is CancellationException) throw e
+
       LOG.warn(e)
       return ""
     }
