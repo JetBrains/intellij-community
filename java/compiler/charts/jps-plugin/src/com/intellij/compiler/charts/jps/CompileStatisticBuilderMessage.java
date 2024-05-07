@@ -1,0 +1,87 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.compiler.charts.jps;
+
+import com.google.gson.Gson;
+import com.intellij.util.containers.ContainerUtil;
+import com.sun.management.OperatingSystemMXBean;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.ModuleBasedTarget;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CustomBuilderMessage;
+
+import java.lang.management.MemoryMXBean;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import static com.intellij.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATISTIC_BUILDER_ID;
+
+public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
+  private static final Gson JSON = new Gson();
+
+  private CompileStatisticBuilderMessage(@NotNull String messageType, @NotNull String data) {
+    super(COMPILATION_STATISTIC_BUILDER_ID, messageType, data);
+  }
+
+  @NotNull
+  public static CompileStatisticBuilderMessage create(@NotNull Set<? extends BuildTarget<?>> targets,
+                                                      @NotNull String event) {
+    List<CompileStatisticBuilderMessage.TargetEvent>
+      events = ContainerUtil.map(targets, target -> map(target, event.equals("STARTED")
+                                                                ? CompileStatisticBuilderMessage.StartTarget::new
+                                                                : CompileStatisticBuilderMessage.FinishTarget::new));
+    return new CompileStatisticBuilderMessage(event, JSON.toJson(events));
+  }
+
+  @NotNull
+  private static <T extends CompileStatisticBuilderMessage.TargetEvent> T map(@NotNull BuildTarget<?> target,
+                                                                              @NotNull Supplier<T> event) {
+    T data = event.get();
+    data.name = target instanceof ModuleBasedTarget
+                ? ((ModuleBasedTarget<?>)target).getModule().getName() :
+                target.getId();
+    data.type = target.getTargetType().getTypeId();
+    data.isFileBased = target.getTargetType().isFileBased();
+    data.isTest = target.getTargetType() instanceof JavaModuleBuildTargetType &&
+                  ((JavaModuleBuildTargetType)target.getTargetType()).isTests();
+    return data;
+  }
+
+  @NotNull
+  public static BuildMessage create(@NotNull MemoryMXBean memory, @NotNull OperatingSystemMXBean os) {
+    CompileStatisticBuilderMessage.CpuMemoryStatistics
+      statistics = new CompileStatisticBuilderMessage.CpuMemoryStatistics();
+    statistics.heapUsed = Math.max(memory.getHeapMemoryUsage().getUsed(), 0);
+    statistics.heapMax = Math.max(memory.getHeapMemoryUsage().getMax(), 0);
+    statistics.nonHeapUsed = Math.max(memory.getNonHeapMemoryUsage().getUsed(), 0);
+    statistics.nonHeapMax = Math.max(memory.getNonHeapMemoryUsage().getMax(), 0);
+    statistics.cpu = Math.max(os.getProcessCpuLoad() * 100, 0);
+    return new CompileStatisticBuilderMessage("STATISTIC", JSON.toJson(statistics));
+  }
+
+  public static abstract class TargetEvent {
+    public String name;
+    public String type;
+    public boolean isTest;
+    public boolean isFileBased;
+    public long time = System.nanoTime();
+    public long thread = Thread.currentThread().getId();
+  }
+
+  public static class StartTarget extends CompileStatisticBuilderMessage.TargetEvent {
+  }
+
+  public static class FinishTarget extends CompileStatisticBuilderMessage.TargetEvent {
+  }
+
+  public static class CpuMemoryStatistics {
+    public long heapUsed;
+    public long heapMax;
+    public long nonHeapUsed;
+    public long nonHeapMax;
+    public double cpu;
+    public long time = System.nanoTime();
+  }
+}
