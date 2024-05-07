@@ -11,7 +11,6 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.MavenRoamableSettings
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
@@ -42,17 +41,13 @@ internal class MavenSubprojectHandler : SubprojectHandler {
 }
 
 private class MavenImportedProjectSettings(project: Project) : ImportedProjectSettings {
-  val roamableSettings: MavenRoamableSettings = MavenProjectsManager.getInstance(project).roamableSettings
   val projectDir = project.guessProjectDir()
 
   override suspend fun applyTo(workspace: Project) {
     val openProjectProvider = MavenOpenProjectProvider()
-    if (roamableSettings.originalFiles.isEmpty() && openProjectProvider.canOpenProject(projectDir!!)) {
+    if (openProjectProvider.canOpenProject(projectDir!!)) {
       openProjectProvider.linkToExistingProjectAsync(projectDir, workspace)
-      return
     }
-    val manager = MavenProjectsManager.getInstance(workspace)
-    manager.applyRoamableSettings(roamableSettings)
   }
 }
 
@@ -80,6 +75,6 @@ private class MavenSubproject(override val workspace: Project, val mavenProject:
 
   override fun removeSubproject() {
     val files = MavenUtil.collectFiles(listOf(mavenProject))
-    MavenProjectsManager.getInstance(workspace).removeManagedFiles(files)
+    MavenProjectsManager.getInstance(workspace).removeManagedFiles(files, null, null)
   }
 }
