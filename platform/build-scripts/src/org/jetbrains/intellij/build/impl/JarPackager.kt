@@ -118,7 +118,8 @@ class JarPackager private constructor(
   private val outDir: Path,
   private val context: BuildContext,
   private val platformLayout: PlatformLayout?,
-  private val isRootDir: Boolean
+  private val isRootDir: Boolean,
+  private val moduleOutputPatcher: ModuleOutputPatcher,
 ) {
   private val assets = LinkedHashMap<Path, AssetDescriptor>()
 
@@ -140,10 +141,9 @@ class JarPackager private constructor(
       jarsWithSearchableOptions: SearchableOptionSetDescriptor? = null,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
-      val packager = JarPackager(outDir = outputDir, platformLayout = platformLayout, isRootDir = isRootDir, context = context)
+      val packager = JarPackager(outDir = outputDir, platformLayout = platformLayout, isRootDir = isRootDir, moduleOutputPatcher = moduleOutputPatcher, context = context)
       packager.computeModuleSources(
         includedModules = includedModules,
-        moduleOutputPatcher = moduleOutputPatcher,
         jarsWithSearchableOptions = jarsWithSearchableOptions,
         layout = layout,
       )
@@ -228,16 +228,11 @@ class JarPackager private constructor(
     }
   }
 
-  private suspend fun computeModuleSources(
-    includedModules: Collection<ModuleItem>,
-    moduleOutputPatcher: ModuleOutputPatcher,
-    layout: BaseLayout?,
-    jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
-  ) {
+  private suspend fun computeModuleSources(includedModules: Collection<ModuleItem>, layout: BaseLayout?, jarsWithSearchableOptions: SearchableOptionSetDescriptor?) {
     val addedModules = HashSet<String>()
 
     for (item in includedModules) {
-      computeSourcesForModule(item = item, moduleOutputPatcher = moduleOutputPatcher, layout = layout, searchableOptionSetDescriptor = jarsWithSearchableOptions)
+      computeSourcesForModule(item = item, layout = layout, searchableOptionSet = jarsWithSearchableOptions)
 
       addedModules.add(item.moduleName)
     }
@@ -251,19 +246,13 @@ class JarPackager private constructor(
       platformLayout = platformLayout!!,
       addedModules = addedModules,
       helper = helper,
-      moduleOutputPatcher = moduleOutputPatcher,
       jarsWithSearchableOptions = jarsWithSearchableOptions,
       jarPackager = this,
       context = context,
     )
   }
 
-  internal suspend fun computeSourcesForModule(
-    item: ModuleItem,
-    moduleOutputPatcher: ModuleOutputPatcher,
-    layout: BaseLayout?,
-    searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
-  ) {
+  internal suspend fun computeSourcesForModule(item: ModuleItem, layout: BaseLayout?, searchableOptionSet: SearchableOptionSetDescriptor?) {
     val moduleName = item.moduleName
     val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
@@ -301,13 +290,13 @@ class JarPackager private constructor(
       moduleSources.add(DirSource(dir = dir))
     }
 
-    if (searchableOptionSetDescriptor != null) {
+    if (searchableOptionSet != null) {
       addSearchableOptionSources(
         layout = layout,
         moduleName = moduleName,
         module = module,
         moduleSources = moduleSources,
-        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+        searchableOptionSet = searchableOptionSet,
       )
     }
 
@@ -343,7 +332,7 @@ class JarPackager private constructor(
     moduleName: String,
     module: JpsModule,
     moduleSources: MutableList<Source>,
-    searchableOptionSetDescriptor: SearchableOptionSetDescriptor
+    searchableOptionSet: SearchableOptionSetDescriptor
   ) {
     if (layout is PluginLayout) {
       if (moduleName == BUILT_IN_HELP_MODULE_NAME) {
@@ -351,18 +340,18 @@ class JarPackager private constructor(
       }
 
       if (moduleName == layout.mainModule) {
-        val pluginId = helper.getPluginIdByModule(module)
-        moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin(pluginId))
+        val pluginId = helper.getPluginIdByModule(module, moduleOutputPatcher = moduleOutputPatcher)
+        moduleSources.addAll(searchableOptionSet.createSourceByPlugin(pluginId))
       }
       else {
         // is it a product module?
         context.findFileInModuleSources(module, "$moduleName.xml")?.let {
-          moduleSources.addAll(searchableOptionSetDescriptor.createSourceByModule(moduleName))
+          moduleSources.addAll(searchableOptionSet.createSourceByModule(moduleName))
         }
       }
     }
     else if (moduleName == (context.productProperties.productPluginSourceModuleName ?: context.productProperties.applicationInfoModule)) {
-      moduleSources.addAll(searchableOptionSetDescriptor.createSourceByPlugin("com.intellij"))
+      moduleSources.addAll(searchableOptionSet.createSourceByPlugin("com.intellij"))
     }
   }
 

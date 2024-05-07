@@ -61,8 +61,7 @@ class ModuleOutputPatcher {
   }
 
   fun getPatchedPluginXmlIfExists(moduleName: String): String? {
-    val result = patches.get(moduleName)?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value
-    return if (result == null) null else String(result, StandardCharsets.UTF_8)
+    return patches.get(moduleName)?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value?.decodeToString()
   }
 
   fun getPatchedPluginXml(moduleName: String): ByteArray {

@@ -2,7 +2,10 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.readXmlAsModel
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.JarPackager
+import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
 
 private const val VERIFIER_MODULE = "intellij.platform.commercial.verifier"
 
@@ -12,7 +15,6 @@ internal suspend fun inferModuleSources(
   platformLayout: PlatformLayout,
   helper: JarPackagerDependencyHelper,
   jarPackager: JarPackager,
-  moduleOutputPatcher: ModuleOutputPatcher,
   jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ) {
@@ -31,9 +33,8 @@ internal suspend fun inferModuleSources(
         relativeOutputFile = if (descriptor.getAttributeValue("package") == null) "modules/$moduleName.jar" else layout.getMainJarName(),
         reason = "<- ${layout.mainModule} (plugin content)",
       ),
-      moduleOutputPatcher = moduleOutputPatcher,
       layout = layout,
-      searchableOptionSetDescriptor = jarsWithSearchableOptions,
+      searchableOptionSet = jarsWithSearchableOptions,
     )
   }
 
@@ -53,7 +54,7 @@ internal suspend fun inferModuleSources(
       continue
     }
 
-    jarPackager.computeSourcesForModule(item = moduleItem, moduleOutputPatcher = moduleOutputPatcher, layout = layout, searchableOptionSetDescriptor = jarsWithSearchableOptions)
+    jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = jarsWithSearchableOptions)
   }
 
   // check verifier in all included modules
@@ -69,7 +70,7 @@ internal suspend fun inferModuleSources(
 
       val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
       addedModules.add(name)
-      jarPackager.computeSourcesForModule(item = moduleItem, moduleOutputPatcher = moduleOutputPatcher, layout = layout, searchableOptionSetDescriptor = jarsWithSearchableOptions)
+      jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = jarsWithSearchableOptions)
     }
   }
 }

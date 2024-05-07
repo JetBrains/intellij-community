@@ -502,7 +502,15 @@ private suspend fun processAndGetProductPluginContentModules(
       ?: context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
     ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
 
-    processProductXmlDescriptor(file = file, moduleName = productPluginSourceModuleName, withPatch = layout::withPatch, xIncludePathResolver = xIncludePathResolver, context = context)
+    val xml = JDOMUtil.load(file)
+    val result = embedContentModules(file = file, xml = xml, xIncludePathResolver = xIncludePathResolver, context = context)
+    val data = JDOMUtil.write(xml)
+    val fileName = file.fileName.toString()
+    layout.withPatch { moduleOutputPatcher, _, _ ->
+      moduleOutputPatcher.patchModuleOutput(productPluginSourceModuleName, "META-INF/$fileName", data)
+    }
+
+    result
   }
 }
 
@@ -540,22 +548,9 @@ fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>,
   }
 }
 
-suspend fun processProductXmlDescriptor(
-  file: Path,
-  moduleName: String,
-  withPatch: suspend(patcher: suspend (ModuleOutputPatcher, PlatformLayout, BuildContext) -> Unit) -> Unit,
-  xIncludePathResolver: XIncludePathResolver,
-  context: BuildContext,
-): Set<ModuleItem> {
-  val xml = JDOMUtil.load(file)
+fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, context: BuildContext): Set<ModuleItem> {
   resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
-  val result = collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
-  val data = JDOMUtil.write(xml)
-  val fileName = file.fileName.toString()
-  withPatch { moduleOutputPatcher, _, _ ->
-    moduleOutputPatcher.patchModuleOutput(moduleName, "META-INF/$fileName", data)
-  }
-  return result
+  return collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
 }
 
 // see PluginXmlPathResolver.toLoadPath
@@ -568,9 +563,10 @@ private fun toLoadPath(relativePath: String): String {
 }
 
 private fun getModuleDescriptor(moduleName: String, xIncludePathResolver: XIncludePathResolver, context: BuildContext): CDATA {
-  val descriptorFile = "$moduleName.xml"
-  val file = requireNotNull(context.findFileInModuleSources(moduleName, descriptorFile)) {
-    "Cannot find file $descriptorFile in module $moduleName"
+  val descriptorFile = "${moduleName.replace('/', '.')}.xml"
+  val jpsModuleName = moduleName.substringBeforeLast('/')
+  val file = requireNotNull(context.findFileInModuleSources(jpsModuleName, descriptorFile)) {
+    "Cannot find file $descriptorFile in module $jpsModuleName"
   }
   val xml = JDOMUtil.load(file)
   resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)

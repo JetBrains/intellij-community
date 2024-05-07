@@ -6,7 +6,10 @@ package org.jetbrains.intellij.build.dev
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBuildDescriptor
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
@@ -19,14 +22,14 @@ internal suspend fun buildPlugins(
   pluginBuildDescriptors: List<PluginBuildDescriptor>,
   platformLayout: PlatformLayout,
   context: BuildContext,
-  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope { span ->
     val counter = LongAdder()
     val pluginEntries = coroutineScope {
       pluginBuildDescriptors.map { plugin ->
         async {
-          plugin to buildPluginIfNotCached(plugin = plugin, platformLayout = platformLayout, context = context, jarsWithSearchableOptions = jarsWithSearchableOptions)
+          plugin to buildPlugin(plugin = plugin, platformLayout = platformLayout, searchableOptionSet = searchableOptionSet, context = context)
         }
       }
     }.map { it.getCompleted() }
@@ -35,51 +38,35 @@ internal suspend fun buildPlugins(
   }
 }
 
-internal suspend fun buildPluginIfNotCached(
-  plugin: PluginBuildDescriptor,
-  platformLayout: PlatformLayout,
-  context: BuildContext,
-  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
-): List<DistributionFileEntry> {
-  val mainModule = plugin.layout.mainModule
-
-  withContext(Dispatchers.IO) {
-    // check cache
-    if (plugin.layout.mainModule == "intellij.rider.plugins.clion.radler" && hasResourcePaths(plugin.layout)) {
-      // copy custom resources
-      spanBuilder("build plugin")
-        .setAttribute("mainModule", mainModule)
-        .setAttribute("dir", plugin.layout.directoryName)
-        .setAttribute("reason", "copy custom resources")
-        .useWithScope {
-          layoutResourcePaths(layout = plugin.layout, context = context, targetDirectory = plugin.dir, overwrite = true)
-        }
-    }
-  }
-
-  return buildPlugin(plugin = plugin, platformLayout = platformLayout, context = context, copyFiles = true, jarsWithSearchableOptions = jarsWithSearchableOptions)
-}
-
 private suspend fun buildPlugin(
   plugin: PluginBuildDescriptor,
   platformLayout: PlatformLayout,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
-  copyFiles: Boolean,
-  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
 ): List<DistributionFileEntry> {
-  val moduleOutputPatcher = ModuleOutputPatcher()
+  if (plugin.layout.mainModule == "intellij.rider.plugins.clion.radler" && hasResourcePaths(plugin.layout)) {
+    // copy custom resources
+    spanBuilder("build plugin")
+      .setAttribute("mainModule", plugin.layout.mainModule)
+      .setAttribute("dir", plugin.layout.directoryName)
+      .setAttribute("reason", "copy custom resources")
+      .useWithScope(Dispatchers.IO) {
+        layoutResourcePaths(layout = plugin.layout, context = context, targetDirectory = plugin.dir, overwrite = true)
+      }
+  }
+
   return spanBuilder("build plugin")
     .setAttribute("mainModule", plugin.layout.mainModule)
     .setAttribute("dir", plugin.layout.directoryName)
     .useWithScope {
       val (pluginEntries, _) = layoutDistribution(
         layout = plugin.layout,
-        platformLayout = platformLayout, targetDirectory = plugin.dir,
-
-        moduleOutputPatcher = moduleOutputPatcher,
+        platformLayout = platformLayout,
+        targetDirectory = plugin.dir,
+        moduleOutputPatcher = ModuleOutputPatcher(),
         includedModules = plugin.layout.includedModules,
-        copyFiles = copyFiles,
-        searchableOptionSet = jarsWithSearchableOptions,
+        copyFiles = true,
+        searchableOptionSet = searchableOptionSet,
         context = context,
       )
       pluginEntries

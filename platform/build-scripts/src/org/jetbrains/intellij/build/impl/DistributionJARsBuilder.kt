@@ -197,7 +197,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
     val commonClassPath = generatePluginClassPath(common, writeDescriptor = true)
 
     val additional = additionalDeferred.await()
-    val additionalClassPath = additional?.let { generatePluginClassPathFromFiles(it, writeDescriptor = true) }
+    val additionalClassPath = additional?.let { generatePluginClassPathFromFiles(it) }
 
     val specific = specificDeferred.await()
     for ((supportedDist) in pluginDirs) {
@@ -586,8 +586,9 @@ private suspend fun buildPlugins(
           releaseDate = context.applicationInfo.majorReleaseDate,
           releaseVersion = context.applicationInfo.releaseVersionForLicensing,
           pluginsToPublish = state.pluginsToPublish,
-          context = context,
           helper = (context as BuildContextImpl).jarPackagerDependencyHelper,
+          platformLayout = state.platform,
+          context = context,
         )
       }
 

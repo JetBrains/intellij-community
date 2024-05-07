@@ -262,6 +262,6 @@ class PluginXmlPatcherTest {
       isEap = isEap,
       productName = productName,
     )
-    assertThat(result).isEqualTo(after)
+    assertThat(JDOMUtil.write(result)).isEqualTo(after)
   }
 }

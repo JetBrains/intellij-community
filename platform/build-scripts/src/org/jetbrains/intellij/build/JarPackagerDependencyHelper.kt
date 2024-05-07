@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsDependencyElement
@@ -36,8 +37,8 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     }
   }
 
-  fun getPluginIdByModule(pluginModule: JpsModule): String {
-    val root = readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
+  fun getPluginIdByModule(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): String {
+    val root = readXmlAsModel(StringReader(moduleOutputPatcher.getPatchedPluginXmlIfExists(pluginModule.name) ?: getPluginXmlContent(pluginModule)))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")
     return element.content!!
   }

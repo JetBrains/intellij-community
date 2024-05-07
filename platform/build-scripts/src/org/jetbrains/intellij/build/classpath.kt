@@ -195,10 +195,10 @@ fun generatePluginClassPath(
       .toMutableList()
     allEntries.add(pluginAsset.dir to files)
   }
-  return generatePluginClassPathFromFiles(pluginEntries = allEntries, writeDescriptor = writeDescriptor)
+  return generatePluginClassPathFromFiles(pluginEntries = allEntries)
 }
 
-fun generatePluginClassPathFromFiles(pluginEntries: List<Pair<Path, List<Path>>>, writeDescriptor: Boolean): ByteArray {
+fun generatePluginClassPathFromFiles(pluginEntries: List<Pair<Path, List<Path>>>): ByteArray {
   val byteOut = ByteArrayOutputStream()
   val out = DataOutputStream(byteOut)
 
@@ -217,7 +217,7 @@ fun generatePluginClassPathFromFiles(pluginEntries: List<Pair<Path, List<Path>>>
     }
 
     // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
-    val pluginDescriptorContent = reorderPluginClassPath(files, writeDescriptor)
+    val pluginDescriptorContent = reorderPluginClassPath(files)
 
     // the plugin dir as the last item in the list
     out.writeShort(files.size)
@@ -240,14 +240,14 @@ fun generatePluginClassPathFromFiles(pluginEntries: List<Pair<Path, List<Path>>>
   return byteOut.toByteArray()
 }
 
-private fun reorderPluginClassPath(files: MutableList<Path>, writeDescriptor: Boolean): ByteArray? {
+private fun reorderPluginClassPath(files: MutableList<Path>): ByteArray? {
   var pluginDescriptorContent: ByteArray? = null
   var pluginDirIndex = -1
   for ((index, file) in files.withIndex()) {
     if (Files.isDirectory(file)) {
       val pluginDescriptorFile = file.resolve("META-INF/plugin.xml")
       if (Files.exists(pluginDescriptorFile)) {
-        pluginDescriptorContent = if (writeDescriptor) Files.readAllBytes(pluginDescriptorFile) else null
+        pluginDescriptorContent = null
         pluginDirIndex = index
         break
       }
@@ -255,9 +255,7 @@ private fun reorderPluginClassPath(files: MutableList<Path>, writeDescriptor: Bo
     else {
       val found = HashMapZipFile.load(file).use { zip ->
         val rawEntry = zip.getRawEntry("META-INF/plugin.xml")
-        if (writeDescriptor) {
-          pluginDescriptorContent = rawEntry?.getData(zip)
-        }
+        pluginDescriptorContent = rawEntry?.getData(zip)
         rawEntry != null
       }
 

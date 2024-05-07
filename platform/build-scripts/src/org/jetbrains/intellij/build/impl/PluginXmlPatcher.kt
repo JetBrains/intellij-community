@@ -42,8 +42,9 @@ internal fun patchPluginXml(
   releaseDate: String,
   releaseVersion: String,
   pluginsToPublish: Set<PluginLayout?>,
-  context: BuildContext,
   helper: JarPackagerDependencyHelper,
+  platformLayout: PlatformLayout,
+  context: BuildContext,
 ) {
   val pluginModule = context.findRequiredModule(plugin.mainModule)
   val descriptorContent = plugin.rawPluginXmlPatcher(helper.getPluginXmlContent(pluginModule))
@@ -60,21 +61,27 @@ internal fun patchPluginXml(
   val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlSupplier = { descriptorContent }, ideBuildVersion = context.pluginBuildNumber, context = context)
   @Suppress("TestOnlyProblems")
   val content = try {
-    plugin.pluginXmlPatcher(
-      doPatchPluginXml(
-        rootElement = JDOMUtil.load(descriptorContent),
-        pluginModuleName = plugin.mainModule,
-        pluginVersion = pluginVersion.pluginVersion,
-        releaseDate = releaseDate,
-        releaseVersion = releaseVersion,
-        compatibleSinceUntil = pluginVersion.sinceUntil ?: getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber),
-        toPublish = pluginsToPublish.contains(plugin),
-        retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
-        isEap = context.applicationInfo.isEAP,
-        productName = context.applicationInfo.fullProductName,
-      ),
-      context,
+    val element = doPatchPluginXml(
+      rootElement = JDOMUtil.load(descriptorContent),
+      pluginModuleName = plugin.mainModule,
+      pluginVersion = pluginVersion.pluginVersion,
+      releaseDate = releaseDate,
+      releaseVersion = releaseVersion,
+      compatibleSinceUntil = pluginVersion.sinceUntil ?: getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber),
+      toPublish = pluginsToPublish.contains(plugin),
+      retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
+      isEap = context.applicationInfo.isEAP,
+      productName = context.applicationInfo.fullProductName,
     )
+
+    embedContentModules(
+      xml = element,
+      file = context.findFileInModuleSources(pluginModule, "META-INF/plugin.xml")!!,
+      xIncludePathResolver = createXIncludePathResolver(plugin.includedModules.map { it.moduleName } + platformLayout.includedModules.map { it.moduleName }, context),
+      context = context,
+    )
+
+    plugin.pluginXmlPatcher(JDOMUtil.write(element), context)
   }
   catch (e: Throwable) {
     throw RuntimeException("Could not patch descriptor (module=${plugin.mainModule})", e)
@@ -94,7 +101,7 @@ fun doPatchPluginXml(
   retainProductDescriptorForBundledPlugin: Boolean,
   isEap: Boolean,
   productName: String,
-): String {
+): Element {
   val ideaVersionElement = getOrCreateTopElement(rootElement, "idea-version", listOf("id", "name"))
   ideaVersionElement.setAttribute("since-build", compatibleSinceUntil.first)
   ideaVersionElement.setAttribute("until-build", compatibleSinceUntil.second)
@@ -125,7 +132,7 @@ fun doPatchPluginXml(
     val replaced = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm and RustRover")
     check(replaced) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
   }
-  return JDOMUtil.write(rootElement)
+  return rootElement
 }
 
 fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<String>): Element {

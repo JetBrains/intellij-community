@@ -173,7 +173,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       val (pluginEntries, additionalEntries) = pluginDistributionEntriesDeferred.await()
       spanBuilder("generate plugin classpath").useWithScope(Dispatchers.IO) {
         val mainData = generatePluginClassPath(pluginEntries, writeDescriptor = !request.isUnpackedDist)
-        val additionalData = additionalEntries?.let { generatePluginClassPathFromFiles(it, writeDescriptor = !request.isUnpackedDist) }
+        val additionalData = additionalEntries?.let { generatePluginClassPathFromFiles(it) }
 
         val byteOut = ByteArrayOutputStream()
         val out = DataOutputStream(byteOut)
@@ -355,7 +355,7 @@ private suspend fun buildPlugins(
     pluginBuildDescriptors = pluginBuildDescriptors,
     platformLayout = platformLayout.await(),
     context = context,
-    jarsWithSearchableOptions = jarsWithSearchableOptions,
+    searchableOptionSet = jarsWithSearchableOptions,
   )
   val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)
   return pluginEntries to additionalPlugins
