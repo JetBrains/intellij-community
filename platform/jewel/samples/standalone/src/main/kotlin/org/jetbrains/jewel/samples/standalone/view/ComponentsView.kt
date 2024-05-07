@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.samples.standalone.view
 
+import androidx.compose.foundation.TooltipPlacement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,8 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -30,12 +29,15 @@ import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.SelectableIconButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
-import org.jetbrains.jewel.ui.component.TooltipPlacement
 import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.TooltipMetrics
+import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
+import org.jetbrains.jewel.ui.theme.tooltipStyle
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 @View(title = "Components", position = 1, icon = "icons/structure.svg")
@@ -53,7 +55,11 @@ fun ComponentsToolBar() {
         ComponentsViewModel.views.forEach {
             Tooltip(
                 tooltip = { Text("Show ${it.title}") },
-                tooltipPlacement = TooltipPlacement(DpOffset(40.dp, 0.dp), Alignment.End, LocalDensity.current),
+                style = TooltipStyle(
+                    JewelTheme.tooltipStyle.colors,
+                    TooltipMetrics.defaults(showDelay = 150.milliseconds),
+                ),
+                tooltipPlacement = TooltipPlacement.ComponentRect(Alignment.CenterEnd, Alignment.CenterEnd),
             ) {
                 SelectableIconButton(
                     selected = ComponentsViewModel.currentView == it,

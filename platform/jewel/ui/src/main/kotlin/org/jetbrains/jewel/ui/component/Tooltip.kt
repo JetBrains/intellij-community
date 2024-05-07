@@ -16,15 +16,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupPositionProviderAtPosition
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
@@ -37,11 +34,7 @@ public fun Tooltip(
     tooltip: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     style: TooltipStyle = JewelTheme.tooltipStyle,
-    tooltipPlacement: TooltipPlacement = TooltipPlacement(
-        contentOffset = style.metrics.tooltipOffset,
-        alignment = style.metrics.tooltipAlignment,
-        density = LocalDensity.current,
-    ),
+    tooltipPlacement: TooltipPlacement = style.metrics.placement,
     content: @Composable () -> Unit,
 ) {
     TooltipArea(
@@ -81,86 +74,60 @@ public fun Tooltip(
     )
 }
 
-public class TooltipPlacement(
-    private val contentOffset: DpOffset,
-    private val alignment: Alignment.Horizontal,
-    private val density: Density,
+/**
+ * [TooltipPlacement] implementation for providing a [PopupPositionProvider] that calculates
+ * the position of the popup relative to the current mouse cursor position, but never changes
+ * it after showing the popup.
+ *
+ * @param offset [DpOffset] to be added to the position of the popup.
+ * @param alignment The alignment of the popup relative to the current cursor position.
+ * @param windowMargin Defines the area within the window that limits the placement of the popup.
+ */
+@ExperimentalJewelApi
+public class FixedCursorPoint(
+    private val offset: DpOffset = DpOffset.Zero,
+    private val alignment: Alignment = Alignment.BottomEnd,
     private val windowMargin: Dp = 4.dp,
 ) : TooltipPlacement {
-
     @Composable
-    public override fun positionProvider(cursorPosition: Offset): PopupPositionProvider =
-        rememberTooltipPositionProvider(
-            cursorPosition = cursorPosition,
-            contentOffset = contentOffset,
+    override fun positionProvider(cursorPosition: Offset): PopupPositionProvider =
+        rememberPopupPositionProviderAtFixedPosition(
+            positionPx = cursorPosition,
+            offset = offset,
             alignment = alignment,
-            density = density,
             windowMargin = windowMargin,
         )
 }
 
+/**
+ * A [PopupPositionProvider] that positions the popup at the given position relative to the anchor,
+ * but never updates it after showing the popup.
+ *
+ * @param positionPx the offset, in pixels, relative to the anchor, to position the popup at.
+ * @param offset [DpOffset] to be added to the position of the popup.
+ * @param alignment The alignment of the popup relative to desired position.
+ * @param windowMargin Defines the area within the window that limits the placement of the popup.
+ */
+@ExperimentalJewelApi
 @Composable
-private fun rememberTooltipPositionProvider(
-    cursorPosition: Offset,
-    contentOffset: DpOffset,
-    alignment: Alignment.Horizontal,
-    density: Density,
+public fun rememberPopupPositionProviderAtFixedPosition(
+    positionPx: Offset,
+    offset: DpOffset = DpOffset.Zero,
+    alignment: Alignment = Alignment.BottomEnd,
     windowMargin: Dp = 4.dp,
-) =
-    remember(contentOffset, alignment, density, windowMargin) {
-        TooltipPositionProvider(
-            cursorPosition = cursorPosition,
-            contentOffset = contentOffset,
+): PopupPositionProvider = with(LocalDensity.current) {
+    val offsetPx = Offset(offset.x.toPx(), offset.y.toPx())
+    val windowMarginPx = windowMargin.roundToPx()
+
+    val initialPosition = remember { positionPx }
+
+    remember(offsetPx, alignment, windowMarginPx) {
+        PopupPositionProviderAtPosition(
+            positionPx = initialPosition,
+            isRelativeToAnchor = true,
+            offsetPx = offsetPx,
             alignment = alignment,
-            density = density,
-            windowMargin = windowMargin,
+            windowMarginPx = windowMarginPx,
         )
     }
-
-private class TooltipPositionProvider(
-    private val cursorPosition: Offset,
-    private val contentOffset: DpOffset,
-    private val alignment: Alignment.Horizontal,
-    private val density: Density,
-    private val windowMargin: Dp = 4.dp,
-) : PopupPositionProvider {
-
-    override fun calculatePosition(
-        anchorBounds: IntRect,
-        windowSize: IntSize,
-        layoutDirection: LayoutDirection,
-        popupContentSize: IntSize,
-    ): IntOffset =
-        with(density) {
-            val windowSpaceBounds = IntRect(
-                left = windowMargin.roundToPx(),
-                top = windowMargin.roundToPx(),
-                right = windowSize.width - windowMargin.roundToPx(),
-                bottom = windowSize.height - windowMargin.roundToPx(),
-            )
-
-            val contentOffsetX = contentOffset.x.roundToPx()
-            val contentOffsetY = contentOffset.y.roundToPx()
-
-            val posX = cursorPosition.x.toInt() + anchorBounds.left
-            val posY = cursorPosition.y.toInt() + anchorBounds.top
-
-            val x = posX + alignment.align(popupContentSize.width, 0, layoutDirection) + contentOffsetX
-
-            val aboveSpacing = cursorPosition.y - contentOffsetY - windowSpaceBounds.top
-            val belowSpacing = windowSpaceBounds.bottom - cursorPosition.y - contentOffsetY
-
-            val y =
-                if (belowSpacing > popupContentSize.height || belowSpacing >= aboveSpacing) {
-                    posY + contentOffsetY
-                } else {
-                    posY - contentOffsetY - popupContentSize.height
-                }
-
-            val popupBounds =
-                IntRect(x, y, x + popupContentSize.width, y + popupContentSize.height)
-                    .constrainedIn(windowSpaceBounds)
-
-            IntOffset(popupBounds.left, popupBounds.top)
-        }
 }

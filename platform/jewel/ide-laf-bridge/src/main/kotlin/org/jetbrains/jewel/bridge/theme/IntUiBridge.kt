@@ -17,6 +17,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.NewUI
 import com.intellij.util.ui.DirProvider
@@ -1013,16 +1014,21 @@ private fun readCircularProgressStyle(isDark: Boolean) =
             .takeOrElse { if (isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD) },
     )
 
-private fun readTooltipStyle() =
-    TooltipStyle(
-        metrics = TooltipMetrics.defaults(),
+private fun readTooltipStyle(): TooltipStyle {
+    return TooltipStyle(
+        metrics = TooltipMetrics.defaults(
+            contentPadding = JBUI.CurrentTheme.HelpTooltip.smallTextBorderInsets().toPaddingValues(),
+            showDelay = Registry.intValue("ide.tooltip.initialDelay").milliseconds,
+            cornerSize = CornerSize(JBUI.CurrentTheme.Tooltip.CORNER_RADIUS.dp),
+        ),
         colors = TooltipColors(
             content = retrieveColorOrUnspecified("ToolTip.foreground"),
             background = retrieveColorOrUnspecified("ToolTip.background"),
-            border = retrieveColorOrUnspecified("ToolTip.borderColor"),
+            border = JBUI.CurrentTheme.Tooltip.borderColor().toComposeColor(),
             shadow = retrieveColorOrUnspecified("Notification.Shadow.bottom1Color"),
         ),
     )
+}
 
 private fun readIconButtonStyle(): IconButtonStyle =
     IconButtonStyle(

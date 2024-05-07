@@ -291,6 +291,13 @@ public final class org/jetbrains/jewel/ui/component/DropdownState$Companion {
 	public static synthetic fun of-17HSnUM$default (Lorg/jetbrains/jewel/ui/component/DropdownState$Companion;ZZZZZILjava/lang/Object;)J
 }
 
+public final class org/jetbrains/jewel/ui/component/FixedCursorPoint : androidx/compose/foundation/TooltipPlacement {
+	public static final field $stable I
+	public synthetic fun <init> (JLandroidx/compose/ui/Alignment;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLandroidx/compose/ui/Alignment;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun positionProvider-9KIMszo (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/ui/window/PopupPositionProvider;
+}
+
 public final class org/jetbrains/jewel/ui/component/GroupHeaderKt {
 	public static final fun GroupHeader-cf5BqRc (Ljava/lang/String;Landroidx/compose/ui/Modifier;JLorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Landroidx/compose/runtime/Composer;II)V
 }
@@ -731,13 +738,7 @@ public final class org/jetbrains/jewel/ui/component/TextKt {
 
 public final class org/jetbrains/jewel/ui/component/TooltipKt {
 	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-}
-
-public final class org/jetbrains/jewel/ui/component/TooltipPlacement : androidx/compose/foundation/TooltipPlacement {
-	public static final field $stable I
-	public synthetic fun <init> (JLandroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/unit/Density;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (JLandroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/unit/Density;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun positionProvider-9KIMszo (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/ui/window/PopupPositionProvider;
+	public static final fun rememberPopupPositionProviderAtFixedPosition-7KAyTs4 (JJLandroidx/compose/ui/Alignment;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/window/PopupPositionProvider;
 }
 
 public final class org/jetbrains/jewel/ui/component/Typography {
@@ -2074,22 +2075,21 @@ public final class org/jetbrains/jewel/ui/component/styling/TooltipColors$Compan
 public final class org/jetbrains/jewel/ui/component/styling/TooltipMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFJLandroidx/compose/ui/Alignment$Horizontal;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBorderWidth-D9Ej5fM ()F
 	public final fun getContentPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getPlacement ()Landroidx/compose/foundation/TooltipPlacement;
 	public final fun getShadowSize-D9Ej5fM ()F
 	public final fun getShowDelay-UwyO8pc ()J
-	public final fun getTooltipAlignment ()Landroidx/compose/ui/Alignment$Horizontal;
-	public final fun getTooltipOffset-RKDOV3M ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/TooltipMetrics$Companion {
-	public final fun defaults-e4GK2sY (Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFJLandroidx/compose/ui/Alignment$Horizontal;)Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
-	public static synthetic fun defaults-e4GK2sY$default (Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics$Companion;Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFJLandroidx/compose/ui/Alignment$Horizontal;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
+	public final fun defaults-8qf-r9M (Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;)Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
+	public static synthetic fun defaults-8qf-r9M$default (Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics$Companion;Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/TooltipStyle {
