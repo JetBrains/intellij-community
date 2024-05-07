@@ -7,7 +7,10 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.tree.IElementType
 
-internal class TerminalPromptPsiFile(elementType: IElementType, viewProvider: FileViewProvider) : PsiFileImpl(elementType, elementType, viewProvider) {
+internal class TerminalPromptPsiFile(
+  elementType: IElementType,
+  viewProvider: FileViewProvider
+) : PsiFileImpl(elementType, elementType, viewProvider) {
   override fun accept(visitor: PsiElementVisitor) {
     visitor.visitFile(this)
   }
