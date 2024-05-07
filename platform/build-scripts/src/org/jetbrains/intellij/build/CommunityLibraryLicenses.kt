@@ -313,8 +313,6 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/hypfvieh/dbus-java",
                    licenseUrl = "https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
-    LibraryLicense(name = "DecentXML", libraryName = "decentxml",
-                   url = "https://code.google.com/p/decentxml").newBsd(),
     LibraryLicense(name = "docutils", attachedTo = "intellij.python", version = "0.12",
                    url = "https://docutils.sourceforge.io/").simplifiedBsd(),
     LibraryLicense(name = "dotenv-kotlin", libraryName = "io.github.cdimascio.dotenv.kotlin",

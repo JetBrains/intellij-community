@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import de.pdark.decentxml.XMLParser
+import com.intellij.openapi.util.JDOMUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.intellij.lang.annotations.Language
 import org.jetbrains.intellij.build.impl.doPatchPluginXml
 import org.junit.jupiter.api.Test
 
@@ -17,12 +18,12 @@ class PluginXmlPatcherTest {
       </idea-plugin>
     """.trimIndent(),
     """
-      <idea-plugin>
-        <version>x-plugin-version</version>
-        <name>CSS</name>
-        <id>com.intellij.css</id>
-        <idea-version since-build="new-since" until-build="new-until"/>
-      </idea-plugin>
+    <idea-plugin>
+      <version>x-plugin-version</version>
+      <name>CSS</name>
+      <id>com.intellij.css</id>
+      <idea-version since-build="new-since" until-build="new-until" />
+    </idea-plugin>
     """.trimIndent())
 
   @Test
@@ -34,12 +35,12 @@ class PluginXmlPatcherTest {
       </idea-plugin>
     """.trimIndent(),
     """
-      <idea-plugin>
-        <name>CSS</name>
-        <id>com.intellij.css</id>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/>
-      </idea-plugin>
+    <idea-plugin>
+      <name>CSS</name>
+      <id>com.intellij.css</id>
+      <version>x-plugin-version</version>
+      <idea-version since-build="new-since" until-build="new-until" />
+    </idea-plugin>
     """.trimIndent())
 
   @Test
@@ -48,9 +49,10 @@ class PluginXmlPatcherTest {
       <idea-plugin></idea-plugin>
     """.trimIndent(),
     """
-      <idea-plugin>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/></idea-plugin>
+    <idea-plugin>
+      <version>x-plugin-version</version>
+      <idea-version since-build="new-since" until-build="new-until" />
+    </idea-plugin>
     """.trimIndent())
 
   @Test
@@ -63,12 +65,12 @@ class PluginXmlPatcherTest {
         </idea-plugin>
       """.trimIndent(),
       """
-        <idea-plugin>
-          <name>CSS</name>
-          <id>com.intellij.css</id>
-          <version>x-plugin-version</version>
-          <idea-version since-build="new-since" until-build="new-until"/>
-        </idea-plugin>
+      <idea-plugin>
+        <name>CSS</name>
+        <id>com.intellij.css</id>
+        <version>x-plugin-version</version>
+        <idea-version since-build="new-since" until-build="new-until" />
+      </idea-plugin>
       """.trimIndent())
   }
 
@@ -83,12 +85,12 @@ class PluginXmlPatcherTest {
         </idea-plugin>
       """.trimIndent(),
       """
-        <idea-plugin>
-          <name>CSS</name>
-          <id>com.intellij.css</id>
-          <version>x-plugin-version</version>
-          <idea-version since-build="new-since" until-build="new-until"/>
-        </idea-plugin>
+      <idea-plugin>
+        <name>CSS</name>
+        <id>com.intellij.css</id>
+        <version>x-plugin-version</version>
+        <idea-version since-build="new-since" until-build="new-until" />
+      </idea-plugin>
       """.trimIndent())
   }
 
@@ -105,12 +107,12 @@ class PluginXmlPatcherTest {
       </idea-plugin>
     """.trimIndent(),
     """
-      <idea-plugin>
-        <name>CSS</name>
-        <id>com.intellij.css</id>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/>
-      </idea-plugin>
+    <idea-plugin>
+      <name>CSS</name>
+      <id>com.intellij.css</id>
+      <version>x-plugin-version</version>
+      <idea-version since-build="new-since" until-build="new-until" />
+    </idea-plugin>
     """.trimIndent(),
     toPublish = false
   )
@@ -128,14 +130,13 @@ class PluginXmlPatcherTest {
       </idea-plugin>
     """.trimIndent(),
     """
-      <idea-plugin>
-        <name>CSS</name>
-        <id>com.intellij.css</id>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/>
-
-        <product-descriptor code="PDB" release-version="X-RELEASE-VERSION-X" release-date="X-RELEASE-DATE-X"/>
-      </idea-plugin>
+    <idea-plugin>
+      <name>CSS</name>
+      <id>com.intellij.css</id>
+      <version>x-plugin-version</version>
+      <idea-version since-build="new-since" until-build="new-until" />
+      <product-descriptor code="PDB" release-version="X-RELEASE-VERSION-X" release-date="X-RELEASE-DATE-X" />
+    </idea-plugin>
     """.trimIndent(),
     toPublish = true,
     isEap = false
@@ -154,14 +155,13 @@ class PluginXmlPatcherTest {
       </idea-plugin>
     """.trimIndent(),
     """
-      <idea-plugin>
-        <name>CSS</name>
-        <id>com.intellij.css</id>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/>
-
-        <product-descriptor code="PDB" eap="true" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
-      </idea-plugin>
+    <idea-plugin>
+      <name>CSS</name>
+      <id>com.intellij.css</id>
+      <version>x-plugin-version</version>
+      <idea-version since-build="new-since" until-build="new-until" />
+      <product-descriptor code="PDB" eap="true" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
+    </idea-plugin>
     """.trimIndent(),
     toPublish = true,
     isEap = true
@@ -182,18 +182,14 @@ class PluginXmlPatcherTest {
       </idea-plugin>
     """.trimIndent(),
     """
-      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-        <name>Database Tools and SQL for WebStorm</name>
-        <id>com.intellij.database</id>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/>
-        <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X"/>
-        <description>
-            <![CDATA[
-              xxx for WebStorm provides
-            ]]>
-        </description>
-      </idea-plugin>
+    <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+      <name>Database Tools and SQL for WebStorm</name>
+      <id>com.intellij.database</id>
+      <version>x-plugin-version</version>
+      <idea-version since-build="new-since" until-build="new-until" />
+      <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
+      <description>xxx for WebStorm provides</description>
+    </idea-plugin>
     """.trimIndent(),
     productName = "WebStorm",
     toPublish = true,
@@ -214,18 +210,14 @@ class PluginXmlPatcherTest {
       </idea-plugin>
     """.trimIndent(),
     """
-      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-        <name>Database Tools and SQL</name>
-        <id>com.intellij.database</id>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/>
-        <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X"/>
-        <description>
-            <![CDATA[
-              xxx for IntelliJ-based IDEs provides
-            ]]>
-        </description>
-      </idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>Database Tools and SQL</name>
+  <id>com.intellij.database</id>
+  <version>x-plugin-version</version>
+  <idea-version since-build="new-since" until-build="new-until" />
+  <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
+  <description>xxx for IntelliJ-based IDEs provides</description>
+</idea-plugin>
     """.trimIndent(),
     toPublish = true,
   )
@@ -239,35 +231,37 @@ class PluginXmlPatcherTest {
       </idea-plugin>
     """.trimIndent(),
     """
-      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-        <id>com</id>
-        <version>x-plugin-version</version>
-        <idea-version since-build="new-since" until-build="new-until"/>
-        <product-descriptor code="PCWMP" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" optional="true"/>
-      </idea-plugin>
+  <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <id>com</id>
+    <version>x-plugin-version</version>
+    <idea-version since-build="new-since" until-build="new-until" />
+    <product-descriptor code="PCWMP" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" optional="true" />
+  </idea-plugin>
     """.trimIndent(),
     retainProductDescriptorForBundledPlugin = true,
     toPublish = false,
   )
 
   private fun assertTransform(
-    before: String,
-    after: String,
+    @Language("XML") before: String,
+    @Language("XML") after: String,
     productName: String = "UnExistent",
     toPublish: Boolean = false,
     isEap: Boolean = false,
     retainProductDescriptorForBundledPlugin: Boolean = false,
   ) {
-    val result = doPatchPluginXml(document = XMLParser.parse(before),
-                                  pluginModuleName = "x-plugin-module-name",
-                                  pluginVersion = "x-plugin-version",
-                                  releaseDate = "X-RELEASE-DATE-X",
-                                  releaseVersion = "X-RELEASE-VERSION-X",
-                                  compatibleSinceUntil = Pair("new-since", "new-until"),
-                                  toPublish = toPublish,
-                                  retainProductDescriptorForBundledPlugin = retainProductDescriptorForBundledPlugin,
-                                  isEap = isEap,
-                                  productName = productName)
+    val result = doPatchPluginXml(
+      rootElement = JDOMUtil.load(before),
+      pluginModuleName = "x-plugin-module-name",
+      pluginVersion = "x-plugin-version",
+      releaseDate = "X-RELEASE-DATE-X",
+      releaseVersion = "X-RELEASE-VERSION-X",
+      compatibleSinceUntil = Pair("new-since", "new-until"),
+      toPublish = toPublish,
+      retainProductDescriptorForBundledPlugin = retainProductDescriptorForBundledPlugin,
+      isEap = isEap,
+      productName = productName,
+    )
     assertThat(result).isEqualTo(after)
   }
 }
