@@ -172,7 +172,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @NotNull
-  private JComponent createToolbar(boolean horizontal) {
+  public JComponent createToolbar(boolean horizontal) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CommitMessage", getToolbarActions(), horizontal);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setBorder(createEmptyBorder());

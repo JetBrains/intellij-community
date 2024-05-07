@@ -7643,6 +7643,7 @@ c:com.intellij.openapi.vcs.ui.CommitMessage
 - <init>(com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.project.Project,Z,Z,Z):V
 - <init>(com.intellij.openapi.project.Project,Z,Z,Z,java.lang.String):V
+- createToolbar(Z):javax.swing.JComponent
 - dispose():V
 - focus():V
 - getComment():java.lang.String
