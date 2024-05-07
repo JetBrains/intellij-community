@@ -164,7 +164,7 @@ object CodeReviewDetailsStatusComponentFactory {
   fun <Reviewer, IconKey> createReviewersReviewStateComponent(
     scope: CoroutineScope,
     reviewersReview: Flow<Map<Reviewer, ReviewState>>,
-    reviewerActionProvider: (Reviewer) -> ActionGroup,
+    reviewerActionProvider: (Reviewer) -> ActionGroup?,
     reviewerNameProvider: (Reviewer) -> String,
     avatarKeyProvider: (Reviewer) -> IconKey,
     iconProvider: (iconKey: IconKey, iconSize: Int) -> Icon,
@@ -193,7 +193,7 @@ object CodeReviewDetailsStatusComponentFactory {
   private fun <Reviewer, IconKey> createReviewerReviewStatus(
     reviewer: Reviewer,
     reviewState: ReviewState,
-    reviewerActionProvider: (Reviewer) -> ActionGroup,
+    reviewerActionProvider: (Reviewer) -> ActionGroup?,
     reviewerNameProvider: (Reviewer) -> String,
     avatarKeyProvider: (Reviewer) -> IconKey,
     iconProvider: (iconKey: IconKey, iconSize: Int) -> Icon,
@@ -220,7 +220,9 @@ object CodeReviewDetailsStatusComponentFactory {
       add(reviewerLabel)
 
       if (reviewState != ReviewState.ACCEPTED) {
-        PopupHandler.installPopupMenu(this, reviewerActionProvider(reviewer), "CodeReviewReviewerStatus")
+        reviewerActionProvider(reviewer)?.let { action ->
+          PopupHandler.installPopupMenu(this, action, "CodeReviewReviewerStatus")
+        }
       }
     }
   }
