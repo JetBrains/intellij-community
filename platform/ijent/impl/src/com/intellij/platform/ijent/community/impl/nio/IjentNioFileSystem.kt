@@ -14,6 +14,7 @@ import java.nio.file.attribute.UserPrincipalLookupService
 class IjentNioFileSystem internal constructor(
   private val fsProvider: IjentNioFileSystemProvider,
   internal val ijent: FsAndUserApi,
+  private val onClose: () -> Unit,
 ) : FileSystem() {
   /**
    * Just a bunch of parts of [com.intellij.platform.ijent.IjentApi] with proper types. It was introduced to avoid type upcasting.
@@ -34,7 +35,7 @@ class IjentNioFileSystem internal constructor(
   }
 
   override fun close() {
-    // Seems that there should be nothing.
+    onClose()
   }
 
   override fun provider(): IjentNioFileSystemProvider = fsProvider

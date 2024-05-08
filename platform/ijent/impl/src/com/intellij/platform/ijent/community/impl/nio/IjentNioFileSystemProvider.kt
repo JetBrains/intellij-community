@@ -55,7 +55,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
     val ijentFsAndUser = FsAndUserApi.create(ijentApi)
 
-    val fs = IjentNioFileSystem(this, ijentFsAndUser)
+    val fs = IjentNioFileSystem(this, ijentFsAndUser, onClose = { registeredFileSystems.remove(ijentId) })
 
     if (registeredFileSystems.putIfAbsent(ijentId, fs) != null) {
       throw FileSystemAlreadyExistsException("A filesystem for $ijentId is already registered")
