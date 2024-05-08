@@ -121,7 +121,8 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
      * A primitive filter: either "*" (all) or a specific name.
      */
     private fun filterProperties(original: List<ComponentPropertyInfo>, nameFilter: List<String>): List<ComponentPropertyInfo> =
-      if (nameFilter.first() == "*") original else original.filter { nameFilter.contains(it.name) }
+      (if (nameFilter.first() == "*") original else original.filter { nameFilter.contains(it.name) })
+        .filter { it.type != PropertyType.Unsupported }
 
     private fun whiteListToComponentMap(whiteList: WhiteList): Map<String, ComponentInfo> {
       val result = mutableMapOf<String, ComponentInfo>()
