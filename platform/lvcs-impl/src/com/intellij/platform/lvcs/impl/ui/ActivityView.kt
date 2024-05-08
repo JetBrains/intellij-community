@@ -56,7 +56,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
                    private val isFrameDiffPreview: Boolean = false) :
   JBPanel<ActivityView>(BorderLayout()), DataProvider, Disposable {
 
-  private val coroutineScope = project.service<ActivityService>().coroutineScope.childScope()
+  private val coroutineScope = project.service<ActivityService>().coroutineScope.childScope("ActivityView")
 
   private val model = ActivityViewModel(project, gateway, activityScope, coroutineScope)
 
