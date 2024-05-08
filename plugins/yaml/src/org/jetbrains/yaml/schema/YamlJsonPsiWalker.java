@@ -6,13 +6,12 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -467,6 +466,38 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         sibling = sibling.getNextSibling();
       }
       return sibling;
+    }
+
+    @NotNull
+    @Override
+    public PsiElement addProperty(@NotNull PsiElement contextForInsertion, @NotNull PsiElement newProperty) {
+      // Sometimes, post-write-action formatting can break the YAML structure if the area was not indented properly initially.
+      // This is why we pre-format it to avoid problems.
+      preFormatAround(contextForInsertion);
+
+      return JsonLikeSyntaxAdapter.super.addProperty(contextForInsertion, newProperty);
+    }
+
+    private static void preFormatAround(PsiElement element) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(element.getProject());
+      Document document = documentManager.getDocument(element.getContainingFile());
+      if (document == null) {
+        return; // nothing to format if there is no document anyway
+      }
+      // We need to commit the pending PSI changes before triggering the formatting, otherwise it will fail.
+      // This typically happens if we have several calls to addProperty in a row, but could be with any previous PSI change too.
+      documentManager.doPostponedOperationsAndUnblockDocument(document);
+
+      // If we try to format an element that is itself indented, the formatter will not take this base indent into account.
+      // This is why we need to go up the tree to find the top-level Key-Value that contains our element.
+      PsiElement elementToFormat = YamlPsiUtilKt.findClosestAncestorWithoutIndent(document, element);
+
+      // The formatter doesn't support formatting YAMLDocument or YAMLMapping elements, but if we reach one of those, they represent the
+      // whole file anyway (because they must have an indent of 0), so we can trigger the formatting on the containing file.
+      if (elementToFormat instanceof YAMLDocument || elementToFormat instanceof YAMLMapping) {
+        elementToFormat = elementToFormat.getContainingFile();
+      }
+      CodeStyleManager.getInstance(element.getProject()).reformat(elementToFormat, true);
     }
   }
 }

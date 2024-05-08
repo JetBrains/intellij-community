@@ -96,6 +96,84 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                  -\s""");
   }
 
+  public void testAddPropAfterObjectProp() {
+    @Language("JSON") String schema = """
+      {
+        "type": "object",
+        "properties": {
+          "obj": {
+            "type": "object",
+            "properties": {
+              "foo": {
+                "type": "number"
+              },
+              "bar": {
+                "type": "object"
+              },
+              "baz": {
+                "type": "number"
+              }
+            },
+            "required": ["foo", "bar", "baz"]
+          }
+        },
+        "required": ["obj"]
+      }""";
+    String text = """
+      obj:
+        <warning>foo: 42
+        bar:
+          aa: 42
+          ab: 42<caret></warning>""";
+    String afterFix = """
+      obj:
+        foo: 42
+        bar:
+          aa: 42
+          ab: 42
+        baz: 0""";
+    doTest(schema, text, "Add missing property 'baz'", afterFix);
+  }
+
+  public void testAddPropAfterObjectProp_wrongFormatting() {
+    @Language("JSON") String schema = """
+      {
+        "type": "object",
+        "properties": {
+          "obj": {
+            "type": "object",
+            "properties": {
+              "foo": {
+                "type": "number"
+              },
+              "bar": {
+                "type": "object"
+              },
+              "baz": {
+                "type": "number"
+              }
+            },
+            "required": ["foo", "bar", "baz"]
+          }
+        },
+        "required": ["obj"]
+      }""";
+    String text = """
+      obj:
+           <warning>foo: 42
+           bar:
+              aa: 42
+              ab: 42<caret></warning>""";
+    String afterFix = """
+      obj:
+        foo: 42
+        bar:
+          aa: 42
+          ab: 42
+        baz: 0""";
+    doTest(schema, text, "Add missing property 'baz'", afterFix);
+  }
+
   public void testEmptyObjectMultipleProps() {
     String text = """
       xyzObject:

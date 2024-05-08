@@ -3,8 +3,11 @@ package org.jetbrains.yaml.psi
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.editor.Document
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
+import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.headTailOrNull
 import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.annotations.ApiStatus
@@ -48,3 +51,19 @@ private fun isValid(meta: YamlMetaType, value: YAMLValue): Boolean {
 
 @ApiStatus.Experimental
 fun estimatedType(scalar: YAMLScalar): YamlMetaType? = types.firstOrNull { isValid(it, scalar) }
+
+/**
+ * Returns the closest ancestor of [element] that has no indentation (is at the start of line).
+ * In short, this helps to find the containing top-level Key-Value in non-empty documents.
+ */
+internal fun Document.findClosestAncestorWithoutIndent(element: PsiElement): PsiElement {
+  var current = element
+  while (!isAtStartOfLine(current)) {
+    // It is not possible to reach the root here, because it would mean the root itself is indented - where would the indent node be then?
+    current = current.parent ?: error("the root of the PSI tree cannot be indented itself")
+  }
+  return current
+}
+
+private fun Document.isAtStartOfLine(element: PsiElement): Boolean =
+  getLineStartOffset(getLineNumber(element.startOffset)) == element.startOffset
