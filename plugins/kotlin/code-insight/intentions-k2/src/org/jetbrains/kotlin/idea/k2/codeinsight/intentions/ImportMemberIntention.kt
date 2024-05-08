@@ -9,10 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -88,7 +85,7 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
         is KaCallableSymbol -> {
             val callableId = symbol.callableId ?: return null
             if (callableId.callableName.isSpecial) return null
-            if (!canBeImported(symbol)) return null
+            if (symbol.getImportableName() == null) return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
                 classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },
@@ -104,22 +101,5 @@ private fun computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): Im
         }
 
         else -> return null
-    }
-}
-
-context(KaSession)
-private fun canBeImported(symbol: KaCallableSymbol): Boolean {
-    if (symbol is KaEnumEntrySymbol) return true
-    if (symbol.origin.isJavaSourceOrLibrary()) {
-        return when (symbol) {
-            is KaFunctionSymbol -> symbol.isStatic
-            is KtPropertySymbol -> symbol.isStatic
-            is KtJavaFieldSymbol -> symbol.isStatic
-            else -> false
-        }
-    } else {
-        if ((symbol as? KaSymbolWithKind)?.symbolKind == KaSymbolKind.TOP_LEVEL) return true
-        val containingClass = symbol.getContainingSymbol() as? KaClassOrObjectSymbol ?: return true
-        return containingClass.classKind == KaClassKind.OBJECT || containingClass.classKind == KaClassKind.COMPANION_OBJECT
     }
 }
