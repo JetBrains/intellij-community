@@ -1045,6 +1045,7 @@ f:com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog
 - loadConfiguration(com.intellij.structuralsearch.plugin.ui.Configuration):V
 - show():V
 f:com.intellij.structuralsearch.plugin.ui.StructuralSearchDialogKeys
+- sf:AI_SUPPORT_KEY:com.intellij.openapi.util.Key
 - sf:STRUCTURAL_SEARCH_DIALOG:com.intellij.openapi.util.Key
 - sf:STRUCTURAL_SEARCH_ERROR_CALLBACK:com.intellij.openapi.util.Key
 - sf:STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID:com.intellij.openapi.util.Key
