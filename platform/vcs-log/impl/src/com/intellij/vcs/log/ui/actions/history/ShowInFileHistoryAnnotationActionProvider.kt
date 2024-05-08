@@ -57,7 +57,7 @@ private class ShowInFileHistoryAnnotationAction(private val annotation: FileAnno
     val ui = showFileHistoryUi(project, listOf(annotatedFilePath), annotatedRevisionNumber) ?: return
     val future = ui.jumpToHash(lineRevisionNumber, false, true)
 
-    VcsProjectLog.getInstance(project).childScope().launch {
+    VcsProjectLog.getInstance(project).coroutineScope.launch {
       withBackgroundProgress(project,
                              VcsLogBundle.message("file.history.show.commit.in.history.process",
                                                   VcsLogUtil.getShortHash(lineRevisionNumber)), true) {

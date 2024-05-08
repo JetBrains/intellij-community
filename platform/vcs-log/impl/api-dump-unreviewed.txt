@@ -1112,7 +1112,6 @@ f:com.intellij.vcs.log.impl.VcsProjectLog
 - sf:Companion:com.intellij.vcs.log.impl.VcsProjectLog$Companion
 - sf:VCS_PROJECT_LOG_CHANGED:com.intellij.util.messages.Topic
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- f:childScope():kotlinx.coroutines.CoroutineScope
 - f:createLogInBackground(Z):V
 - f:getDataManager():com.intellij.vcs.log.data.VcsLogData
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.log.impl.VcsProjectLog
