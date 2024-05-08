@@ -16,7 +16,7 @@ interface NavBarItem {
 
   companion object {
     @JvmField
-    val NAVBAR_ITEM_KEY: DataKey<NavBarItem> = DataKey.create("navigationBarItem")
+    val NAVBAR_ITEM_KEY: DataKey<Pointer<out NavBarItem>> = DataKey.create("navigationBarItem")
   }
 
   /**

@@ -33,6 +33,7 @@ suspend fun dumpContextModel(ctx: DataContext, project: Project): List<String> {
 @RequiresReadLock
 fun contextNavBarPathStrings(ctx: DataContext): List<String> {
   val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
+                      ?.dereference()
                     ?: return emptyList()
   return contextItem.pathToItem().map {
     it.presentation().text

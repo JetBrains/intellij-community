@@ -38,6 +38,7 @@ internal class MonolithNavbarServiceDelegate(private val project: Project) : Nav
   override suspend fun contextModel(ctx: DataContext): List<NavBarVmItem> {
     return readAction {
       val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
+                          ?.dereference()
                         ?: return@readAction emptyList()
       contextItem
         .pathToItem()
