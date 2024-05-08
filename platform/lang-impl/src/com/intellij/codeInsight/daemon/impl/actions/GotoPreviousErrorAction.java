@@ -34,7 +34,7 @@ public class GotoPreviousErrorAction extends BaseCodeInsightAction implements Du
 
   @Override
   protected @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
-    return new GotoNextErrorHandler(true, GotoNextErrorUtilsKt.getTrafficHighlightSeverity(dataContext));
+    return new GotoNextErrorHandler(false, GotoNextErrorUtilsKt.getTrafficHighlightSeverity(dataContext));
   }
 
   @Override
