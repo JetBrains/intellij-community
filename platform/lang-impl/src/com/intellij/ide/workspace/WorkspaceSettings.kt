@@ -4,7 +4,7 @@ package com.intellij.ide.workspace
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 
-internal val Project.isWorkspace get() = WorkspaceSettings.getInstance(this).isWorkspace
+val Project.isWorkspace get() = WorkspaceSettings.getInstance(this).isWorkspace
 
 internal fun setWorkspace(project: Project) {
   WorkspaceSettings.getInstance(project).isWorkspace = true

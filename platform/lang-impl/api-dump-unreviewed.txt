@@ -19511,6 +19511,8 @@ f:com.intellij.ide.workspace.WorkspaceAttachProcessor
 - getActionText(com.intellij.openapi.project.Project):java.lang.String
 - getDescription(com.intellij.openapi.project.Project):java.lang.String
 - isEnabled():Z
+f:com.intellij.ide.workspace.WorkspaceSettingsKt
+- sf:isWorkspace(com.intellij.openapi.project.Project):Z
 f:com.intellij.ide.workspace.projectView.WorkspaceNode
 - com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory,com.intellij.ide.projectView.ViewSettings,com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode):V
