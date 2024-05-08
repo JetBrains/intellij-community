@@ -818,7 +818,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
     if (mavenArtifacts.forIdeModules) {
       platformModules.addAll(distributionState.platformModules)
       val productLayout = context.productProperties.productLayout
-      collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = platformModules)
+      collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = platformModules, context = context)
     }
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
@@ -1396,7 +1396,7 @@ private fun crossPlatformZip(
 
 fun collectModulesToCompile(context: BuildContext, result: MutableSet<String>) {
   val productLayout = context.productProperties.productLayout
-  collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = result)
+  collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = result, context = context)
   collectPlatformModules(result)
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
@@ -1451,7 +1451,7 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
 /**
  * @return list of all modules which output is included in the plugin's JARs
  */
-internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>, product: ProductModulesLayout, result: MutableSet<String>) {
+internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>, product: ProductModulesLayout, result: MutableSet<String>, context: BuildContext) {
   result.addAll(enabledPluginModules)
   val enabledPluginModuleSet = if (enabledPluginModules is Set<String> || enabledPluginModules.size < 2) {
     enabledPluginModules
@@ -1459,9 +1459,15 @@ internal fun collectIncludedPluginModules(enabledPluginModules: Collection<Strin
   else {
     enabledPluginModules.toHashSet()
   }
-  product.pluginLayouts.asSequence()
-    .filter { enabledPluginModuleSet.contains(it.mainModule) }
-    .flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
+
+  for (plugin in product.pluginLayouts) {
+    if (!enabledPluginModuleSet.contains(plugin.mainModule)) {
+      continue
+    }
+
+    plugin.includedModules.mapTo(result) { it.moduleName }
+    result.addAll((context as BuildContextImpl).jarPackagerDependencyHelper.readPluginContentFromDescriptor(context.findRequiredModule(plugin.mainModule)))
+  }
 }
 
 fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
