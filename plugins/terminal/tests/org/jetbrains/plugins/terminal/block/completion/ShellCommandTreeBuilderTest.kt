@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.completion
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.block.completion
 
 import com.intellij.terminal.block.completion.engine.*
-import com.intellij.terminal.completion.util.FakeShellCommandSpecsManager
-import com.intellij.terminal.completion.util.FakeShellRuntimeDataProvider
+import org.jetbrains.plugins.terminal.block.util.FakeShellCommandSpecsManager
+import org.jetbrains.plugins.terminal.block.util.FakeShellRuntimeDataProvider
 import com.intellij.terminal.completion.util.commandSpec
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.TreeTraversal
