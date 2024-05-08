@@ -6,6 +6,7 @@ package com.intellij.ui
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -36,8 +37,11 @@ abstract class ExperimentalUI {
     const val FORCED_SWITCH_TO_NEW_UI: String = "forced.switch.to.new.ui"
     val forcedSwitchedUi = EarlyAccessRegistryManager.getBoolean(FORCED_SWITCH_TO_NEW_UI)
 
+    @Internal
+    val EP_LISTENER: ExtensionPointName<Listener> = ExtensionPointName("com.intellij.uiChangeListener")
+
     init {
-      NewUiValue.initialize { EarlyAccessRegistryManager.getBoolean(KEY) }
+      NewUiValue.initialize { getInstance().earlyInitValue() }
     }
 
     @JvmStatic
@@ -45,10 +49,6 @@ abstract class ExperimentalUI {
 
     @JvmStatic
     fun isNewUI(): Boolean = NewUiValue.isEnabled()
-
-    fun setNewUI(value: Boolean) {
-      getInstance().setNewUIInternal(newUI = value, suggestRestart = true)
-    }
 
     val isNewNavbar: Boolean
       get() = NewUiValue.isEnabled() && Registry.`is`("ide.experimental.ui.navbar.scroll", true)
@@ -65,7 +65,9 @@ abstract class ExperimentalUI {
       }
   }
 
-  open fun setNewUIInternal(newUI: Boolean, suggestRestart: Boolean) {}
+  open fun setNewUIInternal(newUI: Boolean, suggestRestart: Boolean) {
+    // TODO: remove all callers
+  }
 
   // used by the JBClient for cases where a link overrides new UI mode
   abstract fun saveCurrentValueAndReapplyDefaultLaf()
@@ -76,9 +78,16 @@ abstract class ExperimentalUI {
   open fun installIconPatcher() {
   }
 
+  open fun earlyInitValue() = EarlyAccessRegistryManager.getBoolean(KEY)
+
   /**
    * Interface to mark renderers compliant with the new UI design guidelines.
    */
   @Internal
   interface NewUIComboBoxRenderer
+
+  @Internal
+  interface Listener {
+    fun changeUI(value: Boolean)
+  }
 }

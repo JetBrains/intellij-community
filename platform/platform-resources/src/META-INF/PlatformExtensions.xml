@@ -650,8 +650,6 @@
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
 
-    <startPagePromoter id="NewUiPromoter" implementation="com.intellij.openapi.wm.impl.welcomeScreen.NewUiPromoter"/>
-
     <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization" preload="notHeadless"/>
 
     <!-- General -->
@@ -675,14 +673,6 @@
     <applicationConfigurable groupId="appearance" groupWeight="130" instance="com.intellij.ide.ui.customization.CustomizationConfigurable"
                              id="preferences.customizations"
                              key="title.customizations" bundle="messages.IdeBundle"/>
-
-    <!-- New UI -->
-    <applicationConfigurable groupId="appearance"
-                             groupWeight="149"
-                             id="reference.settings.ide.settings.new.ui"
-                             instance="com.intellij.ui.ExperimentalUIConfigurable"
-                             bundle="messages.IdeBundle"
-                             key="configurable.new.ui.name"/>
 
     <!-- Notifications -->
     <applicationConfigurable groupId="appearance"

@@ -389,12 +389,21 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("group.ui.options")) {
         val leftColumnControls = sequence<Row.() -> Unit> {
+          if (ExperimentalUI.isNewUI()) {
+            yield {
+              checkBox(message("checkbox.compact.mode"))
+                .bindSelected(UISettings.getInstance()::compactMode)
+                .comment(message("checkbox.compact.mode.description"))
+            }
+          }
           yield { checkBox(cdFullPathsInTitleBar) }
-          yield { checkBox(cdDnDWithAlt) }
-          yield {
-            checkBox(cdSmoothScrolling)
-              .gap(RightGap.SMALL)
-            contextHelp(message("checkbox.smooth.scrolling.description"))
+          if (!ExperimentalUI.isNewUI()) {
+            yield { checkBox(cdDnDWithAlt) }
+            yield {
+              checkBox(cdSmoothScrolling)
+                .gap(RightGap.SMALL)
+              contextHelp(message("checkbox.smooth.scrolling.description"))
+            }
           }
           if (ProjectWindowCustomizerService.getInstance().isAvailable()) {
             yield {
@@ -420,6 +429,14 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
+          if (ExperimentalUI.isNewUI()) {
+            yield { checkBox(cdDnDWithAlt) }
+            yield {
+              checkBox(cdSmoothScrolling)
+                .gap(RightGap.SMALL)
+              contextHelp(message("checkbox.smooth.scrolling.description"))
+            }
+          }
           yield { checkBox(cdEnableControlsMnemonics) }
           yield { checkBox(cdEnableMenuMnemonics) }
           yield { checkBox(cdShowMenuIcons) }
@@ -446,11 +463,35 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         // column to the left one:
         val leftIt = leftColumnControls.iterator()
         val rightIt = rightColumnControls.iterator()
-        while (leftIt.hasNext() || rightIt.hasNext()) {
-          when {
-            leftIt.hasNext() && rightIt.hasNext() -> twoColumnsRow(leftIt.next(), rightIt.next())
-            leftIt.hasNext() -> twoColumnsRow(leftIt.next())
-            rightIt.hasNext() -> twoColumnsRow(rightIt.next()) // move from right to left
+
+        if (ExperimentalUI.isNewUI()) {
+          twoColumnsRow(
+            {
+              panel {
+                while (leftIt.hasNext()) {
+                  row {
+                    leftIt.next().invoke(this)
+                  }
+                }
+              }
+            },
+            {
+              panel {
+                while (rightIt.hasNext()) {
+                  row {
+                    rightIt.next().invoke(this)
+                  }
+                }
+              }
+            })
+        }
+        else {
+          while (leftIt.hasNext() || rightIt.hasNext()) {
+            when {
+              leftIt.hasNext() && rightIt.hasNext() -> twoColumnsRow(leftIt.next(), rightIt.next())
+              leftIt.hasNext() -> twoColumnsRow(leftIt.next())
+              rightIt.hasNext() -> twoColumnsRow(rightIt.next()) // move from right to left
+            }
           }
         }
 

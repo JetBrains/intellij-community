@@ -46,11 +46,6 @@ private class IFTInteractiveCoursePanel(isEnabled: Boolean, disabledText: String
     if (!enableLessonsAndPromoters) {
       add(JTextPane().apply {
         contentType = "text/html"
-        addHyperlinkListener(object : HyperlinkAdapter() {
-          override fun hyperlinkActivated(e: HyperlinkEvent) {
-            ExperimentalUI.setNewUI(true)
-          }
-        })
         editorKit = HTMLEditorKitBuilder.simple()
         text = disabledText
         isEditable = false
