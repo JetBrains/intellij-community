@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 /**
  * Tests "Create local variable" fixes
  */
-abstract class K2CreateLocalVariableFromUsageTest : K2AbstractCreateFromUsageTest() {
+abstract class K2CreateVariableFromUsageTest : K2AbstractCreateFromUsageTest() {
     override fun getTestDataPath(): String {
         return TestMetadataUtil.getTestDataPath(javaClass) + "/idea/tests/testData/quickfix/createFromUsage/createVariable"
     }
@@ -15,5 +15,5 @@ abstract class K2CreateLocalVariableFromUsageTest : K2AbstractCreateFromUsageTes
      * Class names correspond to the testData directories inside [getTestDataPath]
      * E.g. test class [LocalVariable] will find all test files inside `[getTestDataPath]/localVariable` and execute corresponding tests on them
      */
-    class LocalVariable : K2CreateLocalVariableFromUsageTest()
+    class LocalVariable : K2CreateVariableFromUsageTest()
 }
