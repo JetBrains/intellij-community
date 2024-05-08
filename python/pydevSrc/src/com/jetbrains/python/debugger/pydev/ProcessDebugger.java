@@ -10,9 +10,10 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
-import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.notebooks.tables.TableCommandParameters;
+import com.intellij.notebooks.tables.TableCommandType;
 
 import java.util.Collection;
 import java.util.List;

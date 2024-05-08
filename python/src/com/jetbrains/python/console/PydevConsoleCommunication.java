@@ -32,11 +32,9 @@ import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
-import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.pydev.tables.PyDevCommandParameters;
-import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
@@ -48,6 +46,8 @@ import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import com.intellij.notebooks.tables.TableCommandParameters;
+import com.intellij.notebooks.tables.TableCommandType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -946,7 +946,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
 
     @Override
-    public void sendRichOutput(Map<String, String> data) throws TException {
+    public void sendRichOutput(Map<String, String> data) {
       if (myConsoleView == null) return;
       if (data.isEmpty()) return;
       PyConsoleOutputCustomizer.Companion.getInstance().showRichOutput(myConsoleView, data);

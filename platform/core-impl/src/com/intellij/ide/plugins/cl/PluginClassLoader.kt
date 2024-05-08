@@ -95,7 +95,7 @@ class PluginClassLoader(
 
     init {
       var logStreamCandidate: Writer? = null
-      var debugFilePath = System.getProperty("plugin.classloader.debug", "")
+      var debugFilePath =   System.getProperty("plugin.classloader.debug", "")
       if (!debugFilePath.isEmpty()) {
         try {
           if (debugFilePath.startsWith("~/") || debugFilePath.startsWith("~\\")) {

@@ -14,9 +14,10 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
-import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.notebooks.tables.TableCommandParameters;
+import com.intellij.notebooks.tables.TableCommandType;
 
 import java.io.IOException;
 import java.util.*;
@@ -112,7 +113,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public boolean isConnected() {
-    return allDebuggers().stream().anyMatch(RemoteDebugger::isConnected);
+    return ContainerUtil.exists(allDebuggers(), RemoteDebugger::isConnected);
   }
 
   @Override
