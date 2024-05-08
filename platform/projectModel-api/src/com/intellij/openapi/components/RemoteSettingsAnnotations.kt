@@ -4,3 +4,4 @@ package com.intellij.openapi.components
 annotation class RemoteSetting(val direction: RemoteSettingDirection, val allowedInCwm: Boolean = false)
 
 enum class RemoteSettingDirection { FromHost, FromClient, Both, None }
+// TODO remove Both and None, rename to initial value source

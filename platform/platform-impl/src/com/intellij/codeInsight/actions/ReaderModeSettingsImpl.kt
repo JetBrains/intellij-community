@@ -101,6 +101,10 @@ class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : Pers
 
   override fun getState(): State = state
 
+  override fun noStateLoaded() {
+    loadState(State())
+  }
+
   override fun loadState(state: State) {
     this.state = state
   }

@@ -4,7 +4,7 @@ import com.intellij.openapi.components.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-@RemoteSetting(direction = RemoteSettingDirection.Both)
+@RemoteSetting(direction = RemoteSettingDirection.FromHost)
 @State(name = "MarkdownCodeInsightSettings",
        category = SettingsCategory.CODE,
        storages = [(Storage("markdown.xml"))])
@@ -18,6 +18,10 @@ class MarkdownCodeInsightSettings: SimplePersistentStateComponent<MarkdownCodeIn
     var smartEnterAndBackspace: Boolean by property(true)
     var renumberListsOnType: Boolean by property(false)
     var enableFileDrop: Boolean by property(true)
+  }
+
+  override fun noStateLoaded() {
+    reset()
   }
 
   fun reset() {
