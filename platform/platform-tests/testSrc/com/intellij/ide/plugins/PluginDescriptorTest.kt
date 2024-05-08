@@ -586,7 +586,8 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     raw.id = id.idString
   }
   val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = id, moduleName = null)
-  result.readExternal(
+  initMainDescriptorByRaw(
+    descriptor = result,
     raw = raw,
     context = DescriptorListLoadingContext(customDisabledPlugins = emptySet()),
     pathResolver = pathResolver,
@@ -609,6 +610,6 @@ fun createFromDescriptor(path: Path,
                                  readInto = null,
                                  locationSource = path.toString())
   val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = null, moduleName = null)
-  result.readExternal(raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
+  initMainDescriptorByRaw(descriptor = result, raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
   return result
 }

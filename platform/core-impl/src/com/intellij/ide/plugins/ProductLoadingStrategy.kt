@@ -197,23 +197,13 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       val descriptorInput = when {
         pluginDescriptorData != null -> createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
         jarOnly || item.path.endsWith(".jar") -> {
-          createNonCoalescingXmlStreamReader(
-            input = dataLoader.load(PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)!!,
-            locationSource = item.path,
-          )
+          createNonCoalescingXmlStreamReader(input = dataLoader.load(PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)!!, locationSource = item.path)
         }
         else -> {
           createNonCoalescingXmlStreamReader(Files.newInputStream(item.file.resolve(PluginManagerCore.PLUGIN_XML_PATH)), item.path)
         }
       }
-      readModuleDescriptor(
-        reader = descriptorInput,
-        readContext = context,
-        pathResolver = pluginPathResolver,
-        dataLoader = dataLoader,
-        includeBase = null,
-        readInto = null,
-      )
+      readModuleDescriptor(reader = descriptorInput, readContext = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
     }
 
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginDir, isBundled = true, id = null, moduleName = null)

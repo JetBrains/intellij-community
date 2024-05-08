@@ -224,28 +224,7 @@ class IdeaPluginDescriptorImpl(
     return result
   }
 
-  fun readExternal(
-    raw: RawPluginDescriptor,
-    pathResolver: PathResolver,
-    context: DescriptorListLoadingContext,
-    dataLoader: DataLoader,
-  ) {
-    for (module in content.modules) {
-      val subDescriptorFile = module.configFile ?: "${module.name}.xml"
-      val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
-      val subDescriptor = createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
-      module.descriptor = subDescriptor
-    }
-
-    initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
-  }
-
-  internal fun initByRawDescriptor(
-    raw: RawPluginDescriptor,
-    context: DescriptorListLoadingContext,
-    pathResolver: PathResolver,
-    dataLoader: DataLoader,
-  ) {
+  internal fun initByRawDescriptor(raw: RawPluginDescriptor, context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader) {
     if (raw.resourceBundleBaseName != null) {
       if (id == PluginManagerCore.CORE_ID) {
         LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +

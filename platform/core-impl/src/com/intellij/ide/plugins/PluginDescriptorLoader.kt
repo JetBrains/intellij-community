@@ -115,7 +115,7 @@ fun loadDescriptorFromDir(
       useCoreClassLoader = useCoreClassLoader,
     )
     context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = descriptorRelativePath)
-    descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
+    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
     descriptor.jarFiles = Collections.singletonList(dir)
     return descriptor
   }
@@ -164,16 +164,9 @@ fun loadDescriptorFromJar(
       locationSource = file.toString(),
     )
 
-    val descriptor = IdeaPluginDescriptorImpl(
-      raw = raw,
-      path = pluginDir ?: file,
-      isBundled = isBundled,
-      id = null,
-      moduleName = null,
-      useCoreClassLoader = useCoreClassLoader,
-    )
+    val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginDir ?: file, isBundled = isBundled, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
     parentContext.debugData?.recordDescriptorPath(descriptor, raw, descriptorRelativePath)
-    descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = parentContext, dataLoader = dataLoader)
+    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = parentContext, dataLoader = dataLoader)
     descriptor.jarFiles = Collections.singletonList(descriptor.pluginPath)
     return descriptor
   }
@@ -190,19 +183,26 @@ fun loadDescriptorFromJar(
 }
 
 @VisibleForTesting
-fun loadDescriptorFromFileOrDirInTests(
-  file: Path,
+fun initMainDescriptorByRaw(
+  descriptor: IdeaPluginDescriptorImpl,
+  raw: RawPluginDescriptor,
+  pathResolver: PathResolver,
   context: DescriptorListLoadingContext,
-  isBundled: Boolean,
-): IdeaPluginDescriptorImpl? {
-  return loadDescriptorFromFileOrDir(
-    file = file,
-    context = context,
-    isBundled = isBundled,
-    isEssential = true,
-    isUnitTestMode = true,
-    pool = NonShareableJavaZipFilePool(),
-  )
+  dataLoader: DataLoader,
+) {
+  for (module in descriptor.content.modules) {
+    val subDescriptorFile = module.configFile ?: "${module.name}.xml"
+    val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
+    val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
+    module.descriptor = subDescriptor
+  }
+
+  descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+}
+
+@VisibleForTesting
+fun loadDescriptorFromFileOrDirInTests(file: Path, context: DescriptorListLoadingContext, isBundled: Boolean): IdeaPluginDescriptorImpl? {
+  return loadDescriptorFromFileOrDir(file = file, context = context, isBundled = isBundled, isEssential = true, isUnitTestMode = true, pool = NonShareableJavaZipFilePool())
 }
 
 @Internal
