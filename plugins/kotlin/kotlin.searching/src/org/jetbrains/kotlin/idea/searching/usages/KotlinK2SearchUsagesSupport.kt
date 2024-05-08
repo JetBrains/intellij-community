@@ -89,8 +89,14 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         declaration: KtNamedDeclaration
     ): Boolean = declaration.isExpectDeclaration() &&
             reference.unwrappedTargets.any { target ->
-                target is KtDeclaration && ExpectActualSupport.getInstance(declaration.project)
-                    .expectedDeclarationIfAny(target) == declaration
+                if (target is KtDeclaration) {
+                    val expectedDeclaration = ExpectActualSupport.getInstance(declaration.project)
+                        .expectedDeclarationIfAny(target)
+                    expectedDeclaration == declaration ||
+                            //repeat logic of AbstractKtReference.isReferenceTo for calls on companion objects
+                            expectedDeclaration is KtObjectDeclaration && expectedDeclaration.isCompanion() && expectedDeclaration.getNonStrictParentOfType<KtClass>() == declaration
+                }
+                else false
             }
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {

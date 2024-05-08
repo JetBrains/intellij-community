@@ -58,6 +58,11 @@ public class FindUsagesMultiModuleTestGenerated extends AbstractFindUsagesMultiM
         runTest("testData/multiModuleFindUsages/findCommonSuperclass/");
     }
 
+    @TestMetadata("findCompanionObjectUsages")
+    public void testFindCompanionObjectUsages() throws Exception {
+        runTest("testData/multiModuleFindUsages/findCompanionObjectUsages/");
+    }
+
     @TestMetadata("findDataComponentInJs")
     public void testFindDataComponentInJs() throws Exception {
         runTest("testData/multiModuleFindUsages/findDataComponentInJs/");
