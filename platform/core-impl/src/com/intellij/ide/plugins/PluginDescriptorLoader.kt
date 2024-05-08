@@ -759,7 +759,7 @@ private fun loadProductModule(
       reader = createXmlStreamReader(requireNotNull(module.descriptorContent) {
         "Product module ${module.name} descriptor content is not embedded - corrupted distribution " +
         "(jarFile=$jarFile, containerDescriptor=$containerDescriptor, siblings=${containerDescriptor.content.modules.joinToString()})"
-      }.reader()),
+      }),
       readContext = context,
       pathResolver = pathResolver,
       dataLoader = dataLoader,

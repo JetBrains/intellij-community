@@ -158,7 +158,7 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
   }
 }
 
-data class PluginBuildDescriptor(
+internal data class PluginBuildDescriptor(
   @JvmField val dir: Path,
   @JvmField val layout: PluginLayout,
   @JvmField val moduleNames: List<String>,
@@ -172,10 +172,7 @@ fun writePluginClassPathHeader(out: DataOutputStream, isJarOnly: Boolean, plugin
   out.writeShort(pluginCount)
 }
 
-fun generatePluginClassPath(
-  pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
-  writeDescriptor: Boolean,
-): ByteArray {
+internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>): ByteArray {
   val allEntries = mutableListOf<Pair<Path, List<Path>>>()
   for ((pluginAsset, entries) in pluginEntries) {
     val files = entries.asSequence()

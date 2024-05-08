@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -17,9 +17,7 @@ suspend fun createDistributionBuilderState(context: BuildContext): DistributionB
   return DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context)
 }
 
-class DistributionBuilderState(@JvmField val platform: PlatformLayout,
-                               @JvmField val pluginsToPublish: Set<PluginLayout>,
-                               context: BuildContext) {
+class DistributionBuilderState(@JvmField val platform: PlatformLayout, @JvmField val pluginsToPublish: Set<PluginLayout>, context: BuildContext) {
   init {
     val releaseDate = context.applicationInfo.majorReleaseDate
     require(!releaseDate.startsWith("__")) {
@@ -71,7 +69,7 @@ internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: 
 }
 
 /**
- * @return module names which are required to run necessary tools from build scripts
+ * @return module names which are required to run the necessary tools from build scripts
  */
 internal fun getToolModules(): List<String> {
   return java.util.List.of("intellij.java.rt", "intellij.platform.main",

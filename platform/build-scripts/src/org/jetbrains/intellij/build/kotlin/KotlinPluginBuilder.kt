@@ -341,7 +341,7 @@ object KotlinPluginBuilder {
         throw IllegalStateException("Can't parse build number: $ideBuildVersion")
       })
 
-      spec.withRawPluginXmlPatcher { text ->
+      spec.withRawPluginXmlPatcher { text, _ ->
         when (kind) {
           KotlinPluginKind.IJ, KotlinPluginKind.Fleet ->
             //noinspection SpellCheckingInspection

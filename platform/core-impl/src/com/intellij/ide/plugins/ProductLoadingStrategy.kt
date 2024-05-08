@@ -7,6 +7,7 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
+import com.intellij.util.xml.dom.createXmlStreamReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayInputStream
@@ -218,29 +219,31 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginDir, isBundled = true, id = null, moduleName = null)
     context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)
     for (module in descriptor.content.modules) {
-      val subDescriptorFile = module.configFile ?: "${module.name}.xml"
-      val input = dataLoader.load(subDescriptorFile, pluginDescriptorSourceOnly = true)
       var classPath: List<Path>? = null
-      val subRaw = if (input == null) {
-        val jarFile = pluginDir.resolve("lib/modules/${module.name}.jar")
-        if (Files.exists(jarFile)) {
-          classPath = Collections.singletonList(jarFile)
-          loadModuleFromSeparateJar(pool = zipFilePool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
+      val subDescriptorFile = module.configFile ?: "${module.name}.xml"
+      val subRaw = if (module.descriptorContent == null) {
+        val input = dataLoader.load(subDescriptorFile, pluginDescriptorSourceOnly = true)
+        if (input == null) {
+          val jarFile = pluginDir.resolve("lib/modules/${module.name}.jar")
+          if (Files.exists(jarFile)) {
+            classPath = Collections.singletonList(jarFile)
+            loadModuleFromSeparateJar(pool = zipFilePool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
+          }
+          else {
+            throw RuntimeException("Cannot resolve $subDescriptorFile (dataLoader=$dataLoader)")
+          }
         }
         else {
-          throw RuntimeException("Cannot resolve $subDescriptorFile (dataLoader=$dataLoader)")
+          readModuleDescriptor(reader = createXmlStreamReader(input), readContext = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
         }
       }
       else {
-        readModuleDescriptor(
-          input = input,
-          readContext = context,
-          pathResolver = pluginPathResolver,
-          dataLoader = dataLoader,
-          includeBase = null,
-          readInto = null,
-          locationSource = null,
-        )
+        val subRaw = readModuleDescriptor(reader = createXmlStreamReader(module.descriptorContent), readContext = context, dataLoader = dataLoader)
+        if (subRaw.`package` == null) {
+          classPath = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
+        }
+
+        subRaw
       }
 
       val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
@@ -249,6 +252,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       }
       module.descriptor = subDescriptor
     }
+
     descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
     descriptor.jarFiles = fileItems.map { it.file }
     return descriptor
@@ -330,17 +334,9 @@ private fun loadModuleFromSeparateJar(
 ): RawPluginDescriptor {
   val resolver = pool.load(jarFile)
   try {
-    val entry = resolver.loadZipEntry(subDescriptorFile) ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
-    return readModuleDescriptor(
-      input = entry,
-      readContext = context,
-      // product module is always fully resolved and do not contain `xi:include`
-      pathResolver = null,
-      dataLoader = dataLoader,
-      includeBase = null,
-      readInto = null,
-      locationSource = jarFile.toString(),
-    )
+    val input = resolver.loadZipEntry(subDescriptorFile) ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
+    // product module is always fully resolved and do not contain `xi:include`
+    return readModuleDescriptor(reader = createXmlStreamReader(input, jarFile.toString()), readContext = context, dataLoader = dataLoader)
   }
   finally {
     (resolver as? Closeable)?.close()

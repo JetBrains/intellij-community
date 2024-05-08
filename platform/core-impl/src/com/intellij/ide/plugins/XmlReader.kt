@@ -82,10 +82,10 @@ fun readModuleDescriptor(
 internal fun readModuleDescriptor(
   reader: XMLStreamReader2,
   readContext: ReadModuleContext,
-  pathResolver: PathResolver?,
   dataLoader: DataLoader,
-  includeBase: String?,
-  readInto: RawPluginDescriptor?,
+  pathResolver: PathResolver? = null,
+  includeBase: String? = null,
+  readInto: RawPluginDescriptor? = null,
 ): RawPluginDescriptor {
   try {
     if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
@@ -780,19 +780,19 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
 
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
-      descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(
-        name = name,
-        configFile = configFile,
-        descriptorContent = null,
-      ))
+      descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = null))
     }
     else {
-      val descriptorContent = reader.text?.takeIf { it.isNotBlank() }
-      descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(
-        name = name,
-        configFile = configFile,
-        descriptorContent = descriptorContent,
-      ))
+      val fromIndex = reader.textStart
+      val toIndex = fromIndex + reader.textLength
+      val length: Int = toIndex - fromIndex
+      val descriptorContent = if (length == 0) {
+        null
+      }
+      else {
+        Arrays.copyOfRange(reader.textCharacters, fromIndex, toIndex)
+      }
+      descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = descriptorContent))
 
       var nesting = 1
       while (true) {

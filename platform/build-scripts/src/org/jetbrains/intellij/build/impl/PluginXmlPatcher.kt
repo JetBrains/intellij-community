@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import io.opentelemetry.api.trace.Span
+import org.jdom.CDATA
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
@@ -47,7 +48,7 @@ internal fun patchPluginXml(
   context: BuildContext,
 ) {
   val pluginModule = context.findRequiredModule(plugin.mainModule)
-  val descriptorContent = plugin.rawPluginXmlPatcher(helper.getPluginXmlContent(pluginModule))
+  val descriptorContent = plugin.rawPluginXmlPatcher(helper.getPluginXmlContent(pluginModule), context)
 
   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                          context.proprietaryBuildTools.artifactsServer != null
@@ -119,6 +120,16 @@ fun doPatchPluginXml(
       setProductDescriptorEapAttribute(productDescriptor, isEap)
       productDescriptor.setAttribute("release-date", releaseDate)
       productDescriptor.setAttribute("release-version", releaseVersion)
+    }
+  }
+
+  // CDATA is not created by our XML reader, so, we restore wrapping into CDATA
+  for (name in arrayOf("description", "change-notes")) {
+    rootElement.getChild(name)?.let {
+      val text = it.text
+      if (text.isNotEmpty()) {
+        it.setContent(CDATA(text))
+      }
     }
   }
 

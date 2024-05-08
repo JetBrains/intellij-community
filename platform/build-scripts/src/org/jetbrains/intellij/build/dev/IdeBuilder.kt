@@ -165,13 +165,14 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         platformLayout = platformLayout,
         artifactTask = artifactTask,
         searchableOptionSet = searchableOptionSet,
+        buildPlatformJob = platformDistributionEntriesDeferred,
       )
     }
 
     launch {
       val (pluginEntries, additionalEntries) = pluginDistributionEntriesDeferred.await()
       spanBuilder("generate plugin classpath").useWithScope(Dispatchers.IO) {
-        val mainData = generatePluginClassPath(pluginEntries, writeDescriptor = !request.isUnpackedDist)
+        val mainData = generatePluginClassPath(pluginEntries)
         val additionalData = additionalEntries?.let { generatePluginClassPathFromFiles(it) }
 
         val byteOut = ByteArrayOutputStream()
@@ -319,30 +320,14 @@ private suspend fun buildPlugins(
   platformLayout: Deferred<PlatformLayout>,
   artifactTask: Job,
   searchableOptionSet: SearchableOptionSetDescriptor?,
+  buildPlatformJob: Job,
 ): Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?> {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
 
   val pluginRootDir = runDir.resolve("plugins")
 
-  val moduleNameToPluginBuildDescriptor = HashMap<String, PluginBuildDescriptor>()
-  val pluginBuildDescriptors = mutableListOf<PluginBuildDescriptor>()
-  for (plugin in getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)) {
-    if (!isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = plugin, context = context)) {
-      continue
-    }
-
-    // remove all modules without a content root
-    val modules = plugin.includedModules.asSequence()
-      .map { it.moduleName }
-      .distinct()
-      .filter { it == plugin.mainModule || !context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
-      .toList()
-    val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName), layout = plugin, moduleNames = modules)
-    for (name in modules) {
-      moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
-    }
-    pluginBuildDescriptors.add(pluginBuildDescriptor)
-  }
+  val plugins = getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
+    .filter { isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = it, context = context) }
 
   withContext(Dispatchers.IO) {
     Files.createDirectories(pluginRootDir)
@@ -351,9 +336,11 @@ private suspend fun buildPlugins(
   artifactTask.join()
 
   val pluginEntries = buildPlugins(
-    pluginBuildDescriptors = pluginBuildDescriptors,
+    plugins = plugins,
     platformLayout = platformLayout.await(),
     searchableOptionSet = searchableOptionSet,
+    pluginRootDir = pluginRootDir,
+    buildPlatformJob = buildPlatformJob,
     context = context,
   )
   val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)

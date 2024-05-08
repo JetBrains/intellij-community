@@ -516,8 +516,8 @@ private suspend fun processAndGetProductPluginContentModules(
 
 fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>, context: BuildContext): XIncludePathResolver {
   return object : XIncludePathResolver {
-    override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean): Path? {
-      if (isOptional) {
+    override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path? {
+      if (isOptional || isDynamic) {
         // It isn't safe to resolve includes at build time if they're optional.
         // This could lead to issues when running another product using this distribution.
         // E.g., if the corresponding module is somehow being excluded on runtime.

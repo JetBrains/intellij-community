@@ -33,7 +33,7 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
   class ModuleItem(
     @JvmField val name: String,
     @JvmField val configFile: String?,
-    @JvmField internal val descriptorContent: String?,
+    @JvmField internal val descriptorContent: CharArray?,
   ) {
     @JvmField
     internal var descriptor: IdeaPluginDescriptorImpl? = null

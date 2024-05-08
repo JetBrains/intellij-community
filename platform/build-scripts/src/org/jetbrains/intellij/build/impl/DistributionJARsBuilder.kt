@@ -194,7 +194,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
     }
 
     val common = commonDeferred.await()
-    val commonClassPath = generatePluginClassPath(common, writeDescriptor = true)
+    val commonClassPath = generatePluginClassPath(common)
 
     val additional = additionalDeferred.await()
     val additionalClassPath = additional?.let { generatePluginClassPathFromFiles(it) }
@@ -202,7 +202,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
     val specific = specificDeferred.await()
     for ((supportedDist) in pluginDirs) {
       val specificList = specific[supportedDist]
-      val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it, writeDescriptor = true) }
+      val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it) }
 
       val byteOut = ByteArrayOutputStream()
       val out = DataOutputStream(byteOut)
@@ -559,7 +559,7 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
   }
 }
 
-private suspend fun buildPlugins(
+internal suspend fun buildPlugins(
   moduleOutputPatcher: ModuleOutputPatcher,
   plugins: Collection<PluginLayout>,
   targetDir: Path,

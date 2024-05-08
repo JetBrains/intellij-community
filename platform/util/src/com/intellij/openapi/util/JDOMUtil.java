@@ -209,7 +209,7 @@ public final class JDOMUtil {
 
   private static @NotNull Document loadDocumentUsingStaX(@NotNull InputStream stream) throws JDOMException, IOException {
     try {
-      XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(stream);
+      XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(stream, null);
       try {
         return SafeStAXStreamBuilderKt.buildJdomDocument(xmlStreamReader);
       }
@@ -227,7 +227,7 @@ public final class JDOMUtil {
 
   private static @NotNull Element loadUsingStaX(@NotNull InputStream stream) throws JDOMException {
     try {
-      XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(stream);
+      XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(stream, null);
       try {
         return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true);
       }

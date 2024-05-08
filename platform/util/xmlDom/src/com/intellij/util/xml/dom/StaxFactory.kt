@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StaxFactory")
 package com.intellij.util.xml.dom
 
@@ -32,8 +32,9 @@ private fun createConfig(coalesce: Boolean): ReaderConfig {
 }
 
 @Throws(XMLStreamException::class)
-fun createXmlStreamReader(input: InputStream): XMLStreamReader2 {
-  return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, null, "UTF-8"), input))
+@JvmOverloads
+fun createXmlStreamReader(input: InputStream, locationSource: String? = null): XMLStreamReader2 {
+  return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, locationSource, "UTF-8"), input))
 }
 
 @Throws(XMLStreamException::class)
@@ -58,4 +59,8 @@ fun createNonCoalescingXmlStreamReader(input: ByteArray, locationSource: String?
 @Throws(XMLStreamException::class)
 fun createXmlStreamReader(reader: Reader): XMLStreamReader2 {
   return StreamReaderImpl.construct(CharSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, null, "UTF-8"), reader))
+}
+
+fun createXmlStreamReader(chars: CharArray): XMLStreamReader2 {
+  return StreamReaderImpl.construct(CharSourceBootstrapper.construct(configWithCoalescing.createNonShared(null, null, "UTF-8"), chars, 0, chars.size))
 }

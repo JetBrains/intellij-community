@@ -216,7 +216,7 @@ class PluginXmlPatcherTest {
   <version>x-plugin-version</version>
   <idea-version since-build="new-since" until-build="new-until" />
   <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
-  <description>xxx for IntelliJ-based IDEs provides</description>
+  <description><![CDATA[xxx for IntelliJ-based IDEs provides]]></description>
 </idea-plugin>
     """.trimIndent(),
     toPublish = true,

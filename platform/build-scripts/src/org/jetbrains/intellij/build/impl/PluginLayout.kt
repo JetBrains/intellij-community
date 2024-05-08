@@ -43,7 +43,9 @@ class PluginLayout private constructor(
 
   var versionEvaluator: PluginVersionEvaluator = PLUGIN_VERSION_AS_IDE
 
-  internal var rawPluginXmlPatcher: (String) -> String = { it }
+  @Internal
+  @JvmField
+  var rawPluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
 
   var pluginXmlPatcher: (String, BuildContext) -> String = { s, _ -> s }
 
@@ -202,6 +204,10 @@ class PluginLayout private constructor(
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
       layout.withResourceFromModule(moduleName = moduleName, resourcePath = resourcePath, relativeOutputPath = relativeOutputPath)
     }
+
+    fun withRawPluginXmlPatcher(pluginXmlPatcher: (String, BuildContext) -> String) {
+      layout.rawPluginXmlPatcher = pluginXmlPatcher
+    }
   }
 
   class SimplePluginLayoutSpec internal constructor(layout: PluginLayout) : PluginLayoutBuilder(layout)
@@ -304,10 +310,6 @@ class PluginLayout private constructor(
      */
     fun withCustomVersion(versionEvaluator: PluginVersionEvaluator) {
       layout.versionEvaluator = versionEvaluator
-    }
-
-    fun withRawPluginXmlPatcher(pluginXmlPatcher: (String) -> String) {
-      layout.rawPluginXmlPatcher = pluginXmlPatcher
     }
 
     /**
