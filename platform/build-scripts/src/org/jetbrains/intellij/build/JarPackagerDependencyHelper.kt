@@ -6,12 +6,10 @@ package org.jetbrains.intellij.build
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsDependencyElement
-import org.jetbrains.jps.model.module.JpsLibraryDependency
-import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.model.module.*
 import java.io.StringReader
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
@@ -24,6 +22,10 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
 
   fun getModuleDependencies(moduleName: String): Sequence<String> {
     return getModuleDependencies(context.findRequiredModule(moduleName)).map { it.moduleReference.moduleName }
+  }
+
+  fun isPluginModulePackedIntoSeparateJar(module: JpsModule, layout: PluginLayout?): Boolean {
+    return !(layout?.modulesWithExcludedModuleLibraries ?: emptySet()).contains(module.name) && getLibraryDependencies(module).any { it.libraryReference.parentReference is JpsModuleReference }
   }
 
   fun getPluginXmlContent(pluginModule: JpsModule): String {
@@ -69,11 +71,9 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     return libraryCache.computeIfAbsent(module) {
       val result = mutableListOf<JpsLibraryDependency>()
       for (element in module.dependenciesList.dependencies) {
-        if (!isProductionRuntime(element)) {
-          continue
+        if (isProductionRuntime(element) && element is JpsLibraryDependency) {
+          result.add(element)
         }
-
-        result.add((element as? JpsLibraryDependency) ?: continue)
       }
       if (result.isEmpty()) java.util.List.of() else result
     }

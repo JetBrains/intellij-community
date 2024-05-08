@@ -15,7 +15,7 @@ internal suspend fun inferModuleSources(
   platformLayout: PlatformLayout,
   helper: JarPackagerDependencyHelper,
   jarPackager: JarPackager,
-  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ) {
   // First, check the content. This is done prior to everything else since we might configure a custom relativeOutputFile.
@@ -25,16 +25,18 @@ internal suspend fun inferModuleSources(
       continue
     }
 
-    val descriptor = readXmlAsModel(context.findFileInModuleSources(moduleName, "$moduleName.xml")!!)
+    val module = context.findRequiredModule(moduleName)
+    val descriptor = readXmlAsModel(context.findFileInModuleSources(module, "$moduleName.xml")!!)
+    val useSeparateJar = descriptor.getAttributeValue("package") == null || helper.isPluginModulePackedIntoSeparateJar(module, layout)
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,
         // relative path with `/` is always packed by dev-mode, so, we don't need to fix resolving for now and can improve it later
-        relativeOutputFile = if (descriptor.getAttributeValue("package") == null) "modules/$moduleName.jar" else layout.getMainJarName(),
+        relativeOutputFile = if (useSeparateJar) "modules/$moduleName.jar" else layout.getMainJarName(),
         reason = "<- ${layout.mainModule} (plugin content)",
       ),
       layout = layout,
-      searchableOptionSet = jarsWithSearchableOptions,
+      searchableOptionSet = searchableOptionSet,
     )
   }
 
@@ -54,7 +56,7 @@ internal suspend fun inferModuleSources(
       continue
     }
 
-    jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = jarsWithSearchableOptions)
+    jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
   }
 
   // check verifier in all included modules
@@ -70,7 +72,7 @@ internal suspend fun inferModuleSources(
 
       val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
       addedModules.add(name)
-      jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = jarsWithSearchableOptions)
+      jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
     }
   }
 }

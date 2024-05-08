@@ -194,14 +194,12 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     val dataLoader = MixedDirAndJarDataLoader(files = fileItems, pool = zipFilePool, jarOnly = jarOnly)
     val pluginPathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
     val raw = withContext(Dispatchers.IO) {
-      val descriptorInput = when {
-        pluginDescriptorData != null -> createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
-        jarOnly || item.path.endsWith(".jar") -> {
-          createNonCoalescingXmlStreamReader(input = dataLoader.load(PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)!!, locationSource = item.path)
-        }
-        else -> {
-          createNonCoalescingXmlStreamReader(Files.newInputStream(item.file.resolve(PluginManagerCore.PLUGIN_XML_PATH)), item.path)
-        }
+      val descriptorInput = if (pluginDescriptorData == null) {
+        assert(!jarOnly)
+        createNonCoalescingXmlStreamReader(Files.newInputStream(item.file.resolve(PluginManagerCore.PLUGIN_XML_PATH)), item.path)
+      }
+      else {
+        createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
       }
       readModuleDescriptor(reader = descriptorInput, readContext = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
     }
@@ -215,13 +213,8 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
         val input = dataLoader.load(subDescriptorFile, pluginDescriptorSourceOnly = true)
         if (input == null) {
           val jarFile = pluginDir.resolve("lib/modules/${module.name}.jar")
-          if (Files.exists(jarFile)) {
-            classPath = Collections.singletonList(jarFile)
-            loadModuleFromSeparateJar(pool = zipFilePool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
-          }
-          else {
-            throw RuntimeException("Cannot resolve $subDescriptorFile (dataLoader=$dataLoader)")
-          }
+          classPath = Collections.singletonList(jarFile)
+          loadModuleFromSeparateJar(pool = zipFilePool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
         }
         else {
           readModuleDescriptor(reader = createXmlStreamReader(input), readContext = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
@@ -229,7 +222,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       }
       else {
         val subRaw = readModuleDescriptor(reader = createXmlStreamReader(module.descriptorContent), readContext = context, dataLoader = dataLoader)
-        if (subRaw.`package` == null) {
+        if (subRaw.`package` == null || subRaw.isSeparateJar) {
           classPath = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
         }
 

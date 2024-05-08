@@ -246,7 +246,7 @@ class JarPackager private constructor(
       platformLayout = platformLayout!!,
       addedModules = addedModules,
       helper = helper,
-      jarsWithSearchableOptions = jarsWithSearchableOptions,
+      searchableOptionSet = jarsWithSearchableOptions,
       jarPackager = this,
       context = context,
     )
@@ -291,13 +291,7 @@ class JarPackager private constructor(
     }
 
     if (searchableOptionSet != null) {
-      addSearchableOptionSources(
-        layout = layout,
-        moduleName = moduleName,
-        module = module,
-        moduleSources = moduleSources,
-        searchableOptionSet = searchableOptionSet,
-      )
+      addSearchableOptionSources(layout = layout, moduleName = moduleName, module = module, moduleSources = moduleSources, searchableOptionSet = searchableOptionSet)
     }
 
     val excludes = if (extraExcludes.isEmpty()) {
@@ -314,11 +308,7 @@ class JarPackager private constructor(
 
     if (layout != null && !layout.modulesWithExcludedModuleLibraries.contains(moduleName)) {
       val jarAsset = if (packToDir) {
-        getJarAsset(
-          targetFile = outFile,
-          relativeOutputFile = item.relativeOutputFile,
-          metaInfDir = moduleOutDir.resolve("META-INF"),
-        )
+        getJarAsset(targetFile = outFile, relativeOutputFile = item.relativeOutputFile, metaInfDir = moduleOutDir.resolve("META-INF"))
       }
       else {
         asset
@@ -395,11 +385,7 @@ class JarPackager private constructor(
             continue
           }
 
-          projectLibraryData = ProjectLibraryData(
-            libraryName = libName,
-            packMode = LibraryPackMode.MERGED,
-            reason = "<- $moduleName (always packed into plugin)",
-          )
+          projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName (always packed into plugin)")
           libToMetadata.put(element.library!!, projectLibraryData)
         }
         else {
@@ -418,15 +404,9 @@ class JarPackager private constructor(
       for (i in (files.size - 1) downTo 0) {
         val file = files.get(i)
         val fileName = file.fileName.toString()
-        if (item.reason != ModuleIncludeReasons.PRODUCT_MODULES &&
-            isSeparateJar(fileName = fileName, file = file, jarPath = asset.relativePath)) {
+        if (item.reason != ModuleIncludeReasons.PRODUCT_MODULES && isSeparateJar(fileName = fileName, file = file, jarPath = asset.relativePath)) {
           files.removeAt(i)
-          addLibrary(
-            library = library,
-            targetFile = outDir.resolve(removeVersionFromJar(fileName)),
-            relativeOutputFile = item.relativeOutputFile,
-            files = listOf(file),
-          )
+          addLibrary(library = library, targetFile = outDir.resolve(removeVersionFromJar(fileName)), relativeOutputFile = item.relativeOutputFile, files = listOf(file))
         }
       }
 
@@ -448,14 +428,7 @@ class JarPackager private constructor(
                 )
               }
               else {
-                ProjectLibraryEntry(
-                  path = targetFile,
-                  libraryFile = file,
-                  size = size,
-                  hash = hash,
-                  data = projectLibraryData,
-                  relativeOutputFile = item.relativeOutputFile,
-                )
+                ProjectLibraryEntry(path = targetFile, libraryFile = file, size = size, hash = hash, data = projectLibraryData, relativeOutputFile = item.relativeOutputFile)
               }
             },
             isPreSignedAndExtractedCandidate = asset.nativeFiles != null || isLibPreSigned(library),
@@ -674,10 +647,6 @@ class JarPackager private constructor(
 }
 
 private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String): Boolean {
-  if (jarPath.contains('/')) {
-    return true
-  }
-
   if (fileName.endsWith("-rt.jar") || fileName.contains("-agent")) {
     return true
   }

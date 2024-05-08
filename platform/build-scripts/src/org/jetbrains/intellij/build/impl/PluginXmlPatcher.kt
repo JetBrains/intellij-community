@@ -79,6 +79,7 @@ internal fun patchPluginXml(
       xml = element,
       file = context.findFileInModuleSources(pluginModule, "META-INF/plugin.xml")!!,
       xIncludePathResolver = createXIncludePathResolver(plugin.includedModules.map { it.moduleName } + platformLayout.includedModules.map { it.moduleName }, context),
+      layout = plugin,
       context = context,
     )
 

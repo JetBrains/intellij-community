@@ -502,7 +502,7 @@ private suspend fun processAndGetProductPluginContentModules(
     ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
 
     val xml = JDOMUtil.load(file)
-    val result = embedContentModules(file = file, xml = xml, xIncludePathResolver = xIncludePathResolver, context = context)
+    val result = embedAndCollectProductModules(file = file, xml = xml, xIncludePathResolver = xIncludePathResolver, context = context)
     val data = JDOMUtil.write(xml)
     val fileName = file.fileName.toString()
     layout.withPatch { moduleOutputPatcher, _, _ ->
@@ -547,9 +547,25 @@ fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>,
   }
 }
 
-fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, context: BuildContext): Set<ModuleItem> {
+private fun embedAndCollectProductModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, context: BuildContext): Set<ModuleItem> {
   resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
   return collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
+}
+
+fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, layout: PluginLayout?, context: BuildContext) {
+  resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
+  for (moduleElement in xml.getChildren("content").asSequence().flatMap { it.getChildren("module") }) {
+    val moduleName = moduleElement.getAttributeValue("name") ?: continue
+    check(moduleElement.content.isEmpty())
+
+    val jpsModuleName = moduleName.substringBeforeLast('/')
+    val descriptor = getModuleDescriptor(moduleName = moduleName, jpsModuleName = jpsModuleName, xIncludePathResolver = xIncludePathResolver, context = context)
+    if (jpsModuleName == moduleName &&
+        (context as BuildContextImpl).jarPackagerDependencyHelper.isPluginModulePackedIntoSeparateJar(context.findRequiredModule(jpsModuleName), layout)) {
+      descriptor.setAttribute("separate-jar", "true")
+    }
+    moduleElement.setContent(CDATA(JDOMUtil.write(descriptor)))
+  }
 }
 
 // see PluginXmlPathResolver.toLoadPath
@@ -561,15 +577,14 @@ private fun toLoadPath(relativePath: String): String {
   }
 }
 
-private fun getModuleDescriptor(moduleName: String, xIncludePathResolver: XIncludePathResolver, context: BuildContext): CDATA {
+private fun getModuleDescriptor(moduleName: String, jpsModuleName: String, xIncludePathResolver: XIncludePathResolver, context: BuildContext): Element {
   val descriptorFile = "${moduleName.replace('/', '.')}.xml"
-  val jpsModuleName = moduleName.substringBeforeLast('/')
   val file = requireNotNull(context.findFileInModuleSources(jpsModuleName, descriptorFile)) {
     "Cannot find file $descriptorFile in module $jpsModuleName"
   }
   val xml = JDOMUtil.load(file)
   resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
-  return CDATA(JDOMUtil.write(xml))
+  return xml
 }
 
 private fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: XIncludePathResolver, context: BuildContext): Set<ModuleItem> {
@@ -585,7 +600,7 @@ private fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: X
     }
 
     check(moduleElement.content.isEmpty())
-    moduleElement.setContent(getModuleDescriptor(moduleName = moduleName, xIncludePathResolver = xIncludePathResolver, context = context))
+    moduleElement.setContent(CDATA(JDOMUtil.write(getModuleDescriptor(moduleName = moduleName, jpsModuleName = moduleName, xIncludePathResolver = xIncludePathResolver, context = context))))
   }
   return result
 }
