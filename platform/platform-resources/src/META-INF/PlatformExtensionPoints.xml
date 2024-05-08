@@ -12,10 +12,6 @@
     <extensionPoint name="jps.plugin"
                     beanClass="com.intellij.jps.impl.JpsPluginBean" dynamic="true"/>
 
-    <extensionPoint name="preloadingActivity"
-                    interface="com.intellij.openapi.application.PreloadingActivity"
-                    dynamic="true"/>
-
     <extensionPoint name="projectConfigurable"
                     beanClass="com.intellij.openapi.options.ConfigurableEP"
                     area="IDEA_PROJECT"
