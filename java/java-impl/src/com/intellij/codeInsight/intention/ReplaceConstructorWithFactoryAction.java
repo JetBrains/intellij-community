@@ -212,13 +212,10 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
       if (element.getParent() instanceof PsiNewExpression newExpression) {
         newUsages.add(newExpression);
       }
-      else if ("super".equals(element.getText()) || "this".equals(element.getText())) {
-        otherUsages.add(element);
-      }
-      else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-        otherUsages.add(element);
-      }
-      else if (element instanceof PsiClass) {
+      else if (element.getParent() instanceof PsiAnonymousClass || 
+               "super".equals(element.getText()) || "this".equals(element.getText()) ||
+               element instanceof PsiMethod method && method.isConstructor() ||
+               element instanceof PsiClass) {
         otherUsages.add(element);
       }
     }

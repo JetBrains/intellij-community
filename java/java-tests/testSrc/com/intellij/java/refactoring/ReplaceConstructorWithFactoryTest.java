@@ -66,6 +66,8 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testNestedClass() { runTest("NestedClass", "OuterClass"); }
   
   public void testNestedClass2() { runTest("NestedClass2", "InnerClass"); }
+  
+  public void testAnonymousInheritor() { runTest("AnonymousInheritor", "Inner"); }
 
   public void testSubclassVisibility() { runTest("05", null); }
 
@@ -123,6 +125,10 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
       return;
     }
     assertSize(1, modChooseAction.actions());
+  }
+  
+  public void testAnonymousUsage() {
+    
   }
 
   private void runTest(final String testIndex, @NonNls String targetClassName) {
