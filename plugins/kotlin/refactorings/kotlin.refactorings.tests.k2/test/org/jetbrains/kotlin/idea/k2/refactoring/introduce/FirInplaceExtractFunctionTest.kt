@@ -42,6 +42,10 @@ class FirInplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
         doTest()
     }
 
+    fun testMoveLambdaOutsideParenthesis1() {
+        doTest()
+    }
+
     fun testSkipCommentsBefore() {
         doTest()
     }
