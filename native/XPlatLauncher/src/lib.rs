@@ -71,17 +71,18 @@ const CLASS_PATH_SEPARATOR: &str = ":";
 pub fn main_lib() {
     let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from(env::args().next().unwrap()));
     let remote_dev = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
+    let sandbox_subprocess = cfg!(target_os = "windows") && env::args().any(|arg| arg.contains("--type="));
 
     let debug_mode = remote_dev || env::var(DEBUG_MODE_ENV_VAR).is_ok();
 
     #[cfg(target_os = "windows")]
     {
-        if debug_mode {
+        if debug_mode && !sandbox_subprocess {
             attach_console();
         }
     }
 
-    if let Err(e) = main_impl(exe_path, remote_dev, debug_mode) {
+    if let Err(e) = main_impl(exe_path, remote_dev, debug_mode, sandbox_subprocess) {
         ui::show_error(!debug_mode, e);
         std::process::exit(1);
     }
@@ -97,7 +98,7 @@ fn attach_console() {
     }
 }
 
-fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()> {
+fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subprocess: bool) -> Result<()> {
     let level = if debug_mode { LevelFilter::Debug } else { LevelFilter::Error };
     mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Executable: {exe_path:?}");
@@ -123,7 +124,7 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
 
-    let cef_sandbox = init_cef_sandbox(&*configuration, &jre_home).context("Cannot initialize browser sandbox")?;
+    let cef_sandbox = init_cef_sandbox(&jre_home, sandbox_subprocess).context("Cannot initialize browser sandbox")?;
 
     debug!("** Collecting JVM options");
     let vm_options = get_full_vm_options(&*configuration, &cef_sandbox).context("Cannot collect JVM options")?;
@@ -222,12 +223,11 @@ fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn Lau
 }
 
 #[cfg(target_os = "windows")]
-fn init_cef_sandbox(configuration: &dyn LaunchConfiguration, jre_home: &Path) -> Result<Option<CefScopedSandboxInfo>> {
+fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     debug!("** Initializing CEF sandbox");
     let cef_sandbox = CefScopedSandboxInfo::new();
 
-    let is_sandbox_subprocess = configuration.get_args().iter().any(|arg| arg.contains("--type="));
-    if is_sandbox_subprocess {
+    if sandbox_subprocess {
         debug!("Starting a subprocess");
         let exit_code = unsafe {
             let helper_path = jre_home.join("bin\\jcef_helper.dll");
@@ -248,7 +248,7 @@ fn init_cef_sandbox(configuration: &dyn LaunchConfiguration, jre_home: &Path) ->
 }
 
 #[cfg(not(target_os = "windows"))]
-fn init_cef_sandbox(_configuration: &dyn LaunchConfiguration, _jre_home: &Path) -> Result<Option<CefScopedSandboxInfo>> {
+fn init_cef_sandbox(_jre_home: &Path, _sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     Ok(None)
 }
 
