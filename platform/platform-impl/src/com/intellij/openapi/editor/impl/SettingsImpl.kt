@@ -196,6 +196,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     state.myAreLineNumbersShown = `val`
   }
 
+  override fun isLineNumbersAfterIcons(): Boolean {
+    return state.myAreLineNumbersAfterIcons
+  }
+
+  override fun setLineNumbersAfterIcons(`val`: Boolean) {
+    state.myAreLineNumbersAfterIcons = `val`
+  }
+
   override fun areGutterIconsShown(): Boolean {
     return state.myGutterIconsShown
   }

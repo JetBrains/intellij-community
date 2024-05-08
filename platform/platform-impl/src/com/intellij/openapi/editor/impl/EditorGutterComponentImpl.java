@@ -1802,6 +1802,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return myEditor.getSettings().isLineMarkerAreaShown();
   }
 
+  boolean isLineNumbersAfterIcons() {
+    return myEditor.getSettings().isLineNumbersAfterIcons();
+  }
+
   boolean areIconsShown() {
     return myEditor.getSettings().areGutterIconsShown();
   }

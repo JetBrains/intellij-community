@@ -53,6 +53,9 @@ public interface EditorSettings {
   boolean isLineNumbersShown();
   void setLineNumbersShown(boolean val);
 
+  boolean isLineNumbersAfterIcons();
+  void setLineNumbersAfterIcons(boolean val);
+
   int getAdditionalLinesCount();
   void setAdditionalLinesCount(int additionalLinesCount);
 

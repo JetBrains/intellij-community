@@ -8,6 +8,7 @@ import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -113,7 +114,7 @@ public final class EditorGutterLayout {
   }
 
   private List<GutterArea> createClassicLayout() {
-    return List.of(
+    List<GutterArea> lineNumbersAreas = List.of(
       areaGap()
         .as(EditorMouseEventArea.LINE_NUMBERS_AREA)
         .showIf(this::isLineNumbersShown),
@@ -123,8 +124,10 @@ public final class EditorGutterLayout {
         .showIf(this::isLineNumbersShown),
       areaGap() // Note: ADDITIONAL_LINE_NUMBERS_AREA rendering depends on this gap
         .as(EditorMouseEventArea.LINE_MARKERS_AREA)
-        .showIf(this::isLineNumbersShown),
+        .showIf(this::isLineNumbersShown)
+    );
 
+    List<GutterArea> iconRelatedAreas = List.of(
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize)
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize != 0),
@@ -134,22 +137,41 @@ public final class EditorGutterLayout {
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
         .as(EditorMouseEventArea.LINE_MARKERS_AREA) // Distraction-free mode is extended using this area, see IDEA-320495
         .showIf(() -> myEditorGutter.myTextAnnotationExtraSize != 0),
-
       area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
       area(ICONS_AREA, myEditorGutter::getIconsAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
-      area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea).showIf(myEditorGutter::isLineMarkersShown),
-      area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
+      area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea).showIf(myEditorGutter::isLineMarkersShown)
+    );
 
+    List<GutterArea> rightEdgeAreas = List.of(
+      area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
       area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth)
     );
+
+    List<GutterArea> layout;
+
+    if (isLineNumbersAfterIcons()) {
+      layout = new ArrayList<>(iconRelatedAreas);
+      layout.addAll(lineNumbersAreas);
+      layout.addAll(rightEdgeAreas);
+    } else {
+      layout = new ArrayList<>(lineNumbersAreas);
+      layout.addAll(iconRelatedAreas);
+      layout.addAll(rightEdgeAreas);
+    }
+
+    return layout;
   }
 
   private boolean isLineNumbersShown() {
     return myEditorGutter.isLineNumbersShown();
   }
 
+  private boolean isLineNumbersAfterIcons() {
+    return myEditorGutter.isLineNumbersAfterIcons();
+  }
+
   private List<GutterArea> createNewUILayout() {
-    return List.of(
+    List<GutterArea> annotationAreas = List.of(
       area(ANNOTATIONS_AREA, EditorGutterComponentImpl.EMPTY_ANNOTATION_AREA_WIDTH::get)
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize == 0 && myEditorGutter.isLineMarkersShown()),
@@ -159,15 +181,16 @@ public final class EditorGutterLayout {
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize)
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize != 0),
-
       //areaGap(1)
       //  .showIf(() -> myEditorGutter.getLeftFreePaintersAreaWidth() + myEditorGutter.getRightFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown()),
       area(EXTRA_LEFT_FREE_PAINTERS_AREA, myEditorGutter::getExtraLeftFreePaintersAreaWidth)
         .showIf(() -> myEditorGutter.isLineMarkersShown()),
       area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl.GAP_AFTER_VCS_MARKERS_WIDTH::get)
         .as(EditorMouseEventArea.LINE_MARKERS_AREA)
-        .showIf(() -> myEditorGutter.getExtraLeftFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown()),
+        .showIf(() -> myEditorGutter.getExtraLeftFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown())
+    );
 
+    List<GutterArea> lineNumbersAreas = List.of(
       //areaGap(4).as(EditorMouseEventArea.LINE_NUMBERS_AREA).showIf(this::isLineNumbersShown),
       area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth)
         .showIf(this::isLineNumbersShown),
@@ -180,20 +203,39 @@ public final class EditorGutterLayout {
         return Math.max(myEditorGutter.isLineMarkersShown() ? EditorGutterComponentImpl.GAP_AFTER_LINE_NUMBERS_WIDTH.get() : 0,
                         myEditorGutter.myAdditionalLineNumberAreaWidth > 0 ? getGapBetweenAreas() : 0);
       })
-        .showIf(() -> isLineNumbersShown()),
+        .showIf(() -> isLineNumbersShown())
+    );
 
+    List<GutterArea> iconRelatedAreas = List.of(
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
         .as(EditorMouseEventArea.LINE_MARKERS_AREA)
         .showIf(() -> myEditorGutter.myTextAnnotationExtraSize != 0),
-
       area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
       area(ICONS_AREA, myEditorGutter::getIconsAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
-      area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea).showIf(myEditorGutter::isLineMarkersShown),
-      area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
+      area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea).showIf(myEditorGutter::isLineMarkersShown)
+    );
 
+    List<GutterArea> rightEdgeAreas = List.of(
+      area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
       area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth),
       areaGap(3).showIf(() -> myEditorGutter.isLineMarkersShown())
     );
+
+    List<GutterArea> layout;
+
+    if (isLineNumbersAfterIcons()) {
+      layout = new ArrayList<>(annotationAreas);
+      layout.addAll(iconRelatedAreas);
+      layout.addAll(lineNumbersAreas);
+      layout.addAll(rightEdgeAreas);
+    } else {
+      layout = new ArrayList<>(annotationAreas);
+      layout.addAll(lineNumbersAreas);
+      layout.addAll(iconRelatedAreas);
+      layout.addAll(rightEdgeAreas);
+    }
+
+    return layout;
   }
 
   private List<GutterArea> createNewUIDFMLayout() {

@@ -78,6 +78,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myLineMarkerAreaShown: Boolean by property(true)
   var myAllowSingleLogicalLineFolding: Boolean by property(false)
   var myAutoCodeFoldingEnabled: Boolean by property(true)
+  var myAreLineNumbersAfterIcons: Boolean by property { EditorSettingsExternalizable.getInstance().isLineNumbersAfterIcons }
 
   // These come from CodeStyleSettings.
   var myUseTabCharacter: Boolean by property {
