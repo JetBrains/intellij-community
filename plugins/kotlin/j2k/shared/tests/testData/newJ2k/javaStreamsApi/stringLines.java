@@ -1,5 +1,4 @@
 // IGNORE_K2
-// TODO investigate why extension methods are unresolved in this test (imports are not added)
 import java.util.stream.Stream;
 
 public class A {

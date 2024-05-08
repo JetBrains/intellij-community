@@ -5,23 +5,23 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.psi.CommonClassNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 
 class JKImportStorage(languageSettings: LanguageVersionSettings) {
     private val imports = mutableSetOf<FqName>()
 
-    private val defaultImports: Set<FqName> =
+    private val defaultImports: Set<ImportPath> =
         JvmPlatformAnalyzerServices.getDefaultImports(
             languageSettings,
             includeLowPriorityImports = true
-        ).mapNotNull { import ->
-            if (import.isAllUnder) null else import.fqName
-        }.toSet()
+        ).toSet()
 
     fun addImport(import: FqName) {
         if (isImportNeeded(import, allowSingleIdentifierImport = false)) {
@@ -39,7 +39,7 @@ class JKImportStorage(languageSettings: LanguageVersionSettings) {
         val fqNameString = fqName.asString()
         if (!allowSingleIdentifierImport && fqNameString.count { it == '.' } < 1) return false
         if (fqName in NULLABILITY_ANNOTATIONS) return false
-        if (fqName in defaultImports) return false
+        if (defaultImports.any { fqName.isImported(it) }) return false
         if (PLATFORM_CLASSES_MAPPED_TO_KOTLIN.any { it.matches(fqNameString) }) return false
         return true
     }

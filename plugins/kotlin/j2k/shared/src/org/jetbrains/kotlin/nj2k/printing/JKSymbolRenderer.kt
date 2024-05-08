@@ -34,8 +34,18 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
 
     fun renderSymbol(symbol: JKSymbol, owner: JKTreeElement?): String {
         val name = symbol.name.escaped()
-        if (!symbol.isFqNameExpected(owner)) return name
         val fqName = symbol.getDisplayFqName().escapedAsQualifiedName()
+
+        if (!symbol.isFqNameExpected(owner)) {
+            if (symbol.safeAs<JKMultiverseFunctionSymbol>()?.isTopLevelBuiltInKotlinFunction == true &&
+                importStorage.isImportNeeded(fqName)
+            ) {
+                importStorage.addImport(fqName)
+            }
+
+            return name
+        }
+
         if (symbol.isFromJavaLangPackage()) return fqName
 
         return when {
