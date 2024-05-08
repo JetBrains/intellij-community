@@ -900,6 +900,7 @@ public final class ExternalSystemUtil {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         environment.putUserData(ExternalSystemRunnableState.PROGRESS_INDICATOR_KEY, indicator);
+        environment.putUserData(ExternalSystemRunnableState.TASK_NOTIFICATION_LISTENER_KEY, spec.getListener());
         indicator.setIndeterminate(true);
 
         boolean result = waitForProcessExecution(project, environment, () -> environment.getRunner().execute(environment));
