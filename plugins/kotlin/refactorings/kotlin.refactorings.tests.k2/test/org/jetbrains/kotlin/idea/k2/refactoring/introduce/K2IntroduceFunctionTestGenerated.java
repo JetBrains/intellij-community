@@ -1697,6 +1697,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/extensionLambdaAsParameter.kt");
             }
 
+            @TestMetadata("functionalParameterTypeWithReceiver.kt")
+            public void testFunctionalParameterTypeWithReceiver() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/functionalParameterTypeWithReceiver.kt");
+            }
+
             @TestMetadata("idWithBackticks.kt")
             public void testIdWithBackticks() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/idWithBackticks.kt");

@@ -2539,6 +2539,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/extensionLambdaAsParameter.kt");
                 }
 
+                @TestMetadata("functionalParameterTypeWithReceiver.kt")
+                public void testFunctionalParameterTypeWithReceiver() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/functionalParameterTypeWithReceiver.kt");
+                }
+
                 @TestMetadata("idWithBackticks.kt")
                 public void testIdWithBackticks() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/idWithBackticks.kt");
