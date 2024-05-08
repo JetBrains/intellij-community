@@ -40,18 +40,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 public final class TypesUtil implements TypeConstants {
 
-  public static final PsiPrimitiveType[] PRIMITIVES = {
-    PsiTypes.byteType(),
-    PsiTypes.charType(),
-    PsiTypes.doubleType(),
-    PsiTypes.floatType(),
-    PsiTypes.intType(),
-    PsiTypes.shortType(),
-    PsiTypes.longType(),
-    PsiTypes.booleanType(),
-    PsiTypes.voidType()
-  };
-
   private TypesUtil() {
   }
 
@@ -553,17 +541,12 @@ public final class TypesUtil implements TypeConstants {
 
   @NotNull
   public static PsiPrimitiveType getPrimitiveTypeByText(String typeText) {
-    for (final PsiPrimitiveType primitive : PRIMITIVES) {
-      if (PsiTypes.voidType().equals(primitive)) {
-        return primitive;
-      }
-      if (primitive.getCanonicalText().equals(typeText)) {
-        return primitive;
+    for (PsiPrimitiveType primitiveType : PsiTypes.primitiveTypes()) {
+      if (primitiveType.getCanonicalText().equals(typeText)) {
+        return primitiveType;
       }
     }
-
-    assert false : "Unknown primitive type";
-    return null;
+    return PsiTypes.voidType();
   }
 
   @NotNull
