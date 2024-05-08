@@ -19,15 +19,14 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       return if (end == -1) "" else path.substring(0, end)
     }
 
-    fun toLoadPath(
-      relativePath: String,
-      base: String? = null,
-    ): String = when {
-      relativePath[0] == '/' -> relativePath.substring(1)
-      relativePath.startsWith("intellij.")
-      // TODO to be removed after KTIJ-29799
-      || relativePath.startsWith("kotlin.") -> relativePath
-      else -> (base ?: "META-INF") + '/' + relativePath
+    fun toLoadPath(relativePath: String, base: String? = null): String {
+      return when {
+        relativePath[0] == '/' -> relativePath.substring(1)
+        relativePath.startsWith("intellij.")
+        // TODO to be removed after KTIJ-29799
+        || relativePath.startsWith("kotlin.") -> relativePath
+        else -> (base ?: "META-INF") + '/' + relativePath
+      }
     }
 
     internal fun getChildBase(base: String?, relativePath: String): String? {
@@ -41,13 +40,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     }
   }
 
-  override fun loadXIncludeReference(
-    readInto: RawPluginDescriptor,
-    readContext: ReadModuleContext,
-    dataLoader: DataLoader,
-    base: String?,
-    relativePath: String,
-  ): Boolean {
+  override fun loadXIncludeReference(readInto: RawPluginDescriptor, readContext: ReadModuleContext, dataLoader: DataLoader, base: String?, relativePath: String): Boolean {
     val path = toLoadPath(relativePath, base)
     try {
       dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let {
@@ -77,15 +70,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
       if (path.startsWith("META-INF/")) {
         PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
-          readModuleDescriptor(
-            input = it,
-            readContext = readContext,
-            pathResolver = this,
-            dataLoader = dataLoader,
-            includeBase = null,
-            readInto = readInto,
-            locationSource = null,
-          )
+          readModuleDescriptor(input = it, readContext = readContext, pathResolver = this, dataLoader = dataLoader, includeBase = null, readInto = readInto, locationSource = null)
           return true
         }
       }
@@ -96,12 +81,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     return false
   }
 
-  override fun resolvePath(
-    readContext: ReadModuleContext,
-    dataLoader: DataLoader,
-    relativePath: String,
-    readInto: RawPluginDescriptor?,
-  ): RawPluginDescriptor? {
+  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
     val path = toLoadPath(relativePath)
     dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let {
       return readModuleDescriptor(
@@ -116,14 +96,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     }
 
     val result = readInto ?: RawPluginDescriptor()
-    if (pool != null && findInJarFiles(
-        readInto = result,
-        dataLoader = dataLoader,
-        readContext = readContext,
-        relativePath = path,
-        includeBase = null,
-        pool = pool,
-      )) {
+    if (pool != null && findInJarFiles(readInto = result, dataLoader = dataLoader, readContext = readContext, relativePath = path, includeBase = null, pool = pool)) {
       return result
     }
 

@@ -141,19 +141,12 @@ fun loadDescriptorFromJar(
   useCoreClassLoader: Boolean = false,
   pluginDir: Path?,
   pool: ZipFilePool,
-  customDataLoader: DataLoader? = null,
 ): IdeaPluginDescriptorImpl? {
   var closeable: Closeable? = null
   try {
-    val dataLoader = if (customDataLoader == null) {
-      val resolver = pool.load(file)
-      closeable = resolver as? Closeable
-      ImmutableZipFileDataLoader(resolver = resolver, zipPath = file)
-    }
-    else {
-      customDataLoader
-    }
-
+    val resolver = pool.load(file)
+    closeable = resolver as? Closeable
+    val dataLoader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = file)
     val raw = readModuleDescriptor(
       input = dataLoader.load(descriptorRelativePath, pluginDescriptorSourceOnly = true) ?: return null,
       readContext = parentContext,
