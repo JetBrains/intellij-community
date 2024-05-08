@@ -3,18 +3,19 @@ package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
-import com.intellij.terminal.block.completion.ShellEnvironment
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RuleChain
+import com.intellij.terminal.block.completion.spec.ShellCommandSpec
+import com.intellij.testFramework.*
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContext
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCachingGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.testApps.MoveCursorToLineEndAndPrint
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
-import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
+import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.exp.util.CommandResult
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.assertCommandResult
@@ -22,10 +23,7 @@ import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.getComman
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.sendCommandToExecuteWithoutAddingToHistory
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil.sendCommandlineToExecuteWithoutAddingToHistory
 import org.jetbrains.plugins.terminal.util.ShellType
-import org.junit.Assert
-import org.junit.Assume
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
@@ -50,6 +48,15 @@ class BlockTerminalTest(private val shellPath: Path) {
   @Rule
   @JvmField
   val ruleChain: RuleChain = RuleChain(projectRule, disposableRule)
+
+  /**
+   * Remove all command spec providers to not load command specs in these tests and make them faster.
+   * They are requested in [availableCommandsGenerator], but we don't really need them for these tests.
+   */
+  @Before
+  fun removeCommandSpecs() {
+    ExtensionTestUtil.maskExtensions(ShellCommandSpecsProvider.EP_NAME, emptyList(), disposableRule.disposable)
+  }
 
   @Test
   fun `test echo output is read`() {
@@ -93,14 +100,23 @@ class BlockTerminalTest(private val shellPath: Path) {
         val startTime = TimeSource.Monotonic.markNow()
         val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
         val generatorCommandSent = createCommandSentDeferred(session)
-        val envListDeferred: Deferred<ShellEnvironment?> = this.async(Dispatchers.Default) {
-          IJShellRuntimeDataProvider(session, ShellCommandExecutorImpl(session)).getShellEnvironment()
+        // Create generator and context each time, because default implementations are caching
+        val generatorsExecutor = IJShellGeneratorsExecutor(session)
+        val context = IJShellRuntimeContext(
+          "",
+          "",
+          "",
+          session.shellIntegration.shellType.toShellName(),
+          ShellCachingGeneratorCommandsRunner(session)
+        )
+        val commandsListDeferred: Deferred<List<ShellCommandSpec>> = async(Dispatchers.Default) {
+          generatorsExecutor.execute(context, availableCommandsGenerator())
         }
         withTimeout(20.seconds) { generatorCommandSent.await() }
-        delay((1..50).random().milliseconds) // wait a little to start generator
+        delay((1..50).random().milliseconds) // wait a little to start the generator
         session.sendCommandlineToExecuteWithoutAddingToHistory("echo foo")
-        val env: ShellEnvironment? = withTimeout(20.seconds) { envListDeferred.await() }
-        Assert.assertTrue(env != null && env.commands.isNotEmpty())
+        val commands: List<ShellCommandSpec> = withTimeout(20.seconds) { commandsListDeferred.await() }
+        Assert.assertTrue(commands.isNotEmpty())
         assertCommandResult(0, "foo\n", outputFuture)
         println("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
       }
