@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.fs.IjentFileInfo
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
+import com.intellij.platform.ijent.fs.IjentWindowsFileInfo
 import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.time.Instant
@@ -54,11 +54,15 @@ internal class IjentNioBasicFileAttributes(private val fileInfo: IjentFileInfo) 
       is Directory, is Other, is Symlink.Resolved, is Symlink.Unresolved -> 0
     }
 
-  override fun fileKey(): Any {
-    // TODO Return inode here.
-    TODO("Not yet implemented")
-  }
+  override fun fileKey(): Any =
+    when (fileInfo) {
+      is IjentPosixFileInfo -> IjentUnixFileKey(dev = fileInfo.inodeDev, ino = fileInfo.inodeIno)
+      is IjentWindowsFileInfo -> TODO()
+    }
 }
+
+/** Similar to `sun.nio.fs.UnixFileKey` */
+internal data class IjentUnixFileKey(val dev: Long, val ino: Long)
 
 internal class IjentNioPosixFileAttributes(
   private val fileInfo: IjentPosixFileInfo,
@@ -97,23 +101,4 @@ class IjentPosixGroupPrincipal(val gid: Int) : GroupPrincipal {
     // TODO Here should be returned a user name
     return gid.toString()
   }
-}
-
-internal class IjentNioPosixFileAttributesWithDosAdapter(
-  private val userInfo: IjentPosixInfo.User,
-  private val fileInfo: IjentPosixFileInfo,
-  private val nameStartsWithDot: Boolean,
-) : PosixFileAttributes by IjentNioPosixFileAttributes(fileInfo), DosFileAttributes {
-  override fun isReadOnly(): Boolean =
-    when {
-      fileInfo.permissions.owner == userInfo.uid -> fileInfo.permissions.ownerCanRead
-      fileInfo.permissions.group == userInfo.gid -> fileInfo.permissions.groupCanRead
-      else -> fileInfo.permissions.otherCanRead
-    }
-
-  override fun isHidden(): Boolean = nameStartsWithDot
-
-  override fun isArchive(): Boolean = false
-
-  override fun isSystem(): Boolean = false
 }

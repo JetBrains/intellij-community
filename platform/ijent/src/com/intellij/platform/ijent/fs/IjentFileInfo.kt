@@ -33,6 +33,12 @@ interface IjentPosixFileInfo : IjentFileInfo {
   override val type: Type
   override val permissions: Permissions
 
+  /** The device number of the inode. */
+  val inodeDev: Long
+
+  /** The inode number. */
+  val inodeIno: Long
+
   sealed interface Type : IjentFileInfo.Type {
     sealed interface Symlink : Type {
       interface Unresolved : Symlink

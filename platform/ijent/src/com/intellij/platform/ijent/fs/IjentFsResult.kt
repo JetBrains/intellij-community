@@ -85,7 +85,6 @@ sealed interface IjentFsResult {
   @NonExtendable
   interface NotFile :
     Error,
-    ListDirectory.NotFile,
     ListDirectoryWithAttrs.NotFile<IjentFileInfo>,
     Canonicalize.NotFile,
     Stat.NotFile<IjentFileInfo>,

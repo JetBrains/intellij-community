@@ -133,6 +133,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val nioFs = dir.nioFs
 
     return nioFs.fsBlocking {
+      // TODO listDirectoryWithAttrs+sun.nio.fs.BasicFileAttributesHolder
       val childrenNames = when (val v = nioFs.ijent.fs.listDirectory(ensurePathIsAbsolute(dir.ijentPath))) {
         is IjentFileSystemApi.ListDirectory.Ok -> v.value
         is IjentFsResult.Error -> v.throwFileSystemException()
@@ -324,7 +325,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
 
     if (path !is IjentNioPath) {
-      throw ProviderMismatchException("$path is not ${IjentNioPath::class.java.simpleName}")
+      throw ProviderMismatchException("$path (${path.javaClass}) is not ${IjentNioPath::class.java.simpleName}")
     }
 
     return path

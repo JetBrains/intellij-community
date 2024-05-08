@@ -19,7 +19,7 @@ object IjentFsResultImpl {
   }
 
   object ListDirectoryWithAttrs {
-    data class Ok<FI : IjentFileInfo>(override val value: Collection<FI>) :
+    data class Ok<FI : IjentFileInfo>(override val value: Collection<Pair<String, FI>>) :
       IjentFileSystemApi.ListDirectoryWithAttrs.Ok<FI>
   }
 

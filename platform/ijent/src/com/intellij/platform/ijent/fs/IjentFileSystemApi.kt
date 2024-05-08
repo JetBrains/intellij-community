@@ -35,11 +35,11 @@ sealed interface IjentFileSystemApi {
     sealed interface DoesNotExist : ListDirectory, IjentFsResult.Error
     sealed interface PermissionDenied : ListDirectory, IjentFsResult.Error
     sealed interface NotDirectory : ListDirectory, IjentFsResult.Error
-    sealed interface NotFile : ListDirectory, IjentFsResult.Error
   }
 
   /**
-   * Returns names of files in a directory. If [path] is a symlink, it will be resolved regardless of [resolveSymlinks].
+   * Returns names of files in a directory and the attributes of the corresponding files.
+   * If [path] is a symlink, it will be resolved regardless of [resolveSymlinks].
    *  TODO Is it an expected behaviour?
    *
    * [resolveSymlinks] controls resolution of symlinks among children.
@@ -52,7 +52,7 @@ sealed interface IjentFileSystemApi {
 
   @Suppress("unused")
   sealed interface ListDirectoryWithAttrs<FI : IjentFileInfo> : IjentFsResult {
-    interface Ok<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Ok<Collection<FI>>
+    interface Ok<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Ok<Collection<Pair<String, FI>>>
     sealed interface DoesNotExist<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
     sealed interface PermissionDenied<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
     sealed interface NotDirectory<FI : IjentFileInfo> : ListDirectoryWithAttrs<FI>, IjentFsResult.Error
