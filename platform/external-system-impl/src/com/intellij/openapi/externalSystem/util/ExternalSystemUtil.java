@@ -59,7 +59,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
-import com.intellij.openapi.externalSystem.util.task.FilteringTaskNotificationListener;
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -890,13 +889,6 @@ public final class ExternalSystemUtil {
     runnerAndConfigurationSettings.setActivateToolWindowBeforeRun(spec.getActivateToolWindowBeforeRun());
 
     UserDataHolderBase userData = spec.getUserData();
-    if (spec.getListener() != null) {
-      if (userData == null) {
-        userData = new UserDataHolderBase();
-      }
-      FilteringTaskNotificationListener.attach(project, userData, spec.getListener());
-    }
-
     if (userData != null) {
       var runConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
       userData.copyUserDataTo(runConfiguration);
