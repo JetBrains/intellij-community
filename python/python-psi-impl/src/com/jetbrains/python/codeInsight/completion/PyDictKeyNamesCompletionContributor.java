@@ -122,15 +122,11 @@ public final class PyDictKeyNamesCompletionContributor extends CompletionContrib
   private static void addAdditionalKeys(final PsiFile file, final PsiElement operand, final DictKeyCompletionResultSet result) {
     Collection<PySubscriptionExpression> subscriptionExpressions = PsiTreeUtil.findChildrenOfType(file, PySubscriptionExpression.class);
     for (PySubscriptionExpression expr : subscriptionExpressions) {
-      if (expr.getOperand().getText().equals(operand.getText())) {
-        if (expr.getParent() instanceof PyAssignmentStatement assignmentStatement) {
-          if (expr.equals(assignmentStatement.getLeftHandSideExpression())) {
-            PyExpression key = expr.getIndexExpression();
-            if (key != null) {
-              result.addKey(key);
-            }
-          }
-        }
+      if (expr.getOperand().getText().equals(operand.getText()) &&
+          expr.getParent() instanceof PyAssignmentStatement assignmentStatement &&
+          expr.equals(assignmentStatement.getLeftHandSideExpression()) &&
+          expr.getIndexExpression() instanceof PyStringLiteralExpression key) {
+        result.addKey(key);
       }
     }
   }
@@ -141,7 +137,9 @@ public final class PyDictKeyNamesCompletionContributor extends CompletionContrib
   private static void addDictLiteralKeys(final PyDictLiteralExpression dict, final DictKeyCompletionResultSet result) {
     PyKeyValueExpression[] keyValues = dict.getElements();
     for (PyKeyValueExpression expression : keyValues) {
-      result.addKey(expression.getKey());
+      if (expression.getKey() instanceof PyStringLiteralExpression key) {
+        result.addKey(key);
+      }
     }
   }
 
@@ -154,11 +152,9 @@ public final class PyDictKeyNamesCompletionContributor extends CompletionContrib
       myIsInsideString = isInsideString;
     }
 
-    void addKey(@NotNull PyExpression keyExpression) {
+    void addKey(@NotNull PyStringLiteralExpression keyExpression) {
       if (myIsInsideString) {
-        if (keyExpression instanceof PyStringLiteralExpression stringLiteralExpression) {
-          addElement(stringLiteralExpression.getStringValue());
-        }
+        addElement(keyExpression.getStringValue());
       }
       else {
         addElement(keyExpression.getText());

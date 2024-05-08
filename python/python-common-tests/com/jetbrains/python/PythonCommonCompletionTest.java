@@ -308,7 +308,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   public void testDictKeys() {  // PY-2245
-    doTest();
+    myFixture.configureByFile("dictKeys.py");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), "'xyz'");
+    myFixture.type('\n');
+    myFixture.checkResultByFile("dictKeys.after.py");
   }
 
   public void testDictKeys2() { //PY-4181
@@ -316,6 +320,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   public void testDictKeys3() { //PY-5546
+    doTest();
+  }
+
+  // PY-52502
+  public void testExpressionDictKey() {
     doTest();
   }
 
@@ -340,7 +349,8 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     final String text = """
     d={ "key1": 222, 'key2': 333, 22: True, False: 22 }
     d[<caret>]""";
-    assertContainsElements(doTestByText(text), "\"key1\"", "'key2'", "22", "False");
+    List<String> suggested = doTestByText(text);
+    assertContainsElements(suggested, "\"key1\"", "'key2'");
   }
 
   // PY-42738
@@ -400,7 +410,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       d["xxx"]=25
       d['yyy']=26
       d[<caret>]""";
-    assertContainsElements(doTestByText(text), "30", "False", "\"xxx\"", "'yyy'");
+    assertContainsElements(doTestByText(text), "\"xxx\"", "'yyy'");
   }
 
   public void testNoParensForDecorator() {  // PY-2210
