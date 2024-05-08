@@ -9094,28 +9094,6 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$$serializer
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$Companion
 - f:serializer():kotlinx.serialization.KSerializer
-f:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList
-- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList$Companion
-- <init>():V
-- <init>(java.util.List):V
-- b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.util.List
-- f:copy(java.util.List):com.intellij.ide.settings.json.JsonSettingsModel$WhiteList
-- bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$WhiteList,java.util.List,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$WhiteList
-- equals(java.lang.Object):Z
-- f:getProperties():java.util.List
-- hashCode():I
-- toString():java.lang.String
-f:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList$$serializer
-- kotlinx.serialization.internal.GeneratedSerializer
-- sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.settings.json.JsonSettingsModel$WhiteList
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$WhiteList):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
-f:com.intellij.ide.settings.json.JsonSettingsModel$WhiteList$Companion
-- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.ide.settings.json.SettingsInspectorKt
 - sf:buildComponentModel():com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel
 f:com.intellij.ide.startup.ServiceNotReadyException

@@ -8,10 +8,11 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.serialization.MutableAccessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.xmlb.getBeanAccessors
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.function.IntPredicate
 
-
+@VisibleForTesting
 fun buildComponentModel(): JsonSettingsModel.ComponentModel =
   JsonSettingsModel.ComponentModel(listAppComponents().map { descriptor ->
     JsonSettingsModel.ComponentInfo(

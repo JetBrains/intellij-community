@@ -4,12 +4,19 @@ package com.intellij.ide.settings.json
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.VisibleForTesting
 
 private val logger = logger<JsonSettingsModel>()
 
+/**
+ * Contains supported settings which are publicly available to end users and can be edited without UI using only Json schema.
+ * See [Json Settings](https://youtrack.jetbrains.com/articles/IDEA-A-2100661939/Json-Settings)
+ */
 class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
 
-
+  /**
+   * Supported property types.
+   */
   enum class PropertyType {
     Boolean,
     Integer,
@@ -20,11 +27,16 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
     Unsupported
   }
 
+  /**
+   * Contains a pregenerated raw list of Persistent State Components converted to JsonSettingsModel.
+   */
+  @VisibleForTesting
   @Serializable
   data class ComponentModel (
     val components: List<ComponentInfo> = emptyList()
   )
 
+  @VisibleForTesting
   @Serializable
   data class ComponentInfo (
     val name: String?,
@@ -38,6 +50,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
       if (name != null && pluginId != null) "${pluginId}:${scope}:${name}" else null
   }
 
+  @VisibleForTesting
   @Serializable
   data class ComponentPropertyInfo (
     val name: String,
@@ -63,7 +76,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
   )
 
   @Serializable
-  data class WhiteList (
+  internal class WhiteList (
     val properties: List<String> = emptyList()
   )
 
@@ -77,6 +90,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
       } ?: ComponentModel()
     }
 
+    @VisibleForTesting
     fun componentToSettingsModel(componentModel: ComponentModel): JsonSettingsModel {
       val propertyMap = mutableMapOf<String, PropertyDescriptor>()
       val filteredModel = filterSettings(componentModel)
