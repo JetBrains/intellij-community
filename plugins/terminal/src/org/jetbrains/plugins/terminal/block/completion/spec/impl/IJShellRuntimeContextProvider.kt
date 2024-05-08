@@ -4,14 +4,13 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.block.completion.ShellRuntimeContextProvider
-import com.intellij.terminal.block.completion.spec.ShellName
 import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
 import com.intellij.util.PathUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
+import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptState
-import org.jetbrains.plugins.terminal.util.ShellType
 
 internal class IJShellRuntimeContextProvider(
   private val project: Project,
@@ -40,10 +39,6 @@ internal class IJShellRuntimeContextProvider(
     ).apply {
       putUserData(PROJECT_KEY, project)
     }
-  }
-
-  private fun ShellType.toShellName(): ShellName {
-    return ShellName(this.toString().lowercase())
   }
 
   companion object {

@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.terminal.block.completion.spec.*
 import com.intellij.terminal.block.completion.spec.ShellSuggestionType.*
 import org.jetbrains.plugins.terminal.TerminalIcons
+import org.jetbrains.plugins.terminal.util.ShellType
 import javax.swing.Icon
 
 internal object TerminalCompletionUtil {
@@ -60,5 +61,9 @@ internal object TerminalCompletionUtil {
     val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName)
     val fileIcon = fileType.icon ?: TerminalIcons.OtherFile
     return if (fileType is UnknownFileType) TerminalIcons.OtherFile else fileIcon
+  }
+
+  fun ShellType.toShellName(): ShellName {
+    return ShellName(this.toString().lowercase())
   }
 }
