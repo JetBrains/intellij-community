@@ -31,8 +31,8 @@ internal class ArrayListIjentAbsolutePath private constructor(
 
   override fun startsWith(other: IjentPath.Absolute): Boolean =
     nameCount >= other.nameCount &&
-    root.fileName == other.fileName &&
-    (0..<nameCount).all { getName(it) == other.getName(it) }
+    root.fileName == other.root.fileName &&
+    (0..<other.nameCount).all { getName(it) == other.getName(it) }
 
   override fun normalize(): IjentPathResult<out IjentPath.Absolute> {
     val result = mutableListOf<String>()
@@ -102,15 +102,15 @@ internal class ArrayListIjentAbsolutePath private constructor(
     get() = parts.size
 
   override fun getName(index: Int): IjentPath.Relative {
+    if (parts.isEmpty()) return IjentPath.Relative.EMPTY
+
     require(index in parts.indices) { "$index !in ${parts.indices}" }
     return IjentPath.Relative.build(parts[index]).getOrThrow()
   }
 
   override fun endsWith(other: IjentPath.Relative): Boolean {
     val diff = nameCount - other.nameCount
-    return diff >= 0 &&
-           root.fileName == other.fileName &&
-           (0..<other.nameCount).all { getName(it) == other.getName(it + diff) }
+    return diff >= 0 && (0..<other.nameCount).all { getName(it + diff) == other.getName(it) }
   }
 
   override fun compareTo(other: IjentPath.Absolute): Int {

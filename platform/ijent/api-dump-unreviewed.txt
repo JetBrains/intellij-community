@@ -658,6 +658,7 @@ com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$PermissionDenied
 - com.intellij.platform.ijent.fs.IjentPath
 - java.lang.Comparable
 - *sf:Companion:com.intellij.platform.ijent.fs.IjentPath$Relative$Companion
+- sf:EMPTY:com.intellij.platform.ijent.fs.IjentPath$Relative
 - s:build(java.util.List):com.intellij.platform.ijent.fs.IjentPathResult
 - s:build(java.lang.String[]):com.intellij.platform.ijent.fs.IjentPathResult
 - a:compareTo(com.intellij.platform.ijent.fs.IjentPath$Relative):I

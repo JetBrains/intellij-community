@@ -135,6 +135,9 @@ sealed interface IjentPath {
       @JvmStatic
       fun build(parts: List<String>): IjentPathResult<out Relative> =
         ArrayListIjentRelativePath.build(parts)
+
+      @JvmField
+      val EMPTY: Relative = ArrayListIjentRelativePath.EMPTY
     }
 
     override val parent: Relative?
