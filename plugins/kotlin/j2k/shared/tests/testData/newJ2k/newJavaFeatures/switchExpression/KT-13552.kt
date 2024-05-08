@@ -100,7 +100,7 @@ object SwitchDemo {
             }
         }
         val status = ""
-        val b: Int = return when (status) {
+        return when (status) {
             "init", "dial", "transmit" -> 0x111111
             "ok" -> -0xff9a00
             "cancel" -> -0x99999a

@@ -365,17 +365,26 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
             printer.print("if (")
             ifElseExpression.condition.accept(this)
             printer.print(") ")
+            if (ifElseExpression.hasBracketedThenBranch) {
+                printer.print("{ ")
+            }
             ifElseExpression.thenBranch.accept(this)
+            if (ifElseExpression.hasBracketedThenBranch) {
+                printer.print("} ")
+            }
             if (ifElseExpression.elseBranch !is JKStubExpression) {
                 printer.printWithSurroundingSpaces("else")
+                if (ifElseExpression.hasBracketedElseBranch) {
+                    printer.print("{ ")
+                }
                 ifElseExpression.elseBranch.accept(this)
+                if (ifElseExpression.hasBracketedElseBranch) {
+                    printer.print("} ")
+                }
             }
         }
 
         override fun visitIfElseStatementRaw(ifElseStatement: JKIfElseStatement) {
-            if (ifElseStatement.hasLiftedReturn) {
-                printer.print("return ")
-            }
             printer.print("if (")
             ifElseStatement.condition.accept(this)
             printer.print(") ")
@@ -704,7 +713,11 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
                 ensureLineBreak()
                 printer.indented {
                     printer.renderList(block.statements, ::ensureLineBreak) {
-                        it.accept(this)
+                        if (it.children.size == 1 && it.children[0] is JKReturnStatement) {
+                            (it.children[0] as JKReturnStatement).accept(this)
+                        } else {
+                            it.accept(this)
+                        }
                     }
                 }
             }
@@ -868,9 +881,6 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
         }
 
         override fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) {
-            if (ktWhenBlock.hasLiftedReturn) {
-                printer.print("return ")
-            }
             printer.print("when (")
             ktWhenBlock.expression.accept(this)
             printer.print(")")

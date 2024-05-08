@@ -171,6 +171,8 @@ class JKIfElseExpression(
     var condition by child(condition)
     var thenBranch by child(thenBranch)
     var elseBranch by child(elseBranch)
+    var hasBracketedThenBranch: Boolean = false
+    var hasBracketedElseBranch: Boolean = false
 
     override fun accept(visitor: JKVisitor) = visitor.visitIfElseExpression(this)
 }
@@ -372,6 +374,7 @@ class JKKtTryExpression(
     var tryBlock: JKBlock by child(tryBlock)
     var finallyBlock: JKBlock by child(finallyBlock)
     var catchSections: List<JKKtTryCatchSection> by children(catchSections)
+    var hasLiftedReturn: Boolean = false
 
     override fun accept(visitor: JKVisitor) = visitor.visitKtTryExpression(this)
 }

@@ -3969,6 +3969,54 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../shared/tests/testData/newJ2k/liftReturns")
+    public static class LiftReturns extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("LiftReturnComplex.java")
+        public void testLiftReturnComplex() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/liftReturns/LiftReturnComplex.java");
+        }
+
+        @TestMetadata("liftReturnIfElseStatement.java")
+        public void testLiftReturnIfElseStatement() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/liftReturns/liftReturnIfElseStatement.java");
+        }
+
+        @TestMetadata("liftReturnSingleLine.java")
+        public void testLiftReturnSingleLine() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/liftReturns/liftReturnSingleLine.java");
+        }
+
+        @TestMetadata("LiftReturnSingleStatement.java")
+        public void testLiftReturnSingleStatement() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/liftReturns/LiftReturnSingleStatement.java");
+        }
+
+        @TestMetadata("noLiftedReturnInBasicMode.java")
+        public void testNoLiftedReturnInBasicMode() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/liftReturns/noLiftedReturnInBasicMode.java");
+        }
+
+        @TestMetadata("preserveComments.java")
+        public void testPreserveComments() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/liftReturns/preserveComments.java");
+        }
+
+        @TestMetadata("tryCatchStatement.java")
+        public void testTryCatchStatement() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/liftReturns/tryCatchStatement.java");
+        }
+
+        @TestMetadata("whenNestedInIfStatement.java")
+        public void testWhenNestedInIfStatement() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/liftReturns/whenNestedInIfStatement.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/list")
     public static class List extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -5191,16 +5239,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/postProcessing/LiftAssignmentSingleStatement.java");
         }
 
-        @TestMetadata("LiftReturnComplex.java")
-        public void testLiftReturnComplex() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/postProcessing/LiftReturnComplex.java");
-        }
-
-        @TestMetadata("LiftReturnSingleStatement.java")
-        public void testLiftReturnSingleStatement() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/postProcessing/LiftReturnSingleStatement.java");
-        }
-
         @TestMetadata("MapForEach.java")
         public void testMapForEach() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/MapForEach.java");
@@ -5690,11 +5728,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("nestedSwitchFallback.java")
         public void testNestedSwitchFallback() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/switch/nestedSwitchFallback.java");
-        }
-
-        @TestMetadata("noLiftedReturnInBasicMode.java")
-        public void testNoLiftedReturnInBasicMode() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/switch/noLiftedReturnInBasicMode.java");
         }
 
         @TestMetadata("nondefault.java")
