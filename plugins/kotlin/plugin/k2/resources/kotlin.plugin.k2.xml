@@ -149,8 +149,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <iconProvider implementation="org.jetbrains.kotlin.idea.FirKotlinIconProvider"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.IdePackageOracleFactory"/>
-
     <projectService serviceInterface="org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory"
                     serviceImplementation="org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinderFactory"/>
     <projectService serviceInterface="org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory"

@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
-import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 
 inline fun <reified T : PsiElement> T.copied(): T {
     return copy() as T
@@ -158,7 +157,7 @@ fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
  */
 fun shouldLambdaParameterBeNamed(argument: KtLambdaArgument): Boolean {
     val callExpression = argument.parent as KtCallExpression
-    val args = callExpression.getValueArgumentsInParentheses()
+    val args = callExpression.valueArguments.filter { it !is KtLambdaArgument }
     if (args.any { it.isNamed() }) return true
     val callee = (callExpression.calleeExpression?.mainReference?.resolve() as? KtFunction) ?: return false
     return if (callee.valueParameters.any { it.isVarArg }) true else callee.valueParameters.size - 1 > args.size
