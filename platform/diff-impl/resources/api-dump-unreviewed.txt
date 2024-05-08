@@ -1009,6 +1009,7 @@ c:com.intellij.diff.merge.MergeThreesideViewer
 - p:hasNonConflictedChanges(com.intellij.diff.util.ThreeSide):Z
 - ignoreChange(com.intellij.diff.merge.TextMergeChange,com.intellij.diff.util.Side,Z):V
 - isContentModified():Z
+- p:isExternalOperationInProgress():Z
 - markChangeResolved(com.intellij.diff.merge.TextMergeChange):V
 - markChangeResolved(com.intellij.diff.merge.TextMergeChange,com.intellij.diff.util.Side):V
 - p:onBeforeDocumentChange(com.intellij.openapi.editor.event.DocumentEvent):V
@@ -1093,7 +1094,7 @@ c:com.intellij.diff.merge.TextMergeChange
 - pf:myResolved:Z[]
 - pf:myViewer:com.intellij.diff.merge.MergeThreesideViewer
 - <init>(I,Z,com.intellij.diff.fragments.MergeLineFragment,com.intellij.diff.util.MergeConflictType,com.intellij.diff.merge.TextMergeViewer):V
-- p:destroyOperations():V
+- getDiffType():com.intellij.diff.util.TextDiffType
 - p:getEditor(com.intellij.diff.util.ThreeSide):com.intellij.openapi.editor.Editor
 - getEndLine():I
 - getEndLine(com.intellij.diff.util.ThreeSide):I
@@ -1116,7 +1117,7 @@ c:com.intellij.diff.merge.TextMergeChange
 - storeState():com.intellij.diff.merge.TextMergeChange$State
 c:com.intellij.diff.merge.TextMergeChange$State
 - com.intellij.diff.merge.MergeModelBase$State
-- <init>(I,I,I,Z,Z,Z):V
+- <init>(I,I,I,Z,Z,Z,Z):V
 c:com.intellij.diff.merge.TextMergeTool
 - com.intellij.diff.merge.MergeTool
 - sf:INSTANCE:com.intellij.diff.merge.TextMergeTool
