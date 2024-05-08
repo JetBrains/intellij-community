@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
@@ -192,11 +193,11 @@ class MacDistributionBuilder(
   ) {
     val macBinDir = macDistDir.resolve("bin")
     copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macBinDir, customizer.binFilesFilter)
-    copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.MACOS, arch), macBinDir)
+    copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.MACOS, arch), macBinDir)
     copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     val executable = context.productProperties.baseFileName
-    val (execPath, licensePath) = NativeLauncherDownloader.findLocalOrDownload(context, OsFamily.MACOS, arch)
+    val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
     copyFile(execPath, macDistDir.resolve("MacOS/${executable}"))
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
 
@@ -221,7 +222,8 @@ class MacDistributionBuilder(
 
     Files.writeString(
       macBinDir.resolve(PROPERTIES_FILE_NAME),
-      (ideaPropertyContent.lineSequence() + platformProperties).joinToString(separator = "\n"))
+      (ideaPropertyContent.lineSequence() + platformProperties).joinToString(separator = "\n")
+    )
 
     writeVmOptions(macBinDir)
     createJetBrainsClientContextForLaunchers(context)?.let { clientContext ->

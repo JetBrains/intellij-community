@@ -10,6 +10,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
@@ -45,7 +46,7 @@ internal class WindowsDistributionBuilder(
         context.includeBreakGenLibraries() || !file.name.startsWith("breakgen")
       })
 
-      copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
+      copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
 
       generateBuildTxt(context, targetPath)
       generateLanguagePluginsXml(context, targetPath)
@@ -342,7 +343,7 @@ internal class WindowsDistributionBuilder(
       Files.writeString(launcherPropertiesPath, launcherProperties.joinToString(separator = System.lineSeparator()) { (k, v) -> "${k}=${v}" })
 
       val inputPath = if (customizer.useXPlatLauncher) {
-        val (execPath, licensePath) = NativeLauncherDownloader.findLocalOrDownload(context, OsFamily.WINDOWS, arch)
+        val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.WINDOWS, arch)
         if (copyLicense) {
           copyFile(licensePath, winDistPath.resolve("license/launcher-third-party-libraries.html"))
         }

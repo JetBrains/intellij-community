@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
@@ -50,7 +51,7 @@ class LinuxDistributionBuilder(
         val distBinDir = targetPath.resolve("bin")
         val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
         addNativeLauncher(distBinDir, targetPath, arch)
-        copyFileToDir(NativeBinaryDownloader.downloadRestarter(context, OsFamily.LINUX, arch), distBinDir)
+        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.LINUX, arch), distBinDir)
         copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
         copyFileToDir(sourceBinDir.resolve("${arch.dirName}/libdbm.so"), distBinDir)
         generateBuildTxt(context, targetPath)
@@ -379,7 +380,7 @@ class LinuxDistributionBuilder(
 
   private suspend fun addNativeLauncher(distBinDir: Path, targetPath: Path, arch: JvmArchitecture) {
     if (customizer.useXPlatLauncher) {
-      val (execPath, licensePath) = NativeLauncherDownloader.findLocalOrDownload(context, OsFamily.LINUX, arch)
+      val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.LINUX, arch)
       copyFile(execPath, distBinDir.resolve(context.productProperties.baseFileName))
       copyFile(licensePath, targetPath.resolve("license/launcher-third-party-libraries.html"))
     }
