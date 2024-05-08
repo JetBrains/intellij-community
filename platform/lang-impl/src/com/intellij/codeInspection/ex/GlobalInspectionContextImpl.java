@@ -238,7 +238,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     ThreadingAssertions.assertEventDispatchThread();
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     runToolsSpan.end();
-    LOG.info("Code inspection finished. Took " + elapsed + " ms; Files in scope: " + scope.getFileCount());
+    LOG.info("Code inspection finished. Took " + elapsed + " ms");
     if (getProject().isDisposed()) return;
 
     InspectionResultsView oldView = myView;
@@ -1052,7 +1052,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     class TaskDelegate {
       CleanupProblems problems;
-      String noProblemsMessage;
+      @NlsContexts.NotificationContent String noProblemsMessage;
 
       void run(@NotNull ProgressIndicator indicator) {
         problems = findProblems(scope, profile, indicator, shouldApplyFix);
