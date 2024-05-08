@@ -23,7 +23,7 @@ object ClientVersionUtil {
 
   fun isClientUsesTheSamePathsAsLocalIde(clientVersion: String): Boolean {
     val clientBuild = BuildNumber.fromString(clientVersion)
-    return clientBuild != null && clientBuild >= sameDefaultPathsAsLocalIdesUsedSince
+    return clientBuild != null && clientBuild >= sameDefaultPathsAsLocalIdesUsedSince && !clientBuild.isSnapshot
   }
   
   private fun isSeparateConfigSupported(clientBuild: BuildNumber) = 
