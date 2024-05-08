@@ -105,6 +105,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testUInt() = doTest()
     fun testUsefulNull() = doTest()
     fun testWhenK2() = doTest()
+    fun testWhenInLambdaK2() = doTest()
     fun testWhenIsObject() = doTest()
     fun testWhileLoop() = doTest()
 

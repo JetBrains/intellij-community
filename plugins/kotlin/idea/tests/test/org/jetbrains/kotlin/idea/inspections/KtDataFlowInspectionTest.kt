@@ -103,6 +103,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testUInt() = doTest()
     fun testUsefulNull() = doTest()
     fun testWhen() = doTest()
+    fun testWhenInLambda() = doTest()
     fun testWhenIsObject() = doTest()
     fun testWhileLoop() = doTest()
 

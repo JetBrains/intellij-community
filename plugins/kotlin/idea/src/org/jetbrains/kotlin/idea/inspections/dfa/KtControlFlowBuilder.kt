@@ -1695,22 +1695,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
             }
             is KtWhenConditionIsPattern -> {
-                if (dfVar != null) {
-                    addInstruction(JvmPushInstruction(dfVar, null))
-                    val type = getTypeCheckDfType(condition.typeReference)
-                    if (type == DfType.TOP) {
-                        pushUnknown()
-                    } else {
-                        addInstruction(PushValueInstruction(type))
-                        if (condition.isNegated) {
-                            addInstruction(InstanceofInstruction(null, false))
-                            addInstruction(NotInstruction(KotlinWhenConditionAnchor(condition)))
-                        } else {
-                            addInstruction(InstanceofInstruction(KotlinWhenConditionAnchor(condition), false))
-                        }
-                    }
-                } else {
+                val type = getTypeCheckDfType(condition.typeReference)
+                if (dfVar == null || type == DfType.TOP) {
                     pushUnknown()
+                } else {
+                    addInstruction(JvmPushInstruction(dfVar, null))
+                    addInstruction(PushValueInstruction(type))
+                    if (condition.isNegated) {
+                        addInstruction(InstanceofInstruction(null, false))
+                        addInstruction(NotInstruction(KotlinWhenConditionAnchor(condition)))
+                    } else {
+                        addInstruction(InstanceofInstruction(KotlinWhenConditionAnchor(condition), false))
+                    }
                 }
             }
             is KtWhenConditionInRange -> {
