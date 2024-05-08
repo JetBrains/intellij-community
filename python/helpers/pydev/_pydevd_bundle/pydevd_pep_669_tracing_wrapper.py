@@ -15,4 +15,4 @@ else:
 
 sys.modules['_pydevd_bundle.pydevd_pep_669_tracing'] = mod
 
-enable_pep699_monitoring = mod.enable_pep699_monitoring
+enable_pep669_monitoring = mod.enable_pep669_monitoring
