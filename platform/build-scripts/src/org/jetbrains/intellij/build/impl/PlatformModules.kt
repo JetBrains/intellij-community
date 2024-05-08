@@ -105,7 +105,7 @@ internal fun collectPlatformModules(to: MutableCollection<String>) {
 
 internal fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
   val modules = HashSet<String>()
-  collectIncludedPluginModules(enabledPluginModules = enabledPluginModules, product = productLayout, result = modules)
+  collectIncludedPluginModules(enabledPluginModules = enabledPluginModules, product = productLayout, result = modules, context = context)
   modules.addAll(PLATFORM_API_MODULES)
   modules.addAll(PLATFORM_IMPLEMENTATION_MODULES)
   modules.addAll(productLayout.productApiModules)
