@@ -27,9 +27,11 @@ interface TaskExecutionSpec {
   val settings: ExternalSystemTaskExecutionSettings
 
   /**
-   * Actually, the value is enum.
-   * Specifies the type of executed operation {@link ToolWindowId.DEBUG} or {@link ToolWindowId.RUN}.
-   * For more information see {@link com.intellij.execution.Executor}.
+   * Specifies the type of [com.intellij.execution.Executor] to be used for the Task to run:
+   * - [com.intellij.execution.executors.DefaultRunExecutor.EXECUTOR_ID],
+   * - [com.intellij.execution.executors.DefaultDebugExecutor.EXECUTOR_ID],
+   * - etc.
+   * For more information see [com.intellij.execution.Executor].
    */
   val executorId: String
 
@@ -40,13 +42,13 @@ interface TaskExecutionSpec {
 
   /**
    * Defines how the task should be executed.
-   * For more details see {@link ProgressExecutionMode} and {@link com.intellij.openapi.externalSystem.util.ExternalSystemTaskUnderProgress}.
+   * For more details see [ProgressExecutionMode] and [com.intellij.openapi.externalSystem.util.ExternalSystemTaskUnderProgress].
    */
   val progressExecutionMode: ProgressExecutionMode
 
   /**
    * Callback will be executed on task finish.
-   * If operation return code is equal to 0, {@link TaskCallback#onSuccess} will be called, {@link TaskCallback#onFailure} otherwise.
+   * If operation return code is equal to 0, [TaskCallback.onSuccess] will be called, [TaskCallback.onFailure] otherwise.
    */
   val callback: TaskCallback?
 
@@ -61,21 +63,21 @@ interface TaskExecutionSpec {
   val userData: UserDataHolderBase?
 
   /**
-   * Activate the tool window associated with the {@link executorId} before task run.
+   * Activate the tool window associated with the [executorId] before task run.
    */
   val activateToolWindowBeforeRun: Boolean
 
   /**
-   * Activate and focus the tool window associated with the {@link executorId} on task failure.
+   * Activate and focus the tool window associated with the [executorId] on task failure.
    */
   val activateToolWindowOnFailure: Boolean
 
   companion object {
     @JvmStatic
     fun create(project: Project,
-                systemId: ProjectSystemId,
-                executorId: String,
-                settings: ExternalSystemTaskExecutionSettings): TaskExecutionSpecBuilder {
+               systemId: ProjectSystemId,
+               executorId: String,
+               settings: ExternalSystemTaskExecutionSettings): TaskExecutionSpecBuilder {
       return TaskExecutionSpecBuilderImpl(project = project, systemId = systemId, executorId = executorId, settings = settings)
     }
   }
