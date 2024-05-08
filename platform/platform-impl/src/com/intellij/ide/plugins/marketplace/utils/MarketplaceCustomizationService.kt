@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace.utils
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
@@ -17,7 +17,11 @@ interface MarketplaceCustomizationService {
 
   companion object {
     @JvmStatic
-    fun getInstance(): MarketplaceCustomizationService = service()
+    fun getInstance(): MarketplaceCustomizationService {
+      /* this function can be called from ConfigImportHelper.downloadUpdatesForIncompatiblePlugins when Application instance isn't created 
+         yet, use the default implementation in such cases */
+      return serviceOrNull<MarketplaceCustomizationService>() ?: ApplicationInfoMarketplaceCustomizationService()
+    }
   }
 
   /**
