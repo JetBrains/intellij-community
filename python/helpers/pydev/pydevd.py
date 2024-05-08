@@ -512,6 +512,8 @@ class PyDB(object):
 
         self._exception_breakpoints_change_callbacks = set()
 
+        self.is_pep669_monitoring_enabled = False
+
     def get_thread_local_trace_func(self):
         try:
             thread_trace_func = self._local_thread_trace_func.thread_trace_func
@@ -1312,7 +1314,7 @@ class PyDB(object):
 
         if USE_LOW_IMPACT_MONITORING:
             debugger = get_global_debugger()
-            if debugger:
+            if debugger and not debugger.is_pep669_monitoring_enabled:
                 enable_pep669_monitoring()
         else:
             while frame is not None:
