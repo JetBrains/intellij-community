@@ -272,7 +272,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   public boolean suspends(@NotNull ThreadReferenceProxyImpl thread) {
     assertNotResumed();
-    if (isEvaluating()) {
+    if (myEvaluationContext != null && thread == myEvaluationContext.getThreadForEvaluation()) {
       return false;
     }
     return switch (getSuspendPolicy()) {

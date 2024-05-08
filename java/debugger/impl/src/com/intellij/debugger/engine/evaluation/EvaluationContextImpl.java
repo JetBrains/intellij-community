@@ -7,12 +7,14 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +26,8 @@ public final class EvaluationContextImpl implements EvaluationContext {
   private final StackFrameProxyImpl myFrameProxy;
   private boolean myAutoLoadClasses = true;
   private ClassLoaderReference myClassLoader;
+  private @Nullable ThreadReferenceProxyImpl myThreadForEvaluation = null;
+
 
   private EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext,
                                 @Nullable StackFrameProxyImpl frameProxy,
@@ -107,6 +111,16 @@ public final class EvaluationContextImpl implements EvaluationContext {
 
   public void setAutoLoadClasses(final boolean autoLoadClasses) {
     myAutoLoadClasses = autoLoadClasses;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ThreadReferenceProxyImpl getThreadForEvaluation() {
+    return myThreadForEvaluation;
+  }
+
+  @ApiStatus.Internal
+  public void setThreadForEvaluation(@Nullable ThreadReferenceProxyImpl threadForEvaluation) {
+    myThreadForEvaluation = threadForEvaluation;
   }
 
   public EvaluationContextImpl withAutoLoadClasses(boolean autoLoadClasses) {
