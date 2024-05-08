@@ -261,12 +261,6 @@ f:com.intellij.diff.actions.ShowStandaloneDiffAction
 - sf:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.diff.actions.ShowStandaloneDiffAction$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-f:com.intellij.diff.actions.impl.CombinedDiffToggleAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.diff.actions.impl.DiffNavigatableArrayRule
 - com.intellij.ide.impl.dataRules.GetDataRule
 - <init>():V
