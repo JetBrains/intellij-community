@@ -44,7 +44,7 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun getCaretLine() = caretPosition.getLine() + 1
 
   fun setCaretPosition(line: Int, column: Int) {
-    setFocus()
+    click()
     driver.withContext(OnDispatcher.EDT) {
       editor.getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1))
     }
