@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processD
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import kotlin.math.max
 import kotlin.math.min
 
 interface AbstractInplaceExtractionHelper<KotlinType,
@@ -57,9 +58,10 @@ interface AbstractInplaceExtractionHelper<KotlinType,
         val descriptor = descriptorWithConflicts.descriptor
         val elements = descriptor.extractionData.physicalElements
         val file = descriptor.extractionData.originalFile
+        val first = elements.first()
         val callTextRange =
             editor.document.createRangeMarker(
-                rangeOf(elements.first()).startOffset,
+                max(rangeOf(PsiTreeUtil.skipWhitespacesAndCommentsBackward(first) ?: first).startOffset - 1, 0),
                 rangeOf(elements.last()).endOffset
             ).apply {
                 isGreedyToLeft = true

@@ -38,6 +38,14 @@ class FirInplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
         doTest()
     }
 
+    fun testMoveLambdaOutsideParenthesis() {
+        doTest()
+    }
+
+    fun testSkipCommentsBefore() {
+        doTest()
+    }
+
     fun testStringTemplateWithNameConflict() {
         doTest(changedName = "substring")
     }
