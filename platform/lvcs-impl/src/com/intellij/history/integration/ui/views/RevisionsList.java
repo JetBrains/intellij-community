@@ -388,7 +388,7 @@ public final class RevisionsList {
       }
 
       Color fg = orig.getForeground();
-      Color bg = isSelected && !table.isFocusOwner() ? UIUtil.getListUnfocusedSelectionBackground() : orig.getBackground();
+      Color bg = isSelected && !table.isFocusOwner() ? UIUtil.getListSelectionBackground(false) : orig.getBackground();
 
       myDateLabel.setForeground(isSelected ? fg : JBColor.GRAY);
       myFilesCountLabel.setForeground(myDateLabel.getForeground());
