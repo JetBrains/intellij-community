@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
@@ -27,11 +28,15 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
+import java.util.function.Predicate
 
 @ApiStatus.Internal
 class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: CoroutineScope) : Disposable,
                                                                                             UnindexedFilesScannerExecutor {
+  // helpers for tests
   private val scanningWaitsForNonDumbModeOverride = MutableStateFlow<Boolean?>(null)
+  private var taskFilter: Predicate<UnindexedFilesScanner>? = null
+
   private val runningDumbTask = AtomicReference<ProgressIndicator>()
 
   // note that shouldShowProgressIndicator = false in UnindexedFilesScannerExecutor, so there is no suspender for the progress indicator
@@ -129,7 +134,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       enabled && scanningTask != null
     }
 
-    // Delay scanning tasks until after all the scheduled dumb tasks are finished.
+    // Delay scanning tasks until all the scheduled dumb tasks are finished.
     // For example, PythonLanguageLevelPusher.initExtra is invoked from RequiredForSmartModeActivity and may submit additional dumb tasks.
     // We want scanning to start after all these "extra" dumb tasks are finished.
     // Note that a project may become dumb immediately after the check. This is not a problem - we schedule scanning anyway.
@@ -196,6 +201,12 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   override fun submitTask(task: FilesScanningTask) {
     task as UnindexedFilesScanner
     thisLogger().debug(Throwable("submit task, thread=${Thread.currentThread()}"))
+
+    if (taskFilter?.test(task) == false) {
+      thisLogger().info("Skipping task (rejected by filter): $task")
+      task.close()
+      return
+    }
 
     // Two tasks with limited checks should be just run one after another.
     // A case of a full check followed by a limited change cancelling the first one and making a full check anew results
@@ -292,6 +303,12 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
 
   override val hasQueuedTasks: Boolean
     get() = scanningTask.value != null
+
+  @TestOnly
+  fun setTaskFilterInTest(disposable: Disposable, filter: Predicate<UnindexedFilesScanner>) {
+    Disposer.register(disposable) { taskFilter = null }
+    taskFilter = filter
+  }
 
   companion object {
     private val LOG = Logger.getInstance(UnindexedFilesScannerExecutor::class.java)
