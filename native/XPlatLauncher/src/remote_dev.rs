@@ -92,8 +92,6 @@ impl RemoteDevLaunchConfiguration {
         if remote_dev_starter_command == "help" {
             print_help();
             std::process::exit(0)
-        } else if remote_dev_starter_command == "registerBackendLocationForGateway" {
-            bail!("registerBackendLocationForGateway is not implemented")
         }
 
         let should_parse_project_path = ij_starter_command.ij_command == "warmup";
@@ -390,7 +388,7 @@ fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
         ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
         ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: false, is_arguments_required: false}),
-        ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "registerBackendLocationForGateway".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
     ])
 }
