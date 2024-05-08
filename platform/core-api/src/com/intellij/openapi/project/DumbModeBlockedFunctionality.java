@@ -33,6 +33,7 @@ public enum DumbModeBlockedFunctionality {
   Kotlin,
   LineProfiler,
   MemberInplaceRenamer,
+  Micronaut,
   MultipleActionIds,
   Other,
   PackageDependencies,

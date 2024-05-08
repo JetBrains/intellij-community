@@ -2596,6 +2596,7 @@ e:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Kotlin:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:LineProfiler:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:MemberInplaceRenamer:com.intellij.openapi.project.DumbModeBlockedFunctionality
+- sf:Micronaut:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:MultipleActionIds:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Other:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:PackageDependencies:com.intellij.openapi.project.DumbModeBlockedFunctionality
