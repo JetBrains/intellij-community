@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
+import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
@@ -22,12 +23,15 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.flowOf
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.beans.PropertyChangeListener
@@ -72,56 +76,54 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
 }
 
 @Service(Service.Level.PROJECT)
-private class ComponentFactory(private val project: Project, private val parentCs: CoroutineScope) {
+private class ComponentFactory(private val project: Project, parentCs: CoroutineScope) {
+  private val cs = parentCs.childScope(Dispatchers.Main)
+
   fun createComponent(file: GitLabMergeRequestTimelineFile, disposable: Disposable): JComponent {
     val wrapper = Wrapper(LoadingLabel().apply {
       border = JBUI.Borders.empty(CodeReviewChatItemUIUtil.ComponentType.FULL.paddingInsets)
     })
 
-    parentCs.childScope(Dispatchers.Main).launchNow {
-      project.serviceAsync<GitLabToolWindowViewModel>().projectVm.collectLatest { projectVm ->
-        if (projectVm == null) {
-          return@collectLatest
-        }
-
-        projectVm.getTimelineViewModel(file.mergeRequestId).collectLatest {
-          coroutineScope {
-            it.fold(
-              onSuccess = {
-                val timeline = GitLabMergeRequestTimelineComponentFactory.create(project, this, it, projectVm.avatarIconProvider)
-                wrapper.setContent(timeline)
-                wrapper.repaint()
-              },
-              onFailure = { error ->
-                val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
-                  projectVm.accountVm,
-                  swingAction(GitLabBundle.message("merge.request.reload")) {
-                    launch {
-                      project.service<GitLabProjectConnectionManager>()
-                        .connectionState.value
-                        ?.projectData?.mergeRequests
-                        ?.reloadMergeRequest(file.mergeRequestId)
-                    }
-                  })
-                val errorPanel = ErrorStatusPanelFactory.create(this, flowOf(error), errorPresenter).let {
-                  CollaborationToolsUIUtil.moveToCenter(it)
-                }
-                wrapper.setContent(errorPanel)
-                wrapper.repaint()
-              }
-            )
-            try {
-              awaitCancellation()
-            }
-            catch (e: Exception) {
-              withContext(NonCancellable) {
-                wrapper.setContent(null)
-              }
-            }
-          }
+    cs.launchNow {
+      project.serviceAsync<GitLabToolWindowViewModel>().projectVm.collectScoped { projectVm ->
+        projectVm?.getTimelineViewModel(file.mergeRequestId)?.collectScoped {
+          showTimelineOrError(projectVm, it, file.mergeRequestId, wrapper)
         }
       }
-    }.cancelOnDispose(disposable)
+    }.cancelOnDispose(disposable, false)
     return wrapper
+  }
+
+  private suspend fun showTimelineOrError(projectVm: GitLabToolWindowProjectViewModel,
+                                          timelineVmResult: Result<GitLabMergeRequestTimelineViewModel>,
+                                          mergeRequestId: String,
+                                          wrapper: Wrapper) {
+    withContext(Dispatchers.Main.immediate) {
+      timelineVmResult.fold(
+        onSuccess = {
+          val timeline = GitLabMergeRequestTimelineComponentFactory.create(project, this, it, projectVm.avatarIconProvider)
+          wrapper.setContent(timeline)
+          wrapper.repaint()
+        },
+        onFailure = { error ->
+          val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
+            projectVm.accountVm,
+            swingAction(GitLabBundle.message("merge.request.reload")) {
+              projectVm.reloadMergeRequestDetails(mergeRequestId)
+            })
+          val errorPanel = ErrorStatusPanelFactory.create(this, flowOf(error), errorPresenter).let {
+            CollaborationToolsUIUtil.moveToCenter(it)
+          }
+          wrapper.setContent(errorPanel)
+          wrapper.repaint()
+        }
+      )
+      try {
+        awaitCancellation()
+      }
+      finally {
+        wrapper.setContent(null)
+      }
+    }
   }
 }
