@@ -1,9 +1,4 @@
-// ERROR: Unresolved reference: withSign
-// ERROR: Unresolved reference: IEEErem
-// ERROR: Unresolved reference: nextTowards
-// ERROR: Unresolved reference: nextDown
-// ERROR: Unresolved reference: nextUp
-// ERROR: Unresolved reference: pow
+import kotlin.math.IEEErem
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.asin
@@ -22,6 +17,10 @@ import kotlin.math.ln1p
 import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.nextDown
+import kotlin.math.nextTowards
+import kotlin.math.nextUp
+import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.sign
 import kotlin.math.sin
@@ -29,8 +28,8 @@ import kotlin.math.sinh
 import kotlin.math.sqrt
 import kotlin.math.tan
 import kotlin.math.tanh
+import kotlin.math.withSign
 
-// TODO investigate why extension methods are unresolved in this test (imports are not added)
 class J {
     fun foo(x: Double, y: Double, f: Float) {
         abs(x)

@@ -28,17 +28,26 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
             // not to use a receiver. Both `run` and `kotlin.run` calls should work from the J2K point of view, but `run` is cleaner.
             return false
         }
-        if (this.safeAs<JKMultiverseFunctionSymbol>()?.isTopLevelBuiltInKotlinFunction == true) return true
+        if (isTopLevelBuiltInKotlinFunction) return true
         return this is JKClassSymbol || isStaticMember || isEnumConstant
     }
 
     fun renderSymbol(symbol: JKSymbol, owner: JKTreeElement?): String {
         val name = symbol.name.escaped()
-        if (!symbol.isFqNameExpected(owner)) return name
         val fqName = symbol.getDisplayFqName().escapedAsQualifiedName()
-        if (symbol.isFromJavaLangPackage()) return fqName
 
         return when {
+            !symbol.isFqNameExpected(owner) -> {
+                if (symbol.isTopLevelBuiltInKotlinFunction && importStorage.isImportNeeded(fqName)) {
+                    // Kotlin's extension function is called by a simple name, but the import still needs to be added
+                    importStorage.addImport(fqName)
+                }
+
+                name
+            }
+
+            symbol.isFromJavaLangPackage() -> fqName
+
             symbol is JKClassSymbol && canBeShortenedClassNameCache.canBeShortened(symbol) -> {
                 importStorage.addImport(fqName)
                 name
@@ -66,8 +75,8 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
     companion object {
         private const val JAVA_LANG_FQ_PREFIX = "java.lang"
 
-        private val JKMultiverseFunctionSymbol.isTopLevelBuiltInKotlinFunction: Boolean
-            get() = fqName.isKotlinPackagePrefix && target.parent is KtFile
+        private val JKSymbol.isTopLevelBuiltInKotlinFunction: Boolean
+            get() = this is JKMultiverseFunctionSymbol && fqName.isKotlinPackagePrefix && target.parent is KtFile
 
         private val String.isKotlinPackagePrefix: Boolean
             get() = this == "kotlin" || this.startsWith("kotlin.")
