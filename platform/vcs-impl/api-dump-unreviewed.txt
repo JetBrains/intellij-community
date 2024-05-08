@@ -8334,14 +8334,6 @@ f:com.intellij.vcs.VcsActivity
 - sf:Shelve:com.intellij.history.ActivityId
 - sf:Unshelve:com.intellij.history.ActivityId
 - sf:Update:com.intellij.history.ActivityId
-f:com.intellij.vcs.VcsActivityPresentationProvider
-- com.intellij.history.ActivityPresentationProvider
-- sf:Companion:com.intellij.vcs.VcsActivityPresentationProvider$Companion
-- sf:ID:java.lang.String
-- <init>():V
-- getIcon(java.lang.String):javax.swing.Icon
-- getId():java.lang.String
-f:com.intellij.vcs.VcsActivityPresentationProvider$Companion
 f:com.intellij.vcs.VcsLocaleHelper
 - sf:INSTANCE:com.intellij.vcs.VcsLocaleHelper
 - f:findMatchingLocale(java.lang.String,java.util.List):java.util.Map

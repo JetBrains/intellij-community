@@ -1272,7 +1272,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Patch_file = load("vcs/patch_file.svg", -1991117101, 0);
     /** 16x16 */ public static final @NotNull Icon Push = load("vcs/push.svg", 1768616645, 2);
     /** 16x16 */ public static final @NotNull Icon Remove = load("vcs/remove.svg", -930385649, 2);
-    /** 16x16 */ public static final @NotNull Icon Shelve = load("vcs/Shelve.svg", -1645293825, 2);
     /** 16x16 */ public static final @NotNull Icon ShelveSilent = load("vcs/shelveSilent.svg", -370626475, 2);
     /** 16x16 */ public static final @NotNull Icon ShowUnversionedFiles = load("vcs/ShowUnversionedFiles.svg", -1565476650, 2);
     /** 16x16 */ public static final @NotNull Icon Unshelve = load("vcs/Unshelve.svg", -81545320, 2);

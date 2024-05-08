@@ -1197,7 +1197,6 @@ f:com.intellij.icons.AllIcons$Vcs
 - sf:Patch_file:javax.swing.Icon
 - sf:Push:javax.swing.Icon
 - sf:Remove:javax.swing.Icon
-- sf:Shelve:javax.swing.Icon
 - sf:ShelveSilent:javax.swing.Icon
 - sf:ShowUnversionedFiles:javax.swing.Icon
 - sf:Unshelve:javax.swing.Icon

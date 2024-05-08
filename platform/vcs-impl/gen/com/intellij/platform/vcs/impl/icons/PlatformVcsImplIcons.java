@@ -21,5 +21,6 @@ public final class PlatformVcsImplIcons {
     /** 16x16 */ public static final @NotNull Icon Vcs = load("icons/new/vcs.svg", 1023462254, 2);
   }
 
+  /** 16x16 */ public static final @NotNull Icon Shelve = load("icons/Shelve.svg", -1645293825, 2);
   /** 16x16 */ public static final @NotNull Icon Stash = load("icons/Stash.svg", -451629034, 2);
 }
