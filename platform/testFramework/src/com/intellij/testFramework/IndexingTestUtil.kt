@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import org.junit.Assert
 import kotlin.time.Duration.Companion.seconds
@@ -84,7 +84,7 @@ class IndexingTestUtil(private val project: Project) {
     }
 
     if (ApplicationManager.getApplication().isDispatchThread) {
-      val scope = GlobalScope.namedChildScope("Indexing waiter", Dispatchers.IO)
+      val scope = GlobalScope.childScope("Indexing waiter", Dispatchers.IO)
       val waiting = scope.launch { suspendUntilIndexesAreReady() }
       try {
         PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !waiting.isActive }, 600)

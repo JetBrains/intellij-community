@@ -20,7 +20,7 @@ import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.platform.ml.embeddings.utils.normalized
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,7 +29,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @Service(Service.Level.APP)
 class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
-  private val indexingScope = cs.namedChildScope("Actions embedding indexing scope")
+  private val indexingScope = cs.childScope("Actions embedding indexing scope")
   private var isFirstIndexing = true
   private var shouldSaveToDisk = false
   private val isIndexingTriggered = AtomicBoolean(false)

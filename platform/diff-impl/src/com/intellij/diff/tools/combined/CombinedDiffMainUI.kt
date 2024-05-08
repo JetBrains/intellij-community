@@ -29,7 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.Wrapper
@@ -56,7 +56,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val cs: CoroutineScope = GlobalScope.namedChildScope("CombinedDiffMainUI", Dispatchers.EDT)
+  private val cs: CoroutineScope = GlobalScope.childScope("CombinedDiffMainUI", Dispatchers.EDT)
 
   private val context: DiffContext = model.context
   private val settings = DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE))

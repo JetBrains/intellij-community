@@ -14,7 +14,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.X11UiUtil
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -50,7 +50,7 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
   private lateinit var lbIsMaximizedHorz: JLabel
   private lateinit var lbIdeFrameInFullScreen: JLabel
   private lateinit var lbFrameExtendedState: JLabel
-  private var scope = GlobalScope.namedChildScope("X11UiTestAction")
+  private var scope = GlobalScope.childScope("X11UiTestAction")
 
   init {
     title = dialogTitle

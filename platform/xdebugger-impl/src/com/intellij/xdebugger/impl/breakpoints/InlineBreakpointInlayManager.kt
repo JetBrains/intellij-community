@@ -17,7 +17,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -42,8 +42,8 @@ import java.util.concurrent.atomic.AtomicLong
 internal class InlineBreakpointInlayManager(private val project: Project, parentScope: CoroutineScope) {
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val scope = parentScope.namedChildScope("InlineBreakpoints",
-                                                  if (Registry.`is`(LIMIT_REDRAW_JOBS_COUNT_KEY))
+  private val scope = parentScope.childScope("InlineBreakpoints",
+                                             if (Registry.`is`(LIMIT_REDRAW_JOBS_COUNT_KEY))
                                                     Dispatchers.Default.limitedParallelism (1)
                                                   else
                                                     Dispatchers.Default)

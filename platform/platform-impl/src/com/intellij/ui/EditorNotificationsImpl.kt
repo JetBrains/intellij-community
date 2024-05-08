@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
@@ -61,7 +61,7 @@ class EditorNotificationsImpl(private val project: Project,
    * for example, in [com.intellij.httpClient.http.request.utils.prepareEditorNotifications].
    * Since it's canceled in [dispose], we have to create a child.
    */
-  private val coroutineScope: CoroutineScope = coroutineScope.namedChildScope("EditorNotificationsImpl")
+  private val coroutineScope: CoroutineScope = coroutineScope.childScope("EditorNotificationsImpl")
   private val updateAllRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val fileToUpdateNotificationJob = CollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()

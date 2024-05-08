@@ -22,7 +22,7 @@ fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext,
 }
 
 @Internal
-fun CoroutineScope.namedChildScope(
+fun CoroutineScope.childScope(
   name: String,
   context: CoroutineContext = EmptyCoroutineContext,
   supervisor: Boolean = true,

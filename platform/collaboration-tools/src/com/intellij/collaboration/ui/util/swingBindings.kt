@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
@@ -382,7 +382,7 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
 
   @OptIn(DelicateCoroutinesApi::class)
   override fun showNotify() {
-    scope = GlobalScope.namedChildScope("ActivatableCoroutineScopeProvider", context(), true).apply {
+    scope = GlobalScope.childScope("ActivatableCoroutineScopeProvider", context(), true).apply {
       for (block in blocks) {
         launch { block() }
       }

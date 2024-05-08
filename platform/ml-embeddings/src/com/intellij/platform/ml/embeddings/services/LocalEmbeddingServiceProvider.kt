@@ -10,8 +10,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader
-import com.intellij.platform.util.coroutines.namedChildScope
-import kotlinx.coroutines.*
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
@@ -26,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Service
 class LocalEmbeddingServiceProvider(cs: CoroutineScope) {
-  private val providerScope = cs.namedChildScope("Local embedding service provider scope")
+  private val providerScope = cs.childScope("Local embedding service provider scope")
 
   // Allow garbage collector to free memory if the available heap size is low
   private var localServiceRef: AtomicReference<LocalEmbeddingService?> = AtomicReference(null)

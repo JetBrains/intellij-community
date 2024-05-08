@@ -35,7 +35,7 @@ import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo.isWindows
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
 import com.intellij.ui.components.JBLabel
@@ -187,7 +187,7 @@ private fun updateGraphProperties(
 internal class ProjectWizardJdkComboBoxService(
   private val coroutineScope: CoroutineScope
 ) {
-  fun childScope(name: String): CoroutineScope = coroutineScope.namedChildScope(name)
+  fun childScope(name: String): CoroutineScope = coroutineScope.childScope(name)
 }
 
 class ProjectWizardJdkComboBox(

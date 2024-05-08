@@ -2,7 +2,7 @@ package com.intellij.remoteDev.tests.impl.utils
 
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -17,7 +17,7 @@ suspend fun <T> withTimeoutDumping(title: String,
                                    timeout: Duration,
                                    failMessageProducer: (() -> String)? = null,
                                    action: suspend () -> T): T = coroutineScope {
-  val outerScope = namedChildScope(title)
+  val outerScope = childScope(title)
 
   val deferred = outerScope.async { action() }
   @OptIn(DelicateCoroutinesApi::class)

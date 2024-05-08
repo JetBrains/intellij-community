@@ -13,7 +13,7 @@ import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
@@ -55,7 +55,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   private var runningTask: Job? = null
 
   init {
-    cs.namedChildScope("Scanning (root)").launch {
+    cs.childScope("Scanning (root)").launch {
       while (true) {
         try {
           scanningEnabled.first { it }
@@ -124,7 +124,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       MutableStateFlow(true)
     }
     coroutineScope {
-      val progressScope = namedChildScope("Scanning progress")
+      val progressScope = childScope("Scanning progress")
       val progressReporter = IndexingProgressReporter()
       val taskIndicator = IndexingProgressReporter.CheckPauseOnlyProgressIndicatorImpl(progressScope, getPauseReason())
       IndexingProgressReporter.launchIndexingProgressUIReporter(progressScope, project, shouldShowProgress, progressReporter,

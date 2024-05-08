@@ -3,7 +3,7 @@ package com.intellij.platform.instanceContainer.instantiation
 
 import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
 import kotlinx.coroutines.*
@@ -292,7 +292,7 @@ private suspend fun <T> instantiate(
       .toArray(ArrayUtilRt.EMPTY_OBJECT_ARRAY)
       .also { args ->
         replaceScopeMarkerWithScope(args) {
-          parentScope.namedChildScope(instanceClass.name)
+          parentScope.childScope(instanceClass.name)
         }
       }
   }
