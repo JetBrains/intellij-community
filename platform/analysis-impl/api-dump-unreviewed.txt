@@ -1007,6 +1007,7 @@ c:com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 - getProject():com.intellij.openapi.project.Project
 - hasErrorResults():Z
 - size():I
+- toString():java.lang.String
 a:com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 - <init>():V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager

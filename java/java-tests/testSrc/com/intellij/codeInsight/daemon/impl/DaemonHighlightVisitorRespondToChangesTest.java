@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -463,19 +464,19 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), TextEditorProvider.getInstance().getTextEditor(getEditor()), ArrayUtilRt.EMPTY_INT_ARRAY, true, () -> {
       if (timeOut.isTimedOut()) {
         List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
-        System.err.println("Timed out\ninfos="+infos+"\n"
-                           +";visitor1.myState().THINKING.get()="+visitor1.myState().THINKING.get()
-                           +";visitor2.myState().THINKING.get()="+visitor2.myState().THINKING.get()
-                           +";visitor1.myState().THINK.get()="+visitor1.myState().THINK.get()
-                           +";visitor2.myState().THINK.get()="+visitor2.myState().THINK.get()
-                           +";visitor1.myState().COMMENT_HIGHLIGHTED.get()="+visitor1.myState().COMMENT_HIGHLIGHTED.get()
-                           +";visitor2.myState().COMMENT_HIGHLIGHTED.get()="+visitor2.myState().COMMENT_HIGHLIGHTED.get()
-                           +"\n"+ThreadDumper.dumpThreadsToString());
         visitor1.myState().THINK.set(false);
         visitor2.myState().THINK.set(false);
         visitor1.myState().THINKING.set(false);
         visitor2.myState().THINKING.set(false);
-        fail();
+        fail("Timed out\ninfos=" + infos + "\n"
+             + "; ForkJoinPool.commonPool().getParallelism()=" + ForkJoinPool.commonPool().getParallelism()
+             + ";visitor1.myState().THINKING.get()=" + visitor1.myState().THINKING.get()
+             + ";visitor2.myState().THINKING.get()=" + visitor2.myState().THINKING.get()
+             + ";visitor1.myState().THINK.get()=" + visitor1.myState().THINK.get()
+             + ";visitor2.myState().THINK.get()=" + visitor2.myState().THINK.get()
+             + ";visitor1.myState().COMMENT_HIGHLIGHTED.get()=" + visitor1.myState().COMMENT_HIGHLIGHTED.get()
+             + ";visitor2.myState().COMMENT_HIGHLIGHTED.get()=" + visitor2.myState().COMMENT_HIGHLIGHTED.get()
+             + "\n" + ThreadDumper.dumpThreadsToString());
       }
       if (visitor1.myState().THINKING.get() && visitor2.myState().THINKING.get()) {
         // if two visitors are paused, it means they both have visited comments. Check that corresponding highlights are in the markup model
@@ -502,26 +503,6 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
 
     private MyThinkingHighlightVisitor(String MSG) {
       this.MSG = MSG;
-    }
-    private static class MyThinkingHighlightVisitor1 extends MyThinkingHighlightVisitor {
-      private MyThinkingHighlightVisitor1() {
-        super("MSG1");
-      }
-
-      @Override
-      public @NotNull HighlightVisitor clone() {
-        return new MyThinkingHighlightVisitor1();
-      }
-    }
-    private static class MyThinkingHighlightVisitor2 extends MyThinkingHighlightVisitor {
-      private MyThinkingHighlightVisitor2() {
-        super("MSG2");
-      }
-
-      @Override
-      public @NotNull HighlightVisitor clone() {
-        return new MyThinkingHighlightVisitor2();
-      }
     }
 
     @Override
@@ -556,12 +537,38 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
       return true;
     }
 
-    boolean isMy(HighlightInfo info) {
+    boolean isMy(@NotNull HighlightInfo info) {
       return HighlightSeverity.WARNING.equals(info.getSeverity()) && MSG.equals(info.getDescription());
     }
 
     State myState() {
       return STATE.get(MSG);
+    }
+
+    private static class MyThinkingHighlightVisitor1 extends MyThinkingHighlightVisitor {
+      private MyThinkingHighlightVisitor1() {
+        super("MSG1");
+      }
+
+      @Override
+      public @NotNull HighlightVisitor clone() {
+        return new MyThinkingHighlightVisitor1();
+      }
+    }
+    private static class MyThinkingHighlightVisitor2 extends MyThinkingHighlightVisitor {
+      private MyThinkingHighlightVisitor2() {
+        super("MSG2");
+      }
+
+      @Override
+      public @NotNull HighlightVisitor clone() {
+        return new MyThinkingHighlightVisitor2();
+      }
+
+      @Override
+      public void visit(@NotNull PsiElement element) {
+        super.visit(element); // for stacktrace
+      }
     }
   }
 }
