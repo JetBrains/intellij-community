@@ -199,6 +199,10 @@ def enable_pep669_monitoring():
         ):
             monitoring.register_callback(DEBUGGER_ID, event_type, callback)
 
+    debugger = GlobalDebuggerHolder.global_dbg
+    if debugger:
+        debugger.is_pep669_monitoring_enabled = True
+
 
 def _enable_return_tracing(code):
     local_events = monitoring.get_local_events(monitoring.DEBUGGER_ID, code)
