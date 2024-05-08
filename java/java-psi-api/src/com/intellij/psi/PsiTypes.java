@@ -3,11 +3,26 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static com.intellij.psi.PsiType.*;
 
 @SuppressWarnings("deprecation")
 public final class PsiTypes {
-  /** 
+
+  private static final List<PsiPrimitiveType> PRIMITIVE_TYPES = Arrays.asList(
+    booleanType(),
+    byteType(),
+    charType(),
+    shortType(),
+    intType(),
+    longType(),
+    floatType(),
+    doubleType()
+  );
+
+  /**
    * Returns instance corresponding to {@code byte} type. 
    */
   public static @NotNull PsiPrimitiveType byteType() { 
@@ -68,6 +83,14 @@ public final class PsiTypes {
    */
   public static @NotNull PsiPrimitiveType voidType() { 
     return VOID; 
+  }
+
+  /**
+   *
+   * @return a list of primitive types (without void and null types)
+   */
+  public static @NotNull List<PsiPrimitiveType> primitiveTypes() {
+    return PRIMITIVE_TYPES;
   }
 
   /** 

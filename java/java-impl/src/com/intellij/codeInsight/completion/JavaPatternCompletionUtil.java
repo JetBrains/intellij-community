@@ -27,17 +27,6 @@ import java.util.function.Consumer;
 
 public final class JavaPatternCompletionUtil {
 
-  private static final List<PsiType> PRIMITIVE_TYPES = List.of(
-    PsiTypes.booleanType(),
-    PsiTypes.byteType(),
-    PsiTypes.charType(),
-    PsiTypes.shortType(),
-    PsiTypes.intType(),
-    PsiTypes.floatType(),
-    PsiTypes.doubleType(),
-    PsiTypes.longType()
-  );
-
   public static boolean insideDeconstructionList(@NotNull PsiElement element) {
     if (!PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, element)) return false;
     return element.getParent() instanceof PsiJavaCodeReferenceElement ref &&
@@ -142,7 +131,7 @@ public final class JavaPatternCompletionUtil {
                                               @NotNull Consumer<? super LookupElement> result) {
     if (fromType == null) return;
     if (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, currentPosition)) return;
-    for (PsiType primitiveType : PRIMITIVE_TYPES) {
+    for (PsiType primitiveType : PsiTypes.primitiveTypes()) {
       if (TypeConversionUtil.areTypesConvertible(fromType, primitiveType)) {
         LookupElement lookupItem =
           BasicExpressionCompletionContributor.createKeywordLookupItem(currentPosition, primitiveType.getCanonicalText());

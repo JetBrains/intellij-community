@@ -1171,14 +1171,7 @@ public class JavaKeywordCompletion {
       return;
     }
 
-    if ((InstanceofTypeProvider.AFTER_INSTANCEOF.accepts(position)) &&
-        position.getParent() instanceof PsiJavaCodeReferenceElement referenceElement &&
-        referenceElement.getParent() instanceof PsiTypeElement typeElement &&
-        (typeElement.getParent() instanceof PsiInstanceOfExpression ||
-         (typeElement.getParent() instanceof PsiPatternVariable variable &&
-          (variable.getParent() instanceof PsiInstanceOfExpression ||
-           variable.getParent() instanceof PsiTypeTestPattern typeTestPattern &&
-           typeTestPattern.getParent() instanceof PsiInstanceOfExpression)))) {
+    if (afterInstanceofForType(position)) {
       PsiInstanceOfExpression instanceOfExpression = PsiTreeUtil.getParentOfType(position, PsiInstanceOfExpression.class);
       if (instanceOfExpression != null) {
         JavaPatternCompletionUtil.suggestPrimitiveTypesForPattern(position, instanceOfExpression.getOperand().getType(), result);
@@ -1186,14 +1179,7 @@ public class JavaKeywordCompletion {
       return;
     }
 
-    if (psiElement().afterLeaf(PsiKeyword.CASE).accepts(position) &&
-        ((position.getParent() instanceof PsiReferenceExpression referenceExpression &&
-          referenceExpression.getParent() instanceof PsiCaseLabelElementList)
-         || (position.getParent() instanceof PsiJavaCodeReferenceElement referenceElement &&
-             referenceElement.getParent() instanceof PsiTypeElement typeElement &&
-             typeElement.getParent() instanceof PsiPatternVariable patternVariable &&
-             patternVariable.getParent() instanceof PsiTypeTestPattern typeTestPattern &&
-             typeTestPattern.getParent() instanceof PsiCaseLabelElementList))) {
+    if (afterCaseForType(position)) {
       PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class);
       if (switchBlock != null && switchBlock.getExpression() != null) {
         JavaPatternCompletionUtil.suggestPrimitiveTypesForPattern(position, switchBlock.getExpression().getType(), result);
@@ -1248,6 +1234,51 @@ public class JavaKeywordCompletion {
     else if (typeFragment && ((PsiTypeCodeFragment)position.getContainingFile()).isVoidValid()) {
       result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID));
     }
+  }
+
+  /**
+   * Checks if the given PsiElement is in a position where it occurs after a case keyword for a specific type.
+   * <p>
+   * Example:
+   * <pre><code>
+   *   switch(i){
+   *     case <caret>
+   *   }
+   * </code></pre>
+   * @param position the PsiElement to check
+   * @return true if the position occurs after a case keyword for a specific type, false otherwise
+   */
+  private static boolean afterCaseForType(@Nullable PsiElement position) {
+    if (position == null) return false;
+    return psiElement().afterLeaf(PsiKeyword.CASE).accepts(position) &&
+           ((position.getParent() instanceof PsiReferenceExpression referenceExpression &&
+             referenceExpression.getParent() instanceof PsiCaseLabelElementList)
+            || (position.getParent() instanceof PsiJavaCodeReferenceElement referenceElement &&
+                referenceElement.getParent() instanceof PsiTypeElement typeElement &&
+                typeElement.getParent() instanceof PsiPatternVariable patternVariable &&
+                patternVariable.getParent() instanceof PsiTypeTestPattern typeTestPattern &&
+                typeTestPattern.getParent() instanceof PsiCaseLabelElementList));
+  }
+
+  /**
+   * Checks if the given PsiElement is in a position where it occurs after an instanceof keyword for a specific type.
+   * Example:
+   * <pre><code>
+   *   if(i instanceof <caret>)
+   * </code></pre>
+   * @param position the PsiElement to check
+   * @return true if the position occurs after an instanceof keyword for a specific type, false otherwise
+   */
+  private static boolean afterInstanceofForType(@Nullable PsiElement position) {
+    if (position == null) return false;
+    return (InstanceofTypeProvider.AFTER_INSTANCEOF.accepts(position)) &&
+           position.getParent() instanceof PsiJavaCodeReferenceElement referenceElement &&
+           referenceElement.getParent() instanceof PsiTypeElement typeElement &&
+           (typeElement.getParent() instanceof PsiInstanceOfExpression ||
+            (typeElement.getParent() instanceof PsiPatternVariable variable &&
+             (variable.getParent() instanceof PsiInstanceOfExpression ||
+              variable.getParent() instanceof PsiTypeTestPattern typeTestPattern &&
+              typeTestPattern.getParent() instanceof PsiInstanceOfExpression)));
   }
 
   private static boolean isVariableTypePosition(PsiElement position) {
