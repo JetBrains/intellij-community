@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.coroutines
 
 import kotlinx.coroutines.*
@@ -21,7 +21,19 @@ fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext,
   return ChildScope(coroutineContext + context, supervisor)
 }
 
-@Internal
+/**
+ * @return a scope with a [Job] which parent is the [Job] of [this] scope.
+ *
+ * The returned scope can be completed only by cancellation.
+ * [this] scope will cancel the returned scope when canceled.
+ * If the child scope has a narrower lifecycle than [this] scope,
+ * then it should be canceled explicitly when not needed,
+ * otherwise, it will continue to live in the Job hierarchy until [this] scope is canceled.
+ *
+ * For example, if [this] scope is a service scope, the child scope will be only canceled on service termination,
+ * even if it's not needed anymore.
+ */
+@Experimental
 fun CoroutineScope.childScope(
   name: String,
   context: CoroutineContext = EmptyCoroutineContext,
