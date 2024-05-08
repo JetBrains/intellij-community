@@ -540,6 +540,15 @@ fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>,
   }
 }
 
+fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, context: BuildContext) {
+  resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
+  for (moduleElement in xml.getChildren("content").asSequence().flatMap { it.getChildren("module") }) {
+    val moduleName = moduleElement.getAttributeValue("name") ?: continue
+    check(moduleElement.content.isEmpty())
+    moduleElement.setContent(getModuleDescriptor(moduleName = moduleName, xIncludePathResolver = xIncludePathResolver, context = context))
+  }
+}
+
 suspend fun processProductXmlDescriptor(
   file: Path,
   moduleName: String,
