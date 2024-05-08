@@ -36,8 +36,9 @@ object IndexStorageLayoutLocator {
   @Throws(IOException::class)
   fun <Key, Value> getLayout(indexExtension: FileBasedIndexExtension<Key, Value>): VfsAwareIndexStorageLayout<Key, Value> {
     val prioritizedLayoutProviders = prioritizedLayoutProviders(forceTopProviderBean = customIndexLayoutProviderBean)
-    val providerBeanForExtension = prioritizedLayoutProviders.firstOrNull { it.layoutProvider.isApplicable(indexExtension) }
+    val applicableLayoutProviders = prioritizedLayoutProviders.filter { it.layoutProvider.isApplicable(indexExtension) }
 
+    val providerBeanForExtension = applicableLayoutProviders.firstOrNull()
     if (providerBeanForExtension == null) {
       //default provider should be applicable to anything, so this is an exceptional case:
       throw UnsupportedOperationException(
@@ -45,7 +46,8 @@ object IndexStorageLayoutLocator {
       )
     }
 
-    log.info("Layout '${providerBeanForExtension.id}' will be used to for '${indexExtension.name}' index")
+    log.info("Layout '${providerBeanForExtension.id}' will be used to for '${indexExtension.name}' index " +
+             "(applicable providers: [${applicableLayoutProviders.map { it.id }.joinToString()}]) ")
     return providerBeanForExtension.layoutProvider.getLayout(indexExtension)
   }
 
