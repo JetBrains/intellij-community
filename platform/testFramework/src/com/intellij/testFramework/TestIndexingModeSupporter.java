@@ -9,6 +9,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.testFramework.DumbModeTestUtils.EternalTaskShutdownToken;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.UnindexedFilesScanner;
+import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,8 @@ public interface TestIndexingModeSupporter {
       public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
         EternalTaskShutdownToken dumbTask = indexEverythingAndBecomeDumb(project);
         RecursionManager.disableMissedCacheAssertions(testRootDisposable);
+        // we don't want "waiting-for-non-dumb-mode" to pause tasks submitted from ensureIndexingStatus
+        UnindexedFilesScannerExecutorImpl.getInstance(project).overrideScanningWaitsForNonDumbMode(false);
         return new ShutdownToken(dumbTask);
       }
 
@@ -57,6 +60,8 @@ public interface TestIndexingModeSupporter {
       public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
         EternalTaskShutdownToken dumbTask = becomeDumb(project);
         RecursionManager.disableMissedCacheAssertions(testRootDisposable);
+        // we don't want "waiting-for-non-dumb-mode" to pause tasks submitted from ensureIndexingStatus
+        UnindexedFilesScannerExecutorImpl.getInstance(project).overrideScanningWaitsForNonDumbMode(false);
         return new ShutdownToken(dumbTask);
       }
     }, DUMB_EMPTY_INDEX {
@@ -97,6 +102,9 @@ public interface TestIndexingModeSupporter {
     public void tearDownTest(@Nullable Project project, @NotNull ShutdownToken token) {
       if (token.dumbTask != null) {
         DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, token.dumbTask);
+        if (project != null) {
+          UnindexedFilesScannerExecutorImpl.getInstance(project).overrideScanningWaitsForNonDumbMode(null /* reset to default */);
+        }
       }
     }
 

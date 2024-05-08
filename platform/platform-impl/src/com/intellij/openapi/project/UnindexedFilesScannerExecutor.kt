@@ -3,7 +3,6 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.openapi.util.registry.Registry
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,9 +28,6 @@ interface UnindexedFilesScannerExecutor {
 
     @JvmStatic
     fun shouldScanInSmartMode(): Boolean = true
-
-    @JvmStatic
-    fun scanningWaitsForNonDumbMode(): Boolean = Registry.`is`("scanning.waits.for.non.dumb.mode", true)
 
     fun <T: MergeableQueueTask<T>> unwrapTask(task: MergingTaskQueue.QueuedTask<T>): T {
       return task.task

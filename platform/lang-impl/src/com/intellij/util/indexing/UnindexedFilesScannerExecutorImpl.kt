@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.NlsContexts.ProgressText
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -22,6 +23,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
@@ -29,6 +31,7 @@ import java.util.concurrent.locks.LockSupport
 @ApiStatus.Internal
 class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: CoroutineScope) : Disposable,
                                                                                             UnindexedFilesScannerExecutor {
+  private val scanningWaitsForNonDumbModeOverride = MutableStateFlow<Boolean?>(null)
   private val runningDumbTask = AtomicReference<ProgressIndicator>()
 
   // note that shouldShowProgressIndicator = false in UnindexedFilesScannerExecutor, so there is no suspender for the progress indicator
@@ -115,6 +118,11 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     }
   }
 
+  private fun scanningWaitsForNonDumbMode(override: Boolean?): Boolean = override ?: Registry.`is`("scanning.waits.for.non.dumb.mode", true)
+
+  @VisibleForTesting
+  fun scanningWaitsForNonDumbMode(): Boolean = scanningWaitsForNonDumbMode(scanningWaitsForNonDumbModeOverride.value)
+
   private suspend fun waitUntilNextTaskExecutionAllowed() {
     // wait until scanning is enabled
     var flow: Flow<Boolean> = scanningEnabled.combine(scanningTask) { enabled, scanningTask ->
@@ -125,13 +133,23 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     // For example, PythonLanguageLevelPusher.initExtra is invoked from RequiredForSmartModeActivity and may submit additional dumb tasks.
     // We want scanning to start after all these "extra" dumb tasks are finished.
     // Note that a project may become dumb immediately after the check. This is not a problem - we schedule scanning anyway.
-    if (UnindexedFilesScannerExecutor.scanningWaitsForNonDumbMode()) {
-      flow = flow.combine(DumbServiceImpl.getInstance(project).isDumbAsFlow) { shouldRun, isDumb ->
-        shouldRun && !isDumb
+    if (scanningWaitsForNonDumbMode()) {
+      flow = flow.combine(
+        // nested flow is needed because of negation (!shouldWaitForNonDumb)
+        DumbServiceImpl.getInstance(project).isDumbAsFlow.combine(scanningWaitsForNonDumbModeOverride) { isDumb, scanningWaitsCurrentValue ->
+          isDumb && scanningWaitsForNonDumbMode(scanningWaitsCurrentValue)
+        }
+      ) { shouldRun, shouldWaitForNonDumb ->
+        shouldRun && !shouldWaitForNonDumb
       }
     }
 
     flow.first { it }
+  }
+
+  @TestOnly
+  fun overrideScanningWaitsForNonDumbMode(newValue: Boolean?) {
+    scanningWaitsForNonDumbModeOverride.value = newValue
   }
 
   private suspend fun runScanningTask(task: UnindexedFilesScanner) {
@@ -277,5 +295,8 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
 
   companion object {
     private val LOG = Logger.getInstance(UnindexedFilesScannerExecutor::class.java)
+
+    @JvmStatic
+    fun getInstance(project: Project): UnindexedFilesScannerExecutorImpl = project.service<UnindexedFilesScannerExecutor>() as UnindexedFilesScannerExecutorImpl
   }
 }

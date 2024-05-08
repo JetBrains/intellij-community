@@ -13,6 +13,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl
 import kotlinx.coroutines.*
 import org.junit.Assert
 import kotlin.time.Duration.Companion.seconds
@@ -106,11 +107,11 @@ class IndexingTestUtil(private val project: Project) {
 
     dumbService.ensureInitialDumbTaskRequiredForSmartModeSubmitted() // TODO IJPL-578: don't submit
 
-    val scannerExecutor = UnindexedFilesScannerExecutor.getInstance(project)
+    val scannerExecutor = UnindexedFilesScannerExecutorImpl.getInstance(project)
 
     // Scheduled tasks will become a running tasks soon. To avoid a race, we check scheduled tasks first
     if (scannerExecutor.hasQueuedTasks) {
-      return if (UnindexedFilesScannerExecutor.scanningWaitsForNonDumbMode() && dumbService.isDumb) {
+      return if (scannerExecutor.scanningWaitsForNonDumbMode() && dumbService.isDumb) {
         val isEternal = DumbModeTestUtils.isEternalDumbTaskRunning(project)
         if (isEternal) {
           thisLogger().debug("Do not wait for queued scanning task, because eternal dumb task is running in the project [$project]")
