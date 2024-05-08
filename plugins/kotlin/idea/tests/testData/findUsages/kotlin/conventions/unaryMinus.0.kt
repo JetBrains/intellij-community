@@ -12,4 +12,3 @@ fun test() {
 }
 
 
-// IGNORE_K2_LOG

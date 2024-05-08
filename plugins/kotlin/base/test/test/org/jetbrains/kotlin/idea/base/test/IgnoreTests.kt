@@ -271,7 +271,6 @@ object IgnoreTests {
 
         const val IGNORE_K2: String = "// IGNORE_K2"
         const val IGNORE_K2_MULTILINE_COMMENT: String = "/* IGNORE_K2 */"
-        const val IGNORE_K2_LOG: String = "// IGNORE_K2_LOG"
 
         @Deprecated(message = "use IGNORE_K2 instead")
         const val IGNORE_FIR: String = "// IGNORE_FIR"

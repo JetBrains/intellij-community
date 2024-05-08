@@ -17,4 +17,4 @@ fun y(o: Any) {
 }
 
 
-// IGNORE_K2_LOG
+

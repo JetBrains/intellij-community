@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.getElementToSearch
 import org.jetbrains.kotlin.idea.search.KOTLIN_NAMED_ARGUMENT_SEARCH_CONTEXT
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
@@ -47,7 +47,6 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -101,12 +100,7 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
 
             if (!element.isValid) return@Callable null
             val unwrappedElement = element.namedUnwrappedElement ?: return@Callable null
-            val elementToSearch =
-                if (kotlinOptions.searchForExpectedUsages && unwrappedElement is KtDeclaration && unwrappedElement.hasActualModifier()) {
-                    unwrappedElement.expectedDeclarationIfAny() as? PsiNamedElement
-                } else {
-                    null
-                } ?: unwrappedElement
+            val elementToSearch = getElementToSearch(kotlinOptions, unwrappedElement)
 
             val name = elementToSearch.name
             if (name.isNullOrBlank()) return@Callable null
@@ -183,12 +177,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
                 val unwrappedElement = psiElement.namedUnwrappedElement ?: return@Callable null
 
-                val elementToSearch =
-                    if (kotlinOptions.searchForExpectedUsages && unwrappedElement is KtDeclaration && unwrappedElement.hasActualModifier()) {
-                        unwrappedElement.expectedDeclarationIfAny() as? PsiNamedElement
-                    } else {
-                        null
-                    } ?: unwrappedElement
+                val elementToSearch = getElementToSearch(kotlinOptions, unwrappedElement)
 
                 val effectiveSearchScope = queryParameters.effectiveSearchScope(elementToSearch)
 
@@ -302,7 +291,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 }
 
                 is KtConstructor<*> -> {
-                    val psiMethods = findAllRelatedActuals(element)
+                    val psiMethods = findAllRelatedActualsOrSelf(element)
                         .filterIsInstance<KtConstructor<*>>()
                         .flatMap { getLightClassMethods(it) }
 
@@ -324,7 +313,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 }
 
                 is KtProperty -> {
-                    val propertyAccessors = findAllRelatedActuals(element)
+                    val propertyAccessors = findAllRelatedActualsOrSelf(element)
                             .filterIsInstance<KtProperty>()
                             .map { getLightClassPropertyMethods(it) }
                     propertyAccessors.forEach { propertyAccessor ->
@@ -367,7 +356,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
         @RequiresReadLock
         private fun searchPropertyAccessorMethods(origin: KtParameter) {
-            val lightMethods = findAllRelatedActuals(origin)
+            val lightMethods = findAllRelatedActualsOrSelf(origin)
                 .filterIsInstance<KtParameter>()
                 .flatMap { it.toLightElements() }
                 .toList()
@@ -390,7 +379,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
          * return self if [element] is not expect nor actual
          */
         @RequiresReadLock
-        private fun findAllRelatedActuals(element: KtDeclaration): Set<KtDeclaration> {
+        private fun findAllRelatedActualsOrSelf(element: KtDeclaration): Set<KtDeclaration> {
             val expectActualSupport = ExpectActualSupport.getInstance(element.project)
             return when {
                 element.isExpectDeclaration() -> expectActualSupport.actualsForExpected(element)
@@ -409,7 +398,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
         private fun processKtClassOrObject(element: KtClassOrObject) {
             if (element.name == null) return
 
-            val lightClasses = findAllRelatedActuals(element).mapNotNull { (it as? KtClassOrObject)?.toLightClass() }
+            val lightClasses = findAllRelatedActualsOrSelf(element).mapNotNull { (it as? KtClassOrObject)?.toLightClass() }
 
             lightClasses.forEach(::searchNamedElement)
 

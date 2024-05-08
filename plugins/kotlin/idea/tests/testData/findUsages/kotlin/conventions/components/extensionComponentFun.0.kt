@@ -32,4 +32,4 @@ fun g(z1: Z1, z2: Z2) {
 }
 
 
-// IGNORE_K2_LOG
+

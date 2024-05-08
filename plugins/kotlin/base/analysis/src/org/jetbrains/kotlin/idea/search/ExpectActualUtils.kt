@@ -2,10 +2,13 @@
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.module.Module
+import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
+import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 
 object ExpectActualUtils {
     fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
@@ -30,4 +33,13 @@ object ExpectActualUtils {
         val actuals = expect.actualsForExpected()
         return listOf(expect) + actuals
     }
+
+    fun getElementToSearch(
+        kotlinOptions: KotlinReferencesSearchOptions,
+        unwrappedElement: PsiNamedElement
+    ): PsiNamedElement = if (kotlinOptions.searchForExpectedUsages && unwrappedElement is KtDeclaration && unwrappedElement.hasActualModifier()) {
+        unwrappedElement.expectedDeclarationIfAny() as? PsiNamedElement
+    } else {
+        null
+    } ?: unwrappedElement
 }

@@ -14,4 +14,3 @@ class E: D() {
     }
 }
 
-// IGNORE_K2_LOG

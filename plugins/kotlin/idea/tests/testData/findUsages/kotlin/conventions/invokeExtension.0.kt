@@ -13,4 +13,3 @@ fun f(p: P) {
 }
 
 
-// IGNORE_K2_LOG

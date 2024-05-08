@@ -11,4 +11,4 @@ suspend fun main() {
     a.invoke()
 }
 
-// IGNORE_K2_LOG
+

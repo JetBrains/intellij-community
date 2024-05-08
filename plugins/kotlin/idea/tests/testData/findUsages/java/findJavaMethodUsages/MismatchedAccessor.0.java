@@ -11,4 +11,3 @@ public class Bar {
 }
 
 
-// IGNORE_K2_LOG

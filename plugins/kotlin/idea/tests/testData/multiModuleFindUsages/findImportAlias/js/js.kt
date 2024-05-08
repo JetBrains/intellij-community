@@ -3,4 +3,3 @@
 package foo
 
 actual interface OnlyInCommonI<caret>nterface014
-// IGNORE_K2_LOG

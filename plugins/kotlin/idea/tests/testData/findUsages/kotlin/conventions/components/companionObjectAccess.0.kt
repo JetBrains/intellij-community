@@ -16,4 +16,3 @@ fun foo() {
 
 
 
-// IGNORE_K2_LOG

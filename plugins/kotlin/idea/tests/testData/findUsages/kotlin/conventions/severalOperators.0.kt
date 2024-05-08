@@ -41,4 +41,3 @@ fun test4() {
 }
 
 
-// IGNORE_K2_LOG
