@@ -1,0 +1,14 @@
+// IGNORE_K2
+// TODO investigate why extension methods are unresolved in this test (imports are not added)
+import java.util.concurrent.Callable;
+import java.util.stream.Stream;
+
+public class A {
+    void foo(Callable<Stream<String>> ref) {}
+
+    void bar() {
+        String s = "test";
+        foo(s::lines);
+        foo("test"::lines);
+    }
+}

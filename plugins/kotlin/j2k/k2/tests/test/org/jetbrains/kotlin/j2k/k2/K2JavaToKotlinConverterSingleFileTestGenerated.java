@@ -3814,6 +3814,21 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         public void testStreamOperations() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/javaStreamsApi/streamOperations.java");
         }
+
+        @TestMetadata("stringLines.java")
+        public void testStringLines() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/javaStreamsApi/stringLines.java");
+        }
+
+        @TestMetadata("stringLinesCustomClass.java")
+        public void testStringLinesCustomClass() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/javaStreamsApi/stringLinesCustomClass.java");
+        }
+
+        @TestMetadata("stringLinesRef.java")
+        public void testStringLinesRef() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/javaStreamsApi/stringLinesRef.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
