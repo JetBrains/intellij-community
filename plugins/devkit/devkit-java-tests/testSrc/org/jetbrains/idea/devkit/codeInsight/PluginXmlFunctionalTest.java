@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Computable;
@@ -32,7 +33,6 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -600,7 +600,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testSpecifyJetBrainsAsVendorQuickFix() {
-    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), true);
     try {
       myFixture.configureByFile("pluginWithoutVendor_before.xml");
       IntentionAction fix = myFixture.findSingleIntention("Specify JetBrains");
@@ -608,7 +608,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
       myFixture.checkResultByFile("pluginWithoutVendor_after.xml");
     }
     finally {
-      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
+      IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), false);
     }
   }
 
@@ -661,12 +661,12 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
 
   private void testHighlightingInIdeaProject(String path) {
-    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), true);
     try {
       doHighlightingTest(path);
     }
     finally {
-      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
+      IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), false);
     }
   }
 

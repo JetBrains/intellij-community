@@ -2,7 +2,7 @@
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.psi.util.ProjectIconsAccessor;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -59,14 +59,14 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
   }
 
   public void testActionNoPluginIdInIdeaProject() {
-    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), true);
 
     try {
       myFixture.testHighlighting("pluginXmlCapitalization_NoPluginIdInIdeaProject.xml",
                                  "messages/ActionsBundle.properties");
     }
     finally {
-      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
+      IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), false);
     }
   }
 

@@ -4,10 +4,9 @@ package com.intellij.psi.util;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +17,6 @@ import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.ULiteralExpression;
 import org.jetbrains.uast.UPolyadicExpression;
@@ -43,10 +41,6 @@ public final class ProjectIconsAccessor {
   private static final int ICON_MAX_SIZE = 2 * 1024 * 1024; // 2Kb
 
   private static final List<String> ICON_EXTENSIONS = List.of("png", "ico", "bmp", "gif", "jpg", "svg");
-  private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
-  private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES = List.of("intellij.idea.community.main",
-                                                                               "intellij.platform.commercial",
-                                                                               "intellij.android.studio.integration");
 
   private final @NotNull Project project;
 
@@ -130,7 +124,7 @@ public final class ProjectIconsAccessor {
     }
 
     try {
-      Icon icon = createOrFindBetterIcon(file, isIdeaProject(project));
+      Icon icon = createOrFindBetterIcon(file, IntelliJProjectUtil.isIntelliJPlatformProject(project));
       iconInfo = new Pair<>(stamp, hasProperSize(icon) ? icon : null);
       iconCache.put(file.getPath(), iconInfo);
     }
@@ -154,30 +148,12 @@ public final class ProjectIconsAccessor {
            icon.getIconWidth() <= JBUIScale.scale(ICON_MAX_WEIGHT);
   }
 
+  /**
+   * @deprecated Use {@linkplain IntelliJProjectUtil#isIntelliJPlatformProject(Project)} instead.
+   */
+  @Deprecated
   public static boolean isIdeaProject(@Nullable Project project) {
-    if (project == null) {
-      return false;
-    }
-
-    Boolean flag = project.getUserData(IDEA_PROJECT);
-    if (flag == null) {
-      flag = false;
-      ModuleManager moduleManager = ModuleManager.getInstance(project);
-      for (String moduleName : IDEA_PROJECT_MARKER_MODULE_NAMES) {
-        if (moduleManager.findModuleByName(moduleName) != null) {
-          flag = true;
-          break;
-        }
-      }
-      project.putUserData(IDEA_PROJECT, flag);
-    }
-
-    return flag;
-  }
-
-  @TestOnly
-  public static void markAsIdeaProject(@NotNull Project project, Boolean value) {
-    project.putUserData(IDEA_PROJECT, value);
+    return IntelliJProjectUtil.isIntelliJPlatformProject(project);
   }
 
   private static Icon createOrFindBetterIcon(VirtualFile file, boolean useIconLoader) throws IOException {

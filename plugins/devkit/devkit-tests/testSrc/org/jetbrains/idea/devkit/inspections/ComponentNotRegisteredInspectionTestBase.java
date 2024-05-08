@@ -2,8 +2,8 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.util.ProjectIconsAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Anchor;
@@ -30,14 +30,14 @@ public abstract class ComponentNotRegisteredInspectionTestBase extends PluginMod
   }
 
   public void testRegisteredActionInIDEAProject() {
-    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), true);
 
     try {
       myFixture.copyFileToProject("registeredAction-plugin.xml", "someOtherPluginXmlName.xml");
       myFixture.testHighlighting("RegisteredAction." + getSourceFileExtension());
     }
     finally {
-      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
+      IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), false);
     }
   }
 
