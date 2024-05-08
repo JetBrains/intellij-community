@@ -721,7 +721,7 @@ public final class TreeState implements JDOMExternalizable {
   private Promise<List<TreePath>> expand(@NotNull JTree tree) {
     if (TreeUtil.isBulkExpandCollapseSupported(tree) && tree instanceof Tree jbTree && Registry.is("ide.tree.bulk.expand.tree.state", false)) {
       var promise = new AsyncPromise<List<TreePath>>();
-      var bulkExpandVisitor = new BulkExpandVisitor(myExpandedPaths);
+      var bulkExpandVisitor = new MultiplePathsVisitor(myExpandedPaths);
       TreeUtil.promiseVisit(tree, bulkExpandVisitor).onProcessed(lastPathFound -> {
         jbTree.expandPaths(bulkExpandVisitor.pathsFound);
         promise.setResult(bulkExpandVisitor.pathsFound);
@@ -729,7 +729,7 @@ public final class TreeState implements JDOMExternalizable {
       return promise;
     }
     else {
-      Stream<Visitor> visitors = myExpandedPaths.stream().map(elements -> new Visitor(elements));
+      Stream<SinglePathVisitor> visitors = myExpandedPaths.stream().map(elements -> new SinglePathVisitor(elements));
       if (myPresentationData == null) {
         return TreeUtil.promiseExpand(tree, visitors);
       }
@@ -744,7 +744,7 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   private Promise<List<TreePath>> select(@NotNull JTree tree) {
-    return TreeUtil.promiseSelect(tree, mySelectedPaths.stream().map(elements -> new Visitor(elements)));
+    return TreeUtil.promiseSelect(tree, mySelectedPaths.stream().map(elements -> new SinglePathVisitor(elements)));
   }
 
   private boolean visit(@NotNull JTree tree) {
@@ -764,10 +764,10 @@ public final class TreeState implements JDOMExternalizable {
     return true;
   }
 
-  private static final class Visitor implements TreeVisitor {
+  private static final class SinglePathVisitor implements TreeVisitor {
     private final PathElement[] elements;
 
-    Visitor(PathElement[] elements) {
+    SinglePathVisitor(PathElement[] elements) {
       this.elements = elements;
     }
 
@@ -785,7 +785,7 @@ public final class TreeState implements JDOMExternalizable {
     }
   }
 
-  private static final class BulkExpandVisitor implements TreeVisitor {
+  private static final class MultiplePathsVisitor implements TreeVisitor {
 
     private static final class PathMatchState {
 
@@ -826,7 +826,7 @@ public final class TreeState implements JDOMExternalizable {
     private final List<PathMatchState> matchStates = new ArrayList<>();
     private final List<TreePath> pathsFound = new ArrayList<>();
 
-    BulkExpandVisitor(List<PathElement[]> paths) {
+    MultiplePathsVisitor(List<PathElement[]> paths) {
       for (PathElement[] path : paths) {
         matchStates.add(new PathMatchState(path));
       }
