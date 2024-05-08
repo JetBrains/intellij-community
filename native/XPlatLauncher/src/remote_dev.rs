@@ -390,6 +390,7 @@ fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
         ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "registerBackendLocationForGateway".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("serverMode", IjStarterCommand{ij_command: "serverMode".to_string(), is_project_path_required: false, is_arguments_required: false}),
     ])
 }
 
