@@ -12,6 +12,6 @@ sealed interface ShellCommandContext : ShellSuggestionContext {
   var parserDirectives: ShellCommandParserDirectives
 
   fun subcommands(content: suspend ShellChildCommandsContext.(ShellRuntimeContext) -> Unit)
-  fun options(content: ShellChildOptionsContext.() -> Unit)
+  fun option(vararg names: String, content: ShellOptionContext.() -> Unit = {})
   fun argument(content: ShellArgumentContext.() -> Unit = {})
 }

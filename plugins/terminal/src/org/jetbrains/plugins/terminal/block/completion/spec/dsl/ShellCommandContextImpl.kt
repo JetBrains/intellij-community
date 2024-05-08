@@ -18,7 +18,7 @@ internal class ShellCommandContextImpl(
   override var parserDirectives: ShellCommandParserDirectives = ShellCommandParserDirectives.DEFAULT
 
   private var subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>? = null
-  private var optionsSupplier: () -> List<ShellOptionSpec> = { emptyList() }
+  private var optionSuppliers: MutableList<() -> ShellOptionSpec> = mutableListOf()
   private val argumentSuppliers: MutableList<() -> ShellArgumentSpec> = mutableListOf()
 
   private val parentNamesWithSelf: List<String> = parentNames + names.first()
@@ -32,12 +32,13 @@ internal class ShellCommandContextImpl(
     }
   }
 
-  override fun options(content: ShellChildOptionsContext.() -> Unit) {
-    optionsSupplier = {
-      val context = ShellChildOptionsContextImpl(parentNamesWithSelf)
+  override fun option(vararg names: String, content: ShellOptionContext.() -> Unit) {
+    val supplier = {
+      val context = ShellOptionContextImpl(names.asList(), parentNamesWithSelf)
       content.invoke(context)
       context.build()
     }
+    optionSuppliers.add(supplier)
   }
 
   override fun argument(content: ShellArgumentContext.() -> Unit) {
@@ -59,7 +60,7 @@ internal class ShellCommandContextImpl(
       requiresSubcommand = requiresSubcommand,
       parserDirectives = parserDirectives,
       subcommandsGenerator = subcommandsGenerator ?: emptyListGenerator(),
-      optionsSupplier = optionsSupplier,
+      optionsSupplier = { optionSuppliers.map { it() } },
       argumentsSupplier = { argumentSuppliers.map { it() } }
     )
   }
