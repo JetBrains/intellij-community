@@ -1,0 +1,12 @@
+
+public interface A {
+
+  public void n(A a);
+
+}
+
+class B {
+
+    public void m() {
+    }
+}

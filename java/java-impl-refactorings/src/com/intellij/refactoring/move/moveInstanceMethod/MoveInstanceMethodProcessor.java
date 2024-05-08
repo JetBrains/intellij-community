@@ -2,6 +2,7 @@
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -460,6 +461,11 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
         replaceReferences(body);
+      } else {
+        if (myMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            !myTargetClass.isInterface() && !myTargetClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          CreateFromUsageUtils.setupMethodBody(myMethod);
+        }
       }
 
       final PsiMethod methodCopy = getPatternMethod();
