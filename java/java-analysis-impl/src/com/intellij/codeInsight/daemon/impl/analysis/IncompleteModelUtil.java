@@ -179,6 +179,9 @@ final class IncompleteModelUtil {
     if (expression instanceof PsiReferenceExpression ref && canBePendingReference(ref)) {
       return true;
     }
+    if (expression instanceof PsiArrayAccessExpression accessExpression) {
+      return mayHaveUnknownTypeDueToPendingReference(accessExpression.getArrayExpression());
+    }
     return false;
   }
 
@@ -194,7 +197,7 @@ final class IncompleteModelUtil {
       if (qualifier == null) {
         PsiClass psiClass = ClassUtils.getContainingClass(ref);
         while (psiClass != null) {
-          if (isHierarchyResolved(psiClass)) return true;
+          if (!isHierarchyResolved(psiClass)) return true;
           psiClass = ClassUtils.getContainingClass(psiClass);
         }
         boolean call = ref.getParent() instanceof PsiMethodCallExpression;

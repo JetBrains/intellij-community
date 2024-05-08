@@ -211,6 +211,10 @@ public final class HighlightUtil {
     boolean convertible = TypeConversionUtil.areTypesConvertible(operandType, checkType);
     boolean primitiveInPatternsEnabled = PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, expression);
     if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) || !convertible) {
+      if (!convertible && IncompleteModelUtil.isIncompleteModel(expression) &&
+          IncompleteModelUtil.isPotentiallyConvertible(checkType, operand)) {
+        return;
+      }
       String message = JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
         .formatType(checkType));
       HighlightInfo.Builder info =
@@ -328,6 +332,9 @@ public final class HighlightUtil {
     if (operandType != null &&
         !TypeConversionUtil.areTypesConvertible(operandType, castType, PsiUtil.getLanguageLevel(expression)) &&
         !RedundantCastUtil.isInPolymorphicCall(expression)) {
+      if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.isPotentiallyConvertible(castType, operand)) {
+        return null;
+      }
       String message = JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
         .formatType(castType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);

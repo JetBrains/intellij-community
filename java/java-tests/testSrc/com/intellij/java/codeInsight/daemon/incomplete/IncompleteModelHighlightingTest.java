@@ -9,9 +9,13 @@ public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTe
   static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/incompleteHighlighting";
 
   private void doTest() {
+    doTest(getTestName(false) + ".java");
+  }
+
+  private void doTest(String fileName) {
     var ignored = WriteAction.compute(() -> getProject().getService(IncompleteDependenciesService.class).enterIncompleteState());
     try {
-      doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, true);
+      doTest(BASE_PATH + "/" + fileName, true, true);
     }
     finally {
       WriteAction.run(ignored::close);
@@ -19,6 +23,8 @@ public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTe
   }
   
   public void testSimple() { doTest(); }
+  
+  public void testModuleInfo() { doTest("module-info.java"); }
 
   public void testDefaultLoaderFactory() { doTest(); }
   
