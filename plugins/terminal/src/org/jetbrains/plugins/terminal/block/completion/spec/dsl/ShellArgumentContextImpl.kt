@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
-import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
-import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
-import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.block.completion.spec.*
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellArgumentSpecImpl
@@ -25,6 +23,18 @@ internal class ShellArgumentContextImpl(private val parentCommandNames: List<Str
   override fun generator(content: suspend (ShellRuntimeContext) -> List<ShellCompletionSuggestion>) {
     val cacheKey = createCacheKey(parentCommandNames, "arg ${generators.count() + 1}")
     generators.add(ShellRuntimeDataGenerator(cacheKey) { content.invoke(it) })
+  }
+
+  override fun generator(generator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>) {
+    generators.add(generator)
+  }
+
+  override fun suggestions(vararg names: String) {
+    val debugName = createCacheKey(parentCommandNames, "arg ${generators.count() + 1}")
+    val generator = ShellRuntimeDataGenerator(debugName = debugName) {
+      names.map { ShellCompletionSuggestion(it, type = ShellSuggestionType.ARGUMENT) }
+    }
+    generators.add(generator)
   }
 
   fun build(): ShellArgumentSpec {

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
 import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
@@ -17,4 +18,8 @@ sealed interface ShellArgumentContext {
   var isCommand: Boolean
 
   fun generator(content: suspend (ShellRuntimeContext) -> List<ShellCompletionSuggestion>)
+
+  fun generator(generator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>)
+
+  fun suggestions(vararg names: String)
 }
