@@ -497,6 +497,9 @@ public final class TreeState implements JDOMExternalizable {
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
     LOG.debug(new IllegalStateException("restore paths"));
+    if (tree instanceof @NotNull Tree jbTree) {
+      jbTree.fireTreeStateRestoreStarted();
+    }
     applyCachedPresentation(tree);
     if (visit(tree)) return; // AsyncTreeModel#accept
     if (root == null) return;
@@ -520,8 +523,11 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   private void applyCachedPresentation(@NotNull JTree tree) {
-    if (myPresentationData != null && tree instanceof CachedTreePresentationSupport jbTree) {
-      jbTree.setCachedPresentation(myPresentationData.createTree());
+    if (myPresentationData != null && tree instanceof CachedTreePresentationSupport cps) {
+      cps.setCachedPresentation(myPresentationData.createTree());
+      if (tree instanceof @NotNull Tree jbTree) {
+        jbTree.fireTreeStateCachedStateRestored();
+      }
     }
   }
 
@@ -758,6 +764,9 @@ public final class TreeState implements JDOMExternalizable {
     expand(tree, promise -> expand(tree).onProcessed(expanded -> {
       if (LOG.isDebugEnabled() && expanded != null) {
         LOG.debug("Expanded " + expanded.size() + " paths in " + (System.currentTimeMillis() - started) + " ms");
+      }
+      if (tree instanceof @NotNull Tree jbTree) {
+        jbTree.fireTreeStateRestoreFinished();
       }
       clearCachedPresentation(tree);
       if (isSelectionNeeded(expanded, tree, promise)) {

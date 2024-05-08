@@ -716,6 +716,57 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  @ApiStatus.Internal
+  public void fireTreeStateRestoreStarted() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeStateListener stateListener
+      ) {
+        if (e == null) {
+           e = new TreeExpansionEvent(this, null);
+        }
+        stateListener.treeStateRestoreStarted(e);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void fireTreeStateCachedStateRestored() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeStateListener stateListener
+      ) {
+        if (e == null) {
+           e = new TreeExpansionEvent(this, null);
+        }
+        stateListener.treeStateCachedStateRestored(e);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void fireTreeStateRestoreFinished() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeStateListener stateListener
+      ) {
+        if (e == null) {
+           e = new TreeExpansionEvent(this, null);
+        }
+        stateListener.treeStateRestoreFinished(e);
+      }
+    }
+  }
+
   private boolean expandAccessibilityAnnouncementsAllowed() {
     return suspendedExpandAccessibilityAnnouncements.get() == 0;
   }

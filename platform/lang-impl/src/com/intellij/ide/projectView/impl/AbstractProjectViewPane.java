@@ -38,6 +38,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
+import com.intellij.ui.treeStructure.TreeStateListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -58,6 +59,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
@@ -660,10 +662,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (myTree == null || myTreeStateRestored.getAndSet(true)) return;
     TreeState treeState = myReadTreeState.get(getSubId());
     if (treeState != null && !treeState.isEmpty()) {
+      var initListener = new MyTreeStateListener();
+      myTree.addTreeExpansionListener(initListener);
       treeState.applyTo(myTree);
     }
     else if (myTree.isSelectionEmpty()) {
       TreeUtil.promiseSelectFirst(myTree);
+      myProject.getService(ProjectViewInitNotifier.class).initCompleted();
     }
   }
 
@@ -1246,5 +1251,27 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (file != null) return new ProjectViewFileVisitor(file, null);
     LOG.warn("cannot create visitor without element and/or file");
     return null;
+  }
+
+  private class MyTreeStateListener implements TreeStateListener {
+    @Override
+    public void treeStateRestoreStarted(@NotNull TreeExpansionEvent event) { }
+
+    @Override
+    public void treeStateCachedStateRestored(@NotNull TreeExpansionEvent event) {
+      myProject.getService(ProjectViewInitNotifier.class).initCachedNodesLoaded();
+    }
+
+    @Override
+    public void treeStateRestoreFinished(@NotNull TreeExpansionEvent event) {
+      myProject.getService(ProjectViewInitNotifier.class).initCompleted();
+      myTree.removeTreeExpansionListener(this);
+    }
+
+    @Override
+    public void treeExpanded(TreeExpansionEvent event) { }
+
+    @Override
+    public void treeCollapsed(TreeExpansionEvent event) { }
   }
 }

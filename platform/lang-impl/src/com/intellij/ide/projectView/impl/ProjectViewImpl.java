@@ -957,6 +957,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public synchronized void setupImpl(@NotNull ToolWindow toolWindow, final boolean loadPaneExtensions) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isInitialized) return;
+    project.getService(ProjectViewInitNotifier.class).initStarted();
 
     actionGroup = new DefaultActionGroup();
 

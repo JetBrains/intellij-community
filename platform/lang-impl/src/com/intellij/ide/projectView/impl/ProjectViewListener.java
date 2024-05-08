@@ -16,4 +16,8 @@ public interface ProjectViewListener {
    */
   default void paneShown(@NotNull AbstractProjectViewPane current, @Nullable AbstractProjectViewPane previous) {
   }
+
+  default void initStarted() { }
+  default void initCachedNodesLoaded() { }
+  default void initCompleted() { }
 }

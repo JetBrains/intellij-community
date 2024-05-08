@@ -16921,6 +16921,9 @@ f:com.intellij.ide.projectView.impl.ProjectViewInplaceCommentProducerImplKt
 - sf:appendInplaceComments(com.intellij.ide.util.treeView.InplaceCommentAppender,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 com.intellij.ide.projectView.impl.ProjectViewListener
 - sf:TOPIC:com.intellij.util.messages.Topic
+- initCachedNodesLoaded():V
+- initCompleted():V
+- initStarted():V
 - paneShown(com.intellij.ide.projectView.impl.AbstractProjectViewPane,com.intellij.ide.projectView.impl.AbstractProjectViewPane):V
 c:com.intellij.ide.projectView.impl.ProjectViewPane
 - com.intellij.ide.projectView.impl.AbstractProjectViewPaneWithAsyncSupport
