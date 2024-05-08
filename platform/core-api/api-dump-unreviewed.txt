@@ -2572,6 +2572,7 @@ e:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Action:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:ActionWithoutId:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Android:com.intellij.openapi.project.DumbModeBlockedFunctionality
+- sf:CDI:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:CodeCompletion:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:CtrlMouseHandler:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:DupLocator:com.intellij.openapi.project.DumbModeBlockedFunctionality
