@@ -46,7 +46,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val discussions: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 ) : GitLabMergeRequestReviewViewModelBase(
-  parentCs.childScope(CoroutineName("GitLab Merge Request Editor Review VM")),
+  parentCs.childScope("GitLab Merge Request Editor Review VM"),
   currentUser, mergeRequest
 ), CodeReviewInEditorViewModel {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()

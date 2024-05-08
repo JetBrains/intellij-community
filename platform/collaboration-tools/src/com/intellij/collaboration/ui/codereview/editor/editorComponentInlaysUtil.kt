@@ -160,7 +160,7 @@ private fun <VM : EditorMapped> CoroutineScope.insertComponent(
   editor: EditorEx,
   offset: Int
 ): Inlay<*>? {
-  val inlayScope = childScope(CoroutineName("Scope for code review component editor inlay at $offset"))
+  val inlayScope = childScope("Scope for code review component editor inlay at $offset")
   var newInlay: Inlay<*>? = null
   try {
     newInlay = editor.insertComponent(offset, inlayScope.rendererFactory(vm))?.also {

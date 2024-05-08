@@ -26,7 +26,7 @@ internal class GHPRReviewBranchStateSharedViewModel(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider
 ) {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   val updateRequired: StateFlow<Boolean> = run {

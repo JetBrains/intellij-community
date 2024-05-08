@@ -31,7 +31,7 @@ class DocumentTrackerCodeReviewEditorGutterChangesModel(
   reviewHeadContent: Flow<CharSequence?>,
   reviewChangesRanges: Flow<List<Range>?>
 ) : CodeReviewEditorGutterChangesModel {
-  private val cs = parentCs.childScope(classAsCoroutineName() + Dispatchers.Main)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main)
 
   private val reviewHeadDocument = LineStatusTrackerBase.createVcsDocument(document)
   private val documentTracker = DocumentTracker(reviewHeadDocument, document).also {

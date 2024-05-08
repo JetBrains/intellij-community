@@ -43,7 +43,7 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
                                               private val changesService: GHPRChangesService,
                                               private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>)
   : GHPRDataProviderRepository {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   private var isDisposed = false
 
@@ -72,7 +72,7 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
   }
 
   private fun createDataProvider(parentDisposable: CheckedDisposable, id: GHPRIdentifier): GHPRDataProvider {
-    val providerCs = cs.childScope(classAsCoroutineName<GHPRDataProviderImpl>()).apply {
+    val providerCs = cs.childScope(GHPRDataProviderImpl::class.java.name).apply {
       cancelledWith(parentDisposable)
     }
     val messageBus = MessageBusFactory.newMessageBus(object : MessageBusOwner {

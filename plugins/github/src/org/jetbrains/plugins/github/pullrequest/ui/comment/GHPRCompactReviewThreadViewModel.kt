@@ -59,7 +59,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
   private val dataProvider: GHPRDataProvider,
   initialData: GHPullRequestReviewThread
 ) : GHPRCompactReviewThreadViewModel {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
   private val reviewData: GHPRReviewDataProvider = dataProvider.reviewData
   private val taskLauncher = SingleCoroutineLauncher(cs)
 

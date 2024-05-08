@@ -55,7 +55,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 ) : GitLabMergeRequestDiffReviewViewModel {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val persistentChangesViewedState by lazy { project.service<GitLabPersistentMergeRequestChangesViewedState>() }
 

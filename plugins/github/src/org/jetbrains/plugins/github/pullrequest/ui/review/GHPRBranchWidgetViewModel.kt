@@ -38,7 +38,7 @@ internal class GHPRBranchWidgetViewModelImpl(
   private val reviewVmHelper: GHPRReviewViewModelHelper,
   override val id: GHPRIdentifier
 ) : GHPRBranchWidgetViewModel, GHPRReviewViewModel by DelegatingGHPRReviewViewModel(reviewVmHelper) {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val updateRequired: StateFlow<Boolean> = sharedBranchVm.updateRequired
 

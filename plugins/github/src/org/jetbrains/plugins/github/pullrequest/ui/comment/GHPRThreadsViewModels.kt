@@ -22,7 +22,7 @@ internal class GHPRThreadsViewModels(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
 ) {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
   val canComment: Boolean = dataProvider.reviewData.canComment()
 
   val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =

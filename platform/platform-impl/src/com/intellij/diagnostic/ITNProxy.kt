@@ -48,7 +48,7 @@ internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
   val dispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(2)
 
   @JvmField
-  internal val coroutineScope: CoroutineScope = coroutineScope.childScope(dispatcher + CoroutineName("ITNProxy call"))
+  internal val coroutineScope: CoroutineScope = coroutineScope.childScope("ITNProxy call", dispatcher)
 }
 
 internal object ITNProxy {

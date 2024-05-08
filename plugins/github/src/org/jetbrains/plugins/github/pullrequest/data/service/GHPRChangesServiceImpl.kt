@@ -42,7 +42,7 @@ class GHPRChangesServiceImpl(parentCs: CoroutineScope,
                              private val requestExecutor: GithubApiRequestExecutor,
                              private val gitRemote: GitRemoteUrlCoordinates,
                              private val ghRepository: GHRepositoryCoordinates) : GHPRChangesService {
-  private val cs = parentCs.childScope(classAsCoroutineName() + Dispatchers.Default)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
   private val patchesCache = Caffeine.newBuilder()
     .expireAfterAccess(Duration.ofMinutes(5))

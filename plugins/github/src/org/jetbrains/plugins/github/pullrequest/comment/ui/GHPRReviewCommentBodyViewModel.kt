@@ -46,7 +46,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
   private val threadId: String,
   private val commentId: String
 ) {
-  private val cs = parentCs.childScope(CoroutineName("GH PR comment suggestion VM"))
+  private val cs = parentCs.childScope("GH PR comment suggestion VM")
   private val detailsData = dataProvider.detailsData
   private val reviewData = dataProvider.reviewData
 

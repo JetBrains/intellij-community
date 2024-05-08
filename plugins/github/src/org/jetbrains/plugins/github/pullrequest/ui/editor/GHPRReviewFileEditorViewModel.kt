@@ -60,7 +60,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
   private val discussionsViewOption: StateFlow<DiscussionsViewOption>,
   private val showDiff: (change: RefComparisonChange, lineIdx: Int?) -> Unit
 ) : GHPRReviewFileEditorViewModel {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val originalContent: StateFlow<ComputedResult<CharSequence>?> =
     flow {

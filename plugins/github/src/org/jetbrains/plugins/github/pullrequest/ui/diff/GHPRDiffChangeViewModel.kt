@@ -55,7 +55,7 @@ internal class GHPRDiffChangeViewModelImpl(
   private val threadsVms: GHPRThreadsViewModels,
   private val discussionsViewOption: StateFlow<DiscussionsViewOption>
 ) : GHPRDiffChangeViewModel {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val commentableRanges: List<Range> = diffData.patch.ranges
   override val canComment: Boolean = threadsVms.canComment

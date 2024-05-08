@@ -31,7 +31,7 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
                                                          override val defaultBranchName: String?,
                                                          override val isFork: Boolean)
   : GHPRRepositoryDataService {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val serverPath = repositoryCoordinates.serverPath
   private val repoPath = repositoryCoordinates.repositoryPath

@@ -32,7 +32,7 @@ internal class GHReactionViewModelImpl(
   private val reactionsService: GHReactionsService,
   override val reactionIconsProvider: IconsProvider<GHReactionContent>
 ) : GHReactionsViewModel {
-  private val cs = parentCs.childScope(CoroutineName("GitHub Reactions View Model"))
+  private val cs = parentCs.childScope("GitHub Reactions View Model")
 
   private val reactionsState = MutableStateFlow(reactionsFlow.value)
 

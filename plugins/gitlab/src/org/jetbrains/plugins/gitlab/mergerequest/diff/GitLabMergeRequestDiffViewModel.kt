@@ -57,7 +57,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
   private val discussions: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 ) : GitLabMergeRequestDiffViewModel, GitLabMergeRequestReviewViewModelBase(
-  parentCs.childScope(CoroutineName("GitLab Merge Request Diff Review VM")),
+  parentCs.childScope("GitLab Merge Request Diff Review VM"),
   currentUser, mergeRequest
 ) {
   private val changesSorter = project.service<GitLabMergeRequestsPreferences>().changesGroupingState

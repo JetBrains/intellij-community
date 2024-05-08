@@ -56,7 +56,7 @@ internal class GHPRDiffViewModelImpl(
   reviewVmHelper: GHPRReviewViewModelHelper,
   private val threadsVms: GHPRThreadsViewModels,
 ) : GHPRDiffViewModel {
-  private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Diff View Model"))
+  private val cs = parentCs.childScope("GitHub Pull Request Diff View Model")
   private val reviewDataProvider = dataProvider.reviewData
 
   override val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)

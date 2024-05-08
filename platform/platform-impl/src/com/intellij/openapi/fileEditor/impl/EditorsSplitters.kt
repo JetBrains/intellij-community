@@ -627,7 +627,7 @@ open class EditorsSplitters internal constructor(
 
   internal fun createCurrentWindow() {
     LOG.assertTrue(currentWindow == null)
-    val window = EditorWindow(owner = this, coroutineScope.childScope(CoroutineName("EditorWindow")))
+    val window = EditorWindow(owner = this, coroutineScope.childScope("EditorWindow"))
     add(window.component, BorderLayout.CENTER)
     windows.add(window)
     currentWindowFlow.value = window
@@ -917,7 +917,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       val windowDeferred = async(Dispatchers.EDT) {
         splitters.insideChange++
         try {
-          val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
+          val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope("EditorWindow"))
           splitters.addWindow(editorWindow)
           editorWindow.component.isFocusable = false
           if (tabSizeLimit != 1) {

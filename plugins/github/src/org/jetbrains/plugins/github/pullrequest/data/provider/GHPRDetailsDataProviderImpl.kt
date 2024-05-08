@@ -24,7 +24,7 @@ internal class GHPRDetailsDataProviderImpl(parentCs: CoroutineScope,
                                            private val pullRequestId: GHPRIdentifier,
                                            private val messageBus: MessageBus)
   : GHPRDetailsDataProvider {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val _loadedDetailsState = MutableStateFlow<GHPullRequest?>(null)
   val loadedDetailsState = _loadedDetailsState.asStateFlow()

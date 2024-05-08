@@ -49,7 +49,7 @@ internal class UpdateableGHPRTimelineCommentViewModel(
   private val commentsData: GHPRCommentsDataProvider,
   initialData: GHIssueComment
 ) : GHPRTimelineCommentViewModel, GHPRTimelineItem.Comment {
-  private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Timeline Comment View Model"))
+  private val cs = parentCs.childScope("GitHub Pull Request Timeline Comment View Model")
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   private val currentUser: GHUser = dataContext.securityService.currentUser

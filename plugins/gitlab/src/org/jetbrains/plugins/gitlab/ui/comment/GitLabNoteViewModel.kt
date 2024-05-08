@@ -47,7 +47,7 @@ class GitLabNoteViewModelImpl(
   currentUser: GitLabUserDTO
 ) : GitLabNoteViewModel {
 
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val id: GitLabId = note.id
   override val author: GitLabUserDTO = note.author

@@ -15,7 +15,7 @@ fun requireNoJob(context: CoroutineContext) {
 }
 
 @Internal
-@Experimental
+@Deprecated("Please specify child scope name")
 fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext, supervisor: Boolean = true): CoroutineScope {
   requireNoJob(context)
   return ChildScope(coroutineContext + context, supervisor)
