@@ -27608,6 +27608,7 @@ c:com.intellij.refactoring.ui.NameSuggestionsField
 - getEditor():com.intellij.openapi.editor.Editor
 - getEnteredName():java.lang.String
 - getFocusableComponent():javax.swing.JComponent
+- getProject():com.intellij.openapi.project.Project
 - hasSuggestions():Z
 - removeDataChangedListener(com.intellij.refactoring.ui.NameSuggestionsField$DataChanged):V
 - requestFocus():V

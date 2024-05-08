@@ -15,20 +15,25 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class NameSuggestionsManager {
   private final TypeSelector myTypeSelector;
   private final NameSuggestionsField myNameField;
   private final NameSuggestionsGenerator myGenerator;
 
-  private final HashMap<PsiType, SuggestedNameInfo> myTypesToSuggestions = new HashMap<>();
+  private final Map<PsiType, SuggestedNameInfo> myTypesToSuggestions = new ConcurrentHashMap<>();
 
   public NameSuggestionsManager(TypeSelector typeSelector, NameSuggestionsField nameField, NameSuggestionsGenerator generator) {
     myTypeSelector = typeSelector;
@@ -55,13 +60,12 @@ public class NameSuggestionsManager {
     }
   }
 
-  private void updateSuggestions(PsiType selectedType) {
-    SuggestedNameInfo nameInfo = myTypesToSuggestions.get(selectedType);
-    if (nameInfo == null) {
-      nameInfo = myGenerator.getSuggestedNameInfo(selectedType);
-      myTypesToSuggestions.put(selectedType, nameInfo);
-    }
-    myNameField.setSuggestions(nameInfo.names);
+  private void updateSuggestions(@Nullable PsiType selectedType) {
+    if (selectedType == null) return;
+    ReadAction.nonBlocking(() -> myTypesToSuggestions.computeIfAbsent(selectedType, myGenerator::getSuggestedNameInfo))
+      .expireWhen(myNameField.getProject()::isDisposed)
+      .finishOnUiThread(ModalityState.any(), nameInfo -> myNameField.setSuggestions(nameInfo.names))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public void setLabelsFor(JLabel typeSelectorLabel, JLabel nameLabel) {

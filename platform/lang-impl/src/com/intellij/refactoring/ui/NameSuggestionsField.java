@@ -33,13 +33,13 @@ public class NameSuggestionsField extends JPanel {
   private final JComponent myComponent;
   private final EventListenerList myListenerList = new EventListenerList();
   private final MyComboBoxModel myComboBoxModel;
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private MyDocumentListener myDocumentListener;
   private MyComboBoxItemListener myComboBoxItemListener;
 
   private boolean myNonHumanChange = false;
 
-  public NameSuggestionsField(Project project) {
+  public NameSuggestionsField(@NotNull Project project) {
     super(new BorderLayout());
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
@@ -56,8 +56,12 @@ public class NameSuggestionsField extends JPanel {
   public NameSuggestionsField(String[] nameSuggestions, Project project) {
     this(nameSuggestions, project, StdFileTypes.JAVA);
   }
+  
+  public @NotNull Project getProject() {
+    return myProject;
+  }
 
-  public NameSuggestionsField(String[] nameSuggestions, Project project, FileType fileType) {
+  public NameSuggestionsField(String[] nameSuggestions, @NotNull Project project, FileType fileType) {
     super(new BorderLayout());
     myProject = project;
     if (nameSuggestions == null || nameSuggestions.length <= 1 && !forceCombobox()) {
