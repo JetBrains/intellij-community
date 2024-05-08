@@ -527,6 +527,7 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - isInsertParenthesesAutomatically():Z
 - isKeepTrailingSpacesOnCaretLine():Z
 - isLeadingWhitespacesShown():Z
+- isLineNumbersAfterIcons():Z
 - isLineNumbersShown():Z
 - isMouseClickSelectionHonorsCamelWords():Z
 - isPreselectRename():Z
@@ -623,6 +624,7 @@ f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 - ADDITIONAL_PAGE_AT_BOTTOM:Z
 - ADD_CARETS_ON_DOUBLE_CTRL:Z
 - ARE_GUTTER_ICONS_SHOWN:Z
+- ARE_LINE_NUMBERS_AFTER_ICONS:Z
 - ARE_LINE_NUMBERS_SHOWN:Z
 - BIDI_TEXT_DIRECTION:com.intellij.openapi.editor.ex.BidiTextDirection
 - CARET_BLINKING_PERIOD:I
@@ -696,6 +698,7 @@ f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$PropNames
 - sf:PROP_ADDITIONAL_PAGE_AT_BOTTOM:java.lang.String
 - sf:PROP_ADD_CARETS_ON_DOUBLE_CTRL:java.lang.String
 - sf:PROP_ARE_GUTTER_ICONS_SHOWN:java.lang.String
+- sf:PROP_ARE_LINE_NUMBERS_AFTER_ICONS:java.lang.String
 - sf:PROP_ARE_LINE_NUMBERS_SHOWN:java.lang.String
 - sf:PROP_BIDI_TEXT_DIRECTION:java.lang.String
 - sf:PROP_BREADCRUMBS_PER_LANGUAGE:java.lang.String

@@ -1859,6 +1859,7 @@ com.intellij.openapi.editor.EditorSettings
 - a:isInsertParenthesesAutomatically():Z
 - a:isLeadingWhitespaceShown():Z
 - a:isLineMarkerAreaShown():Z
+- a:isLineNumbersAfterIcons():Z
 - a:isLineNumbersShown():Z
 - a:isMouseClickSelectionHonorsCamelWords():Z
 - isPaintSoftWraps():Z
@@ -1904,6 +1905,7 @@ com.intellij.openapi.editor.EditorSettings
 - a:setLeadingWhitespaceShown(Z):V
 - a:setLineCursorWidth(I):V
 - a:setLineMarkerAreaShown(Z):V
+- a:setLineNumbersAfterIcons(Z):V
 - a:setLineNumbersShown(Z):V
 - a:setLineNumerationType(com.intellij.openapi.editor.EditorSettings$LineNumerationType):V
 - a:setMouseClickSelectionHonorsCamelWords(Z):V
