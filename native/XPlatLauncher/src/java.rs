@@ -69,10 +69,15 @@ fn get_vfprintf_hook_pointer() -> *mut c_void {
 #[no_mangle]
 extern "C" fn abort_hook() {
     error!("[JVM] abort_hook");
-    let text = HOOK_MESSAGES.lock().unwrap().as_ref().unwrap().join("");
-    if !text.is_empty() {
-        let gui = !DEBUG_MODE.load(Ordering::Acquire);
-        ui::show_error(gui, anyhow::format_err!(text))
+    match HOOK_MESSAGES.lock() {
+        Ok(unlocked) => {
+            let text = unlocked.as_ref().map(|lines| lines.join("")).unwrap_or("".to_string());
+            if !text.is_empty() {
+                let gui = !DEBUG_MODE.load(Ordering::Acquire);
+                ui::show_error(gui, anyhow::format_err!(text))
+            }
+        }
+        Err(e) => error!("[JVM] HOOK_MESSAGES.lock() failed: {}", e)
     }
 }
 
