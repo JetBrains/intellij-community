@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionalType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -100,3 +101,12 @@ fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): K
     val containingSymbol = symbol.getContainingSymbol() as? KaNamedClassOrObjectSymbol
     return containingSymbol?.takeIf { it.companionObject == symbol }
 }
+
+/**
+ * Checks whether [this] is one of the following:
+ * * extension
+ * * variable having a return type with a receiver
+ */
+context(KaSession)
+fun KaCallableSymbol.canBeUsedAsExtension(): Boolean =
+    isExtension || this is KaVariableLikeSymbol && (returnType as? KaFunctionalType)?.hasReceiver == true

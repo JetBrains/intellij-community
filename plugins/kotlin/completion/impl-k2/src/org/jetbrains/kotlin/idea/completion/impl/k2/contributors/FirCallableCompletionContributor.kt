@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
@@ -466,7 +467,7 @@ internal open class FirCallableCompletionContributor(
         sessionParameters: FirCompletionSessionParameters,
     ): Collection<ApplicableExtension> =
         scope.getCallableSymbols(scopeNameFilter)
-            .filter { it.isExtension || it is KtVariableLikeSymbol && (it.returnType as? KtFunctionalType)?.hasReceiver == true }
+            .filter { it.canBeUsedAsExtension() }
             .filter { visibilityChecker.isVisible(it) }
             .filter { filter(it, sessionParameters) }
             .mapNotNull { callable -> checkApplicabilityAndSubstitute(callable, hasSuitableExtensionReceiver) }
