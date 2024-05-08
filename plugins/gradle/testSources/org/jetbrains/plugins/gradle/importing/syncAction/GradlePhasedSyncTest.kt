@@ -197,6 +197,54 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   }
 
   @Test
+  fun `test multi-phased Gradle sync with non-complete set of model providers`() {
+    Disposer.newDisposable().use { disposable ->
+      val projectLoadingAssertion = ListenerAssertion()
+      val modelFetchCompletionAssertion = ListenerAssertion()
+      val modelFetchPhaseCompletionAssertion = ListenerAssertion()
+
+      val allPhases = GradleModelFetchPhase.entries
+      val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
+
+      whenPhaseCompleted(disposable) { _, phase ->
+        modelFetchPhaseCompletionAssertion.trace {
+          completedPhases.add(phase)
+        }
+      }
+      whenProjectLoaded(disposable) { _ ->
+        projectLoadingAssertion.touch()
+      }
+      whenModelFetchCompleted(disposable) { _ ->
+        modelFetchCompletionAssertion.touch()
+      }
+
+      initMultiModuleProject()
+      importProject()
+      assertMultiModuleProjectStructure()
+
+      projectLoadingAssertion.assertListenerFailures()
+      projectLoadingAssertion.assertListenerState(1) {
+        "The project loaded action should be completed"
+      }
+      modelFetchCompletionAssertion.assertListenerFailures()
+      modelFetchCompletionAssertion.assertListenerState(1) {
+        "The model fetch action should be completed"
+      }
+      modelFetchPhaseCompletionAssertion.assertListenerFailures()
+      modelFetchPhaseCompletionAssertion.assertListenerState(allPhases.size) {
+        "All requested model fetch phases should be completed.\n" +
+        "Requested phases = $allPhases\n" +
+        "Completed phases = $completedPhases"
+      }
+      Assertions.assertEquals(allPhases, completedPhases) {
+        "All requested model fetch phases should be completed.\n" +
+        "Requested phases = $allPhases\n" +
+        "Completed phases = $completedPhases"
+      }
+    }
+  }
+
+  @Test
   fun `test one-phased Gradle sync cancellation by exception`() {
     Disposer.newDisposable().use { disposable ->
       val modelFetchCompletionAssertion = ListenerAssertion()
