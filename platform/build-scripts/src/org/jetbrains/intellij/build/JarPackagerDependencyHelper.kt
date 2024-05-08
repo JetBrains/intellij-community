@@ -25,7 +25,8 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
   }
 
   fun isPluginModulePackedIntoSeparateJar(module: JpsModule, layout: PluginLayout?): Boolean {
-    return !(layout?.modulesWithExcludedModuleLibraries ?: emptySet()).contains(module.name) && getLibraryDependencies(module).any { it.libraryReference.parentReference is JpsModuleReference }
+    return !(layout?.modulesWithExcludedModuleLibraries ?: emptySet()).contains(module.name) &&
+           getLibraryDependencies(module).any { it.libraryReference.parentReference is JpsModuleReference }
   }
 
   fun getPluginXmlContent(pluginModule: JpsModule): String {

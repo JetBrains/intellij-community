@@ -115,7 +115,7 @@ fun loadDescriptorFromDir(
       useCoreClassLoader = useCoreClassLoader,
     )
     context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = descriptorRelativePath)
-    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
+    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = context, pluginDir = pluginDir ?: dir,  dataLoader = dataLoader)
     descriptor.jarFiles = Collections.singletonList(dir)
     return descriptor
   }
@@ -159,7 +159,7 @@ fun loadDescriptorFromJar(
 
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginDir ?: file, isBundled = isBundled, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
     parentContext.debugData?.recordDescriptorPath(descriptor, raw, descriptorRelativePath)
-    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = parentContext, dataLoader = dataLoader)
+    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = parentContext, pluginDir = pluginDir ?: file, dataLoader = dataLoader)
     descriptor.jarFiles = Collections.singletonList(descriptor.pluginPath)
     return descriptor
   }
@@ -182,12 +182,22 @@ fun initMainDescriptorByRaw(
   pathResolver: PathResolver,
   context: DescriptorListLoadingContext,
   dataLoader: DataLoader,
+  pluginDir: Path,
 ) {
   for (module in descriptor.content.modules) {
     val subDescriptorFile = module.configFile ?: "${module.name}.xml"
-    val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
-    val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
-    module.descriptor = subDescriptor
+    if (module.descriptorContent == null) {
+      val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
+      module.descriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
+    }
+    else {
+      val subRaw = readModuleDescriptor(reader = createXmlStreamReader(module.descriptorContent), readContext = context, dataLoader = dataLoader)
+      val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
+      if (subRaw.`package` == null || subRaw.isSeparateJar) {
+        subDescriptor.jarFiles = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
+      }
+      module.descriptor = subDescriptor
+    }
   }
 
   descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
@@ -793,7 +803,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
   val fileName = file.fileName.toString()
   if (fileName.endsWith(".jar", ignoreCase = true)) {
     val descriptor = runBlocking {
-    loadDescriptorFromJar(file = file, parentContext = context, pluginDir = null, pool = NonShareableJavaZipFilePool())
+      loadDescriptorFromJar(file = file, parentContext = context, pluginDir = null, pool = NonShareableJavaZipFilePool())
     }
     if (descriptor != null) {
       return descriptor
