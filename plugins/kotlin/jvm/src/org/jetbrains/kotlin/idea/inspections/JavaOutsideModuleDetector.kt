@@ -31,7 +31,8 @@ class JavaOutsideModuleDetector : EditorNotificationProvider {
 
         val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
 
-        if (fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) return null
+        if (fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES) ||
+            !fileIndex.isInSourceContent(file)) return null
 
         if (fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES)) {
             val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return null
