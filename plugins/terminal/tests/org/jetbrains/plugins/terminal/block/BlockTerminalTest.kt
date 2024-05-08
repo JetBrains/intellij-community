@@ -98,7 +98,8 @@ class BlockTerminalTest(private val shellPath: Path) {
     runBlocking {
       for (stepId in 1..100) {
         val startTime = TimeSource.Monotonic.markNow()
-        val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+
+        // At first, schedule the generator
         val generatorCommandSent = createCommandSentDeferred(session)
         // Create generator and context each time, because default implementations are caching
         val generatorsExecutor = IJShellGeneratorsExecutor(session)
@@ -114,9 +115,16 @@ class BlockTerminalTest(private val shellPath: Path) {
         }
         withTimeout(20.seconds) { generatorCommandSent.await() }
         delay((1..50).random().milliseconds) // wait a little to start the generator
+
+        // Then schedule the user command
+        val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
         session.sendCommandlineToExecuteWithoutAddingToHistory("echo foo")
+
+        // Wait until the generator is finished
         val commands: List<ShellCommandSpec> = withTimeout(20.seconds) { commandsListDeferred.await() }
         Assert.assertTrue(commands.isNotEmpty())
+
+        // Wait until the user command is finished
         assertCommandResult(0, "foo\n", outputFuture)
         println("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
       }
