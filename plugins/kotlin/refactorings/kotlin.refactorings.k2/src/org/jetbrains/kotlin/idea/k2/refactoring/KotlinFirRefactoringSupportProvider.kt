@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntr
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinIntroducePropertyHandler
 
 class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
-    override fun isSafeDeleteAvailable(element: PsiElement) = element.canDeleteElement()
+    override fun isSafeDeleteAvailable(element: PsiElement): Boolean = element.canDeleteElement()
 
     /**
      * @see org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider.isInplaceRenameAvailable
@@ -29,9 +29,9 @@ class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
      */
     override fun getIntroduceVariableHandler(): RefactoringActionHandler = K2IntroduceVariableHandler
 
-    override fun getChangeSignatureHandler(): ChangeSignatureHandler? = KotlinChangeSignatureHandler
+    override fun getChangeSignatureHandler(): ChangeSignatureHandler = KotlinChangeSignatureHandler
 
-    override fun getIntroduceParameterHandler(): RefactoringActionHandler? = KotlinFirIntroduceParameterHandler()
+    override fun getIntroduceParameterHandler(): RefactoringActionHandler = KotlinFirIntroduceParameterHandler()
 
     override fun getIntroduceConstantHandler(): RefactoringActionHandler = KotlinIntroduceConstantHandler()
 

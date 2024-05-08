@@ -31,34 +31,18 @@ import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.INTRODUCE_PARAMETER
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.IntroduceParameterDescriptor
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinInplaceParameterIntroducerBase
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHelper
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.selectNewParameterContext
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
@@ -69,7 +53,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     context(KtAnalysisSession)
     private fun findInternalUsagesOfParametersAndReceiver(
         targetParent: KtNamedDeclaration
-    ): MultiMap<KtElement, KtElement>? {
+    ): MultiMap<KtElement, KtElement> {
         val usages = MultiMap<KtElement, KtElement>()
 
         targetParent.getValueParameters()
@@ -167,7 +151,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
             }
             suggestedNames.addAll(KotlinNameSuggester.suggestNamesByType(expressionType, targetParent, nameValidator, "p"))
 
-            val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent) ?: return@analyzeInModalWindow null
+            val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent)
 
             val forbiddenRanges = (targetParent as? KtClass)?.declarations?.asSequence()
                 ?.filter(::isObjectOrNonInnerClass)
@@ -299,7 +283,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         occurrencesToReplace: List<KotlinPsiRange>,
         psiFactory: KtPsiFactory
     ): IntroduceParameterDescriptor<KtNamedDeclaration> = helper.configure(
-        IntroduceParameterDescriptor<KtNamedDeclaration>(
+        IntroduceParameterDescriptor(
             originalRange = originalExpression.toRange(),
             callable = targetParent,
             callableDescriptor = targetParent,

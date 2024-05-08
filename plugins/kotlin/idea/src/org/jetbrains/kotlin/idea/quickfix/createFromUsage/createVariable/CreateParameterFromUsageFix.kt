@@ -18,13 +18,14 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 
 class CreateParameterFromUsageFix<E : KtElement>(
     originalExpression: E,
     private val dataProvider: (E) -> CreateParameterData<E>?
 ) : CreateFromUsageFixBase<E>(originalExpression) {
-    private var parameterInfoReference: WeakReference<KotlinParameterInfo>? = null
+    private var parameterInfoReference: Reference<KotlinParameterInfo>? = null
 
     private fun parameterInfo(): KotlinParameterInfo? =
         parameterInfoReference?.get() ?: parameterData()?.parameterInfo?.also {
@@ -51,7 +52,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
 
     override fun getText(): String = element?.run { calculatedText } ?: ""
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
     private fun runChangeSignature(project: Project, editor: Editor?) {
         val originalExpression = element ?: return
@@ -61,7 +62,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
                 return originalDescriptor.modify { it.addParameter(parameterInfo) }
             }
 
-            override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean = parameterData()?.createSilently ?: false
+            override fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean = parameterData()?.createSilently ?: false
         }
 
         runChangeSignature(project, editor, parameterInfo.callableDescriptor, config, originalExpression, text)
@@ -91,7 +92,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
             element: E,
             callableInfosFactory: (E) -> List<CallableInfo>?
         ): CreateParameterFromUsageFix<E> {
-            return CreateParameterFromUsageFix(element, dataProvider = fun(element): CreateParameterData<E>? {
+            fun dataProvider(element:E): CreateParameterData<E>? {
                 val info = callableInfosFactory.invoke(element)?.singleOrNull().safeAs<PropertyInfo>() ?: return null
                 if (info.receiverTypeInfo.staticContextRequired) return null
 
@@ -131,7 +132,8 @@ class CreateParameterFromUsageFix<E : KtElement>(
                     ),
                     originalExpression = element
                 )
-            })
+            }
+            return CreateParameterFromUsageFix(element, dataProvider = ::dataProvider)
         }
     }
 }

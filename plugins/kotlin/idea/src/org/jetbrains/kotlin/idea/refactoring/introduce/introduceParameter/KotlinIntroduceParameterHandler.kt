@@ -14,7 +14,6 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -37,7 +36,6 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -87,7 +85,7 @@ fun IntroduceParameterDescriptor<FunctionDescriptor>.performRefactoring(editor: 
             }
         }
 
-        override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean = true
+        override fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean = true
     }
 
     val project = callable.project
@@ -376,9 +374,12 @@ private fun findInternalUsagesOfParametersAndReceiver(
 }
 
 interface KotlinIntroduceLambdaParameterHelper<Descriptor> : KotlinIntroduceParameterHelper<Descriptor> {
-    class Default<D> : KotlinIntroduceLambdaParameterHelper<D>
+    class Default<D> : KotlinIntroduceLambdaParameterHelper<D>{
+        override fun configure(descriptor: IntroduceParameterDescriptor<D>): IntroduceParameterDescriptor<D> = descriptor
+        override fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor = descriptor
+    }
 
-    fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor = descriptor
+    fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor
 }
 
 open class KotlinIntroduceLambdaParameterHandler(

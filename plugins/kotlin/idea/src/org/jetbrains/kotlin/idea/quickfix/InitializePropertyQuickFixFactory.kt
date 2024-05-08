@@ -80,7 +80,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                     }
                 }
 
-                override fun performSilently(affectedFunctions: Collection<PsiElement>) = noUsagesExist(affectedFunctions)
+                override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = noUsagesExist(affectedFunctions)
             }
         }
 
@@ -146,7 +146,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                     }
                 }
 
-                override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean = noUsagesExist(affectedFunctions)
+                override fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean = noUsagesExist(affectedFunctions)
             }
         }
 

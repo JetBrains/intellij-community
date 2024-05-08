@@ -110,26 +110,6 @@ abstract class CallableRefactoring<out T : CallableDescriptor>(
     protected abstract fun performRefactoring(descriptorsForChange: Collection<CallableDescriptor>)
 
     fun run(): Boolean {
-        fun buttonPressed(code: Int, dialogButtons: List<String>, button: String): Boolean {
-            return code == dialogButtons.indexOf(button) && button in dialogButtons
-        }
-
-        fun performForWholeHierarchy(dialogButtons: List<String>, code: Int): Boolean {
-            return buttonPressed(code, dialogButtons, Messages.getYesButton()) || buttonPressed(code, dialogButtons, Messages.getOkButton())
-        }
-
-        fun performForSelectedFunctionOnly(dialogButtons: List<String>, code: Int): Boolean {
-            return buttonPressed(code, dialogButtons, Messages.getNoButton())
-        }
-
-        fun buildDialogOptions(isSingleFunctionSelected: Boolean): List<String> {
-            return if (isSingleFunctionSelected) {
-                arrayListOf(Messages.getYesButton(), Messages.getNoButton(), Messages.getCancelButton())
-            } else {
-                arrayListOf(Messages.getOkButton(), Messages.getCancelButton())
-            }
-        }
-
         if (kind == SYNTHESIZED) {
             LOG.error("Change signature refactoring should not be called for synthesized member $callableDescriptor")
             return false
@@ -153,6 +133,26 @@ abstract class CallableRefactoring<out T : CallableDescriptor>(
         if (closestModifiableDescriptors.size == 1 && deepestSuperDeclarations.subtract(closestModifiableDescriptors).isEmpty()) {
             performRefactoring(closestModifiableDescriptors)
             return true
+        }
+
+        fun buttonPressed(code: Int, dialogButtons: List<String>, button: String): Boolean {
+            return code == dialogButtons.indexOf(button) && button in dialogButtons
+        }
+
+        fun performForWholeHierarchy(dialogButtons: List<String>, code: Int): Boolean {
+            return buttonPressed(code, dialogButtons, Messages.getYesButton()) || buttonPressed(code, dialogButtons, Messages.getOkButton())
+        }
+
+        fun performForSelectedFunctionOnly(dialogButtons: List<String>, code: Int): Boolean {
+            return buttonPressed(code, dialogButtons, Messages.getNoButton())
+        }
+
+        fun buildDialogOptions(isSingleFunctionSelected: Boolean): List<String> {
+            return if (isSingleFunctionSelected) {
+                arrayListOf(Messages.getYesButton(), Messages.getNoButton(), Messages.getCancelButton())
+            } else {
+                arrayListOf(Messages.getOkButton(), Messages.getCancelButton())
+            }
         }
 
         val isSingleFunctionSelected = closestModifiableDescriptors.size == 1

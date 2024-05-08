@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
@@ -28,21 +29,23 @@ object K2CreateParameterFromUsageBuilder {
         if (refExpr.getQualifiedElement() != refExpr) return null
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return null
 
-        if (getContainerClass(refExpr) == null) return null
-        return CreateParameterFromUsageAction(refExpr)
+        val pair = getContainerClass(refExpr)
+        if (pair.first == null) return null
+        return CreateParameterFromUsageAction(refExpr, refExpr.getReferencedName(), pair.second)
     }
 
-    private fun getContainerClass(refExpr: KtNameReferenceExpression): KtClass? {
+    private fun getContainerClass(refExpr: KtNameReferenceExpression): Pair<PsiElement?, CreateParameterUtil.ValVar> {
         val varExpected = refExpr.getAssignmentByLHS() != null
-        return CreateParameterUtil.chooseContainerPreferringClass(refExpr, varExpected) as? KtClass
+        return CreateParameterUtil.chooseContainerPreferringClass(refExpr, varExpected)
     }
 
-    internal class CreateParameterFromUsageAction(refExpr: KtNameReferenceExpression, private val propertyName: String = refExpr.getReferencedName()) : IntentionAction {
+    internal class CreateParameterFromUsageAction(refExpr: KtNameReferenceExpression, private val propertyName: String, valVar: CreateParameterUtil.ValVar) : IntentionAction {
         val pointer: SmartPsiElementPointer<KtNameReferenceExpression> = SmartPointerManager.createPointer(refExpr)
         override fun getText(): String = KotlinBundle.message("fix.create.from.usage.local.variable", propertyName)
         private var declarationText:String = computeDeclarationText()
 
         private fun computeDeclarationText(): String {
+            //val handler = KotlinFirIntroduceParameterHandler()
             val refExpr = pointer.element ?: return ""
             val assignment = refExpr.getAssignmentByLHS()
             val varExpected = assignment != null
@@ -64,7 +67,7 @@ object K2CreateParameterFromUsageBuilder {
 
         override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
             val refExpr = pointer.element ?: return
-            val container = getContainerClass(refExpr) ?: return
+            val container = getContainerClass(refExpr).first ?: return
             if (!ReadonlyStatusHandler.ensureFilesWritable(project, PsiUtil.getVirtualFile(container))) {
                 return
             }
