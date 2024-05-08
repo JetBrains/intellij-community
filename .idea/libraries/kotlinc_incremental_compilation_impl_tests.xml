@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.incremental-compilation-impl-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:incremental-compilation-impl-tests-for-ide:2.0.20-dev-3206">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.0.20-dev-3206/incremental-compilation-impl-tests-for-ide-2.0.20-dev-3206.jar">
-          <sha256sum>39ef63fa8c4dd786c0b89045ca5be6f871076068d8ebbbcfbb3d12ac1ebc4e19</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.incremental-compilation-impl-tests">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.0.20-dev-3206/incremental-compilation-impl-tests-for-ide-2.0.20-dev-3206.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.0.255-dev-255/incremental-compilation-impl-tests-for-ide-2.0.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.0.20-dev-3206/incremental-compilation-impl-tests-for-ide-2.0.20-dev-3206-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/incremental-compilation-impl-tests-for-ide/2.0.255-dev-255/incremental-compilation-impl-tests-for-ide-2.0.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
