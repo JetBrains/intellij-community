@@ -60,7 +60,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -746,13 +745,8 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
             }
           }
       }
-      AccessibleContext accessibleContext = editor.getContentComponent().getAccessibleContext();
       if (accessibleName != null) {
-        accessibleContext.setAccessibleName(accessibleName);
-      }
-
-      if (myHintText != null && accessibleContext.getAccessibleDescription() == null) {
-        accessibleContext.setAccessibleDescription(AccessibleContextUtil.getUniqueDescription(accessibleContext, myHintText.toString()));
+        editor.getContentComponent().getAccessibleContext().setAccessibleName(accessibleName);
       }
 
       initOneLineMode(editor);
