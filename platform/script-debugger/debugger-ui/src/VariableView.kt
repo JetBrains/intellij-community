@@ -19,6 +19,7 @@ import com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation
 import com.intellij.xdebugger.frame.presentation.XNumericValuePresentation
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
+import com.jetbrains.javascript.debugger.JavaScriptDebugAware
 import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.values.*
 import java.util.*
@@ -121,6 +122,10 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   private fun computePresentation(value: Value, node: XValueNode) {
+    if (JavaScriptDebugAware.EP_NAME.extensionList.any { it.computeAlternativeValuePresentation(value, node, icon) }) {
+      return
+    }
+
     if (variable is ObjectProperty && isPrototypeVariable(variable.name) && value.type != ValueType.NULL) {
       setObjectPresentation(value as ObjectValue, icon, node)
       return

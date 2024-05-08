@@ -46,6 +46,7 @@ a:com.jetbrains.javascript.debugger.JavaScriptDebugAware
 - sf:Companion:com.jetbrains.javascript.debugger.JavaScriptDebugAware$Companion
 - <init>():V
 - canGetEvaluationInfo(com.intellij.psi.PsiFile):Z
+- *:computeAlternativeValuePresentation(org.jetbrains.debugger.values.Value,com.intellij.xdebugger.frame.XValueNode,javax.swing.Icon):Z
 - createMemberFilter(com.intellij.javascript.debugger.NameMapper,com.intellij.psi.PsiElement,I):org.jetbrains.debugger.MemberFilter
 - getBreakpointTypeClass():java.lang.Class
 - getEvaluationInfo(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,com.intellij.javascript.debugger.ExpressionInfoFactory):org.jetbrains.concurrency.Promise
