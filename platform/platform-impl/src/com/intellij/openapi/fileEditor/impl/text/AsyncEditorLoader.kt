@@ -62,6 +62,9 @@ class AsyncEditorLoader internal constructor(
 
     internal fun isFirstInBulk(file: VirtualFile): Boolean = file.getUserData(FIRST_IN_BULK) != null
 
+    /**
+     * Invoke callback when the editor is successfully loaded. The callback will not be called if the loading was canceled.
+     */
     @JvmStatic
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
