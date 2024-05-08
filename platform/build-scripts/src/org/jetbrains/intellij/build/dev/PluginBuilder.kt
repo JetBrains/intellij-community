@@ -16,25 +16,21 @@ import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import java.util.concurrent.atomic.LongAdder
 
 internal suspend fun buildPlugins(
   pluginBuildDescriptors: List<PluginBuildDescriptor>,
   platformLayout: PlatformLayout,
-  context: BuildContext,
   searchableOptionSet: SearchableOptionSetDescriptor?,
+  context: BuildContext,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
-  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope { span ->
-    val counter = LongAdder()
-    val pluginEntries = coroutineScope {
+  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope {
+    coroutineScope {
       pluginBuildDescriptors.map { plugin ->
         async {
           plugin to buildPlugin(plugin = plugin, platformLayout = platformLayout, searchableOptionSet = searchableOptionSet, context = context)
         }
       }
     }.map { it.getCompleted() }
-    span.setAttribute("reusedCount", counter.toLong())
-    pluginEntries
   }
 }
 

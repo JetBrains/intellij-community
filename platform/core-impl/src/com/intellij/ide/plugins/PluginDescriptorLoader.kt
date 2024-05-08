@@ -505,15 +505,9 @@ private suspend fun loadDescriptors(
   val loadingResult = PluginLoadingResult()
 
   val isMainProcess = isMainProcess()
-  loadingResult.addAll(
-    descriptors = toSequence(listDeferred, isMainProcess = isMainProcess),
-    overrideUseIfCompatible = false,
-    productBuildNumber = buildNumber,
-  )
+  loadingResult.addAll(descriptors = toSequence(listDeferred, isMainProcess = isMainProcess), overrideUseIfCompatible = false, productBuildNumber = buildNumber)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-  loadingResult.addAll(descriptors = toSequence(extraListDeferred, isMainProcess = isMainProcess),
-                       overrideUseIfCompatible = true,
-                       productBuildNumber = buildNumber)
+  loadingResult.addAll(descriptors = toSequence(extraListDeferred, isMainProcess = isMainProcess), overrideUseIfCompatible = true, productBuildNumber = buildNumber)
 
   if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1) {
     // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
@@ -579,12 +573,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
     pool = zipFilePool,
     classLoader = mainClassLoader,
   ))
-  result.addAll(loadingStrategy.loadCustomPluginDescriptors(
-    scope = this,
-    customPluginDir = customPluginDir,
-    context = context,
-    zipFilePool = zipFilePool,
-  ))
+  result.addAll(loadingStrategy.loadCustomPluginDescriptors(scope = this, customPluginDir = customPluginDir, context = context, zipFilePool = zipFilePool))
 
   result.addAll(loadingStrategy.loadBundledPluginDescriptors(
     scope = this,

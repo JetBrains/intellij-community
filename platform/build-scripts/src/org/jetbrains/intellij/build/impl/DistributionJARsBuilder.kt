@@ -530,7 +530,7 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
         targetDirectory = context.paths.distAllDir,
         platform = platformLayout,
         context = context,
-        searchableOptionSetDescriptor = null,
+        searchableOptionSet = null,
         copyFiles = false,
       )
     }
@@ -725,7 +725,7 @@ suspend fun buildLib(
     targetDirectory = context.paths.distAllDir,
     platform = platform,
     copyFiles = true,
-    searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+    searchableOptionSet = searchableOptionSetDescriptor,
     context = context,
   )
   context.proprietaryBuildTools.scrambleTool?.validatePlatformLayout(platform.includedModules, context)
@@ -736,7 +736,7 @@ suspend fun layoutPlatformDistribution(
   moduleOutputPatcher: ModuleOutputPatcher,
   targetDirectory: Path,
   platform: PlatformLayout,
-  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   copyFiles: Boolean,
   context: BuildContext,
 ): List<DistributionFileEntry> {
@@ -767,7 +767,7 @@ suspend fun layoutPlatformDistribution(
         copyFiles = copyFiles,
         moduleOutputPatcher = moduleOutputPatcher,
         includedModules = platform.includedModules,
-        searchableOptionSet = searchableOptionSetDescriptor,
+        searchableOptionSet = searchableOptionSet,
         context = context,
       ).first
     }
@@ -791,10 +791,7 @@ fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture,
   return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
 }
 
-private fun checkOutputOfPluginModules(mainPluginModule: String,
-                                       includedModules: Collection<ModuleItem>,
-                                       moduleExcludes: Map<String, List<String>>,
-                                       context: BuildContext) {
+private fun checkOutputOfPluginModules(mainPluginModule: String, includedModules: Collection<ModuleItem>, moduleExcludes: Map<String, List<String>>, context: BuildContext) {
   // don't check modules which are not direct children of lib/ directory
   val modulesWithPluginXml = mutableListOf<String>()
   for (item in includedModules) {

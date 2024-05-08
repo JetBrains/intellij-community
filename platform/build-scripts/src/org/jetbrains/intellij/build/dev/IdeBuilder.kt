@@ -47,10 +47,9 @@ data class BuildRequest(
   @JvmField val platformPrefix: String,
   @JvmField val additionalModules: List<String>,
   @JvmField val projectDir: Path,
-  @JvmField val devRootDir: Path = projectDir.normalize().toAbsolutePath().resolve("out/dev-run"),
+  @JvmField val devRootDir: Path = projectDir.resolve("out/dev-run"),
   @JvmField val jarCacheDir: Path = devRootDir.resolve("jar-cache"),
-  @JvmField val productionClassOutput: Path = Path.of(System.getenv("CLASSES_DIR")
-                                                      ?: projectDir.resolve("out/classes/production").toString()).toAbsolutePath(),
+  @JvmField val productionClassOutput: Path = System.getenv("CLASSES_DIR")?.let { Path.of(it).normalize().toAbsolutePath() } ?: projectDir.resolve("out/classes/production"),
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
   /**
@@ -120,7 +119,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       createPlatformLayout(pluginsToPublish = emptySet(), context = context)
     }
 
-    val searchableOptionSetDescriptor = getJarsWithSearchableOptions(context)
+    val searchableOptionSet = getSearchableOptionSet(context)
 
     val platformDistributionEntriesDeferred = async {
       launch(Dispatchers.IO) {
@@ -136,7 +135,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
 
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").useWithScope {
-        layoutPlatform(runDir = runDir, platformLayout = platformLayout.await(), searchableOptionSetDescriptor = searchableOptionSetDescriptor, context = context)
+        layoutPlatform(runDir = runDir, platformLayout = platformLayout.await(), searchableOptionSet = searchableOptionSet, context = context)
       }
 
       launch(Dispatchers.IO) {
@@ -165,7 +164,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         runDir = runDir,
         platformLayout = platformLayout,
         artifactTask = artifactTask,
-        jarsWithSearchableOptions = searchableOptionSetDescriptor,
+        searchableOptionSet = searchableOptionSet,
       )
     }
 
@@ -212,7 +211,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
   return runDir
 }
 
-private suspend fun getJarsWithSearchableOptions(context: BuildContext): SearchableOptionSetDescriptor? {
+private suspend fun getSearchableOptionSet(context: BuildContext): SearchableOptionSetDescriptor? {
   return withContext(Dispatchers.IO) {
     try {
       readSearchableOptionIndex(context.paths.searchableOptionDir)
@@ -319,7 +318,7 @@ private suspend fun buildPlugins(
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
   artifactTask: Job,
-  jarsWithSearchableOptions: SearchableOptionSetDescriptor?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
 ): Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?> {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
 
@@ -354,8 +353,8 @@ private suspend fun buildPlugins(
   val pluginEntries = buildPlugins(
     pluginBuildDescriptors = pluginBuildDescriptors,
     platformLayout = platformLayout.await(),
+    searchableOptionSet = searchableOptionSet,
     context = context,
-    searchableOptionSet = jarsWithSearchableOptions,
   )
   val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)
   return pluginEntries to additionalPlugins
@@ -506,20 +505,19 @@ internal suspend fun createProductProperties(productConfiguration: ProductConfig
   }
 }
 
-private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> =
-  sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
+private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> = sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 
 private suspend fun layoutPlatform(
   runDir: Path,
   platformLayout: PlatformLayout,
-  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Set<Path>> {
   val entries = layoutPlatformDistribution(
     moduleOutputPatcher = ModuleOutputPatcher(),
     targetDirectory = runDir,
     platform = platformLayout,
-    searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+    searchableOptionSet = searchableOptionSet,
     copyFiles = true,
     context = context,
   )
@@ -555,11 +553,11 @@ private suspend fun layoutPlatform(
   return entries to sortedClassPath
 }
 
-private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> =
-  LinkedHashSet(context.bundledPluginModules) + additionalModules
+private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
+  return LinkedHashSet(context.bundledPluginModules) + additionalModules
+}
 
-fun getAdditionalModules(): Sequence<String>? =
-  System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
+fun getAdditionalModules(): Sequence<String>? = System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
 
 private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
   if (additionalModules.isEmpty()) {
@@ -573,5 +571,4 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
   }
 }
 
-private fun getCommunityHomePath(homePath: Path): Path =
-  if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
+private fun getCommunityHomePath(homePath: Path): Path = if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
