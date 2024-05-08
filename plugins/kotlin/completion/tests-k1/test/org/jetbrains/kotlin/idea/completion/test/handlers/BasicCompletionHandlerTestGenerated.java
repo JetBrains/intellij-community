@@ -632,6 +632,26 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/override/ExpectClassValOverride.kt");
         }
 
+        @TestMetadata("ImplementAnnotatedFunctionMultipleAnnotations.kt")
+        public void testImplementAnnotatedFunctionMultipleAnnotations() throws Exception {
+            runTest("../testData/handlers/basic/override/ImplementAnnotatedFunctionMultipleAnnotations.kt");
+        }
+
+        @TestMetadata("ImplementAnnotatedFunctionMultipleAnnotations2.kt")
+        public void testImplementAnnotatedFunctionMultipleAnnotations2() throws Exception {
+            runTest("../testData/handlers/basic/override/ImplementAnnotatedFunctionMultipleAnnotations2.kt");
+        }
+
+        @TestMetadata("ImplementAnnotatedFunctionWithExtension.kt")
+        public void testImplementAnnotatedFunctionWithExtension() throws Exception {
+            runTest("../testData/handlers/basic/override/ImplementAnnotatedFunctionWithExtension.kt");
+        }
+
+        @TestMetadata("ImplementAnnotatedFunctionWithoutExtension.kt")
+        public void testImplementAnnotatedFunctionWithoutExtension() throws Exception {
+            runTest("../testData/handlers/basic/override/ImplementAnnotatedFunctionWithoutExtension.kt");
+        }
+
         @TestMetadata("ImplementFunction.kt")
         public void testImplementFunction() throws Exception {
             runTest("../testData/handlers/basic/override/ImplementFunction.kt");
