@@ -13,7 +13,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -24,8 +23,7 @@ private class TipOfTheDayStartupActivity : ProjectActivity {
     if (ApplicationManager.getApplication().isHeadlessEnvironment ||
         ApplicationManager.getApplication().isUnitTestMode ||
         PlatformUtils.isRider() ||
-        !GeneralSettings.getInstance().isShowTipsOnStartup ||
-        ExperimentalUI.forcedSwitchedUi) {
+        !GeneralSettings.getInstance().isShowTipsOnStartup) {
       throw ExtensionNotApplicableException.create()
     }
   }

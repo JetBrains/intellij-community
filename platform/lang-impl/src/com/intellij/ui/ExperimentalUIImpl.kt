@@ -124,7 +124,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   }
 
   fun appClosing() {
-    unsetForcedSwitchNewUi()
     if (shouldUnsetNewUiSwitchKey) {
       PropertiesComponent.getInstance().unsetValue(NEW_UI_SWITCH)
     }
@@ -134,7 +133,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     }
   }
 
-  private fun onValueChanged(isEnabled: Boolean, withLafToDef: Boolean = true) {
+  private fun onValueChanged(isEnabled: Boolean) {
     if (isEnabled) {
       setNewUiUsed()
     }
@@ -159,7 +158,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     if (PlatformUtils.isJetBrainsClient()) {
       NewUiValue.overrideNewUiForOneRemDevSession(isEnabled)
     }
-    if (withLafToDef) resetLafSettingsToDefault()
+    resetLafSettingsToDefault()
   }
 
   private fun saveNewValue(enabled: Boolean) {
@@ -216,15 +215,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
           changeUI()
         }
       })
-    }
-  }
-
-  private fun unsetForcedSwitchNewUi() {
-    try {
-      EarlyAccessRegistryManager.setBoolean(FORCED_SWITCH_TO_NEW_UI, false)
-      EarlyAccessRegistryManager.syncAndFlush()
-    } catch (e: Throwable) {
-      LOG.error(e)
     }
   }
 }
