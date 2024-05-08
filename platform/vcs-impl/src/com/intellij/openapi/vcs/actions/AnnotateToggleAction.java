@@ -52,6 +52,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     new ExtensionPointName<>("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
 
   public AnnotateToggleAction() {
+    getTemplatePresentation().setMultiChoice(false);
     setEnabledInModalContext(true);
   }
 
