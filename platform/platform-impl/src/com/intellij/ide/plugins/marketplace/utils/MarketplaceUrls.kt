@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.marketplace.utils
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
@@ -23,11 +22,11 @@ object MarketplaceUrls {
   const val EXTENSIONS_BACKUP_FILENAME = "pluginsFeatures.json"
 
   @JvmStatic
-  fun getPluginManagerUrl() = service<MarketplaceCustomizationService>().getPluginManagerUrl().trimEnd('/')
+  fun getPluginManagerUrl() = MarketplaceCustomizationService.getInstance().getPluginManagerUrl().trimEnd('/')
   @JvmStatic
   fun getPluginManagerHost() = URL(getPluginManagerUrl()).host!!
 
-  private fun getDownloadUrl() = service<MarketplaceCustomizationService>().getPluginDownloadUrl().trimEnd('/')
+  private fun getDownloadUrl() = MarketplaceCustomizationService.getInstance().getPluginDownloadUrl().trimEnd('/')
 
   fun getPluginMetaUrl(externalPluginId: String) = "${getPluginManagerUrl()}/files/$externalPluginId/meta.json"
   fun getUpdateMetaUrl(externalPluginId: String, externalUpdateId: String) =
