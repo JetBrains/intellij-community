@@ -50,6 +50,12 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun clickOnPosition(line: Int, column: Int) {
+    setFocus()
+    click(interact { val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line-1, column-1))
+      Point(lowerPoint.getX().toInt(), lowerPoint.getY().toInt()+editor.getLineHeight()/2)})
+  }
+
   fun getLineText(line: Int) = editor.getDocument().getText().split("\n").let {
     if (it.size < line) "" else it[line - 1]
   }

@@ -15,6 +15,7 @@ interface Editor {
   fun getCaretModel(): CaretModel
   fun logicalPositionToXY(position: LogicalPosition): Point
   fun getVirtualFile(): VirtualFile
+  fun getLineHeight(): Int
 }
 
 @Remote("com.intellij.openapi.editor.Document")
