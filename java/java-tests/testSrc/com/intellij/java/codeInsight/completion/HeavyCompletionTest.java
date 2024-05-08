@@ -180,7 +180,11 @@ public class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(p.getItemTextForeground(), JBColor.foreground());
   }
 
-  @NeedsIndex.ForStandardLibrary
+  // TODO (IJPL-426): DUMB_RUNTIME_ONLY_INDEX means "entities available before the test has changed indexing mode"
+  //  adding a library in the middle of the test will not cause indexing of this library
+  //  This is a bug in DUMB_RUNTIME_ONLY_INDEX implementation, not in the test
+  // @NeedsIndex.ForStandardLibrary
+  @NeedsIndex.Full
   public void testSeeminglyScrambledSubclass() {
     PsiTestUtil.addLibrary(getModule(), JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/seemsScrambled.jar");
     myFixture.configureByText("a.java", """
