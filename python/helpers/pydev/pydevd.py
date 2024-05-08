@@ -60,7 +60,7 @@ from _pydevd_bundle.pydevd_trace_dispatch import (
     trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning)
 from _pydevd_frame_eval.pydevd_frame_eval_main import (
     frame_eval_func, dummy_trace_dispatch, show_frame_eval_warning)
-from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import enable_pep699_monitoring
+from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import enable_pep669_monitoring
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
@@ -530,7 +530,7 @@ class PyDB(object):
         '''
         set_fallback_excepthook()
         if USE_LOW_IMPACT_MONITORING:
-            enable_pep699_monitoring()
+            enable_pep669_monitoring()
             return
         if self.frame_eval_func is not None:
             self.frame_eval_func()
@@ -1313,7 +1313,7 @@ class PyDB(object):
         if USE_LOW_IMPACT_MONITORING:
             debugger = get_global_debugger()
             if debugger:
-                enable_pep699_monitoring()
+                enable_pep669_monitoring()
         else:
             while frame is not None:
                 try:
@@ -1371,7 +1371,7 @@ class PyDB(object):
 
         if enable_tracing_from_start:
             if USE_LOW_IMPACT_MONITORING:
-                enable_pep699_monitoring()
+                enable_pep669_monitoring()
             else:
                 pydevd_tracing.SetTrace(self.trace_dispatch)
 

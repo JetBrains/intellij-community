@@ -181,7 +181,7 @@ def _stop_on_unhandled_exception(exc_info, py_db, thread):
                                     exc_info)
 
 
-def enable_pep699_monitoring():
+def enable_pep669_monitoring():
     DEBUGGER_ID = monitoring.DEBUGGER_ID
     if not monitoring.get_tool(DEBUGGER_ID):
         monitoring.use_tool_id(DEBUGGER_ID, PYDEVD_TOOL_NAME)
