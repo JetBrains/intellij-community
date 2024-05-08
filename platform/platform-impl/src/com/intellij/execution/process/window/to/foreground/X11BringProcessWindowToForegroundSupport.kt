@@ -9,7 +9,7 @@ import com.jetbrains.rd.util.trace
 
 private val logger = getLogger<X11BringProcessWindowToForegroundSupport>()
 
-class X11BringProcessWindowToForegroundSupport : BringProcessWindowToForegroundSupportApplicable() {
+internal class X11BringProcessWindowToForegroundSupport : BringProcessWindowToForegroundSupportApplicable() {
   override fun isApplicable(): Boolean {
     return StartupUiUtil.isXToolkit().also {
       if (!it)

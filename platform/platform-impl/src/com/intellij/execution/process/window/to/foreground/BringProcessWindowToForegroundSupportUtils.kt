@@ -6,6 +6,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.getOrCreateUserData
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.trace
+import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.optionals.getOrNull
 
 private val logger = getLogger<BringProcessWindowToForegroundSupport>()
@@ -13,7 +14,7 @@ private val logger = getLogger<BringProcessWindowToForegroundSupport>()
 private val terminalPIDKey = Key<Int?>("ProcessWindowUtils_TerminalPIDKey")
 private val terminalBroughtSuccessfullyKey = Key<Boolean>("ProcessWindowUtils_TerminalBroughtSuccessfullyKey")
 
-
+@ApiStatus.Internal
 fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHolderBase) : Boolean {
   if (!this.isApplicable())
     return false
@@ -93,5 +94,6 @@ private fun WinBringProcessWindowToForegroundSupport.tryBringWindowsTerminalInFo
   return bringWindowWithName(windowsTerminalPid, dataHolder, "Debugger.Worker.exe")
 }
 
+@ApiStatus.Internal
 fun BringProcessWindowToForegroundSupport.isApplicable() =
   ((this as? BringProcessWindowToForegroundSupportApplicable)?.isApplicable() ?: true)

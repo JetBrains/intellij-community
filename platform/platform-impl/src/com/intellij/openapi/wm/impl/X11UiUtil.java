@@ -511,6 +511,7 @@ public final class X11UiUtil {
     X11.sendClientMessage(window, "activate", X11.NET_ACTIVE_WINDOW);
   }
 
+  @ApiStatus.Internal
   public static boolean activate(long windowId) {
     if (X11 == null) return false;
     if (FocusManagerImpl.FOCUS_REQUESTS_LOG.isDebugEnabled()) {
@@ -527,6 +528,7 @@ public final class X11UiUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static Long findVisibleWindowByPid(int pid) {
     if (X11 == null) return null;
     try {

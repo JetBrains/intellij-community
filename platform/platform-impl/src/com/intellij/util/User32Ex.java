@@ -9,6 +9,7 @@ import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,13 +33,26 @@ public interface User32Ex extends StdCallLibrary {
   boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.UINT pvParam, WinDef.UINT fWinIni);
   boolean AllowSetForegroundWindow(WinDef.DWORD pid);
   boolean SetForegroundWindow(WinDef.HWND hwnd);
+
+  @ApiStatus.Internal
   boolean EnumWindows(@NotNull EnumThreadWindowsCallback callback, @Nullable WinDef.INT_PTR extraData);
+
+  @ApiStatus.Internal
   boolean GetWindowThreadProcessId(WinDef.HWND handle, IntByReference lpdwProcessId);
+
+  @ApiStatus.Internal
   WinDef.HWND GetWindow(WinDef.HWND hWnd, int uCmd);
+
+  @ApiStatus.Internal
   boolean IsWindowVisible(WinDef.HWND hWnd);
+
+  @ApiStatus.Internal
   int GetWindowTextLength(WinDef.HWND hWnd);
+
+  @ApiStatus.Internal
   int GetWindowText(WinDef.HWND hWnd, char[] text, int maxLength);
 
+  @ApiStatus.Internal
   interface EnumThreadWindowsCallback extends Callback {
     boolean callback(WinDef.HWND hWnd, IntByReference lParam);
   }

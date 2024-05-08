@@ -14,7 +14,7 @@ import com.sun.jna.platform.win32.WinDef
 
 private val logger = getLogger<WinBringProcessWindowToForegroundSupport>()
 
-class WinBringProcessWindowToForegroundSupport : BringProcessWindowToForegroundSupport {
+internal class WinBringProcessWindowToForegroundSupport : BringProcessWindowToForegroundSupport {
   override fun bring(pid: Int): Boolean {
     val mainWindowHandle = User32Ex.INSTANCE.findMainWindow(pid) ?: run {
       logger.trace { "There's no window for \"$pid\" process" }

@@ -3,7 +3,9 @@ package com.intellij.execution.process.window.to.foreground
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface BringProcessWindowToForegroundSupport {
   companion object {
     fun getInstance(): BringProcessWindowToForegroundSupport = ApplicationManager.getApplication().service<BringProcessWindowToForegroundSupport>()
@@ -12,6 +14,7 @@ interface BringProcessWindowToForegroundSupport {
   fun bring(pid: Int) : Boolean
 }
 
+@ApiStatus.Internal
 abstract class BringProcessWindowToForegroundSupportApplicable : BringProcessWindowToForegroundSupport {
   abstract fun isApplicable() : Boolean
 }

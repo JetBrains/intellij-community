@@ -8,11 +8,13 @@ import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 private val logger: Logger = Logger.getInstance(XDebugProcessDebuggeeInForeground::class.java)
 
+@ApiStatus.Internal
 fun XDebugProcessDebuggeeInForeground.start(session: XDebugSession, bringAfterMs: Long = 1000) {
   if (!isEnabled())
     return
