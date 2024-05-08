@@ -1105,9 +1105,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private abstract class InvokeCommand<E extends Value> {
     private final Method myMethod;
     private final List<Value> myArgs;
-    protected final @NotNull EvaluationContext myEvaluationContext;
+    protected final @NotNull EvaluationContextImpl myEvaluationContext;
 
-    protected InvokeCommand(@NotNull Method method, @NotNull List<? extends Value> args, @NotNull EvaluationContext evaluationContext) {
+    protected InvokeCommand(@NotNull Method method, @NotNull List<? extends Value> args, @NotNull EvaluationContextImpl evaluationContext) {
       myMethod = method;
       myArgs = new ArrayList<>(args);
       myEvaluationContext = evaluationContext;
@@ -1121,17 +1121,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException;
 
 
-    E start(EvaluationContextImpl evaluationContext, boolean internalEvaluate) throws EvaluateException {
+    E start(boolean internalEvaluate) throws EvaluateException {
       ReferenceType lastLoadedClass = null;
       while (true) {
         try {
-          return startInternal(evaluationContext, internalEvaluate);
+          return startInternal(internalEvaluate);
         }
         catch (ClassNotLoadedException e) {
           ReferenceType loadedClass = null;
           try {
-            if (evaluationContext.isAutoLoadClasses()) {
-              loadedClass = loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader());
+            if (myEvaluationContext.isAutoLoadClasses()) {
+              loadedClass = loadClass(myEvaluationContext, e.className(), myEvaluationContext.getClassLoader());
             }
           }
           catch (Exception ignored) {
@@ -1142,17 +1142,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
           else if (loadedClass.equals(lastLoadedClass)) { // check for endless loading in the incorrect class loader, see IDEA-335672
             throw EvaluateExceptionUtil.createEvaluateException(
-              "Loading class " + e.className() + " in the wrong classloader " + evaluationContext.getClassLoader());
+              "Loading class " + e.className() + " in the wrong classloader " + myEvaluationContext.getClassLoader());
           }
           lastLoadedClass = loadedClass;
         }
       }
     }
 
-    E startInternal(EvaluationContextImpl evaluationContext, boolean internalEvaluate)
+    E startInternal(boolean internalEvaluate)
       throws EvaluateException, ClassNotLoadedException {
       DebuggerManagerThreadImpl.assertIsManagerThread();
-      SuspendContextImpl suspendContext = evaluationContext.getSuspendContext();
+      SuspendContextImpl suspendContext = myEvaluationContext.getSuspendContext();
       SuspendManagerUtil.assertSuspendContext(suspendContext);
 
       ThreadReferenceProxyImpl invokeThread = suspendContext.getThread();
@@ -1186,7 +1186,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         resumeData = SuspendManagerUtil.prepareForResume(suspendContext);
         synchronized (myEvaluationStateLock) {
-          suspendContext.setIsEvaluating(evaluationContext);
+          suspendContext.setIsEvaluating(myEvaluationContext);
         }
 
         getVirtualMachineProxy().clearCaches();
@@ -1389,7 +1389,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                     @NotNull List<? extends Value> args,
                                     final int invocationOptions,
                                     boolean internalEvaluate) throws EvaluateException {
-    return new InvokeCommand<>(method, args, evaluationContext) {
+    return new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
       @Override
       protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
         throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
@@ -1398,7 +1398,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
       }
-    }.start((EvaluationContextImpl)evaluationContext, internalEvaluate);
+    }.start(internalEvaluate);
   }
 
   private static ThreadReferenceProxy getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
@@ -1437,7 +1437,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             @NotNull List<? extends Value> args,
                             int extraInvocationOptions,
                             boolean internalEvaluate) throws EvaluateException {
-    return new InvokeCommand<>(method, args, evaluationContext) {
+    return new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
       @Override
       protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
         throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
@@ -1446,14 +1446,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         return classType.invokeMethod(thread, method, args, invokePolicy | extraInvocationOptions);
       }
-    }.start((EvaluationContextImpl)evaluationContext, internalEvaluate);
+    }.start(internalEvaluate);
   }
 
   public Value invokeMethod(EvaluationContext evaluationContext,
                             InterfaceType interfaceType,
                             Method method,
                             List<? extends Value> args) throws EvaluateException {
-    return new InvokeCommand<>(method, args, evaluationContext) {
+    return new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
       @Override
       protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
         throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
@@ -1471,7 +1471,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                           ApplicationNamesInfo.getInstance().getFullProductName());
         }
       }
-    }.start((EvaluationContextImpl)evaluationContext, false);
+    }.start(false);
   }
 
 
@@ -1501,7 +1501,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                      @NotNull List<? extends Value> args,
                                      final int invocationOptions,
                                      boolean internalEvaluate) throws EvaluateException {
-    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args, evaluationContext) {
+    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
       @Override
       protected ObjectReference invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
         throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
@@ -1511,7 +1511,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return classType.newInstance(thread, method, args, invokePolicy | invocationOptions);
       }
     };
-    return invokeCommand.start((EvaluationContextImpl)evaluationContext, internalEvaluate);
+    return invokeCommand.start(internalEvaluate);
   }
 
   public void clearCashes(@MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy) {
