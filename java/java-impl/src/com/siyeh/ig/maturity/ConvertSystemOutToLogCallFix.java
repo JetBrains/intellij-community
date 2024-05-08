@@ -111,7 +111,6 @@ public class ConvertSystemOutToLogCallFix extends PsiBasedModCommandAction<PsiMe
     }
 
     PsiExpression expression = expressions[0];
-    Project project = callExpression.getProject();
 
     String arguments = getArguments(expression);
 
@@ -132,7 +131,7 @@ public class ConvertSystemOutToLogCallFix extends PsiBasedModCommandAction<PsiMe
 
     PsiUpdateModCommandQuickFix fix = StringConcatenationArgumentToLogCallInspection.getQuickFix(context.problemType(), context.argument());
     if (fix instanceof StringConcatenationArgumentToLogCallInspection.EvaluatedStringFix evaluatedStringFix) {
-      evaluatedStringFix.fix(project, newCall);
+      evaluatedStringFix.fix(newCall);
     }
   }
 

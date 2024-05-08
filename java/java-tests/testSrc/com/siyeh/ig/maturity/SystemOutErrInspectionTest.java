@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -21,6 +7,7 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("RedundantStringFormatCall")
 public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
@@ -65,7 +52,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       """
       class Test{
         void foo(Object o) {
-            /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println("Something " + o);
+            /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/*_*//**/.println("Something " + o);
         }
       }
       """);
@@ -97,7 +84,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
         private static final Logger log = LoggerFactory.getLogger(Test.class);
 
         void foo(Exception o) {
-          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println("Something " + o);
+          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/*_*//**/.println("Something " + o);
         }
       }
       """);
@@ -131,7 +118,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
         record R(){}
   
         void foo(R r) {
-          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println(r);
+          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/*_*//**/.println(r);
         }
       }
       """);
@@ -160,12 +147,12 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
-
+      
       class Test{
         private static final Logger log = LoggerFactory.getLogger(Test.class);
       
         void foo(Object r) {
-          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println(String.format("test %s test", r));
+          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/*_*//**/.println(String.format("test %s test", r));
         }
       }
       """);
@@ -174,7 +161,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
   """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
-      
+
       class Test{
         private static final Logger log = LoggerFactory.getLogger(Test.class);
       
@@ -199,7 +186,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
         private static final Logger log = LoggerFactory.getLogger(Test.class);
       
         void foo(Object r) {
-          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println(MessageFormat.format("test {0} test", r));
+          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/*_*//**/.println(MessageFormat.format("test {0} test", r));
         }
       }
       """);

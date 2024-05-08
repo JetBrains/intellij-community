@@ -170,7 +170,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
   }
 
   public interface EvaluatedStringFix {
-    void fix(@NotNull Project project, @NotNull PsiMethodCallExpression logCall);
+    void fix(@NotNull PsiMethodCallExpression logCall);
   }
 
   private static class StringConcatenationArgumentToLogCallFix extends PsiUpdateModCommandQuickFix implements  EvaluatedStringFix {
@@ -188,11 +188,11 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      fix(project, methodCallExpression);
+      fix(methodCallExpression);
     }
 
     @Override
-    public void fix(@NotNull Project project, @NotNull PsiMethodCallExpression methodCallExpression) {
+    public void fix(@NotNull PsiMethodCallExpression methodCallExpression) {
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
@@ -379,7 +379,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
 
     @Override
-    public void fix(@NotNull Project project, @NotNull PsiMethodCallExpression callExpression) {
+    public void fix(@NotNull PsiMethodCallExpression callExpression) {
       PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
       if (expressions.length != 1) {
         return;
@@ -410,7 +410,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
             referenceExpression.getParent() instanceof PsiMethodCallExpression callExpression)) {
         return;
       }
-      fix(project, callExpression);
+      fix(callExpression);
     }
 
     private @NotNull String createNewArgumentsFromCall(@NotNull PsiMethodCallExpression formatCallExpression,
