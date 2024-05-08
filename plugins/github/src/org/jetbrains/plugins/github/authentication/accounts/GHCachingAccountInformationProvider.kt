@@ -28,7 +28,7 @@ internal class GHCachingAccountInformationProvider(serviceCs: CoroutineScope) {
     .build<GithubAccount, Deferred<GithubAuthenticatedUser>>()
 
   init {
-    cs.childScope().launch {
+    cs.launch {
       service<GHAccountManager>().accountsState.collect {
         informationCache.invalidateAll()
       }
