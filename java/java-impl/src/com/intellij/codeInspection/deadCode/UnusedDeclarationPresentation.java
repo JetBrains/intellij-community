@@ -39,6 +39,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jdom.Element;
@@ -56,8 +57,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -356,6 +355,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       }
     }
   }
+
   private static void commentOutDead(PsiElement psiElement) {
     PsiFile psiFile = psiElement.getContainingFile();
 
@@ -363,7 +363,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       Document doc = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiFile);
       if (doc != null) {
         TextRange textRange = psiElement.getTextRange();
-        String date = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.now());
+        String date = DateFormatUtil.formatDateTime(new Date())
+          .replaceAll("\\P{Graph}", " "); // replace all non-visible characters (including space) with spaces, e.g. NNBSP
 
         int startOffset = textRange.getStartOffset();
         CharSequence chars = doc.getCharsSequence();
