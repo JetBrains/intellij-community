@@ -11,10 +11,17 @@ import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModules
 import org.jetbrains.kotlin.idea.configuration.getKotlinVersionsAndModules
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
+
+    private lateinit var foojayPropertyMap: Map<String, String>
+    override fun setUp() {
+        super.setUp()
+        foojayPropertyMap = mapOf("FOOJAY_VERSION" to Versions.GRADLE_PLUGINS.FOOJAY_VERSION.text)
+    }
 
     private fun runSimpleTestcase(kotlinVersion: String) {
         val files = importProjectFromTestData()
@@ -32,7 +39,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                     collector,
                     kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -57,7 +64,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app", "app1")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -82,7 +89,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app", "app1")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -105,7 +112,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                   collector,
                   kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -128,7 +135,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                   collector,
                   kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -151,7 +158,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                   collector,
                   kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -176,7 +183,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -201,7 +208,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -226,7 +233,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -252,7 +259,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -278,7 +285,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -303,7 +310,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -328,7 +335,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -351,7 +358,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                   collector,
                   kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -374,7 +381,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                   collector,
                   kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -399,7 +406,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app", "app1")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -424,7 +431,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app", "app1")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -449,7 +456,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("app", "app1")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -472,7 +479,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                     collector,
                     kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -496,7 +503,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                     collector,
                     kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -519,7 +526,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                     collector,
                     kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -543,7 +550,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                     collector,
                     kotlinVersionsAndModules,
                 )
-                checkFiles(files)
+                checkFiles(files, foojayPropertyMap)
             }
         }
     }
@@ -568,7 +575,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("javamodule", "kotlinmodule", "buildSrc")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -594,7 +601,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("javamodule", "kotlinmodule", "buildSrc")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -623,7 +630,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("javamodule", "buildSrc")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -652,7 +659,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("javamodule", "buildSrc")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -684,7 +691,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("javamodule", "buildSrc")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -717,7 +724,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 )
 
                 val subModules = listOf("javamodule", "buildSrc")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayPropertyMap)
             }
         }
     }
@@ -780,7 +787,7 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 configurator.configureWithVersion(myProject, listOf(subModule), IdeKotlinVersion.get("1.8.0"), collector, kotlinVersionsAndModules)
 
                 val subModules = listOf("app", "app1, app2")
-                checkFilesInMultimoduleProject(files, subModules)
+                checkFilesInMultimoduleProject(files, subModules, foojayValueMap)
             }
         }
     }*/
