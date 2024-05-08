@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
 sealed interface ShellChildOptionsContext {
-  fun option(vararg names: String, content: ShellOptionContext.() -> Unit)
+  fun option(vararg names: String, content: ShellOptionContext.() -> Unit = {})
 }
 
 /**

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
 sealed interface ShellChildCommandsContext {
-  fun subcommand(vararg names: String, content: ShellCommandContext.() -> Unit)
+  fun subcommand(vararg names: String, content: ShellCommandContext.() -> Unit = {})
 }
 
 /**

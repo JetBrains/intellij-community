@@ -14,7 +14,7 @@ import java.util.function.Supplier
 
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
-fun ShellCommandSpec(name: String, content: ShellCommandContext.() -> Unit): ShellCommandSpec {
+fun ShellCommandSpec(name: String, content: ShellCommandContext.() -> Unit = {}): ShellCommandSpec {
   val context = ShellCommandContextImpl(listOf(name))
   content.invoke(context)
   return context.build()

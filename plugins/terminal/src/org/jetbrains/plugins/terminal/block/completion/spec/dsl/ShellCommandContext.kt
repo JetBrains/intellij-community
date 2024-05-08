@@ -13,5 +13,5 @@ sealed interface ShellCommandContext : ShellSuggestionContext {
 
   fun subcommands(content: suspend ShellChildCommandsContext.(ShellRuntimeContext) -> Unit)
   fun options(content: ShellChildOptionsContext.() -> Unit)
-  fun argument(content: ShellArgumentContext.() -> Unit)
+  fun argument(content: ShellArgumentContext.() -> Unit = {})
 }

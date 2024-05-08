@@ -13,5 +13,5 @@ sealed interface ShellOptionContext : ShellSuggestionContext {
   var exclusiveOn: List<String>
   var dependsOn: List<String>
 
-  fun argument(content: ShellArgumentContext.() -> Unit)
+  fun argument(content: ShellArgumentContext.() -> Unit = {})
 }
