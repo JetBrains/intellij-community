@@ -123,10 +123,10 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
 
-    let launch_scope = get_launch_scope_or_launch_subprocess(&*configuration, &jre_home).context("Cannot resolve launch scope")?;
+    let cef_sandbox = init_cef_sandbox(&*configuration, &jre_home).context("Cannot initialize browser sandbox")?;
 
     debug!("** Collecting JVM options");
-    let vm_options = get_full_vm_options(&*configuration, &launch_scope).context("Cannot collect JVM options")?;
+    let vm_options = get_full_vm_options(&*configuration, &cef_sandbox).context("Cannot collect JVM options")?;
     debug!("VM options: {vm_options:?}");
 
     debug!("** Launching JVM");
@@ -221,58 +221,38 @@ fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn Lau
     }
 }
 
-struct JvmLaunchScope {
-    pub cef_sandbox: Option<CefScopedSandboxInfo>
-}
-
-#[cfg(not(target_os = "windows"))]
-fn get_launch_scope_or_launch_subprocess(_configuration: &dyn LaunchConfiguration, _jre_home: &Path) -> Result<JvmLaunchScope> {
-    Ok(
-        JvmLaunchScope {
-            cef_sandbox: None,
-        }
-    )
-}
-
 #[cfg(target_os = "windows")]
-fn get_launch_scope_or_launch_subprocess(configuration: &dyn LaunchConfiguration, jre_home: &Path) -> Result<JvmLaunchScope> {
+fn init_cef_sandbox(configuration: &dyn LaunchConfiguration, jre_home: &Path) -> Result<Option<CefScopedSandboxInfo>> {
+    debug!("** Initializing CEF sandbox");
     let cef_sandbox = CefScopedSandboxInfo::new();
 
     let is_sandbox_subprocess = configuration.get_args().iter().any(|arg| arg.contains("--type="));
     if is_sandbox_subprocess {
+        debug!("Starting a subprocess");
         let exit_code = unsafe {
-            launch_cef_subprocess(jre_home, &cef_sandbox)?
-        };
+            let helper_path = jre_home.join("bin\\jcef_helper.dll");
+            let lib = libloading::Library::new(&helper_path)
+                .with_context(|| format!("Cannot load '{:#?}'", helper_path))?;
 
-        std::process::exit(exit_code)
-    }
-
-    Ok(
-        JvmLaunchScope {
-            cef_sandbox: Some(cef_sandbox)
-        }
-    )
-}
-
-#[cfg(target_os = "windows")]
-unsafe fn launch_cef_subprocess(jre_home: &Path, cef_sandbox: &CefScopedSandboxInfo) -> Result<i32> {
-    unsafe {
-        let helper_path = jre_home.join("bin\\jcef_helper.dll");
-        let lib = libloading::Library::new(&helper_path)
-            .with_context(|| format!("Cannot load '{:#?}'", helper_path))?;
-
-        let proc: libloading::Symbol<'_, unsafe extern "system" fn(*mut std::os::raw::c_void, *mut std::os::raw::c_void) -> i32> =
-            lib.get(b"execute_subprocess\0")
+            let proc: libloading::Symbol<'_, unsafe extern "system" fn(*mut std::os::raw::c_void, *mut std::os::raw::c_void) -> i32> = lib.get(b"execute_subprocess\0")
                 .context("Cannot find 'execute_subprocess' in 'jcef_helper.dll'")?;
 
-        let mut h_instance = GetModuleHandleW(PCWSTR(std::ptr::null_mut()))?;
-        let exit_code = proc(&mut h_instance as *mut _ as *mut std::os::raw::c_void, cef_sandbox.ptr);
-
-        Ok(exit_code)
+            let mut h_instance = GetModuleHandleW(PCWSTR(std::ptr::null_mut()))?;
+            proc(&mut h_instance as *mut _ as *mut std::os::raw::c_void, cef_sandbox.ptr)
+        };
+        debug!("  finished: {}", exit_code);
+        std::process::exit(exit_code);
     }
+
+    Ok(Some(cef_sandbox))
 }
 
-fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _jvm_launch_scope: &JvmLaunchScope) -> Result<Vec<String>> {
+#[cfg(not(target_os = "windows"))]
+fn init_cef_sandbox(_configuration: &dyn LaunchConfiguration, _jre_home: &Path) -> Result<Option<CefScopedSandboxInfo>> {
+    Ok(None)
+}
+
+fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _cef_sandbox: &Option<CefScopedSandboxInfo>) -> Result<Vec<String>> {
     let mut vm_options = configuration.get_vm_options()?;
 
     debug!("Looking for custom properties environment variable");
@@ -290,7 +270,7 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _jvm_launch_scop
 
     #[cfg(target_os = "windows")]
     {
-        if let Some(cef_sandbox) = &_jvm_launch_scope.cef_sandbox {
+        if let Some(cef_sandbox) = _cef_sandbox {
             vm_options.push(jvm_property!("jcef.sandbox.ptr", format!("{:016X}", cef_sandbox.ptr as usize)));
             vm_options.push(jvm_property!("jcef.sandbox.cefVersion", env!("CEF_VERSION")));
         }
