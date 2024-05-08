@@ -48,20 +48,18 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   init {
     commandManager.addListener(object : ShellCommandListener {
       override fun initialized() {
-        lock.withLock { withoutLock ->
+        lock.withLock {
           isInitialized = true
-          cancelGenerators(withoutLock, "initialized")
         }
         processQueueIfReady()
       }
 
       override fun commandFinished(event: CommandFinishedEvent) {
-        lock.withLock { withoutLock ->
+        lock.withLock {
           if (!isCommandRunning) {
             LOG.warn("Received command_finished event, but command wasn't started")
           }
           isCommandRunning = false
-          cancelGenerators(withoutLock, "command_finished")
         }
         processQueueIfReady()
       }
@@ -91,21 +89,21 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }, session)
   }
 
-  private fun cancelGenerators(withoutLock: WithoutLockRegistrar, receivedEvent: String) {
+  private fun cancelGenerators(withoutLock: WithoutLockRegistrar, incompatibleCondition: String) {
     runningGenerator?.let { runningGenerator ->
       withoutLock {
-        val msg = "Unexpectedly running $runningGenerator when $receivedEvent event received"
+        val msg = "Unexpectedly running $runningGenerator, but $incompatibleCondition"
         LOG.warn(msg)
         runningGenerator.deferred.completeExceptionally(IllegalStateException(msg))
       }
     }
     runningGenerator = null
     scheduledGenerators.drainToList().nullize()?.let { cancelledGenerators ->
-      LOG.warn("Unexpected scheduled generators $cancelledGenerators when $receivedEvent event received")
+      LOG.warn("Unexpected scheduled generators $cancelledGenerators, but $incompatibleCondition")
       withoutLock {
         cancelledGenerators.forEach {
           it.deferred.cancel(CancellationException(
-            "Unexpectedly scheduled generator when $receivedEvent event received"))
+            "Unexpectedly scheduled generator, but $incompatibleCondition"))
         }
       }
     }
@@ -138,17 +136,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
    */
   fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): Deferred<String> {
     val generator = Generator(generatorName, generatorParameters)
-    lock.withLock { withoutLock ->
-      val cancelReason: String? = when {
-        isCommandRunning -> "Generator shouldn't be scheduled when command is running"
-        !isInitialized -> "Generator shouldn't be scheduled when session hasn't been initialized yet"
-        else -> null
-      }
-      if (cancelReason != null) {
-        withoutLock {
-          generator.deferred.completeExceptionally(IllegalStateException(cancelReason))
-        }
-      }
+    lock.withLock {
       scheduledGenerators.offer(generator)
     }
     processQueueIfReady()
@@ -163,22 +151,27 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   // should be called without `lock`
   private fun processQueueIfReady() {
     lock.withLock { withoutLock ->
-      if (runningGenerator == null && !isCommandRunning && isInitialized) {
-        scheduledCommands.poll()?.let { command ->
-          // cancel previously scheduled generators, because user command is already ready
-          scheduledGenerators.drainToList().nullize()?.let { cancelledGenerators ->
-            withoutLock {
-              cancelledGenerators.forEach { it.deferred.cancel(CancellationException("Generator cancelled because of executing command")) }
-            }
-          }
-          isCommandRunning = true
-          doSendCommandToExecute(command)
-          return@withLock
-        }
-        pollNextGeneratorToRun()?.let {
-          runningGenerator = it
-          doSendCommandToExecute(it.shellCommand())
-        }
+      if (!isInitialized) {
+        cancelGenerators(withoutLock, "not initialized yet")
+        return@withLock // `initialized` event will resume queue processing
+      }
+      if (isCommandRunning) {
+        cancelGenerators(withoutLock, "command is running")
+        return@withLock // `commandFinished` event will resume queue processing
+      }
+      if (runningGenerator != null) {
+        return@withLock // `generatorFinished` event will resume queue processing
+      }
+      scheduledCommands.poll()?.let { command ->
+        cancelGenerators(withoutLock, "user command is ready to execute")
+        isCommandRunning = true
+        doSendCommandToExecute(command)
+        return@withLock // `commandFinished` event will resume queue processing
+      }
+      pollNextGeneratorToRun()?.let {
+        runningGenerator = it
+        doSendCommandToExecute(it.shellCommand())
+        // `generatorFinished` event will resume queue processing
       }
     }
   }
