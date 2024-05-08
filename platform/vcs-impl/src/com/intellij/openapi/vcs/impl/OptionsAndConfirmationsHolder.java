@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@SuppressWarnings("LightServiceMigrationCode")
 public final class OptionsAndConfirmationsHolder implements PersistentStateComponent<Element> {
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
