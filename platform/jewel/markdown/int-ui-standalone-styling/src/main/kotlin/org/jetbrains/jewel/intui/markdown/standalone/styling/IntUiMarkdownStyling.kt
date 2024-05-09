@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.intui.markdown.styling
+package org.jetbrains.jewel.intui.markdown.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape

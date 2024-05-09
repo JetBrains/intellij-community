@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.intui.markdown.styling.extension.github.alerts
+package org.jetbrains.jewel.intui.markdown.standalone.styling.extension.github.alerts
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Color
