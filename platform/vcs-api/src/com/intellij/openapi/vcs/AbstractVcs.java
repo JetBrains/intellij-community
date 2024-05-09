@@ -275,14 +275,6 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * @deprecated dead code
-   */
-  @Deprecated(forRemoval = true)
-  public String getMenuItemText() {
-    return getDisplayName();
-  }
-
-  /**
    * @return the update interface, or null if the updates are not supported by the VCS.
    * @see #getStatusEnvironment
    * @see #getIntegrateEnvironment

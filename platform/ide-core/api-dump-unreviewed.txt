@@ -2293,7 +2293,6 @@ f:com.intellij.openapi.util.registry.RegistryKeyBean$Companion
 com.intellij.openapi.vcs.FilePath
 - a:getCharset():java.nio.charset.Charset
 - a:getCharset(com.intellij.openapi.project.Project):java.nio.charset.Charset
-- a:getDocument():com.intellij.openapi.editor.Document
 - a:getFileType():com.intellij.openapi.fileTypes.FileType
 - a:getIOFile():java.io.File
 - a:getName():java.lang.String
@@ -2302,11 +2301,9 @@ com.intellij.openapi.vcs.FilePath
 - a:getPresentableUrl():java.lang.String
 - a:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 - a:getVirtualFileParent():com.intellij.openapi.vfs.VirtualFile
-- a:hardRefresh():V
 - a:isDirectory():Z
 - a:isNonLocal():Z
 - a:isUnder(com.intellij.openapi.vcs.FilePath,Z):Z
-- a:refresh():V
 c:com.intellij.openapi.vcs.LocalFilePath
 - com.intellij.openapi.vcs.FilePath
 - <init>(java.lang.String,Z):V
@@ -2316,7 +2313,6 @@ c:com.intellij.openapi.vcs.LocalFilePath
 - p:findFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - getCharset():java.nio.charset.Charset
 - getCharset(com.intellij.openapi.project.Project):java.nio.charset.Charset
-- getDocument():com.intellij.openapi.editor.Document
 - getFileType():com.intellij.openapi.fileTypes.FileType
 - getIOFile():java.io.File
 - getName():java.lang.String
@@ -2326,12 +2322,10 @@ c:com.intellij.openapi.vcs.LocalFilePath
 - getPresentableUrl():java.lang.String
 - getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 - getVirtualFileParent():com.intellij.openapi.vfs.VirtualFile
-- hardRefresh():V
 - hashCode():I
 - isDirectory():Z
 - isNonLocal():Z
 - isUnder(com.intellij.openapi.vcs.FilePath,Z):Z
-- refresh():V
 - toString():java.lang.String
 c:com.intellij.openapi.vcs.UrlFilePath
 - com.intellij.openapi.vcs.LocalFilePath

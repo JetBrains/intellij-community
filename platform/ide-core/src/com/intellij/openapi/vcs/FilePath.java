@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -51,14 +50,6 @@ public interface FilePath {
   @NotNull
   String getPresentableUrl();
 
-  /**
-   * @deprecated to remove in IDEA 16.
-   * Use {@link com.intellij.openapi.fileEditor.FileDocumentManager#getDocument(VirtualFile)} directly.
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  Document getDocument();
-
   @NotNull
   Charset getCharset();
 
@@ -73,20 +64,6 @@ public interface FilePath {
    */
   @NotNull
   FileType getFileType();
-
-  /**
-   * @deprecated to remove in IDEA 16.
-   * Use {@link com.intellij.openapi.vfs.VfsUtil#findFileByIoFile} or {@link com.intellij.openapi.vfs.LocalFileSystem#findFileByPath} instead.
-   */
-  @Deprecated(forRemoval = true)
-  void refresh();
-
-  /**
-   * @deprecated to remove in IDEA 16.
-   * Use {@link com.intellij.openapi.vfs.LocalFileSystem#refreshAndFindFileByPath} instead.
-   */
-  @Deprecated(forRemoval = true)
-  void hardRefresh();
 
   /**
    * @return the path to the file represented by this file path in the system-independent format.
