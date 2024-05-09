@@ -31,7 +31,7 @@ suspend fun ShellRuntimeContext.getFileSuggestions(
   val adjustedPath = path.ifEmpty { "." }
   val result = runShellCommand("__jetbrains_intellij_get_directory_files $adjustedPath")
   if (result.exitCode != 0) {
-    logger<ShellRuntimeContext>().error("Get files command for path '$adjustedPath' failed with exit code ${result.exitCode}, output: ${result.output}")
+    logger<ShellRuntimeContext>().warn("Get files command for path '$adjustedPath' failed with exit code ${result.exitCode}, output: ${result.output}")
     return emptyList()
   }
   val separator = File.separatorChar

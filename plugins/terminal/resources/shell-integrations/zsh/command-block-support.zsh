@@ -35,7 +35,9 @@ __jetbrains_intellij_run_generator() {
   __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
   builtin local request_id="$1"
   builtin local command="$2"
-  builtin local result="$(eval "$command" 2>&1)"
+  # Can't be joined with an assignment, otherwise we will fail to capture the exit code of eval.
+  builtin local result
+  result="$(eval "$command" 2>&1)"
   builtin local exit_code=$?
   builtin printf '\e]1341;generator_finished;request_id=%s;result=%s;exit_code=%s\a' "$request_id" \
     "$(__jetbrains_intellij_encode_large "$result")" \
