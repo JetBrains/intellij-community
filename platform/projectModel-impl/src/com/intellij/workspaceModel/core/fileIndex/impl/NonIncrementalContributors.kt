@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
@@ -141,7 +143,12 @@ internal class NonIncrementalContributors(private val project: Project) {
   private fun computeFileSets(): Map<VirtualFile, StoredFileSetCollection> {
     val result = HashMap<VirtualFile, StoredFileSetCollection>()
     AdditionalLibraryRootsProvider.EP_NAME.extensionList.forEach { provider ->
-      provider.getAdditionalProjectLibraries(project).forEach { library ->
+      for (library in provider.getAdditionalProjectLibraries(project)) {
+        if (library == null) {
+          PluginException.logPluginError(LOG, "The result of AdditionalLibraryRootsProvider.getAdditionalProjectLibraries on ${provider.javaClass} includes 'null' item", null, provider.javaClass)
+          continue
+        }
+
         fun registerRoots(files: MutableCollection<VirtualFile>, kind: WorkspaceFileKind, fileSetData: WorkspaceFileSetData) {
           files.forEach { root ->
             RootFileValidityChecker.correctRoot(root, library, provider)?.let {
@@ -179,6 +186,8 @@ internal class NonIncrementalContributors(private val project: Project) {
     fun isPlaceholderReference(entityPointer: EntityPointer<WorkspaceEntity>): Boolean {
       return entityPointer is NonIncrementalMarker
     }
+    
+    private val LOG = logger<NonIncrementalContributors>()
   }
 }
 
