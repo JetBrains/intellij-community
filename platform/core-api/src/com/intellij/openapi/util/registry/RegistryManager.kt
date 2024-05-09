@@ -34,6 +34,12 @@ interface RegistryManager {
   fun get(key: String): RegistryValue
 
   fun resetValueChangeListener()
+
+  /**
+   * Waits for the registry load. Useful in cases when there's an early startup activity that is required to access the registry.
+   */
+  @ApiStatus.Experimental
+  suspend fun awaitRegistryLoad()
 }
 
 @ApiStatus.Internal
