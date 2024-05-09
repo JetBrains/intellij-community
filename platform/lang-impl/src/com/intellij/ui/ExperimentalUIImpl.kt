@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -43,6 +44,11 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   }
 
   private fun changeValue(prevNewUi: Boolean, newUi: Boolean) {
+    val application = ApplicationManager.getApplication()
+    if (application.isHeadlessEnvironment || application.isUnitTestMode) {
+      return
+    }
+
     val enabled: Boolean
 
     if (prevNewUi && !newUi) {
