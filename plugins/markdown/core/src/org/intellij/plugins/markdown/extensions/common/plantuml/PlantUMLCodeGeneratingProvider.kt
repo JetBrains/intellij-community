@@ -1,25 +1,25 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.common.plantuml
 
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.io.FileUtil
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.util.registry.Registry
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles.FileEntry
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.util.*
 
 @ApiStatus.Internal
-class PlantUMLCodeGeneratingProvider(
-  collector: MarkdownCodeFencePluginCacheCollector? = null
-): MarkdownCodeFenceCacheableProvider(collector), MarkdownExtensionWithDownloadableFiles, MarkdownBrowserPreviewExtension.Provider {
+class PlantUMLCodeGeneratingProvider: CodeFenceGeneratingProvider, MarkdownExtensionWithDownloadableFiles, MarkdownBrowserPreviewExtension.Provider {
+  private val cache = Caffeine.newBuilder().softValues().build<String, String>()
+
   override val externalFiles: Iterable<String>
     get() = ownFiles
 
@@ -31,10 +31,21 @@ class PlantUMLCodeGeneratingProvider(
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val key = getUniqueFile(language.lowercase(), raw, "png").toFile()
-    cacheDiagram(key, raw)
-    collector?.addAliveCachedFile(this, key)
-    return "<img src=\"${key.toURI()}\" from-extension=true/>"
+    val content = obtainGeneratedContent(raw)
+    val header = "data:image/png;base64,"
+    return """<img src="$header$content" from-extension=true/>"""
+  }
+
+  // Not thread safe
+  private fun obtainGeneratedContent(raw: String): String {
+    val key = MarkdownUtil.md5(raw, "salt")
+    val cached = cache.getIfPresent(key)
+    if (cached != null) {
+      return cached
+    }
+    val generated = generateDiagram(raw)
+    cache.put(key, generated)
+    return generated
   }
 
   override val displayName: String
@@ -60,36 +71,26 @@ class PlantUMLCodeGeneratingProvider(
     return null
   }
 
-  private fun cacheDiagram(path: File, text: String) {
-    if (!path.exists()) {
-      generateDiagram(text, path)
-    }
-  }
-
   @Throws(IOException::class)
-  private fun generateDiagram(text: CharSequence, diagramPath: File) {
-    var innerText: String = text.toString().trim()
-    if (!innerText.startsWith("@startuml")) {
-      innerText = "@startuml\n$innerText"
+  private fun generateDiagram(text: CharSequence): String {
+    val content = buildString {
+      if (!text.startsWith("@startuml")) {
+        append("@startuml\n")
+      }
+      append(text)
+      if (!text.endsWith("@enduml")) {
+        append("\n@enduml")
+      }
     }
-    if (!innerText.endsWith("@enduml")) {
-      innerText += "\n@enduml"
-    }
-    FileUtil.createParentDirs(diagramPath)
-    storeDiagram(innerText, diagramPath)
+    val stream = ByteArrayOutputStream()
+    PlantUMLJarManager.getInstance().generateImage(content, stream)
+    val encodedContent = Base64.getEncoder().encode(stream.toByteArray())
+    return encodedContent.toString(Charsets.UTF_8)
   }
 
   companion object {
     const val jarFilename = "plantuml.jar"
     private val ownFiles = listOf(jarFilename)
     private val dowloadableFiles = listOf(FileEntry(jarFilename) { Registry.stringValue("markdown.plantuml.download.link") })
-
-    private fun storeDiagram(source: String, file: File) {
-      try {
-        file.outputStream().buffered().use { PlantUMLJarManager.getInstance().generateImage(source, it) }
-      } catch (exception: Exception) {
-        thisLogger().warn("Cannot save diagram PlantUML diagram. ", exception)
-      }
-    }
   }
 }
