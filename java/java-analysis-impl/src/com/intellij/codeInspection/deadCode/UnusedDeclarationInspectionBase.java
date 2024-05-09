@@ -203,15 +203,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                             @NotNull InspectionManager manager,
                             @NotNull GlobalInspectionContext globalContext,
                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    System.out.println("UnusedDeclarationInspectionBase.runInspection(" +
-                       scope +
-                       ", " +
-                       manager +
-                       ", " +
-                       globalContext.getClass() +
-                       ", " +
-                       problemDescriptionsProcessor +
-                       ")");
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
@@ -347,7 +338,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       globalContext.putUserData(PROCESSED_SUSPICIOUS_ELEMENTS_KEY, null);
       return false;
     }
-    System.out.println("phase = " + phase);
     Set<RefElement> processedSuspicious = globalContext.getUserData(PROCESSED_SUSPICIOUS_ELEMENTS_KEY);
 
     boolean firstPhase = phase == 1;
@@ -495,25 +485,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   void checkForReachableRefs(@NotNull GlobalInspectionContext context) {
-    System.out.println("UnusedDeclarationInspectionBase.checkForReachableRefs(" + ")");
-    new Throwable().printStackTrace(System.out);
     CodeScanner codeScanner = new CodeScanner();
+    RefManager refManager = context.getRefManager();
 
-    // Cleanup previous reachability information.
-   RefManager refManager = context.getRefManager();
-    long timestamp = System.currentTimeMillis();
-    /*refManager.iterate(new RefJavaVisitor() {
-      @Override
-      public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefJavaElementImpl refElement) {
-          if (!((GlobalInspectionContextBase)context).isToCheckMember(refElement, UnusedDeclarationInspectionBase.this)) return;
-          refElement.setReachable(false);
-        }
-      }
-    });
-    System.out.println("clearing took " + (System.currentTimeMillis() - timestamp) + "ms");*/
-
-    //timestamp = System.currentTimeMillis();
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
       entry.accept(codeScanner);
     }
@@ -530,7 +504,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         codeScanner.myNextRound.pop().accept(codeScanner);
       }
     }
-    System.out.println("reachability analysis took " + (System.currentTimeMillis() - timestamp) + " ms");
   }
 
   private static EntryPointsManager getEntryPointsManager(@NotNull GlobalInspectionContext context) {
