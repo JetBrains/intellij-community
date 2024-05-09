@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ public abstract class PsiDocumentManager {
    * @param document the document for which the PSI file is requested.
    * @return the PSI file instance.
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile getPsiFile(@NotNull Document document);
 
   /**

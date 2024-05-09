@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,7 @@ public class ModuleUtilCore {
    * @return module where {@code file} is located,
    * null for project files outside module content roots or library files
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return null;
