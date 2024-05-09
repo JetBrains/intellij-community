@@ -169,7 +169,7 @@ class ShellCommandSpecSuggestionsTest {
       subcommand("cd") {
         argument {
           suggestions("-", "~")
-          generator(fileSuggestionsGenerator(onlyDirectories = true))
+          suggestions(fileSuggestionsGenerator(onlyDirectories = true))
         }
       }
     }

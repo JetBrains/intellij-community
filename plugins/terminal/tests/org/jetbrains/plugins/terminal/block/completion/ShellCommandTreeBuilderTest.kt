@@ -94,11 +94,11 @@ class ShellCommandTreeBuilderTest {
       subcommand("withFiles") {
         option("-o") {
           argument {
-            generator(fileSuggestionsGenerator())
+            suggestions(fileSuggestionsGenerator())
           }
         }
         argument {
-          generator(fileSuggestionsGenerator(onlyDirectories = true))
+          suggestions(fileSuggestionsGenerator(onlyDirectories = true))
         }
       }
     }

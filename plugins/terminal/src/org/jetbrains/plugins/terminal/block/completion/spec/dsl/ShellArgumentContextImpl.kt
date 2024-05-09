@@ -19,12 +19,12 @@ internal class ShellArgumentContextImpl(private val parentCommandNames: List<Str
 
   private val generators: MutableList<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>> = mutableListOf()
 
-  override fun generator(content: suspend (ShellRuntimeContext) -> List<ShellCompletionSuggestion>) {
+  override fun suggestions(content: suspend (ShellRuntimeContext) -> List<ShellCompletionSuggestion>) {
     val cacheKey = createCacheKey(parentCommandNames, "arg ${generators.count() + 1}")
     generators.add(ShellRuntimeDataGenerator(cacheKey) { content.invoke(it) })
   }
 
-  override fun generator(generator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>) {
+  override fun suggestions(generator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>) {
     generators.add(generator)
   }
 
