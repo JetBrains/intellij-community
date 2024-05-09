@@ -33,6 +33,7 @@ import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
@@ -41,7 +42,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
-import org.jetbrains.terminal.completion.BaseSuggestion
 import java.awt.Component
 import java.awt.Dimension
 import java.lang.ref.WeakReference
@@ -217,7 +217,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
   }
 
   private fun LookupElement.toDocRequest(): DocumentationRequest? {
-    val suggestion = `object` as? BaseSuggestion ?: return null
+    val suggestion = `object` as? ShellCompletionSuggestion ?: return null
     val description = suggestion.description ?: return null
     val docTarget = TerminalDocumentationTarget(suggestion.names.first(), description)
     return DocumentationRequest(docTarget.createPointer(), docTarget.computePresentation())
