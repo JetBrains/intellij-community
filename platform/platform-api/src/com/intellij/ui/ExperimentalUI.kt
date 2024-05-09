@@ -41,7 +41,14 @@ abstract class ExperimentalUI {
     val EP_LISTENER: ExtensionPointName<Listener> = ExtensionPointName("com.intellij.uiChangeListener")
 
     init {
-      NewUiValue.initialize { getInstance().earlyInitValue() }
+      NewUiValue.initialize {
+        if (ApplicationManager.getApplication() == null) {
+          EarlyAccessRegistryManager.getBoolean(KEY)
+        }
+        else {
+          getInstance().earlyInitValue()
+        }
+      }
     }
 
     @JvmStatic
