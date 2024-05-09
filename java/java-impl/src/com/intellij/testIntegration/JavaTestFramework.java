@@ -6,6 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -107,11 +108,15 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   @Override
   public boolean isTestClass(@NotNull PsiElement clazz) {
+    //other languages are not ready for dumb-mode
+    if (DumbService.isDumb(clazz.getProject()) && clazz.getLanguage() != JavaLanguage.INSTANCE) return false;
     return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, false);
   }
 
   @Override
   public boolean isPotentialTestClass(@NotNull PsiElement clazz) {
+    //other languages are not ready for dumb-mode
+    if (DumbService.isDumb(clazz.getProject()) && clazz.getLanguage() != JavaLanguage.INSTANCE) return false;
     return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, true);
   }
 
