@@ -144,14 +144,8 @@ object CommunityRepositoryModules {
     pluginAuto(listOf(
       "intellij.packageSearch",
       "intellij.packageSearch.gradle",
-      "intellij.packageSearch.maven",
-      "intellij.packageSearch.kotlin",
     )) { spec ->
       spec.withModule("intellij.packageSearch.gradle.tooling", "pkgs-tooling-extension.jar")
-    },
-    plugin("intellij.android.gradle.dsl") { spec ->
-      spec.withModule("intellij.android.gradle.dsl.kotlin")
-      spec.withModule("intellij.android.gradle.dsl.toml")
     },
     pluginAuto(listOf("intellij.gradle.java", "intellij.gradle.jps")) {
       it.excludeProjectLibrary("Ant")
@@ -167,7 +161,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
       spec.withProjectLibrary("TestNG")
     },
-    pluginAuto(listOf("intellij.dev", "intellij.platform.statistics.devkit")),
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.withModule("intellij.devkit.jps")
       spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
@@ -189,9 +182,8 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
     },
     javaFXPlugin("intellij.javaFX.community"),
-    plugin("intellij.terminal") { spec ->
+    pluginAuto("intellij.terminal") { spec ->
       spec.withModule("intellij.terminal.completion")
-      spec.withModule("intellij.terminal.sh")
       spec.withResource("resources/shell-integrations", "shell-integrations")
     },
     pluginAuto("intellij.emojipicker") { spec ->

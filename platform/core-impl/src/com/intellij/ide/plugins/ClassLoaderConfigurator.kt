@@ -156,15 +156,29 @@ class ClassLoaderConfigurator(
         }
       }
       else {
-        module.pluginClassLoader = PluginClassLoader(
-          classPath = module.jarFiles?.let { ClassPath(it, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false) } ?: mainInfo.classPath,
-          parents = dependencies,
-          pluginDescriptor = module,
-          coreLoader = coreLoader,
-          resolveScopeManager = createModuleResolveScopeManager(),
-          packagePrefix = module.packagePrefix,
-          libDirectories = mainInfo.libDirectories,
-        )
+        val customJarFiles = module.jarFiles
+        if (customJarFiles == null) {
+          module.pluginClassLoader = PluginClassLoader(
+            classPath = mainInfo.classPath,
+            parents = dependencies,
+            pluginDescriptor = module,
+            coreLoader = coreLoader,
+            resolveScopeManager = createModuleResolveScopeManager(),
+            packagePrefix = module.packagePrefix,
+            libDirectories = mainInfo.libDirectories,
+          )
+        }
+        else {
+          module.pluginClassLoader = PluginClassLoader(
+            classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false),
+            parents = dependencies,
+            pluginDescriptor = module,
+            coreLoader = coreLoader,
+            resolveScopeManager = null,
+            packagePrefix = null,
+            libDirectories = mainInfo.libDirectories,
+          )
+        }
       }
     }
 

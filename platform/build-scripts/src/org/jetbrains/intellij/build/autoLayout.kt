@@ -18,28 +18,6 @@ internal suspend fun inferModuleSources(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ) {
-  // First, check the content. This is done prior to everything else since we might configure a custom relativeOutputFile.
-  for (moduleName in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule))) {
-    // todo PyCharm team why this module is being incorrectly published
-    if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter" || !addedModules.add(moduleName)) {
-      continue
-    }
-
-    val module = context.findRequiredModule(moduleName)
-    val descriptor = readXmlAsModel(context.findFileInModuleSources(module, "$moduleName.xml")!!)
-    val useSeparateJar = descriptor.getAttributeValue("package") == null || helper.isPluginModulePackedIntoSeparateJar(module, layout)
-    jarPackager.computeSourcesForModule(
-      item = ModuleItem(
-        moduleName = moduleName,
-        // relative path with `/` is always packed by dev-mode, so, we don't need to fix resolving for now and can improve it later
-        relativeOutputFile = if (useSeparateJar) "modules/$moduleName.jar" else layout.getMainJarName(),
-        reason = "<- ${layout.mainModule} (plugin content)",
-      ),
-      layout = layout,
-      searchableOptionSet = searchableOptionSet,
-    )
-  }
-
   // for now, check only direct dependencies of the main plugin module
   val childPrefix = "${layout.mainModule.removeSuffix(".plugin")}."
   for (name in helper.getModuleDependencies(layout.mainModule)) {
@@ -74,6 +52,36 @@ internal suspend fun inferModuleSources(
       addedModules.add(name)
       jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
     }
+  }
+}
+
+internal suspend fun computeModuleSourcesByContent(
+  helper: JarPackagerDependencyHelper,
+  context: BuildContext,
+  layout: PluginLayout,
+  addedModules: MutableSet<String>,
+  jarPackager: JarPackager,
+  searchableOptionSet: SearchableOptionSetDescriptor?
+) {
+  for (moduleName in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule))) {
+    // todo PyCharm team why this module is being incorrectly published
+    if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter" || !addedModules.add(moduleName)) {
+      continue
+    }
+
+    val module = context.findRequiredModule(moduleName)
+    val descriptor = readXmlAsModel(context.findFileInModuleSources(module, "$moduleName.xml")!!)
+    val useSeparateJar = descriptor.getAttributeValue("package") == null || helper.isPluginModulePackedIntoSeparateJar(module, layout)
+    jarPackager.computeSourcesForModule(
+      item = ModuleItem(
+        moduleName = moduleName,
+        // relative path with `/` is always packed by dev-mode, so, we don't need to fix resolving for now and can improve it later
+        relativeOutputFile = if (useSeparateJar) "modules/$moduleName.jar" else layout.getMainJarName(),
+        reason = "<- ${layout.mainModule} (plugin content)",
+      ),
+      layout = layout,
+      searchableOptionSet = searchableOptionSet,
+    )
   }
 }
 

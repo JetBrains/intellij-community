@@ -138,15 +138,11 @@ class JarPackager private constructor(
       platformLayout: PlatformLayout?,
       moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
       dryRun: Boolean,
-      jarsWithSearchableOptions: SearchableOptionSetDescriptor? = null,
+      searchableOptionSet: SearchableOptionSetDescriptor? = null,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
       val packager = JarPackager(outDir = outputDir, platformLayout = platformLayout, isRootDir = isRootDir, moduleOutputPatcher = moduleOutputPatcher, context = context)
-      packager.computeModuleSources(
-        includedModules = includedModules,
-        jarsWithSearchableOptions = jarsWithSearchableOptions,
-        layout = layout,
-      )
+      packager.computeModuleSources(includedModules = includedModules, searchableOptionSet = searchableOptionSet, layout = layout)
       if (layout != null) {
         packager.computeModuleCustomLibrarySources(layout)
 
@@ -228,12 +224,23 @@ class JarPackager private constructor(
     }
   }
 
-  private suspend fun computeModuleSources(includedModules: Collection<ModuleItem>, layout: BaseLayout?, jarsWithSearchableOptions: SearchableOptionSetDescriptor?) {
+  private suspend fun computeModuleSources(includedModules: Collection<ModuleItem>, layout: BaseLayout?, searchableOptionSet: SearchableOptionSetDescriptor?) {
     val addedModules = HashSet<String>()
 
-    for (item in includedModules) {
-      computeSourcesForModule(item = item, layout = layout, searchableOptionSet = jarsWithSearchableOptions)
+    // First, check the content. This is done prior to everything else since we might configure a custom relativeOutputFile.
+    if (layout is PluginLayout) {
+      computeModuleSourcesByContent(helper = helper, context = context, layout = layout, addedModules = addedModules, jarPackager = this, searchableOptionSet = searchableOptionSet)
+    }
 
+    for (item in includedModules) {
+      if (layout is PluginLayout && addedModules.contains(item.moduleName) && !item.relativeOutputFile.contains('/')) {
+        check(item.relativeOutputFile == layout.getMainJarName()) {
+          "Custom output path is not allowed for content modules ($item)"
+        }
+        continue
+      }
+
+      computeSourcesForModule(item = item, layout = layout, searchableOptionSet = searchableOptionSet)
       addedModules.add(item.moduleName)
     }
 
@@ -246,7 +253,7 @@ class JarPackager private constructor(
       platformLayout = platformLayout!!,
       addedModules = addedModules,
       helper = helper,
-      searchableOptionSet = jarsWithSearchableOptions,
+      searchableOptionSet = searchableOptionSet,
       jarPackager = this,
       context = context,
     )

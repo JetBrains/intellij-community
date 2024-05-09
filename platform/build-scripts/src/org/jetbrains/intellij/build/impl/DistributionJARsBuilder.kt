@@ -1042,7 +1042,7 @@ suspend fun layoutDistribution(
           layout = layout,
           platformLayout = platformLayout,
           moduleOutputPatcher = moduleOutputPatcher,
-          jarsWithSearchableOptions = searchableOptionSet,
+          searchableOptionSet = searchableOptionSet,
           dryRun = !copyFiles,
           context = context,
         )
