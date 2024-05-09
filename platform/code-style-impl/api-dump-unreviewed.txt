@@ -650,7 +650,6 @@ c:com.intellij.psi.formatter.DocumentBasedFormattingModel
 - shiftIndentInsideRange(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange,I):com.intellij.openapi.util.TextRange
 f:com.intellij.psi.formatter.FormatterUtil
 - sf:FORMATTER_ACTION_NAMES:java.util.Collection
-- sf:REFORMAT_BEFORE_COMMIT_COMMAND_NAME:java.lang.String
 - s:containsWhiteSpacesOnly(com.intellij.lang.ASTNode):Z
 - s:getNext(com.intellij.lang.ASTNode,com.intellij.psi.tree.IElementType[]):com.intellij.lang.ASTNode
 - s:getNextNonWhitespaceLeaf(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode

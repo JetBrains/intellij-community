@@ -85,14 +85,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   /**
-   * @deprecated See {@link #CodeStyleSettings()}
-   */
-  @Deprecated(forRemoval = true)
-  public CodeStyleSettings(boolean loadExtensions) {
-    this(loadExtensions, true);
-  }
-
-  /**
    * @param loadExtensions    Loading custom extensions {@link CustomCodeStyleSettings} is needed.
    * @param needsRegistration Created settings need to be registered to avoid memory leaks when a plugin with custom
    *                          code style extensions is unloaded. Can be {@code false} for temporarily created settings.

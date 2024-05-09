@@ -555,7 +555,6 @@ c:com.intellij.psi.codeStyle.CodeStyleSettings
 - VISIBILITY:java.lang.String
 - WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN:Z
 - <init>():V
-- <init>(Z):V
 - p:<init>(Z,Z):V
 - clearCodeStyleSettings():V
 - clone():com.intellij.psi.codeStyle.CodeStyleSettings
@@ -680,7 +679,6 @@ c:com.intellij.psi.codeStyle.CodeStyleSettingsManager
 - p:enumSettings():java.util.Collection
 - fireCodeStyleSettingsChanged():V
 - fireCodeStyleSettingsChanged(com.intellij.openapi.vfs.VirtualFile):V
-- fireCodeStyleSettingsChanged(com.intellij.psi.PsiFile):V
 - getCurrentSettings():com.intellij.psi.codeStyle.CodeStyleSettings
 - s:getInstance():com.intellij.psi.codeStyle.CodeStyleSettingsManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.codeStyle.CodeStyleSettingsManager
