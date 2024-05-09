@@ -328,8 +328,9 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
       while (element != null && element.getTextRange().getStartOffset() < lineEnd) {
         PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiField.class);
         if (parent != null) {
-          int lineNumberStart = document.getLineNumber(parent.getTextOffset());
-          int lineNumberEnd = document.getLineNumber(parent.getTextOffset() + parent.getTextLength());
+          int startOffset = parent.getTextRange().getStartOffset();
+          int lineNumberStart = document.getLineNumber(startOffset);
+          int lineNumberEnd = document.getLineNumber(startOffset + parent.getTextLength());
           if (lineNumberStart != lineNumberEnd) {
             return true;
           }
