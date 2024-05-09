@@ -104,7 +104,7 @@ public final class FrameBoundsConverter {
     scale(bounds, gc.getBounds(), JBUIScale.sysScale(gc));
   }
 
-  private static void scaleDown(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
+  static void scaleDown(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
     float scale = JBUIScale.sysScale(gc);
     assert scale != 0;
     scale(bounds, gc.getBounds(), 1 / scale);
