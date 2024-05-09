@@ -192,6 +192,22 @@ public class TextWithMnemonicTest {
     assertIllegalMnemonicText("hello" + MNEMONIC);
   }
 
+  @Test
+  public void formatWithCustomMnemonicPrefix() {
+    assertEquals(
+      "hello & " + MNEMONIC + "goodbye",
+      TextWithMnemonic.fromMnemonicText("hello & " + MNEMONIC + "goodbye").format(false, MNEMONIC, false)
+    );
+    assertEquals(
+      "hello(" + MNEMONIC + "X)...",
+      TextWithMnemonic.fromPlainText("hello...", 'x').format(false, MNEMONIC, true)
+    );
+    assertEquals(
+      "hello...",
+      TextWithMnemonic.fromPlainText("hello...", 'x').format(false, MNEMONIC, false)
+    );
+  }
+
   private static void assertIllegalMnemonicText(@NotNull String illegalText) {
     TextWithMnemonic mnemonic;
     try {

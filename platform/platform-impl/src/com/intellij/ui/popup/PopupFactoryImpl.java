@@ -829,15 +829,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       TextWithMnemonic textWithMnemonic = presentation.getTextWithPossibleMnemonic().get();
       if (textWithMnemonic != null && !myMnemonicsEnabled && myHonorActionMnemonics) {
         // See com.intellij.ui.popup.ActionPopupStep implementation of com.intellij.openapi.ui.popup.MnemonicNavigationFilter
-        // that NEEDS the UIUtil.MNEMONIC character to be used.
-        String visibleText = textWithMnemonic.getText(true);
-        int index = textWithMnemonic.getMnemonicIndex();
-        if (index != -1) {
-          text = visibleText.substring(0, index) + UIUtil.MNEMONIC + visibleText.substring(index);
-        }
-        else {
-          text = visibleText;
-        }
+        // that NEEDS the UIUtil.MNEMONIC character to be used and doesn't know anything about mnemonic escaping.
+        text = textWithMnemonic.format(false, UIUtil.MNEMONIC, true);
       }
       else {
         text = textWithMnemonic != null ? textWithMnemonic.getText() : null;
