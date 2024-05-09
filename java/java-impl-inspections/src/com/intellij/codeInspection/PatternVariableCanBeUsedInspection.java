@@ -308,7 +308,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         typeElement = instanceOfType;
       }
       PsiIfStatement psiIfStatement = PsiTreeUtil.getParentOfType(instanceOf, PsiIfStatement.class);
-      if (psiIfStatement == null) return;
+      if (psiIfStatement == null || psiIfStatement.getParent() == null) return;
       var visitor = new JavaRecursiveElementVisitor() {
         final List<PsiTypeCastExpression> myCasts = new ArrayList<>();
 
@@ -326,7 +326,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         }
       };
 
-      psiIfStatement.accept(visitor);
+      psiIfStatement.getParent().accept(visitor);
       List<PsiTypeCastExpression> casts = visitor.myCasts;
       if (casts.isEmpty()) return;
 
