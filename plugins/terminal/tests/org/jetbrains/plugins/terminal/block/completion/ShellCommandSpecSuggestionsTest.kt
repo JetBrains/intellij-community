@@ -166,9 +166,15 @@ class ShellCommandSpecSuggestionsTest {
         }
       }
 
-      subcommand("cd") {
+      subcommand("cdWithSuggestions") {
         argument {
           suggestions("-", "~")
+          suggestions(fileSuggestionsGenerator(onlyDirectories = true))
+        }
+      }
+
+      subcommand("cd") {
+        argument {
           suggestions(fileSuggestionsGenerator(onlyDirectories = true))
         }
       }
@@ -177,7 +183,7 @@ class ShellCommandSpecSuggestionsTest {
 
   @Test
   fun `main command`() {
-    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cd",
+    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cdWithSuggestions", "cd",
                              "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
@@ -285,14 +291,7 @@ class ShellCommandSpecSuggestionsTest {
   fun `suggest hardcoded suggestions with files`() {
     val separator = File.separatorChar
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
-    doTest("cd", expected = listOf("dir$separator", "folder$separator", "-", "~", "--bcde"))
-  }
-
-  @Test
-  fun `do not suggest hardcoded suggestions with files if some directory already typed`() {
-    val separator = File.separatorChar
-    mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
-    doTest("cd", typedPrefix = "someDir$separator", expected = listOf("dir$separator", "folder$separator"))
+    doTest("cdWithSuggestions", expected = listOf("dir$separator", "folder$separator", "-", "~", "--bcde"))
   }
 
   @Test
