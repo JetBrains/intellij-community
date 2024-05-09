@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.diagnostics.AbstractKtDiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory1
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactoryFromIntentionActions
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.*
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
@@ -98,8 +98,8 @@ private fun KtQuickFixesListBuilder.registerQuickFixForDiagnosticFactory(
 
 private inline fun <reified DIAGNOSTIC : KtDiagnosticWithPsi<*>> createApplicatorForFactory(
     factory: AbstractKtDiagnosticFactory,
-    crossinline createQuickFixes:  context(KtAnalysisSession)(DIAGNOSTIC) -> List<IntentionAction>
-) = diagnosticFixFactoryFromIntentionActions { diagnostic: DIAGNOSTIC ->
+    crossinline createQuickFixes: context(KtAnalysisSession)(DIAGNOSTIC) -> List<IntentionAction>
+) = KotlinQuickFixFactory.IntentionBased { diagnostic: DIAGNOSTIC ->
     if (diagnostic.factoryName == factory.name) {
         createQuickFixes(analysisSession, diagnostic)
     } else {

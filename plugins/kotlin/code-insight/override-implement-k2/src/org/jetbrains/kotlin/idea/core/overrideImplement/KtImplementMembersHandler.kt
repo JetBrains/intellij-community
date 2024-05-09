@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactoryFromIntentionActions
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler.Companion.getUnimplementedMembers
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.psi.KtClass
@@ -102,29 +102,29 @@ internal class KtImplementAsConstructorParameterQuickfix(private val members: Co
 object MemberNotImplementedQuickfixFactories {
 
     val abstractMemberNotImplemented =
-        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.AbstractMemberNotImplemented ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.AbstractMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi)
         }
 
     val abstractClassMemberNotImplemented =
-        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.AbstractClassMemberNotImplemented ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.AbstractClassMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi)
         }
 
     val manyInterfacesMemberNotImplemented =
-        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.ManyInterfacesMemberNotImplemented ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ManyInterfacesMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi)
         }
 
     val manyImplMemberNotImplemented =
-        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.ManyImplMemberNotImplemented ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ManyImplMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi, false)
         }
 
     val abstractMemberNotImplementedByEnumEntry =
-        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.AbstractMemberNotImplementedByEnumEntry ->
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.AbstractMemberNotImplementedByEnumEntry ->
             val missingDeclarations = diagnostic.missingDeclarations
-            if (missingDeclarations.isEmpty()) return@diagnosticFixFactoryFromIntentionActions emptyList()
+            if (missingDeclarations.isEmpty()) return@IntentionBased emptyList()
             listOf(KtImplementMembersQuickfix(missingDeclarations.mapToKtClassMemberInfo()))
         }
 
