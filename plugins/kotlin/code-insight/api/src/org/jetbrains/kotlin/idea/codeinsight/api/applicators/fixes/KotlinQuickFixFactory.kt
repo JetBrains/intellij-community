@@ -13,7 +13,6 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
-import kotlin.reflect.KClass
 
 /*sealed*/ fun interface KotlinQuickFixFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>> {
 
@@ -43,7 +42,6 @@ import kotlin.reflect.KClass
  * Returns a [KotlinQuickFixFactory.IntentionBased] that creates [IntentionAction]s from a diagnostic.
  */
 fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> diagnosticFixFactoryFromIntentionActions(
-    diagnosticClass: KClass<DIAGNOSTIC>,
     createIntentionActions: context(KtAnalysisSession)(DIAGNOSTIC) -> List<IntentionAction>,
 ) = KotlinQuickFixFactory.IntentionBased { diagnostic: DIAGNOSTIC ->
     // Wrap the IntentionActions as QuickFixActionBase. This ensures all fixes are of type QuickFixActionBase.

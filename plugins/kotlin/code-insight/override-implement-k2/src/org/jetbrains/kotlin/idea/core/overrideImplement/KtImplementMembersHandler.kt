@@ -102,27 +102,27 @@ internal class KtImplementAsConstructorParameterQuickfix(private val members: Co
 object MemberNotImplementedQuickfixFactories {
 
     val abstractMemberNotImplemented =
-        diagnosticFixFactoryFromIntentionActions(KtFirDiagnostic.AbstractMemberNotImplemented::class) { diagnostic ->
+        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.AbstractMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi)
         }
 
     val abstractClassMemberNotImplemented =
-        diagnosticFixFactoryFromIntentionActions(KtFirDiagnostic.AbstractClassMemberNotImplemented::class) { diagnostic ->
+        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.AbstractClassMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi)
         }
 
     val manyInterfacesMemberNotImplemented =
-        diagnosticFixFactoryFromIntentionActions(KtFirDiagnostic.ManyInterfacesMemberNotImplemented::class) { diagnostic ->
+        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.ManyInterfacesMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi)
         }
 
     val manyImplMemberNotImplemented =
-        diagnosticFixFactoryFromIntentionActions(KtFirDiagnostic.ManyImplMemberNotImplemented::class) { diagnostic ->
+        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.ManyImplMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi, false)
         }
 
     val abstractMemberNotImplementedByEnumEntry =
-        diagnosticFixFactoryFromIntentionActions(KtFirDiagnostic.AbstractMemberNotImplementedByEnumEntry::class) { diagnostic ->
+        diagnosticFixFactoryFromIntentionActions { diagnostic: KtFirDiagnostic.AbstractMemberNotImplementedByEnumEntry ->
             val missingDeclarations = diagnostic.missingDeclarations
             if (missingDeclarations.isEmpty()) return@diagnosticFixFactoryFromIntentionActions emptyList()
             listOf(KtImplementMembersQuickfix(missingDeclarations.mapToKtClassMemberInfo()))
