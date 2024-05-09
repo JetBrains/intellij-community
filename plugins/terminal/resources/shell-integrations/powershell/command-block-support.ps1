@@ -128,15 +128,35 @@ function Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft() {
 
 function Global:__jetbrains_intellij_run_generator([int]$RequestId, [string]$Command) {
   $Global:__JetBrainsIntellijGeneratorRunning = $true
-  $Result = Invoke-Expression $Command
-  $Success = $?
+  # Remember the exit code, because it can be changed in a result of generator command execution
+  $RealExitCode = $Global:LastExitCode
+  $Global:LastExitCode = 0
+
+  $Success = $false
+  $Result = ""
+  # Redirect the stderr of generator command to stdout. Invoke-Expression can't take all the output for external applications.
+  $AdjustedCommand = $Command + " 2>&1"
+  # Catch the exceptions in a different ways, because exceptions
+  # inside Invoke-Expression and inside $AdjustedCommand can be propagated differently.
+  try {
+    $Result = Invoke-Expression $AdjustedCommand -ErrorVariable Exception
+    if($Exception -ne $null){
+      Throw $Exception
+    }
+    $Success = $true
+  }
+  catch {
+    $Result = $_
+  }
   $ExitCode = $Global:LastExitCode
   if (($ExitCode -eq $null) -or ($ExitCode -eq 0 -and -not $Success)) {
     $ExitCode = if ($Success) { 0 } else { 1 }
   }
+
   $ResultOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $Result);exit_code=$ExitCode"
   $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
   [Console]::Write($CommandEndMarker + $ResultOSC)
+  $Global:LastExitCode = $RealExitCode
 }
 
 function Global:__JetBrainsIntellijGetCompletions([string]$Command, [int]$CursorIndex) {

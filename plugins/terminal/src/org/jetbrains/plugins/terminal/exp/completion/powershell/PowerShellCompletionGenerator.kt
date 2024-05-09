@@ -21,7 +21,7 @@ internal fun powerShellCompletionGenerator(command: String, caretOffset: Int): S
 
     val commandResult = context.runShellCommand("""__JetBrainsIntellijGetCompletions "$command" $caretOffset""")
     if (commandResult.exitCode != 0) {
-      logger<PowerShellCompletionContributor>().error("PowerShell completion generator for command '$command' at offset $caretOffset failed with exit code ${commandResult.exitCode}, output: ${commandResult.output}")
+      logger<PowerShellCompletionContributor>().warn("PowerShell completion generator for command '$command' at offset $caretOffset failed with exit code ${commandResult.exitCode}, output: ${commandResult.output}")
       return@ShellRuntimeDataGenerator emptyCompletionResult()
     }
     val json = Json { ignoreUnknownKeys = true }
