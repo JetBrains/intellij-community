@@ -48,4 +48,8 @@ internal class ShellJsonBasedOptionSpec(
   override val arguments: List<ShellArgumentSpec> by lazy {
     data.args.map { ShellJsonBasedArgumentSpec(it, parentCommandNames) }
   }
+
+  override fun toString(): String {
+    return "ShellJsonBasedOptionSpec(parentCommandNames=$parentCommandNames, data=$data)"
+  }
 }

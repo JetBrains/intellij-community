@@ -54,4 +54,8 @@ internal class ShellJsonBasedCommandSpec(
   }
 
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = ShellRuntimeDataGenerator { subcommands }
+
+  override fun toString(): String {
+    return "ShellJsonBasedCommandSpec(parentNamesWithSelf=$parentNamesWithSelf, data=$data)"
+  }
 }

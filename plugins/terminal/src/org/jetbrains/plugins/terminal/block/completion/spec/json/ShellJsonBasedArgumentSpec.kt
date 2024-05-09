@@ -60,4 +60,8 @@ internal class ShellJsonBasedArgumentSpec(
   private fun ShellArgument.isWithTemplate(template: String): Boolean {
     return templates.contains(template) || generators.any { it.templates.contains(template) }
   }
+
+  override fun toString(): String {
+    return "ShellJsonBasedArgumentSpec(parentCommandNames=$parentCommandNames, data=$data)"
+  }
 }
