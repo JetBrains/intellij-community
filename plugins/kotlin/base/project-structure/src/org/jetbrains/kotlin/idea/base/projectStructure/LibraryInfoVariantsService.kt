@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibr
  * Stores mappings from [LibraryInfo] to all its variants. "Library variant" here means an imported library
  * which was published from the same Multiplatform module (Gradle subproject).
  *
- * For instance, a typical iOS/JVM/Linux-library would have the following variants:
+ * For instance, a typical iOS/JVM/Linux library would have the following variants:
  * ```
  * com.example:lib-iosarm64:1.0
  * com.example:lib-iossimulatorarm64:1.0
@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibr
  * com.example:lib:commonMain:1.0
  * ```
  * Use with caution – variant calculation is based on a name heuristic (therefore not precise).
- * Only Kotlin Multiplatform libraries imported through Gradle is supported
+ * Only Kotlin Multiplatform libraries imported through Gradle are supported
  */
 @Service(Service.Level.PROJECT)
 class LibraryInfoVariantsService(project: Project): Disposable {
@@ -69,8 +69,8 @@ class LibraryInfoVariantsService(project: Project): Disposable {
     /*
         Supported formats:
 
-        <groupId>:<artifactId>:<variant>:<version>
-        <groupId>:<artifactId>-<variant>:<version>
+        [prefix:] <groupId>:<artifactId>:<variant>:<version>
+        [prefix:] <groupId>:<artifactId>-<variant>:<version>
      */
     private fun LibraryInfo.mavenGroupArtifactId(): MavenGroupArtifactId? {
 
@@ -83,16 +83,13 @@ class LibraryInfoVariantsService(project: Project): Disposable {
             return null
         }
 
-        val split = library.name.orEmpty().split(":")
-        if (split.size != 3 && split.size != 4) {
-            return null
-        }
+        val match = GRADLE_LIBRARY_NAME_REGEX.matchEntire(library.name.orEmpty()) ?: return null
+        val variant = match.groups[VARIANT]
+        val groupId = match.groups[GROUP]?.value ?: return null
+        val artifactId = match.groups[ARTIFACT_ID]?.value ?: return null
 
-        return when (split.size) {
-            3 -> split[0] + ":" + split[1].substringBeforeLast('-')
-            4 -> split[0] + ":" + split[1]
-            else -> null
-        }
+        val artifactIdWithoutVariant = if (variant != null) artifactId else artifactId.substringBeforeLast('-')
+        return "$groupId:$artifactIdWithoutVariant"
     }
 
     companion object {
@@ -132,6 +129,13 @@ class LibraryInfoVariantsService(project: Project): Disposable {
                 }
             }
         }
+
+        private val GRADLE_LIBRARY_NAME_REGEX: Regex =
+            Regex("^(?<prefix>\\S+: )?(?<group>\\S+?):(?<artifactId>\\S+?):(?<variant>\\S+?:)?(?<version>\\S+)$")
+        // group name constants are not used in the pattern because of the regex checker complains
+        private const val GROUP = "group"
+        private const val ARTIFACT_ID = "artifactId"
+        private const val VARIANT = "variant"
     }
 }
 
