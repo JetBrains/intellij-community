@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -107,9 +106,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   }
 
   public void init() {
-    ModifiableRootModel rootModel = myState.getModifiableRootModel();
-    rootModel.getModuleLibraryTable(); //this is a temporary workaround to fix IDEA-352499; it forces creation of ModifiableModuleLibraryTableBridge 
-    final OrderEntry[] orderEntries = rootModel.getOrderEntries();
+    final OrderEntry[] orderEntries = myState.getModifiableRootModel().getOrderEntries();
     boolean hasJdkOrderEntry = false;
     List<ClasspathTableItem<?>> items = new ArrayList<>();
     for (final OrderEntry orderEntry : orderEntries) {
