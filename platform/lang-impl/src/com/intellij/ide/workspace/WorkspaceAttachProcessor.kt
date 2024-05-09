@@ -9,7 +9,7 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-class WorkspaceAttachProcessor : ProjectAttachProcessor() {
+internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
   override fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
     if (project.isWorkspace) {
       linkToWorkspace(project, projectDir.pathString)

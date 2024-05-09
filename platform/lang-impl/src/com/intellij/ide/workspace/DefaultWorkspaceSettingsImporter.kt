@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 
-class DefaultWorkspaceSettingsImporter : WorkspaceSettingsImporter {
+internal class DefaultWorkspaceSettingsImporter : WorkspaceSettingsImporter {
   override fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings? {
     if (newWorkspace) {
       return DefaultImportedProjectSettings(project)

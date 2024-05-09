@@ -7,7 +7,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 
-class SubprojectDeleteProvider(val selected: Collection<Subproject>) : DeleteProvider, TitledHandler {
+internal class SubprojectDeleteProvider(val selected: Collection<Subproject>) : DeleteProvider, TitledHandler {
   override fun deleteElement(dataContext: DataContext) {
     for (subproject in selected) {
       subproject.removeSubproject()
