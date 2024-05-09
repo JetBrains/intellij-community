@@ -75,8 +75,30 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                            final RefElement refClass = refManager.getReference(javaClass.getOriginalElement());
                            if (refClass != null) refClass.initializeIfNeeded();
                            refFrom.addReference(refClass, javaClass.getOriginalElement(), decl, false, true, null);
+                           checkRepeatableAnnotation(javaClass, node);
                          }
                          return false;
+                       }
+
+                       private void checkRepeatableAnnotation(PsiClass annotationClass, UAnnotation annotation) {
+                         if (!CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE.equals(annotationClass.getQualifiedName())) return;
+                         UExpression value = annotation.findAttributeValue("value");
+                         while (value instanceof UParenthesizedExpression parenth) {
+                           value = parenth.getExpression();
+                         }
+                         if (!(value instanceof UClassLiteralExpression classLiteralExpression)) return;
+                         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(classLiteralExpression.getType());
+                         if (aClass == null) return;
+                         RefClassImpl refClass =
+                           ObjectUtils.tryCast(refManager.getReference(aClass.getOriginalElement()), RefClassImpl.class);
+                         if (refClass == null) return;
+                         refClass.initializeIfNeeded();
+                         for (RefEntity child : refClass.getChildren()) {
+                           if (child instanceof RefMethod method && "value()".equals(method.getName())) {
+                             refFrom.addReference(method, null, decl, false, true, null);
+                             break;
+                           }
+                         }
                        }
 
                        @Override
@@ -232,7 +254,6 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                          boolean writing = isAccessedForWriting(node);
                          boolean reading = isAccessedForReading(node);
                          if (refResolved != null) refResolved.initializeIfNeeded();
-                         refFrom.initializeIfNeeded();
                          refFrom.addReference(refResolved, psiResolved, decl, writing, reading, node);
 
                          if (refResolved instanceof RefMethodImpl refMethod) {
