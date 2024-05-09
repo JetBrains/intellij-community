@@ -20,13 +20,14 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   @Override
   public synchronized boolean put(int key,
                                   int value) throws IOException {
-    return multimap.put(adjustKey(key), value);
+    //return multimap.put(adjustKey(key), value);
+    return multimap.put(key, value);
   }
 
   @Override
-  public boolean replace(int key,
-                         int oldValue,
-                         int newValue) throws IOException {
+  public synchronized boolean replace(int key,
+                                      int oldValue,
+                                      int newValue) throws IOException {
     return multimap.replace(key, oldValue, newValue);
   }
 
@@ -40,7 +41,7 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   public synchronized int lookup(int key,
                                  @NotNull ValueAcceptor valuesAcceptor) throws IOException {
     IntRef returnValue = new IntRef(NO_VALUE);
-    multimap.lookup(adjustKey(key), value -> {
+    multimap.lookup(key, value -> {
       try {
         if (valuesAcceptor.accept(value)) {
           returnValue.set(value);
@@ -60,8 +61,7 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
                                          @NotNull ValueAcceptor valuesAcceptor,
                                          @NotNull ValueCreator valueCreator) throws IOException {
     IntRef returnValue = new IntRef(NO_VALUE);
-    int adjustedKey = adjustKey(key);
-    multimap.lookup(adjustedKey, value -> {
+    multimap.lookup(key, value -> {
       try {
         if (valuesAcceptor.accept(value)) {
           returnValue.set(value);
@@ -78,12 +78,12 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
     }
 
     int newValue = valueCreator.newValueForKey(key);
-    multimap.put(adjustedKey, newValue);
+    multimap.put(key, newValue);
     return newValue;
   }
 
   @Override
-  public boolean remove(int key, int value) throws IOException {
+  public synchronized boolean remove(int key, int value) throws IOException {
     return multimap.remove(key, value);
   }
 
@@ -93,12 +93,12 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   }
 
   @Override
-  public boolean isEmpty() throws IOException {
+  public synchronized boolean isEmpty() throws IOException {
     return multimap.size() == 0;
   }
 
   @Override
-  public boolean forEach(@NotNull KeyValueProcessor processor) {
+  public synchronized boolean forEach(@NotNull KeyValueProcessor processor) {
     return multimap.forEach((key, value) -> {
       try {
         return processor.process(key, value);
@@ -110,7 +110,7 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   }
 
   @Override
-  public boolean isClosed() {
+  public synchronized boolean isClosed() {
     return false;
   }
 
@@ -125,18 +125,7 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   }
 
   @Override
-  public void closeAndClean() throws IOException {
+  public synchronized void closeAndClean() throws IOException {
     //nothing
-  }
-
-  private static int adjustKey(int key) {
-    if (key == Int2IntMultimap.NO_VALUE) {
-      //Int2IntMultimap doesn't allow 0 keys/values, hence replace 0 key with just any value!=0. Key doesn't
-      // identify value uniquely anyway, hence this replacement just adds another collision -- basically,
-      // we replaced original Key.hash with our own hash, which avoids 0 at the cost of slightly higher collision
-      // chances
-      return -1;// any value!=0 will do
-    }
-    return key;
   }
 }

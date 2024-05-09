@@ -281,8 +281,6 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
 
   private static long[] generateUniqueKeyValues(int size) {
     return ThreadLocalRandom.current().longs()
-      .filter(v -> key(v) != NO_VALUE
-                   && value(v) != NO_VALUE)
       //generate more multi-value-keys, to better check appropriate branches: +1,+2,... is almost always
       // have same upper 32 bits (=key), but different lower 32 bits (=value) => this switch creates
       // approximately 1/14 of keys with 2 values, and another 3/14 of keys with 5 values, and 10/14 of
@@ -292,6 +290,8 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
         case 10, 11, 12 -> LongStream.of(v, v + 1);
         default -> LongStream.of(v);
       })
+      .filter(v -> key(v) != NO_VALUE
+                   && value(v) != NO_VALUE)
       .distinct()
       .limit(size)
       .toArray();

@@ -2,9 +2,7 @@
 package com.intellij.platform.util.io.storages.intmultimaps;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.AssumptionViolatedException;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 public class NonParallelNonPersistentInToMultiIntMapTest extends DurableIntToMultiIntMapTestBase<NonDurableNonParallelIntToMultiIntMap> {
@@ -18,13 +16,4 @@ public class NonParallelNonPersistentInToMultiIntMapTest extends DurableIntToMul
     return new NonDurableNonParallelIntToMultiIntMap();
   }
 
-  @Override
-  public void ZERO_IS_PROHIBITED_KEY() throws IOException {
-    throw new AssumptionViolatedException("NonDurableNonParallelIntToMultiIntMap is implemented it differently");
-  }
-
-  @Override
-  public void ZERO_IS_PROHIBITED_VALUE() throws IOException {
-    throw new AssumptionViolatedException("NonDurableNonParallelIntToMultiIntMap is implemented it differently");
-  }
 }
