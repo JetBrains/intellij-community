@@ -9,13 +9,11 @@
 
   <resource-bundle>messages.PyBundle</resource-bundle>
 
-
-  <xi:include href="/META-INF/PythonParser.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/PythonPsi.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/PythonPsiImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/PythonSdk.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/PythonSyntax.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
+  <xi:include href="/META-INF/PythonParser.xml"/>
+  <xi:include href="/META-INF/PythonPsi.xml"/>
+  <xi:include href="/META-INF/PythonPsiImpl.xml"/>
+  <xi:include href="/META-INF/PythonSdk.xml"/>
+  <xi:include href="/META-INF/PythonSyntax.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
