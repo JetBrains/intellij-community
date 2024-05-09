@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import icons.JewelIcons
@@ -36,6 +38,7 @@ import org.jetbrains.jewel.foundation.modifier.onActivated
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import org.jetbrains.jewel.markdown.extensions.Markdown
 import org.jetbrains.jewel.ui.Orientation
@@ -237,23 +240,7 @@ private fun RowScope.ColumnTwo() {
         Modifier.trackActivation().weight(1f),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        ProvideMarkdownStyling {
-            Markdown(
-                """
-                |Hi! This is an example of **Markdown** rendering. We support the [CommonMark specs](https://commonmark.org/)
-                |out of the box, but you can also have _extensions_.
-                |
-                |For example:
-                | * Images
-                | * Tables
-                | * And more — I am running out of random things to say 😆
-                """.trimMargin(),
-                Modifier.fillMaxWidth()
-                    .background(JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor(), RoundedCornerShape(8.dp))
-                    .border(1.dp, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR.toComposeColor(), RoundedCornerShape(8.dp))
-                    .padding(8.dp),
-            )
-        }
+        MarkdownExample()
 
         Divider(Orientation.Horizontal)
 
@@ -293,6 +280,39 @@ private fun RowScope.ColumnTwo() {
             Box(Modifier.fillMaxWidth()) {
                 Text(element.data, Modifier.padding(2.dp))
             }
+        }
+    }
+}
+
+@Composable
+private fun MarkdownExample() {
+    var enabled by remember { mutableStateOf(true) }
+    CheckboxRow("Enabled", enabled, { enabled = it })
+
+    val contentColor = if (enabled) JewelTheme.globalColors.text.normal else JewelTheme.globalColors.text.disabled
+    CompositionLocalProvider(LocalContentColor provides contentColor) {
+        ProvideMarkdownStyling {
+            Markdown(
+                """
+                |Hi! This is an example of **Markdown** rendering. We support the [CommonMark specs](https://commonmark.org/)
+                |out of the box, but you can also have _extensions_.
+                |
+                |For example:
+                | * Images
+                | * Tables
+                | * And more — I am running out of random things to say 😆
+                """.trimMargin(),
+                Modifier.fillMaxWidth()
+                    .background(JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor(), RoundedCornerShape(8.dp))
+                    .border(
+                        1.dp,
+                        JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR.toComposeColor(),
+                        RoundedCornerShape(8.dp),
+                    )
+                    .padding(8.dp),
+                enabled = enabled,
+                onUrlClick = { url -> BrowserUtil.open(url) },
+            )
         }
     }
 }

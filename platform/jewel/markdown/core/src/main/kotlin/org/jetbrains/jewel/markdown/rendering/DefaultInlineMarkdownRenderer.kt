@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.markdown.rendering
 
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedString.Builder
 import androidx.compose.ui.text.ExperimentalTextApi
@@ -25,34 +26,48 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
     public override fun renderAsAnnotatedString(
         inlineMarkdown: Iterable<InlineMarkdown>,
         styling: InlinesStyling,
+        enabled: Boolean,
     ): AnnotatedString =
         buildAnnotatedString {
-            appendInlineMarkdownFrom(inlineMarkdown, styling)
+            appendInlineMarkdownFrom(inlineMarkdown, styling, enabled)
         }
 
     @OptIn(ExperimentalTextApi::class)
-    private fun Builder.appendInlineMarkdownFrom(inlineMarkdown: Iterable<InlineMarkdown>, styling: InlinesStyling) {
+    private fun Builder.appendInlineMarkdownFrom(
+        inlineMarkdown: Iterable<InlineMarkdown>,
+        styling: InlinesStyling,
+        enabled: Boolean,
+    ) {
         for (child in inlineMarkdown) {
             when (child) {
                 is InlineMarkdown.Text -> append(child.nativeNode.literal)
 
                 is InlineMarkdown.Emphasis -> {
-                    withStyles(styling.emphasis, child) { appendInlineMarkdownFrom(it.children, styling) }
+                    withStyles(styling.emphasis.withEnabled(enabled), child) {
+                        appendInlineMarkdownFrom(
+                            it.children,
+                            styling,
+                            enabled,
+                        )
+                    }
                 }
 
                 is InlineMarkdown.StrongEmphasis -> {
-                    withStyles(styling.strongEmphasis, child) { appendInlineMarkdownFrom(it.children, styling) }
+                    withStyles(
+                        styling.strongEmphasis.withEnabled(enabled),
+                        child,
+                    ) { appendInlineMarkdownFrom(it.children, styling, enabled) }
                 }
 
                 is InlineMarkdown.Link -> {
-                    withStyles(styling.link, child) {
+                    withStyles(styling.link.withEnabled(enabled), child) {
                         pushUrlAnnotation(UrlAnnotation(it.nativeNode.destination))
-                        appendInlineMarkdownFrom(it.children, styling)
+                        appendInlineMarkdownFrom(it.children, styling, enabled)
                     }
                 }
 
                 is InlineMarkdown.Code -> {
-                    withStyles(styling.inlineCode, child) { append(it.nativeNode.literal) }
+                    withStyles(styling.inlineCode.withEnabled(enabled), child) { append(it.nativeNode.literal) }
                 }
 
                 is InlineMarkdown.HardLineBreak,
@@ -61,7 +76,10 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
 
                 is InlineMarkdown.HtmlInline -> {
                     if (styling.renderInlineHtml) {
-                        withStyles(styling.inlineHtml, child) { append(it.nativeNode.literal.trim()) }
+                        withStyles(
+                            styling.inlineHtml.withEnabled(enabled),
+                            child,
+                        ) { append(it.nativeNode.literal.trim()) }
                     }
                 }
 
@@ -76,6 +94,13 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
             }
         }
     }
+
+    private fun SpanStyle.withEnabled(enabled: Boolean): SpanStyle =
+        if (enabled) {
+            this
+        } else {
+            copy(color = Color.Unspecified)
+        }
 
     // The T type parameter is needed to avoid issues with capturing lambdas
     // making smart cast of the child local variable impossible.

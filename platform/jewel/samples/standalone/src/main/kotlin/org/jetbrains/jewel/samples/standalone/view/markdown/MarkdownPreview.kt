@@ -90,7 +90,7 @@ internal fun MarkdownPreview(
                 modifier = modifier.background(background),
                 contentPadding = PaddingValues(16.dp),
                 state = lazyListState,
-                isSelectable = true,
+                selectable = true,
                 onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
             )
 

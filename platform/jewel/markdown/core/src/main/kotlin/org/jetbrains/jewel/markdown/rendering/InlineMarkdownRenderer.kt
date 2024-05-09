@@ -12,7 +12,11 @@ public interface InlineMarkdownRenderer {
      * Render the [inlineMarkdown] as an [AnnotatedString], using the [styling]
      * provided.
      */
-    public fun renderAsAnnotatedString(inlineMarkdown: Iterable<InlineMarkdown>, styling: InlinesStyling): AnnotatedString
+    public fun renderAsAnnotatedString(
+        inlineMarkdown: Iterable<InlineMarkdown>,
+        styling: InlinesStyling,
+        enabled: Boolean,
+    ): AnnotatedString
 
     public companion object {
 

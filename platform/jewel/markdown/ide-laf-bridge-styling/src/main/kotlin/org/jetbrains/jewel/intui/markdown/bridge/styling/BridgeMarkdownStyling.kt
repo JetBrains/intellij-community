@@ -422,7 +422,7 @@ private val defaultTextSize
     get() = (JBFont.labelFontSize() + 1).sp
 
 private val defaultTextStyle
-    get() = retrieveDefaultTextStyle()
+    get() = retrieveDefaultTextStyle().copy(color = Color.Unspecified)
 
 private val dividerColor
     get() = retrieveColorOrUnspecified("Group.separatorColor")

@@ -116,7 +116,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubA
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/markdown/extensions/github/alerts/AlertStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;)V
 	public fun canRender (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;)Z
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 }
 
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubAlertProcessorExtension : org/jetbrains/jewel/markdown/extensions/MarkdownProcessorExtension {

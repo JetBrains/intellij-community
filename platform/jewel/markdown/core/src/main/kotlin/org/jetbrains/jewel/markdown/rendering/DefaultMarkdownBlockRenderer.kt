@@ -80,12 +80,13 @@ public open class DefaultMarkdownBlockRenderer(
     @Composable
     override fun render(
         blocks: List<MarkdownBlock>,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
             for (block in blocks) {
-                render(block, onUrlClick, onTextClick)
+                render(block, enabled, onUrlClick, onTextClick)
             }
         }
     }
@@ -93,23 +94,25 @@ public open class DefaultMarkdownBlockRenderer(
     @Composable
     override fun render(
         block: MarkdownBlock,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
         when (block) {
-            is BlockQuote -> render(block, rootStyling.blockQuote, onUrlClick, onTextClick)
+            is BlockQuote -> render(block, rootStyling.blockQuote, enabled, onUrlClick, onTextClick)
             is FencedCodeBlock -> render(block, rootStyling.code.fenced)
             is IndentedCodeBlock -> render(block, rootStyling.code.indented)
-            is Heading -> render(block, rootStyling.heading, onUrlClick, onTextClick)
+            is Heading -> render(block, rootStyling.heading, enabled, onUrlClick, onTextClick)
             is HtmlBlock -> render(block, rootStyling.htmlBlock)
-            is OrderedList -> render(block, rootStyling.list.ordered, onUrlClick, onTextClick)
-            is UnorderedList -> render(block, rootStyling.list.unordered, onUrlClick, onTextClick)
-            is ListItem -> render(block, onUrlClick, onTextClick)
-            is Paragraph -> render(block, rootStyling.paragraph, onUrlClick, onTextClick)
+            is OrderedList -> render(block, rootStyling.list.ordered, enabled, onUrlClick, onTextClick)
+            is UnorderedList -> render(block, rootStyling.list.unordered, enabled, onUrlClick, onTextClick)
+            is ListItem -> render(block, enabled, onUrlClick, onTextClick)
+            is Paragraph -> render(block, rootStyling.paragraph, enabled, onUrlClick, onTextClick)
             ThematicBreak -> renderThematicBreak(rootStyling.thematicBreak)
             is CustomBlock -> {
                 rendererExtensions.find { it.blockRenderer.canRender(block) }
-                    ?.blockRenderer?.render(block, this, inlineRenderer, onUrlClick, onTextClick)
+                    ?.blockRenderer
+                    ?.render(block, blockRenderer = this, inlineRenderer, enabled, onUrlClick, onTextClick)
             }
         }
     }
@@ -118,14 +121,16 @@ public open class DefaultMarkdownBlockRenderer(
     override fun render(
         block: Paragraph,
         styling: MarkdownStyling.Paragraph,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
-        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling)
+        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled)
         SimpleClickableText(
             text = renderedContent,
             textStyle = styling.inlinesStyling.textStyle,
             color = styling.inlinesStyling.textStyle.color.takeOrElse { LocalContentColor.current },
+            enabled = enabled,
             onUnhandledClick = onTextClick,
             onUrlClick = onUrlClick,
         )
@@ -135,16 +140,17 @@ public open class DefaultMarkdownBlockRenderer(
     override fun render(
         block: Heading,
         styling: MarkdownStyling.Heading,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
         when (block.level) {
-            1 -> render(block, styling.h1, onUrlClick, onTextClick)
-            2 -> render(block, styling.h2, onUrlClick, onTextClick)
-            3 -> render(block, styling.h3, onUrlClick, onTextClick)
-            4 -> render(block, styling.h4, onUrlClick, onTextClick)
-            5 -> render(block, styling.h5, onUrlClick, onTextClick)
-            6 -> render(block, styling.h6, onUrlClick, onTextClick)
+            1 -> render(block, styling.h1, enabled, onUrlClick, onTextClick)
+            2 -> render(block, styling.h2, enabled, onUrlClick, onTextClick)
+            3 -> render(block, styling.h3, enabled, onUrlClick, onTextClick)
+            4 -> render(block, styling.h4, enabled, onUrlClick, onTextClick)
+            5 -> render(block, styling.h5, enabled, onUrlClick, onTextClick)
+            6 -> render(block, styling.h6, enabled, onUrlClick, onTextClick)
             else -> error("Heading level ${block.level} not supported:\n$block")
         }
     }
@@ -153,10 +159,11 @@ public open class DefaultMarkdownBlockRenderer(
     override fun render(
         block: Heading,
         styling: MarkdownStyling.Heading.HN,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
-        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling)
+        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled)
         Heading(
             renderedContent,
             styling.inlinesStyling.textStyle,
@@ -164,6 +171,7 @@ public open class DefaultMarkdownBlockRenderer(
             styling.underlineWidth,
             styling.underlineColor,
             styling.underlineGap,
+            enabled,
             onUrlClick,
             onTextClick,
         )
@@ -177,6 +185,7 @@ public open class DefaultMarkdownBlockRenderer(
         underlineWidth: Dp,
         underlineColor: Color,
         underlineGap: Dp,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
@@ -185,6 +194,7 @@ public open class DefaultMarkdownBlockRenderer(
                 text = renderedContent,
                 textStyle = textStyle,
                 color = textStyle.color.takeOrElse { LocalContentColor.current },
+                enabled = enabled,
                 onUnhandledClick = onTextClick,
                 onUrlClick = onUrlClick,
             )
@@ -200,6 +210,7 @@ public open class DefaultMarkdownBlockRenderer(
     override fun render(
         block: BlockQuote,
         styling: MarkdownStyling.BlockQuote,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
@@ -222,7 +233,7 @@ public open class DefaultMarkdownBlockRenderer(
             verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing),
         ) {
             CompositionLocalProvider(LocalContentColor provides styling.textColor) {
-                render(block.children, onUrlClick, onTextClick)
+                render(block.children, enabled, onUrlClick, onTextClick)
             }
         }
     }
@@ -231,12 +242,13 @@ public open class DefaultMarkdownBlockRenderer(
     override fun render(
         block: ListBlock,
         styling: MarkdownStyling.List,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
         when (block) {
-            is OrderedList -> render(block, styling.ordered, onUrlClick, onTextClick)
-            is UnorderedList -> render(block, styling.unordered, onUrlClick, onTextClick)
+            is OrderedList -> render(block, styling.ordered, enabled, onUrlClick, onTextClick)
+            is UnorderedList -> render(block, styling.unordered, enabled, onUrlClick, onTextClick)
         }
     }
 
@@ -244,6 +256,7 @@ public open class DefaultMarkdownBlockRenderer(
     override fun render(
         block: OrderedList,
         styling: MarkdownStyling.List.Ordered,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
@@ -272,7 +285,7 @@ public open class DefaultMarkdownBlockRenderer(
 
                     Spacer(Modifier.width(styling.numberContentGap))
 
-                    render(item, onUrlClick, onTextClick)
+                    render(item, enabled, onUrlClick, onTextClick)
                 }
             }
         }
@@ -282,6 +295,7 @@ public open class DefaultMarkdownBlockRenderer(
     override fun render(
         block: UnorderedList,
         styling: MarkdownStyling.List.Unordered,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
@@ -307,7 +321,7 @@ public open class DefaultMarkdownBlockRenderer(
 
                     Spacer(Modifier.width(styling.bulletContentGap))
 
-                    render(item, onUrlClick, onTextClick)
+                    render(item, enabled, onUrlClick, onTextClick)
                 }
             }
         }
@@ -316,11 +330,12 @@ public open class DefaultMarkdownBlockRenderer(
     @Composable
     override fun render(
         block: ListItem,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
-            render(block.children, onUrlClick, onTextClick)
+            render(block.children, enabled, onUrlClick, onTextClick)
         }
     }
 
@@ -418,9 +433,9 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    private fun rememberRenderedContent(block: BlockWithInlineMarkdown, styling: InlinesStyling) =
-        remember(block.inlineContent, styling) {
-            inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling)
+    private fun rememberRenderedContent(block: BlockWithInlineMarkdown, styling: InlinesStyling, enabled: Boolean) =
+        remember(block.inlineContent, styling, enabled) {
+            inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled)
         }
 
     @OptIn(ExperimentalTextApi::class)
@@ -428,12 +443,16 @@ public open class DefaultMarkdownBlockRenderer(
     private fun SimpleClickableText(
         text: AnnotatedString,
         textStyle: TextStyle,
+        enabled: Boolean,
         modifier: Modifier = Modifier,
         color: Color = Color.Unspecified,
         onUrlClick: (String) -> Unit,
         onUnhandledClick: () -> Unit,
     ) {
-        var pointerIcon by remember { mutableStateOf(PointerIcon.Default) }
+        var hoverPointerIcon by remember { mutableStateOf(PointerIcon.Default) }
+        val actualPointerIcon = remember(hoverPointerIcon, enabled) {
+            if (enabled) hoverPointerIcon else PointerIcon.Default
+        }
 
         val textColor = color.takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
 
@@ -442,9 +461,9 @@ public open class DefaultMarkdownBlockRenderer(
         ClickableText(
             text = text,
             style = mergedStyle,
-            modifier = modifier.pointerHoverIcon(pointerIcon, true),
+            modifier = modifier.pointerHoverIcon(actualPointerIcon, true),
             onHover = { offset ->
-                pointerIcon =
+                hoverPointerIcon =
                     if (offset == null || text.getUrlAnnotations(offset, offset).isEmpty()) {
                         PointerIcon.Default
                     } else {
@@ -452,6 +471,8 @@ public open class DefaultMarkdownBlockRenderer(
                     }
             },
         ) { offset ->
+            if (!enabled) return@ClickableText
+
             val span = text.getUrlAnnotations(offset, offset).firstOrNull()
             if (span != null) {
                 onUrlClick(span.item.url)

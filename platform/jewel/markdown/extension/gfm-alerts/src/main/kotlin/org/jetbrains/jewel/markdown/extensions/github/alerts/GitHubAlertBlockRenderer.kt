@@ -45,6 +45,7 @@ public class GitHubAlertBlockRenderer(
         block: CustomBlock,
         blockRenderer: MarkdownBlockRenderer,
         inlineRenderer: InlineMarkdownRenderer,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
@@ -54,11 +55,11 @@ public class GitHubAlertBlockRenderer(
         val alert = block as? Alert
 
         when (alert) {
-            is Caution -> Alert(alert, styling.caution, blockRenderer, onUrlClick, onTextClick)
-            is Important -> Alert(alert, styling.important, blockRenderer, onUrlClick, onTextClick)
-            is Note -> Alert(alert, styling.note, blockRenderer, onUrlClick, onTextClick)
-            is Tip -> Alert(alert, styling.tip, blockRenderer, onUrlClick, onTextClick)
-            is Warning -> Alert(alert, styling.warning, blockRenderer, onUrlClick, onTextClick)
+            is Caution -> Alert(alert, styling.caution, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Important -> Alert(alert, styling.important, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Note -> Alert(alert, styling.note, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Tip -> Alert(alert, styling.tip, enabled, blockRenderer, onUrlClick, onTextClick)
+            is Warning -> Alert(alert, styling.warning, enabled, blockRenderer, onUrlClick, onTextClick)
             else -> error("Unsupported block of type ${block.javaClass.name} cannot be rendered")
         }
     }
@@ -67,6 +68,7 @@ public class GitHubAlertBlockRenderer(
     private fun Alert(
         block: Alert,
         styling: BaseAlertStyling,
+        enabled: Boolean,
         blockRenderer: MarkdownBlockRenderer,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
@@ -126,7 +128,7 @@ public class GitHubAlertBlockRenderer(
             CompositionLocalProvider(
                 LocalContentColor provides styling.textColor.takeOrElse { LocalContentColor.current },
             ) {
-                blockRenderer.render(block.content, onUrlClick, onTextClick)
+                blockRenderer.render(block.content, enabled, onUrlClick, onTextClick)
             }
         }
     }

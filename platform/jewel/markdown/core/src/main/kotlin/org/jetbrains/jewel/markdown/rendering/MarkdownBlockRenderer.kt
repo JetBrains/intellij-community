@@ -20,6 +20,7 @@ public interface MarkdownBlockRenderer {
     @Composable
     public fun render(
         blocks: List<MarkdownBlock>,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )
@@ -27,6 +28,7 @@ public interface MarkdownBlockRenderer {
     @Composable
     public fun render(
         block: MarkdownBlock,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )
@@ -35,6 +37,7 @@ public interface MarkdownBlockRenderer {
     public fun render(
         block: Paragraph,
         styling: MarkdownStyling.Paragraph,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )
@@ -43,6 +46,7 @@ public interface MarkdownBlockRenderer {
     public fun render(
         block: MarkdownBlock.Heading,
         styling: MarkdownStyling.Heading,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )
@@ -51,6 +55,7 @@ public interface MarkdownBlockRenderer {
     public fun render(
         block: MarkdownBlock.Heading,
         styling: MarkdownStyling.Heading.HN,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )
@@ -59,6 +64,7 @@ public interface MarkdownBlockRenderer {
     public fun render(
         block: BlockQuote,
         styling: MarkdownStyling.BlockQuote,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )
@@ -67,6 +73,7 @@ public interface MarkdownBlockRenderer {
     public fun render(
         block: ListBlock,
         styling: MarkdownStyling.List,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )
@@ -75,6 +82,7 @@ public interface MarkdownBlockRenderer {
     public fun render(
         block: OrderedList,
         styling: MarkdownStyling.List.Ordered,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )
@@ -83,6 +91,7 @@ public interface MarkdownBlockRenderer {
     public fun render(
         block: UnorderedList,
         styling: MarkdownStyling.List.Unordered,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )
@@ -90,6 +99,7 @@ public interface MarkdownBlockRenderer {
     @Composable
     public fun render(
         block: ListItem,
+        enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     )

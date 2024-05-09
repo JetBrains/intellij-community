@@ -55,7 +55,8 @@ public val JewelTheme.Companion.markdownBlockRenderer: MarkdownBlockRenderer
 public fun Markdown(
     @Language("Markdown") markdown: String,
     modifier: Modifier = Modifier,
-    isSelectable: Boolean = false,
+    selectable: Boolean = false,
+    enabled: Boolean = true,
     renderingDispatcher: CoroutineDispatcher = Dispatchers.Default,
     onUrlClick: (String) -> Unit = {},
     onTextClick: () -> Unit = {},
@@ -72,7 +73,8 @@ public fun Markdown(
     Markdown(
         markdownBlocks = markdownBlocks,
         modifier = modifier,
-        isSelectable = isSelectable,
+        selectable = selectable,
+        enabled = enabled,
         onUrlClick = onUrlClick,
         onTextClick = onTextClick,
         markdownStyling = markdownStyling,
@@ -85,17 +87,18 @@ public fun Markdown(
 public fun Markdown(
     markdownBlocks: List<MarkdownBlock>,
     modifier: Modifier = Modifier,
-    isSelectable: Boolean = false,
+    enabled: Boolean = true,
+    selectable: Boolean = false,
     onUrlClick: (String) -> Unit = {},
     onTextClick: () -> Unit = {},
     markdownStyling: MarkdownStyling = JewelTheme.markdownStyling,
     blockRenderer: MarkdownBlockRenderer = JewelTheme.markdownBlockRenderer,
 ) {
-    if (isSelectable) {
+    if (selectable) {
         SelectionContainer(modifier) {
             Column(verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing)) {
                 for (block in markdownBlocks) {
-                    blockRenderer.render(block, onUrlClick, onTextClick)
+                    blockRenderer.render(block, enabled, onUrlClick, onTextClick)
                 }
             }
         }
@@ -105,7 +108,7 @@ public fun Markdown(
             verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
         ) {
             for (block in markdownBlocks) {
-                blockRenderer.render(block, onUrlClick, onTextClick)
+                blockRenderer.render(block, enabled, onUrlClick, onTextClick)
             }
         }
     }
@@ -118,13 +121,14 @@ public fun LazyMarkdown(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     state: LazyListState = rememberLazyListState(),
-    isSelectable: Boolean = false,
+    enabled: Boolean = true,
+    selectable: Boolean = false,
     onUrlClick: (String) -> Unit = {},
     onTextClick: () -> Unit = {},
     markdownStyling: MarkdownStyling = JewelTheme.markdownStyling,
     blockRenderer: MarkdownBlockRenderer = JewelTheme.markdownBlockRenderer,
 ) {
-    if (isSelectable) {
+    if (selectable) {
         SelectionContainer(modifier) {
             LazyColumn(
                 state = state,
@@ -132,7 +136,7 @@ public fun LazyMarkdown(
                 verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
             ) {
                 items(markdownBlocks) { block ->
-                    blockRenderer.render(block, onUrlClick, onTextClick)
+                    blockRenderer.render(block, enabled, onUrlClick, onTextClick)
                 }
             }
         }
@@ -144,7 +148,7 @@ public fun LazyMarkdown(
             verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
         ) {
             items(markdownBlocks) { block ->
-                blockRenderer.render(block, onUrlClick, onTextClick)
+                blockRenderer.render(block, enabled, onUrlClick, onTextClick)
             }
         }
     }
