@@ -42,7 +42,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 @View(title = "Components", position = 1, icon = "icons/structure.svg")
 fun ComponentsView() {
-    Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.paneBackground)) {
+    Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
         ComponentsToolBar()
         Divider(Orientation.Vertical)
         ComponentView(ComponentsViewModel.currentView)

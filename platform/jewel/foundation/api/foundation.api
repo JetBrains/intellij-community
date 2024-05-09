@@ -26,12 +26,12 @@ public abstract interface annotation class org/jetbrains/jewel/foundation/Genera
 public final class org/jetbrains/jewel/foundation/GlobalColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/foundation/GlobalColors$Companion;
-	public synthetic fun <init> (Lorg/jetbrains/jewel/foundation/BorderColors;Lorg/jetbrains/jewel/foundation/OutlineColors;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lorg/jetbrains/jewel/foundation/BorderColors;Lorg/jetbrains/jewel/foundation/OutlineColors;Lorg/jetbrains/jewel/foundation/TextColors;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBorders ()Lorg/jetbrains/jewel/foundation/BorderColors;
-	public final fun getInfoContent-0d7_KjU ()J
 	public final fun getOutlines ()Lorg/jetbrains/jewel/foundation/OutlineColors;
-	public final fun getPaneBackground-0d7_KjU ()J
+	public final fun getPanelBackground-0d7_KjU ()J
+	public final fun getText ()Lorg/jetbrains/jewel/foundation/TextColors;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -126,6 +126,23 @@ public final class org/jetbrains/jewel/foundation/StrokeKt {
 	public static synthetic fun Stroke-Ke5fDM4$default (FLandroidx/compose/ui/graphics/Brush;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;FILjava/lang/Object;)Lorg/jetbrains/jewel/foundation/Stroke;
 	public static final fun Stroke-nMwvq1g (FJLorg/jetbrains/jewel/foundation/Stroke$Alignment;F)Lorg/jetbrains/jewel/foundation/Stroke;
 	public static synthetic fun Stroke-nMwvq1g$default (FJLorg/jetbrains/jewel/foundation/Stroke$Alignment;FILjava/lang/Object;)Lorg/jetbrains/jewel/foundation/Stroke;
+}
+
+public final class org/jetbrains/jewel/foundation/TextColors {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/foundation/TextColors$Companion;
+	public synthetic fun <init> (JJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDisabled-0d7_KjU ()J
+	public final fun getError-0d7_KjU ()J
+	public final fun getInfo-0d7_KjU ()J
+	public final fun getNormal-0d7_KjU ()J
+	public final fun getSelected-0d7_KjU ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/foundation/TextColors$Companion {
 }
 
 public class org/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings : org/jetbrains/jewel/foundation/lazy/DefaultSelectableColumnKeybindings {

@@ -319,10 +319,12 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiUndecorated
 public final class org/jetbrains/jewel/intui/standalone/theme/IntUiGlobalColorsKt {
 	public static final fun dark-GyCwops (Lorg/jetbrains/jewel/foundation/BorderColors$Companion;JJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/BorderColors;
 	public static final fun dark-Hformbs (Lorg/jetbrains/jewel/foundation/OutlineColors$Companion;JJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/OutlineColors;
-	public static final fun dark-jA1GFJw (Lorg/jetbrains/jewel/foundation/GlobalColors$Companion;Lorg/jetbrains/jewel/foundation/BorderColors;Lorg/jetbrains/jewel/foundation/OutlineColors;JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/GlobalColors;
+	public static final fun dark-Hformbs (Lorg/jetbrains/jewel/foundation/TextColors$Companion;JJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/TextColors;
+	public static final fun dark-yrwZFoE (Lorg/jetbrains/jewel/foundation/GlobalColors$Companion;Lorg/jetbrains/jewel/foundation/BorderColors;Lorg/jetbrains/jewel/foundation/OutlineColors;Lorg/jetbrains/jewel/foundation/TextColors;JLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public static final fun light-GyCwops (Lorg/jetbrains/jewel/foundation/BorderColors$Companion;JJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/BorderColors;
 	public static final fun light-Hformbs (Lorg/jetbrains/jewel/foundation/OutlineColors$Companion;JJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/OutlineColors;
-	public static final fun light-jA1GFJw (Lorg/jetbrains/jewel/foundation/GlobalColors$Companion;Lorg/jetbrains/jewel/foundation/BorderColors;Lorg/jetbrains/jewel/foundation/OutlineColors;JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/GlobalColors;
+	public static final fun light-Hformbs (Lorg/jetbrains/jewel/foundation/TextColors$Companion;JJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/TextColors;
+	public static final fun light-yrwZFoE (Lorg/jetbrains/jewel/foundation/GlobalColors$Companion;Lorg/jetbrains/jewel/foundation/BorderColors;Lorg/jetbrains/jewel/foundation/OutlineColors;Lorg/jetbrains/jewel/foundation/TextColors;JLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/GlobalColors;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/theme/IntUiGlobalMetricsKt {

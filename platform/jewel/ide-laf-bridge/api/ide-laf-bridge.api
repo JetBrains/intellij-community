@@ -87,6 +87,7 @@ public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalColorsKt {
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/BorderColors$Companion;)Lorg/jetbrains/jewel/foundation/BorderColors;
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/GlobalColors$Companion;)Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/OutlineColors$Companion;)Lorg/jetbrains/jewel/foundation/OutlineColors;
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/TextColors$Companion;)Lorg/jetbrains/jewel/foundation/TextColors;
 }
 
 public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalMetricsKt {

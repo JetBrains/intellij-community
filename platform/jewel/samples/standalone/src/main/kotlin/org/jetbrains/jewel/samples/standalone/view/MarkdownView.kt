@@ -22,7 +22,7 @@ import org.jetbrains.jewel.ui.component.Divider
 @View(title = "Markdown", position = 2, icon = "icons/markdown.svg")
 @Composable
 fun MarkdownDemo() {
-    Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.paneBackground)) {
+    Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
         var currentMarkdown by remember { mutableStateOf(JewelReadme) }
         MarkdownEditor(currentMarkdown, { currentMarkdown = it }, Modifier.fillMaxHeight().weight(1f))
 

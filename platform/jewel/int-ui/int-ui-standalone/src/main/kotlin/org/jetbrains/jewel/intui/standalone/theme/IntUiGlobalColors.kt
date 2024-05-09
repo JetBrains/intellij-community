@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.foundation.BorderColors
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.OutlineColors
+import org.jetbrains.jewel.foundation.TextColors
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 
@@ -12,28 +13,28 @@ import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 public fun GlobalColors.Companion.light(
     borders: BorderColors = BorderColors.light(),
     outlines: OutlineColors = OutlineColors.light(),
-    infoContent: Color = IntUiLightTheme.colors.grey(7),
+    text: TextColors = TextColors.light(),
     paneBackground: Color = IntUiLightTheme.colors.grey(13),
 ): GlobalColors =
     GlobalColors(
         borders = borders,
         outlines = outlines,
-        infoContent = infoContent,
-        paneBackground = paneBackground,
+        text = text,
+        panelBackground = paneBackground,
     )
 
 @Composable
 public fun GlobalColors.Companion.dark(
     borders: BorderColors = BorderColors.dark(),
     outlines: OutlineColors = OutlineColors.dark(),
-    infoContent: Color = IntUiDarkTheme.colors.grey(7),
+    text: TextColors = TextColors.dark(),
     paneBackground: Color = IntUiDarkTheme.colors.grey(2),
 ): GlobalColors =
     GlobalColors(
         borders = borders,
         outlines = outlines,
-        infoContent = infoContent,
-        paneBackground = paneBackground,
+        text = text,
+        panelBackground = paneBackground,
     )
 
 @Composable
@@ -51,6 +52,26 @@ public fun BorderColors.Companion.dark(
     disabled: Color = IntUiDarkTheme.colors.grey(4),
 ): BorderColors =
     BorderColors(normal, focused, disabled)
+
+@Composable
+public fun TextColors.Companion.light(
+    normal: Color = IntUiLightTheme.colors.grey(1),
+    selected: Color = IntUiLightTheme.colors.grey(1),
+    disabled: Color = IntUiLightTheme.colors.grey(8),
+    info: Color = IntUiLightTheme.colors.grey(7),
+    error: Color = IntUiLightTheme.colors.red(4),
+): TextColors =
+    TextColors(normal, selected, disabled, info, error)
+
+@Composable
+public fun TextColors.Companion.dark(
+    normal: Color = IntUiDarkTheme.colors.grey(12),
+    selected: Color = IntUiDarkTheme.colors.grey(12),
+    disabled: Color = IntUiDarkTheme.colors.grey(6),
+    info: Color = IntUiDarkTheme.colors.grey(7),
+    error: Color = IntUiDarkTheme.colors.red(7),
+): TextColors =
+    TextColors(normal, selected, disabled, info, error)
 
 @Composable
 public fun OutlineColors.Companion.light(
