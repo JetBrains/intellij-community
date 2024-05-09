@@ -600,7 +600,6 @@ a:com.intellij.openapi.util.AtomicNotNullLazyValue
 a:com.intellij.openapi.util.AtomicNullableLazyValue
 - com.intellij.openapi.util.NullableLazyValue
 - p:<init>():V
-- s:createValue(com.intellij.openapi.util.Factory):com.intellij.openapi.util.AtomicNullableLazyValue
 - f:getValue():java.lang.Object
 - isComputed():Z
 com.intellij.openapi.util.BooleanGetter
@@ -3343,7 +3342,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:getOrCreate(java.util.Map,java.lang.Object,com.intellij.openapi.util.Factory):java.lang.Object
 - s:getOrCreate(java.util.Map,java.lang.Object,java.lang.Object):java.lang.Object
 - s:getOrElse(java.util.List,I,java.lang.Object):java.lang.Object
-- s:getOrElse(java.util.Map,java.lang.Object,java.lang.Object):java.lang.Object
 - s:groupBy(java.lang.Iterable,com.intellij.util.NullableFunction):com.intellij.util.containers.MultiMap
 - s:immutableList():java.util.List
 - s:immutableList(java.lang.Object):java.util.List

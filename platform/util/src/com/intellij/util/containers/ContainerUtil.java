@@ -2221,16 +2221,6 @@ public final class ContainerUtil {
     return result.computeIfAbsent(key, __ -> factory.create());
   }
 
-  /**
-   * @deprecated use {@link Map#getOrDefault(Object, Object)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @Contract(pure = true)
-  public static @NotNull <T, V> V getOrElse(@NotNull Map<? extends T, V> map, T key, @NotNull V defValue) {
-    return map.getOrDefault(key, defValue);
-  }
-
   @Contract(pure=true)
   public static <T> boolean and(T @NotNull [] iterable, @NotNull Condition<? super T> condition) {
     for (T t : iterable) {
