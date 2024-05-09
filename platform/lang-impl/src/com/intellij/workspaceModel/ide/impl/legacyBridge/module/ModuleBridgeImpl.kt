@@ -17,19 +17,15 @@ import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnSnapshot
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
@@ -43,13 +39,8 @@ internal class ModuleBridgeImpl(
   virtualFileUrl: VirtualFileUrl?,
   override var entityStorage: VersionedEntityStorage,
   override var diff: MutableEntityStorage?
-) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge, WorkspaceModelChangeListener {
+) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
   init {
-    // default project doesn't have modules
-    if (!project.isDefault && !project.isDisposed) {
-      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, this)
-    }
-
     // This is a temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
@@ -64,23 +55,23 @@ internal class ModuleBridgeImpl(
     }
   }
 
-  override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
-    val moduleEntityChanges = event.getChanges(ModuleEntity::class.java)
-    moduleEntityChanges.forEach {
-      if (it !is EntityChange.Removed<ModuleEntity>) return@forEach
-      if (it.entity.symbolicId != moduleEntityId) return@forEach
-
-      if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
-
-      val currentStore = entityStorage.current
-      entityStorage = VersionedEntityStorageOnSnapshot(currentStore.toSnapshot())
-      assert(moduleEntityId in entityStorage.current) {
-        // If we ever get this assertion, replace use `event.storeBefore` instead of current
-        // As it made in ArtifactBridge
-        "Cannot resolve module $moduleEntityId. Current store: $currentStore"
-      }
-    }
-  }
+  //override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
+  //  val moduleEntityChanges = event.getChanges(ModuleEntity::class.java)
+  //  moduleEntityChanges.forEach {
+  //    if (it !is EntityChange.Removed<ModuleEntity>) return@forEach
+  //    if (it.entity.symbolicId != moduleEntityId) return@forEach
+  //
+  //    if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
+  //
+  //    val currentStore = entityStorage.current
+  //    entityStorage = VersionedEntityStorageOnSnapshot(currentStore.toSnapshot())
+  //    assert(moduleEntityId in entityStorage.current) {
+  //      // If we ever get this assertion, replace use `event.storeBefore` instead of current
+  //      // As it made in ArtifactBridge
+  //      "Cannot resolve module $moduleEntityId. Current store: $currentStore"
+  //    }
+  //  }
+  //}
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
