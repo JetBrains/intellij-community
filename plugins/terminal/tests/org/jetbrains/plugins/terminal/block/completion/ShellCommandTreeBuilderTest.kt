@@ -1,16 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion
 
-import com.intellij.terminal.block.completion.engine.*
-import org.jetbrains.plugins.terminal.block.util.FakeShellCommandSpecsManager
-import org.jetbrains.plugins.terminal.block.util.FakeShellRuntimeDataProvider
-import com.intellij.terminal.completion.util.commandSpec
-import com.intellij.util.containers.JBIterable
-import com.intellij.util.containers.TreeTraversal
-import junit.framework.TestCase.assertTrue
+import com.intellij.terminal.completion.ShellCommandTreeAssertions
+import com.intellij.terminal.completion.ShellCommandTreeBuilderFixture
+import com.intellij.terminal.block.completion.spec.ShellCommandParserDirectives
+import com.intellij.terminal.block.completion.spec.ShellCommandResult
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.terminal.completion.ShellCommandParserDirectives
-import org.jetbrains.terminal.completion.ShellSuggestionsGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
+import org.jetbrains.plugins.terminal.block.util.TestCommandSpecsManager
+import org.jetbrains.plugins.terminal.block.util.TestGeneratorsExecutor
+import org.jetbrains.plugins.terminal.block.util.TestRuntimeContextProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -21,73 +22,84 @@ class ShellCommandTreeBuilderTest {
   private val commandName = "command"
   private var filePathSuggestions: List<String> = emptyList()
 
-  private val spec = commandSpec(commandName) {
+  private val spec = ShellCommandSpec(commandName) {
     option("-a", "--asd")
     option("--bcde")
     option("--argum") {
-      argument("optArg", isOptional = true) {
+      argument {
+        isOptional = true
         suggestions("someArg")
       }
     }
 
-    argument("mainCmdArg", isOptional = true) {
+    argument {
+      isOptional = true
       suggestions("aaa", "bbb")
     }
 
-    subcommand("sub") {
-      option("-o", "--opt1")
-      option("-a")
-      option("-b")
-      option("--long")
-      option("--withReqArg") {
-        argument("reqArg")
-      }
-      option("--withOptArg") {
-        argument("optArg", isOptional = true)
-      }
-      option("--manyArgs") {
-        argument("a1")
-        argument("a2", isOptional = true) {
-          suggestions("a2")
+    subcommands {
+      subcommand("sub") {
+        option("-o", "--opt1")
+        option("-a")
+        option("-b")
+        option("--long")
+        option("--withReqArg") {
+          argument()
+        }
+        option("--withOptArg") {
+          argument {
+            isOptional = true
+          }
+        }
+        option("--manyArgs") {
+          argument()
+          argument {
+            isOptional = true
+            suggestions("a2")
+          }
+        }
+        option("--skippedArg") {
+          argument {
+            isOptional = true
+          }
+          argument()
+          argument {
+            isOptional = true
+            suggestions("opt2")
+          }
+        }
+
+        argument {
+          suggestions("somePath")
+        }
+        argument {
+          isOptional = true
+          suggestions("arg1", "arg2")
         }
       }
-      option("--skippedArg") {
-        argument("opt", isOptional = true)
-        argument("req")
-        argument("opt2", isOptional = true) {
-          suggestions("opt2")
+
+      subcommand("nonPosix") {
+        parserDirectives = ShellCommandParserDirectives.create(flagsArePosixNonCompliant = true)
+        option("-a")
+        option("-b")
+      }
+
+      subcommand("sep") {
+        option("--withSeparator") {
+          separator = "="
+          argument()
         }
       }
 
-      argument("file") {
-        suggestions("somePath")
-      }
-      argument("someOptArg", isOptional = true) {
-        suggestions("arg1", "arg2")
-      }
-    }
-
-    subcommand("nonPosix") {
-      parserDirectives = ShellCommandParserDirectives(flagsArePosixNoncompliant = true)
-      option("-a")
-      option("-b")
-    }
-
-    subcommand("sep") {
-      option("--withSeparator") {
-        separator = "="
-        argument("arg")
-      }
-    }
-
-    subcommand("withFiles") {
-      option("-o") {
-        argument("file") {
-          templates("filepaths")
+      subcommand("withFiles") {
+        option("-o") {
+          argument {
+            generator(fileSuggestionsGenerator())
+          }
         }
-      }
-      argument("folder") {
-        generator(ShellSuggestionsGenerator(templates = listOf("folders")))
+        argument {
+          generator(fileSuggestionsGenerator(onlyDirectories = true))
+        }
       }
     }
   }
@@ -244,54 +256,23 @@ class ShellCommandTreeBuilderTest {
     }
   }
 
-  private fun doTest(vararg arguments: String, assertions: CommandTreeAssertions.() -> Unit) = runBlocking {
-    val commandSpecManager = FakeShellCommandSpecsManager()
-    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider(filePathSuggestions))
-    val root = ShellCommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
-                                             commandName, spec, arguments.asList())
-    assertions(CommandTreeAssertions(root))
+  private fun doTest(vararg arguments: String, assertions: ShellCommandTreeAssertions.() -> Unit) = runBlocking {
+    // Mock fileSuggestionsGenerator result
+    val generatorCommandsRunner = object : ShellGeneratorCommandsRunner {
+      override suspend fun runGeneratorCommand(command: String): ShellCommandResult {
+        val output = filePathSuggestions.joinToString("\n")
+        return ShellCommandResult.create(output, exitCode = 0)
+      }
+    }
+    val fixture = ShellCommandTreeBuilderFixture(
+      TestCommandSpecsManager(spec),
+      TestGeneratorsExecutor(),
+      TestRuntimeContextProvider(generatorCommandsRunner = generatorCommandsRunner)
+    )
+    fixture.buildCommandTreeAndTest(spec, arguments.toList(), assertions)
   }
 
   private fun mockFilePathsSuggestions(vararg files: String) {
     filePathSuggestions = files.asList()
-  }
-
-  private class CommandTreeAssertions(root: ShellCommandTreeNode<*>) {
-    private val allChildren: JBIterable<ShellCommandTreeNode<*>> = TreeTraversal.PRE_ORDER_DFS.traversal(root) { node -> node.children }
-
-    fun assertSubcommandOf(cmd: String, parentCmd: String) {
-      val childNode = allChildren.find { it.text == cmd } ?: error("Not found node with name: $cmd")
-      assertTrue("Expected that child is subcommand", childNode is ShellCommandNode)
-      assertTrue("Expected that parent of '$cmd' is a subcommand '$parentCmd', but was: ${childNode.parent}",
-                 (childNode.parent as? ShellCommandNode)?.text == parentCmd)
-    }
-
-    fun assertOptionOf(option: String, subcommand: String) {
-      val childNode = allChildren.find { it.text == option } ?: error("Not found node with name: $option")
-      assertTrue("Expected that child is option", childNode is ShellOptionNode)
-      assertTrue("Expected that parent of '$option' is a subcommand '$subcommand', but was: ${childNode.parent}",
-                 (childNode.parent as? ShellCommandNode)?.text == subcommand)
-    }
-
-    fun assertArgumentOfOption(arg: String, option: String) {
-      val childNode = allChildren.find { it.text == arg } ?: error("Not found node with name: $arg")
-      assertTrue("Expected that child is argument", childNode is ShellArgumentNode)
-      assertTrue("Expected that parent of '$arg' is an option '$option', but was: ${childNode.parent}",
-                 (childNode.parent as? ShellOptionNode)?.text == option)
-    }
-
-    fun assertArgumentOfSubcommand(arg: String, subcommand: String) {
-      val childNode = allChildren.find { it.text == arg } ?: error("Not found node with name: $arg")
-      assertTrue("Expected that child is argument", childNode is ShellArgumentNode)
-      assertTrue("Expected that parent of '$arg' is an option '$subcommand', but was: ${childNode.parent}",
-                 (childNode.parent as? ShellCommandNode)?.text == subcommand)
-    }
-
-    fun assertUnknown(child: String, parent: String) {
-      val childNode = allChildren.find { it.text == child } ?: error("Not found node with name: $child")
-      assertTrue("Expected that child is unknown", childNode is ShellUnknownNode)
-      assertTrue("Expected that parent of '$child' is '$parent', but was: ${childNode.parent}",
-                 childNode.parent?.text == parent)
-    }
   }
 }

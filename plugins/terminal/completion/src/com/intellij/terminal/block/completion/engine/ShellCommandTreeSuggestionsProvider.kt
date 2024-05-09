@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.block.completion.engine
 
+import com.intellij.terminal.block.completion.ShellArgumentSuggestion
 import com.intellij.terminal.block.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.block.completion.spec.*
 import java.io.File
@@ -125,7 +126,9 @@ internal class ShellCommandTreeSuggestionsProvider(
     val suggestions = mutableListOf<ShellCompletionSuggestion>()
     for (generator in arg.generators) {
       val result = generatorsExecutor.execute(context, generator)
-      suggestions.addAll(result)
+      // Wrap ordinary completion suggestions into ShellArgumentSuggestion to be able to get the argument spec in ShellCommandTreeBuilder
+      val adjustedSuggestions = result.map { if (it !is ShellCommandSpec) ShellArgumentSuggestion(it, arg) else it }
+      suggestions.addAll(adjustedSuggestions)
     }
     return suggestions
   }

@@ -1,19 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion
 
-import com.intellij.terminal.block.completion.ShellEnvironment
-import com.intellij.terminal.block.completion.engine.ShellCommandNode
-import com.intellij.terminal.block.completion.engine.ShellCommandTreeBuilder
-import com.intellij.terminal.block.completion.engine.ShellCommandTreeNode
-import com.intellij.terminal.block.completion.engine.ShellCommandTreeSuggestionsProvider
-import org.jetbrains.plugins.terminal.block.util.FakeShellCommandSpecsManager
-import org.jetbrains.plugins.terminal.block.util.FakeShellRuntimeDataProvider
-import com.intellij.terminal.completion.util.commandSpec
+import com.intellij.terminal.block.completion.ShellCommandSpecCompletion
+import com.intellij.terminal.block.completion.spec.ShellCommandParserDirectives
+import com.intellij.terminal.block.completion.spec.ShellCommandResult
+import com.intellij.testFramework.UsefulTestCase.assertNotNull
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
-import com.intellij.util.containers.TreeTraversal
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.terminal.completion.ShellCommand
-import org.jetbrains.terminal.completion.ShellCommandParserDirectives
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
+import org.jetbrains.plugins.terminal.block.util.TestCommandSpecsManager
+import org.jetbrains.plugins.terminal.block.util.TestGeneratorsExecutor
+import org.jetbrains.plugins.terminal.block.util.TestRuntimeContextProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -23,155 +22,162 @@ import java.io.File
 class ShellCommandSpecSuggestionsTest {
   private val commandName = "command"
   private var filePathSuggestions: List<String> = emptyList()
-  private var shellEnvironment: ShellEnvironment? = null
-  private var commandMap: Map<String, ShellCommand> = emptyMap()
 
-  private val spec = commandSpec(commandName) {
+  private val spec = ShellCommandSpec(commandName) {
     option("-a", "--asd")
     option("--bcde") {
       isPersistent = true
       repeatTimes = 2
     }
     option("--argum") {
-      argument("optArg", isOptional = true) {
+      argument {
+        isOptional = true
         suggestions("all", "none", "default")
       }
     }
 
-    argument("mainCmdArg", isOptional = true) {
+    argument {
+      isOptional = true
       suggestions("abc")
     }
 
-    subcommand("sub") {
-      option("-o", "--opt1")
-      option("-a") {
-        repeatTimes = 0
-      }
-      option("--long")
-      option("--withReqArg") {
-        argument("reqArg") {
-          suggestions("argValue")
-        }
-      }
-      option("--withOptArg") {
-        argument("optArg", isOptional = true)
-      }
-
-      argument("file") {
-        suggestions("file")
-      }
-      argument("someOptArg", isOptional = true) {
-        suggestions("s1")
-      }
-    }
-
-    subcommand("excl") {
-      option("-a") {
-        exclusiveOn("-b")
-      }
-      option("-b") {
-        exclusiveOn("-a")
-      }
-      option("-c")
-      option("-d") {
-        dependsOn("-a", "-c")
-      }
-    }
-
-    subcommand("reqSub") {
-      requiresSubcommand = true
-      subcommand("abc")
-      option("-a")
-    }
-
-    subcommand("manyArgs") {
-      argument("a1", isOptional = true) {
-        suggestions("arg1")
-      }
-      argument("a2") {
-        suggestions("arg2", "arg22")
-      }
-      argument("a3", isOptional = true) {
-        suggestions("arg3")
-      }
-      argument("a4") {
-        suggestions("arg4", "arg44")
-      }
-    }
-
-    subcommand("optPrecedeArgs") {
-      parserDirectives = ShellCommandParserDirectives(optionsMustPrecedeArguments = true)
-      option("-c")
-      option("-d")
-      argument("arg", isOptional = true) {
-        suggestions("arg")
-      }
-
+    subcommands {
       subcommand("sub") {
-        option("-e")
-        option("-f")
-        argument("arg") {
-          suggestions("arg2")
+        option("-o", "--opt1")
+        option("-a") {
+          repeatTimes = 0
+        }
+        option("--long")
+        option("--withReqArg") {
+          argument {
+            suggestions("argValue")
+          }
+        }
+        option("--withOptArg") {
+          argument {
+            isOptional = true
+          }
+        }
+
+        argument {
+          suggestions("file")
+        }
+        argument {
+          isOptional = true
+          suggestions("s1")
         }
       }
-    }
 
-    subcommand("variadic") {
-      option("-a")
-      option("--var") {
-        argument("var") {
+      subcommand("excl") {
+        option("-a") {
+          exclusiveOn = listOf("-b")
+        }
+        option("-b") {
+          exclusiveOn = listOf("-a")
+        }
+        option("-c")
+        option("-d") {
+          dependsOn = listOf("-a", "-c")
+        }
+      }
+
+      subcommand("reqSub") {
+        requiresSubcommand = true
+        subcommands {
+          subcommand("abc")
+        }
+        option("-a")
+      }
+
+      subcommand("manyArgs") {
+        argument {
+          isOptional = true
+          suggestions("arg1")
+        }
+        argument {
+          suggestions("arg2", "arg22")
+        }
+        argument {
+          isOptional = true
+          suggestions("arg3")
+        }
+        argument {
+          suggestions("arg4", "arg44")
+        }
+      }
+
+      subcommand("optPrecedeArgs") {
+        parserDirectives = ShellCommandParserDirectives.create(optionsMustPrecedeArguments = true)
+        option("-c")
+        option("-d")
+        argument {
+          isOptional = true
+          suggestions("arg")
+        }
+
+        subcommands {
+          subcommand("sub") {
+            option("-e")
+            option("-f")
+            argument {
+              suggestions("arg2")
+            }
+          }
+        }
+      }
+
+      subcommand("variadic") {
+        option("-a")
+        option("--var") {
+          argument {
+            isVariadic = true
+            suggestions("var1", "var2")
+          }
+        }
+        argument {
+          suggestions("req")
+        }
+        argument {
           isVariadic = true
-          suggestions("var1", "var2")
+          suggestions("v")
+        }
+        argument {
+          isOptional = true
+          suggestions("opt")
         }
       }
-      argument("req") {
-        suggestions("req")
-      }
-      argument("var") {
-        isVariadic = true
-        suggestions("v")
-      }
-      argument("opt", isOptional = true) {
-        suggestions("opt")
-      }
-    }
 
-    subcommand("variadic2") {
-      option("-b")
-      option("---") {
-        argument("varOpt") {
+      subcommand("variadic2") {
+        option("-b")
+        option("---") {
+          argument {
+            isVariadic = true
+            optionsCanBreakVariadicArg = false
+            suggestions("var")
+          }
+        }
+        argument {
           isVariadic = true
           optionsCanBreakVariadicArg = false
-          suggestions("var")
+          suggestions("v")
+        }
+        argument {
+          suggestions("end")
         }
       }
-      argument("var") {
-        isVariadic = true
-        optionsCanBreakVariadicArg = false
-        suggestions("v")
-      }
-      argument("end") {
-        suggestions("end")
-      }
-    }
 
-    subcommand("cd") {
-      argument("dir") {
-        templates("folders")
-        suggestions("-", "~")
-      }
-    }
-
-    subcommand("sudo") {
-      argument("cmd") {
-        isCommand = true
+      subcommand("cd") {
+        argument {
+          suggestions("-", "~")
+          generator(fileSuggestionsGenerator(onlyDirectories = true))
+        }
       }
     }
   }
 
   @Test
   fun `main command`() {
-    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cd", "sudo",
+    doTest(expected = listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cd",
                              "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
@@ -296,47 +302,26 @@ class ShellCommandSpecSuggestionsTest {
     doTest("cd", typedPrefix = "\"someDir$separator", expected = listOf("dir$separator", "folder$separator"))
   }
 
-  @Test
-  fun `suggest command names for command argument`() {
-    val commands = listOf("cmd", "ls", "git")
-    mockShellEnvironment(ShellEnvironment(commands = commands))
-    doTest("sudo", expected = commands + "--bcde")
-  }
-
-  @Test
-  fun `suggest subcommands and options for nested command`() {
-    val nestedCommandName = "cmd"
-    val nestedCommand = commandSpec(nestedCommandName) {
-      subcommand("sub")
-      option("-a")
-      option("--opt")
-    }
-    mockCommandManager(mapOf(nestedCommandName to nestedCommand))
-    mockShellEnvironment(ShellEnvironment(commands = listOf(nestedCommandName)))
-    doTest("sudo", nestedCommandName, expected = listOf("sub", "-a", "--opt"))
-  }
-
   private fun doTest(vararg arguments: String, typedPrefix: String = "", expected: List<String>) = runBlocking {
-    val commandSpecManager = FakeShellCommandSpecsManager(commandMap)
-    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider(filePathSuggestions, shellEnvironment))
-    val rootNode: ShellCommandNode = ShellCommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
-                                                                   commandName, spec, arguments.asList())
-    val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(rootNode as ShellCommandTreeNode<*>) { node -> node.children }
-    val lastNode = allChildren.last() ?: rootNode
-    val actual = suggestionsProvider.getSuggestionsOfNext(lastNode, typedPrefix).flatMap { it.names }.filter { it.isNotEmpty() }
-
+    // Mock fileSuggestionsGenerator result
+    val generatorCommandsRunner = object : ShellGeneratorCommandsRunner {
+      override suspend fun runGeneratorCommand(command: String): ShellCommandResult {
+        val output = filePathSuggestions.joinToString("\n")
+        return ShellCommandResult.create(output, exitCode = 0)
+      }
+    }
+    val completion = ShellCommandSpecCompletion(
+      TestCommandSpecsManager(spec),
+      TestGeneratorsExecutor(),
+      TestRuntimeContextProvider(generatorCommandsRunner = generatorCommandsRunner)
+    )
+    val suggestions = completion.computeCompletionItems(commandName, arguments.toList() + typedPrefix)
+    assertNotNull("Completion suggestions are null", suggestions)
+    val actual = suggestions!!.flatMap { it.names }
     assertSameElements(actual, expected)
   }
 
   private fun mockFilePathsSuggestions(vararg files: String) {
     filePathSuggestions = files.asList()
-  }
-
-  private fun mockShellEnvironment(env: ShellEnvironment) {
-    shellEnvironment = env
-  }
-
-  private fun mockCommandManager(commands: Map<String, ShellCommand>) {
-    commandMap = commands
   }
 }

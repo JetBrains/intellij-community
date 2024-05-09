@@ -1,0 +1,17 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.block.util
+
+import com.intellij.terminal.block.completion.ShellCommandSpecsManager
+import com.intellij.terminal.block.completion.spec.ShellCommandSpec
+
+class TestCommandSpecsManager(vararg specs: ShellCommandSpec) : ShellCommandSpecsManager {
+  private val specs: Map<String, ShellCommandSpec> = specs.flatMap { spec -> spec.names.map { it to spec } }.associate { it }
+
+  override suspend fun getCommandSpec(commandName: String): ShellCommandSpec? {
+    return specs[commandName]
+  }
+
+  override suspend fun getFullCommandSpec(spec: ShellCommandSpec): ShellCommandSpec {
+    return spec
+  }
+}
