@@ -30,6 +30,13 @@ class MarkdownHighlightingAnnotator : Annotator {
           else -> null
         }
       }
+      MarkdownTokenTypes.DOLLAR -> annotateBasedOnParent(element, holder) {
+        when (it) {
+          MarkdownElementTypes.BLOCK_MATH -> MarkdownHighlighterColors.CODE_FENCE_MARKER
+          MarkdownElementTypes.INLINE_MATH -> MarkdownHighlighterColors.CODE_SPAN_MARKER
+          else -> null
+        }
+      }
       else -> annotateWithHighlighter(element, holder)
     }
   }

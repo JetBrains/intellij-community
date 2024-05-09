@@ -59,6 +59,8 @@ public interface MarkdownTokenTypes extends TokenType {
   IElementType BACKTICK = platformType(org.intellij.markdown.MarkdownTokenTypes.BACKTICK);
   IElementType ESCAPED_BACKTICKS = platformType(org.intellij.markdown.MarkdownTokenTypes.ESCAPED_BACKTICKS);
 
+  IElementType DOLLAR = platformType(GFMTokenTypes.DOLLAR);
+
   IElementType LIST_BULLET = platformType(org.intellij.markdown.MarkdownTokenTypes.LIST_BULLET);
   IElementType URL = platformType(org.intellij.markdown.MarkdownTokenTypes.URL);
   IElementType HORIZONTAL_RULE = platformType(org.intellij.markdown.MarkdownTokenTypes.HORIZONTAL_RULE);
