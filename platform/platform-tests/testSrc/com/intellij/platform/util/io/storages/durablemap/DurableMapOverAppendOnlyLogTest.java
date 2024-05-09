@@ -1,12 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.durablemap;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
+import com.intellij.util.io.Unmappable;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,8 +94,106 @@ public class DurableMapOverAppendOnlyLogTest extends DurableMapTestBase<String, 
 
     List<Map.Entry<String, String>> entries = DurableMapOverAppendOnlyLogTest.listAllEntries(storage);
     assertTrue(entries.isEmpty(),
-                          ".forEachEntry() must list nothing after removing all the entries");
+               ".forEachEntry() must list nothing after removing all the entries");
   }
+
+  @Test
+  public void mapContent_WithManyMappingsAddedAndRemoved_CouldBeRestored_ifHashToIdMapping_IsLost() throws IOException {
+    //RC: real scenario we're testing is 'improper termination' there ExtendibleMap content is corrupted, hence
+    //    needs to be re-created from main entriesLog (see DurableMapFactory.rebuildMapFromLogIfInconsistent branch).
+
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      storage.put(key, value);
+      storage.remove(key);
+    }
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      storage.put(key, value);
+    }
+
+    ((Unmappable)storage).closeAndUnsafelyUnmap();
+
+    //force a recovery: remove .map file, and reopen storage
+    {
+      //In this test I want to test recovery itself, so don't bother emulating map corruption -- and just remove the whole
+      //   .map file instead:
+      var mapPath = storagePath().resolveSibling(storagePath().getFileName() + ".map");
+      assertTrue(
+        Files.exists(mapPath),
+        mapPath + " must exists"
+      );
+      FileUtil.delete(mapPath);
+      reopenStorage();
+    }
+
+    assertEquals(
+      keyValuesSubstrate.length,
+      storage.size(),
+      "Storage must contain " + keyValuesSubstrate.length + " items"
+    );
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      assertEquals(
+        storage.get(key),
+        value,
+        "Storage must contain (" + key + ", " + value + ") entry"
+      );
+    }
+  }
+
+  @Test
+  public void mapContent_WithManyMappingsAddedAndRemoved_CouldBeRestored_ifHashToIdMapping_IsCorrupted() throws Exception {
+    //RC: real scenario we're testing is 'improper termination' there ExtendibleMap content is corrupted, hence
+    //    needs to be re-created from main entriesLog (see DurableMapFactory.rebuildMapFromLogIfInconsistent branch).
+
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      storage.put(key, value);
+      storage.remove(key);
+    }
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      storage.put(key, value);
+    }
+
+    //Force a recovery: map is 'improperly closed'
+    StorageTestingUtils.emulateImproperClose(storage);
+    reopenStorage();
+
+    assertEquals(
+      keyValuesSubstrate.length,
+      storage.size(),
+      "Storage must contain " + keyValuesSubstrate.length + " items"
+    );
+    for (int substrate : keyValuesSubstrate) {
+      Map.Entry<String, String> entry = keyValue(substrate);
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      assertEquals(
+        storage.get(key),
+        value,
+        "Storage must contain (" + key + ", " + value + ") entry"
+      );
+    }
+  }
+
 
 
   ///////
