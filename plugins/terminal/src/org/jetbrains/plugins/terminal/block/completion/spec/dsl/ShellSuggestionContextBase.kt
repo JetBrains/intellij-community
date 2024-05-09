@@ -11,6 +11,12 @@ internal abstract class ShellSuggestionContextBase(
   override var description: Supplier<@Nls String>? = null
   override var insertValue: String? = null
   override var priority: Int = 50
+    set(value) {
+      if (value in 0..100) {
+        field = value
+      }
+      else error("Priority must be between 0 and 100")
+    }
 
   init {
     if (names.isEmpty()) {

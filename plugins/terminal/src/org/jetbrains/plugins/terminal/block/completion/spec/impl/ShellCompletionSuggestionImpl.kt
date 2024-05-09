@@ -13,6 +13,12 @@ internal class ShellCompletionSuggestionImpl(
   override val insertValue: String?,
   override val priority: Int
 ) : ShellCompletionSuggestionBase(names, descriptionSupplier) {
+  init {
+    if (priority !in 0..100) {
+      error("Priority must be between 0 and 100")
+    }
+  }
+
   override fun toString(): String {
     return "ShellCompletionSuggestionImpl(names=$names, type=$type, displayName=$displayName, insertValue=$insertValue, priority=$priority, description=$description)"
   }

@@ -20,6 +20,12 @@ internal class ShellOptionSpecImpl(
   override val dependsOn: List<String>,
   override val arguments: List<ShellArgumentSpec>
 ) : ShellCompletionSuggestionBase(names, descriptionSupplier), ShellOptionSpec {
+  init {
+    if (priority !in 0..100) {
+      error("Priority must be between 0 and 100")
+    }
+  }
+
   override fun toString(): String {
     return "ShellOptionSpecImpl(names=$names, displayName=$displayName, isRequired=$isRequired, isPersistent=$isPersistent, separator=$separator, repeatTimes=$repeatTimes, exclusiveOn=$exclusiveOn, dependsOn=$dependsOn, insertValue=$insertValue, priority=$priority)"
   }

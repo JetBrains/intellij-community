@@ -21,6 +21,12 @@ internal class ShellCommandSpecImpl(
   override val options: List<ShellOptionSpec> by lazy { optionsSupplier() }
   override val arguments: List<ShellArgumentSpec> by lazy { argumentsSupplier() }
 
+  init {
+    if (priority !in 0..100) {
+      error("Priority must be between 0 and 100")
+    }
+  }
+
   override fun toString(): String {
     return "ShellCommandSpecImpl(names=$names, displayName=$displayName, insertValue=$insertValue, priority=$priority, requiresSubcommand=$requiresSubcommand, parserDirectives=$parserDirectives, description=$description, subcommandsGenerator=$subcommandsGenerator, options=$options, arguments=$arguments)"
   }

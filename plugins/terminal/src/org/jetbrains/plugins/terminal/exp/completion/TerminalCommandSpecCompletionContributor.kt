@@ -140,7 +140,8 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
         .withTailText(nextSuggestions, true)
         .withIcon(icon)
         .withInsertHandler(MyInsertHandler(this, appendPathSeparator))
-      PrioritizedLookupElement.withPriority(element, priority / 100.0)
+      val adjustedPriority = priority.coerceIn(0, 100)
+      PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
     }
   }
 
