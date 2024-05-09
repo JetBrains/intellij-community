@@ -169,7 +169,7 @@
     <fileEditorProvider id="markdown-preview-editor" implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
 
-    <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
+    <fileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
 
     <breadcrumbsInfoProvider id="MarkdownDefaultBreadcrumbs"
                              implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
