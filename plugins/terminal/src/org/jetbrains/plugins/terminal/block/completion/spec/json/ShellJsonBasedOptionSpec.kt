@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec.json
 import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
 import com.intellij.terminal.block.completion.spec.ShellOptionSpec
 import org.jetbrains.terminal.completion.ShellOption
+import javax.swing.Icon
 
 /**
  * @param [parentCommandNames] used to build cache key/debug name of the argument's generators
@@ -26,6 +27,9 @@ internal class ShellJsonBasedOptionSpec(
 
   override val priority: Int
     get() = data.priority
+
+  // the icon of option will be specified in the completion logic
+  override val icon: Icon? = null
 
   override val isRequired: Boolean
     get() = data.isRequired

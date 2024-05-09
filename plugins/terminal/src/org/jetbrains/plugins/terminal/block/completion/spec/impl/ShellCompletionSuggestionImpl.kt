@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 import com.intellij.terminal.block.completion.spec.ShellSuggestionType
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
+import javax.swing.Icon
 
 internal class ShellCompletionSuggestionImpl(
   names: List<String>,
@@ -11,7 +12,8 @@ internal class ShellCompletionSuggestionImpl(
   override val displayName: String?,
   descriptionSupplier: Supplier<@Nls String>?,
   override val insertValue: String?,
-  override val priority: Int
+  override val priority: Int,
+  override val icon: Icon?
 ) : ShellCompletionSuggestionBase(names, descriptionSupplier) {
   init {
     if (priority !in 0..100) {

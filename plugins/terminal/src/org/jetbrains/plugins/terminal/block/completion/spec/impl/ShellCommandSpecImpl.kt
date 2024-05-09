@@ -5,6 +5,7 @@ import com.intellij.terminal.block.completion.spec.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.emptyListGenerator
 import java.util.function.Supplier
+import javax.swing.Icon
 
 internal class ShellCommandSpecImpl(
   names: List<String>,
@@ -20,6 +21,9 @@ internal class ShellCommandSpecImpl(
 ) : ShellCompletionSuggestionBase(names, descriptionSupplier), ShellCommandSpec {
   override val options: List<ShellOptionSpec> by lazy { optionsSupplier() }
   override val arguments: List<ShellArgumentSpec> by lazy { argumentsSupplier() }
+
+  // the icon of command will be specified in the completion logic
+  override val icon: Icon? = null
 
   init {
     if (priority !in 0..100) {

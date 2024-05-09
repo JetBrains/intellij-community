@@ -5,6 +5,7 @@ import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
 import com.intellij.terminal.block.completion.spec.ShellOptionSpec
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
+import javax.swing.Icon
 
 internal class ShellOptionSpecImpl(
   names: List<String>,
@@ -20,6 +21,9 @@ internal class ShellOptionSpecImpl(
   override val dependsOn: List<String>,
   override val arguments: List<ShellArgumentSpec>
 ) : ShellCompletionSuggestionBase(names, descriptionSupplier), ShellOptionSpec {
+  // the icon of option will be specified in the completion logic
+  override val icon: Icon? = null
+
   init {
     if (priority !in 0..100) {
       error("Priority must be between 0 and 100")

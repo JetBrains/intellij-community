@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec.json
 import com.intellij.terminal.block.completion.spec.*
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.terminal.completion.ShellCommand
+import javax.swing.Icon
 
 /**
  * @param [parentNames] used to build cache key/debug name of the subcommand/option/argument generators
@@ -26,6 +27,9 @@ internal class ShellJsonBasedCommandSpec(
 
   override val priority: Int
     get() = data.priority
+
+  // the icon of command will be specified in the completion logic
+  override val icon: Icon? = null
 
   override val requiresSubcommand: Boolean
     get() = data.requiresSubcommand

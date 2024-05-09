@@ -11,6 +11,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandCont
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellCommandSpecDsl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCompletionSuggestionImpl
 import java.util.function.Supplier
+import javax.swing.Icon
 
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
@@ -27,7 +28,8 @@ fun ShellCompletionSuggestion(
   displayName: String? = null,
   description: Supplier<@Nls String>? = null,
   insertValue: String? = null,
-  priority: Int = 50
+  priority: Int = 50,
+  icon: Icon? = null,
 ): ShellCompletionSuggestion {
-  return ShellCompletionSuggestionImpl(listOf(name), type, displayName, description, insertValue, priority)
+  return ShellCompletionSuggestionImpl(listOf(name), type, displayName, description, insertValue, priority, icon)
 }

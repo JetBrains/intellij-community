@@ -122,7 +122,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
 
   private fun ShellCompletionSuggestion.toLookupElements(): List<LookupElement> {
     return names.map { name ->
-      val icon = findIconForSuggestion(name, type)
+      val actualIcon = icon ?: findIconForSuggestion(name, type)
       val realInsertValue = insertValue?.replace("{cursor}", "")
       val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
       val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
@@ -138,7 +138,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       val element = LookupElementBuilder.create(this, lookupString)
         .withPresentableText(displayName ?: name)
         .withTailText(nextSuggestions, true)
-        .withIcon(icon)
+        .withIcon(actualIcon)
         .withInsertHandler(MyInsertHandler(this, appendPathSeparator))
       val adjustedPriority = priority.coerceIn(0, 100)
       PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
