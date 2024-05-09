@@ -2,9 +2,15 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.jdk2k
 
 import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -19,9 +25,10 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.callExpressionVisitor
 
 internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
-    KotlinApplicableInspectionBase.MultiFixes<KtCallExpression, List<Replacement>>() {
+    KotlinApplicableInspectionBase<KtCallExpression, List<Replacement>>() {
 
     private fun findReplacementCandidatesByPsi(element: KtCallExpression): List<Replacement> {
         val callee = element.calleeExpression ?: return emptyList()
@@ -31,7 +38,8 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
         } ?: emptyList()
     }
 
-    override fun isApplicableByPsi(element: KtCallExpression): Boolean = !findReplacementCandidatesByPsi(element).isEmpty()
+    override fun isApplicableByPsi(element: KtCallExpression): Boolean =
+        !findReplacementCandidatesByPsi(element).isEmpty()
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallExpression): List<Replacement>? {
@@ -45,28 +53,38 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
         }.takeIf { it.isNotEmpty() }
     }
 
-    override fun getProblemDescription(element: KtCallExpression, context: List<Replacement>): String =
-        KotlinBundle.message("should.be.replaced.with.kotlin.function")
+    override fun InspectionManager.createProblemDescriptor(
+        element: KtCallExpression,
+        context: List<Replacement>,
+        rangeInElement: TextRange?,
+        onTheFly: Boolean,
+    ): ProblemDescriptor = createProblemDescriptor(
+        /* psiElement = */ element,
+        /* rangeInElement = */ rangeInElement,
+        /* descriptionTemplate = */ KotlinBundle.message("should.be.replaced.with.kotlin.function"),
+        /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        /* onTheFly = */ onTheFly,
+        /* ...fixes = */ *(context.map { it.asQuickFix() }.toArray(LocalQuickFix.EMPTY_ARRAY)),
+    )
 
-    override fun createQuickFixes(
-        element: KtCallExpression, context: List<Replacement>
-    ): Collection<KotlinModCommandQuickFix<KtCallExpression>> = context.map<Replacement, KotlinModCommandQuickFix<KtCallExpression>> {
-        object : KotlinModCommandQuickFix<KtCallExpression>() {
-            override fun getFamilyName(): String {
-                val suffix = if (it.mayChangeSemantics) KotlinBundle.message("quickfix.text.suffix.may.change.semantics") else ""
-                return KotlinBundle.message("replace.with.kotlin.analog.function.text", it.kotlinFunctionShortName) + suffix
-            }
+    private fun Replacement.asQuickFix() = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
-            override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
-                it.transformation(element, it)
-            }
-        }
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.with.kotlin.analog.function.text", kotlinFunctionShortName) +
+                    if (mayChangeSemantics) KotlinBundle.message("quickfix.text.suffix.may.change.semantics") else ""
+
+        override fun applyFix(
+            project: Project,
+            element: KtCallExpression,
+            updater: ModPsiUpdater,
+        ): Unit = transformation(element, this@asQuickFix)
     }
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
-        override fun visitCallExpression(expression: KtCallExpression) {
-            visitTargetElement(expression, holder, isOnTheFly)
-        }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): KtVisitorVoid = callExpressionVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
     }
 }
 
