@@ -51,11 +51,11 @@ internal class MarkdownFileDropHandler: CustomFileDropHandler() {
       return false
     }
     val files = FileCopyPasteUtil.getFiles(transferable)?.asSequence() ?: return false
-    val content = buildTextContent(files, file)
+    val content = Manager.buildTextContent(files, file)
     val document = editor.document
     runWriteAction {
-      handleReadOnlyModificationException(project, document) {
-        executeCommand(project, commandName) {
+      Manager.handleReadOnlyModificationException(project, document) {
+        executeCommand(project, Manager.commandName) {
           editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
             document.insertString(caret.offset, content)
             caret.moveToOffset(content.length)
@@ -66,11 +66,11 @@ internal class MarkdownFileDropHandler: CustomFileDropHandler() {
     return true
   }
 
-  companion object {
-    private val commandName
+  internal object Manager {
+    val commandName
       get() = MarkdownImagesBundle.message("markdown.image.file.drop.handler.drop.command.name")
 
-    internal fun buildTextContent(files: Sequence<Path>, file: PsiFile): String {
+    fun buildTextContent(files: Sequence<Path>, file: PsiFile): String {
       val imageFileType = ImageFileTypeManager.getInstance().imageFileType
       val registry = FileTypeRegistry.getInstance()
       val currentDirectory = obtainDirectoryPath(file)
@@ -111,7 +111,7 @@ internal class MarkdownFileDropHandler: CustomFileDropHandler() {
       return "[${file.name}]($independentPath)"
     }
 
-    internal fun handleReadOnlyModificationException(project: Project, document: Document, block: () -> Unit) {
+    fun handleReadOnlyModificationException(project: Project, document: Document, block: () -> Unit) {
       try {
         block.invoke()
       } catch (exception: ReadOnlyModificationException) {

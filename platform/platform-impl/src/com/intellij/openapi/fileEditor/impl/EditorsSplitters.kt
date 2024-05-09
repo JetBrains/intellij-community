@@ -26,7 +26,7 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
-import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
+import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
@@ -800,7 +800,7 @@ private class MyFocusTraversalPolicy(private val splitters: EditorsSplitters) : 
 }
 
 private class MyTransferHandler(private val splitters: EditorsSplitters) : TransferHandler() {
-  private val fileDropHandler = FileDropHandler(null)
+  private val fileDropHandler = FileEditorDropHandler(null)
 
   override fun importData(comp: JComponent, t: Transferable): Boolean {
     if (fileDropHandler.canHandleDrop(t.transferDataFlavors)) {

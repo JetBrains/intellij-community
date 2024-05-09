@@ -15,7 +15,7 @@ import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import java.awt.datatransfer.DataFlavor
 
-internal class FileLinkPasteProvider: PasteProvider {
+internal class FileLinkPasteProvider : PasteProvider {
   override fun performPaste(dataContext: DataContext) {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
     val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
@@ -24,9 +24,9 @@ internal class FileLinkPasteProvider: PasteProvider {
     val files = FileCopyPasteUtil.getFiles(transferable)?.asSequence() ?: return
     val file = PsiEditorUtil.getPsiFile(editor)
     val document = editor.document
-    val content = MarkdownFileDropHandler.buildTextContent(files, file)
+    val content = MarkdownFileDropHandler.Manager.buildTextContent(files, file)
     runWriteAction {
-      MarkdownFileDropHandler.handleReadOnlyModificationException(project, document) {
+      MarkdownFileDropHandler.Manager.handleReadOnlyModificationException(project, document) {
         executeCommand(project) {
           editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
             val offset = caret.offset
