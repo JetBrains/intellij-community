@@ -105,11 +105,7 @@ public final class BasicLiteralUtil {
   private static @NotNull String getTextBlockIndentString(String @NotNull [] lines) {
     IndentResult result = getTextBlockIndentInner(lines, true, false);
     String restorationLine = lines[result.indentLineNumber];
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < result.indentSize; ++i) {
-      builder.append(restorationLine.charAt(i));
-    }
-    return builder.toString();
+    return restorationLine.substring(0, result.indentSize);
   }
 
   private static class IndentResult {
