@@ -2,6 +2,8 @@
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ClickListener;
@@ -86,7 +88,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
       myValueLabel.repaint();
     });
     showPopupMenuOnClick();
-    showPopupMenuFromKeyboard();
+    showPopupMenuFromKeyboardAndClearOnDelete();
     if (shouldIndicateHovering()) {
       Stream.of(this, myFilterActionButton, myNameLabel, myValueLabel)
         .filter(nonNull())
@@ -103,6 +105,15 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     myFilterActionButton.setIcon(selected ? AllIcons.Actions.Close : AllIcons.General.ArrowDown);
     myFilterActionButton.setHoveredIcon(selected ? AllIcons.Actions.CloseHovered : AllIcons.General.ArrowDown);
     myFilterActionButton.setFocusable(selected);
+    if (selected) {
+      new HelpTooltip()
+        .setTitle(VcsLogBundle.message("vcs.log.filter.clear"))
+        .setShortcut(KeymapUtil.getKeyText(KeyEvent.VK_DELETE))
+        .installOn(myFilterActionButton);
+    }
+    else {
+      HelpTooltip.dispose(myFilterActionButton);
+    }
   }
 
   @Override
@@ -154,13 +165,16 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     });
   }
 
-  private void showPopupMenuFromKeyboard() {
+  private void showPopupMenuFromKeyboardAndClearOnDelete() {
     addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(@NotNull KeyEvent e) {
         if (!isEnabled()) return;
         if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_DOWN) {
           showPopup();
+        }
+        if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+          resetFilter();
         }
       }
     });
@@ -223,7 +237,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     }
   }
 
-  private void resetFilter() {
+  protected void resetFilter() {
     Runnable resetAction = createResetAction();
     if (resetAction != null) {
       resetAction.run();

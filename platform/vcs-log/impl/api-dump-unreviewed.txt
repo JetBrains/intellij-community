@@ -12,6 +12,7 @@ a:com.intellij.util.ui.FilterComponent
 - initUi():javax.swing.JComponent
 - a:installChangeListener(java.lang.Runnable):V
 - pa:isValueSelected():Z
+- p:resetFilter():V
 - setEnabled(Z):V
 - setShowPopupAction(java.lang.Runnable):V
 - p:shouldDrawLabel():com.intellij.util.ui.FilterComponent$DrawLabelMode
