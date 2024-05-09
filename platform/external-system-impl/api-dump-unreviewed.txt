@@ -958,12 +958,6 @@ c:com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigu
 - suggestedName():java.lang.String
 - writeExternal(org.jdom.Element):V
 - ps:writeExternalBoolean(org.jdom.Element,java.lang.String,Z):V
-com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationExtension
-- a:appendEditors(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,com.intellij.openapi.options.SettingsEditorGroup):V
-- a:attachToProcess(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler,com.intellij.execution.configurations.RunnerSettings):V
-- a:readExternal(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,org.jdom.Element):V
-- a:updateVMParameters(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,com.intellij.execution.configurations.SimpleJavaParameters,com.intellij.execution.configurations.RunnerSettings,com.intellij.execution.Executor):V
-- a:writeExternal(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,org.jdom.Element):V
 f:com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 - com.intellij.build.BuildProgressListener
 - com.intellij.build.BuildProgressObservable
