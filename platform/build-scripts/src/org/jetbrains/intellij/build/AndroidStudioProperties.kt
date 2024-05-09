@@ -201,9 +201,11 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       },
       plugin("intellij.c.clangd.plugin") { spec ->
         spec.withModule("intellij.c.clangd")
+        spec.withModule("intellij.c.dfa", spec.mainJarName)
       },
       plugin("intellij.c.clangdBridge.plugin") { spec ->
         spec.withModule("intellij.c.clangdBridge")
+        spec.withModule("intellij.c.dfa.bridge", spec.mainJarName)
       },
       plugin("intellij.cidr.clangConfig.plugin") { spec ->
         spec.withModule("intellij.cidr.clangConfig")
