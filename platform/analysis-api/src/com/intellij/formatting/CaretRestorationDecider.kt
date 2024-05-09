@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting
 
+import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface CaretRestorationDecider {
   /**
-   * Determines whether the caret position should be restored after formatting.
+   * Determines whether the caret position should be restored after formatting. Should be invoked under read action.
    * @param document the document being formatted
    * @param editor the editor in which the document is being displayed
    * @param caretOffset offset in which the caret is located.
@@ -23,5 +24,10 @@ interface CaretRestorationDecider {
    */
   fun shouldRestoreCaret(document: Document, editor: Editor, caretOffset: Int): Boolean
 
-  companion object : LanguageExtension<CaretRestorationDecider>("com.intellij.formatting.caretRestorationDecider")
+  companion object {
+    private val EP_NAME = LanguageExtension<CaretRestorationDecider>("com.intellij.formatting.caretRestorationDecider")
+
+    @JvmStatic
+    fun forLanguage(language: Language): CaretRestorationDecider? = EP_NAME.forLanguage(language)
+  }
 }

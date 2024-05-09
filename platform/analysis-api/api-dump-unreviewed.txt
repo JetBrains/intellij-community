@@ -2205,9 +2205,10 @@ f:com.intellij.codeInspection.util.RefEntityAlphabeticalComparator
 - s:getInstance():com.intellij.codeInspection.util.RefEntityAlphabeticalComparator
 *:com.intellij.formatting.CaretRestorationDecider
 - *sf:Companion:com.intellij.formatting.CaretRestorationDecider$Companion
+- s:forLanguage(com.intellij.lang.Language):com.intellij.formatting.CaretRestorationDecider
 - a:shouldRestoreCaret(com.intellij.openapi.editor.Document,com.intellij.openapi.editor.Editor,I):Z
 *f:com.intellij.formatting.CaretRestorationDecider$Companion
-- com.intellij.lang.LanguageExtension
+- f:forLanguage(com.intellij.lang.Language):com.intellij.formatting.CaretRestorationDecider
 a:com.intellij.ide.PlatformIdeService
 - <init>():V
 - createHyperlinkConsumer():java.util.function.BiConsumer

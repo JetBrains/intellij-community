@@ -43,7 +43,7 @@ public final class CaretPositionKeeper {
     }
 
     int caretOffset = getCaretOffset();
-    CaretRestorationDecider decider = CaretRestorationDecider.Companion.forLanguage(language);
+    CaretRestorationDecider decider = CaretRestorationDecider.forLanguage(language);
 
     if (decider == null) {
       decider = DefaultCaretRestorationDecider.INSTANCE;
