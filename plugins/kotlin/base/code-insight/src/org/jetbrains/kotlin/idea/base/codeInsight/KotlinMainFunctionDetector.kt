@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -65,6 +67,12 @@ interface KotlinMainFunctionDetector {
         const val MAIN_FUNCTION_NAME: String = "main"
 
         fun getInstance(): KotlinMainFunctionDetector = service()
+
+        @ApiStatus.Internal
+        fun getInstanceDumbAware(project: Project): KotlinMainFunctionDetector {
+            return if (DumbService.isDumb(project)) PsiOnlyKotlinMainFunctionDetector
+            else getInstance()
+        }
     }
 }
 
