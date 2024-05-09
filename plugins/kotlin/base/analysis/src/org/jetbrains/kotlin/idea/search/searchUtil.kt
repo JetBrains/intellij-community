@@ -96,7 +96,7 @@ fun PsiElement.codeUsageScopeRestrictedToKotlinSources(): SearchScope = codeUsag
 fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     name: String,
     scope: GlobalSearchScope,
-    fileToIgnoreOccurrencesIn: PsiFile?
+    fileToIgnoreOccurrencesIn: PsiFile? = null
 ): PsiSearchHelper.SearchCostResult {
     if (OperatorConventions.isConventionName(Name.identifier(name))) {
         return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES

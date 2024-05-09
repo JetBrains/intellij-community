@@ -162,7 +162,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                         listOfNotNull(declaration.getClassNameForCompanionObject())
                 for (name in list) {
                     if (name == null) continue
-                    when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null)) {
+                    when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)) {
                         ZERO_OCCURRENCES -> {
                         } // go on, check other names
                         FEW_OCCURRENCES -> zeroOccurrences = false
