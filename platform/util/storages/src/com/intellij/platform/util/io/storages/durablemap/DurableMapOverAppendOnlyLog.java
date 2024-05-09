@@ -13,6 +13,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,9 @@ import java.util.function.BiPredicate;
  * Construct with {@link DurableMapFactory}, not with constructor
  */
 @ApiStatus.Internal
-public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
+public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unmappable {
+
+  public static final int DATA_FORMAT_VERSION = 1;
 
   //TODO RC: current implementation is almost single-threaded -- all the operations, including (potential) IO, happen
   //         under keyHashToIdMap's lock. The only reason for that is an attempt to avoid storing repeating (key,value)
@@ -137,17 +140,17 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
         adjustedHash,
         candidateRecordId -> {
           long logRecordId = convertStoredIdToLogId(candidateRecordId);
-          Entry<K, V> entry = readEntryIfKeyMatch(logRecordId, key);
-          if (entry == null) {
+          Entry<K, V> entryWithSameKey = readEntryIfKeyMatch(logRecordId, key);
+          if (entryWithSameKey == null) {
             return false; // [record.key != key] => hash collision => look further
           }
-          if (nullSafeEquals(value, entry.value())) {
+          if (nullSafeEquals(value, entryWithSameKey.value())) {
             //record with key existed, and with the same value
             // => just return, don't store entry ref -- we already know both key & value
             return true;
           }
           //record with key exists, but with different value
-          resultRef.set(entry);
+          resultRef.set(entryWithSameKey);
           return true;
         }
       );
@@ -295,18 +298,42 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      IOException.class,
-      () -> new IOException("Can't close " + keyValuesLog + "/" + keyHashToIdMap),
+      IOException.class, () -> new IOException("Can't close " + keyValuesLog + "/" + keyHashToIdMap),
+
       keyValuesLog::close,
       keyHashToIdMap::close
     );
   }
 
   @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      IOException.class, () -> new IOException("Can't closeAndClean " + keyValuesLog + "/" + keyHashToIdMap),
+
+      () -> {
+        if (keyValuesLog instanceof Unmappable unmappable) {
+          unmappable.closeAndUnsafelyUnmap();
+        }
+        else {
+          keyValuesLog.close();
+        }
+      },
+      () -> {
+        if (keyHashToIdMap instanceof Unmappable unmappable) {
+          unmappable.closeAndUnsafelyUnmap();
+        }
+        else {
+          keyHashToIdMap.close();
+        }
+      }
+    );
+  }
+
+  @Override
   public void closeAndClean() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      IOException.class,
-      () -> new IOException("Can't closeAndClean " + keyValuesLog + "/" + keyHashToIdMap),
+      IOException.class, () -> new IOException("Can't closeAndClean " + keyValuesLog + "/" + keyHashToIdMap),
+
       keyValuesLog::closeAndClean,
       keyHashToIdMap::closeAndClean
     );
@@ -319,7 +346,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   // ============================= infrastructure: ============================================================================ //
 
-  private static int convertLogIdToStoredId(long logRecordId) {
+  static int convertLogIdToStoredId(long logRecordId) {
     int storeId = (int)(logRecordId);
     if (storeId != logRecordId) {
       throw new IllegalStateException("logRecordId(=" + logRecordId + ") doesn't fit into int32");
@@ -327,7 +354,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
     return storeId;
   }
 
-  private static long convertStoredIdToLogId(int storedRecordId) {
+  static long convertStoredIdToLogId(int storedRecordId) {
     return storedRecordId;
   }
 
