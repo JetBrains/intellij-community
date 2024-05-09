@@ -726,7 +726,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   }
 
   @VisibleForTesting
-  static final class HashMapSegmentLayout implements HashTableData {
+  record HashMapSegmentLayout(int segmentIndex,
+                              int segmentSize,
+                              @NotNull ByteBuffer segmentBuffer) implements HashTableData {
     //@formatter:off
     private static final int LIVE_ENTRIES_COUNT_OFFSET  =  0; //int32
     private static final int HASH_SUFFIX_OFFSET         =  4; //int32
@@ -737,28 +739,19 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     private static final int HASHTABLE_SLOTS_OFFSET     = STATIC_HEADER_SIZE; //int32[N]
     //@formatter:on
 
-    private final int segmentSize;
-    private final int segmentIndex;
-
-    private final ByteBuffer segmentBuffer;
+    HashMapSegmentLayout {
+      if (segmentIndex < 1) {
+        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
+      }
+    }
 
     HashMapSegmentLayout(@NotNull BufferSource bufferSource,
                          int segmentIndex,
                          int segmentSize) throws IOException {
-      if (segmentIndex < 1) {
-        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
-      }
-      this.segmentIndex = segmentIndex;
-      this.segmentSize = segmentSize;
-
-      long offsetInFile = segmentIndex * (long)segmentSize;
-
-      this.segmentBuffer = bufferSource.slice(offsetInFile, segmentSize);
+      this(segmentIndex, segmentSize,
+           bufferSource.slice(segmentIndex * (long)segmentSize, segmentSize)
+      );
     }
-
-    public int segmentIndex() { return segmentIndex; }
-
-    public int segmentSize() { return segmentSize; }
 
     @Override
     public int aliveEntriesCount() {
