@@ -60,8 +60,8 @@ class ModuleOutputPatcher {
     }
   }
 
-  fun getPatchedPluginXmlIfExists(moduleName: String): String? {
-    return patches.get(moduleName)?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value?.decodeToString()
+  fun getPatchedPluginXmlIfExists(moduleName: String): ByteArray? {
+    return patches.get(moduleName)?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value
   }
 
   fun getPatchedPluginXml(moduleName: String): ByteArray {

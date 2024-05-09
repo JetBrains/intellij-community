@@ -119,7 +119,7 @@ class JarPackager private constructor(
   private val context: BuildContext,
   private val platformLayout: PlatformLayout?,
   private val isRootDir: Boolean,
-  private val moduleOutputPatcher: ModuleOutputPatcher,
+  internal @JvmField val moduleOutputPatcher: ModuleOutputPatcher,
 ) {
   private val assets = LinkedHashMap<Path, AssetDescriptor>()
 
@@ -337,7 +337,7 @@ class JarPackager private constructor(
       }
 
       if (moduleName == layout.mainModule) {
-        val pluginId = helper.getPluginIdByModule(module, moduleOutputPatcher = moduleOutputPatcher)
+        val pluginId = helper.getPluginIdByModule(module)
         moduleSources.addAll(searchableOptionSet.createSourceByPlugin(pluginId))
       }
       else {

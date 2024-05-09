@@ -63,7 +63,7 @@ internal suspend fun computeModuleSourcesByContent(
   jarPackager: JarPackager,
   searchableOptionSet: SearchableOptionSetDescriptor?
 ) {
-  for (moduleName in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule))) {
+  for (moduleName in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule), jarPackager.moduleOutputPatcher)) {
     // todo PyCharm team why this module is being incorrectly published
     if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter" || !addedModules.add(moduleName)) {
       continue

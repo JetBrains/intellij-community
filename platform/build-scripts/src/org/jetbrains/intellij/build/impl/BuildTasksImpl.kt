@@ -97,20 +97,17 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
 
     buildProjectArtifacts(
       platform = distState.platform,
-      enabledPluginModules = getEnabledPluginModules(
-        pluginsToPublish = distState.pluginsToPublish,
-        context = context
-      ),
+      enabledPluginModules = getEnabledPluginModules(pluginsToPublish = distState.pluginsToPublish, context = context),
       compilationTasks = compilationTasks,
       context = context,
     )
-    val searchableOptionSetDescriptor = buildSearchableOptions(context)
+    val searchableOptionSet = buildSearchableOptions(context)
     buildNonBundledPlugins(
       pluginsToPublish = pluginsToPublish,
       compressPluginArchive = context.options.compressZipFiles,
       buildPlatformLibJob = null,
       state = distState,
-      searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+      searchableOptionSet = searchableOptionSet,
       context = context
     )
   }
@@ -192,7 +189,7 @@ private suspend fun localizeModules(context: BuildContext, moduleNames: Collecti
   else {
     moduleNames.asSequence().mapNotNull { context.findModule(it) }
       .flatMap { m ->
-        (context as BuildContextImpl).jarPackagerDependencyHelper.readPluginContentFromDescriptor(m).mapNotNull { context.findModule(it) } + sequenceOf(m)
+        (context as BuildContextImpl).jarPackagerDependencyHelper.readPluginIncompleteContentFromDescriptor(m).mapNotNull { context.findModule(it) } + sequenceOf(m)
       }.flatMap { m ->
         m.dependenciesList.dependencies.asSequence().filterIsInstance<JpsModuleDependency>().mapNotNull { it.module } + sequenceOf(m)
       }.distinctBy { m -> m.name }.toList()
@@ -768,7 +765,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
         compressPluginArchive = context.options.compressZipFiles,
         buildPlatformLibJob = null,
         state = distributionState,
-        searchableOptionSetDescriptor = buildSearchableOptions(context),
+        searchableOptionSet = buildSearchableOptions(context),
         context = context
       )
       return@coroutineScope
@@ -1466,7 +1463,7 @@ internal fun collectIncludedPluginModules(enabledPluginModules: Collection<Strin
     }
 
     plugin.includedModules.mapTo(result) { it.moduleName }
-    result.addAll((context as BuildContextImpl).jarPackagerDependencyHelper.readPluginContentFromDescriptor(context.findRequiredModule(plugin.mainModule)))
+    result.addAll((context as BuildContextImpl).jarPackagerDependencyHelper.readPluginIncompleteContentFromDescriptor(context.findRequiredModule(plugin.mainModule)))
   }
 }
 

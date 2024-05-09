@@ -113,7 +113,7 @@ internal suspend fun buildDistribution(
         compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles,
         buildPlatformLibJob = buildPlatformJob,
         state = state,
-        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+        searchableOptionSet = searchableOptionSetDescriptor,
         context = context,
       )
     }
@@ -380,7 +380,7 @@ suspend fun buildNonBundledPlugins(
   compressPluginArchive: Boolean,
   buildPlatformLibJob: Job?,
   state: DistributionBuilderState,
-  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): List<DistributionFileEntry> {
   return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope { span ->
@@ -410,7 +410,7 @@ suspend fun buildNonBundledPlugins(
       plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
       targetDir = stageDir,
       state = state,
-      searchableOptionSet = searchableOptionSetDescriptor,
+      searchableOptionSet = searchableOptionSet,
       context = context,
       buildPlatformJob = buildPlatformLibJob,
     ) { plugin, pluginDirOrFile ->
@@ -442,7 +442,7 @@ suspend fun buildNonBundledPlugins(
         targetDir = autoUploadingDir,
         moduleOutputPatcher = moduleOutputPatcher,
         state = state,
-        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+        searchableOptionSetDescriptor = searchableOptionSet,
         context = context,
       )
       pluginSpecs.add(spec)

@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -40,16 +41,31 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     }
   }
 
-  fun getPluginIdByModule(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): String {
-    val root = readXmlAsModel(StringReader(moduleOutputPatcher.getPatchedPluginXmlIfExists(pluginModule.name) ?: getPluginXmlContent(pluginModule)))
+  fun getPluginIdByModule(pluginModule: JpsModule): String {
+    // it is ok to read the plugin descriptor with unresolved x-include as the ID should be specified at the root
+    val root = readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")
     return element.content!!
   }
 
-  fun readPluginContentFromDescriptor(pluginModule: JpsModule): Sequence<String> {
+  fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<String> {
+    return readPluginContentFromDescriptor(getResolvedPluginDescriptor(pluginModule, moduleOutputPatcher))
+  }
+
+  // plugin patcher should be executed before
+  private fun getResolvedPluginDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): XmlElement {
+    return moduleOutputPatcher.getPatchedPluginXmlIfExists(pluginModule.name)?.let { readXmlAsModel(it) } ?: readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
+  }
+
+  // The x-include is not resolved. If the plugin.xml includes any files, the content from these included files will not be considered.
+  fun readPluginIncompleteContentFromDescriptor(pluginModule: JpsModule): Sequence<String> {
     val pluginXml = context.findFileInModuleSources(pluginModule, "META-INF/plugin.xml") ?: return emptySequence()
+    return readPluginContentFromDescriptor(readXmlAsModel(pluginXml))
+  }
+
+  private fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<String> {
     return sequence {
-      for (content in readXmlAsModel(pluginXml).children("content")) {
+      for (content in pluginDescriptor.children("content")) {
         for (module in content.children("module")) {
           val moduleName = module.attributes.get("name")?.takeIf { !it.contains('/') } ?: continue
           yield(moduleName)
