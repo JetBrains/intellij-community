@@ -197,7 +197,7 @@ internal operator fun TextUnit.plus(delta: Float): TextUnit =
 
 internal fun retrieveIdeaDensity(sourceDensity: Density): Density {
     val ideaScale = UISettingsUtils.getInstance().currentIdeScale
-    val scale = ideaScale * sourceDensity.density
+    val fontScale = sourceDensity.fontScale * ideaScale
 
-    return Density(scale, sourceDensity.fontScale)
+    return Density(sourceDensity.density, fontScale)
 }
