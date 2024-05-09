@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.block.completion.spec.*
+import com.intellij.terminal.block.completion.spec.ShellCommandSpec
+import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCommandSpecImpl
@@ -13,40 +13,14 @@ import java.io.File
 
 @ApiStatus.Experimental
 object ShellDataGenerators {
-  private val LOG: Logger = logger<ShellDataGenerators>()
-
   fun fileSuggestionsGenerator(onlyDirectories: Boolean = false): ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> {
-    fun getBasePath(context: ShellRuntimeContext): String {
-      val separator = File.separatorChar
-      val adjustedPrefix = context.typedPrefix.removePrefix("\"").removeSuffix("'")
-      return if (adjustedPrefix.contains(separator)) {
-        adjustedPrefix.substringBeforeLast(separator) + separator
-      }
-      else "."
-    }
-
+    val key = if (onlyDirectories) "directories" else "files"
     return ShellRuntimeDataGenerator(
-      debugName = "files",
-      getCacheKey = { "files:${getBasePath(it)}" }
+      debugName = key,
+      getCacheKey = { "$key:${getParentPath(it.typedPrefix)}" }
     ) { context ->
-      val separator = File.separatorChar
-      val basePath = getBasePath(context)
-      val result = context.runShellCommand("__jetbrains_intellij_get_directory_files $basePath")
-      if (result.exitCode != 0) {
-        LOG.error("Get files command for path '$basePath' failed with exit code ${result.exitCode}, output: ${result.output}")
-        return@ShellRuntimeDataGenerator emptyList()
-      }
-      result.output.splitToSequence("\n")
-        .filter { !onlyDirectories || it.endsWith(separator) }
-        // do not suggest './' and '../' directories if the user already typed some path
-        .filter { basePath == "." || (it != ".$separator" && it != "..$separator") }
-        .map {
-          val type = if (it.endsWith(separator)) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
-          ShellCompletionSuggestion(it, type)
-        }
-        // add an empty choice to be able to handle the case when the folder is chosen
-        .let { if (basePath != ".") it.plus(ShellCompletionSuggestion("")) else it }
-        .toList()
+      val path = getParentPath(context.typedPrefix)
+      context.getFileSuggestions(path, onlyDirectories)
     }
   }
 
@@ -85,5 +59,22 @@ object ShellDataGenerators {
   fun createCacheKey(commandNames: List<String>, suffix: String): String {
     assert(commandNames.isNotEmpty())
     return commandNames.joinToString(".") + " $suffix"
+  }
+
+  /**
+   * Tries to guess the parent path of [typedPrefix] if it is a file path.
+   * For example,
+   * 1. `file.txt` -> `<empty>`
+   * 2. `src/file.txt` -> `src/`
+   * 3. `/usr/b` -> `/usr/`
+   */
+  fun getParentPath(typedPrefix: String): String {
+    val separator = File.separatorChar
+    // Remove possible quotes before and after
+    val adjustedPrefix = typedPrefix.removePrefix("\"").removeSuffix("'")
+    return if (adjustedPrefix.contains(separator)) {
+      adjustedPrefix.substringBeforeLast(separator) + separator
+    }
+    else ""
   }
 }
