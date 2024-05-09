@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -11,6 +12,7 @@ import com.intellij.openapi.roots.impl.RootFileValidityChecker
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -30,7 +32,8 @@ import java.util.*
 
 internal class LibrariesAndSdkContributors(private val project: Project,
                                            private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
-                                           private val fileSetsByPackagePrefix: PackagePrefixStorage
+                                           private val fileSetsByPackagePrefix: PackagePrefixStorage,
+                                           parentDisposable: Disposable,
 ) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
   private val sdkRoots = MultiMap.create<Sdk, VirtualFile>()
   private val libraryRoots = MultiMap<Library, VirtualFile>(IdentityHashMap())
@@ -41,6 +44,10 @@ internal class LibrariesAndSdkContributors(private val project: Project,
   init {
     moduleDependencyIndex.addListener(this)
     ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener(this)
+    Disposer.register(parentDisposable) {
+      moduleDependencyIndex.removeListener(this)
+      ProjectRootManagerEx.getInstanceEx(project).removeProjectJdkListener(this)
+    }
   }
   
   fun registerFileSets() {

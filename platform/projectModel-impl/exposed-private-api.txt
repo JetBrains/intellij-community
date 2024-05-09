@@ -8,4 +8,3 @@ com/intellij/platform/workspace/storage/VersionedEntityStorage
 com/intellij/workspaceModel/ide/impl/WorkspaceModelImpl
 com/intellij/workspaceModel/ide/impl/legacyBridge/sdk/SdkBridgeImpl
 com/intellij/workspaceModel/ide/legacyBridge/ModuleBridge
-com/intellij/workspaceModel/ide/legacyBridge/ModuleDependencyListener

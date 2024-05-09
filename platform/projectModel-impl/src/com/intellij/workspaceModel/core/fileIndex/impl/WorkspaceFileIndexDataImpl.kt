@@ -2,11 +2,13 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -22,7 +24,7 @@ import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
 
 internal class WorkspaceFileIndexDataImpl(private val contributorList: List<WorkspaceFileIndexContributor<*>>,
-                                          private val project: Project): WorkspaceFileIndexData {
+                                          private val project: Project): WorkspaceFileIndexData, Disposable {
   private val contributors = contributorList.filter { it.storageKind == EntityStorageKind.MAIN }.groupBy { it.entityClass }
   private val contributorsForUnloaded = contributorList.filter { it.storageKind == EntityStorageKind.UNLOADED }.groupBy { it.entityClass }
   private val contributorDependencies = contributorList.associateWith { it.dependenciesOnOtherEntities }
@@ -35,7 +37,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   
   private val packageDirectoryCache: PackageDirectoryCacheImpl
   private val nonIncrementalContributors = NonIncrementalContributors(project)
-  private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, fileSets, fileSetsByPackagePrefix)
+  private val librariesAndSdkContributors = LibrariesAndSdkContributors(project, fileSets, fileSetsByPackagePrefix, this)
   private val fileIdWithoutFileSets = ConcurrentBitSet.create()
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
   private val dirtyEntities = HashSet<EntityPointer<WorkspaceEntity>>()
@@ -47,7 +49,8 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   init {
     WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
     val start = Nanoseconds.now()
-
+    
+    Disposer.register(project, this)
     packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     registerAllEntities(EntityStorageKind.MAIN)
     registerAllEntities(EntityStorageKind.UNLOADED)
@@ -371,6 +374,9 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
       packageName.isEmpty() -> packagePrefix
       else -> "$packagePrefix.$packageName"
     }
+  }
+
+  override fun dispose() {
   }
 
   override fun getDirectoriesByPackageName(packageName: String,

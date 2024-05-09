@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.impl.DirectoryIndexImpl
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -28,14 +29,29 @@ import com.intellij.util.ThreeState
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
+import java.util.concurrent.atomic.AtomicReference
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
   companion object {
     val EP_NAME: ExtensionPointName<WorkspaceFileIndexContributor<*>> = ExtensionPointName("com.intellij.workspaceModel.fileIndexContributor")
   }
 
-  @Volatile
-  override var indexData: WorkspaceFileIndexData = EmptyWorkspaceFileIndexData.NOT_INITIALIZED 
+  private val indexDataReference = AtomicReference<WorkspaceFileIndexData>(EmptyWorkspaceFileIndexData.NOT_INITIALIZED)
+  
+  override var indexData: WorkspaceFileIndexData
+    get() = indexDataReference.get()
+    set(newValue) {
+      fun WorkspaceFileIndexData.dispose() {
+        if (this is Disposable) Disposer.dispose(this)
+      }
+      val current = indexDataReference.get()
+      if (indexDataReference.compareAndSet(current, newValue)) {
+        current.dispose()
+      }
+      else {
+        newValue.dispose()
+      }
+    }
 
   init {
     project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
@@ -279,8 +295,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   private fun getMainIndexData(): WorkspaceFileIndexData {
-    var data = indexData
-    when (data) {
+    when (indexData) {
       EmptyWorkspaceFileIndexData.NOT_INITIALIZED -> {
         if (project.isDefault) {
           thisLogger().warn("WorkspaceFileIndex must not be queried for the default project")
@@ -290,11 +305,10 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
         }
       }
       EmptyWorkspaceFileIndexData.RESET -> {
-        data = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project)
-        indexData = data
+        indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project)
       }
     }
-    return data
+    return indexData
   }
 
   override fun reset() {

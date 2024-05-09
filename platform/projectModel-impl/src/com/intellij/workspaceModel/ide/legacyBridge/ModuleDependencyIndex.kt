@@ -26,6 +26,11 @@ interface ModuleDependencyIndex {
    * tables. 
    */
   fun addListener(listener: ModuleDependencyListener)
+  
+  /**
+   * Unregisters a listener added by [addListener]. 
+   */
+  fun removeListener(listener: ModuleDependencyListener)
 
   fun setupTrackedLibrariesAndJdks()
   
@@ -57,6 +62,7 @@ interface ModuleDependencyIndex {
  * The methods of this listener are called synchronously under 'write action' lock. Events about module-level libraries aren't fired,
  * because such libraries are implicitly added to containing modules.
  */
+@ApiStatus.Internal
 interface ModuleDependencyListener : EventListener {
   /** 
    * Called when [library] is added to dependency of some module, and there were no dependencies on this library before 

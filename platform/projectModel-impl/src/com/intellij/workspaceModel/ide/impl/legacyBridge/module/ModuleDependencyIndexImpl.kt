@@ -30,8 +30,10 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
   companion object {
     private const val LIBRARY_NAME_DELIMITER = ":"
@@ -65,6 +67,10 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
   override fun addListener(listener: ModuleDependencyListener) {
     eventDispatcher.addListener(listener)
+  }
+
+  override fun removeListener(listener: ModuleDependencyListener) {
+    eventDispatcher.removeListener(listener)
   }
 
   override fun setupTrackedLibrariesAndJdks() {
