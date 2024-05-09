@@ -3,6 +3,7 @@
 
 package com.intellij.ui
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.plugins.PluginManagerCore
@@ -45,7 +46,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   private fun changeValue(prevNewUi: Boolean, newUi: Boolean) {
     val application = ApplicationManager.getApplication()
-    if (application.isHeadlessEnvironment || application.isUnitTestMode) {
+    if (application.isHeadlessEnvironment || application.isUnitTestMode || !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
       return
     }
 
