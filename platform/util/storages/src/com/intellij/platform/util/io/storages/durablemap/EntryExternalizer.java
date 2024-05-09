@@ -25,6 +25,10 @@ public interface EntryExternalizer<K, V> extends DataExternalizerEx<EntryExterna
   @NotNull
   Entry<K, V> read(@NotNull ByteBuffer input) throws IOException;
 
+  //MAYBE RC: instead of series of 'short-circuit' methods -- make Entry an interface with lazy .key/.value/.isValueVoid()
+  //          evaluation? I.e. keep reference to ByteBuffer slice, and deserialize key/value only as needed?
+  //          But overhead could be quite pronounced?
+
   /**
    * @return [key, value] entry read from the input buffer, if entry.key==expectedKey, or null if the entry contains key!=expectedKey
    * I.e. it is just short-circuit version of {@link #read(ByteBuffer)} that checks entry.key.equals(expectedKey) early on,
@@ -33,6 +37,14 @@ public interface EntryExternalizer<K, V> extends DataExternalizerEx<EntryExterna
   @Nullable
   Entry<K, V> readIfKeyMatch(@NotNull ByteBuffer input,
                              @NotNull K expectedKey) throws IOException;
+
+  /**
+   * @return key from the record, or null, if record is 'deleted'
+   * I.e. it is another short-circuit for
+   * {@code entry=read(input); if(entry.isValueVoid()) {null}else{entry.key()}}
+   */
+  @Nullable
+  K readKey(@NotNull ByteBuffer input) throws IOException;
 
   //TODO boolean isKeyMatch(@NotNull K expectedKey) throws IOException;
 

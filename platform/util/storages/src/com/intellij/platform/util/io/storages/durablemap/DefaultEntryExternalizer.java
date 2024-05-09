@@ -96,6 +96,20 @@ public class DefaultEntryExternalizer<K, V> implements EntryExternalizer<K, V> {
     return new Entry<>(expectedKey, candidateValue);
   }
 
+  @Override
+  public @Nullable K readKey(@NotNull ByteBuffer input) throws IOException {
+    int header = readHeader(input);
+    int keyRecordSize = keySize(header);
+    boolean valueIsNull = isValueVoid(header);
+    if (valueIsNull) {
+      return null;
+    }
+    ByteBuffer keyRecordSlice = input
+      .position(HEADER_SIZE)
+      .limit(HEADER_SIZE + keyRecordSize);
+    return keyDescriptor.read(keyRecordSlice);
+  }
+
   private static int readHeader(@NotNull ByteBuffer keyBuffer) {
     return keyBuffer.getInt(0);
   }

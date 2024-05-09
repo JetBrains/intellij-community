@@ -193,13 +193,16 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor) throws IOException {
-    Set<K> alreadyProcessed = CollectionFactory.createSmallMemoryFootprintSet();
     //Keys listed via .forEach() are non-unique -- having 2 entries (key, value1), (key, value2) same key be listed twice.
-    //MAYBE RC: Having alreadyProcessed set is expensive for large maps, better have .forEachKey() method
-    //          in DurableIntToMultiIntMap
-    //TODO RC: forEachEntry() reads & deserializes both key and value -- but we don't need values here, only keys are needed.
-    //         Specialize method so it reads only keys?
-    return forEachEntry((key, value) -> {
+    Set<K> alreadyProcessed = CollectionFactory.createSmallMemoryFootprintSet();
+    //MAYBE RC: Having alreadyProcessed set is expensive for large maps?
+    return keyHashToIdMap.forEach((keyHash, recordId) -> {
+      K key = readKey(convertStoredIdToLogId(recordId));
+      if (key == null) {
+        throw new AssertionError(
+          "(keyHash: " + keyHash + ", recordId: " + recordId + "): key can't be null, removed records must NOT be in keyHashToIdMap"
+        );
+      }
       if (alreadyProcessed.add(key)) {
         return processor.process(key);
       }
@@ -387,6 +390,11 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
 
   private Entry<K, V> readEntry(long logRecordId) throws IOException {
     return keyValuesLog.read(logRecordId, entryExternalizer::read);
+  }
+
+  /** @return a key from record(logRecordId), or null, if the record is deleted */
+  private @Nullable K readKey(long logRecordId) throws IOException {
+    return keyValuesLog.read(logRecordId, entryExternalizer::readKey);
   }
 
   private long appendEntry(@NotNull K key,

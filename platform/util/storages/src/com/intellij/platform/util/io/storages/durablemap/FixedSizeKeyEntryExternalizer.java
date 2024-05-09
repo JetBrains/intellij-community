@@ -98,6 +98,20 @@ public class FixedSizeKeyEntryExternalizer<K, V> implements EntryExternalizer<K,
     return new Entry<>(expectedKey, candidateValue);
   }
 
+  @Override
+  public @Nullable K readKey(@NotNull ByteBuffer input) throws IOException {
+    byte header = readHeader(input);
+    boolean valueIsNull = isValueVoid(header);
+    if (valueIsNull) {
+      return null;
+    }
+
+    ByteBuffer keyRecordSlice = input
+      .position(HEADER_SIZE)
+      .limit(HEADER_SIZE + keyRecordSize);
+    return keyDescriptor.read(keyRecordSlice);
+  }
+
 
   private static byte readHeader(@NotNull ByteBuffer keyBuffer) {
     return keyBuffer.get(0);
