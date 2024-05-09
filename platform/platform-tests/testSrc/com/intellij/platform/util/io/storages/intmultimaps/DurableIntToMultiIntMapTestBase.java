@@ -125,6 +125,41 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
     assertTrue(values.contains(3), "Values for key=1 must contain 3");
   }
 
+  @Test
+  public void manyKeyValues_PutRemovedAndPutAgain_AreAllExistInTheMap() throws IOException {
+    long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
+
+    //test for entries removing-overwriting: add/remove/add again the entries from the map,
+    // and check map behave as-if only the last added entries are there
+
+    putAllEntries(multimap, packedKeysValues);
+    removeAllEntries(multimap, packedKeysValues);
+
+    assertEquals(0, multimap.size(),
+                 "Map must be empty since all entries were removed"
+    );
+
+    for (long packedKeyValue : packedKeysValues) {
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+
+      boolean reallyPut = multimap.put(key, value);
+      assertTrue(reallyPut, "(" + key + ", " + value + ") must be a new entry for the map");
+    }
+
+    assertEquals(packedKeysValues.length,
+                 multimap.size(),
+                 "Map.size must be equal to the number of entries added"
+    );
+
+    for (long packedKeyValue : packedKeysValues) {
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+
+      assertTrue(multimap.has(key, value),
+                 "(" + key + ", " + value + ") must exist in the map");
+    }
+  }
 
   @Test
   public void withManyKeyValuesPut_MultimapSizeIsEqualToNumberOfTruthReturned() throws IOException {
@@ -174,11 +209,7 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
   @Test
   public void remove_DeletesKeyValueFromTheMultimap_AndReturnsTrueIfKeyValuePreviouslyExists() throws IOException {
     long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
-    for (long packedKeyValue : packedKeysValues) {
-      int key = key(packedKeyValue);
-      int value = value(packedKeyValue);
-      multimap.put(key, value);
-    }
+    putAllEntries(multimap, packedKeysValues);
 
     for (long packedKeyValue : packedKeysValues) {
       int key = key(packedKeyValue);
@@ -256,13 +287,33 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
   /* ======================== infrastructure: ================================================================ */
 
 
-  private int lookupSingleValue(int key,
-                                int value) throws IOException {
+  protected static void putAllEntries(@NotNull DurableIntToMultiIntMap multimap,
+                                      long[] packedKeysValues) throws IOException {
+    for (long packedKeyValue : packedKeysValues) {
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+
+      multimap.put(key, value);
+    }
+  }
+
+  private static void removeAllEntries(@NotNull DurableIntToMultiIntMap multimap,
+                                       long[] packedKeysValues) throws IOException {
+    for (long packedKeyValue : packedKeysValues) {
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+
+      multimap.remove(key, value);
+    }
+  }
+
+  protected int lookupSingleValue(int key,
+                                  int value) throws IOException {
     return multimap.lookup(key, v -> (v == value));
   }
 
-  private static @NotNull IntOpenHashSet lookupAllValues(@NotNull DurableIntToMultiIntMap multimap,
-                                                         int key) throws IOException {
+  protected static @NotNull IntOpenHashSet lookupAllValues(@NotNull DurableIntToMultiIntMap multimap,
+                                                           int key) throws IOException {
     IntOpenHashSet values = new IntOpenHashSet();
     multimap.lookup(key, value -> {
       values.add(value);
@@ -271,19 +322,19 @@ public abstract class DurableIntToMultiIntMapTestBase<M extends DurableIntToMult
     return values;
   }
 
-  private static int key(long packedKeyValue) {
+  protected static int key(long packedKeyValue) {
     return (int)(packedKeyValue >> 32);
   }
 
-  private static int value(long packedKeyValue) {
+  protected static int value(long packedKeyValue) {
     return (int)packedKeyValue;
   }
 
-  private static long[] generateUniqueKeyValues(int size) {
+  protected static long[] generateUniqueKeyValues(int size) {
     return ThreadLocalRandom.current().longs()
       //generate more multi-value-keys, to better check appropriate branches: +1,+2,... is almost always
       // have same upper 32 bits (=key), but different lower 32 bits (=value) => this switch creates
-      // approximately 1/14 of keys with 2 values, and another 3/14 of keys with 5 values, and 10/14 of
+      // approximately 3/14 of keys with 2 values, another 1/14 of keys with 5 values, and 10/14 of
       // keys with a single value
       .flatMap(v -> switch ((int)(v % 14)) {
         case 13 -> LongStream.of(v, v + 1, v - 1, v + 42, v - 42);
