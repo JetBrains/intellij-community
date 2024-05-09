@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-@RemoteSetting(direction = RemoteSettingDirection.FromHost)
 @State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
 public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
   implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState>, Disposable {

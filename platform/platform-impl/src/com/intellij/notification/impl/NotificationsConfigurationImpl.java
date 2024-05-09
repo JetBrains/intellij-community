@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@RemoteSetting(direction = RemoteSettingDirection.FromClient)
 @State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"), category = SettingsCategory.UI)
 public final class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(NotificationsConfigurationImpl.class);

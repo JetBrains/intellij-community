@@ -28,7 +28,6 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@RemoteSetting(direction = RemoteSettingDirection.FromHost, allowedInCwm = true)
 @State(name = "CodeInsightSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance(CodeInsightSettings.class);

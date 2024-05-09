@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.SystemDependent
 
 
-@RemoteSetting(direction = RemoteSettingDirection.FromHost)
 @State(name = "GeneralSettings", storages = [Storage(GeneralSettings.IDE_GENERAL_XML)], category = SettingsCategory.SYSTEM)
 class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
   private var state = GeneralSettingsState()
@@ -231,7 +230,6 @@ data class GeneralSettingsState(
   @ReportValue
   @JvmField
   var confirmOpenNewProject2: Int? = null,
-  @field:RemoteSetting(direction = RemoteSettingDirection.FromClient)
   @JvmField
   var processCloseConfirmation: ProcessCloseConfirmation = ProcessCloseConfirmation.ASK,
   @JvmField

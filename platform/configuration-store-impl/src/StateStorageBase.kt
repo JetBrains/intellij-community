@@ -129,7 +129,7 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
 
     val element: Element?
     try {
-      element = serializeState(state = state, component = component, componentName = componentName, pluginId = pluginId, controller = controller, roamingType = roamingType)
+      element = serializeState(state = state, componentName = componentName, pluginId = pluginId, controller = controller, roamingType = roamingType)
     }
     catch (e: WriteExternalException) {
       LOG.debug(e)
@@ -148,7 +148,7 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
   abstract fun setSerializedState(componentName: String, element: Element?)
 }
 
-internal fun serializeState(state: Any, component: Any?, componentName: String, pluginId: PluginId, controller: SettingsController?, roamingType: RoamingType?): Element? {
+internal fun serializeState(state: Any, componentName: String, pluginId: PluginId, controller: SettingsController?, roamingType: RoamingType?): Element? {
   @Suppress("DEPRECATION")
   when (state) {
     is Element -> {
@@ -156,7 +156,7 @@ internal fun serializeState(state: Any, component: Any?, componentName: String, 
         val key = SettingDescriptor(
           key = createSettingKey(componentName = componentName, binding = null),
           pluginId = pluginId,
-          tags = createTags(componentName, component, roamingType, extraTag = null),
+          tags = createTags(componentName, roamingType, extraTag = null),
           serializer = JsonElementSettingSerializerDescriptor,
         )
 
@@ -182,7 +182,6 @@ internal fun serializeState(state: Any, component: Any?, componentName: String, 
               rootBinding = rootBinding,
               state = state,
               filter = filter,
-              component = component,
               componentName = componentName,
               pluginId = pluginId,
               controller = controller,
@@ -190,7 +189,7 @@ internal fun serializeState(state: Any, component: Any?, componentName: String, 
             )
           }
           else if (rootBinding is KotlinxSerializationBinding) {
-            val keyTags = createTags(componentName, component, roamingType, extraTag = null)
+            val keyTags = createTags(componentName, roamingType, extraTag = null)
             val key = SettingDescriptor(
               key = createSettingKey(componentName = componentName, binding = null),
               pluginId = pluginId,
@@ -216,53 +215,40 @@ internal fun serializeState(state: Any, component: Any?, componentName: String, 
   }
 }
 
-private inline fun <reified T: Annotation> getAnnotationInSuperclass(value: Any): T? {
-  return generateSequence(value.javaClass) { it.superclass }
-    .mapNotNull { it.annotations.filterIsInstance<T>().firstOrNull() }
-    .firstOrNull()
-}
-
-private fun createTags(componentName: String, component: Any?, roamingType: RoamingType?, extraTag: SettingTag?): List<SettingTag> {
-  val tags = mutableListOf<SettingTag>(PersistenceStateComponentPropertyTag(componentName))
+private fun createTags(componentName: String, roamingType: RoamingType?, extraTag: SettingTag?): List<SettingTag> {
+  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName)
   if (roamingType == RoamingType.DISABLED) {
-    tags.add(NonShareableTag)
-  }
-  if (extraTag != null) {
-    tags.add(extraTag)
-  }
-
-  // TODO move rdct-specific code to some extension
-  if (component != null) {
-    getAnnotationInSuperclass<RemoteSetting>(component)?.let {
-      tags.add(RemoteSettingTag(it.direction.toString(), it.allowedInCwm))
+    if (extraTag == null) {
+      return java.util.List.of(componentPropertyTag, NonShareableTag)
+    }
+    else {
+      return java.util.List.of(componentPropertyTag, NonShareableTag, extraTag)
     }
   }
-  return tags
-}
-
-private fun createTagsForBinding(rootTags: List<SettingTag>, binding: NestedBinding): List<SettingTag> {
-  val remoteSetting = binding.accessor.getAnnotation(RemoteSetting::class.java)
-                      ?: return rootTags
-
-  val remoteSettingTag = RemoteSettingTag(remoteSetting.direction.toString(), remoteSetting.allowedInCwm)
-  return rootTags.filter { it !is RemoteSettingTag } + remoteSettingTag
+  else {
+    if (extraTag == null) {
+      return java.util.List.of(componentPropertyTag)
+    }
+    else {
+      return java.util.List.of(componentPropertyTag, extraTag)
+    }
+  }
 }
 
 private fun serializeWithController(
   rootBinding: BeanBinding,
   state: Any,
   filter: SkipDefaultsSerializationFilter,
-  component: Any?,
   componentName: String,
   pluginId: PluginId,
   controller: SettingsController,
   roamingType: RoamingType?
 ): Element? {
-  val keyTags = createTags(componentName, component, roamingType, extraTag = null)
+  val keyTags = createTags(componentName, roamingType, extraTag = null)
   var element: Element? = null
   for (binding in rootBinding.bindings!!) {
     val isPropertySkipped = isPropertySkipped(filter = filter, binding = binding, bean = state, rootBinding = rootBinding, isFilterPropertyItself = true)
-    val key = SettingDescriptor(key = createSettingKey(componentName, binding), pluginId = pluginId, tags = createTagsForBinding(keyTags, binding), serializer = JsonElementSettingSerializerDescriptor)
+    val key = SettingDescriptor(key = createSettingKey(componentName, binding), pluginId = pluginId, tags = keyTags, serializer = JsonElementSettingSerializerDescriptor)
     val result = controller.doSetItem(key = key, value = if (isPropertySkipped) null else binding.toJson(state, filter))
     if (isPropertySkipped) {
       continue
@@ -310,7 +296,7 @@ internal fun <T : Any> deserializeStateWithController(
         controller = controller,
         componentName = componentName,
         pluginId = pluginId,
-        tags = createTags(componentName, component = null, roamingType, extraTag = OldLocalValueSupplierTag(supplier = SynchronizedClearableLazy {
+        tags = createTags(componentName, roamingType, extraTag = OldLocalValueSupplierTag(supplier = SynchronizedClearableLazy {
           stateElement?.let {
             jdomToJson(it)
           }

@@ -32,7 +32,6 @@ private const val RECENT_TW_TAG = "recentWindows"
 private const val MORE_BUTTON_TAG = "moreButton"
 
 @ApiStatus.Internal
-//@DoNotSynchronizeSetting
 @State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class ToolWindowManagerStateImpl : ToolWindowManagerState {
   private val isNewUi = ExperimentalUI.isNewUI()

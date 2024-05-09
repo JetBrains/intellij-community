@@ -55,8 +55,3 @@ class OldLocalValueSupplierTag(private val supplier: Supplier<JsonElement?>) : S
 
   override fun toString(): String = "OldLocalValueSupplierTag"
 }
-
-// TODO move rdct-specific tags to some extension
-// TODO obviously a hack to avoid dependencies between `intellij.platform.settings` and `intellij.platform.projectModel`
-// TODO creation of tags must be extracted into some extension point, implemented in `intellij.cwm.common`
-class RemoteSettingTag(val direction: String, val allowedInCwm: Boolean) : SettingTag
