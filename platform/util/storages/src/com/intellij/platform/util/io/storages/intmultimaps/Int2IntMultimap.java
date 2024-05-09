@@ -149,12 +149,8 @@ public final class Int2IntMultimap {
       // But if there are no alive entries anymore -- we _can_ clear everything without breaking anything.
       Arrays.fill(table, NO_VALUE);
       filledSlots = 0;
+
       put(key, value);
-
-
-      //MAYBE RC: instead of waiting for table to be full of tombstones -- shrink the table earlier, then
-      //          e.g. (aliveEntries < 0.5..0.2 filledSlots)?
-      //          Otherwise performance degradation could be quite significant long before we come to this point!
     }
 
     if (firstTombstoneIndex != -1) {

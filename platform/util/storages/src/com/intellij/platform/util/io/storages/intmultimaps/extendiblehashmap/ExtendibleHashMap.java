@@ -1014,11 +1014,18 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         }
       }
 
-      //MAYBE RC: it could be there are not-so-many alive entries, but a lot of tombstones, and no free slots remain.
-      // This is because in the current design we never clear tombstones: during segment split we copy half of alive
-      // entries to a new segment, leaving tombstones in old one -- but we never clean the tombstones in the old segment.
-      // Tombstones are somewhat 'cleaned' by reusing their slots for new records, but this is stochastic, and could be
-      // not very effective
+      //probing sequence went through all the table: i.e. table is full -- but maybe there are tombstones to replace?
+
+      //TODO RC: In the current design we never clear tombstones: during segment split we copy half of alive entries
+      // to a new segment, but we leave the tombstones in old one -- hence, we never clean the tombstones in the old
+      // segment. Tombstones are somewhat 'cleaned' by reusing their slots for new records, but this is stochastic,
+      // and could be not very effective.
+      // Hence, in the current design it could be there are not-so-many alive entries, but a lot of tombstones -- which
+      // deteriorates performance.
+      // The simplest solution would be to prune the tombstones on segment split in old segment also: currently we copy
+      // ~1/2 alive entries in the new segment -- instead we should copy _all_ alive entries into memory buffer first,
+      // clean the old segment entirely, and copy the entries from in-memory buffer into old/new segments afterwards.
+
       if (aliveValues(table) == 0) {
         //If there is 0 alive records => it is OK to clear all the tombstones.
         // We can't clear all tombstones while alive entries exist because such a cleaning breaks lookup: we treat
@@ -1037,11 +1044,22 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         return put(table, key, value);
       }
 
+      if (firstTombstoneIndex != -1) {
+        //Probing sequence is terminated if:
+        // 1) key is found
+        // 2) free slot is found
+        // 3) no more slots to look for key -- all slots was visited (=key is definitely absent in the map)
+        // So, if we scan all the entries and not found a key, but we have found a tombstone along the way
+        //  => we can replace it with the entry at hand:
+        table.updateEntry(firstTombstoneIndex, key, value);
+        incrementAliveValues(table);
+        return true;
+      }
 
       //Table must be resized well before such a condition occurs!
       throw new AssertionError(
-        "Table is full: all " + capacity + " items were traversed, but no free slot found " +
-        "table.aliveEntries: " + table.aliveEntriesCount() + ", table: " + table
+        "Table is full: all " + capacity + " items were traversed, but no free slot found, " +
+        "table: " + table
       );
     }
 
