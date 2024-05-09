@@ -309,7 +309,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
       '$' to "`$"
     )
 
-    private fun escapePowerShellParameter(parameter: String): String {
+    fun escapePowerShellParameter(parameter: String): String {
       return buildString(parameter.length) {
         for (ch in parameter) {
           append(pwshCharsToEscape[ch] ?: ch)
