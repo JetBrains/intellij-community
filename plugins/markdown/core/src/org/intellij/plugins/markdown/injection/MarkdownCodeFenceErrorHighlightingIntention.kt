@@ -32,7 +32,7 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
       val editorManager = FileEditorManager.getInstance(project) ?: return
       val codeAnalyzer = DaemonCodeAnalyzer.getInstance(project) ?: return
       val psiManager = PsiManager.getInstance(project)
-      val coroutineScope = MarkdownPluginScope.createChildScope(project)
+      val coroutineScope = MarkdownPluginScope.scope(project)
       coroutineScope.launch(Dispatchers.Default) {
         readAction {
           val files = editorManager.openFiles.filter { it.hasMarkdownType() }
