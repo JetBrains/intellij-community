@@ -24,7 +24,7 @@ public class ModuleUtilCore {
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     if (isLibraryElement) {
       List<OrderEntry> orders = projectFileIndex.getOrderEntriesForFile(file);
-      for(OrderEntry orderEntry:orders) {
+      for (OrderEntry orderEntry : orders) {
         if (orderEntry instanceof JdkOrderEntry || orderEntry instanceof LibraryOrderEntry) {
           return true;
         }
@@ -53,8 +53,8 @@ public class ModuleUtilCore {
   }
 
   /**
-   * @return module where {@code containingFile} is located, 
-   *         null for project files outside module content roots or library files
+   * @return module where {@code containingFile} is located,
+   * null for project files outside module content roots or library files
    */
   public static @Nullable Module findModuleForFile(@Nullable PsiFile containingFile) {
     if (containingFile != null) {
@@ -66,11 +66,11 @@ public class ModuleUtilCore {
     return null;
   }
 
-    /**
-   * @return module where {@code file} is located, 
-   *         null for project files outside module content roots or library files
+  /**
+   * @return module where {@code file} is located,
+   * null for project files outside module content roots or library files
    */
-    public static @Nullable Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @Nullable Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return null;
     }
@@ -78,7 +78,7 @@ public class ModuleUtilCore {
   }
 
   /**
-   * Return module where containing file of the {@code element} is located. 
+   * Return module where containing file of the {@code element} is located.
    * <br>
    * For {@link com.intellij.psi.PsiDirectory}, corresponding virtual file is checked directly.
    * If this virtual file belongs to a library or SDK and this library/SDK is attached to exactly one module, then this module will be returned.
@@ -163,6 +163,7 @@ public class ModuleUtilCore {
 
   /**
    * collect transitive module dependants
+   *
    * @param module to find dependencies on
    * @param result resulted set
    */
@@ -194,7 +195,7 @@ public class ModuleUtilCore {
   public static @NotNull List<Module> getAllDependentModules(@NotNull Module module) {
     List<Module> list = new ArrayList<>();
     Graph<Module> graph = ModuleManager.getInstance(module.getProject()).moduleGraph();
-    for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
+    for (Iterator<Module> i = graph.getOut(module); i.hasNext(); ) {
       list.add(i.next());
     }
     return list;
