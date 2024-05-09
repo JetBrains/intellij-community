@@ -9,8 +9,9 @@ import com.intellij.openapi.roots.JavaSyntheticLibrary
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
-import com.intellij.openapi.roots.impl.RootFileSupplier
+import com.intellij.openapi.roots.impl.RootFileValidityChecker
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -31,8 +32,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
  * Since these extensions don't support incremental updates, the corresponding parts of the index are rebuilt from scratch in [updateIfNeeded]
  * method after [resetCache] was called.
  */
-internal class NonIncrementalContributors(private val project: Project,
-                                          private val rootFileSupplier: RootFileSupplier) {
+internal class NonIncrementalContributors(private val project: Project) {
   private var allRoots = emptySet<VirtualFile>()
   private var excludedUrls = emptySet<VirtualFileUrl>()
   @Volatile
@@ -96,9 +96,9 @@ internal class NonIncrementalContributors(private val project: Project,
 
     DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project).forEach { policy -> 
       policy.excludeUrlsForProject.forEach { url ->
-        val file = rootFileSupplier.findFileByUrl(url)
+        val file = VirtualFileManager.getInstance().findFileByUrl(url)
         if (file != null) {
-          if (RootFileSupplier.ensureValid(file, project, policy)) {
+          if (RootFileValidityChecker.ensureValid(file, project, policy)) {
             excludedFiles.put(file, WorkspaceFileKindMask.ALL)
           }
         }
@@ -112,7 +112,7 @@ internal class NonIncrementalContributors(private val project: Project,
         sdks.forEach { sdk ->
           strategy.`fun`(sdk).forEach { root ->
             if (root !in sdkClasses) {
-              val correctedRoot = rootFileSupplier.correctRoot(root, sdk, policy)
+              val correctedRoot = RootFileValidityChecker.correctRoot(root, sdk, policy)
               if (correctedRoot != null) {
                 excludedFiles.put(correctedRoot, WorkspaceFileKindMask.EXTERNAL or excludedFiles.getInt(correctedRoot))
               }
@@ -124,7 +124,7 @@ internal class NonIncrementalContributors(private val project: Project,
         policy.getExcludeRootsForModule(ModuleRootManager.getInstance(module)).forEach { pointer ->
           val file = pointer.file
           if (file != null) {
-            val correctedRoot = rootFileSupplier.correctRoot(file, module, policy)
+            val correctedRoot = RootFileValidityChecker.correctRoot(file, module, policy)
             if (correctedRoot != null) {
               excludedFiles.put(correctedRoot, WorkspaceFileKindMask.CONTENT or excludedFiles.getInt(correctedRoot))
             }
@@ -144,7 +144,7 @@ internal class NonIncrementalContributors(private val project: Project,
       provider.getAdditionalProjectLibraries(project).forEach { library ->
         fun registerRoots(files: MutableCollection<VirtualFile>, kind: WorkspaceFileKind, fileSetData: WorkspaceFileSetData) {
           files.forEach { root ->
-            rootFileSupplier.correctRoot(root, library, provider)?.let {
+            RootFileValidityChecker.correctRoot(root, library, provider)?.let {
               result.putValue(it, WorkspaceFileSetImpl(it, kind, NonIncrementalMarker, EntityStorageKind.MAIN, fileSetData))
             }
           }

@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.impl.DirectoryIndexImpl
-import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vfs.*
@@ -214,7 +213,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   override fun initializeBlocking() {
     if (indexData is EmptyWorkspaceFileIndexData) {
-      indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project, RootFileSupplier.INSTANCE)
+      indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project)
     }
   }
 
@@ -291,7 +290,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
         }
       }
       EmptyWorkspaceFileIndexData.RESET -> {
-        data = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project, RootFileSupplier.INSTANCE)
+        data = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project)
         indexData = data
       }
     }
