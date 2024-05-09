@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -8,10 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,9 +38,20 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
+    DataContext context = e.getDataContext();
+
     boolean isVisible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
-    e.getPresentation().setEnabled(isEnabled(e.getDataContext()));
+    boolean isEnabled = isEnabled(context);
+
+    e.getPresentation().setEnabled(isEnabled);
     e.getPresentation().setVisible(isVisible);
+
+    if (isEnabled && isVisible && VcsContextUtil.selectedFilePathsIterable(context).isEmpty()) {
+      VirtualFile editorFile = getEditorFile(context);
+      if (editorFile != null) {
+        e.getPresentation().setText(ActionsBundle.message("action.Vcs.ShowTabbedFileHistory.for.file.text", editorFile.getName()));
+      }
+    }
   }
 
   protected boolean isEnabled(@NotNull DataContext context) {
