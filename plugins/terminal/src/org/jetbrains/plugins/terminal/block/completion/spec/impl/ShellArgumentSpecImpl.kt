@@ -12,13 +12,12 @@ internal class ShellArgumentSpecImpl(
   override val isOptional: Boolean,
   override val isVariadic: Boolean,
   override val optionsCanBreakVariadicArg: Boolean,
-  override val isCommand: Boolean,
   override val generators: List<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>>
 ) : ShellArgumentSpec {
   override val displayName: String?
     get() = displayNameSupplier?.get()
 
   override fun toString(): String {
-    return "ShellArgumentSpecImpl(displayName: $displayName, isOptional=$isOptional, isVariadic=$isVariadic, optionsCanBreakVariadicArg=$optionsCanBreakVariadicArg, isCommand=$isCommand, generators=$generators)"
+    return "ShellArgumentSpecImpl(displayName: $displayName, isOptional=$isOptional, isVariadic=$isVariadic, optionsCanBreakVariadicArg=$optionsCanBreakVariadicArg, generators=$generators)"
   }
 }

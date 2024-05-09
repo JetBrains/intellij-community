@@ -85,7 +85,7 @@ internal class ShellCommandTreeSuggestionsProvider(
 
     /**
      * Checks that [parent] command contain the subcommand with the name of [child].
-     * If there is no such subcommand, it means that [child] is a nested command in a place of argument with [ShellArgumentSpec.isCommand] = true.
+     * If there is no such subcommand, it means that [child] is a nested command in a place of argument with command suggestions.
      */
     suspend fun isSubcommand(parent: ShellCommandNode, child: ShellCommandNode): Boolean {
       val subcommands = parent.spec.getSubcommands()

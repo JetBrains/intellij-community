@@ -10,7 +10,6 @@ interface ShellArgumentSpec {
   val isOptional: Boolean
   val isVariadic: Boolean
   val optionsCanBreakVariadicArg: Boolean
-  val isCommand: Boolean
 
   val generators: List<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>>
 }

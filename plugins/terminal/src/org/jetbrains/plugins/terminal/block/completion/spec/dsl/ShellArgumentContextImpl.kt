@@ -16,7 +16,6 @@ internal class ShellArgumentContextImpl(private val parentCommandNames: List<Str
   override var isOptional: Boolean = false
   override var isVariadic: Boolean = false
   override var optionsCanBreakVariadicArg: Boolean = true
-  override var isCommand: Boolean = false
 
   private val generators: MutableList<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>> = mutableListOf()
 
@@ -38,6 +37,6 @@ internal class ShellArgumentContextImpl(private val parentCommandNames: List<Str
   }
 
   fun build(): ShellArgumentSpec {
-    return ShellArgumentSpecImpl(displayNameSupplier = displayName, isOptional = isOptional, isVariadic = isVariadic, optionsCanBreakVariadicArg = optionsCanBreakVariadicArg, isCommand = isCommand, generators = generators)
+    return ShellArgumentSpecImpl(displayNameSupplier = displayName, isOptional = isOptional, isVariadic = isVariadic, optionsCanBreakVariadicArg = optionsCanBreakVariadicArg, generators = generators)
   }
 }

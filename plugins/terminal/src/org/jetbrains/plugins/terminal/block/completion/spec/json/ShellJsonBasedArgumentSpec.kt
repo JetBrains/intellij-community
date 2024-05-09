@@ -32,9 +32,6 @@ internal class ShellJsonBasedArgumentSpec(
   override val optionsCanBreakVariadicArg: Boolean
     get() = data.optionsCanBreakVariadicArg
 
-  override val isCommand: Boolean
-    get() = data.isCommand
-
   override val generators: List<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>> by lazy {
     buildList {
       if (data.suggestions.isNotEmpty()) {

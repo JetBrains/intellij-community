@@ -15,7 +15,6 @@ sealed interface ShellArgumentContext {
   var isOptional: Boolean
   var isVariadic: Boolean
   var optionsCanBreakVariadicArg: Boolean
-  var isCommand: Boolean
 
   fun generator(content: suspend (ShellRuntimeContext) -> List<ShellCompletionSuggestion>)
 
