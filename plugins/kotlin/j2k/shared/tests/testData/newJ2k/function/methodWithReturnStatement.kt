@@ -1,2 +1,3 @@
-val isTrue: Boolean
-    get() = true
+fun bool(): Boolean {
+    return true
+}

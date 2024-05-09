@@ -1,7 +1,5 @@
 package demo
 
-import demo.One
-
 internal class Container {
     var myInt: Int = 1
 }

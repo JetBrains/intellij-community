@@ -1,5 +1,4 @@
 import Foo.SomeClass
-
 internal interface FooInterface {
     fun foo(): ArrayList<out SomeClass?>?
 }

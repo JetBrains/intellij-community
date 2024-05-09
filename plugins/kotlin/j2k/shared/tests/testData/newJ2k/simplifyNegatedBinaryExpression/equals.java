@@ -1,4 +1,3 @@
-// IGNORE_K2
 class C {
     void foo(int a, int b, String s1, String s2) {
         if (!(0 != 1)) return;

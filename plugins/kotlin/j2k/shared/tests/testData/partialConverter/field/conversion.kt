@@ -1,14 +1,13 @@
 internal class A {
-    private val i = byte.toInt()
+    private val i = takeByte().toInt()
 
     fun foo() {
         TODO()
     }
 
     companion object {
-        val byte: Byte
-            get() {
-                TODO()
-            }
+        fun takeByte(): Byte {
+            TODO()
+        }
     }
 }

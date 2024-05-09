@@ -1,3 +1,2 @@
-// IGNORE_K2
 //method
-boolean isTrue<caret>() { return true; }
+boolean bool<caret>() { return true; }

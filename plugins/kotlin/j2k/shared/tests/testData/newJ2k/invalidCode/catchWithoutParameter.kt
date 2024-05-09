@@ -1,4 +1,4 @@
-// error message difference
+// ERROR: A type annotation is required on a value parameter.
 internal object Test {
     @JvmStatic
     fun main(args: Array<String>) {

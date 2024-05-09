@@ -1,2 +1,1 @@
-val t: T
-    get() {}
+fun t(): T? {}

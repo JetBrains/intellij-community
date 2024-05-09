@@ -1,10 +1,10 @@
 internal interface I {
-    val string: String?
+    fun string(): String?
 }
 
 internal class C {
     fun foo(i: I, b: Boolean) {
-        var result = i.string
+        var result = i.string()
         if (b) result = null
         if (result != null) {
             println(result)

@@ -3,5 +3,5 @@ internal open class Base {
 }
 
 internal class Child : Base() {
-    private val mySecond: String = TODO()
+    private val mySecond: String? = TODO()
 }

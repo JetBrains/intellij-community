@@ -1,4 +1,4 @@
 internal interface INode {
-    val tag: String?
+    fun tag(): String?
     fun toKotlin(): String?
 }

@@ -1,4 +1,4 @@
-// ERROR: 'when' expression must be exhaustive, add necessary 'else' branch
+// ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
 object NonDefault {
     @JvmStatic
     fun main(args: Array<String>) {

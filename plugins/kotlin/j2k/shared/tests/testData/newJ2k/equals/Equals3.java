@@ -4,6 +4,6 @@ class C{
     }
 
     boolean foo(C c1, C c2) {
-        return c1.equals(c2)
+        return c1.equals(c2);
     }
 }

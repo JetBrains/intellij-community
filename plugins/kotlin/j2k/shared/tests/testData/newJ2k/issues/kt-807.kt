@@ -3,7 +3,6 @@ import java.io.DataInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
-
 internal object FileRead {
     @JvmStatic
     fun main(args: Array<String>) {

@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 class Test extends Base {
   @Override
   public int hashCode() {

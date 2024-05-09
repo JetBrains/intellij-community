@@ -1,11 +1,10 @@
-// IGNORE_K2
 interface I {
-    String getString();
+    String string();
 }
 
 class C {
     void foo(I i) {
-        String result = i.getString();
+        String result = i.string();
         if (result != null) {
             System.out.println(result);
         }

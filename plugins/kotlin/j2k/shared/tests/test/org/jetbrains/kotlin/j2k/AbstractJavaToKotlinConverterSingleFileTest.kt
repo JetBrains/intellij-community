@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -55,7 +56,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
         val settings = configureSettings(directives)
         val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
-        val expectedFile = File(javaFile.path.replace(".java", ".kt"))
+        val expectedFile = getExpectedFile(javaFile)
 
         val actualText = if (prefix == "file") {
             createKotlinFile(convertedText).getFileTextWithErrors()
@@ -65,6 +66,20 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
         val actualTextWithoutRedundantImports = removeRedundantImports(actualText)
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithoutRedundantImports)
+    }
+
+    // For testdata with trivial differences between K1 and K2 (for example, different wording of error messages),
+    // introduce a K1-specific expected file that ends with ".k1.kt".
+    private fun getExpectedFile(javaFile: File): File {
+        val defaultFile = File(javaFile.path.replace(".java", ".kt"))
+        return  when (pluginMode) {
+            KotlinPluginMode.K1 -> {
+                val k1File = File(javaFile.path.replace(".java", ".k1.kt")).takeIf(File::exists)
+                k1File ?: defaultFile
+            }
+            KotlinPluginMode.K2 -> defaultFile
+            else -> error("Can't get expected file")
+        }
     }
 
     private fun addDependencies(directives: Directives) {

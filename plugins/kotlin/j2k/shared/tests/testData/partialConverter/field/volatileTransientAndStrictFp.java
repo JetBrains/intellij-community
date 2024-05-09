@@ -1,4 +1,3 @@
-// IGNORE_K2
 class A {
     @Deprecated
     volatile int field1 = 0;

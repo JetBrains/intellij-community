@@ -10,7 +10,7 @@ internal class A(p1: Int, p2: Int, a: A) {
     private val field9: Int = TODO()
     private val field10: Int = TODO()
     private val field11: Int = TODO()
-    private val field12: Int = TODO()
+    private val field12: Int? = TODO()
 
     init {
         TODO()

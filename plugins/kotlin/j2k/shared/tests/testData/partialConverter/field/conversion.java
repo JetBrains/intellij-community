@@ -1,8 +1,7 @@
-// IGNORE_K2
 class A {
-    private Integer <caret>i = getByte();
+    private Integer <caret>i = takeByte();
 
-    static byte getByte() { return 0; }
+    static byte takeByte() { return 0; }
 
     void foo() {
         i = 10;

@@ -1,3 +1,2 @@
-// ERROR: Modifier 'protected' is not applicable inside 'file'
-// error message difference
+// ERROR: Modifier 'protected' is not applicable inside 'file'.
 protected class Test
