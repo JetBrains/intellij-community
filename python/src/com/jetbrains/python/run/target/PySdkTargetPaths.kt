@@ -3,7 +3,6 @@
 
 package com.jetbrains.python.run.target
 
-import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.targetPath
@@ -14,17 +13,7 @@ import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager.appendBasicMappings
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-
-@Deprecated("Use Path for localPath")
-@ApiStatus.ScheduledForRemoval
-fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvironmentRequest,
-                                           project: Project,
-                                           sdk: Sdk?,
-                                           pathMapper: PyRemotePathMapper?,
-                                           localPath: String): TargetEnvironmentFunction<String> =
-  getTargetPathForPythonConsoleExecution(project, sdk, pathMapper, Path.of(localPath))
 
 /**
  * @param pathMapper corresponds to the path mappings specified in the run configuration
