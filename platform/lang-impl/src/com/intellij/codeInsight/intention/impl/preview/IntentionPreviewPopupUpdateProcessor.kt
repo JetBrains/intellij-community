@@ -77,7 +77,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         .addUserData(IntentionPreviewPopupKey())
 
       //see with com.intellij.ui.popup.AbstractPopup.show(java.awt.Component, int, int, boolean).
-      //don't use in cases, when borders may be preserved
+      //don't use in cases when borders may be preserved
       if (WindowRoundedCornersManager.isAvailable() && SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
         popupBuilder = popupBuilder.setShowBorder(true)
       }
@@ -214,16 +214,14 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     val location = popup.locationOnScreen
     val screen = ScreenUtil.getScreenRectangle(location)
 
-    if (screen != null) {
-      var delta = screen.width + screen.x - location.x
-      val content = originalPopup?.content
-      val origLocation = if (content?.isShowing == true) content.locationOnScreen else null
-      // On the left side of the original popup: avoid overlap
-      if (origLocation != null && location.x < origLocation.x) {
-        delta = delta.coerceAtMost(origLocation.x - screen.x - PositionAdjuster.DEFAULT_GAP)
-      }
-      size.width = size.width.coerceAtMost(delta)
+    var delta = screen.width + screen.x - location.x
+    val content = originalPopup?.content
+    val origLocation = if (content?.isShowing == true) content.locationOnScreen else null
+    // On the left side of the original popup: avoid overlap
+    if (origLocation != null && location.x < origLocation.x) {
+      delta = delta.coerceAtMost(origLocation.x - screen.x - PositionAdjuster.DEFAULT_GAP)
     }
+    size.width = size.width.coerceAtMost(delta)
 
     component.editors.forEach {
       it.softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
@@ -244,7 +242,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   /**
-   * Call when process is just activated via hotkey
+   * Call when the process is just activated via hotkey
    */
   fun activate() {
     justActivated = true
