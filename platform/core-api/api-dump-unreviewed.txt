@@ -2923,6 +2923,7 @@ c:com.intellij.openapi.util.SimpleModificationTracker
 - incModificationCount():V
 com.intellij.openapi.util.registry.RegistryManager
 - sf:Companion:com.intellij.openapi.util.registry.RegistryManager$Companion
+- *a:awaitRegistryLoad(kotlin.coroutines.Continuation):java.lang.Object
 - a:get(java.lang.String):com.intellij.openapi.util.registry.RegistryValue
 - s:getInstance():com.intellij.openapi.util.registry.RegistryManager
 - a:intValue(java.lang.String):I
