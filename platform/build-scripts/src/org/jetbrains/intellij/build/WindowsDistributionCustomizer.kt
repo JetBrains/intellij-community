@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -47,7 +47,7 @@ abstract class WindowsDistributionCustomizer {
   var installerImagesPath: String? = null
 
   /**
-   * List of file extensions (without leading dot) which the installer will suggest to associate with the product.
+   * List of file extensions (without a leading dot) which the installer will suggest to associate with the product.
    */
   var fileAssociations: List<String> = emptyList()
 
@@ -70,8 +70,9 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Name of the Windows installation directory and Desktop shortcut.
    */
-  open fun getNameForInstallDirAndDesktopShortcut(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${getFullNameIncludingEdition(appInfo)} ${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+  open fun getNameForInstallDirAndDesktopShortcut(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "${getFullNameIncludingEdition(appInfo)} ${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+  }
 
   /**
    * Override this method to copy additional files to the Windows distribution of the product.
@@ -94,8 +95,9 @@ abstract class WindowsDistributionCustomizer {
   /**
    * The returned name will be used to create links on Desktop.
    */
-  open fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String =
-    appInfo.shortCompanyName + ' ' + getFullNameIncludingEdition(appInfo)
+  open fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String {
+    return appInfo.shortCompanyName + ' ' + getFullNameIncludingEdition(appInfo)
+  }
 
   open fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String? = null
 

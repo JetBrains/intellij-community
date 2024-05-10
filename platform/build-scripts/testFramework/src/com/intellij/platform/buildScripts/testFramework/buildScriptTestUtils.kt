@@ -27,18 +27,9 @@ import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.Path
 
-fun createBuildOptionsForTest(
-  productProperties: ProductProperties,
-  homeDir: Path,
-  skipDependencySetup: Boolean = false,
-): BuildOptions {
+fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, skipDependencySetup: Boolean = false): BuildOptions {
   val outDir = createTestBuildOutDir(productProperties)
-  val options = BuildOptions(
-    cleanOutDir = false,
-    useCompiledClassesFromProjectOutput = true,
-    // todo enable once sync issues will be fixed
-    jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
-  )
+  val options = BuildOptions(cleanOutDir = false, useCompiledClassesFromProjectOutput = true, jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"))
   customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup)
   return options
 }
@@ -47,11 +38,7 @@ fun createTestBuildOutDir(productProperties: ProductProperties): Path {
   return FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
 }
 
-private inline fun createBuildOptionsForTest(
-  productProperties: ProductProperties,
-  homeDir: Path,
-  customizer: (BuildOptions) -> Unit,
-): BuildOptions {
+private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, customizer: (BuildOptions) -> Unit): BuildOptions {
   val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir)
   customizer(options)
   return options
@@ -76,19 +63,14 @@ fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDepend
 }
 
 suspend inline fun createBuildContext(
-  homePath: Path,
+  homeDir: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
-  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homePath)
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(
-    projectHome = homePath,
-    productProperties = productProperties,
-    proprietaryBuildTools = buildTools,
-    options = options,
-  )
+  return BuildContextImpl.createContext(projectHome = homeDir, productProperties = productProperties, proprietaryBuildTools = buildTools, options = options)
 }
 
 // don't expose BuildDependenciesCommunityRoot
