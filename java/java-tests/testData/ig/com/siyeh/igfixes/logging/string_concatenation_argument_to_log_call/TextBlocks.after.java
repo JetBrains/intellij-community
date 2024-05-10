@@ -11,7 +11,7 @@ class TextBlock {
               """ + 1 + "1{}", a);
 
       log.info("""
-                              
+              
               """ + 1 + "1{}", a);
 
       log.info("""

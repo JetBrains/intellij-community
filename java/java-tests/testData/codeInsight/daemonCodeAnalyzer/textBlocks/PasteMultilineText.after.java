@@ -4,5 +4,5 @@ class C {
             <body>
             </body>
           </html> \s
-                 """;
+          """;
 }
