@@ -53,7 +53,7 @@ private class MavenImportedProjectSettings(project: Project) : ImportedProjectSe
 
 private class MavenSubproject(override val workspace: Project, val mavenProject: MavenProject) : Subproject {
   override val name: String get() = mavenProject.displayName
-  override val projectPath: String get() = mavenProject.path
+  override val projectPath: String get() = mavenProject.directory
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
