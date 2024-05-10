@@ -7,5 +7,5 @@ fun foo(x: Any) {
 // K1_TYPE: x -> <html>String (smart cast from Any)</html>
 // K1_TYPE: x.length -> <html>Int</html>
 
-// K2_TYPE: x -> <html>String (smart cast from Any)</html>
-// K2_TYPE: x.length -> <html>Int</html>
+// K2_TYPE: x -> String
+// K2_TYPE: x.length -> Int

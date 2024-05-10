@@ -12,5 +12,5 @@ fun fn(value: Any) {
 // K1_TYPE: value -> <html>B (smart cast from Any)</html>
 // K1_TYPE: value is A -> <html>Boolean</html>
 
-// K2_TYPE: value -> <html>B (smart cast from Any)</html>
-// K2_TYPE: value is A -> <html>Boolean</html>
+// K2_TYPE: value -> B
+// K2_TYPE: value is A -> Boolean

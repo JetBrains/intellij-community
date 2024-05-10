@@ -6,4 +6,4 @@ fun main() {
 
 // K1_TYPE: a -> <html>Int</html>
 
-// K2_TYPE: a -> <html>Int</html>
+// K2_TYPE: a -> Type is unknown
