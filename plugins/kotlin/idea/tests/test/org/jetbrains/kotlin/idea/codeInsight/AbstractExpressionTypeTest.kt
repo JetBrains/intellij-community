@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.codeInsight
 
+import com.intellij.lang.LanguageExpressionTypes
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -11,9 +13,19 @@ abstract class AbstractExpressionTypeTest : KotlinLightCodeInsightFixtureTestCas
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
+    private fun findKotlinExpressionTypeProvider(): KotlinExpressionTypeProvider {
+        val providers = LanguageExpressionTypes.INSTANCE
+            .allForLanguage(KotlinLanguage.INSTANCE)
+            .filterIsInstance<KotlinExpressionTypeProvider>()
+
+        assertSize(1, providers)
+
+        return providers.single()
+    }
+
     protected fun doTest(path: String) {
         myFixture.configureByFile(fileName())
-        val expressionTypeProvider = KotlinExpressionTypeProviderDescriptorsImpl()
+        val expressionTypeProvider = findKotlinExpressionTypeProvider()
         val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!!
         val expressions = expressionTypeProvider.getExpressionsAt(elementAtCaret)
         val types = expressions.map { "${it.text.replace('\n', ' ')} -> ${expressionTypeProvider.getInformationHint(it)}" }
