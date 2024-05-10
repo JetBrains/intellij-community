@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
-import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.VisibleForTesting

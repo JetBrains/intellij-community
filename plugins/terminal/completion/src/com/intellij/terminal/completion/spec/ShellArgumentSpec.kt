@@ -1,4 +1,4 @@
-package com.intellij.terminal.block.completion.spec
+package com.intellij.terminal.completion.spec
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls

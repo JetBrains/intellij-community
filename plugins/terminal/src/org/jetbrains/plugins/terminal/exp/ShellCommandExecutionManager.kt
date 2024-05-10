@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.terminal.block.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.util.containers.nullize
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.input.InputEvent.CTRL_MASK

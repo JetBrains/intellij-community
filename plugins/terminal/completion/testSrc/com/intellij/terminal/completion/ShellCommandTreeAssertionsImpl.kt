@@ -1,6 +1,6 @@
 package com.intellij.terminal.completion
 
-import com.intellij.terminal.block.completion.engine.*
+import com.intellij.terminal.completion.engine.*
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.TreeTraversal
 import junit.framework.TestCase.assertTrue

@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.block.completion.engine
+package com.intellij.terminal.completion.engine
 
-import com.intellij.terminal.block.completion.ShellArgumentSuggestion
-import com.intellij.terminal.block.completion.ShellCommandSpecsManager
-import com.intellij.terminal.block.completion.ShellDataGeneratorsExecutor
-import com.intellij.terminal.block.completion.ShellRuntimeContextProvider
-import com.intellij.terminal.block.completion.spec.ShellCommandSpec
-import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.block.completion.spec.ShellOptionSpec
+import com.intellij.terminal.completion.ShellArgumentSuggestion
+import com.intellij.terminal.completion.ShellCommandSpecsManager
+import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
+import com.intellij.terminal.completion.ShellRuntimeContextProvider
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellOptionSpec
 import java.io.File
 
 internal class ShellCommandTreeBuilder private constructor(

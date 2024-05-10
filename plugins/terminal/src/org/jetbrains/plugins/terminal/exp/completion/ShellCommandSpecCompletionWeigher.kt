@@ -4,8 +4,8 @@ package org.jetbrains.plugins.terminal.exp.completion
 import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.block.completion.spec.ShellSuggestionType
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellSuggestionType
 
 internal class ShellCommandSpecCompletionWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing>? {

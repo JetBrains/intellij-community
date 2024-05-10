@@ -1,4 +1,4 @@
-package com.intellij.terminal.block.completion.spec
+package com.intellij.terminal.completion.spec
 
 import com.intellij.openapi.util.Key
 import org.intellij.lang.annotations.Language

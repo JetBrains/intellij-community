@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.block.completion.ShellRuntimeContextProvider
-import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.ShellRuntimeContextProvider
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.util.PathUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession

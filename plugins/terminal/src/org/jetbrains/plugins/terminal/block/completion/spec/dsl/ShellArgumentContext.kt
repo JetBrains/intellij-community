@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
-import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
-import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier

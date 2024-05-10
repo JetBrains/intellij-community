@@ -1,10 +1,10 @@
-package com.intellij.terminal.block.completion
+package com.intellij.terminal.completion
 
-import com.intellij.terminal.block.completion.engine.ShellCommandNode
-import com.intellij.terminal.block.completion.engine.ShellCommandTreeBuilder
-import com.intellij.terminal.block.completion.engine.ShellCommandTreeNode
-import com.intellij.terminal.block.completion.engine.ShellCommandTreeSuggestionsProvider
-import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.engine.ShellCommandNode
+import com.intellij.terminal.completion.engine.ShellCommandTreeBuilder
+import com.intellij.terminal.completion.engine.ShellCommandTreeNode
+import com.intellij.terminal.completion.engine.ShellCommandTreeSuggestionsProvider
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.annotations.ApiStatus
 

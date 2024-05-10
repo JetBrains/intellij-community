@@ -4,9 +4,9 @@ package org.jetbrains.plugins.terminal.block.completion.spec
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
-import com.intellij.terminal.block.completion.spec.ShellSuggestionType
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 

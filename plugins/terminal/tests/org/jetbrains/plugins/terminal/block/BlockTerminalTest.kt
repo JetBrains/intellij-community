@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
-import com.intellij.terminal.block.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.testFramework.*
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*

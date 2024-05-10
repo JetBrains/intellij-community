@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.block.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.jediterm.terminal.TerminalCustomCommandListener
 import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.NonNls

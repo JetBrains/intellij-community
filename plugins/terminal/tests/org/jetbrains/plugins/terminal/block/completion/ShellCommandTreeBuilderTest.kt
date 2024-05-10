@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.block.completion
 
 import com.intellij.terminal.completion.ShellCommandTreeAssertions
 import com.intellij.terminal.completion.ShellCommandTreeBuilderFixture
-import com.intellij.terminal.block.completion.spec.ShellCommandParserDirectives
-import com.intellij.terminal.block.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.spec.ShellCommandParserDirectives
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator

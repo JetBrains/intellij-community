@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.util.Disposer
-import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
 import com.intellij.testFramework.utils.io.createDirectory

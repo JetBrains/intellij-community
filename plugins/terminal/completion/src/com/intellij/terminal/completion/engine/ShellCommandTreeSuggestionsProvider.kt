@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.block.completion.engine
+package com.intellij.terminal.completion.engine
 
-import com.intellij.terminal.block.completion.ShellArgumentSuggestion
-import com.intellij.terminal.block.completion.ShellDataGeneratorsExecutor
-import com.intellij.terminal.block.completion.spec.*
+import com.intellij.terminal.completion.ShellArgumentSuggestion
+import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
+import com.intellij.terminal.completion.spec.*
 import java.io.File
 
 internal class ShellCommandTreeSuggestionsProvider(

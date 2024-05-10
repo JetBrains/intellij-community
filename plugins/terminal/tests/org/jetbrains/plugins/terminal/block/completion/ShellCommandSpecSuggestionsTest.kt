@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion
 
-import com.intellij.terminal.block.completion.ShellCommandSpecCompletion
-import com.intellij.terminal.block.completion.spec.ShellCommandParserDirectives
-import com.intellij.terminal.block.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.ShellCommandSpecCompletion
+import com.intellij.terminal.completion.spec.ShellCommandParserDirectives
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.testFramework.UsefulTestCase.assertNotNull
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import kotlinx.coroutines.runBlocking

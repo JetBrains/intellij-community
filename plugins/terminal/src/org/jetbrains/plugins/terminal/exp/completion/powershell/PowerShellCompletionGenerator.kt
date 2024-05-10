@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.terminal.exp.completion.powershell
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
-import com.intellij.terminal.block.completion.spec.isPowerShell
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.completion.spec.isPowerShell
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

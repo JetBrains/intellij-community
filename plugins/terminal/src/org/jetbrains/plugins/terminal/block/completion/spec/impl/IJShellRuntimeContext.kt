@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.terminal.block.completion.spec.ShellCommandResult
-import com.intellij.terminal.block.completion.spec.ShellName
-import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.spec.ShellName
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
 
 internal class IJShellRuntimeContext(
   override val currentDirectory: String,

@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec.json
 
-import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
-import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.block.completion.spec.ShellRuntimeDataGenerator
-import com.intellij.terminal.block.completion.spec.ShellSuggestionType
+import com.intellij.terminal.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
+import com.intellij.terminal.completion.spec.ShellSuggestionType
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey

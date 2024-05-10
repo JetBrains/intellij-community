@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Scheduler
-import com.intellij.terminal.block.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener

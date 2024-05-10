@@ -11,8 +11,8 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.terminal.block.completion.ShellCommandSpecsManager
-import com.intellij.terminal.block.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.ShellCommandSpecsManager
+import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.util.containers.MultiMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
