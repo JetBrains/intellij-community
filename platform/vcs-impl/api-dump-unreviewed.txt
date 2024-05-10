@@ -4069,6 +4069,9 @@ c:com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog
 com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor
 - a:apply(java.util.List,com.intellij.util.containers.MultiMap,com.intellij.openapi.vcs.changes.LocalChangeList,java.lang.String,com.intellij.openapi.util.ThrowableComputable):V
 - a:getName():java.lang.String
+f:com.intellij.openapi.vcs.changes.patch.ApplyPatchFile
+- getFile():com.intellij.openapi.vfs.VirtualFile
+- toString():java.lang.String
 c:com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts
 - <init>(java.lang.String,java.lang.String,java.lang.String,Z):V
 - s:create(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.diff.impl.patch.TextFilePatch,java.lang.CharSequence):com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts
@@ -4096,6 +4099,13 @@ e:com.intellij.openapi.vcs.changes.patch.ApplyPatchMode
 - isCanChangePatchFile():Z
 - s:valueOf(java.lang.String):com.intellij.openapi.vcs.changes.patch.ApplyPatchMode
 - s:values():com.intellij.openapi.vcs.changes.patch.ApplyPatchMode[]
+f:com.intellij.openapi.vcs.changes.patch.ApplyPatchUtil
+- <init>():V
+- s:applyContent(com.intellij.openapi.project.Project,com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase,com.intellij.openapi.diff.impl.patch.ApplyPatchContext,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.changes.CommitContext,Z,java.lang.String,java.lang.String):com.intellij.openapi.diff.impl.patch.ApplyPatchStatus
+- s:getPatchFile(java.io.File):com.intellij.openapi.vcs.changes.patch.ApplyPatchFile
+- s:showAndGetApplyPatch(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.patch.ApplyPatchFile):java.lang.Boolean
+- s:showAndGetApplyPatch(com.intellij.openapi.project.Project,java.io.File):java.lang.Boolean
+- s:showApplyPatch(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 f:com.intellij.openapi.vcs.changes.patch.BinaryFilePatchInProgress
 - com.intellij.openapi.vcs.changes.patch.CommonBinaryFilePatchInProgress
 f:com.intellij.openapi.vcs.changes.patch.BinaryPatchWriter
