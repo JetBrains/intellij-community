@@ -13,6 +13,11 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCompletion
 import java.util.function.Supplier
 import javax.swing.Icon
 
+/**
+ * The single true way of creating [ShellCommandSpec].
+ * @param name name of the shell command
+ * @param content description of subcommands, options and arguments using DSL
+ */
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
 fun ShellCommandSpec(name: String, content: ShellCommandContext.() -> Unit = {}): ShellCommandSpec {
@@ -21,6 +26,20 @@ fun ShellCommandSpec(name: String, content: ShellCommandContext.() -> Unit = {})
   return context.build()
 }
 
+/**
+ * Creates [ShellCompletionSuggestion] with the following parameters:
+ * @param name the string to be shown in the completion popup and inserted on completion
+ * @param type used for now only to automatically configure the icon
+ * @param displayName the string to be shown in the completion popup instead of [name] if specified
+ * @param description text to be shown in the documentation popup
+ * @param insertValue the string to be inserted on completion instead of [name] if specified.
+ * Supports specifying caret position after completion item insertion in a form `some{caret}item`.
+ * In this example `someitem` text will be inserted and caret is placed between `some` and `item`.
+ * @param priority int from 0 to 100 with default 50.
+ * Allows specifying the order of the items in the completion popup.
+ * The greater the number, the closer the item will be to the first place.
+ * @param icon used to provide custom icon instead of autodetected from [type]
+ */
 @ApiStatus.Experimental
 fun ShellCompletionSuggestion(
   name: String,

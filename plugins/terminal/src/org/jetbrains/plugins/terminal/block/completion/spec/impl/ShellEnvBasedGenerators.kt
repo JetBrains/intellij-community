@@ -14,6 +14,10 @@ import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 internal object ShellEnvBasedGenerators {
   private val LOG: Logger = logger<ShellEnvBasedGenerators>()
 
+  /**
+   * Provides the map of aliases for shell commands.
+   * The key is the alias name, the value is the expanded alias value.
+   */
   fun aliasesGenerator(): ShellRuntimeDataGenerator<Map<String, String>> {
     return ShellRuntimeDataGenerator(cacheKeyAndDebugName = "aliases") { context ->
       val shellEnv = getShellEnv(context) ?: return@ShellRuntimeDataGenerator emptyMap()

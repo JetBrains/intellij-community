@@ -4,9 +4,16 @@ package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * DSL for declaring subcommands of the Shell command.
+ */
 @ApiStatus.Experimental
 @ShellCommandSpecDsl
 sealed interface ShellChildCommandsContext {
+  /**
+   * Specifies that shell command can have the following subcommand.
+   * @param content subcommand description
+   */
   fun subcommand(vararg names: String, content: ShellCommandContext.() -> Unit = {})
 }
 

@@ -16,6 +16,14 @@ class ShellCommandParserOptions private constructor(
   companion object {
     val DEFAULT = create()
 
+    /**
+     * @param flagsArePosixNonCompliant whether options starting with one hyphen ('-a', '-l', etc.) may have more than one character.
+     * If this option is true, then completion engine will parse `-abc` as a single shell option instead of chained options `-a`, `-b` and `-c`.
+     * False by default.
+     * @param optionsMustPrecedeArguments if true, the options won't be suggested after any argument of the command is typed. False by default.
+     * @param optionArgSeparators allows specifying that the option that takes the argument will require having one of these separators
+     * between the option name and the argument value.
+     */
     fun create(
       flagsArePosixNonCompliant: Boolean = false,
       optionsMustPrecedeArguments: Boolean = false,
