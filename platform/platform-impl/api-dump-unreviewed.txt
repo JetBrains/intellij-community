@@ -4890,7 +4890,6 @@ f:com.intellij.ide.actions.QuickChangeLookAndFeel
 - <init>():V
 - s:switchLafAndUpdateUI(com.intellij.ide.ui.LafManager,com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo,Z):V
 - s:switchLafAndUpdateUI(com.intellij.ide.ui.LafManager,javax.swing.UIManager$LookAndFeelInfo,Z):V
-- s:switchLafAndUpdateUI(com.intellij.ide.ui.LafManager,javax.swing.UIManager$LookAndFeelInfo,Z,Z):V
 f:com.intellij.ide.actions.QuickChangeSchemesAction
 - com.intellij.ide.actions.QuickSwitchSchemeAction
 - com.intellij.openapi.project.DumbAware
@@ -5322,7 +5321,6 @@ f:com.intellij.ide.actions.SuggestAutomaticVfsRecoveryDialog$Companion
 f:com.intellij.ide.actions.Switcher
 - com.intellij.ide.actions.BaseSwitcherAction
 - sf:INSTANCE:com.intellij.ide.actions.Switcher
-- sf:createAndShowSwitcher(com.intellij.openapi.actionSystem.AnActionEvent,java.lang.String,Z,com.intellij.openapi.vfs.VirtualFile[]):com.intellij.ide.actions.Switcher$SwitcherPanel
 - f:getSWITCHER_KEY():com.intellij.openapi.util.Key
 f:com.intellij.ide.actions.Switcher$SwitcherPanel
 - com.intellij.util.ui.components.BorderLayoutPanel
@@ -10895,14 +10893,11 @@ f:com.intellij.ide.wizard.RootNewProjectWizardStep
 - getPropertyGraph():com.intellij.openapi.observable.properties.PropertyGraph
 - setKeywords(com.intellij.ide.wizard.NewProjectWizardStep$Keywords):V
 f:com.intellij.ide.wizard.UIWizardUtil
-- sf:chain(com.intellij.ide.wizard.NewProjectWizardStep,kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardStep
 - sf:chain(com.intellij.ide.wizard.NewProjectWizardStep,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardStep
 - sf:chain(com.intellij.ide.wizard.NewProjectWizardStep,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardStep
-- sf:chain(com.intellij.ide.wizard.NewProjectWizardStep,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ide.wizard.NewProjectWizardStep
 - sf:getProjectOrDefault(com.intellij.ide.util.projectWizard.WizardContext):com.intellij.openapi.project.Project
 - sf:setMinimumWidthForAllRowLabels(com.intellij.openapi.ui.DialogPanel,I):V
 - *sf:setupProjectSafe(com.intellij.ide.wizard.NewProjectWizardStep,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0):V
-- sf:stepSequence(com.intellij.ide.wizard.NewProjectWizardStep,com.intellij.ide.wizard.NewProjectWizardStep[]):com.intellij.ide.wizard.NewProjectWizardStep
 - sf:withVisualPadding(com.intellij.openapi.ui.DialogPanel,Z):com.intellij.openapi.ui.DialogPanel
 - bs:withVisualPadding$default(com.intellij.openapi.ui.DialogPanel,Z,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
 a:com.intellij.ide.wizard.comment.CommentNewProjectWizardStep
@@ -15672,7 +15667,6 @@ f:com.intellij.openapi.fileChooser.ex.LocalFsFinder$FileChooserFilter
 - isAccepted(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):Z
 f:com.intellij.openapi.fileChooser.ex.LocalFsFinder$IoFile
 - com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile
-- <init>(java.io.File):V
 - <init>(java.nio.file.Path):V
 - equals(java.lang.Object):Z
 - exists():Z

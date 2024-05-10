@@ -3450,15 +3450,11 @@ com.intellij.openapi.options.colors.RainbowColorSettingsPage
 - sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- sf:withBackgroundProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withBackgroundProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withBackgroundProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- bs:withBackgroundProgressIndicator$default(com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:withModalProgress(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withModalProgress(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withModalProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- sf:withModalProgressIndicator(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- bs:withModalProgressIndicator$default(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 a:com.intellij.openapi.project.DumbAwareToggleAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.openapi.project.DumbAware
@@ -7007,13 +7003,6 @@ c:com.intellij.ui.JBIntSpinner
 - setMax(I):V
 - setMin(I):V
 - setNumber(I):V
-a:com.intellij.ui.JBListWithHintProvider
-- com.intellij.ui.components.JBList
-- <init>():V
-- <init>(java.util.Collection):V
-- <init>(javax.swing.ListModel):V
-- <init>(java.lang.Object[]):V
-- pa:getPsiElementForHint(java.lang.Object):com.intellij.psi.PsiElement
 c:com.intellij.ui.JBSplitter
 - com.intellij.openapi.ui.Splitter
 - <init>():V
@@ -8363,7 +8352,6 @@ c:com.intellij.ui.components.JBOptionButton
 - f:showPopup(javax.swing.Action,Z):V
 - bs:showPopup$default(com.intellij.ui.components.JBOptionButton,javax.swing.Action,Z,I,java.lang.Object):V
 - f:togglePopup():V
-- f:updateOptions(javax.swing.Action[]):V
 f:com.intellij.ui.components.JBOptionButton$Companion
 - f:getDefaultShowPopupShortcut():com.intellij.openapi.actionSystem.CustomShortcutSet
 - f:getDefaultTooltip():java.lang.String
@@ -9523,9 +9511,6 @@ f:com.intellij.ui.dsl.gridLayout.VerticalGaps
 - hashCode():I
 - toString():java.lang.String
 f:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
-f:com.intellij.ui.dsl.gridLayout.VerticalGapsKt
-- sf:JBVerticalGaps(I,I):com.intellij.ui.dsl.gridLayout.VerticalGaps
-- bs:JBVerticalGaps$default(I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.VerticalGaps
 *f:com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 - <init>(javax.swing.JComponent,com.intellij.ui.dsl.gridLayout.Grid):V
 - b:<init>(javax.swing.JComponent,com.intellij.ui.dsl.gridLayout.Grid,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -11046,8 +11031,6 @@ c:com.intellij.ui.tabs.impl.JBTabsImpl
 - p:createTabBorder():com.intellij.ui.tabs.JBTabsBorder
 - p:createTabLabel(com.intellij.ui.tabs.TabInfo):com.intellij.ui.tabs.impl.TabLabel
 - p:createTabPainterAdapter():com.intellij.ui.tabs.impl.TabPainterAdapter
-- p:createTableLayout():com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
-- f:dispose():V
 - doLayout():V
 - pf:drawBorder(java.awt.Graphics):V
 - f:findEnabledBackward(I,Z):com.intellij.ui.tabs.TabInfo
@@ -11369,7 +11352,6 @@ c:com.intellij.ui.tabs.impl.TabLabel
 - editLabelForeground(java.awt.Color):java.awt.Color
 - enableCompressionMode(Z):V
 - getAccessibleContext():javax.accessibility.AccessibleContext
-- p:getActionsInset():I
 - getActionsPosition():com.intellij.ui.tabs.impl.TabLabel$ActionsPosition
 - getData(java.lang.String):java.lang.Object
 - p:getEffectiveBackground():java.awt.Color
@@ -12153,8 +12135,6 @@ f:com.intellij.util.MixinEP
 - getKey():java.lang.Class
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 f:com.intellij.util.OpenSourceUtil
-- s:canNavigate(java.lang.Object):Z
-- s:canNavigateToSource(java.lang.Object):Z
 - s:navigate(Z,Z,java.lang.Iterable):Z
 - s:navigate(Z,Z,com.intellij.pom.Navigatable[]):V
 - s:navigate(Z,com.intellij.pom.Navigatable[]):V
@@ -13205,7 +13185,6 @@ f:com.intellij.util.ui.tree.TreeUtil
 - s:getUserObject(java.lang.Class,java.lang.Object):java.lang.Object
 - s:getUserObject(java.lang.Object):java.lang.Object
 - s:getVisibleRowCount(javax.swing.JTree):I
-- s:hasManyChildren(javax.swing.tree.TreeNode,I):Z
 - s:hasManyNodes(com.intellij.ui.treeStructure.Tree,I):Z
 - s:hasManyNodes(javax.swing.tree.TreeNode,I):Z
 - s:indexedBinarySearch(javax.swing.tree.TreeNode,javax.swing.tree.TreeNode,java.util.Comparator):I

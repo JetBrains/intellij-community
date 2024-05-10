@@ -25,24 +25,6 @@ public final class OpenSourceUtil {
   }
 
   /**
-   * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation
-   * @deprecated check instanceof/null on the caller side
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean canNavigate(@Nullable Object object) {
-    return object instanceof Navigatable && ((Navigatable)object).canNavigate();
-  }
-
-  /**
-   * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation to source
-   * @deprecated check instanceof/null on the caller side
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean canNavigateToSource(@Nullable Object object) {
-    return object instanceof Navigatable && ((Navigatable)object).canNavigateToSource();
-  }
-
-  /**
    * Invokes {@link #navigate(boolean, Navigatable...)} that always requests focus.
    */
   public static void navigate(Navigatable @Nullable ... navigatables) {

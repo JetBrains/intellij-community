@@ -167,22 +167,6 @@ suspend fun <T> withBackgroundProgressIndicator(
 ): T {
   val cancellation = if (cancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
   @Suppress("DEPRECATION")
-  return withBackgroundProgressIndicator(project, title, cancellation, action)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
-            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("withBackgroundProgress(project, title, cancellation) { withRawProgressReporter (action) }"),
-)
-suspend fun <T> withBackgroundProgressIndicator(
-  project: Project,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
-  action: suspend CoroutineScope.() -> T
-): T {
   return withBackgroundProgress(project, title, cancellation) {
     withRawProgressReporter(action)
   }
@@ -201,24 +185,8 @@ suspend fun <T> withModalProgressIndicator(
   action: suspend CoroutineScope.() -> T,
 ): T {
   @Suppress("DEPRECATION")
-  return withModalProgressIndicator(owner = ModalTaskOwner.project(project), title = title, action = action)
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `withModalProgress`, " +
-            "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("withModalProgress(owner, title, cancellation) { withRawProgressReporter(action) }"),
-)
-suspend fun <T> withModalProgressIndicator(
-  owner: ModalTaskOwner,
-  title: @ProgressTitle String,
-  cancellation: TaskCancellation = TaskCancellation.cancellable(),
-  action: suspend CoroutineScope.() -> T,
-): T {
-  return withModalProgress(owner, title, cancellation) {
-    withRawProgressReporter(action)
+  return withModalProgress(owner = ModalTaskOwner.project(project), title = title, cancellation = TaskCancellation.cancellable()) {
+    withRawProgressReporter(action = action)
   }
 }
 

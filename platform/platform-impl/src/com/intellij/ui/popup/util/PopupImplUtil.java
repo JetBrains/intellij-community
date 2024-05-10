@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ObjectUtils;
@@ -69,12 +68,6 @@ public final class PopupImplUtil {
       return values;
     }
     return null;
-  }
-
-  /** @deprecated Use {@link PopupUtil#setPopupToggleComponent}, but in the most cases it is not needed any more */
-  @Deprecated(forRemoval = true)
-  public static void setPopupToggleButton(@NotNull JBPopup jbPopup, @Nullable Component toggleButton) {
-    PopupUtil.setPopupToggleComponent(jbPopup, toggleButton);
   }
 
   public static @Nullable Component getClickSourceFromLastInputEvent() {

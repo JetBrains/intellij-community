@@ -1557,8 +1557,6 @@ com.intellij.ui.BackgroundSupplier
 c:com.intellij.ui.BooleanTableCellEditor
 - javax.swing.DefaultCellEditor
 - <init>():V
-- <init>(Z):V
-- getCellEditorValue():java.lang.Object
 - getTableCellEditorComponent(javax.swing.JTable,java.lang.Object,Z,I,I):java.awt.Component
 f:com.intellij.ui.CachingPainter
 - <init>():V
@@ -4532,7 +4530,6 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$RunWidget
 - sf:RUNNING_BACKGROUND:java.awt.Color
 - sf:RUNNING_ICON_COLOR:java.awt.Color
 - sf:RUN_ICON_COLOR:java.awt.Color
-- sf:SEPARATOR:java.awt.Color
 - sf:STOP_BACKGROUND:java.awt.Color
 - <init>():V
 - s:actionButtonWidth():I
@@ -4997,9 +4994,7 @@ f:com.intellij.util.ui.StartupUiUtil
 - f:isJreHiDPI(com.intellij.ui.scale.ScaleContext):Z
 - sf:isJreHiDPI(java.awt.Component):Z
 - sf:isUnderDarcula():Z
-- sf:isUnderDefaultMacTheme():Z
 - sf:isUnderIntelliJLaF():Z
-- sf:isUnderWin10LookAndFeel():Z
 - sf:isWaylandToolkit():Z
 - sf:isXToolkit():Z
 - f:pump():V

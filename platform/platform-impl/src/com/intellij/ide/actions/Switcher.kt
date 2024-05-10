@@ -70,7 +70,6 @@ import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -94,17 +93,6 @@ import kotlin.math.min
  */
 object Switcher : BaseSwitcherAction(null) {
   val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
-
-  @Deprecated("Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}")
-  @ApiStatus.ScheduledForRemoval
-  @JvmStatic
-  fun createAndShowSwitcher(e: AnActionEvent, title: @Nls String, pinned: Boolean, vFiles: Array<VirtualFile?>?): SwitcherPanel? {
-    val project = e.project ?: return null
-    val switcher = SWITCHER_KEY[project]
-    if (switcher != null && switcher.title == title) return null
-    val event = e.inputEvent
-    return SwitcherPanel(project, title, event, if (pinned) vFiles != null else null, event == null || !event.isShiftDown)
-  }
 
   class SwitcherPanel(val project: Project,
                       val title: @Nls String,

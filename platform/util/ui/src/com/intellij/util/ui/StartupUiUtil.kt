@@ -58,22 +58,6 @@ object StartupUiUtil {
   }
 
   @JvmStatic
-  @Deprecated("Starts from NewUI default mac theme lost meaning. If you want to something based on theme please check current theme id.",
-              ReplaceWith("false"))
-  @ScheduledForRemoval
-  fun isUnderDefaultMacTheme(): Boolean {
-    return false
-  }
-
-  @JvmStatic
-  @Deprecated("Starts from NewUI default win10 theme lost meaning. If you want to something based on theme please check current theme id.",
-              ReplaceWith("false"))
-  @ScheduledForRemoval
-  fun isUnderWin10LookAndFeel(): Boolean {
-    return false
-  }
-
-  @JvmStatic
   fun getLcdContrastValue(): Int {
     val lcdContrastValue = if (LoadingState.APP_STARTED.isOccurred) Registry.intValue("lcd.contrast.value", 0) else 0
     return if (lcdContrastValue == 0) {

@@ -2315,9 +2315,6 @@ public final class JBUI {
       public static final Color RUN_ICON_COLOR = JBColor.namedColor("RunWidget.runIconColor", new Color(0x5FAD65));
       public static final Color RUNNING_BACKGROUND = JBColor.namedColor("RunWidget.runningBackground", 0x599E5E);
       public static final Color RUNNING_ICON_COLOR = JBColor.namedColor("RunWidget.runningIconColor", Color.WHITE);
-      /** @deprecated The separator key was used in the contrast run widget implementation, and now it is now needed any more */
-      @Deprecated(forRemoval = true)
-      public static final Color SEPARATOR = JBColor.namedColor("RunWidget.separatorColor", new Color(255, 255, 255, 64));
       public static final Color STOP_BACKGROUND = JBColor.namedColor("RunWidget.stopBackground", new Color(0xC94F4F));
 
       // these colors will be applied over background color
