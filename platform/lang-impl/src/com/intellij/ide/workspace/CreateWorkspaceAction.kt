@@ -19,7 +19,6 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.addIfNotNull
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -93,7 +92,7 @@ internal suspend fun linkToWorkspace(workspace: Project, projectPath: String) {
 private fun createAndOpenWorkspaceProject(project: Project,
                                           workspacePath: Path,
                                           projectName: String?,
-                                          initTask: suspend CoroutineScope.(workspace: Project) -> Unit) {
+                                          initTask: suspend (workspace: Project) -> Unit) {
   val options = OpenProjectTask {
     projectToClose = project
     this.projectName = projectName
@@ -103,9 +102,7 @@ private fun createAndOpenWorkspaceProject(project: Project,
     isRefreshVfsNeeded = true
     beforeOpen = { workspace ->
       setWorkspace(workspace)
-      withContext(Dispatchers.EDT) {
-        initTask(workspace)
-      }
+      initTask(workspace)
       true
     }
   }
