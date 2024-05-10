@@ -6,14 +6,11 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -73,12 +70,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       ActionContext context =
         ActionContext.from(editor, element.getContainingFile()).withElement(element);
       String name = getActionName(element);
-      ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return ReadAction.nonBlocking(() -> perform(context)).executeSynchronously();
-      }, name, true, context.project());
-      if (command == null) return;
-      CommandProcessor.getInstance().executeCommand(
-        context.project(), () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor), name, null);
+      ModCommandExecutor.executeInteractively(context, name, editor, () -> perform(context));
     }
     finally {
       final RefactoringEventData afterData = new RefactoringEventData();

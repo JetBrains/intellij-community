@@ -256,14 +256,11 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       result = elements == null ? List.of() :
                IntStreamEx.ofIndices(members, elements::contains).elements(modChooser.elements()).toList();
     }
-    ModCommand nextCommand = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking(() -> modChooser.nextCommand().apply(result)).executeSynchronously(),
-      modChooser.title(), true, context.project());
-    executeInteractively(context, nextCommand, editor);
+    ModCommandExecutor.executeInteractively(context, modChooser.title(), editor, () -> modChooser.nextCommand().apply(result));
     return true;
   }
 
-  private boolean executeStartTemplate(@NotNull ActionContext context, @NotNull ModStartTemplate template, @Nullable Editor editor) {
+  private static boolean executeStartTemplate(@NotNull ActionContext context, @NotNull ModStartTemplate template, @Nullable Editor editor) {
     VirtualFile file = actualize(template.file());
     if (file == null) return false;
     Editor finalEditor = getEditor(context.project(), editor, file);
@@ -293,10 +290,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
         @Override
         public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {
-          ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-            return ReadAction.nonBlocking(() -> template.templateFinishFunction().apply(psiFile)).executeSynchronously();
-          }, name, true, context.project());
-          CommandProcessor.getInstance().executeCommand(context.project(), () -> executeInteractively(context, next, editor), name, null);
+          ModCommandExecutor.executeInteractively(context, name, editor, () -> template.templateFinishFunction().apply(psiFile));
         }
       });
     });

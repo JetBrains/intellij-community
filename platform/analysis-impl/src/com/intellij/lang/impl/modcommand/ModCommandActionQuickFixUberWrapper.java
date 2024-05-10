@@ -7,7 +7,10 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -21,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntentionActionOnPsiElement 
+public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntentionActionOnPsiElement
   implements Iconable, PriorityAction, IntentionActionWithFixAllOption, ReportingClassSubstitutor {
   private final @NotNull ModCommandAction myAction;
   private @Nullable Presentation myPresentation;
@@ -72,8 +75,9 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     ActionContext context = ActionContext.from(editor, file).withElement(startElement);
-    ModCommand command = myAction.perform(context);
-    ModCommandExecutor.getInstance().executeInteractively(context, command, editor);
+    Presentation presentation = myPresentation;
+    String name = presentation == null ? getFamilyName() : presentation.name();
+    ModCommandExecutor.executeInteractively(context, name, editor, () -> myAction.perform(context));
   }
 
   @Override
