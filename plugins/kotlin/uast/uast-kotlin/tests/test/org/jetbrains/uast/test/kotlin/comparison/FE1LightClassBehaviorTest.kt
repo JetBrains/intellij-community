@@ -2,6 +2,7 @@
 package org.jetbrains.uast.test.kotlin.org.jetbrains.uast.test.kotlin.comparison
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.test.common.kotlin.LightClassBehaviorTestBase
@@ -10,7 +11,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), LightClassBehaviorTestBase {
-    override val isFirUastPlugin: Boolean = false
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

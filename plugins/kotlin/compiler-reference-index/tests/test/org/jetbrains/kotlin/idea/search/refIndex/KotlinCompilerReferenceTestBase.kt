@@ -9,22 +9,27 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
-abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
+abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
+                                                 ExpectedPluginModeProvider {
+
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)
         moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
     }
 
-    protected open val isFir: Boolean get() = false
-    protected open val withK2Compiler: Boolean get() = isFir
+    protected open val withK2Compiler: Boolean
+        get() = pluginMode == KotlinPluginMode.K2
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         KotlinCompilerReferenceIndexService[project]
 
         if (withK2Compiler) {

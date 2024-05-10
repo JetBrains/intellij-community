@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.fir.kmp
 import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixtureTestCase
 
 abstract class AbstractK2KmpLightFixtureHighlightingTest : KotlinLightMultiplatformCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     fun doTest(path: String) {
         val allFiles = configureModuleStructure(path).allFiles

@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveInJavaTest
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractFirReferenceResolveInJavaTest : AbstractReferenceResolveInJavaTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun tearDown() {
         runAll(

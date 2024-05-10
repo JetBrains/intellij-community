@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 abstract class AbstractK2IntroduceParameterTest : AbstractExtractionTest() {
-    override fun isFirPlugin(): Boolean = true
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     protected fun doIntroduceParameterTest(unused: String) {
@@ -59,7 +58,7 @@ abstract class AbstractK2IntroduceParameterTest : AbstractExtractionTest() {
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 

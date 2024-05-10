@@ -8,6 +8,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.BaseKotlinChangeSignatureTest
@@ -15,9 +16,9 @@ import org.jetbrains.kotlin.psi.*
 
 class KotlinFirChangeSignatureTest :
     BaseKotlinChangeSignatureTest<KotlinChangeInfo, KotlinParameterInfo, KotlinTypeInfo, Visibility, KotlinMethodDescriptor>() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getSuffix(): String {
         return "k2"

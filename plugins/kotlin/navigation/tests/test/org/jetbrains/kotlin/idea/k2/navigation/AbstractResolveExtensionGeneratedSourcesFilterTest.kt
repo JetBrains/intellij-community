@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.navigation.KotlinResolveExtensionGeneratedSourc
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest
 
 abstract class AbstractResolveExtensionGeneratedSourcesFilterTest : AbstractReferenceResolveTest() {
-    override fun isFirPlugin(): Boolean = true
 
     private lateinit var xmlFile: XmlFile
     private val filter = KotlinResolveExtensionGeneratedSourcesFilter()

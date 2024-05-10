@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class IdeKotlinAnnotationsResolverTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/annotationsResolver/ambiguity")
     public static class Ambiguity extends AbstractIdeKotlinAnnotationsResolverTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -40,6 +47,12 @@ public abstract class IdeKotlinAnnotationsResolverTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/annotationsResolver/priority")
     public static class Priority extends AbstractIdeKotlinAnnotationsResolverTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -58,6 +71,12 @@ public abstract class IdeKotlinAnnotationsResolverTestGenerated extends Abstract
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/annotationsResolver")
     public static class Uncategorized extends AbstractIdeKotlinAnnotationsResolverTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

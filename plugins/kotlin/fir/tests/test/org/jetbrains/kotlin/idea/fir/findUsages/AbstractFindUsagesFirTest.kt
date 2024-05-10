@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.findUsages
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
@@ -11,7 +10,6 @@ import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractFindUsagesFirTest : AbstractFindUsagesTest(), KMPTest {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KMPProjectDescriptorTestUtilities.createKMPProjectDescriptor(testPlatform)
@@ -23,8 +21,8 @@ abstract class AbstractFindUsagesFirTest : AbstractFindUsagesTest(), KMPTest {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 }

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTestCase
@@ -14,7 +13,6 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 abstract class AbstractFirWithMppStdlibCompletionTest : KotlinFixtureCompletionBaseTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinJdkAndMultiplatformStdlibDescriptor.JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES
@@ -22,8 +20,8 @@ abstract class AbstractFirWithMppStdlibCompletionTest : KotlinFixtureCompletionB
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 

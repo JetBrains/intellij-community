@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.nj2k;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class NewJavaToKotlinConverterPartialTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/partialConverter/field")
     public static class Field extends AbstractNewJavaToKotlinConverterPartialTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -95,6 +102,12 @@ public abstract class NewJavaToKotlinConverterPartialTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/partialConverter/function")
     public static class Function extends AbstractNewJavaToKotlinConverterPartialTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

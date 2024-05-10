@@ -310,7 +310,9 @@ abstract class AbstractHighlightingCodeMetaInfoTest : AbstractCodeMetaInfoTest()
 }
 
 abstract class AbstractCodeMetaInfoTest : AbstractMultiModuleTest() {
+
     open val checkNoDiagnosticError: Boolean get() = false
+
     open fun getConfigurations(): List<AbstractCodeMetaInfoRenderConfiguration> = listOf(
         DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration(),

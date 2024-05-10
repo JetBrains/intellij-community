@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.k2.debugger.test.withTestServicesNeededForCodeC
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractK2PositionManagerTest : AbstractPositionManagerTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getCompileFiles(files: MutableList<KtFile>?, configuration: CompilerConfiguration?): GenerationState {
         return withTestServicesNeededForCodeCompilation(project) {

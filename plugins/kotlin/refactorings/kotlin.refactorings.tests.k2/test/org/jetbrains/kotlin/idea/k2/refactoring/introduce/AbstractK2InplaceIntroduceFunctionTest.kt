@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractK2InplaceIntroduceFunctionTest : AbstractInplaceIntroduceFunctionTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getExtractFunctionHandler(allContainersEnabled: Boolean): AbstractExtractKotlinFunctionHandler =
         KotlinFirExtractFunctionHandler(allContainersEnabled)
@@ -18,7 +17,7 @@ abstract class AbstractK2InplaceIntroduceFunctionTest : AbstractInplaceIntroduce
     override fun tearDown() {
         runAll(
           { myFixture.project.invalidateCaches() },
-          { super.tearDown() }
+          { super.tearDown() },
         )
     }
 

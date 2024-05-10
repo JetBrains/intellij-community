@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.resolve;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references/arrayAccess")
     public static class ArrayAccess extends AbstractReferenceResolveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -40,6 +47,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references/constructorDelegatingReference")
     public static class ConstructorDelegatingReference extends AbstractReferenceResolveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -61,6 +74,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references/delegatedPropertyAccessors/inSource")
         public static class InSource extends AbstractReferenceResolveTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -89,6 +108,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references/delegatedPropertyAccessors/inStandardLibrary")
         public static class InStandardLibrary extends AbstractReferenceResolveTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -107,6 +132,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references/delegatedPropertyAccessors")
         public static class Uncategorized extends AbstractReferenceResolveTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -124,6 +155,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references/forLoopIn/inBuiltIns")
         public static class InBuiltIns extends AbstractReferenceResolveTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -142,6 +179,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references/forLoopIn/inLibrary")
         public static class InLibrary extends AbstractReferenceResolveTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -155,6 +198,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references/forLoopIn/inSource")
         public static class InSource extends AbstractReferenceResolveTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -178,6 +227,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references/forLoopIn")
         public static class Uncategorized extends AbstractReferenceResolveTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -192,6 +247,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references/inImport")
     public static class InImport extends AbstractReferenceResolveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -245,6 +306,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references/invoke")
     public static class Invoke extends AbstractReferenceResolveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -323,6 +390,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references/nestedTypes")
     public static class NestedTypes extends AbstractReferenceResolveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -386,6 +459,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references/packageReference")
     public static class PackageReference extends AbstractReferenceResolveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -414,6 +493,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references/qualifiedAccess")
     public static class QualifiedAccess extends AbstractReferenceResolveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -457,6 +542,12 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/references")
     public static class Uncategorized extends AbstractReferenceResolveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

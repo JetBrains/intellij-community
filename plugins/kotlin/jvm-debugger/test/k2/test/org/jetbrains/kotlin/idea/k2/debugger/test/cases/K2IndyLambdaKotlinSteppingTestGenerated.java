@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/stepIntoAndSmartStepInto")
     public static class StepInto extends AbstractK2IndyLambdaKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -119,6 +126,12 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/stepIntoAndSmartStepInto")
     public static class SmartStepInto extends AbstractK2IndyLambdaKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSmartStepIntoTest, this, testDataFilePath);
         }
@@ -217,6 +230,12 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/stepInto")
     public static class StepIntoOnly extends AbstractK2IndyLambdaKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -350,6 +369,12 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/stepOut")
     public static class StepOut extends AbstractK2IndyLambdaKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepOutTest, this, testDataFilePath);
         }
@@ -406,6 +431,12 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/stepping/stepOver/coroutines")
         public static class Coroutines extends AbstractK2IndyLambdaKotlinSteppingTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -434,6 +465,12 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/stepping/stepOver/steppingThroughInlineLambdas")
         public static class SteppingThroughInlineLambdas extends AbstractK2IndyLambdaKotlinSteppingTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -477,6 +514,12 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/stepping/stepOver")
         public static class Uncategorized extends AbstractK2IndyLambdaKotlinSteppingTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -1056,6 +1099,12 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/filters")
     public static class Filters extends AbstractK2IndyLambdaKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -1124,6 +1173,12 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/custom")
     public static class Custom extends AbstractK2IndyLambdaKotlinSteppingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
         }

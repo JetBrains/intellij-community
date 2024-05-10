@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processD
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 abstract class AbstractK2IntroduceFunctionTest : AbstractExtractionTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getExtractFunctionHandler(
         explicitPreviousSibling: PsiElement?,
@@ -61,7 +60,7 @@ abstract class AbstractK2IntroduceFunctionTest : AbstractExtractionTest() {
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 

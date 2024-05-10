@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 import org.jetbrains.kotlin.test.TargetBackend;
 
@@ -28,6 +29,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
             public static class InaccessibleMembers extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -116,6 +123,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
             public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -170,6 +183,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/contextReceivers")
         public static class ContextReceivers extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -246,6 +265,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/runToCursor")
             public static class RunToCursor extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -297,6 +322,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto")
                 public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -315,6 +346,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto/unsupported")
                 public static class Unsupported extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -332,6 +369,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOut")
                 public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -355,6 +398,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported")
                 public static class Unsupported extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -382,6 +431,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver")
                 public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -450,6 +505,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported")
                 public static class Unsupported extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -484,6 +545,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
             public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -593,6 +660,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/createExpression")
         public static class CreateExpression extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -616,6 +689,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/extraVariables")
         public static class ExtraVariables extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -679,6 +758,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/frame")
         public static class Frame extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -987,6 +1072,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/funWithDefaultParam")
         public static class FunWithDefaultParam extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1015,6 +1106,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/implicitClassReceiver")
         public static class ImplicitClassReceiver extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1058,6 +1155,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/javaContext")
         public static class JavaContext extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1096,6 +1199,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/labels")
         public static class Labels extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1129,6 +1238,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/lambdas")
         public static class Lambdas extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1242,6 +1357,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/renderer")
         public static class Renderer extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1265,6 +1386,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleConstructors")
         public static class SimpleConstructors extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1278,6 +1405,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleLocals")
         public static class SimpleLocals extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1381,6 +1514,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleSmartcasts")
         public static class SimpleSmartcasts extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -1419,6 +1558,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint")
         public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -2081,6 +2226,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints/library")
         public static class Library extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -2099,6 +2250,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints")
         public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
@@ -2353,6 +2510,12 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/multiplatform")
     public static class Multiplatform extends AbstractIrKotlinEvaluateExpressionInMppTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
         }

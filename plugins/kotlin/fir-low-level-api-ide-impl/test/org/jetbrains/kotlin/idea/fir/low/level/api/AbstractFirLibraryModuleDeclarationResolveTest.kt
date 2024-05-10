@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractFirLibraryModuleDeclarationResolveTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

@@ -2,18 +2,16 @@
 
 package org.jetbrains.kotlin.j2k.k2
 
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
 
 abstract class AbstractK2JavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterSingleFileTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 }

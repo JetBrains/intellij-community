@@ -23,10 +23,6 @@ abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
         return computeDocumentationBlocking(target.createPointer())?.html
     }
 
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-
     override fun doTest(path: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             super.doTest(path)

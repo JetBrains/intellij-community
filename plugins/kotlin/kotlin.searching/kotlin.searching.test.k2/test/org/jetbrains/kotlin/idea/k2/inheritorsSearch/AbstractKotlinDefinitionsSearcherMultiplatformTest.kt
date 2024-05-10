@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.nio.file.Paths
 
 abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightMultiplatformCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     fun doTestKotlinClass(path: String) {
         val virtualFile = configureModuleStructure(path).mainFile

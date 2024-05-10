@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.resolve
 
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -9,7 +10,9 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.runAll
 
 class KotlinSymbolOnAirResolveTest: KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()

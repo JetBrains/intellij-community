@@ -4,6 +4,7 @@ package org.jetbrains.fir.uast.test
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
@@ -16,7 +17,9 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 import kotlin.text.trimIndent
 
 class FirUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     fun `test dataflow not null`() = doTest("""
         fun dataFlowNotNull(b: Boolean) {

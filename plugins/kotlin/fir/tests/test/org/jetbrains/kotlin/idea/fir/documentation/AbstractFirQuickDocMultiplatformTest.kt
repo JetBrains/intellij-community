@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixture
 import java.io.File
 
 abstract class AbstractFirQuickDocMultiplatformTest: KotlinLightMultiplatformCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     fun getDoc(): String? {
         val target =

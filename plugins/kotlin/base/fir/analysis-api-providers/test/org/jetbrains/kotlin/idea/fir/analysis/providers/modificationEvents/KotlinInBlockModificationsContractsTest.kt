@@ -10,13 +10,16 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
 class KotlinInBlockModificationsContractsTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     context(KtAnalysisSession)
     private fun KtFile.diagnostics() = collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)

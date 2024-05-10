@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractK2ClassNameCalculatorTest: AbstractClassNameCalculatorTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun checkConsistency(file: KtFile, allNames: Map<KtElement, String>) {
         withTestServicesNeededForCodeCompilation(project) {

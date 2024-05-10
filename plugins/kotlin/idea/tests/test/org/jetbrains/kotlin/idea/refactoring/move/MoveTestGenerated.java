@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.refactoring.move;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/changePackage")
     public static class ChangePackage extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -69,6 +76,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/movePackage")
     public static class MovePackage extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -82,6 +95,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveDirectory")
     public static class MoveDirectory extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -100,6 +119,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveFile")
     public static class MoveFile extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -228,6 +253,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveTopLevel")
     public static class MoveTopLevel extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -641,6 +672,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveTopLevelToInner")
     public static class MoveTopLevelToInner extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -664,6 +701,12 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveNested")
     public static class MoveNested extends AbstractMoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

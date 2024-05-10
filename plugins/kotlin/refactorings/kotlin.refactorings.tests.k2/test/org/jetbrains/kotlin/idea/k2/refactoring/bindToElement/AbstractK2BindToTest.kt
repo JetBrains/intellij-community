@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 abstract class AbstractK2BindToTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin() = true
 
     override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 

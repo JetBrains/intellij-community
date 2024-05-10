@@ -5,14 +5,10 @@ package org.jetbrains.kotlin.idea.refactoring.move
 import com.google.gson.JsonObject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 
 abstract class AbstractK1MultiModuleMoveTest : AbstractMultiModuleMoveTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
 
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
         runRefactoringTest(path, config, rootDir, project, MoveAction.valueOf(config.getString("type")))

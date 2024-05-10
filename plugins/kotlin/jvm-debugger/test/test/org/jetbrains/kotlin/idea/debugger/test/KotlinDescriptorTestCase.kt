@@ -159,9 +159,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
             .setValue(originalDisableFallbackToOldEvaluator)
     }
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
-
     protected open val compileWithK2: Boolean get() = false
 
     protected open val useInlineScopes: Boolean get() = false

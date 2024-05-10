@@ -3,4 +3,4 @@ package org.jetbrains.kotlin.idea.k1.codeinsight.handlers
 
 import org.jetbrains.kotlin.idea.completion.test.AbstractSmartEnterTest
 
-class K1SmartEnterTest: AbstractSmartEnterTest()
+class K1SmartEnterTest : AbstractSmartEnterTest()

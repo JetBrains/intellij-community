@@ -11,6 +11,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -18,7 +19,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
 class K2AutoImportHighlightingFlickeringTest: KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

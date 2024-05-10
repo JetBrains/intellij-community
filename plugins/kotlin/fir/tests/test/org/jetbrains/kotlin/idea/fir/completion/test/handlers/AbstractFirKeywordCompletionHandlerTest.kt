@@ -10,9 +10,8 @@ import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.test.utils.withExtension
 
 abstract class AbstractFirKeywordCompletionHandlerTest : AbstractKeywordCompletionHandlerTest() {
-    override val captureExceptions: Boolean = false
 
-    override fun isFirPlugin(): Boolean = true
+    override val captureExceptions: Boolean = false
 
     override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, IgnoreTests.FileExtension.FIR, ".after")
 

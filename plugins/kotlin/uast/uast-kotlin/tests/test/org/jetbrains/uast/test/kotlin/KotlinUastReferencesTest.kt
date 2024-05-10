@@ -10,6 +10,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.UExpression
@@ -23,6 +24,9 @@ import kotlin.test.fail
 @RunWith(JUnit38ClassRunner::class)
 class KotlinUastReferencesTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     @Test
     fun `test original getter is visible when reference is under renaming`() {

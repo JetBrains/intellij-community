@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import java.nio.file.Paths
 
 abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

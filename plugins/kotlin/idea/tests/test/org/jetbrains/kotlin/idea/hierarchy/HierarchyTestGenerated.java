@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.hierarchy;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/hierarchy/class/type")
     public static class Type extends AbstractHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTypeClassHierarchyTest, this, testDataFilePath);
         }
@@ -174,6 +181,12 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/hierarchy/class/super")
     public static class Super extends AbstractHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSuperClassHierarchyTest, this, testDataFilePath);
         }
@@ -202,6 +215,12 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/hierarchy/class/sub")
     public static class Sub extends AbstractHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSubClassHierarchyTest, this, testDataFilePath);
         }
@@ -280,6 +299,12 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/hierarchy/calls/callers")
     public static class Callers extends AbstractHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doCallerHierarchyTest, this, testDataFilePath);
         }
@@ -418,6 +443,12 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/hierarchy/calls/callersJava")
     public static class CallersJava extends AbstractHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doCallerJavaHierarchyTest, this, testDataFilePath);
         }
@@ -431,6 +462,12 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/hierarchy/calls/callees")
     public static class Callees extends AbstractHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doCalleeHierarchyTest, this, testDataFilePath);
         }
@@ -504,6 +541,12 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/hierarchy/overrides")
     public static class Overrides extends AbstractHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doOverrideHierarchyTest, this, testDataFilePath);
         }

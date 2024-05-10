@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.search
 
 import com.intellij.psi.PsiFileFactory
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -14,6 +15,10 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class PsiBasedClassResolverTest : KotlinLightCodeInsightFixtureTestCaseBase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     fun testSimple() {
         Assert.assertFalse(doTest("@Test fun foo()")!!)
     }

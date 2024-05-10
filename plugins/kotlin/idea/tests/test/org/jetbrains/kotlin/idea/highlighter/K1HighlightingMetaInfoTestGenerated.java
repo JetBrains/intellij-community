@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.highlighter;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/diagnostics")
     public static class Diagnostics extends AbstractK1HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -50,6 +57,12 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/dsl")
     public static class Dsl extends AbstractK1HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -88,6 +101,12 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/focusMode")
     public static class FocusMode extends AbstractK1HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -111,6 +130,12 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/jvm")
     public static class Jvm extends AbstractK1HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -169,6 +194,12 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/smartCasts")
     public static class SmartCasts extends AbstractK1HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -227,6 +258,12 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo")
     public static class Uncategorized extends AbstractK1HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -355,6 +392,12 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/unresolved")
     public static class Unresolved extends AbstractK1HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

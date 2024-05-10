@@ -7,7 +7,6 @@ import com.google.gson.JsonParser
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.IdeaTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -22,9 +21,6 @@ abstract class AbstractK2MultiFileInspectionTest : KotlinMultiFileTestCase() {
     init {
         myDoCompare = false
     }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     protected fun doTest(path: String) {
         val configFile = File(path)

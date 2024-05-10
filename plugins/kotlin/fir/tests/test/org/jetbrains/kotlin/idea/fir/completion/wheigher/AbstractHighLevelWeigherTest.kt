@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.fir.completion.wheigher
 
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletionWeigherTest
@@ -12,7 +11,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractHighLevelWeigherTest : AbstractBasicCompletionWeigherTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -30,8 +28,8 @@ abstract class AbstractHighLevelWeigherTest : AbstractBasicCompletionWeigherTest
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() },
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 }

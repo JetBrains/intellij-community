@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringFactory
-import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
@@ -29,7 +29,11 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationBaseTest() {
+
     private lateinit var mockLibraryFacility: MockLibraryFacility
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun setUp() {
         super.setUp()
@@ -39,9 +43,9 @@ class KotlinJUnitRunConfigurationTest : AbstractRunConfigurationBaseTest() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { (RunManager.Companion.getInstance(myProject) as RunManagerImpl).clearAll() },
-            ThrowableRunnable { mockLibraryFacility.tearDown(module) },
-            ThrowableRunnable { super.tearDown() }
+            { (RunManager.Companion.getInstance(myProject) as RunManagerImpl).clearAll() },
+            { mockLibraryFacility.tearDown(module) },
+            { super.tearDown() },
         )
     }
 

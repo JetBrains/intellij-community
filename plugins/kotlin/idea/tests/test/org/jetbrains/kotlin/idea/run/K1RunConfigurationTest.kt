@@ -2,9 +2,14 @@
 
 package org.jetbrains.kotlin.idea.run
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 
 @RunWith(JUnit38ClassRunner::class)
-class K1RunConfigurationTest : AbstractRunConfigurationTest()
+class K1RunConfigurationTest : AbstractRunConfigurationTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+}

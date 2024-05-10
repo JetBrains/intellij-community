@@ -5,6 +5,7 @@ package org.jetbrains.fir.uast.test
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
@@ -15,7 +16,10 @@ import java.nio.file.Path
 
 @RunWith(JUnit3RunnerWithInners::class)
 abstract class FirUastResolveApiTest : AbstractFirUastTest() {
-    override val isFirUastPlugin: Boolean = true
+
+    final override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     override val testBasePath: Path = KotlinRoot.PATH.resolve("uast")
     override fun check(filePath: String, file: UFile) {
         // Bogus
@@ -34,6 +38,7 @@ abstract class FirUastResolveApiTest : AbstractFirUastTest() {
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : FirUastResolveApiTest(), UastResolveApiTestBase {
+
         @TestMetadata("doWhile.kt")
         fun testDoWhile() {
             doCheck("uast-kotlin-fir/tests/testData/declaration/doWhile.kt", ::checkCallbackForDoWhile)

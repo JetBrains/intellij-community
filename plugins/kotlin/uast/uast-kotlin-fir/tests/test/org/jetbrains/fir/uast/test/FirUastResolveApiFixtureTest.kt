@@ -4,6 +4,7 @@ package org.jetbrains.fir.uast.test
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.KtAssert
@@ -13,8 +14,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastResolveApiFixtureTestBase {
-    override val isFirUastPlugin: Boolean = true
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()

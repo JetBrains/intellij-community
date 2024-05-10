@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.refactoring.pullUp;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/pullUp/k2k")
     public static class K2K extends AbstractPullUpTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
         }
@@ -314,6 +321,12 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/pullUp/k2j")
     public static class K2J extends AbstractPullUpTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
         }
@@ -382,6 +395,12 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/pullUp/j2k")
     public static class J2K extends AbstractPullUpTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doJavaTest, this, testDataFilePath);
         }

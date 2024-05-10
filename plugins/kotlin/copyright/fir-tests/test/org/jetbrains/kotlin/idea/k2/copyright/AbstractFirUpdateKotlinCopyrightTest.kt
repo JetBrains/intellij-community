@@ -3,9 +3,4 @@ package org.jetbrains.kotlin.idea.k2.copyright
 
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
 
-abstract class AbstractFirUpdateKotlinCopyrightTest: AbstractUpdateKotlinCopyrightTest() {
-
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-}
+abstract class AbstractFirUpdateKotlinCopyrightTest : AbstractUpdateKotlinCopyrightTest()

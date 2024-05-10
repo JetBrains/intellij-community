@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.actions;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class K1AddImportActionTestGenerated extends AbstractK1AddImport
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/idea/actions/kotlinAddImportAction/extensions")
     public static class Extensions extends AbstractK1AddImportActionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -50,6 +57,12 @@ public abstract class K1AddImportActionTestGenerated extends AbstractK1AddImport
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/idea/actions/kotlinAddImportAction")
     public static class Uncategorized extends AbstractK1AddImportActionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

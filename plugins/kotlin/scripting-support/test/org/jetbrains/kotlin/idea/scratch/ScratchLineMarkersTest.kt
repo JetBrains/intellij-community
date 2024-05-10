@@ -18,11 +18,18 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.AbstractLineMarkersTest
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest.Companion.configureOptions
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
-abstract class AbstractScratchLineMarkersTest : FileEditorManagerTestCase() {
+abstract class AbstractScratchLineMarkersTest : FileEditorManagerTestCase(),
+                                                ExpectedPluginModeProvider {
     private val scratchFiles: MutableList<VirtualFile> = ArrayList()
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
 
     fun doScratchTest(path: String) {
         val fileText = FileUtil.loadFile(File(path))

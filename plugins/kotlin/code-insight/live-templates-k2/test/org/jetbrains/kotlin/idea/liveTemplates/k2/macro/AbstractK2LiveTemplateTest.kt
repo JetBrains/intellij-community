@@ -14,9 +14,6 @@ import kotlin.io.path.name
 
 abstract class AbstractK2LiveTemplateTest : NewLightKotlinCodeInsightFixtureTestCase() {
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
-
     override fun setUp() {
         super.setUp()
         TemplateManagerImpl.setTemplateTesting(testRootDisposable)

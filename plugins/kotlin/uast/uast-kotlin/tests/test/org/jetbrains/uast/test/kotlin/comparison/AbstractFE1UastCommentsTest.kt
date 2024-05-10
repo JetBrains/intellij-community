@@ -2,13 +2,16 @@
 
 package org.jetbrains.uast.test.kotlin.comparison
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastCommentLogTestBase
 import org.jetbrains.uast.test.kotlin.AbstractKotlinUastTest
 import java.io.File
 
 abstract class AbstractFE1UastCommentsTest : AbstractKotlinUastTest(), UastCommentLogTestBase {
-    override val isFirUastPlugin: Boolean = false
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun check(filePath: String, file: UFile) {
         super<UastCommentLogTestBase>.check(filePath, file)

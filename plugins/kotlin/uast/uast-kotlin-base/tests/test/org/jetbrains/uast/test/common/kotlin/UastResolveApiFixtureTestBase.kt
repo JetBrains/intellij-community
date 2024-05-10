@@ -35,7 +35,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
-interface UastResolveApiFixtureTestBase : UastPluginSelection {
+interface UastResolveApiFixtureTestBase {
     fun checkResolveStringFromUast(myFixture: JavaCodeInsightTestFixture, project: Project) {
         val file = myFixture.addFileToProject(
             "s.kt", """fun foo(){

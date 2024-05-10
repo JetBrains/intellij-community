@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.resolve;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/referenceInJava/binaryAndSource")
     public static class BinaryAndSource extends AbstractReferenceResolveInJavaTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -109,6 +116,12 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/referenceInJava/sourceOnly")
     public static class SourceOnly extends AbstractReferenceResolveInJavaTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

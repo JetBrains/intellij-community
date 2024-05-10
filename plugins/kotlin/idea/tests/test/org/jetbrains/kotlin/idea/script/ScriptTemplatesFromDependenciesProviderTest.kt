@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
@@ -26,6 +27,10 @@ import java.io.File
 @RunWith(JUnit3RunnerWithInners::class)
 @TestMetadata("testData/script/definition/jar")
 class ScriptTemplatesFromDependenciesProviderTest : AbstractScriptConfigurationTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     override fun setUp() {
         super.setUp()
 

@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.test.handlers;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/smart/lambda")
     public static class Lambda extends AbstractSmartCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -70,6 +77,12 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/smart/lambdaSignature")
     public static class LambdaSignature extends AbstractSmartCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -88,6 +101,12 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/smart/suspendLambdaSignature")
     public static class SuspendLambdaSignature extends AbstractSmartCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -106,6 +125,12 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/smart")
     public static class Uncategorized extends AbstractSmartCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

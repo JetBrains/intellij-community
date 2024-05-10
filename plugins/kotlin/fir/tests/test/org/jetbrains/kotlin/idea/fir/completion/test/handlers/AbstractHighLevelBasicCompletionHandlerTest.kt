@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.idea.fir.invalidateCaches
 abstract class AbstractHighLevelBasicCompletionHandlerTest : AbstractBasicCompletionHandlerTest() {
     override val captureExceptions: Boolean = false
 
-    override fun isFirPlugin(): Boolean = true
-
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },

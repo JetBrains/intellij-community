@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.fir.search.refIndex;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -27,6 +28,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestInContainingClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -40,6 +47,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestInContainingClassNoErrors extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -53,6 +66,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestJavaUsage extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -66,6 +85,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestNamed extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -79,6 +104,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestNamedWithInvoke extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -92,6 +123,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestSimple extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -105,6 +142,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestWithInvoke extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -118,6 +161,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestWithInvokeExtension extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -131,6 +180,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
             public static class TestWithInvokeFromParent extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -151,6 +206,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestCallableReferences extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -164,6 +225,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestCompanionObjectAccess extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -177,6 +244,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestComponentFunForGenericType1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -190,6 +263,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestComponentFunForGenericType2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -203,6 +282,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestDataClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -216,6 +301,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestDataClassComponentByRef extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -229,6 +320,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestDataClassComponentByRefLocal extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -242,6 +339,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestDataClassFromStdlib extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -255,6 +358,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestDataClassInsideDataClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -268,6 +377,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestExtensionComponentFun extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -281,6 +396,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestFor extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -294,6 +415,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestIsAndAs extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -307,6 +434,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestLambdas extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -320,6 +453,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestMayTypeAffectAncestors extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -333,6 +472,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestMemberComponentFun extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -346,6 +491,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestOperators extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -359,6 +510,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestPropertyDelegate extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -372,6 +529,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestRecursiveDataClass1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -385,6 +548,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestRecursiveDataClass2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -398,6 +567,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestSAM extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -411,6 +586,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestWhen extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -428,6 +609,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
                 public static class TestInvokeAsTypeParameterExtension extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -441,6 +628,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
                 public static class TestInvokeAsTypeParameterExtensionWithSmartCast extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -454,6 +647,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
                 public static class TestInvokeInObjectAsFunction extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -467,6 +666,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
                 public static class TestSuspendInvoke extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -481,6 +686,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestCompareTo extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -494,6 +705,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestContains extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -507,6 +724,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestEquals extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -520,6 +743,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestEqualsNotAny extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -533,6 +762,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestForIteration extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -546,6 +781,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestGet extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -559,6 +800,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestGetAsPropertyDelegate extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -572,6 +819,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestGetInObject extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -585,6 +838,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestInc extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -598,6 +857,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestInvoke extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -611,6 +876,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestInvokeExtension extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -624,6 +895,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestInvokeInObject extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -637,6 +914,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestInvokeInheritance extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -650,6 +933,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestInvokeWithVarArg extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -663,6 +952,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestPlus extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -676,6 +971,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestPlusAssign extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -689,6 +990,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestRecursive extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -702,6 +1009,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestSet extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -715,6 +1028,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestSet1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -728,6 +1047,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestSetAsPropertyDelegate extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -741,6 +1066,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestSeveralOperators extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -754,6 +1085,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
             public static class TestUnaryMinus extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -771,6 +1108,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestClassUsedInPlainText extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -784,6 +1127,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestClassUsedInTextAsRef extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -797,6 +1146,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -810,6 +1165,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaClassConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -823,6 +1184,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaClassFunctionUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -836,6 +1203,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaClassFunctionUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -849,6 +1222,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaClassNonConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -862,6 +1241,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaClassPropertyUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -875,6 +1260,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaClassPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -888,6 +1279,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaClassSecondaryCtrUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -901,6 +1298,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaDerivedClassUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -914,6 +1317,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaDerivedClassUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -927,6 +1336,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaDerivedInterfaceUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -940,6 +1355,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaDerivedInterfaceUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -953,6 +1374,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestJavaInterfaceAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -966,6 +1393,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinAliasedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -979,6 +1412,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -992,6 +1431,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassAllUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1005,6 +1450,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassAllUsages3 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1018,6 +1469,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassAllUsagesNoImport extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1031,6 +1488,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1044,6 +1507,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1057,6 +1526,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassDerivedClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1070,6 +1545,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassDerivedInnerClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1083,6 +1564,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassDerivedInnerObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1096,6 +1583,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1109,6 +1602,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1122,6 +1621,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassDerivedObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1135,6 +1640,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassFunctionUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1148,6 +1659,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassFunctionUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1161,6 +1678,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassImportAliasAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1174,6 +1697,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassNonConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1187,6 +1716,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassPropertyUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1200,6 +1735,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1213,6 +1754,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinClassSecondaryCtorUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1226,6 +1773,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinDeeplyNestedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1239,6 +1792,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInnerClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1252,6 +1811,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInterfaceAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1265,6 +1830,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInterfaceDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1278,6 +1849,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInterfaceDerivedClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1291,6 +1868,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInterfaceDerivedInnerClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1304,6 +1887,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInterfaceDerivedInnerObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1317,6 +1906,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInterfaceDerivedInterfaces extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1330,6 +1925,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInterfaceDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1343,6 +1944,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInterfaceDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1356,6 +1963,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinInterfaceDerivedObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1369,6 +1982,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinLocalClassDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1382,6 +2001,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinLocalClassDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1395,6 +2020,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinLocalClassDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1408,6 +2039,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinLocalClassUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1421,6 +2058,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinLocalClassUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1434,6 +2077,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinNestedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1447,6 +2096,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinPrivateClassUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1460,6 +2115,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestLocalAndNonLocalClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1473,6 +2134,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestPrimaryConstructorOfEnum extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1486,6 +2153,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestPrimaryConstructorWithDefaultParams extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1499,6 +2172,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestUsageInTypeAlias extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1516,6 +2195,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestDataClassComponent extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1529,6 +2214,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestEnumFunctionUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1542,6 +2233,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestEnumValueOf extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1555,6 +2252,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestFunctionCallWithinLambda extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1568,6 +2271,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestFunctionUsedInPlainText extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1581,6 +2290,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestHighlightingOfSuperUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1594,6 +2309,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestInterfaceOverrides extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1607,6 +2328,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestInvokeFromClassCompanion extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1620,6 +2347,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestInvokeFromClassCompanionExtension extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1633,6 +2366,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestInvokeFromInterfaceCompanion extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1646,6 +2385,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestInvokeFromParentCompanionClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1659,6 +2404,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestJavaAndKotlinOverrides extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1672,6 +2423,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestJavaMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1685,6 +2442,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestJvmOverloaded extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1698,6 +2461,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestJvmStaticFun extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1711,6 +2480,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestJvmStaticJvmOverloadsFun extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1724,6 +2499,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinAliasedMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1737,6 +2518,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinExtensionFunction extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1750,6 +2537,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinInterfaceImplThroughDelegate extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1763,6 +2556,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinInterfaceNoImplThroughDelegate extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1776,6 +2575,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinInternalMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1789,6 +2594,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinLocalMethodUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1802,6 +2613,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinLocalMethodUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1815,6 +2632,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinMethodAliasedUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1828,6 +2651,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1841,6 +2670,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinMethodsAliasedUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1854,6 +2689,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinMultiRefInImport extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1867,6 +2708,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinNestedClassMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1880,6 +2727,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1893,6 +2746,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1906,6 +2765,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsages3 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1919,6 +2784,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsages4 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1932,6 +2803,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsages5 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1945,6 +2822,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsagesSameClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1958,6 +2841,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsagesSuperClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1971,6 +2860,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsagesTopLevel extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1984,6 +2879,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsagesTopLevelDifferentFiles extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1997,6 +2898,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2010,6 +2917,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsagesTopLevelExtension extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2023,6 +2936,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsagesTopLevelVsInstance extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2036,6 +2955,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinPrivateMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2049,6 +2974,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinTopLevelExternalFunction extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2062,6 +2993,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinTopLevelMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2075,6 +3012,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinTopLevelMethodUsagesMultifile extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2088,6 +3031,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinTopLevelMethodUsagesNoImport extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2101,6 +3050,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinTopLevelMethodUsagesWithRenamedFile extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2114,6 +3069,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestLabeledReturns extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2127,6 +3088,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestLocalClassMember extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2140,6 +3107,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestNonBaseDeclarationFunctionAsPropName extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2153,6 +3126,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestObjectExpressionDeepMember extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2166,6 +3145,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestObjectExpressionMember extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2179,6 +3164,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestObjectExpressionMember2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2192,6 +3183,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestObjectExpressionMemberInClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2205,6 +3202,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestObjectExpressionMemberInCompanion extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2218,6 +3221,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestObjectExpressionMemberInTopLevel extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2231,6 +3240,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestOverrides extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2244,6 +3259,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestPrivateKotlinClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2257,6 +3278,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestPrivateKotlinObject extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2270,6 +3297,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestUsagesOfBaseForFunction extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2287,6 +3320,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findJavaPropertyUsages")
             public static class TestJavaPropertyUsagesK extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2300,6 +3339,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findJavaPropertyUsages")
             public static class TestJavaPropertyUsagesKJK extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2313,6 +3358,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findJavaPropertyUsages")
             public static class TestJavaPropertyUsagesKK extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2330,6 +3381,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
             public static class TestJavaObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2343,6 +3400,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
             public static class TestKotlinImportedObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2356,6 +3419,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
             public static class TestKotlinLocalObjectUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2369,6 +3438,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
             public static class TestKotlinLocalObjectUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2382,6 +3457,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
             public static class TestKotlinNestedObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2395,6 +3476,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
             public static class TestKotlinObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2408,6 +3495,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
             public static class TestKotlinPrivateObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2425,6 +3518,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPackageUsages")
             public static class TestKotlinPackageUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2442,6 +3541,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinAnnotationConstructorParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2455,6 +3560,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinComponentFunctionParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2468,6 +3579,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinConstructorParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2481,6 +3598,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinConstructorParameterUsagesOverrides extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2494,6 +3617,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinDefaultAnnotationParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2507,6 +3636,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinFunctionParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2520,6 +3655,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinFunctionTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2533,6 +3674,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinHighlightParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2546,6 +3693,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinMemberFunctionMultipleParametersWithSearchInOverridings extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2559,6 +3712,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinMemberFunctionParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2572,6 +3731,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinMemberFunctionParameterUsagesWithSearchInOverridings extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2585,6 +3750,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestParameterNameInTextFile extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2598,6 +3769,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestParameterUsageInAnonymousInheritor extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2611,6 +3788,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestParameterUsageInAnonymousInheritorWithSearchInOverridings extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2628,6 +3811,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestAnnotationConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2641,6 +3830,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestAnnotationEntry extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2654,6 +3849,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2667,6 +3868,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestJvmOverloaded extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2680,6 +3887,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestMissingName extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2693,6 +3906,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestPrimaryConstructorByRef extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2706,6 +3925,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestPrimaryConstructorNoKeyword extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2719,6 +3944,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestPrimaryConstructorOfEnum extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2732,6 +3963,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestPrimaryConstructorWithKeyword extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2745,6 +3982,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestPrimaryConstructorWithOverloadedOption extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2762,6 +4005,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestBaseAndOverridingPropertyInBodyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2775,6 +4024,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestBaseAndOverridingPropertyInCtrUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2788,6 +4043,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestExtensionPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2801,6 +4062,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaAndKotlinImplementations extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2814,6 +4081,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaAndKotlinOverrides extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2827,6 +4100,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaAndKotlinOverrides2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2840,6 +4119,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaClassObjectPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2853,6 +4138,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaClassObjectPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2866,6 +4157,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaPropertyReadUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2879,6 +4176,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaPropertyReadUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2892,6 +4195,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2905,6 +4214,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2918,6 +4233,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaPropertyUsages3 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2931,6 +4252,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaPropertyWriteUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2944,6 +4271,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJavaPropertyWriteUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2957,6 +4290,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJvmFieldProperty extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2970,6 +4309,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestJvmStaticProperty extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2983,6 +4328,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinClassObjectPropertyUsage extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2996,6 +4347,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinLocalPropertyUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3009,6 +4366,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinLocalPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3022,6 +4385,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinMultiRefInImport extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3035,6 +4404,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinNestedClassPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3048,6 +4423,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPrivatePropertyInClassObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3061,6 +4442,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPrivatePropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3074,6 +4461,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPrivatePropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3087,6 +4480,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPrivatePropertyUsages3 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3100,6 +4499,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPrivatePropertyUsages4 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3113,6 +4518,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPropertyReadUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3126,6 +4537,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPropertyReadUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3139,6 +4556,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPropertySameNameAsMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3152,6 +4575,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3165,6 +4594,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3178,6 +4613,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPropertyWriteUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3191,6 +4632,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinPropertyWriteUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3204,6 +4651,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKotlinTopLevelPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3217,6 +4670,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestKt7656 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3234,6 +4693,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
             public static class TestConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3247,6 +4712,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
             public static class TestDefaultSecondaryConstructor extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3260,6 +4731,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
             public static class TestJvmOverloaded extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3273,6 +4750,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
             public static class TestSecondaryConstructor extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3286,6 +4769,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
             public static class TestSecondaryConstructorInMethodReference extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3299,6 +4788,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
             public static class TestSecondaryConstructorWithOverloadedOption extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3316,6 +4811,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeAliasUsages")
             public static class TestClassAlias extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3329,6 +4830,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeAliasUsages")
             public static class TestObjectAlias extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3346,6 +4853,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
             public static class TestKotlinClassTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3359,6 +4872,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
             public static class TestKotlinFunctionTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3372,6 +4891,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
             public static class TestKotlinReifiedTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3385,6 +4910,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
             public static class TestPropertyWithTypeParameter extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3402,6 +4933,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithFilteringImports")
             public static class TestFindWithFilteringImports extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3419,6 +4956,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithStructuralGrouping")
             public static class TestKotlinClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3432,6 +4975,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithStructuralGrouping")
             public static class TestKotlinMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3445,6 +4994,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithStructuralGrouping")
             public static class TestKotlinPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3465,6 +5020,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
                 public static class TestEnumFunctionUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3478,6 +5039,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
                 public static class TestKotlinInterfaceImplThroughDelegate extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3491,6 +5058,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
                 public static class TestKotlinMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3504,6 +5077,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
                 public static class TestKotlinMultiRefInImport extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3517,6 +5096,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
                 public static class TestKotlinOverloadAndExtensionUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3530,6 +5115,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
                 public static class TestKotlinTopLevelMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3543,6 +5134,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
                 public static class TestUsagesOfBaseForFunction extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3560,6 +5157,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPrimaryConstructorUsages")
                 public static class TestConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3573,6 +5176,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPrimaryConstructorUsages")
                 public static class TestPrimaryConstructorByRef extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3590,6 +5199,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
                 public static class TestKotlinClassObjectPropertyUsage extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3603,6 +5218,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
                 public static class TestKotlinMultiRefInImport extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3616,6 +5237,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
                 public static class TestKotlinPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3629,6 +5256,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
                 public static class TestKotlinTopLevelPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3646,6 +5279,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findSecondaryConstructorUsages")
                 public static class TestConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3659,6 +5298,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findSecondaryConstructorUsages")
                 public static class TestDefaultSecondaryConstructor extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3672,6 +5317,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findSecondaryConstructorUsages")
                 public static class TestSecondaryConstructor extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3690,6 +5341,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/propertyFiles")
             public static class TestPropertyFileUsagesByRef extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3703,6 +5360,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/propertyFiles")
             public static class TestPropertyUsagesByRef extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3720,6 +5383,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/unresolvedAnnotation")
             public static class TestUnresolvedAnnotation extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3737,6 +5406,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
             public static class TestPlusAssignFun extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3750,6 +5425,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
             public static class TestReadAccess extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3763,6 +5444,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
             public static class TestVarInDoWhile extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3776,6 +5463,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
             public static class TestWriteAccess extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3797,6 +5490,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
             public static class TestJavaConstructorInDelegationCall extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3810,6 +5509,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
             public static class TestJavaDefaultConstructorInDelegationCall extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3823,6 +5528,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
             public static class TestPrimaryConstructorByJavaRef extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3836,6 +5547,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
             public static class TestPrimaryConstructorByJavaSuperRef extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3849,6 +5566,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
             public static class TestSecondaryConstructorByJavaNewExpression extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3862,6 +5585,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
             public static class TestSecondaryConstructorByJavaSuperCall extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3879,6 +5608,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKAliasedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3892,6 +5627,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3905,6 +5646,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3918,6 +5665,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassDerivedClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3931,6 +5684,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassDerivedInnerClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3944,6 +5703,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassDerivedInnerObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3957,6 +5722,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3970,6 +5741,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3983,6 +5760,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassDerivedObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3996,6 +5779,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassFieldsUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4009,6 +5798,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassMethodsUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4022,6 +5817,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKClassWithImplicitConstructorAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4035,6 +5836,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKDerivedInterfaces extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4048,6 +5855,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKInnerClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4061,6 +5874,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKInterfaceDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4074,6 +5893,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKInterfaceDerivedClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4087,6 +5912,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKInterfaceDerivedInnerClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4100,6 +5931,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKInterfaceDerivedInnerObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4113,6 +5950,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKInterfaceDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4126,6 +5969,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKInterfaceDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4139,6 +5988,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKInterfaceDerivedObjects extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4152,6 +6007,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
             public static class TestJKNestedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4169,6 +6030,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaFieldUsages")
             public static class TestJKFieldUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4186,6 +6053,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestConventionUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4199,6 +6072,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestDefaultJavaAnnotationMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4212,6 +6091,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestJKMethodOverrides extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4225,6 +6110,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestJKMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4238,6 +6129,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestJavaComponentFunctions extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4251,6 +6148,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestJavaInvoke extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4264,6 +6167,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestJavaInvokeWithStaticImport extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4277,6 +6186,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestJavaWithGroovyInvoke extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4290,6 +6205,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestMismatchedAccessor extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4303,6 +6224,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverriddenMethodSyntheticAccessor extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4316,6 +6243,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverriddenMethodSyntheticAccessor2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4329,6 +6262,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverriddenMethodSyntheticAccessorWithFinalModifier extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4342,6 +6281,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverridenArrayType extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4355,6 +6300,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverridenBoxedType extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4368,6 +6319,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverridenFlexibleCollection extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4381,6 +6338,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverridenRawGenericSignatureBase extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4394,6 +6357,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverridenRawGenericSignatureBase2 extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4407,6 +6376,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestOverridenRawType extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4420,6 +6395,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestSyntheticProperties extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4433,6 +6414,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
             public static class TestUnaryNot extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4450,6 +6437,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaPropertyUsages")
             public static class TestJavaPropertyGetterUsagesKJ extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4463,6 +6456,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaPropertyUsages")
             public static class TestJavaPropertySetterUsagesKJ extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4481,6 +6480,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/propertyFiles")
         public static class TestPropertyFileUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4494,6 +6499,12 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/propertyFiles")
         public static class TestPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

@@ -1,11 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.kotlin
 
-import org.jetbrains.uast.UFile
 import com.intellij.platform.uast.testFramework.common.ValuesTestBase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.uast.UFile
 import org.junit.Test
 
 class KotlinUastValuesTest : AbstractKotlinValuesTest(), ValuesTestBase {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun check(testName: String, file: UFile) {
         super<ValuesTestBase>.check(testName, file)

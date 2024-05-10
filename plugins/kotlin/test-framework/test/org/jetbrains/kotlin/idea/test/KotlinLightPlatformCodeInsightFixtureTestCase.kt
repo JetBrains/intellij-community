@@ -11,9 +11,6 @@ import java.io.File
 abstract class KotlinLightPlatformCodeInsightFixtureTestCase : BasePlatformTestCase(),
                                                                ExpectedPluginModeProvider {
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
-
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
 

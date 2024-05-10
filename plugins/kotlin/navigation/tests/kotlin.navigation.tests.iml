@@ -37,5 +37,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api-fir" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
   </component>
 </module>

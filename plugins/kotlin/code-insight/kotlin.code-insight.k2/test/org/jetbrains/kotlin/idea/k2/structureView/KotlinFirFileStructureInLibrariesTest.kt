@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.structureView
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.structureView.KotlinFileStructureTestBase
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -11,12 +11,12 @@ import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 
 class KotlinFirFileStructureInLibrariesTest: KotlinFileStructureTestBase() {
+
     override val fileExtension: String
         get() = error("`configureDefault` should not be called")
 
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -24,8 +24,8 @@ class KotlinFirFileStructureInLibrariesTest: KotlinFileStructureTestBase() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 

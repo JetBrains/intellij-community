@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.asJava.classes;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.compilerTestData;
 
@@ -23,6 +24,12 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi/facades")
     public static class Facades extends AbstractIdeLightClassesByPsiTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -122,6 +129,12 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi/scripts")
     public static class Scripts extends AbstractIdeLightClassesByPsiTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -151,6 +164,12 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByPsi")
     public static class Uncategorized extends AbstractIdeLightClassesByPsiTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

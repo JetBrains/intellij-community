@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.run.createLibraryWithLongPaths
 import org.jetbrains.kotlin.idea.test.runAll
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -14,6 +15,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class CustomScratchRunActionTest : AbstractScratchRunActionTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     fun testLongCommandLineWithRepl() {
         assertEquals(

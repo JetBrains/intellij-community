@@ -2,21 +2,16 @@
 package org.jetbrains.kotlin.idea.fir.findUsages
 
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesMultiModuleTest
-import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 
 abstract class AbstractFindUsagesMultiModuleFirTest : AbstractFindUsagesMultiModuleTest() {
 
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
-
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 

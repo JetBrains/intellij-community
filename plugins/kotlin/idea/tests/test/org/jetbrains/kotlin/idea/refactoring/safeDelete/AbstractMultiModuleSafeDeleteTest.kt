@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
@@ -49,9 +48,6 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
 
     override fun getTestRoot(): String = "/refactoring/safeDeleteMultiModule/"
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
 
     protected open fun getAlternativeConflictsFile(): String? = null
 

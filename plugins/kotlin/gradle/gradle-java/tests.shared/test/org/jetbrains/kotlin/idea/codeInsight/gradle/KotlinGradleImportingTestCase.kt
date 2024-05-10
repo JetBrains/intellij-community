@@ -24,14 +24,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestData
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
@@ -47,7 +50,9 @@ import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 
 @Suppress("ACCIDENTAL_OVERRIDE")
-abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
+abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
+                                               ExpectedPluginModeProvider {
+
     public override fun getModule(name: String?): Module = super.getModule(name)
 
     protected open fun testDataDirName(): String = ""
@@ -77,7 +82,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     override fun setUp() {
         Assume.assumeFalse(AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio())
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         GradleSystemSettings.getInstance().gradleVmOptions =
             "-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
         GradleProcessOutputInterceptor.install(testRootDisposable)
@@ -94,6 +99,9 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
             super.tearDown()
         }
     }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     protected open fun setUpImportStatusCollector() {
         ExternalSystemProgressNotificationManager

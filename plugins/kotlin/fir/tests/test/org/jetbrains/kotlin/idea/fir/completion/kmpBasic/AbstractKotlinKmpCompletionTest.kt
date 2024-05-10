@@ -13,9 +13,8 @@ import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 abstract class AbstractKotlinKmpCompletionTest : KotlinFixtureCompletionBaseTestCase(), KMPTest {
-  override val captureExceptions: Boolean = false
 
-  override fun isFirPlugin(): Boolean = true
+  override val captureExceptions: Boolean = false
 
   override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, k2Extension = IgnoreTests.FileExtension.FIR)
 
@@ -29,7 +28,7 @@ abstract class AbstractKotlinKmpCompletionTest : KotlinFixtureCompletionBaseTest
   override fun tearDown() {
     runAll(
       { project.invalidateCaches() },
-      { super.tearDown() }
+      { super.tearDown() },
     )
   }
 

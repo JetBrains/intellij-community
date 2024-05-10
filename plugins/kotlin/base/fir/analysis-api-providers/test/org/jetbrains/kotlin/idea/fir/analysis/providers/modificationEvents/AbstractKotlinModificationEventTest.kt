@@ -18,7 +18,7 @@ protected abstract val expectedEventKind: KotlinModificationEventKind
     protected open val defaultAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet()
     override fun getTestDataDirectory(): File = error("Should not be called")
 
-    override val pluginMode: KotlinPluginMode
+    final override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
     protected fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(myProject, name)

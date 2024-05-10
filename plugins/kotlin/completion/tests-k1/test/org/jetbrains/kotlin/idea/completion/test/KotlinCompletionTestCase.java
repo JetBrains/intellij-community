@@ -9,6 +9,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider;
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProviderKt;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import java.io.File;
@@ -17,12 +19,14 @@ import static com.intellij.testFramework.RunAll.runAll;
 import static org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName;
 import static org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot;
 
-abstract public class KotlinCompletionTestCase extends JavaCompletionTestCase {
+abstract public class KotlinCompletionTestCase extends JavaCompletionTestCase
+        implements ExpectedPluginModeProvider {
+
     private Ref<Disposable> vfsDisposable;
 
     @Override
     protected void setUp() throws Exception {
-        super.setUp();
+        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this, super::setUp);
         vfsDisposable = KotlinTestUtils.allowProjectRootAccess(this);
         CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[] {"excludedPackage", "somePackage.ExcludedClass"};
     }

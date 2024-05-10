@@ -3,16 +3,17 @@
 package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.codeInsight.completion.CompletionType
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.AstAccessControl
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import java.io.File
 import kotlin.io.path.Path
 
 abstract class AbstractMultiFileJvmBasicCompletionTest : KotlinCompletionTestCase() {
+
     protected open fun doTest(testPath: String) {
         val fileName = getTestName(false) + ".kt"
         val filePath = Path(testDataDirectory.path, fileName)

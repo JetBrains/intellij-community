@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -24,6 +25,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/collectionElement")
         public static class CollectionElement extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
             }
@@ -62,6 +69,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/explicateTypeArguments")
         public static class ExplicateTypeArguments extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
             }
@@ -100,6 +113,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/extractToScope")
         public static class ExtractToScope extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
             }
@@ -178,6 +197,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/multiDeclarations")
         public static class MultiDeclarations extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
             }
@@ -231,6 +256,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/script")
         public static class Script extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
             }
@@ -254,6 +285,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/stringTemplates")
         public static class StringTemplates extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
             }
@@ -362,6 +399,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable")
         public static class Uncategorized extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
             }
@@ -864,6 +907,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/basic")
         public static class Basic extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1190,6 +1239,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/conditionalJumps")
             public static class ConditionalJumps extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1248,6 +1303,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/default")
             public static class Default extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1291,6 +1352,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/definiteReturns")
             public static class DefiniteReturns extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1344,6 +1411,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/evaluateExpression")
             public static class EvaluateExpression extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1422,6 +1495,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/exitPointEquivalence")
             public static class ExitPointEquivalence extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1475,6 +1554,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/initializer")
             public static class Initializer extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1518,6 +1603,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/outputValues")
             public static class OutputValues extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1696,6 +1787,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/returnTypeCandidates")
             public static class ReturnTypeCandidates extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1719,6 +1816,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/throws")
             public static class Throws extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1772,6 +1875,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/unextractable")
             public static class Unextractable extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1816,6 +1925,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/defaultContainer")
         public static class DefaultContainer extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1859,6 +1974,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/delegation")
         public static class Delegation extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1882,6 +2003,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/duplicates")
         public static class Duplicates extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -1963,6 +2090,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/initializers/accessors")
             public static class Accessors extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1991,6 +2124,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/initializers/classes")
             public static class Classes extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2019,6 +2158,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/initializers/functions")
             public static class Functions extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2087,6 +2232,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/initializers/properties")
             public static class Properties extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2136,6 +2287,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/multiline")
         public static class Multiline extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -2164,6 +2321,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/optIn")
         public static class OptIn extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -2225,6 +2388,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/candidateTypes")
             public static class CandidateTypes extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2318,6 +2487,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/capturedFunctions")
             public static class CapturedFunctions extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2351,6 +2526,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/extractSuper")
             public static class ExtractSuper extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2379,6 +2560,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/extractThis")
             public static class ExtractThis extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2497,6 +2684,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/it")
             public static class It extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2525,6 +2718,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/misc")
             public static class Misc extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2718,6 +2917,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/nonDenotableTypes")
             public static class NonDenotableTypes extends AbstractExtractionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -2767,6 +2972,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/script")
         public static class Script extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -2790,6 +3001,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/stringTemplates")
         public static class StringTemplates extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -2883,6 +3100,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/typeParameters")
         public static class TypeParameters extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
             }
@@ -2985,6 +3208,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceProperty/script")
         public static class Script extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
             }
@@ -3008,6 +3237,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceProperty/stringTemplates")
         public static class StringTemplates extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
             }
@@ -3096,6 +3331,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceProperty")
         public static class Uncategorized extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
             }
@@ -3293,6 +3534,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter/multiline")
         public static class Multiline extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
             }
@@ -3321,6 +3568,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter/script")
         public static class Script extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
             }
@@ -3344,6 +3597,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter/stringTemplates")
         public static class StringTemplates extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
             }
@@ -3437,6 +3696,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter")
         public static class Uncategorized extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
             }
@@ -3790,6 +4055,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter/variableConversion")
         public static class VariableConversion extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
             }
@@ -3812,6 +4083,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceLambdaParameter/multiline")
         public static class Multiline extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceLambdaParameterTest, this, testDataFilePath);
             }
@@ -3840,6 +4117,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceLambdaParameter/stringTemplates")
         public static class StringTemplates extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceLambdaParameterTest, this, testDataFilePath);
             }
@@ -3928,6 +4211,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceLambdaParameter")
         public static class Uncategorized extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceLambdaParameterTest, this, testDataFilePath);
             }
@@ -3987,6 +4276,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceJavaParameter")
     public static class IntroduceJavaParameter extends AbstractExtractionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceJavaParameterTest, this, testDataFilePath);
         }
@@ -4005,6 +4300,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceTypeParameter")
     public static class IntroduceTypeParameter extends AbstractExtractionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceTypeParameterTest, this, testDataFilePath);
         }
@@ -4043,6 +4344,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceTypeAlias")
     public static class IntroduceTypeAlias extends AbstractExtractionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceTypeAliasTest, this, testDataFilePath);
         }
@@ -4199,6 +4506,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceConstant/binaryExpression")
         public static class BinaryExpression extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
             }
@@ -4322,6 +4635,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceConstant/dotQualifiedExpression")
         public static class DotQualifiedExpression extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
             }
@@ -4380,6 +4699,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceConstant/stringTemplates")
         public static class StringTemplates extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
             }
@@ -4438,6 +4763,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceConstant")
         public static class Uncategorized extends AbstractExtractionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
             }
@@ -4472,6 +4803,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/extractSuperclass")
     public static class ExtractSuperclass extends AbstractExtractionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractSuperclassTest, this, testDataFilePath);
         }
@@ -4570,6 +4907,12 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/extractInterface")
     public static class ExtractInterface extends AbstractExtractionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractInterfaceTest, this, testDataFilePath);
         }

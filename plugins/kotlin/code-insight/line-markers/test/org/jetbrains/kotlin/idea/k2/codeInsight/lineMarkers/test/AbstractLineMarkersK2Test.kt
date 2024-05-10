@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.navigation.GotoImplementationHandler
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.codeInsight.AbstractLineMarkersTest
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.SuperDeclarationPopupHandler
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.junit.Assert
 import kotlin.io.path.Path
 
@@ -58,14 +57,10 @@ abstract class AbstractLineMarkersK2Test : AbstractLineMarkersTest() {
         }
     }
 
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 

@@ -11,16 +11,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.registerServiceInstance
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.URLUtil
 import org.jetbrains.fir.uast.test.invalidateAllCachesForUastTests
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.KtAssert
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
@@ -29,12 +28,11 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
-import org.jetbrains.uast.test.common.kotlin.UastPluginSelection
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
-abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), UastPluginSelection {
+abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase() {
     companion object {
 
         val String.withIgnoreFirDirective: Boolean
@@ -76,17 +74,11 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable {
-                scriptSupportRegistry.resetToDefault()
-            },
-            ThrowableRunnable {
-                project.invalidateAllCachesForUastTests()
-            },
-            ThrowableRunnable { super.tearDown() },
+            { scriptSupportRegistry.resetToDefault() },
+            { project.invalidateAllCachesForUastTests() },
+            { super.tearDown() },
         )
     }
-
-    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()

@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
 
 abstract class AbstractProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     fun doTest(path: String) {
         val testDataFile = File(path)

@@ -4,6 +4,7 @@ package org.jetbrains.uast.test.kotlin.analysis
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
@@ -16,7 +17,9 @@ import kotlin.test.assertTrue as kAssertTrue
 import kotlin.test.fail as kFail
 
 class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = false
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     fun `test dataflow not null`() = doTest("""
         fun dataFlowNotNull(b: Boolean) {

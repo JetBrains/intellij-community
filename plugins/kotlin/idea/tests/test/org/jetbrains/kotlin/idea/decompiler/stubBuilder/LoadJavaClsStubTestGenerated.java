@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.decompiler.stubBuilder;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.compilerTestData;
 
@@ -26,6 +27,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/classMembers")
         public static class ClassMembers extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -90,6 +97,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/classes")
         public static class Classes extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -179,6 +192,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/packageMembers")
         public static class PackageMembers extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -233,6 +252,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/parameters")
         public static class Parameters extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -302,6 +327,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/propertiesWithoutBackingFields")
         public static class PropertiesWithoutBackingFields extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -356,6 +387,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/types")
         public static class Types extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -420,6 +457,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -489,6 +532,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/annotations/withUseSiteTarget")
         public static class WithUseSiteTarget extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -527,6 +576,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/class/javaBean")
         public static class JavaBean extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -571,6 +626,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/class")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -766,6 +827,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/classFun")
     public static class ClassFun extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -805,6 +872,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/classObject")
     public static class ClassObject extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -887,6 +960,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/constructor")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -981,6 +1060,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/constructor/vararg")
         public static class Vararg extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -1006,6 +1091,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/contextReceivers")
     public static class ContextReceivers extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -1025,6 +1116,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/coroutines")
     public static class Coroutines extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -1049,6 +1146,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/dataClass")
     public static class DataClass extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -1089,6 +1192,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/error")
             public static class Error extends AbstractLoadJavaClsStubTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
                 }
@@ -1241,6 +1350,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/parameter")
                 public static class Parameter extends AbstractLoadJavaClsStubTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
                     }
@@ -1385,6 +1500,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/return")
                 public static class Return extends AbstractLoadJavaClsStubTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
                     }
@@ -1569,6 +1690,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/typeParameter")
                 public static class TypeParameter extends AbstractLoadJavaClsStubTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
                     }
@@ -1628,6 +1755,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation")
                 public static class Uncategorized extends AbstractLoadJavaClsStubTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
                     }
@@ -1648,6 +1781,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/kotlinSignature")
             public static class Uncategorized extends AbstractLoadJavaClsStubTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
                 }
@@ -1743,6 +1882,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/library")
         public static class Library extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -1772,6 +1917,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/modality")
         public static class Modality extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -1791,6 +1942,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava/notNull")
         public static class NotNull extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -1830,6 +1987,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fromLoadJava")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -2013,6 +2176,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun/genericWithTypeVariables")
         public static class GenericWithTypeVariables extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -2077,6 +2246,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun/genericWithoutTypeVariables")
         public static class GenericWithoutTypeVariables extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -2116,6 +2291,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun/nonGeneric")
         public static class NonGeneric extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -2210,6 +2391,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -2279,6 +2466,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/fun/vararg")
         public static class Vararg extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -2309,6 +2502,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/inline")
     public static class Inline extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -2328,6 +2527,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/memberOrder")
     public static class MemberOrder extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -2367,6 +2572,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/nestedClasses")
     public static class NestedClasses extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -2396,6 +2607,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/platformTypes")
     public static class PlatformTypes extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -2423,6 +2640,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/prop/defaultAccessors")
         public static class DefaultAccessors extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -2487,6 +2710,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/prop")
         public static class Uncategorized extends AbstractLoadJavaClsStubTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
             }
@@ -2672,6 +2901,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/type")
     public static class Type extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -2841,6 +3076,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/typealias")
     public static class Typealias extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
@@ -2875,6 +3116,12 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/visibility")
     public static class Visibility extends AbstractLoadJavaClsStubTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }

@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 abstract class AbstractK2ReferenceResolveWithResolveExtensionTest : AbstractFirReferenceResolveTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()

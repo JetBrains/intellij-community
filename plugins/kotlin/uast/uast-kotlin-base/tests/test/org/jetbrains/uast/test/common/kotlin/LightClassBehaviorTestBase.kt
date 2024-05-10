@@ -15,13 +15,12 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
-interface LightClassBehaviorTestBase : UastPluginSelection {
+interface LightClassBehaviorTestBase {
     // NB: ported [LightClassBehaviorTest#testIdentifierOffsets]
     fun checkIdentifierOffsets(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(

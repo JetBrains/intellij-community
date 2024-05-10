@@ -15,8 +15,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
@@ -24,16 +22,17 @@ import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.test.utils.withExtension
 import java.io.File
 
 abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
-    override val captureExceptions: Boolean = false
 
-    override fun isFirPlugin(): Boolean = true
+    override val captureExceptions: Boolean = false
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun doTest(file: KtFile): String? = allowAnalysisOnEdt {

@@ -16,12 +16,10 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    override fun isFirPlugin(): Boolean = true
-
     override fun tearDown() {
         runAll(
             { runInEdtAndWait { project.invalidateCaches() } },
-            { super.tearDown() }
+            { super.tearDown() },
         )
 
     }

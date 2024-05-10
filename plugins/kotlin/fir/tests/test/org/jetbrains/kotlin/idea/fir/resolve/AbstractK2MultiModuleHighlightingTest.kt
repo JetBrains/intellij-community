@@ -10,7 +10,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
@@ -22,9 +21,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 
 abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest() {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getTestDataDirectory(): File {
         return KotlinRoot.DIR.resolve("fir/tests/testData/resolve/anchors")

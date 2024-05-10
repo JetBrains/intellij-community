@@ -5,7 +5,6 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
@@ -20,9 +19,6 @@ import kotlin.io.path.Path
 abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTest<SealedInheritorsProviderTestProjectStructure>(
     SealedInheritorsProviderTestProjectStructureParser,
 ) {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
 
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("sealedInheritors")

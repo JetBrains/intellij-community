@@ -7,10 +7,11 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -23,6 +24,10 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/search/references")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinReferencesSearchTest : AbstractSearcherTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     fun testPlus() {
         val refs = doTest<KtFunction>()
         Assert.assertEquals(3, refs.size)

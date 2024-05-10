@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.patternMatching.AbstractKotlinPsiUnifierTest
 
 abstract class AbstractK2PsiUnifierTest : AbstractKotlinPsiUnifierTest() {
-    override fun isFirPlugin(): Boolean = true
 
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun KtElement.getMatches(file: KtFile): List<TextRange> = allowAnalysisOnEdt {

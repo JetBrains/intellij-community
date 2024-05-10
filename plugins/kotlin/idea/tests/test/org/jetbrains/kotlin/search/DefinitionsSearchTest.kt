@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.search
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
@@ -15,6 +16,10 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/search/definitions")
 @RunWith(JUnit38ClassRunner::class)
 class DefinitionsSearchTest : AbstractSearcherTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     fun testNestedClass() {
         doTest()
     }

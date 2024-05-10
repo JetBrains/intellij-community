@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.maven;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_01")
     public static class _01 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -34,6 +41,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_02")
     public static class _02 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -47,6 +60,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_03")
     public static class _03 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -60,6 +79,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_04")
     public static class _04 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -73,6 +98,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_05")
     public static class _05 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -86,6 +117,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_06")
     public static class _06 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -99,6 +136,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_07")
     public static class _07 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -112,6 +155,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_08")
     public static class _08 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -125,6 +174,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_09")
     public static class _09 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -138,6 +193,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_10")
     public static class _10 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -151,6 +212,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_11")
     public static class _11 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -164,6 +231,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_12")
     public static class _12 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -177,6 +250,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_13")
     public static class _13 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -190,6 +269,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_14")
     public static class _14 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -203,6 +288,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_15")
     public static class _15 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -216,6 +307,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_16")
     public static class _16 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -229,6 +326,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_17")
     public static class _17 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -242,6 +345,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_18")
     public static class _18 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -255,6 +364,12 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/maven-inspections/_19")
     public static class _19 extends AbstractKotlinMavenInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

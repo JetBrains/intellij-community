@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
@@ -38,7 +37,8 @@ import org.junit.Assert
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
+abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
+                                              ExpectedPluginModeProvider {
 
     private val scratchFiles: MutableList<VirtualFile> = ArrayList()
     private var vfsDisposable: Ref<Disposable>? = null
@@ -330,7 +330,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
     }
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
 
         vfsDisposable = allowProjectRootAccess(this)
 
@@ -339,11 +339,11 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { disposeVfsRootAccess(vfsDisposable) },
-            ThrowableRunnable { super.tearDown() },
-            ThrowableRunnable {
-                for (scratchFile in scratchFiles) {
-                    runWriteAction { scratchFile.delete(this) }
+            { disposeVfsRootAccess(vfsDisposable) },
+            { super.tearDown() },
+            {
+                runWriteAction {
+                    scratchFiles.forEach { it.delete(this) }
                 }
             },
         )

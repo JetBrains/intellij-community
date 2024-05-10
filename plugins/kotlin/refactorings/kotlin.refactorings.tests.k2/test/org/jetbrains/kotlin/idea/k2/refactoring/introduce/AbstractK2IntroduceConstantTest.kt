@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 
 abstract class AbstractK2IntroduceConstantTest : AbstractExtractionTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun doIntroduceConstantTest(unused: String) {
         doTestIfNotDisabledByFileDirective { file ->
@@ -66,7 +65,7 @@ abstract class AbstractK2IntroduceConstantTest : AbstractExtractionTest() {
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 

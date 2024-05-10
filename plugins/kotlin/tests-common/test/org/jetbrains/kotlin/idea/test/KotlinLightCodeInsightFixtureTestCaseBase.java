@@ -90,10 +90,8 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     }
 
-    // todo define final!
-    //  temporarily weakened only for safe-pushes
     // todo inline the method
-    protected boolean isFirPlugin() {
+    protected final boolean isFirPlugin() {
         return getPluginMode() == KotlinPluginMode.K2;
     }
 

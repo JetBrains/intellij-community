@@ -6,7 +6,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
 
 public abstract class KotlinTestWithEnvironment extends KotlinTestWithEnvironmentManagement
         implements ExpectedPluginModeProvider {
@@ -25,11 +24,6 @@ public abstract class KotlinTestWithEnvironment extends KotlinTestWithEnvironmen
     protected void tearDown() throws Exception {
         environment = null;
         WriteAction.runAndWait(() -> super.tearDown());
-    }
-
-    @Override
-    public final @NotNull KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K1;
     }
 
     protected abstract KotlinCoreEnvironment createEnvironment() throws Exception;

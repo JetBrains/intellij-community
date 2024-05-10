@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceParameter/multiline")
     public static class Multiline extends AbstractK2IntroduceParameterTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceParameterTest, this, testDataFilePath);
         }
@@ -50,6 +57,12 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceParameter/script")
     public static class Script extends AbstractK2IntroduceParameterTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceParameterTest, this, testDataFilePath);
         }
@@ -73,6 +86,12 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceParameter/stringTemplates")
     public static class StringTemplates extends AbstractK2IntroduceParameterTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceParameterTest, this, testDataFilePath);
         }
@@ -166,6 +185,12 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceParameter")
     public static class Uncategorized extends AbstractK2IntroduceParameterTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceParameterTest, this, testDataFilePath);
         }
@@ -519,6 +544,12 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceParameter/variableConversion")
     public static class VariableConversion extends AbstractK2IntroduceParameterTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceParameterTest, this, testDataFilePath);
         }

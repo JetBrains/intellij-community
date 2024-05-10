@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -27,6 +28,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspections/dataClassPrivateConstructor/inspectionData")
             public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -47,6 +54,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/class/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -64,6 +77,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/constant/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -81,6 +100,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/enumEntry/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -98,6 +123,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/function/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -115,6 +146,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/localVariable/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -132,6 +169,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/objectOrTopLevelProperty/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -149,6 +192,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/objectPrivateProperty/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -166,6 +215,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/package/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -183,6 +238,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/privateProperty/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -200,6 +261,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../testData/inspections/naming/property/inspectionData")
                 public static class InspectionData extends AbstractSharedK1InspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -218,6 +285,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspections/redundantSemicolon/inspectionData")
             public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -235,6 +308,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspections/redundantSuspendModifier/inspectionData")
             public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -252,6 +331,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspections/removeSetterParameterType/inspectionData")
             public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -269,6 +354,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspections/trailingCommaOff/inspectionData")
             public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -286,6 +377,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspections/trailingCommaOn/inspectionData")
             public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -303,6 +400,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspections/wrapUnaryOperator/inspectionData")
             public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -324,6 +427,12 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData")
             public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }

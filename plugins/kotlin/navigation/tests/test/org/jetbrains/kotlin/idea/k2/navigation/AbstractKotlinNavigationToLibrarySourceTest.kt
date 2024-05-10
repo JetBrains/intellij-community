@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 
 abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceResolveTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
@@ -61,7 +60,7 @@ abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceRe
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 }

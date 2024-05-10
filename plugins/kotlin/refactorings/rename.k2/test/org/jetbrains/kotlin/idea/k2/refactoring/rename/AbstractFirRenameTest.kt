@@ -19,12 +19,10 @@ import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractFirRenameTest : AbstractRenameTest() {
 
-    override fun isFirPlugin(): Boolean = true
-
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 

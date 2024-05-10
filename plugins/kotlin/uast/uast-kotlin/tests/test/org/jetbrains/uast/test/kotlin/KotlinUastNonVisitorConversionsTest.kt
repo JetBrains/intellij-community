@@ -2,9 +2,13 @@
 
 package org.jetbrains.uast.test.kotlin.org.jetbrains.uast.test.kotlin
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.junit.Test
 
 class KotlinUastNonVisitorConversionsTest : AbstractKotlinNonVisitorConversionsTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     @Test
     fun testClassAnnotation() = doTest("ClassAnnotation")

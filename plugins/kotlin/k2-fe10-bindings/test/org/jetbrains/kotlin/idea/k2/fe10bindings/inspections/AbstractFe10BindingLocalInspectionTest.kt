@@ -2,17 +2,15 @@
 package org.jetbrains.kotlin.idea.k2.fe10bindings.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.io.File
 
 abstract class AbstractFe10BindingLocalInspectionTest : AbstractLocalInspectionTest() {
-    override fun isFirPlugin() = true
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -27,8 +25,8 @@ abstract class AbstractFe10BindingLocalInspectionTest : AbstractLocalInspectionT
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 

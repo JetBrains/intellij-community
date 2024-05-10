@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractK2IntroducePropertyTest : AbstractExtractionTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun doIntroducePropertyTest(unused: String) {
         doTestIfNotDisabledByFileDirective { file ->
@@ -63,7 +62,7 @@ abstract class AbstractK2IntroducePropertyTest : AbstractExtractionTest() {
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 

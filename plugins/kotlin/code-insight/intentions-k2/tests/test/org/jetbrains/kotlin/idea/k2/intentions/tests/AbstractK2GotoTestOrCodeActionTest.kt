@@ -7,7 +7,6 @@ import com.intellij.testIntegration.GotoTestOrCodeHandler
 import org.jetbrains.kotlin.idea.actions.AbstractNavigationTest
 
 abstract class AbstractK2GotoTestOrCodeActionTest : AbstractNavigationTest() {
-    override fun isFirPlugin(): Boolean = true
 
     private object Handler : GotoTestOrCodeHandler() {
         public override fun getSourceAndTargetElements(editor: Editor?, file: PsiFile?) = super.getSourceAndTargetElements(editor, file)

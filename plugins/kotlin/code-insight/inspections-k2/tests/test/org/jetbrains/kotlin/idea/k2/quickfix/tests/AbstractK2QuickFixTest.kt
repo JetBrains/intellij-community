@@ -18,8 +18,6 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
         val ACTIONS_DIFFERENT_FROM_K1: List<String> = listOf("Make 'open'") // This look like a bug. See KTIJ-27687.
     }
 
-    override fun isFirPlugin() = true
-
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
@@ -27,7 +25,7 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
     override fun tearDown() {
         runAll(
           { runInEdtAndWait { project.invalidateCaches() } },
-          { super.tearDown() }
+          { super.tearDown() },
         )
     }
 
