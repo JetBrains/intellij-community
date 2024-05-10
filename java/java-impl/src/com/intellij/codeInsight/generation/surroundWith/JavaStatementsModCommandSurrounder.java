@@ -2,10 +2,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.lang.surroundWith.Surrounder;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.lang.surroundWith.ModCommandSurrounder;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
@@ -13,27 +14,27 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-abstract class JavaStatementsSurrounder implements Surrounder {
+abstract class JavaStatementsModCommandSurrounder extends ModCommandSurrounder {
   @Override
   public boolean isApplicable(PsiElement @NotNull [] elements) {
     return ContainerUtil.find(elements, PsiSwitchLabelStatementBase.class::isInstance) == null;
   }
 
   @Override
-  public @Nullable TextRange surroundElements(@NotNull Project project,
-                                              @NotNull Editor editor,
-                                              PsiElement @NotNull [] elements) throws IncorrectOperationException {
+  public final @NotNull ModCommand surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elements) {
     PsiElement container = elements[0].getParent();
-    if (container == null) return null;
-    return surroundStatements(project, editor, container, elements);
+    if (container == null) return ModCommand.nop();
+    return ModCommand.psiUpdate(context, updater -> surroundStatements(
+      context, updater.getWritable(container),
+      ContainerUtil.map2Array(elements, PsiElement.EMPTY_ARRAY, updater::getWritable),
+      updater));
   }
 
-  protected abstract @Nullable TextRange surroundStatements(final Project project,
-                                                            final Editor editor,
-                                                            final PsiElement container,
-                                                            final PsiElement[] statements) throws IncorrectOperationException;
+  protected abstract void surroundStatements(@NotNull ActionContext context,
+                                             @NotNull PsiElement container,
+                                             @NotNull PsiElement @NotNull [] statements,
+                                             @NotNull ModPsiUpdater updater) throws IncorrectOperationException;
 
   protected static @NotNull PsiStatement addAfter(final PsiStatement statement, final PsiElement container, final PsiElement[] statements) {
     if (container instanceof PsiSwitchLabeledRuleStatement && !(statement instanceof PsiBlockStatement)) {

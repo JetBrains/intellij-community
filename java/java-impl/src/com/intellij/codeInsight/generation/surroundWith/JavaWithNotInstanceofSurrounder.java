@@ -18,14 +18,17 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
+import java.util.Objects;
+
+class JavaWithNotInstanceofSurrounder extends JavaExpressionModCommandSurrounder {
   @Override
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
@@ -35,23 +38,23 @@ class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
   }
 
   @Override
-  public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
-    PsiManager manager = expr.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+  protected void surroundExpression(@NotNull ActionContext context, @NotNull PsiExpression expr, @NotNull ModPsiUpdater updater) {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     PsiPrefixExpression prefixExpr = (PsiPrefixExpression)factory.createExpressionFromText("!(a instanceof Type)", null);
     prefixExpr = (PsiPrefixExpression)codeStyleManager.reformat(prefixExpr);
-    PsiParenthesizedExpression parenthExpr = (PsiParenthesizedExpression)prefixExpr.getOperand();
-    PsiInstanceOfExpression instanceofExpr = (PsiInstanceOfExpression)parenthExpr.getExpression();
+    PsiParenthesizedExpression parenthExpr = (PsiParenthesizedExpression)Objects.requireNonNull(prefixExpr.getOperand());
+    PsiInstanceOfExpression instanceofExpr = (PsiInstanceOfExpression)Objects.requireNonNull(parenthExpr.getExpression());
     instanceofExpr.getOperand().replace(expr);
     prefixExpr = (PsiPrefixExpression)expr.replace(prefixExpr);
-    parenthExpr = (PsiParenthesizedExpression)prefixExpr.getOperand();
-    instanceofExpr = (PsiInstanceOfExpression)parenthExpr.getExpression();
+    parenthExpr = (PsiParenthesizedExpression)Objects.requireNonNull(prefixExpr.getOperand());
+    instanceofExpr = (PsiInstanceOfExpression)Objects.requireNonNull(parenthExpr.getExpression());
     instanceofExpr = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(instanceofExpr);
     TextRange range = instanceofExpr.getCheckType().getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    return new TextRange(range.getStartOffset(), range.getStartOffset());
+    instanceofExpr.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    updater.moveCaretTo(range.getStartOffset());
   }
 
   @Override

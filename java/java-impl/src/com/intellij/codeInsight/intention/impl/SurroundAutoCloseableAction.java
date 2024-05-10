@@ -5,12 +5,11 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.surroundWith.ModCommandSurrounder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.modcommand.*;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -258,7 +257,7 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
     return JavaBundle.message("intention.surround.resource.with.ARM.block");
   }
 
-  public static final class Template implements SurroundDescriptor, Surrounder {
+  public static final class Template extends ModCommandSurrounder implements SurroundDescriptor {
     private final Surrounder[] mySurrounders = {this};
 
     @Override
@@ -293,13 +292,11 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
     }
 
     @Override
-    public @Nullable TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
+    public @NotNull ModCommand surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elements) {
       if (elements.length == 1) {
-        ActionContext context = ActionContext.from(editor, elements[0].getContainingFile());
-        ModCommand command = new SurroundAutoCloseableAction().perform(context, elements[0]);
-        ModCommandExecutor.getInstance().executeInteractively(context, command, editor);
+        return new SurroundAutoCloseableAction().perform(context, elements[0]);
       }
-      return null;
+      return ModCommand.nop();
     }
   }
 }

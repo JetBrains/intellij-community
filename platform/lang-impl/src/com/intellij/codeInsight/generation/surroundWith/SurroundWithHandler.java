@@ -16,6 +16,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
+import com.intellij.lang.surroundWith.ModCommandSurrounder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
@@ -221,8 +222,11 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
       );
     } else {
       CommandProcessor.getInstance().executeCommand(project, () -> {
+        editor.getSelectionModel().removeSelection();
         TextRange range = ReadAction.compute(() -> surrounder.surroundElements(project, editor, elements));
-        updateRange(project, editor, range, line, col);
+        if (!(surrounder instanceof ModCommandSurrounder)) {
+          updateRange(project, editor, range, line, col);
+        }
       }, CodeInsightBundle.message("surround.with.chooser.title"), null);
     }
   }

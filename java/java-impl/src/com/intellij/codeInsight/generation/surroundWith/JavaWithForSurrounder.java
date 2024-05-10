@@ -18,30 +18,33 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaWithForSurrounder extends JavaStatementsSurrounder{
+public class JavaWithForSurrounder extends JavaStatementsModCommandSurrounder {
   @Override
   public String getTemplateDescription() {
     return JavaBundle.message("surround.with.for.template");
   }
 
   @Override
-  public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+  protected void surroundStatements(@NotNull ActionContext context,
+                                    @NotNull PsiElement container,
+                                    @NotNull PsiElement @NotNull [] statements,
+                                    @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
-    if (statements.length == 0){
-      return null;
-    }
+    if (statements.length == 0) return;
 
     @NonNls String text = "for(a;b;c){\n}";
     PsiForStatement forStatement = (PsiForStatement)factory.createStatementFromText(text, null);
@@ -50,27 +53,21 @@ public class JavaWithForSurrounder extends JavaStatementsSurrounder{
     forStatement = (PsiForStatement)addAfter(forStatement, container, statements);
 
     PsiStatement body = forStatement.getBody();
-    if (!(body instanceof PsiBlockStatement)) {
-      return null;
-    }
-    PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
+    if (!(body instanceof PsiBlockStatement block)) return;
+    PsiCodeBlock bodyBlock = block.getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements);
     addRangeWithinContainer(bodyBlock, container, statements, false);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     forStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(forStatement);
     PsiStatement initialization = forStatement.getInitialization();
-    if (initialization == null) {
-      return null;
-    }
+    if (initialization == null) return;
     TextRange range1 = initialization.getTextRange();
 
     PsiStatement update = forStatement.getUpdate();
-    if (update == null) {
-      return null;
-    }
+    if (update == null) return;
     TextRange range3 = update.getTextRange();
-    editor.getDocument().deleteString(range1.getStartOffset(), range3.getEndOffset());
-    return new TextRange(range1.getStartOffset(), range1.getStartOffset());
+    update.getContainingFile().getFileDocument().deleteString(range1.getStartOffset(), range3.getEndOffset());
+    updater.moveCaretTo(range1.getStartOffset());
   }
 }

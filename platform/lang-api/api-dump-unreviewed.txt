@@ -3464,6 +3464,12 @@ com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 - a:setParameterOwner(com.intellij.psi.PsiElement):V
 - a:setPreservedOnHintHidden(Z):V
 - a:setUIComponentEnabled(I,Z):V
+*a:com.intellij.lang.surroundWith.ModCommandSurrounder
+- com.intellij.lang.surroundWith.Surrounder
+- <init>():V
+- f:startInWriteAction():Z
+- a:surroundElements(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement[]):com.intellij.modcommand.ModCommand
+- f:surroundElements(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement[]):com.intellij.openapi.util.TextRange
 com.intellij.lang.surroundWith.SurroundDescriptor
 - a:getElementsToSurround(com.intellij.psi.PsiFile,I,I):com.intellij.psi.PsiElement[]
 - a:getSurrounders():com.intellij.lang.surroundWith.Surrounder[]

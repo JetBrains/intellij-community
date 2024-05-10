@@ -18,27 +18,30 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class JavaWithIfElseExpressionSurrounder extends JavaWithIfExpressionSurrounder{
 
   @Override
-  public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
-    PsiManager manager = expr.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+  protected void surroundExpression(@NotNull ActionContext context, @NotNull PsiExpression expr, @NotNull ModPsiUpdater updater) {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     @NonNls String text = "if(a){\nst;\n}else{\n}";
     PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(text, null);
     ifStatement = (PsiIfStatement)codeStyleManager.reformat(ifStatement);
 
-    ifStatement.getCondition().replace(expr);
+    Objects.requireNonNull(ifStatement.getCondition()).replace(expr);
 
     PsiExpressionStatement statement = (PsiExpressionStatement)expr.getParent();
     ifStatement = (PsiIfStatement)statement.replace(ifStatement);
@@ -48,8 +51,8 @@ public class JavaWithIfElseExpressionSurrounder extends JavaWithIfExpressionSurr
     PsiStatement afterStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block.getStatements()[0]);
 
     TextRange range = afterStatement.getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    return new TextRange(range.getStartOffset(), range.getStartOffset());
+    afterStatement.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    updater.moveCaretTo(range.getStartOffset());
   }
 
   @Override

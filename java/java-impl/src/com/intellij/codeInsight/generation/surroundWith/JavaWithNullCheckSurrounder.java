@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
@@ -18,17 +17,16 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
+public class JavaWithNullCheckSurrounder extends JavaExpressionModCommandSurrounder{
   @Override
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
@@ -43,10 +41,9 @@ public class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
   }
 
   @Override
-  public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
-    PsiManager manager = expr.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+  protected void surroundExpression(@NotNull ActionContext context, @NotNull PsiExpression expr, @NotNull ModPsiUpdater updater) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(context.project());
 
     @NonNls String text = "if(a != null){\nst;\n}";
     PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(text, null);
@@ -61,7 +58,7 @@ public class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
     block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
     PsiElement replace = block.getStatements()[0].replace(factory.createStatementFromText(oldText, block));
     int offset = replace.getTextRange().getEndOffset();
-    return new TextRange(offset, offset);
+    updater.moveCaretTo(offset);
   }
 
   @Override

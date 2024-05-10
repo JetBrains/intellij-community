@@ -17,20 +17,21 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.FileTypeUtils;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaWithIfExpressionSurrounder extends JavaBooleanExpressionSurrounder {
+public class JavaWithIfExpressionSurrounder extends JavaExpressionModCommandSurrounder {
   @Override
   public boolean isApplicable(PsiExpression expr) {
-    if (!super.isApplicable(expr)) return false;
+    PsiType type = expr.getType();
+    if (!(type != null && (PsiTypes.booleanType().equals(type) || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(type))))) return false;
     if (!expr.isPhysical()) return false;
     PsiElement expressionStatement = expr.getParent();
     if (!(expressionStatement instanceof PsiExpressionStatement)) return false;
@@ -45,9 +46,9 @@ public class JavaWithIfExpressionSurrounder extends JavaBooleanExpressionSurroun
   }
 
   @Override
-  public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
-    PsiManager manager = expr.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+  protected void surroundExpression(@NotNull ActionContext context, @NotNull PsiExpression expr, @NotNull ModPsiUpdater updater) {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     @NonNls String text = "if(a){\nst;\n}";
@@ -63,14 +64,13 @@ public class JavaWithIfExpressionSurrounder extends JavaBooleanExpressionSurroun
     ifStatement = (PsiIfStatement)statement.replace(ifStatement);
 
     PsiStatement thenBranch = ifStatement.getThenBranch();
-    if (thenBranch instanceof PsiBlockStatement) {
-      PsiCodeBlock block = ((PsiBlockStatement)thenBranch).getCodeBlock();
+    if (thenBranch instanceof PsiBlockStatement blockStatement) {
+      PsiCodeBlock block = blockStatement.getCodeBlock();
       block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
       TextRange range = block.getStatements()[0].getTextRange();
-      editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-      return TextRange.from(range.getStartOffset(), 0);
+      block.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+      updater.moveCaretTo(range.getStartOffset());
     }
-    return TextRange.from(editor.getCaretModel().getOffset(), 0);
   }
 
   @Override
@@ -79,8 +79,8 @@ public class JavaWithIfExpressionSurrounder extends JavaBooleanExpressionSurroun
   }
 
   private static boolean isElseBranch(@NotNull PsiExpression expression, @NotNull PsiElement statementParent) {
-    if (statementParent instanceof PsiIfStatement) {
-      PsiStatement elseBranch = ((PsiIfStatement)statementParent).getElseBranch();
+    if (statementParent instanceof PsiIfStatement ifStatement) {
+      PsiStatement elseBranch = ifStatement.getElseBranch();
       if (elseBranch != null && elseBranch.getFirstChild() == expression) {
         return true;
       }

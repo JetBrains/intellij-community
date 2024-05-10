@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -207,6 +208,34 @@ public final class ElementToWorkOn {
                                                      final Project project) {
     String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
     CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId);
+  }
+
+  /**
+   * @param <E> type of the element
+   * @param element either a physical element, or a non-physical copy returned from 
+   * {@link IntroduceVariableUtil#getSelectedExpression(Project, PsiFile, int, int)} or a similar method 
+   *                (with ElementToWorkOn metadata set).
+   * @param updater an updater for current {@link com.intellij.modcommand.ModCommand} session
+   * @return a copy of the original element suitable for subsequent processing within the ModCommand.
+   */
+  public static <E extends PsiElement> @NotNull E getWritable(@NotNull E element, @NotNull ModPsiUpdater updater) {
+    PsiElement parent = element.getUserData(PARENT);
+    if (parent != null) {
+      PsiElement writableParent = updater.getWritable(parent);
+      @SuppressWarnings("unchecked") E copy = (E)element.copy();
+      copy.putUserData(PARENT, writableParent);
+      copy.putUserData(PREFIX, element.getUserData(PREFIX));
+      copy.putUserData(SUFFIX, element.getUserData(SUFFIX));
+      copy.putUserData(EXPR_RANGE, element.getUserData(EXPR_RANGE));
+      RangeMarker marker = element.getUserData(TEXT_RANGE);
+      if (marker != null) {
+        copy.putUserData(TEXT_RANGE, writableParent.getContainingFile().getFileDocument().createRangeMarker(marker.getTextRange()));
+      }
+      return copy;
+    }
+    E writable = updater.getWritable(element);
+    writable.putUserData(REPLACE_NON_PHYSICAL, true);
+    return writable;
   }
 
   public interface ElementsProcessor<T> {

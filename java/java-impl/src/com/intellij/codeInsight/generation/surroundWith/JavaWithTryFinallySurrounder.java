@@ -16,34 +16,36 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiNavigator;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
-  private static final Logger LOG = Logger.getInstance(JavaWithTryFinallySurrounder.class);
-
+public class JavaWithTryFinallySurrounder extends JavaStatementsModCommandSurrounder {
+  @SuppressWarnings("DialogTitleCapitalization")
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.try.finally.template");
   }
 
   @Override
-  public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+  protected void surroundStatements(@NotNull ActionContext context,
+                                    @NotNull PsiElement container,
+                                    @NotNull PsiElement @NotNull [] statements,
+                                    @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, false);
-    if (statements.length == 0){
-      return null;
-    }
+    if (statements.length == 0) return;
 
     @NonNls String text = "try{\n}finally{\n\n}";
     PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
@@ -52,29 +54,22 @@ public class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
     tryStatement = (PsiTryStatement)addAfter(tryStatement, container, statements);
 
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-    if (tryBlock == null) {
-      return null;
-    }
+    if (tryBlock == null) return;
     SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements);
     addRangeWithinContainer(tryBlock, container, statements, true);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-    if (finallyBlock == null) {
-      return null;
-    }
-    moveCaretToFinallyBlock(project, editor, finallyBlock);
-    return new TextRange(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset());
+    if (finallyBlock == null) return;
+    moveCaretToFinallyBlock(project, updater, finallyBlock);
   }
 
-  public static void moveCaretToFinallyBlock(Project project, Editor editor, PsiCodeBlock finallyBlock) {
-    Document document = editor.getDocument();
+  public static void moveCaretToFinallyBlock(Project project, ModPsiNavigator navigator, PsiCodeBlock finallyBlock) {
+    Document document = finallyBlock.getContainingFile().getFileDocument();
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     TextRange finallyBlockRange = finallyBlock.getTextRange();
     int newLineOffset = finallyBlockRange.getStartOffset() + 2;
-    editor.getCaretModel().moveToOffset(newLineOffset);
-    editor.getSelectionModel().removeSelection();
-    CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
+    navigator.moveCaretTo(CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset));
     PsiDocumentManager.getInstance(project).commitDocument(document);
   }
 }
