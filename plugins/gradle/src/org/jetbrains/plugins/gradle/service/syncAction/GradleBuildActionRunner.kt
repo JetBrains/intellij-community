@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
  * This class handles setting up and running the [BuildActionExecuter] it deals with calling the correct APIs based on the version of
  * Gradle that is present.
  *
- * To do this, we require the current [resolverCtx] and the [buildAction] that should be run.
+ * To do this, we require the current [resolverContext] and the [buildAction] that should be run.
  *
  * We have two different cases which will be handled in [runBuildAction] we will try the most recent first,
  * falling back to the older ones if a [GradleConnectionException] is thrown. For Gradle 4.8 and above,
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
  */
 @ApiStatus.Internal
 class GradleBuildActionRunner(
-  private val resolverCtx: DefaultProjectResolverContext,
+  private val resolverContext: DefaultProjectResolverContext,
   private val buildAction: GradleModelFetchAction,
   private val settings: GradleExecutionSettings,
   private val resultHandler: GradleBuildActionResultHandler
@@ -44,7 +44,7 @@ class GradleBuildActionRunner(
       notifyConnectionAboutChangedPaths()
     }
 
-    val gradleVersion = resolverCtx.projectGradleVersion
+    val gradleVersion = resolverContext.projectGradleVersion
     when {
       // Fallback to default executor for Gradle projects with incorrect build environment or scripts
       gradleVersion == null -> runDefaultBuildAction()
@@ -59,7 +59,7 @@ class GradleBuildActionRunner(
   private fun notifyConnectionAboutChangedPaths() {
     ApplicationManager.getApplication()
       .getService(GradleFileModificationTracker::class.java)
-      .notifyConnectionAboutChangedPaths(resolverCtx.connection)
+      .notifyConnectionAboutChangedPaths(resolverContext.connection)
   }
 
   /**
@@ -67,12 +67,12 @@ class GradleBuildActionRunner(
    */
   private fun runPhasedBuildAction() {
     buildAction.isUseProjectsLoadedPhase = true
-    resolverCtx.connection.action()
+    resolverContext.connection.action()
       .projectsLoaded(buildAction, resultHandler.createProjectLoadedHandler())
       .buildFinished(buildAction, resultHandler.createBuildFinishedHandler())
       .build()
       .prepareOperationForSync()
-      .withCancellationToken(resolverCtx.cancellationToken)
+      .withCancellationToken(resolverContext.cancellationToken)
       .withStreamedValueListener(resultHandler.createStreamValueListener())
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
       .run(resultHandler.createResultHandler())
@@ -80,9 +80,9 @@ class GradleBuildActionRunner(
   }
 
   private fun runDefaultBuildAction() {
-    resolverCtx.connection.action(buildAction)
+    resolverContext.connection.action(buildAction)
       .prepareOperationForSync()
-      .withCancellationToken(resolverCtx.cancellationToken)
+      .withCancellationToken(resolverContext.cancellationToken)
       .withStreamedValueListener(resultHandler.createStreamValueListener())
       .run(resultHandler.createResultHandler())
     resultHandler.waitForBuildFinish()
@@ -90,20 +90,20 @@ class GradleBuildActionRunner(
 
   private fun <T : LongRunningOperation> T.prepareOperationForSync(): T {
     GradleExecutionHelper.prepare(
-      resolverCtx.connection,
+      resolverContext.connection,
       this,
-      resolverCtx.externalSystemTaskId,
+      resolverContext.externalSystemTaskId,
       settings,
-      resolverCtx.listener
+      resolverContext.listener
     )
     GradleOperationHelperExtension.EP_NAME.forEachExtensionSafe {
-      it.prepareForSync(this, resolverCtx)
+      it.prepareForSync(this, resolverContext)
     }
     return this
   }
 
   private fun <T : BuildActionExecuter<*>> T.withStreamedValueListener(listener: StreamedValueListener): T {
-    val gradleVersion = resolverCtx.projectGradleVersion
+    val gradleVersion = resolverContext.projectGradleVersion
     if (gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.6")) {
       buildAction.isUseStreamedValues = true
       setStreamedValueListener(listener)
