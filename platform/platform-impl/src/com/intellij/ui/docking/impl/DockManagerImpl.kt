@@ -83,13 +83,11 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
     @JvmStatic
     fun isNorthPanelAvailable(editors: List<FileEditor>): Boolean {
-      val defaultNorthPanelVisible = isNorthPanelVisible(UISettings.getInstance())
       for (editor in editors) {
-        if (SHOW_NORTH_PANEL.isIn(editor)) {
-          return SHOW_NORTH_PANEL.get(editor, defaultNorthPanelVisible)
-        }
+        val value = SHOW_NORTH_PANEL.get(editor)
+        if (value != null) return value
       }
-      return defaultNorthPanelVisible
+      return true
     }
   }
 
@@ -357,7 +355,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     if (!isSingletonEditorInWindow) {
       window.setupToolWindowPane()
     }
-    val isNorthPanelAvailable = if (content is DockableEditor) content.isNorthPanelAvailable else isNorthPanelVisible(UISettings.getInstance())
+    val isNorthPanelAvailable = (content as? DockableEditor)?.isNorthPanelAvailable ?: true
     if (isNorthPanelAvailable) {
       window.setupNorthPanel()
     }

@@ -50,6 +50,7 @@ internal class DockWindow(
                  isDialog = isDialog,
                  coroutineScope = coroutineScope) {
   var northPanelAvailable: Boolean = false
+    private set
   private val northPanel = VerticalBox()
   private val northExtensions = LinkedHashMap<String, JComponent>()
   val uiContainer: NonOpaquePanel = NonOpaquePanel(BorderLayout())

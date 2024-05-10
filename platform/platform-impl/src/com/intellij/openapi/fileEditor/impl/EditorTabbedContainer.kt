@@ -44,7 +44,6 @@ import com.intellij.ui.docking.DockableContent
 import com.intellij.ui.docking.DragSession
 import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelAvailable
-import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelVisible
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
@@ -272,7 +271,7 @@ class DockableEditor(
   private val preferredSize: Dimension,
   @JvmField internal val isPinned: Boolean,
   @JvmField internal val isSingletonEditorInWindow: Boolean,
-  @JvmField internal val isNorthPanelAvailable: Boolean = isNorthPanelVisible(UISettings.getInstance()),
+  @JvmField internal val isNorthPanelAvailable: Boolean = true,
 ) : DockableContent<VirtualFile?> {
   override fun getKey(): VirtualFile = file
 
