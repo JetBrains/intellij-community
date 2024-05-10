@@ -418,7 +418,7 @@ public abstract class Invoker implements Disposable {
      */
     @Deprecated(forRemoval = true)
     public EDT(@NotNull Disposable parent) {
-      super(new EdtLegacyInvokerImpl(newDescription("EDT", parent.toString(), ThreeState.UNSURE)), ThreeState.UNSURE);
+      super(InvokerService.getInstance().forEdt(newDescription("EDT", parent.toString(), ThreeState.UNSURE)), ThreeState.UNSURE);
       Disposer.register(parent, this);
     }
 
@@ -452,7 +452,7 @@ public abstract class Invoker implements Disposable {
 
     private Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
       super(
-        new BgtLegacyInvokerImpl(
+        InvokerService.getInstance().forBgt(
           newDescription(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", String.valueOf(parent.toString()), useReadAction),
           useReadAction,
           maxThreads
