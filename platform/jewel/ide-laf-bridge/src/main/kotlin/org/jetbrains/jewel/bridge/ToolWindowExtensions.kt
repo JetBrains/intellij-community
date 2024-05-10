@@ -1,11 +1,12 @@
 package org.jetbrains.jewel.bridge
 
 import androidx.compose.runtime.Composable
+import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.wm.ToolWindow
 import org.jetbrains.jewel.foundation.enableNewSwingCompositing
 
 public fun ToolWindow.addComposeTab(
-    tabDisplayName: String,
+    @TabTitle tabDisplayName: String,
     isLockable: Boolean = true,
     isCloseable: Boolean = false,
     content: @Composable ToolWindowScope.() -> Unit,

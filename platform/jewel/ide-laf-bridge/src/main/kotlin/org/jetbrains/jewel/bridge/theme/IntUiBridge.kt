@@ -13,19 +13,19 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.takeOrElse
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
-import com.intellij.ui.NewUI
 import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.jewel.bridge.bridgePainterProvider
 import org.jetbrains.jewel.bridge.createVerticalBrush
 import org.jetbrains.jewel.bridge.dp
+import org.jetbrains.jewel.bridge.isNewUiTheme
+import org.jetbrains.jewel.bridge.lafName
 import org.jetbrains.jewel.bridge.readFromLaF
 import org.jetbrains.jewel.bridge.retrieveArcAsCornerSizeOrDefault
 import org.jetbrains.jewel.bridge.retrieveArcAsCornerSizeWithFallbacks
@@ -36,6 +36,7 @@ import org.jetbrains.jewel.bridge.retrieveIntAsDpOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveTextStyle
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.bridge.toComposeColorOrUnspecified
+import org.jetbrains.jewel.bridge.toDpSize
 import org.jetbrains.jewel.bridge.toPaddingValues
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
@@ -227,13 +228,13 @@ private fun readDefaultButtonStyle(): ButtonStyle {
             borderHovered = normalBorder,
         )
 
-    val minimumSize = JBUI.CurrentTheme.Button.minimumSize()
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toDpSize()
     return ButtonStyle(
         colors = colors,
         metrics = ButtonMetrics(
             cornerSize = retrieveArcAsCornerSizeWithFallbacks("Button.default.arc", "Button.arc"),
             padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
-            minSize = DpSize(minimumSize.width.dp, minimumSize.height.dp),
+            minSize = DpSize(minimumSize.width, minimumSize.height),
             borderWidth = DarculaUIUtil.LW.dp,
         ),
     )
@@ -270,14 +271,14 @@ private fun readOutlinedButtonStyle(): ButtonStyle {
         borderHovered = normalBorder,
     )
 
-    val minimumSize = JBUI.CurrentTheme.Button.minimumSize()
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toDpSize()
     return ButtonStyle(
         colors = colors,
         metrics =
         ButtonMetrics(
             cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
             padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
-            minSize = DpSize(minimumSize.width.dp, minimumSize.height.dp),
+            minSize = DpSize(minimumSize.width, minimumSize.height),
             borderWidth = DarculaUIUtil.LW.dp,
         ),
     )
@@ -468,13 +469,13 @@ private fun readDefaultDropdownStyle(
         iconTintHovered = Color.Unspecified,
     )
 
-    val minimumSize = JBUI.CurrentTheme.ComboBox.minimumSize()
+    val minimumSize = JBUI.CurrentTheme.ComboBox.minimumSize().toDpSize()
     val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp
     return DropdownStyle(
         colors = colors,
         metrics = DropdownMetrics(
-            arrowMinSize = DpSize(arrowWidth, minimumSize.height.dp),
-            minSize = DpSize(minimumSize.width.dp + arrowWidth, minimumSize.height.dp),
+            arrowMinSize = DpSize(arrowWidth, minimumSize.height),
+            minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
             cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp / 2),
             contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
             borderWidth = DarculaUIUtil.LW.dp,
@@ -517,15 +518,15 @@ private fun readUndecoratedDropdownStyle(
     )
 
     val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp
-    val minimumSize = JBUI.CurrentTheme.Button.minimumSize()
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toDpSize()
 
     return DropdownStyle(
         colors = colors,
         metrics = DropdownMetrics(
-            arrowMinSize = DpSize(arrowWidth, minimumSize.height.dp),
-            minSize = DpSize(minimumSize.width.dp + arrowWidth, minimumSize.height.dp),
+            arrowMinSize = DpSize(arrowWidth, minimumSize.height),
+            minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
             cornerSize = CornerSize(JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().dp),
-            contentPadding = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets().toPaddingValues(),
+            contentPadding = PaddingValues(3.dp), // from com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI.getDefaultComboBoxInsets
             borderWidth = 0.dp,
         ),
         icons = DropdownIcons(chevronDown = bridgePainterProvider("general/chevron-down.svg")),
@@ -852,13 +853,13 @@ private fun readTextFieldStyle(textFieldStyle: TextStyle): TextFieldStyle {
         placeholder = NamedColorUtil.getInactiveTextColor().toComposeColor(),
     )
 
-    val minimumSize = JBUI.CurrentTheme.TextField.minimumSize()
+    val minimumSize = JBUI.CurrentTheme.TextField.minimumSize().toDpSize()
     return TextFieldStyle(
         colors = colors,
         metrics = TextFieldMetrics(
             cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp / 2),
             contentPadding = PaddingValues(horizontal = 9.dp, vertical = 2.dp),
-            minSize = DpSize(minimumSize.width.dp, minimumSize.height.dp),
+            minSize = DpSize(minimumSize.width, minimumSize.height),
             borderWidth = DarculaUIUtil.LW.dp,
         ),
         textStyle = textFieldStyle,
@@ -1056,16 +1057,3 @@ private fun readIconButtonStyle(): IconButtonStyle =
             borderHovered = retrieveColorOrUnspecified("ActionButton.hoverBorderColor"),
         ),
     )
-
-internal fun isNewUiTheme(): Boolean {
-    if (!NewUI.isEnabled()) return false
-
-    val lafName = lafName()
-    return lafName == "Light" || lafName == "Dark" || lafName == "Light with Light Header"
-}
-
-@Suppress("UnstableApiUsage")
-private fun lafName(): String {
-    val lafInfo = LafManager.getInstance().currentUIThemeLookAndFeel
-    return lafInfo.name
-}

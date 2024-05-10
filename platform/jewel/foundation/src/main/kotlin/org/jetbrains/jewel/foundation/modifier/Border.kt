@@ -98,7 +98,7 @@ private fun Modifier.drawBorderWithAlignment(
                     drawContent()
 
                     val strokeWidthPx =
-                        min(if (width == Dp.Hairline) 1f else ceil(width.toPx()), ceil(size.minDimension / 2))
+                        min(if (width == Dp.Hairline) 1f else width.toPx(), size.minDimension / 2)
                             .coerceAtLeast(1f)
 
                     val expandWidthPx = expand.takeOrElse { 0.dp }.toPx()

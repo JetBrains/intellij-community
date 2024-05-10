@@ -19,10 +19,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.marker
+import com.intellij.ui.NewUI
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
@@ -118,7 +120,8 @@ public fun JBInsets.toPaddingValues(): PaddingValues =
  * instance, this function delegates to the specific [toDpSize] for it,
  * which is scaling-aware.
  */
-public fun Dimension.toDpSize(): DpSize = DpSize(width.dp, height.dp)
+public fun Dimension.toDpSize(): DpSize =
+    if (this is JBDimension) toDpSize() else DpSize(width.dp, height.dp)
 
 /**
  * Converts a [JBDimension] to [DpSize], in a scaling-aware way. This means
@@ -195,9 +198,22 @@ internal operator fun TextUnit.plus(delta: Float): TextUnit =
         else -> this
     }
 
-internal fun retrieveIdeaDensity(sourceDensity: Density): Density {
+internal fun scaleDensityWithIdeScale(sourceDensity: Density): Density {
     val ideaScale = UISettingsUtils.getInstance().currentIdeScale
-    val fontScale = sourceDensity.fontScale * ideaScale
+    val density = sourceDensity.density * ideaScale
 
-    return Density(sourceDensity.density, fontScale)
+    return Density(density, sourceDensity.fontScale)
+}
+
+internal fun isNewUiTheme(): Boolean {
+    if (!NewUI.isEnabled()) return false
+
+    val lafName = lafName()
+    return lafName == "Light" || lafName == "Dark" || lafName == "Light with Light Header"
+}
+
+@Suppress("UnstableApiUsage")
+internal fun lafName(): String {
+    val lafInfo = LafManager.getInstance().currentUIThemeLookAndFeel
+    return lafInfo.name
 }

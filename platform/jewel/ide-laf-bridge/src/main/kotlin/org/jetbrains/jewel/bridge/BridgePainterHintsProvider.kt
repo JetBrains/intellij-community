@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.Color
 import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.ui.NewUI
-import org.jetbrains.jewel.bridge.theme.isNewUiTheme
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.inDebugMode
