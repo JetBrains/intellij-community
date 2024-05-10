@@ -4,4 +4,6 @@ fun foo() {
 
 fun <T> myMap(transform: (T) -> T): T = TODO()
 
-// TYPE: { it: Int -> it } -> <html>(Int) -&gt; Int</html>
+// K1_TYPE: { it: Int -> it } -> <html>(Int) -&gt; Int</html>
+
+// K2_TYPE: { it: Int -> it } -> <html>(Int) -&gt; Int</html>

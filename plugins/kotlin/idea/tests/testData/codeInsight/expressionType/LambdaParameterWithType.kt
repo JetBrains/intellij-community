@@ -6,4 +6,6 @@ fun test(list: List<Foo>) {
     list.forEach { <caret>foo: Foo -> }
 }
 
-// TYPE: { foo: Foo -> } -> <html>(Foo) -&gt; Unit</html>
+// K1_TYPE: { foo: Foo -> } -> <html>(Foo) -&gt; Unit</html>
+
+// K2_TYPE: { foo: Foo -> } -> <html>(Foo) -&gt; Unit</html>

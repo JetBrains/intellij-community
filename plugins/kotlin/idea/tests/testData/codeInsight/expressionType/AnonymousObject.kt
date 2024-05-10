@@ -3,4 +3,6 @@ fun baz() = run {
     <caret>a // empty box
 }
 
-// TYPE: a -> <html>&lt;anonymous object&gt;</html>
+// K1_TYPE: a -> <html>&lt;anonymous object&gt;</html>
+
+// K2_TYPE: a -> <html>&lt;anonymous object&gt;</html>

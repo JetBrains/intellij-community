@@ -6,4 +6,6 @@ fun test(list: List<Foo>) {
     for (<caret>foo in list) {}
 }
 
-// TYPE: foo -> <html>Foo</html>
+// K1_TYPE: foo -> <html>Foo</html>
+
+// K2_TYPE: foo -> <html>Foo</html>

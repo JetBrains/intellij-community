@@ -2,4 +2,6 @@ fun foo(value: String) {
     print<caret>ln(value)
 }
 
-// TYPE: println(value) -> <html>Unit</html>
+// K1_TYPE: println(value) -> <html>Unit</html>
+
+// K2_TYPE: println(value) -> <html>Unit</html>

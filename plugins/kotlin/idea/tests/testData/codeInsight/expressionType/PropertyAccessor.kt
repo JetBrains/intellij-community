@@ -3,4 +3,6 @@ class A {
         get() = "a<caret>bc"
 }
 
-// TYPE: "abc" -> <html>String</html>
+// K1_TYPE: "abc" -> <html>String</html>
+
+// K2_TYPE: "abc" -> <html>String</html>

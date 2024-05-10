@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.lang.LanguageExpressionTypes
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -25,13 +26,19 @@ abstract class AbstractExpressionTypeTest : KotlinLightCodeInsightFixtureTestCas
         return providers.single()
     }
 
+    private val expectedTypeDirective: String
+        get() = when (pluginMode) {
+            KotlinPluginMode.K1 -> "// K1_TYPE: "
+            KotlinPluginMode.K2 -> "// K2_TYPE: "
+        }
+
     protected fun doTest(path: String) {
         myFixture.configureByFile(fileName())
         val expressionTypeProvider = findKotlinExpressionTypeProvider()
         val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!!
         val expressions = expressionTypeProvider.getExpressionsAt(elementAtCaret)
         val types = expressions.map { "${it.text.replace('\n', ' ')} -> ${expressionTypeProvider.getInformationHint(it)}" }
-        val expectedTypes = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// TYPE: ")
+        val expectedTypes = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, expectedTypeDirective)
         UsefulTestCase.assertOrderedEquals(types, expectedTypes)
     }
 }

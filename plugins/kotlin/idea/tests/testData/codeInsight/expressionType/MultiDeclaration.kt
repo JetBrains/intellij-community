@@ -4,4 +4,6 @@ fun f(x: IntStringPair) {
     val (fir<caret>st, second) = x
 }
 
-// TYPE: first -> <html>Int</html>
+// K1_TYPE: first -> <html>Int</html>
+
+// K2_TYPE: first -> <html>Int</html>
