@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
@@ -86,23 +85,23 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
             scanningTask.getAndUpdate { null }
           } ?: continue
           try {
-            LOG.info("Running task: $task")
+            logInfo("Running task: $task")
             LOG.assertTrue(runningTask == null, "Task is already running (will be cancelled)")
             runningTask?.cancel() // We expect that running task is null. But it's better to be on the safe side
             coroutineScope {
-              runningTask = async {
+              runningTask = async(CoroutineName("Scanning")) {
                 runScanningTask(task)
               }
             }
-            LOG.info("Task finished: $task")
+            logInfo("Task finished: $task")
           }
           catch (t: Throwable) {
-            LOG.info("Task interrupted: $task. ${t.message}")
+            logInfo("Task interrupted: $task. ${t.message}")
             project.service<ProjectIndexingDependenciesService>().requestHeavyScanningOnProjectOpen("Task interrupted: $task")
             checkCanceled() // this will re-throw cancellation
 
             // other exceptions: log and forget
-            LOG.error("Failed to execute task $task", t)
+            logError("Failed to execute task $task", t)
           }
           finally {
             task.close()
@@ -114,7 +113,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           checkCanceled() // this will re-throw cancellation
 
           // other exceptions: log and forget
-          LOG.error("Unexpected exception during scanning (ignored)", t)
+          logError("Unexpected exception during scanning (ignored)", t)
         }
         finally {
           // We don't care about finishing scanning without a write action. This looks harmless at the moment
@@ -124,6 +123,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       }
     }
   }
+
+  private fun prepareLogMessage(message: String) = "[${project.locationHash}] $message"
+  private fun logInfo(message: String) = LOG.info(prepareLogMessage(message))
+  private fun logError(message: String, t: Throwable) = LOG.error(prepareLogMessage(message), t)
 
   private fun scanningWaitsForNonDumbMode(override: Boolean?): Boolean = override ?: Registry.`is`("scanning.waits.for.non.dumb.mode", true)
 
@@ -202,10 +205,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
 
   override fun submitTask(task: FilesScanningTask) {
     task as UnindexedFilesScanner
-    thisLogger().debug(Throwable("submit task, thread=${Thread.currentThread()}"))
+    LOG.debug(Throwable("submit task, ${project.name}[${project.locationHash}], thread=${Thread.currentThread()}"))
 
     if (taskFilter?.test(task) == false) {
-      thisLogger().info("Skipping task (rejected by filter): $task")
+      logInfo("Skipping task (rejected by filter): $task")
       task.close()
       return
     }
