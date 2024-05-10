@@ -155,6 +155,9 @@
     <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$ModuleListenerImpl"
               topic="com.intellij.openapi.project.ModuleListener"
               activeInHeadlessMode="true" activeInTestMode="true"/>
+    <listener class="com.intellij.openapi.externalSystem.action.task.ExternalSystemTaskMenu$Listener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"
+              activeInHeadlessMode="true" activeInTestMode="false"/>
   </applicationListeners>
 </idea-plugin>
 
