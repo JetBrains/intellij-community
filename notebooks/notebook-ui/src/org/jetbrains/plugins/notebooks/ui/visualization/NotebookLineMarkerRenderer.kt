@@ -58,13 +58,6 @@ class MarkdownCellGutterLineMarkerRenderer(private val highlighter: RangeHighlig
   }
 }
 
-@Deprecated("For removal after PY-71962")
-class NotebookCellLineNumbersLineMarkerRenderer(private val highlighter: RangeHighlighter) : NotebookLineMarkerRenderer() {
-  override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
-    // TODO: carefully remove
-  }
-}
-
 class NotebookCodeCellBackgroundLineMarkerRenderer(private val highlighter: RangeHighlighter) : NotebookLineMarkerRenderer() {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     editor as EditorImpl

@@ -17,7 +17,10 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.notebooks.ui.visualization.*
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookCodeCellBackgroundLineMarkerRenderer
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookLineMarkerRenderer
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.*
 import java.awt.*
 import javax.swing.JComponent
@@ -44,8 +47,8 @@ class EditorCellView(
     editor,
     { currentComponent: EditorCellViewComponent? ->
       val currentController = (currentComponent as? ControllerEditorCellViewComponent)?.controller
-      val controller = getInputFactories().firstNotNullOfOrNull {
-        failSafeCompute(it, editor, currentController?.let { listOf(it) }
+      val controller = getInputFactories().firstNotNullOfOrNull { factory ->
+        failSafeCompute(factory, editor, currentController?.let { listOf(it) }
                                     ?: emptyList(), intervals.intervals.listIterator(interval.ordinal))
       }
       if (controller != null) {
@@ -255,9 +258,7 @@ class EditorCellView(
         endOffset,
         HighlighterLayer.FIRST - 99,  // Border should be seen behind any syntax highlighting, selection or any other effect.
         HighlighterTargetArea.LINES_IN_RANGE
-      ).also {
-        it.lineMarkerRenderer = NotebookCellLineNumbersLineMarkerRenderer(it)
-      }
+      )
     }
 
     if (interval.type == NotebookCellLines.CellType.CODE) {
