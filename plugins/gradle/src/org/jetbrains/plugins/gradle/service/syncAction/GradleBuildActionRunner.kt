@@ -68,14 +68,14 @@ class GradleBuildActionRunner(
   private fun runPhasedBuildAction() {
     buildAction.isUseProjectsLoadedPhase = true
     resolverContext.connection.action()
-      .projectsLoaded(buildAction, resultHandler.createProjectLoadedHandler())
-      .buildFinished(buildAction, resultHandler.createBuildFinishedHandler())
+      .projectsLoaded(buildAction, resultHandler.asProjectLoadedResultHandler())
+      .buildFinished(buildAction, resultHandler.asBuildFinishedResultHandler())
       .build()
       .prepareOperationForSync()
       .withCancellationToken(resolverContext.cancellationToken)
-      .withStreamedValueListener(resultHandler.createStreamValueListener())
+      .withStreamedValueListener(resultHandler.asStreamValueListener())
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
-      .run(resultHandler.createResultHandler())
+      .run(resultHandler.asResultHandler())
     resultHandler.waitForBuildFinish()
   }
 
@@ -83,8 +83,8 @@ class GradleBuildActionRunner(
     resolverContext.connection.action(buildAction)
       .prepareOperationForSync()
       .withCancellationToken(resolverContext.cancellationToken)
-      .withStreamedValueListener(resultHandler.createStreamValueListener())
-      .run(resultHandler.createResultHandler())
+      .withStreamedValueListener(resultHandler.asStreamValueListener())
+      .run(resultHandler.asResultHandler())
     resultHandler.waitForBuildFinish()
   }
 

@@ -43,7 +43,7 @@ class GradleBuildActionResultHandler(
     }
   }
 
-  fun createStreamValueListener(): StreamedValueListener {
+  fun asStreamValueListener(): StreamedValueListener {
     return StreamedValueListener { state ->
       runCancellable {
         if (state is GradleModelHolderState) {
@@ -53,7 +53,7 @@ class GradleBuildActionResultHandler(
     }
   }
 
-  fun createProjectLoadedHandler(): IntermediateResultHandler<GradleModelHolderState> {
+  fun asProjectLoadedResultHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
       runCancellable {
         resultHandler.onProjectLoaded(state)
@@ -61,7 +61,7 @@ class GradleBuildActionResultHandler(
     }
   }
 
-  fun createBuildFinishedHandler(): IntermediateResultHandler<GradleModelHolderState> {
+  fun asBuildFinishedResultHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
       runCancellable {
         isBuildActionInterrupted.set(false)
@@ -70,11 +70,11 @@ class GradleBuildActionResultHandler(
     }
   }
 
-  fun createResultHandler(): ResultHandler<Any> {
+  fun asResultHandler(): ResultHandler<Any> {
     return object : ResultHandler<Any> {
 
       /**
-       * The parameter [result] will be null if running from the Phased executer as to obtain the models via [createBuildFinishedHandler].
+       * The parameter [result] will be null if running from the Phased executer as to obtain the models via [asBuildFinishedResultHandler].
        * However, if it is not null then we must be running from the normal build action excuter and thus the [result] must be
        * added to the queue to unblock the main thread.
        */
