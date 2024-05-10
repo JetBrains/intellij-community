@@ -67,7 +67,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     for (changeSet in facade.changes) {
       if (changeSet.isSystemLabelOnly) continue
       if (changeSet.isLabelOnly) {
-        if (!changeSet.changes.any { it.affectsProject(projectId) }) continue
+        if (scopeFilter != null || !changeSet.changes.any { it.affectsProject(projectId) }) continue
       }
       else {
         if (!changeSet.changes.any { change ->
