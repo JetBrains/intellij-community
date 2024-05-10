@@ -12,7 +12,7 @@ internal class TestRuntimeContextProvider(
   private val shellName: ShellName = ShellName("dummy"),
   private val generatorCommandsRunner: ShellGeneratorCommandsRunner = DummyGeneratorCommandsRunner()
 ) : ShellRuntimeContextProvider {
-  override fun getContext(commandText: String, typedPrefix: String): ShellRuntimeContext {
-    return IJShellRuntimeContext(directory, commandText, typedPrefix, shellName, generatorCommandsRunner)
+  override fun getContext(typedPrefix: String): ShellRuntimeContext {
+    return IJShellRuntimeContext(directory, typedPrefix, shellName, generatorCommandsRunner)
   }
 }

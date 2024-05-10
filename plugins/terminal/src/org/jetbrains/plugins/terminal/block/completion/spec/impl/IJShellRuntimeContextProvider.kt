@@ -29,10 +29,9 @@ internal class IJShellRuntimeContextProvider(
     })
   }
 
-  override fun getContext(commandText: String, typedPrefix: String): ShellRuntimeContext {
+  override fun getContext(typedPrefix: String): ShellRuntimeContext {
     return IJShellRuntimeContext(
       curDirectory,
-      commandText,
       typedPrefix,
       session.shellIntegration.shellType.toShellName(),
       generatorCommandsRunner

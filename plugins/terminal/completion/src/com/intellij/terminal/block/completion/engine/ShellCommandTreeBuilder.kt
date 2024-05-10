@@ -11,7 +11,6 @@ import com.intellij.terminal.block.completion.spec.ShellOptionSpec
 import java.io.File
 
 internal class ShellCommandTreeBuilder private constructor(
-  command: String,
   private val contextProvider: ShellRuntimeContextProvider,
   private val generatorsExecutor: ShellDataGeneratorsExecutor,
   private val commandSpecManager: ShellCommandSpecsManager,
@@ -26,7 +25,7 @@ internal class ShellCommandTreeBuilder private constructor(
       commandSpec: ShellCommandSpec,
       arguments: List<String>
     ): ShellCommandNode {
-      val builder = ShellCommandTreeBuilder(command, contextProvider, generatorsExecutor, commandSpecManager, arguments)
+      val builder = ShellCommandTreeBuilder(contextProvider, generatorsExecutor, commandSpecManager, arguments)
       val root = builder.createSubcommandNode(command, commandSpec, null)
       builder.buildSubcommandTree(root)
       return root
@@ -34,12 +33,10 @@ internal class ShellCommandTreeBuilder private constructor(
   }
 
   private var curIndex = 0
-  private var commandText: String = command
 
   private suspend fun buildSubcommandTree(root: ShellCommandNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      commandText += " $name"
       val suggestionsProvider = createSuggestionsProvider(name)
       val suggestions = suggestionsProvider.getSuggestionsOfNext(root, name)
       var suggestion = suggestions.find { it.names.contains(name) }
@@ -74,7 +71,6 @@ internal class ShellCommandTreeBuilder private constructor(
   private suspend fun buildOptionTree(root: ShellOptionNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      commandText += " $name"
       val suggestionsProvider = createSuggestionsProvider(name)
       val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root)
       val suggestion = suggestions.find { it.names.contains(name) }
@@ -145,7 +141,7 @@ internal class ShellCommandTreeBuilder private constructor(
   }
 
   private fun createSuggestionsProvider(typedPrefix: String): ShellCommandTreeSuggestionsProvider {
-    val context = contextProvider.getContext(commandText, typedPrefix)
+    val context = contextProvider.getContext(typedPrefix)
     return ShellCommandTreeSuggestionsProvider(context, generatorsExecutor)
   }
 }

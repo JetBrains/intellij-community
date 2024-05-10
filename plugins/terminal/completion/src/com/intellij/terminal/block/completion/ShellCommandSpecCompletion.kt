@@ -35,8 +35,7 @@ class ShellCommandSpecCompletion(
     val lastArgument = arguments.last()
     val rootNode: ShellCommandNode = ShellCommandTreeBuilder.build(contextProvider, generatorsExecutor, commandSpecManager,
                                                                    command, commandSpec, completeArguments)
-    val commandText = command + " " + arguments.joinToString(" ")
-    val context = contextProvider.getContext(commandText, lastArgument)
+    val context = contextProvider.getContext(lastArgument)
     val suggestionsProvider = ShellCommandTreeSuggestionsProvider(context, generatorsExecutor)
     return computeSuggestions(suggestionsProvider, rootNode, lastArgument)
   }

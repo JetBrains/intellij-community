@@ -121,7 +121,6 @@ class ShellBaseGeneratorsTest(private val shellPath: Path) {
     val executor = IJShellGeneratorsExecutor(session)
     val context = IJShellRuntimeContext(
       currentDirectory = "",
-      commandText = "",
       typedPrefix,
       session.shellIntegration.shellType.toShellName(),
       ShellCachingGeneratorCommandsRunner(session)

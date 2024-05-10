@@ -5,5 +5,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface ShellRuntimeContextProvider {
-  fun getContext(commandText: String, typedPrefix: String): ShellRuntimeContext
+  fun getContext(typedPrefix: String): ShellRuntimeContext
 }

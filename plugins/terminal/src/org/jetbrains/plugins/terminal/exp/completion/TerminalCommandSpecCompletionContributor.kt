@@ -64,15 +64,15 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   }
 
   private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<ShellCompletionSuggestion> {
-    // aliases generator does not requires broad context
-    val dummyRuntimeContext = context.runtimeContextProvider.getContext("", "")
+    // aliases generator does not requires actual typed prefix
+    val dummyRuntimeContext = context.runtimeContextProvider.getContext("")
     val aliases: Map<String, String> = context.generatorsExecutor.execute(dummyRuntimeContext, aliasesGenerator())
     val expandedTokens = expandAliases(tokens, aliases, context)
     if (expandedTokens.isEmpty()) {
       return emptyList()
     }
 
-    val runtimeContext = context.runtimeContextProvider.getContext(expandedTokens.joinToString(separator = " "), expandedTokens.last())
+    val runtimeContext = context.runtimeContextProvider.getContext(expandedTokens.last())
     val completion = ShellCommandSpecCompletion(IJShellCommandSpecsManager.getInstance(), context.generatorsExecutor, context.runtimeContextProvider)
     val command = expandedTokens.first()
     val arguments = expandedTokens.subList(1, expandedTokens.size)

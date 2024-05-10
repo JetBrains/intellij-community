@@ -72,6 +72,6 @@ class ShellCommandSpecManagerTest : BasePlatformTestCase() {
   }
 
   private fun createDummyRuntimeContext(): ShellRuntimeContext {
-    return IJShellRuntimeContext("", "", "", ShellName("dummy"), DummyGeneratorCommandsRunner())
+    return IJShellRuntimeContext("", "", ShellName("dummy"), DummyGeneratorCommandsRunner())
   }
 }

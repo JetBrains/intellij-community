@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.NonExtendable
 interface ShellRuntimeContext {
   val currentDirectory: String
-  val commandText: String
   val typedPrefix: String
   val shellName: ShellName
 

@@ -8,7 +8,6 @@ import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
 
 internal class IJShellRuntimeContext(
   override val currentDirectory: String,
-  override val commandText: String,
   override val typedPrefix: String,
   override val shellName: ShellName,
   private val generatorCommandsRunner: ShellGeneratorCommandsRunner
@@ -19,6 +18,6 @@ internal class IJShellRuntimeContext(
   }
 
   override fun toString(): String {
-    return "IJShellRuntimeContext(currentDirectory='$currentDirectory', commandText='$commandText', typedPrefix='$typedPrefix')"
+    return "IJShellRuntimeContext(currentDirectory='$currentDirectory', typedPrefix='$typedPrefix')"
   }
 }

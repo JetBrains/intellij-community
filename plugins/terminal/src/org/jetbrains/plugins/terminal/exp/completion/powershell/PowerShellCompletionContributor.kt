@@ -44,8 +44,8 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
 
     val command = promptModel.commandText
     val caretPosition = parameters.editor.caretModel.offset - promptModel.commandStartOffset  // relative to command start
-    // PowerShell's completion generator receives commandText directly, so we can create dummy context
-    val runtimeContext = runtimeContextProvider.getContext("", "")
+    // PowerShell's completion generator receives typed prefix directly, so we can create dummy context
+    val runtimeContext = runtimeContextProvider.getContext("")
     val completionResult: CompletionResult = runBlockingCancellable {
       generatorsExecutor.execute(runtimeContext, powerShellCompletionGenerator(command, caretPosition))
     }

@@ -106,7 +106,6 @@ class BlockTerminalTest(private val shellPath: Path) {
         val context = IJShellRuntimeContext(
           "",
           "",
-          "",
           session.shellIntegration.shellType.toShellName(),
           ShellCachingGeneratorCommandsRunner(session)
         )
