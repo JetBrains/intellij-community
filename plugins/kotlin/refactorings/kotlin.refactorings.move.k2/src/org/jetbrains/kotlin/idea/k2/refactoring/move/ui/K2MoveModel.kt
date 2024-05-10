@@ -47,7 +47,9 @@ sealed class K2MoveModel {
     fun isValidRefactoring(): Boolean {
         fun KtFile.isTargetFile(): Boolean {
             return (target as? K2MoveTargetModel.File)?.let { fileTarget ->
-                containingDirectory == fileTarget.directory && name == fileTarget.fileName
+                containingDirectory == fileTarget.directory
+                        && packageFqName == fileTarget.pkgName // check both pkg and directory in case of implicit pkg prefix
+                        && name == fileTarget.fileName
             } ?: false
         }
         if (source.elements.isEmpty()) return false
