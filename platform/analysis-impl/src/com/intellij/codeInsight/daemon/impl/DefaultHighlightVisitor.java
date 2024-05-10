@@ -80,9 +80,6 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     HighlightInfo info = builder.create();
     if (info != null) {
       info.toolId = DefaultHighlightVisitor.class;
-      for (ErrorQuickFixProvider provider : providers) {
-        provider.registerErrorQuickFix(element, info);
-      }
     }
     return info;
   }

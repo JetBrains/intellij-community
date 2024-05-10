@@ -107,16 +107,10 @@ c:com.intellij.codeInsight.CharTailType
 - toString():java.lang.String
 a:com.intellij.codeInsight.TailType
 - sf:CASE_COLON:com.intellij.codeInsight.TailType
-- sf:COND_EXPR_COLON:com.intellij.codeInsight.TailType
 - sf:DOT:com.intellij.codeInsight.TailType
-- sf:EQUALS:com.intellij.codeInsight.TailType
-- sf:HUMBLE_SPACE_BEFORE_WORD:com.intellij.codeInsight.TailType
-- sf:INSERT_SPACE:com.intellij.codeInsight.TailType
-- sf:LPARENTH:com.intellij.codeInsight.TailType
 - sf:NONE:com.intellij.codeInsight.TailType
 - sf:SEMICOLON:com.intellij.codeInsight.TailType
 - sf:SPACE:com.intellij.codeInsight.TailType
-- sf:UNKNOWN:com.intellij.codeInsight.TailType
 - <init>():V
 - s:createSimpleTailType(C):com.intellij.codeInsight.TailType
 - ps:getFileType(com.intellij.openapi.editor.Editor):com.intellij.openapi.fileTypes.FileType

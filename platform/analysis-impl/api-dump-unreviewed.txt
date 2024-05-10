@@ -995,7 +995,6 @@ com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - registerErrorQuickFix(com.intellij.psi.PsiErrorElement,com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder):V
-- registerErrorQuickFix(com.intellij.psi.PsiErrorElement,com.intellij.codeInsight.daemon.impl.HighlightInfo):V
 c:com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 - <init>(com.intellij.psi.PsiFile,com.intellij.codeInsight.daemon.impl.HighlightInfoFilter[]):V
 - add(com.intellij.codeInsight.daemon.impl.HighlightInfo):Z
@@ -1016,7 +1015,6 @@ a:com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 - a:shouldInspect(com.intellij.psi.PsiElement):Z
 f:com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 - s:registerQuickFixAction(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.codeInsight.intention.IntentionAction):V
-- s:registerQuickFixAction(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String):V
 - s:registerQuickFixActions(com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder,com.intellij.openapi.util.TextRange,java.lang.Iterable):V
 - s:registerQuickFixActions(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.util.TextRange,java.lang.Iterable):V
 c:com.intellij.codeInsight.dataflow.DFAEngine
