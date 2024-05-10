@@ -9,7 +9,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -115,7 +118,8 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = Objects.requireNonNull(e.getProject());
+    Project project = e.getProject();
+    if (project == null) return;
 
     List<FilePath> symlinkedPaths = getContextSymlinkedPaths(project, getSelectedFile(e.getDataContext()));
     if (symlinkedPaths != null && canShowNewFileHistory(project, symlinkedPaths)) {
@@ -130,8 +134,13 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
     }
 
     if (selectedFiles.size() == 1) {
-      FilePath path = Objects.requireNonNull(ContainerUtil.getFirstItem(selectedFiles));
-      AbstractVcs vcs = Objects.requireNonNull(ChangesUtil.getVcsForFile(Objects.requireNonNull(getExistingFileOrParent(path)), project));
+      FilePath path = ContainerUtil.getOnlyItem(selectedFiles);
+      VirtualFile fileOrParent = getExistingFileOrParent(path);
+      if (fileOrParent == null) return;
+
+      AbstractVcs vcs = ChangesUtil.getVcsForFile(fileOrParent, project);
+      if (vcs == null) return;
+
       showOldFileHistory(project, vcs, path);
     }
   }
