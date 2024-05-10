@@ -10,24 +10,24 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.SmartList;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import com.intellij.util.ui.html.UtilsKt;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
 import kotlinx.coroutines.flow.StateFlowKt;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Highlighter;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
@@ -36,13 +36,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
-import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 
 @Internal
@@ -176,7 +173,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   @NotNull
   Dimension getPackedSize(int minWidth, int maxWidth) {
     int width = Math.min(
-      Math.max(Math.max(definitionPreferredWidth(), getMinimumSize().width), minWidth),
+      Math.max(Math.max(contentsPreferredWidth(), getMinimumSize().width), minWidth),
       maxWidth
     );
     int height = getPreferredHeightByWidth(width);
@@ -194,57 +191,15 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   }
 
   int getPreferredWidth() {
-    int definitionPreferredWidth = definitionPreferredWidth();
+    int definitionPreferredWidth = contentsPreferredWidth();
     return definitionPreferredWidth < 0 ? getPreferredSize().width
                                         : Math.max(definitionPreferredWidth, getMinimumSize().width);
   }
 
-  private int definitionPreferredWidth() {
-    int preferredDefinitionWidth = Math.max(getPreferredSectionsWidth(CLASS_DEFINITION),
-                                            getPreferredSectionsWidth(CLASS_DEFINITION_SEPARATED));
-    if (preferredDefinitionWidth < 0) {
-      return -1;
-    }
-    int preferredLocationWidth = getPreferredSectionsWidth(CLASS_BOTTOM);
-    int preferredCodeBlockWidth = getPreferredSectionsWidth("styled-code");
+  private int contentsPreferredWidth() {
+    int elementsPreferredWidth = new DocumentationPanePreferredWidthProvider(getUI().getRootView(this)).get();
     int preferredContentWidth = getPreferredContentWidth(getDocument().getLength());
-    return Math.max(Math.max(preferredCodeBlockWidth, preferredContentWidth), Math.max(preferredDefinitionWidth, preferredLocationWidth));
-  }
-
-  private int getPreferredSectionsWidth(String sectionClassName) {
-    var definitions = findSections(getUI().getRootView(this), sectionClassName);
-    return StreamEx.of(definitions).mapToInt(it -> getPreferredWidth(it)).max().orElse(-1);
-  }
-
-  private static int getPreferredWidth(View view) {
-    var result = (int)view.getPreferredSpan(View.X_AXIS);
-    if (result > 0) {
-      result += UtilsKt.getWidth(UtilsKt.getCssMargin(view));
-      var parent = view.getParent();
-      while (parent != null) {
-        result += UtilsKt.getWidth(UtilsKt.getCssMargin(parent)) + UtilsKt.getWidth(UtilsKt.getCssPadding(parent));
-        parent = parent.getParent();
-      }
-    }
-    return result;
-  }
-
-  private static @NotNull List<View> findSections(@NotNull View view, String sectionClassName) {
-    var queue = new ArrayList<View>();
-    queue.add(view);
-
-    var result = new SmartList<View>();
-    while (!queue.isEmpty()) {
-      var cur = queue.remove(queue.size() - 1);
-      if (cur == null) continue;
-      if (sectionClassName.equals(cur.getElement().getAttributes().getAttribute(HTML.Attribute.CLASS))) {
-        result.add(cur);
-      }
-      for (int i = 0; i < cur.getViewCount(); i++) {
-        queue.add(cur.getView(i));
-      }
-    }
-    return result;
+    return Math.max(elementsPreferredWidth, preferredContentWidth);
   }
 
   private static int getPreferredContentWidth(int textLength) {
