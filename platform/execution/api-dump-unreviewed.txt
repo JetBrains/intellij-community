@@ -2189,7 +2189,6 @@ f:com.intellij.execution.wsl.WSLCommandLineOptions
 - setLaunchWithWslExe(Z):com.intellij.execution.wsl.WSLCommandLineOptions
 - setPassEnvVarsUsingInterop(Z):com.intellij.execution.wsl.WSLCommandLineOptions
 - setRemoteWorkingDirectory(java.lang.String):com.intellij.execution.wsl.WSLCommandLineOptions
-- setShellPath(java.lang.String):com.intellij.execution.wsl.WSLCommandLineOptions
 - setSleepTimeoutSec(D):com.intellij.execution.wsl.WSLCommandLineOptions
 - setSudo(Z):com.intellij.execution.wsl.WSLCommandLineOptions
 - toString():java.lang.String
