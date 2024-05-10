@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Some util methods for annotation processing
@@ -35,9 +37,19 @@ public final class PsiAnnotationUtil {
   }
 
   @NotNull
-  public static <T> Collection<T> getAnnotationValues(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, @NotNull Class<T> asClass) {
+  public static <T> Collection<T> getAnnotationValues(@NotNull PsiAnnotation psiAnnotation,
+                                                      @NotNull String parameter,
+                                                      @NotNull Class<T> asClass,
+                                                      @NotNull List<T> defaultDumbValue) {
     Collection<T> result = Collections.emptyList();
-    PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
+    PsiAnnotationMemberValue attributeValue;
+    if (DumbService.isDumb(psiAnnotation.getProject())) {
+      attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
+      if (attributeValue == null) return defaultDumbValue;
+    }
+    else {
+      attributeValue = psiAnnotation.findAttributeValue(parameter);
+    }
     if (attributeValue instanceof PsiArrayInitializerMemberValue) {
       final PsiAnnotationMemberValue[] memberValues = ((PsiArrayInitializerMemberValue) attributeValue).getInitializers();
       result = new ArrayList<>(memberValues.length);

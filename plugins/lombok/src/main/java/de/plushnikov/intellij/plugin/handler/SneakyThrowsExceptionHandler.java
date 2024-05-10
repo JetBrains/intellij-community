@@ -75,8 +75,9 @@ public final class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
       return false;
     }
 
+    List<PsiType> throwable = List.of(PsiType.getJavaLangThrowable(psiAnnotation.getManager(), psiAnnotation.getResolveScope()));
     final Collection<PsiType> sneakedExceptionTypes =
-      PsiAnnotationUtil.getAnnotationValues(psiAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, PsiType.class);
+      PsiAnnotationUtil.getAnnotationValues(psiAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, PsiType.class, throwable);
     //Default SneakyThrows handles all exceptions
     return sneakedExceptionTypes.isEmpty()
            || sneakedExceptionTypes.iterator().next().equalsToText(JAVA_LANG_THROWABLE)

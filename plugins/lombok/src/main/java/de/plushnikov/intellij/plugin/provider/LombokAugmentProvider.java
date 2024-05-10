@@ -1,6 +1,9 @@
 package de.plushnikov.intellij.plugin.provider;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.PsiExtensionMethod;
@@ -28,12 +31,17 @@ import static de.plushnikov.intellij.plugin.util.LombokLibraryUtil.hasLombokLibr
  *
  * @author Plushnikov Michail
  */
-public final class LombokAugmentProvider extends PsiAugmentProvider {
+public final class LombokAugmentProvider extends PsiAugmentProvider implements PossiblyDumbAware {
   private static final class Holder {
     static final Collection<ModifierProcessor> modifierProcessors = LombokProcessorManager.getLombokModifierProcessors();
   }
 
   public LombokAugmentProvider() {
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return Registry.is("lombok.dumb.mode.enabled", false);
   }
 
   @NotNull
@@ -47,18 +55,30 @@ public final class LombokAugmentProvider extends PsiAugmentProvider {
     // make copy of original modifiers
     Set<String> result = new HashSet<>(modifiers);
 
-    // Loop through all available processors and give all of them a chance to respond
-    for (ModifierProcessor processor : Holder.modifierProcessors) {
-      if (processor.isSupported(modifierList)) {
-        processor.transformModifiers(modifierList, result);
+    DumbService dumbService = DumbService.getInstance(modifierList.getProject());
+    Runnable runnable = () -> {
+      // Loop through all available processors and give all of them a chance to respond
+      for (ModifierProcessor processor : Holder.modifierProcessors) {
+        if (processor.isSupported(modifierList)) {
+          processor.transformModifiers(modifierList, result);
+        }
       }
+    };
+    if (dumbService.isDumb() && !dumbService.isAlternativeResolveEnabled()) {
+      dumbService.runWithAlternativeResolveEnabled(() -> runnable.run());
     }
+    else {
+      runnable.run();
 
+    }
     return result;
   }
 
   @Override
   public boolean canInferType(@NotNull PsiTypeElement typeElement) {
+    //skip if dumb mode, allow only `getAugments`
+    if (DumbService.isDumb(typeElement.getProject())) return false;
+
     return hasLombokLibrary(typeElement.getProject()) && ValProcessor.canInferType(typeElement);
   }
 
@@ -75,7 +95,10 @@ public final class LombokAugmentProvider extends PsiAugmentProvider {
   //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyVariableNotInitialized
   @Override
   protected boolean fieldInitializerMightBeChanged(@NotNull PsiField field) {
-    if (field.hasAnnotation(LombokClassNames.BUILDER_DEFAULT)) {
+    //skip if dumb mode, allow only `getAugments`
+    if (DumbService.isDumb(field.getProject())) return false;
+
+    if (PsiAnnotationSearchUtil.isAnnotatedWith(field, LombokClassNames.BUILDER_DEFAULT)) {
       return true;
     }
 
@@ -104,6 +127,9 @@ public final class LombokAugmentProvider extends PsiAugmentProvider {
   @Nullable
   @Override
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
+    //skip if dumb mode, allow only `getAugments`
+    if (DumbService.isDumb(typeElement.getProject())) return null;
+
     return hasLombokLibrary(typeElement.getProject()) ? ValProcessor.inferType(typeElement) : null;
   }
 
@@ -145,7 +171,10 @@ public final class LombokAugmentProvider extends PsiAugmentProvider {
 
     // All invoker of AugmentProvider already make caching,
     // and we want to try to skip recursive calls completely
-
+    DumbService dumbService = DumbService.getInstance(psiClass.getProject());
+    if (DumbService.isDumb(psiClass.getProject()) && !dumbService.isAlternativeResolveEnabled()) {
+      return dumbService.computeWithAlternativeResolveEnabled(()-> getPsis(psiClass, type, nameHint));
+    }
     return getPsis(psiClass, type, nameHint);
   }
 
@@ -165,6 +194,9 @@ public final class LombokAugmentProvider extends PsiAugmentProvider {
   protected List<PsiExtensionMethod> getExtensionMethods(@NotNull PsiClass aClass,
                                                          @NotNull String nameHint,
                                                          @NotNull PsiElement context) {
+    //skip if dumb mode, allow only `getAugments`
+    if (DumbService.isDumb(aClass.getProject())) return Collections.emptyList();
+
     if (!hasLombokLibrary(context.getProject())) {
       return Collections.emptyList();
     }

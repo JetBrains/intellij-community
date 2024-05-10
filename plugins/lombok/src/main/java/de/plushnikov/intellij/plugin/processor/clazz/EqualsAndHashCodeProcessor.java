@@ -62,8 +62,8 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     }
 
     if (problemSink.deepValidation()) {
-      final Collection<String> excludeProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class);
-      final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class);
+      final Collection<String> excludeProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class, List.of());
+      final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class, List.of());
 
       if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
         problemSink.addWarningMessage("inspection.message.exclude.are.mutually.exclusive.exclude.parameter.will.be.ignored")

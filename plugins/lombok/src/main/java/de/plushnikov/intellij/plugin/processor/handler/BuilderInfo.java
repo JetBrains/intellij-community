@@ -63,8 +63,8 @@ public class BuilderInfo {
     result.capitalizationStrategy = CapitalizationStrategy.defaultValue();
     result.deprecated = PsiImplUtil.isDeprecated(psiVariable);
 
-    result.hasBuilderDefaultAnnotation = psiVariable.hasAnnotation(BUILDER_DEFAULT_ANNOTATION);
-    result.singularAnnotation = psiVariable.getAnnotation(LombokClassNames.SINGULAR);
+    result.hasBuilderDefaultAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(psiVariable, BUILDER_DEFAULT_ANNOTATION);
+    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, LombokClassNames.SINGULAR);
     result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiVariable, null != result.singularAnnotation);
 
     result.nullAnnotationLibrary = LombokNullAnnotationLibraryDefned.NONE;

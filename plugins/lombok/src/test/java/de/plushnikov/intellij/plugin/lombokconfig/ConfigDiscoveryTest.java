@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
+import com.intellij.mock.MockDumbService;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -64,6 +66,7 @@ public class ConfigDiscoveryTest {
       }
     };
 
+    when(project.getService(DumbService.class)).thenReturn(new MockDumbService(project));
     when(psiFile.getProject()).thenReturn(project);
     when(psiClass.getContainingFile()).thenReturn(psiFile);
     when(psiFile.getOriginalFile()).thenReturn(psiFile);
