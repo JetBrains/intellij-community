@@ -752,7 +752,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun tryReloadPerClientState(componentClass: Class<out PersistentStateComponent<*>>,
                                       info: ComponentInfo,
                                       changedStorages: Set<StateStorage>): Boolean {
-    val perClientComponent = (project ?: application).getService(componentClass)
+    val perClientComponent = (storageManager.componentManager ?: application).getService(componentClass)
     if (perClientComponent == null || perClientComponent === info.component) {
       return false
     }

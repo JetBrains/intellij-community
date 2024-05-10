@@ -2,7 +2,10 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import org.jetbrains.annotations.ApiStatus;

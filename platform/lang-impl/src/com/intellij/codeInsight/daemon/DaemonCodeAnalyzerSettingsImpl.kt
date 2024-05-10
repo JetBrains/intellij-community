@@ -5,7 +5,10 @@ import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.configurationStore.serializeObjectInto
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.XmlSerializer.deserializeInto
 import org.jdom.Element
