@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="IDE sample" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="IDE sample" type="GradleRunConfiguration" factoryName="Gradle" show_console_on_std_err="true" show_console_on_std_out="true">
     <log_file alias="idea.log" path="$PROJECT_DIR$/samples/ide-plugin/build/idea-sandbox/system/log/idea.log" />
     <ExternalSystemSettings>
       <option name="executionName" />
