@@ -121,11 +121,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
       PropertiesComponent.getInstance().setValue(NEW_UI_USED_VERSION, version)
     }
-    if (forcedSwitchedUi) {
-      ApplicationManager.getApplication().runWriteAction {
-        onValueChanged(true)
-      }
-    }
   }
 
   fun appClosing() {
@@ -139,7 +134,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     }
   }
 
-  private fun onValueChanged(isEnabled: Boolean) {
+  private fun onValueChanged(isEnabled: Boolean, withLafToDef: Boolean = true) {
     if (isEnabled) {
       setNewUiUsed()
     }
@@ -164,7 +159,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     if (PlatformUtils.isJetBrainsClient()) {
       NewUiValue.overrideNewUiForOneRemDevSession(isEnabled)
     }
-    resetLafSettingsToDefault()
+    if (withLafToDef) resetLafSettingsToDefault()
   }
 
   private fun saveNewValue(enabled: Boolean) {
