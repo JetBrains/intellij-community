@@ -79,9 +79,9 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val directoryActivity = provider.loadActivityList(scope, null)
     TestCase.assertEquals(4, directoryActivity.items.size)
     TestCase.assertEquals(listOf("label",
-                                 "Changes in file.txt",
-                                 "Changes in file.txt",
-                                 "Changes in directory"), directoryActivity.getNamesList())
+                                 "Modify ${file.name}",
+                                 "Create ${file.name}",
+                                 "Create ${directory.name}"), directoryActivity.getNamesList())
   }
 
   fun `test recent activity`() {
@@ -143,12 +143,12 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val activityList = provider.loadActivityList(scope, null)
 
     TestCase.assertEquals(listOf(visibleLabel,
-                                 "Changes in ${otherFile.name}",
-                                 "Changes in ${file.name}",
-                                 "Changes in ${otherFile.name}",
-                                 "Changes in ${file.name}",
-                                 "External change",
-                                 "External change"), activityList.getNamesList())
+                                 "Modify ${otherFile.name}",
+                                 "Modify ${file.name}",
+                                 "Modify ${otherFile.name}",
+                                 "Modify ${file.name}",
+                                 "Create ${otherFile.name}",
+                                 "Create ${file.name}"), activityList.getNamesList())
   }
 
   fun `test parent directory and child file history`() {
@@ -171,12 +171,12 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
 
     val activityList = provider.loadActivityList(scope, null)
 
-    TestCase.assertEquals(listOf("Changes in ${file.name}",
+    TestCase.assertEquals(listOf("Modify ${file.name}",
                                  moveActionName,
-                                 "Changes in ${file.name}",
-                                 "Changes in ${file.name}",
-                                 "Changes in directory" /* directory created */,
-                                 "External change" /* file created */), activityList.getNamesList())
+                                 "Modify ${file.name}",
+                                 "Modify ${file.name}",
+                                 "Create ${directory.name}",
+                                 "Create ${file.name}"), activityList.getNamesList())
   }
 
   fun `test diff data`() {

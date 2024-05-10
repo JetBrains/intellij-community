@@ -3,7 +3,8 @@ package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.ActivityId
 import com.intellij.history.core.Paths
-import com.intellij.history.core.changes.ChangeSet
+import com.intellij.history.core.changes.*
+import com.intellij.history.integration.CommonActivity
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -27,9 +28,28 @@ internal class ChangeActivityItem(changeSet: ChangeSet, scope: ActivityScope) : 
   override val name = getName(changeSet, scope)
 
   private fun getName(changeSet: ChangeSet, scope: ActivityScope): @NlsContexts.Label String? {
+    if (changeSet.activityId == CommonActivity.ExternalChange || changeSet.name == null) {
+      val nameFromSingleChange = getNameFromSingleChange(changeSet, scope)
+      if (nameFromSingleChange != null) return nameFromSingleChange
+    }
     if (changeSet.name != null) return changeSet.name
     if (!scope.hasMultipleFiles) return LocalHistoryBundle.message("activity.item.presentation")
     return changeSet.presentableNameFromPaths()
+  }
+
+  private fun getNameFromSingleChange(changeSet: ChangeSet, scope: ActivityScope): @NlsContexts.Label String? {
+    val singleChange = changeSet.changes.singleOrNull() ?: return null
+    return when (singleChange) {
+      is CreateEntryChange -> LocalHistoryBundle.message("activity.item.presentation.create.path", Paths.getNameOf(singleChange.path))
+      is DeleteChange -> LocalHistoryBundle.message("activity.item.presentation.delete.path", Paths.getNameOf(singleChange.path))
+      is RenameChange -> LocalHistoryBundle.message("activity.item.presentation.rename.path", singleChange.oldName, Paths.getNameOf(singleChange.path))
+      is MoveChange -> LocalHistoryBundle.message("activity.item.presentation.move.path", Paths.getNameOf(singleChange.path),
+                                                  Paths.getNameOf(Paths.getParentOf(singleChange.path)))
+      is ContentChange ->
+        if (scope.hasMultipleFiles) LocalHistoryBundle.message("activity.item.presentation.modify.path", Paths.getNameOf(singleChange.path))
+        else null
+      else -> null
+    }
   }
 }
 
