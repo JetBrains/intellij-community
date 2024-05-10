@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisScope;
@@ -155,13 +154,11 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement();
-        node.dropProblemCountCaches();
       }
 
       @Override
       public void includeNode(@NotNull InspectionTreeNode node) {
         node.amnestyElement();
-        node.dropProblemCountCaches();
       }
 
       @Override

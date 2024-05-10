@@ -479,15 +479,9 @@ public final class InspectionTree extends Tree {
 
   public void removeSelectedProblems() {
     ThreadingAssertions.assertEventDispatchThread();
+    if (!getContext().getUIOptions().FILTER_RESOLVED_ITEMS) return;
     TreePath[] selected = getSelectionPaths();
     if (selected == null) return;
-    if (!getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {
-      for (TreePath path : selected) {
-        InspectionTreeNode node = (InspectionTreeNode)path.getLastPathComponent();
-        myModel.traverse(node).forEach(InspectionTreeNode::dropProblemCountCaches);
-      }
-      return;
-    }
     Set<InspectionTreeNode> processedNodes = new HashSet<>();
     List<InspectionTreeNode> toRemove = new ArrayList<>();
     for (TreePath path : selected) {
@@ -521,17 +515,11 @@ public final class InspectionTree extends Tree {
       if (commonAliveAncestorPath != null) pathToSelect = commonAliveAncestorPath;
     }
 
-    Set<InspectionTreeNode> parents = new HashSet<>();
     for (InspectionTreeNode node : toRemove) {
       InspectionTreeNode parent = node.getParent();
       if (parent != null) {
         myModel.remove(node);
-        parents.add(parent);
       }
-    }
-
-    for (InspectionTreeNode parent : parents) {
-      parent.dropProblemCountCaches();
     }
 
     TreeUtil.selectPath(this, pathToSelect);
