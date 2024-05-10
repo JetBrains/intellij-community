@@ -77,7 +77,7 @@ class PlatformExtensionReceiverOfInlineInspection : AbstractKotlinInspection() {
                         receiverExpression,
                         KotlinBundle.message("call.of.inline.function.with.nullable.extension.receiver.can.cause.npe.in.kotlin.1.2"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                        IntentionWrapper(it, receiverExpression.containingKtFile)
+                        IntentionWrapper(it)
                     )
                 }
             }
