@@ -16,6 +16,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
+ * Container balances between keeping the changes as changes, and merging (applying) them.
+ * I.e. if (inputId, value) tuple is removed, the container could either remove the tuple from mergedSnapshot
+ * immediately, or keep the remove in invalidatedIds(+inputId), and apply it later. Same for add (inputId, value):
+ * it could be either applied to mergedSnapshot immediately, or kept in 'added' container and applied later on,
+ *
  * @author Eugene Zhuravlev
  */
 @Internal
@@ -24,6 +29,14 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   protected ValueContainerImpl<Value> myAdded;
   protected IntSet myInvalidated;
 
+
+  //TODO RC: volatile field(s) here seems suspicious/ambiguous to me.
+  //         This class in general is NOT thread-safe -- hence, it should be used either in single-threaded context,
+  //         or it should be a responsibility of a caller to provide the thread-safety => it should be no need for
+  //         volatile at all. But volatile is here.
+  //         So it seems like even though the class is not thread-safe, but it is nevertheless used in multithreaded
+  //         context, and the volatile is sort of 'poor-man way to make multithreading bugs less visible'. Which is
+  //         obviously incorrect.
   /**
    * Cached snapshot of merged (stored + modified) data. should be accessed only read-only outside updatable container.
    * This object is always created by {@link #myInitializer}, hence if initializer is null -- it must also be null
@@ -57,12 +70,26 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     }
 
     if (removeFromAdded(inputId)) {
+      //FIXME RC: what if inputId is contained in the underlying data, but underlying data wasn't loaded (mergedSnapshot==null)?
+      //          I.e consider scenario:
+      //          1) container X created: { merged=null, added=[], invalidated=[] }
+      //             underlying container (to-be-mergedSnapshot, not yet loaded) = [..., (inputId, value), ... ]
+      //          2) X.addValue(inputId, value) => X{ merged=null, added=[(inputId, value)], invalidated=[] }
+      //          3) X.removeAssociatedValue(inputId) => X{ merged=null, added=[], invalidated=[] }
+      //             I.e. the underlying container remains unchanged.
+      //             But this is wrong: (inputId, value) must be removed from the underlying container?
       return true;
     }
 
-    if (myInvalidated == null) myInvalidated = new IntOpenHashSet(1);
-    myInvalidated.add(inputId);
+    addToRemoved(inputId);
     return true;
+  }
+
+  private void addToRemoved(int inputId) {
+    if (myInvalidated == null) {
+      myInvalidated = new IntOpenHashSet(1);
+    }
+    myInvalidated.add(inputId);
   }
 
   protected boolean removeFromAdded(int inputId) {
@@ -145,15 +172,14 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   }
 
   public boolean isDirty() {
-    return (myAdded != null && myAdded.size() > 0) ||
-           (myInvalidated != null && !myInvalidated.isEmpty()) ||
-           needsCompacting();
+    return (myAdded != null && myAdded.size() > 0)
+           || (myInvalidated != null && !myInvalidated.isEmpty())
+           || needsCompacting();
   }
 
   public boolean containsOnlyInvalidatedChange() {
-    return myInvalidated != null &&
-           !myInvalidated.isEmpty() &&
-           (myAdded == null || myAdded.size() == 0);
+    return (myInvalidated != null && !myInvalidated.isEmpty())
+           && (myAdded == null || myAdded.size() == 0);
   }
 
   public boolean containsCachedMergedData() {
@@ -162,6 +188,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
   @Override
   public void setNeedsCompacting(boolean value) {
+    //just to make it public (probably, original method must be public instead?)
     super.setNeedsCompacting(value);
   }
 
@@ -172,7 +199,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     }
     else {
       IntSet set = myInvalidated;
-      if (set != null && set.size() > 0) {
+      if (set != null && !set.isEmpty()) {
         for (int inputId : myInvalidated.toIntArray()) {
           DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
         }

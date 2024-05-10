@@ -15,18 +15,28 @@ public final class ValueContainerExternalizer<T> implements DataExternalizer<Upd
   private final @NotNull DataExternalizer<T> myValueExternalizer;
   private final @NotNull ValueContainerInputRemapping myInputRemapping;
 
-  public ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer, @NotNull ValueContainerInputRemapping inputRemapping) {
+  public ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer,
+                                    @NotNull ValueContainerInputRemapping inputRemapping) {
     myValueExternalizer = valueExternalizer;
     myInputRemapping = inputRemapping;
   }
 
+  //RC: binary format (code is scattered across ValueContainerImpl and ChangeTrackingValueContainer)
+  //    [invalidatedIds: varint, <0 ]* [valuesCount: varint, >=0 ]  [(value, sourceId+)]{valuesCount}
+  //    'value' binary format is given by apt valueExternalizer
+  //
+  //    (sourceId+) list format: [singleIdOrIdsCount: varint] [inputId: varint]{idsCount}
+  //                             if singleIdOrIdsCount is positive: it is a singleId
+  //                                                          else: it is -idsCount
+
   @Override
-  public void save(final @NotNull DataOutput out, final @NotNull UpdatableValueContainer<T> container) throws IOException {
+  public void save(@NotNull DataOutput out,
+                   @NotNull UpdatableValueContainer<T> container) throws IOException {
     container.saveTo(out, myValueExternalizer);
   }
 
   @Override
-  public @NotNull UpdatableValueContainer<T> read(final @NotNull DataInput in) throws IOException {
+  public @NotNull UpdatableValueContainer<T> read(@NotNull DataInput in) throws IOException {
     final ValueContainerImpl<T> valueContainer = ValueContainerImpl.createNewValueContainer();
     valueContainer.readFrom((DataInputStream)in, myValueExternalizer, myInputRemapping);
     return valueContainer;

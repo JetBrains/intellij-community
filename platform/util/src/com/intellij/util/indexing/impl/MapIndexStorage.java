@@ -84,18 +84,20 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   private void onDropFromCache(Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
     try {
-      if (!myReadOnly && valueContainer.isDirty()) {
-        if (myKeyIsUniqueForIndexedFile) {
-          if (valueContainer.containsOnlyInvalidatedChange()) {
-            myMap.remove(key);
-            return;
-          }
-          else if (valueContainer.containsCachedMergedData()) {
-            valueContainer.setNeedsCompacting(true);
-          }
-        }
-        myMap.merge(key, valueContainer);
+      if (myReadOnly || !valueContainer.isDirty()) {
+        return;
       }
+
+      if (myKeyIsUniqueForIndexedFile) {
+        if (valueContainer.containsOnlyInvalidatedChange()) {
+          myMap.remove(key);
+          return;
+        }
+        else if (valueContainer.containsCachedMergedData()) {
+          valueContainer.setNeedsCompacting(true);
+        }
+      }
+      myMap.merge(key, valueContainer);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

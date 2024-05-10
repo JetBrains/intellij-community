@@ -9,10 +9,13 @@ import java.util.Iterator;
 import java.util.function.IntPredicate;
 
 /**
- * <p>Container for set of pairs (value, valueOriginId).</p>
- * <p>
- * Used in inverted indexes: inverted index has structure [value -> (key, keySourceId)*], so it is implemented
- * as (persistent) Map[Value -> ValueContainer[Key]( key, keySourceId ) ].</p>
+ * <p>Container for set of pairs (valueOriginId, value), where there is only 1 value for given valueOriginId.</p>
+ *
+ * <p> This class provides a <b>read-only view</b>, subclasses may provide mutators.</p>
+ *
+ * <p> Used in inverted indexes: inverted index has structure {@code [value -> (key, keySourceId)*]}, so it is implemented
+ * as {@code Map[value -> ValueContainer(keySourceId, key) ]}.<br/>
+ * (This is there constraint 'single value per valueOriginId' comes from)</p>
  * <p>
  * (There is a bit of mess with keys/values labels, since in inverted index keys effectively switch roles
  * with values: that is called 'Value' in ValueContainer definition is 'Key' when ValueContainer is utilized in

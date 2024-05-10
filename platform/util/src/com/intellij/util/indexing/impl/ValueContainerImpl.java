@@ -555,7 +555,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
           int idCountOrSingleValue = DataInputOutputUtil.readINT(stream);
 
           if (idCountOrSingleValue > 0) {
-            @NotNull Object inputIds = remapping.remap(idCountOrSingleValue);
+            int singleId = idCountOrSingleValue;
+            @NotNull Object inputIds = remapping.remap(singleId);
 
             if (inputIds instanceof int[]) {
               for (int inputId : (int[])inputIds) {
@@ -568,11 +569,11 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
             }
           }
           else {
-            idCountOrSingleValue = -idCountOrSingleValue;
-            ChangeBufferingList changeBufferingList = ensureFileSetCapacityForValue(value, idCountOrSingleValue);
+            int idsCount = -idCountOrSingleValue;
+            ChangeBufferingList changeBufferingList = ensureFileSetCapacityForValue(value, idsCount);
             int prev = 0;
 
-            for (int i = 0; i < idCountOrSingleValue; i++) {
+            for (int i = 0; i < idsCount; i++) {
               final int id = DataInputOutputUtil.readINT(stream);
               @NotNull Object inputIds = remapping.remap(prev + id);
 
