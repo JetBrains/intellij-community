@@ -19,11 +19,7 @@ internal interface SourceBuilder {
 }
 
 internal sealed interface JarCacheManager {
-  suspend fun computeIfAbsent(sources: List<Source>,
-                              targetFile: Path,
-                              nativeFiles: MutableMap<ZipSource, List<String>>?,
-                              span: Span,
-                              producer: SourceBuilder): Path
+  suspend fun computeIfAbsent(sources: List<Source>, targetFile: Path, nativeFiles: MutableMap<ZipSource, List<String>>?, span: Span, producer: SourceBuilder): Path
 
   fun validateHash(source: Source)
 
@@ -31,11 +27,7 @@ internal sealed interface JarCacheManager {
 }
 
 internal data object NonCachingJarCacheManager : JarCacheManager {
-  override suspend fun computeIfAbsent(sources: List<Source>,
-                                       targetFile: Path,
-                                       nativeFiles: MutableMap<ZipSource, List<String>>?,
-                                       span: Span,
-                                       producer: SourceBuilder): Path {
+  override suspend fun computeIfAbsent(sources: List<Source>, targetFile: Path, nativeFiles: MutableMap<ZipSource, List<String>>?, span: Span, producer: SourceBuilder): Path {
     producer.produce(targetFile)
     return targetFile
   }

@@ -157,10 +157,9 @@ suspend fun runTestBuild(
 
 private val defaultLogFactory = Logger.getFactory()
 
-private suspend fun doRunTestBuild(context: BuildContext,
-                                   traceSpanName: String?,
-                                   writeTelemetry: Boolean,
-                                   build: suspend (context: BuildContext) -> Unit) {
+private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?, writeTelemetry: Boolean, build: suspend (context: BuildContext) -> Unit) {
+  context.cleanupJarCache()
+
   val traceFile = if (writeTelemetry) {
     val traceFile = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName-trace.json")
     JaegerJsonSpanExporterManager.setOutput(traceFile, addShutDownHook = false)

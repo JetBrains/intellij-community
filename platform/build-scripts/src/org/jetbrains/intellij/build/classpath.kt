@@ -10,6 +10,7 @@ import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -172,100 +173,88 @@ fun writePluginClassPathHeader(out: DataOutputStream, isJarOnly: Boolean, plugin
   out.writeShort(pluginCount)
 }
 
-internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>): ByteArray {
-  val allEntries = mutableListOf<Pair<Path, List<Path>>>()
-  for ((pluginAsset, entries) in pluginEntries) {
-    val files = entries.asSequence()
-      .filter {
-        val relativeOutputFile = it.relativeOutputFile
-        if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
-          return@filter false
-        }
-        // assert that relativeOutputFile is correctly specified
-        check(!it.path.startsWith(pluginAsset.dir) || pluginAsset.dir.relativize(it.path).nameCount == 2) {
-          "relativeOutputFile is not specified correctly for $it"
-        }
-        true
-      }
-      .map { it.path }
-      .distinct()
-      .toMutableList()
-    allEntries.add(pluginAsset.dir to files)
-  }
-  return generatePluginClassPathFromFiles(pluginEntries = allEntries)
-}
-
-fun generatePluginClassPathFromFiles(pluginEntries: List<Pair<Path, List<Path>>>): ByteArray {
+internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, moduleOutputPatcher: ModuleOutputPatcher): ByteArray {
   val byteOut = ByteArrayOutputStream()
   val out = DataOutputStream(byteOut)
 
-  for ((pluginDir, entries) in pluginEntries) {
-    val files = entries.asSequence()
-      .onEach {
-        check(!it.startsWith(pluginDir) || pluginDir.relativize(it).nameCount == 2) {
-          "plugin entry is not specified correctly: $it"
-        }
+  val uniqueGuard = HashSet<Path>()
+  for ((pluginAsset, entries) in pluginEntries) {
+    val pluginDir = pluginAsset.dir
+
+    val files = ArrayList<Path>(entries.size)
+    uniqueGuard.clear()
+    for (entry in entries) {
+      val relativeOutputFile = entry.relativeOutputFile
+      if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
+        continue
       }
-      .distinct()
-      .toMutableList()
+
+      if (!uniqueGuard.add(entry.path)) {
+        continue
+      }
+
+      files.add(entry.path)
+
+      check(!entry.path.startsWith(pluginDir) || pluginDir.relativize(entry.path).nameCount == 2) {
+        "plugin entry is not specified correctly: ${entry.path}"
+      }
+    }
+
     if (files.size > 1) {
       // always sort
       putMoreLikelyPluginJarsFirst(pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
     }
 
-    // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
-    val pluginDescriptorContent = reorderPluginClassPath(files)
-
-    // the plugin dir as the last item in the list
-    out.writeShort(files.size)
-    out.writeUTF(pluginDir.fileName.invariantSeparatorsPathString)
-
-    if (pluginDescriptorContent == null) {
-      out.writeInt(0)
-    }
-    else {
-      out.writeInt(pluginDescriptorContent.size)
-      out.write(pluginDescriptorContent)
-    }
-
-    for (file in files) {
-      out.writeUTF(pluginDir.relativize(file).invariantSeparatorsPathString)
-    }
+    writeEntry(out = out, files = files, pluginDir = pluginDir, pluginDescriptorContent = moduleOutputPatcher.getPatchedPluginXml(pluginAsset.layout.mainModule))
   }
 
   out.close()
   return byteOut.toByteArray()
 }
 
-private fun reorderPluginClassPath(files: MutableList<Path>): ByteArray? {
-  var pluginDescriptorContent: ByteArray? = null
-  var pluginDirIndex = -1
+private fun writeEntry(out: DataOutputStream, files: Collection<Path>, pluginDir: Path, pluginDescriptorContent: ByteArray) {
+  // the plugin dir as the last item in the list
+  out.writeShort(files.size)
+  out.writeUTF(pluginDir.fileName.invariantSeparatorsPathString)
+
+  out.writeInt(pluginDescriptorContent.size)
+  out.write(pluginDescriptorContent)
+
+  for (file in files) {
+    out.writeUTF(pluginDir.relativize(file).invariantSeparatorsPathString)
+  }
+}
+
+internal fun generatePluginClassPathFromPrebuiltPluginFiles(pluginEntries: List<Pair<Path, List<Path>>>): ByteArray {
+  val byteOut = ByteArrayOutputStream()
+  val out = DataOutputStream(byteOut)
+
+  for ((pluginDir, entries) in pluginEntries) {
+    val files = entries.toMutableList()
+    if (files.size > 1) {
+      // always sort
+      putMoreLikelyPluginJarsFirst(pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
+    }
+
+    // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
+    writeEntry(out = out, files = files, pluginDir = pluginDir, pluginDescriptorContent = reorderPluginClassPath(files))
+  }
+
+  out.close()
+  return byteOut.toByteArray()
+}
+
+private fun reorderPluginClassPath(files: MutableList<Path>): ByteArray {
   for ((index, file) in files.withIndex()) {
-    if (Files.isDirectory(file)) {
-      val pluginDescriptorFile = file.resolve("META-INF/plugin.xml")
-      if (Files.exists(pluginDescriptorFile)) {
-        pluginDescriptorContent = null
-        pluginDirIndex = index
-        break
-      }
+    val pluginDescriptorContent = HashMapZipFile.load(file).use { zip ->
+      zip.getRawEntry("META-INF/plugin.xml")?.getData(zip)
     }
-    else {
-      val found = HashMapZipFile.load(file).use { zip ->
-        val rawEntry = zip.getRawEntry("META-INF/plugin.xml")
-        pluginDescriptorContent = rawEntry?.getData(zip)
-        rawEntry != null
-      }
 
-      if (found) {
-        pluginDirIndex = index
-        break
-      }
+    if (pluginDescriptorContent != null) {
+      files.add(0, files.removeAt(index))
+      return pluginDescriptorContent
     }
   }
 
-  check(pluginDirIndex != -1) { "plugin descriptor is not found among\n  ${files.joinToString(separator = "\n  ")}" }
-  if (pluginDirIndex != 0) {
-    files.add(0, files.removeAt(pluginDirIndex))
-  }
-  return pluginDescriptorContent
+  throw IllegalStateException("plugin descriptor is not found among\n  ${files.joinToString(separator = "\n  ")}")
 }

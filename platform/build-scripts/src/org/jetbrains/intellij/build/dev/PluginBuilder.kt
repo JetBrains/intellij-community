@@ -23,10 +23,11 @@ internal suspend fun buildPlugins(
   context: BuildContext,
   pluginRootDir: Path,
   buildPlatformJob: Job,
+  moduleOutputPatcher: ModuleOutputPatcher,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).useWithScope {
     buildPlugins(
-      moduleOutputPatcher = ModuleOutputPatcher(),
+      moduleOutputPatcher = moduleOutputPatcher,
       plugins = plugins,
       targetDir = pluginRootDir,
       state = DistributionBuilderState(platform = platformLayout, pluginsToPublish = emptySet(), context = context),

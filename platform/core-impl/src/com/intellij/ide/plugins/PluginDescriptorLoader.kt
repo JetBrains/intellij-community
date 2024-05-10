@@ -329,10 +329,7 @@ private fun resolveArchives(path: Path): MutableList<Path>? {
   }
 }
 
-private fun CoroutineScope.loadDescriptorsFromProperty(
-  context: DescriptorListLoadingContext,
-  pool: ZipFilePool,
-): List<Deferred<IdeaPluginDescriptorImpl?>> {
+private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLoadingContext, pool: ZipFilePool): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val pathProperty = System.getProperty("plugin.path") ?: return Collections.emptyList()
 
   // gradle-intellij-plugin heavily depends on this property in order to have core class loader plugins during tests
@@ -839,11 +836,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
 }
 
 @RequiresBlockingContext
-fun loadDescriptor(
-  file: Path,
-  isBundled: Boolean,
-  pathResolver: PathResolver,
-): IdeaPluginDescriptorImpl? {
+fun loadDescriptor(file: Path, isBundled: Boolean, pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
   DescriptorListLoadingContext().use { context ->
     return runBlocking {
       loadDescriptorFromFileOrDir(file = file, context = context, pathResolver = pathResolver, isBundled = isBundled, pool = NonShareableJavaZipFilePool())
@@ -914,11 +907,7 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
 }
 
 // do not use it
-fun loadCustomDescriptorsFromDirForImportSettings(
-  scope: CoroutineScope,
-  dir: Path,
-  context: DescriptorListLoadingContext,
-): List<Deferred<IdeaPluginDescriptorImpl?>> {
+fun loadCustomDescriptorsFromDirForImportSettings(scope: CoroutineScope, dir: Path, context: DescriptorListLoadingContext): List<Deferred<IdeaPluginDescriptorImpl?>> {
   return scope.loadDescriptorsFromDir(dir = dir, context = context, isBundled = false, pool = NonShareableJavaZipFilePool())
 }
 

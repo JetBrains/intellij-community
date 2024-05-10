@@ -8,7 +8,10 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.createXmlStreamReader
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayInputStream
 import java.io.Closeable
@@ -122,8 +125,9 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     if (data == null || data[0] != 1.toByte()) {
       return scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
     }
-
-    return loadFromPluginClasspathDescriptor(data = data, context = context, zipFilePool = zipFilePool, bundledPluginDir = effectiveBundledPluginDir, scope = scope).asList()
+    else {
+      return loadFromPluginClasspathDescriptor(data = data, context = context, zipFilePool = zipFilePool, bundledPluginDir = effectiveBundledPluginDir, scope = scope).asList()
+    }
   }
 
   override fun loadCustomPluginDescriptors(
@@ -150,7 +154,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
 
       val pluginDir = bundledPluginDir.resolve(input.readUTF())
       val descriptorSize = input.readInt()
-      val pluginDescriptorData = if (descriptorSize == 0) null else ByteArray(descriptorSize).also { input.read(it) }
+      val pluginDescriptorData = ByteArray(descriptorSize).also { input.read(it) }
       val fileItems = Array(fileCount) {
         val path = input.readUTF()
         var file = pluginDir.resolve(path)
@@ -182,27 +186,19 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     }
   }
 
-  private suspend fun loadPluginDescriptor(
+  private fun loadPluginDescriptor(
     fileItems: Array<FileItem>,
     zipFilePool: ZipFilePool,
     jarOnly: Boolean,
-    pluginDescriptorData: ByteArray?,
+    pluginDescriptorData: ByteArray,
     context: DescriptorListLoadingContext,
     pluginDir: Path,
   ): IdeaPluginDescriptorImpl {
     val item = fileItems.first()
     val dataLoader = MixedDirAndJarDataLoader(files = fileItems, pool = zipFilePool, jarOnly = jarOnly)
     val pluginPathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
-    val raw = withContext(Dispatchers.IO) {
-      val descriptorInput = if (pluginDescriptorData == null) {
-        assert(!jarOnly)
-        createNonCoalescingXmlStreamReader(Files.newInputStream(item.file.resolve(PluginManagerCore.PLUGIN_XML_PATH)), item.path)
-      }
-      else {
-        createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
-      }
-      readModuleDescriptor(reader = descriptorInput, readContext = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
-    }
+    val descriptorInput = createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
+    val raw = readModuleDescriptor(reader = descriptorInput, readContext = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
 
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginDir, isBundled = true, id = null, moduleName = null)
     context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)

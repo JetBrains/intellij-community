@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.dynatrace.hash4j.hashing.HashStream64
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -24,7 +23,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
 
-class BuildContextImpl(
+class BuildContextImpl internal constructor(
   private val compilationContext: CompilationContextImpl,
   override val productProperties: ProductProperties,
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
@@ -36,6 +35,7 @@ class BuildContextImpl(
     productProperties = productProperties,
     buildOptions = compilationContext.options,
   ),
+  @JvmField internal val jarCacheManager: JarCacheManager,
 ) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
@@ -64,6 +64,10 @@ class BuildContextImpl(
     }
   }
 
+  override suspend fun cleanupJarCache() {
+    jarCacheManager.cleanup()
+  }
+
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames
 
@@ -79,12 +83,6 @@ class BuildContextImpl(
     get() = useModularLoader || isEmbeddedJetBrainsClientEnabled && options.generateRuntimeModuleRepository
 
   private var builtinModulesData: BuiltinModulesFileData? = null
-
-  internal val jarCacheManager: JarCacheManager by lazy {
-    options.jarCacheDir?.let {
-      LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = classesOutputDirectory.resolve("production"))
-    } ?: NonCachingJarCacheManager
-  }
 
   internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this) }
 
@@ -127,22 +125,23 @@ class BuildContextImpl(
       productProperties: ProductProperties,
       proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
     ): BuildContextImpl {
-      val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
-      val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
-      val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
-      val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
+      val projectHomeAsString = projectHome.invariantSeparatorsPathString
+      val jarCacheManager = compilationContext.options.jarCacheDir?.let {
+        LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"))
+      } ?: NonCachingJarCacheManager
       return BuildContextImpl(
         compilationContext = compilationContext,
         productProperties = productProperties,
-        windowsDistributionCustomizer = windowsDistributionCustomizer,
-        linuxDistributionCustomizer = linuxDistributionCustomizer,
-        macDistributionCustomizer = macDistributionCustomizer,
+        windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString),
+        linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString),
+        macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString),
         proprietaryBuildTools = proprietaryBuildTools,
         applicationInfo = ApplicationInfoPropertiesImpl(
           project = compilationContext.project,
           productProperties = productProperties,
           buildOptions = compilationContext.options,
         ),
+        jarCacheManager = jarCacheManager,
       )
     }
   }
@@ -152,8 +151,7 @@ class BuildContextImpl(
       if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
         return null
       }
-      return builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. " +
-                                                               "Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
+      return builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
     }
     set(value) {
       check(builtinModulesData == null) { "builtinModulesData was already set" }
@@ -268,6 +266,7 @@ class BuildContextImpl(
       macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
       proprietaryBuildTools = proprietaryBuildTools,
       applicationInfo = newAppInfo,
+      jarCacheManager = jarCacheManager,
     )
     if (prepareForBuild) {
       copy.compilationContext.prepareForBuild()

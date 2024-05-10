@@ -118,7 +118,7 @@ data class DirSource(
   }
 }
 
-data class InMemoryContentSource(@JvmField val relativePath: String, @JvmField val data: ByteArray) : Source {
+internal data class InMemoryContentSource(@JvmField val relativePath: String, @JvmField val data: ByteArray) : Source {
   override var size: Int = 0
   override var hash: Long = 0
 

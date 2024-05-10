@@ -139,6 +139,8 @@ interface BuildContext : CompilationContext {
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
 
   fun checkDistributionBuildNumber()
+
+  suspend fun cleanupJarCache()
 }
 
 suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,

@@ -102,10 +102,7 @@ class CompilationContextImpl private constructor(
   private val nameToModule: Map<String?, JpsModule>
 
   override var classesOutputDirectory: Path
-    get() {
-      val url = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl
-      return Path.of(JpsPathUtil.urlToOsPath(url))
-    }
+    get() = Path.of(JpsPathUtil.urlToPath(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl))
     set(outputDirectory) {
       val url = "file://" + FileUtilRt.toSystemIndependentName(outputDirectory.toString())
       JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url

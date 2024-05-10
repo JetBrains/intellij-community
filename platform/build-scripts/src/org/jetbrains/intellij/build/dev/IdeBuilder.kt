@@ -26,6 +26,7 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
+import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.io.ByteArrayOutputStream
@@ -157,23 +158,25 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
     }
 
+    val moduleOutputPatcher = ModuleOutputPatcher()
     val pluginDistributionEntriesDeferred = async {
       buildPlugins(
         request = request,
-        context = context,
         runDir = runDir,
         platformLayout = platformLayout,
         artifactTask = artifactTask,
         searchableOptionSet = searchableOptionSet,
         buildPlatformJob = platformDistributionEntriesDeferred,
+        moduleOutputPatcher = moduleOutputPatcher,
+        context = context,
       )
     }
 
     launch {
       val (pluginEntries, additionalEntries) = pluginDistributionEntriesDeferred.await()
       spanBuilder("generate plugin classpath").useWithScope(Dispatchers.IO) {
-        val mainData = generatePluginClassPath(pluginEntries)
-        val additionalData = additionalEntries?.let { generatePluginClassPathFromFiles(it) }
+        val mainData = generatePluginClassPath(pluginEntries, moduleOutputPatcher)
+        val additionalData = additionalEntries?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
 
         val byteOut = ByteArrayOutputStream()
         val out = DataOutputStream(byteOut)
@@ -321,6 +324,7 @@ private suspend fun buildPlugins(
   artifactTask: Job,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   buildPlatformJob: Job,
+  moduleOutputPatcher: ModuleOutputPatcher,
 ): Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?> {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
 
@@ -341,13 +345,14 @@ private suspend fun buildPlugins(
     searchableOptionSet = searchableOptionSet,
     pluginRootDir = pluginRootDir,
     buildPlatformJob = buildPlatformJob,
+    moduleOutputPatcher = moduleOutputPatcher,
     context = context,
   )
   val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)
   return pluginEntries to additionalPlugins
 }
 
-internal suspend fun createBuildContext(
+private suspend fun createBuildContext(
   createProductProperties: suspend () -> ProductProperties,
   request: BuildRequest,
   runDir: Path,
@@ -360,20 +365,21 @@ internal suspend fun createBuildContext(
       createProductProperties()
     }
 
+    val buildOptionsTemplate = request.buildOptionsTemplate
+    val useCompiledClassesFromProjectOutput = buildOptionsTemplate == null || buildOptionsTemplate.useCompiledClassesFromProjectOutput
+    val classOutDir = if (useCompiledClassesFromProjectOutput) {
+      request.productionClassOutput.parent
+    }
+    else {
+      buildOptionsTemplate?.classOutDir?.let { Path.of(it) }
+      ?: System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)?.let { Path.of(it) }
+      ?: request.productionClassOutput.parent
+    }
+
     // load project is executed as part of compilation context creation - ~1 second
-    val compilationContext = async {
+    val compilationContextDeferred = async {
       spanBuilder("create build context").useWithScope {
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
-        val buildOptionsTemplate = request.buildOptionsTemplate
-        val useCompiledClassesFromProjectOutput = buildOptionsTemplate == null || buildOptionsTemplate.useCompiledClassesFromProjectOutput
-        val classOutDir = if (useCompiledClassesFromProjectOutput) {
-          request.productionClassOutput.parent.toString()
-        }
-        else {
-          buildOptionsTemplate?.classOutDir
-          ?: System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
-          ?: request.productionClassOutput.parent.toString()
-        }
         val options = BuildOptions(
           jarCacheDir = jarCacheDir,
           buildDateInSeconds = getBuildDateInSeconds(),
@@ -384,7 +390,7 @@ internal suspend fun createBuildContext(
           useCompiledClassesFromProjectOutput = useCompiledClassesFromProjectOutput,
           pathToCompiledClassesArchivesMetadata = buildOptionsTemplate?.pathToCompiledClassesArchivesMetadata?.takeIf { !useCompiledClassesFromProjectOutput },
           pathToCompiledClassesArchive = buildOptionsTemplate?.pathToCompiledClassesArchive?.takeIf { !useCompiledClassesFromProjectOutput },
-          classOutDir = classOutDir,
+          classOutDir = classOutDir.toString(),
 
           validateModuleStructure = false,
           cleanOutDir = false,
@@ -429,13 +435,20 @@ internal suspend fun createBuildContext(
       }
     }
 
+    val jarCacheManager = LocalDiskJarCacheManager(cacheDir = request.jarCacheDir, productionClassOutDir = classOutDir.resolve("production"))
+    launch {
+      jarCacheManager.cleanup()
+    }
+
+    val compilationContext = compilationContextDeferred.await()
     BuildContextImpl(
-      compilationContext = compilationContext.await(),
+      compilationContext = compilationContext,
       productProperties = productProperties.await(),
       windowsDistributionCustomizer = object : WindowsDistributionCustomizer() {},
       linuxDistributionCustomizer = object : LinuxDistributionCustomizer() {},
       macDistributionCustomizer = object : MacDistributionCustomizer() {},
       proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+      jarCacheManager = jarCacheManager
     )
   }
 }

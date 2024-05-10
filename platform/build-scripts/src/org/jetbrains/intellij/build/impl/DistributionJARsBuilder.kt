@@ -164,6 +164,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): List<DistributionFileEntry> {
+  val moduleOutputPatcher = ModuleOutputPatcher()
   return coroutineScope {
     val commonDeferred = async {
       doBuildBundledPlugins(
@@ -171,7 +172,8 @@ private suspend fun buildBundledPluginsForAllPlatforms(
         plugins = pluginLayouts,
         isUpdateFromSources = isUpdateFromSources,
         buildPlatformJob = buildPlatformJob,
-        searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+        searchableOptionSet = searchableOptionSetDescriptor,
+        moduleOutputPatcher = moduleOutputPatcher,
         context = context,
       )
     }
@@ -194,15 +196,15 @@ private suspend fun buildBundledPluginsForAllPlatforms(
     }
 
     val common = commonDeferred.await()
-    val commonClassPath = generatePluginClassPath(common)
+    val commonClassPath = generatePluginClassPath(common, moduleOutputPatcher = moduleOutputPatcher)
 
     val additional = additionalDeferred.await()
-    val additionalClassPath = additional?.let { generatePluginClassPathFromFiles(it) }
+    val additionalClassPath = additional?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
 
     val specific = specificDeferred.await()
     for ((supportedDist) in pluginDirs) {
       val specificList = specific[supportedDist]
-      val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it) }
+      val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it, moduleOutputPatcher = moduleOutputPatcher) }
 
       val byteOut = ByteArrayOutputStream()
       val out = DataOutputStream(byteOut)
@@ -213,12 +215,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
       specificClasspath?.let { out.write(it) }
       out.close()
 
-      context.addDistFile(DistFile(
-        relativePath = PLUGIN_CLASSPATH,
-        content = InMemoryDistFileContent(byteOut.toByteArray()),
-        os = supportedDist.os,
-        arch = supportedDist.arch,
-      ))
+      context.addDistFile(DistFile(relativePath = PLUGIN_CLASSPATH, content = InMemoryDistFileContent(byteOut.toByteArray()), os = supportedDist.os, arch = supportedDist.arch))
     }
 
     listOf(common, specific.values.flatten())
@@ -250,6 +247,7 @@ suspend fun buildBundledPlugins(
   isUpdateFromSources: Boolean,
   buildPlatformJob: Job?,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  moduleOutputPatcher: ModuleOutputPatcher,
   context: BuildContext,
 ) {
   doBuildBundledPlugins(
@@ -257,7 +255,8 @@ suspend fun buildBundledPlugins(
     plugins = plugins,
     isUpdateFromSources = isUpdateFromSources,
     buildPlatformJob = buildPlatformJob,
-    searchableOptionSetDescriptor = searchableOptionSetDescriptor,
+    searchableOptionSet = searchableOptionSetDescriptor,
+    moduleOutputPatcher = moduleOutputPatcher,
     context = context,
   )
 }
@@ -267,7 +266,8 @@ private suspend fun doBuildBundledPlugins(
   plugins: Collection<PluginLayout>,
   isUpdateFromSources: Boolean,
   buildPlatformJob: Job?,
-  searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  searchableOptionSet: SearchableOptionSetDescriptor?,
+  moduleOutputPatcher: ModuleOutputPatcher,
   context: BuildContext,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build bundled plugins")
@@ -283,13 +283,13 @@ private suspend fun doBuildBundledPlugins(
       pluginsToBundle.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
       val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
       val entries = buildPlugins(
-        moduleOutputPatcher = ModuleOutputPatcher(),
+        moduleOutputPatcher = moduleOutputPatcher,
         plugins = pluginsToBundle,
         targetDir = targetDir,
         state = state,
         context = context,
         buildPlatformJob = buildPlatformJob,
-        searchableOptionSet = searchableOptionSetDescriptor,
+        searchableOptionSet = searchableOptionSet,
       )
 
       buildPlatformSpecificPluginResources(

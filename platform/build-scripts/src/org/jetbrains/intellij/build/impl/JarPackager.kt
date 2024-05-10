@@ -119,7 +119,7 @@ class JarPackager private constructor(
   private val context: BuildContext,
   private val platformLayout: PlatformLayout?,
   private val isRootDir: Boolean,
-  internal @JvmField val moduleOutputPatcher: ModuleOutputPatcher,
+  @JvmField internal val moduleOutputPatcher: ModuleOutputPatcher,
 ) {
   private val assets = LinkedHashMap<Path, AssetDescriptor>()
 
@@ -173,10 +173,6 @@ class JarPackager private constructor(
       }
 
       val cacheManager = if (dryRun || context !is BuildContextImpl) NonCachingJarCacheManager else context.jarCacheManager
-      if (!dryRun && isRootDir) {
-        cacheManager.cleanup()
-      }
-
       val nativeFiles = coroutineScope {
         val nativeFiles = async {
           buildJars(
@@ -270,7 +266,7 @@ class JarPackager private constructor(
 
     val packToDir = isUnpackedDist &&
                     !item.relativeOutputFile.contains('/') &&
-                    patchedContent.isEmpty() &&
+                    (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
                     patchedDirs.isEmpty() &&
                     extraExcludes.isEmpty()
 
@@ -419,7 +415,7 @@ class JarPackager private constructor(
 
       for (file in files) {
         @Suppress("NAME_SHADOWING")
-        asset.addSource(
+        asset.sources.add(
           ZipSource(
             file = file,
             distributionFileEntryProducer = { size, hash, targetFile ->
@@ -642,13 +638,7 @@ class JarPackager private constructor(
 
   private fun getJarAsset(targetFile: Path, relativeOutputFile: String, metaInfDir: Path?): AssetDescriptor {
     return assets.computeIfAbsent(targetFile) {
-      createAssetDescriptor(
-        outDir = outDir,
-        targetFile = targetFile,
-        relativeOutputFile = relativeOutputFile,
-        context = context,
-        metaInfDir = metaInfDir,
-      )
+      createAssetDescriptor(outDir = outDir, targetFile = targetFile, relativeOutputFile = relativeOutputFile, context = context, metaInfDir = metaInfDir)
     }
   }
 }
@@ -684,10 +674,6 @@ private data class AssetDescriptor(
 ) {
   @JvmField
   val sources: MutableList<Source> = mutableListOf()
-
-  fun addSource(source: Source) {
-    sources.add(source)
-  }
 
   @JvmField
   val includedModules: IdentityHashMap<ModuleItem, MutableList<Source>> = IdentityHashMap()
@@ -903,13 +889,7 @@ suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: Build
   )
 }
 
-private fun createAssetDescriptor(
-  outDir: Path,
-  relativeOutputFile: String,
-  targetFile: Path,
-  context: BuildContext,
-  metaInfDir: Path?,
-): AssetDescriptor {
+private fun createAssetDescriptor(outDir: Path, relativeOutputFile: String, targetFile: Path, context: BuildContext, metaInfDir: Path?): AssetDescriptor {
   var pathInClassLog = ""
   if (!context.isStepSkipped(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
     if (context.paths.distAllDir == outDir.parent) {
@@ -927,25 +907,13 @@ private fun createAssetDescriptor(
   }
 
   val nativeFiles = metaInfDir?.resolve("native-files-list")?.takeIf { Files.isRegularFile(it) }?.readLines()
-  return AssetDescriptor(
-    isDir = false,
-    file = targetFile,
-    relativePath = relativeOutputFile,
-    pathInClassLog = pathInClassLog,
-    nativeFiles = nativeFiles,
-  )
+  return AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile, pathInClassLog = pathInClassLog, nativeFiles = nativeFiles)
 }
 
 // also, put libraries from Maven repo ahead of others, for them to not depend on the lexicographical order of Maven repo and source path
 private fun isFromLocalMavenRepo(path: Path) = path.startsWith(MAVEN_REPO)
 
-private fun computeDistributionFileEntries(
-  asset: AssetDescriptor,
-  hasher: HashStream64,
-  list: MutableList<DistributionFileEntry>,
-  dryRun: Boolean,
-  cacheManager: JarCacheManager,
-) {
+private fun computeDistributionFileEntries(asset: AssetDescriptor, hasher: HashStream64, list: MutableList<DistributionFileEntry>, dryRun: Boolean, cacheManager: JarCacheManager) {
   for ((module, sources) in asset.includedModules) {
     if (asset.isDir) {
       val single = sources.singleOrNull()
@@ -981,20 +949,14 @@ private fun computeDistributionFileEntries(
   }
 
   for (source in asset.sources) {
-    (source as? ZipSource)?.distributionFileEntryProducer
-      ?.consume(size = source.size, hash = source.hash, targetFile = asset.effectiveFile)?.let(list::add)
+    (source as? ZipSource)?.distributionFileEntryProducer?.consume(size = source.size, hash = source.hash, targetFile = asset.effectiveFile)?.let(list::add)
   }
 }
 
 private fun updateModuleSourceHash(asset: AssetDescriptor) {
   for (sources in asset.includedModules.values) {
     for (source in sources) {
-      if (source is FileSource) {
-        continue
-      }
-
-      check(source is DirSource)
-      if (source.hash == 0L) {
+      if (source is DirSource && source.hash == 0L) {
         source.hash = computeHashForModuleOutput(source)
       }
     }

@@ -38,9 +38,6 @@ internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionC
           if (dir.startsWith(productionClassOutDir)) {
             ModuleOutputSourceAndCacheStrategy(source = source, path = productionClassOutDir.relativize(dir).toString())
           }
-          else if (dir.parent.endsWith("searchable-options")) {
-            DirSourceAndCacheStrategy(source = source, path = "")
-          }
           else {
             throw UnsupportedOperationException("$source is not supported")
           }
@@ -108,27 +105,6 @@ private class ModuleOutputSourceAndCacheStrategy(override val source: DirSource,
 
   override fun updateDigest(digest: HashStream64) {
     hash = computeHashForModuleOutput(source)
-    digest.putLong(hash)
-  }
-}
-
-private class DirSourceAndCacheStrategy(override val source: DirSource, override val path: String) : SourceAndCacheStrategy {
-  private var hash: Long = 0
-
-  override fun getHash() = hash
-
-  override fun getSize(): Long = 0
-
-  override fun updateDigest(digest: HashStream64) {
-    val files = Files.newDirectoryStream(source.dir).use { stream -> stream.sortedBy { it.fileName } }
-    val hashStream = Hashing.komihash5_0().hashStream()
-    hashStream.putInt(files.size)
-    for (file in files) {
-      hashStream.putString(file.fileName.toString())
-      hashStream.putLong(Files.getLastModifiedTime(file).toMillis())
-    }
-
-    hash = hashStream.asLong
     digest.putLong(hash)
   }
 }
