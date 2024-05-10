@@ -65,14 +65,14 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
       }
 
       override fun generatorFinished(requestId: Int, result: String) {
-        lock.withLock { withoutLock ->
+        lock.withLock { registrar ->
           if (runningGenerator == null) {
             LOG.warn("Received generator_finished event (request_id=${requestId}), but no running generator")
           }
           else {
             val runningGeneratorLocal = runningGenerator!!
             runningGenerator = null
-            withoutLock {
+            registrar.afterLock {
               if (requestId == runningGeneratorLocal.requestId) {
                 runningGeneratorLocal.deferred.complete(result)
               }
@@ -89,9 +89,9 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }, session)
   }
 
-  private fun cancelGenerators(withoutLock: WithoutLockRegistrar, incompatibleCondition: String) {
+  private fun cancelGenerators(registrar: AfterLockActionRegistrar, incompatibleCondition: String) {
     runningGenerator?.let { runningGenerator ->
-      withoutLock {
+      registrar.afterLock {
         val msg = "Unexpectedly running $runningGenerator, but $incompatibleCondition"
         LOG.warn(msg)
         runningGenerator.deferred.completeExceptionally(IllegalStateException(msg))
@@ -100,7 +100,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     runningGenerator = null
     scheduledGenerators.drainToList().nullize()?.let { cancelledGenerators ->
       LOG.warn("Unexpected scheduled generators $cancelledGenerators, but $incompatibleCondition")
-      withoutLock {
+      registrar.afterLock {
         cancelledGenerators.forEach {
           it.deferred.cancel(CancellationException(
             "Unexpectedly scheduled generator, but $incompatibleCondition"))
@@ -150,20 +150,20 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
   // should be called without `lock`
   private fun processQueueIfReady() {
-    lock.withLock { withoutLock ->
+    lock.withLock { registrar ->
       if (!isInitialized) {
-        cancelGenerators(withoutLock, "not initialized yet")
+        cancelGenerators(registrar, "not initialized yet")
         return@withLock // `initialized` event will resume queue processing
       }
       if (isCommandRunning) {
-        cancelGenerators(withoutLock, "command is running")
+        cancelGenerators(registrar, "command is running")
         return@withLock // `commandFinished` event will resume queue processing
       }
       if (runningGenerator != null) {
         return@withLock // `generatorFinished` event will resume queue processing
       }
       scheduledCommands.poll()?.let { command ->
-        cancelGenerators(withoutLock, "user command is ready to execute")
+        cancelGenerators(registrar, "user command is ready to execute")
         isCommandRunning = true
         doSendCommandToExecute(command)
         return@withLock // `commandFinished` event will resume queue processing
@@ -244,17 +244,19 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   private class Lock {
     private val lock: Any = Any()
 
-    fun withLock(block: (WithoutLockRegistrar) -> Unit) {
-      val withoutLockBlocks: MutableList<() -> Unit> = ArrayList()
+    fun withLock(block: (AfterLockActionRegistrar) -> Unit) {
+      val afterLockBlocks: MutableList<() -> Unit> = ArrayList()
       try {
         synchronized(lock) {
-          block {
-            withoutLockBlocks.add(it)
-          }
+          block(object : AfterLockActionRegistrar {
+            override fun afterLock(block: () -> Unit) {
+              afterLockBlocks.add(block)
+            }
+          })
         }
       }
       finally {
-        withoutLockBlocks.forEach { it() }
+        afterLockBlocks.forEach { it() }
       }
     }
   }
@@ -286,4 +288,6 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 }
 
-private typealias WithoutLockRegistrar = (() -> Unit) -> Unit
+private interface AfterLockActionRegistrar {
+  fun afterLock(block: () -> Unit)
+}
