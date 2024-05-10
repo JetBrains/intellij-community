@@ -6,16 +6,18 @@ import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
+@ApiStatus.Internal
 class GradleSyncActionResultHandler(
   private val resolverContext: DefaultProjectResolverContext
-) {
+) : GradleModelFetchActionListener {
 
   private val telemetry = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
 
-  suspend fun onModelFetchPhaseCompleted(phase: GradleModelFetchPhase) {
+  override suspend fun onModelFetchPhaseCompleted(phase: GradleModelFetchPhase) {
     telemetry.spanBuilder(phase.name).use {
       GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { extension ->
         checkCanceled()
@@ -26,7 +28,7 @@ class GradleSyncActionResultHandler(
     }
   }
 
-  suspend fun onModelFetchCompleted() {
+  override suspend fun onModelFetchCompleted() {
     telemetry.spanBuilder("MODEL_FETCH_COMPLETED").use {
       GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { extension ->
         checkCanceled()
@@ -37,7 +39,7 @@ class GradleSyncActionResultHandler(
     }
   }
 
-  suspend fun onModelFetchFailed(exception: Throwable) {
+  override suspend fun onModelFetchFailed(exception: Throwable) {
     telemetry.spanBuilder("MODEL_FETCH_FAILED").use { span ->
       GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { extension ->
         checkCanceled()
@@ -50,7 +52,7 @@ class GradleSyncActionResultHandler(
     }
   }
 
-  suspend fun onProjectLoadedActionCompleted() {
+  override suspend fun onProjectLoadedActionCompleted() {
     telemetry.spanBuilder("PROJECT_LOADED_ACTION").use {
       GradleSyncContributor.EP_NAME.forEachExtensionSafeAsync { extension ->
         checkCanceled()

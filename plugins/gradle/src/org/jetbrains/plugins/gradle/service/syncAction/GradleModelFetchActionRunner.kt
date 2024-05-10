@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
  * This class handles setting up and running the [BuildActionExecuter] it deals with calling the correct APIs based on the version of
  * Gradle that is present.
  *
- * To do this, we require the current [resolverContext] and the [buildAction] that should be run.
+ * To do this, we require the current [resolverContext] and the [modelFetchAction] that should be run.
  *
  * We have two different cases which will be handled in [runBuildAction] we will try the most recent first,
  * falling back to the older ones if a [GradleConnectionException] is thrown. For Gradle 4.8 and above,
@@ -28,17 +28,17 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
  * It also allows us to run schedule tasks to be run after fetching the models.
  */
 @ApiStatus.Internal
-class GradleBuildActionRunner(
+class GradleModelFetchActionRunner private constructor(
   private val resolverContext: DefaultProjectResolverContext,
-  private val buildAction: GradleModelFetchAction,
   private val settings: GradleExecutionSettings,
-  private val resultHandler: GradleBuildActionResultHandler
+  private val modelFetchAction: GradleModelFetchAction,
+  private val modelFetchActionListener: GradleModelFetchActionListener
 ) {
 
   /**
    * Fetches the Gradle models that have been populated as a result of running the [GradleModelFetchAction] against the Gradle tooling API.
    */
-  fun runBuildAction() {
+  private fun runBuildAction() {
     // Optionally tell Gradle daemon there were recent file changes
     if (Registry.`is`("gradle.report.recently.saved.paths")) {
       notifyConnectionAboutChangedPaths()
@@ -66,26 +66,28 @@ class GradleBuildActionRunner(
    * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
   private fun runPhasedBuildAction() {
-    buildAction.isUseProjectsLoadedPhase = true
+    val resultHandlerBridge = GradleModelFetchActionResultHandlerBridge(resolverContext, modelFetchAction, modelFetchActionListener)
+    modelFetchAction.isUseProjectsLoadedPhase = true
     resolverContext.connection.action()
-      .projectsLoaded(buildAction, resultHandler.asProjectLoadedResultHandler())
-      .buildFinished(buildAction, resultHandler.asBuildFinishedResultHandler())
+      .projectsLoaded(modelFetchAction, resultHandlerBridge.asProjectLoadedResultHandler())
+      .buildFinished(modelFetchAction, resultHandlerBridge.asBuildFinishedResultHandler())
       .build()
       .prepareOperationForSync()
       .withCancellationToken(resolverContext.cancellationToken)
-      .withStreamedValueListener(resultHandler.asStreamValueListener())
+      .withStreamedValueListener(resultHandlerBridge.asStreamValueListener())
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
-      .run(resultHandler.asResultHandler())
-    resultHandler.waitForBuildFinish()
+      .run(resultHandlerBridge.asResultHandler())
+    resultHandlerBridge.waitForBuildFinish()
   }
 
   private fun runDefaultBuildAction() {
-    resolverContext.connection.action(buildAction)
+    val resultBridge = GradleModelFetchActionResultHandlerBridge(resolverContext, modelFetchAction, modelFetchActionListener)
+    resolverContext.connection.action(modelFetchAction)
       .prepareOperationForSync()
       .withCancellationToken(resolverContext.cancellationToken)
-      .withStreamedValueListener(resultHandler.asStreamValueListener())
-      .run(resultHandler.asResultHandler())
-    resultHandler.waitForBuildFinish()
+      .withStreamedValueListener(resultBridge.asStreamValueListener())
+      .run(resultBridge.asResultHandler())
+    resultBridge.waitForBuildFinish()
   }
 
   private fun <T : LongRunningOperation> T.prepareOperationForSync(): T {
@@ -105,9 +107,22 @@ class GradleBuildActionRunner(
   private fun <T : BuildActionExecuter<*>> T.withStreamedValueListener(listener: StreamedValueListener): T {
     val gradleVersion = resolverContext.projectGradleVersion
     if (gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.6")) {
-      buildAction.isUseStreamedValues = true
+      modelFetchAction.isUseStreamedValues = true
       setStreamedValueListener(listener)
     }
     return this
+  }
+
+  companion object {
+
+    @JvmStatic
+    fun runBuildAction(
+      resolverContext: DefaultProjectResolverContext,
+      settings: GradleExecutionSettings,
+      modelFetchAction: GradleModelFetchAction,
+      modelFetchActionListener: GradleModelFetchActionListener
+    ) {
+      GradleModelFetchActionRunner(resolverContext, settings, modelFetchAction, modelFetchActionListener).runBuildAction()
+    }
   }
 }

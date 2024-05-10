@@ -5,17 +5,20 @@ import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAct
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import org.gradle.tooling.GradleConnectionException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 
-class GradleModelFetchActionResultHandler(
+@ApiStatus.Internal
+class GradleModelFetchActionListenerAdapter(
   private val resolverContext: DefaultProjectResolverContext,
   private val modelFetchAction: GradleModelFetchAction,
-  private val resultHandler: GradleSyncActionResultHandler
+  private val modelFetchActionListener: GradleModelFetchActionListener
 ) {
 
   suspend fun onPhaseCompleted(phase: GradleModelFetchPhase, state: GradleModelHolderState) {
     resolverContext.models.addState(state)
-    resultHandler.onModelFetchPhaseCompleted(phase)
+
+    modelFetchActionListener.onModelFetchPhaseCompleted(phase)
   }
 
   suspend fun onProjectLoaded(state: GradleModelHolderState) {
@@ -23,11 +26,11 @@ class GradleModelFetchActionResultHandler(
 
     if (!modelFetchAction.isUseStreamedValues) {
       for (phase in modelFetchAction.projectLoadedModelProviders.keys) {
-        resultHandler.onModelFetchPhaseCompleted(phase)
+        modelFetchActionListener.onModelFetchPhaseCompleted(phase)
       }
     }
 
-    resultHandler.onProjectLoadedActionCompleted()
+    modelFetchActionListener.onProjectLoadedActionCompleted()
   }
 
   suspend fun onBuildCompleted(state: GradleModelHolderState) {
@@ -35,22 +38,22 @@ class GradleModelFetchActionResultHandler(
 
     if (!modelFetchAction.isUseProjectsLoadedPhase && !modelFetchAction.isUseStreamedValues) {
       for (phase in modelFetchAction.projectLoadedModelProviders.keys) {
-        resultHandler.onModelFetchPhaseCompleted(phase)
+        modelFetchActionListener.onModelFetchPhaseCompleted(phase)
       }
     }
     if (!modelFetchAction.isUseProjectsLoadedPhase) {
-      resultHandler.onProjectLoadedActionCompleted()
+      modelFetchActionListener.onProjectLoadedActionCompleted()
     }
     if (!modelFetchAction.isUseStreamedValues) {
       for (phase in modelFetchAction.buildFinishedModelProviders.keys) {
-        resultHandler.onModelFetchPhaseCompleted(phase)
+        modelFetchActionListener.onModelFetchPhaseCompleted(phase)
       }
     }
 
-    resultHandler.onModelFetchCompleted()
+    modelFetchActionListener.onModelFetchCompleted()
   }
 
   suspend fun onBuildFailed(exception: GradleConnectionException) {
-    resultHandler.onModelFetchFailed(exception)
+    modelFetchActionListener.onModelFetchFailed(exception)
   }
 }

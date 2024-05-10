@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -17,10 +18,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
-class GradleBuildActionResultHandler(
+class GradleModelFetchActionResultHandlerBridge(
   private val resolverContext: DefaultProjectResolverContext,
-  private val resultHandler: GradleModelFetchActionResultHandler
+  modelFetchAction: GradleModelFetchAction,
+  listener: GradleModelFetchActionListener
 ) {
+
+  private val listener = GradleModelFetchActionListenerAdapter(resolverContext, modelFetchAction, listener)
 
   private val buildFinishWaiter = CountDownLatch(1)
 
@@ -47,7 +51,7 @@ class GradleBuildActionResultHandler(
     return StreamedValueListener { state ->
       runCancellable {
         if (state is GradleModelHolderState) {
-          resultHandler.onPhaseCompleted(state.phase!!, state)
+          listener.onPhaseCompleted(state.phase!!, state)
         }
       }
     }
@@ -56,7 +60,7 @@ class GradleBuildActionResultHandler(
   fun asProjectLoadedResultHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
       runCancellable {
-        resultHandler.onProjectLoaded(state)
+        listener.onProjectLoaded(state)
       }
     }
   }
@@ -65,7 +69,7 @@ class GradleBuildActionResultHandler(
     return IntermediateResultHandler { state ->
       runCancellable {
         isBuildActionInterrupted.set(false)
-        resultHandler.onBuildCompleted(state)
+        listener.onBuildCompleted(state)
       }
     }
   }
@@ -83,7 +87,7 @@ class GradleBuildActionResultHandler(
           try {
             if (result is GradleModelHolderState) {
               isBuildActionInterrupted.set(false)
-              resultHandler.onBuildCompleted(result)
+              listener.onBuildCompleted(result)
             }
           }
           finally {
@@ -96,7 +100,7 @@ class GradleBuildActionResultHandler(
         runCancellable {
           try {
             buildFailure.set(failure)
-            resultHandler.onBuildFailed(failure)
+            listener.onBuildFailed(failure)
           }
           finally {
             buildFinishWaiter.countDown()
@@ -123,6 +127,6 @@ class GradleBuildActionResultHandler(
   }
 
   companion object {
-    private val LOG = logger<GradleBuildActionResultHandler>()
+    private val LOG = logger<GradleModelFetchActionResultHandlerBridge>()
   }
 }

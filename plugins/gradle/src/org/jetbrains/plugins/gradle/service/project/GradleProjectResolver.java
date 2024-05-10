@@ -65,7 +65,9 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
-import org.jetbrains.plugins.gradle.service.syncAction.*;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleModelFetchActionRunner;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncActionResultHandler;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -307,6 +309,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var models = new GradleIdeaModelHolder(useCustomSerialization, pathMapper, buildEnvironment);
     resolverContext.setModels(models);
 
+    var syncResultHandler = new GradleSyncActionResultHandler(resolverContext);
 
     ProgressManager.checkCanceled();
 
@@ -326,11 +329,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      var syncResultHandler = new GradleSyncActionResultHandler(resolverContext);
-      var modelFetchResultHandler = new GradleModelFetchActionResultHandler(resolverContext, buildAction, syncResultHandler);
-      var buildActionResultHandler = new GradleBuildActionResultHandler(resolverContext, modelFetchResultHandler);
-      var buildActionRunner = new GradleBuildActionRunner(resolverContext, buildAction, executionSettings, buildActionResultHandler);
-      buildActionRunner.runBuildAction();
+      GradleModelFetchActionRunner.runBuildAction(resolverContext, executionSettings, buildAction, syncResultHandler);
 
       var gradleVersion = ObjectUtils.doIfNotNull(resolverContext.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
