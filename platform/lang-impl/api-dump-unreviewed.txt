@@ -4525,7 +4525,6 @@ com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:SHOW_FIXES_DEFAULT_VALUE:Z
 - sf:SHOW_FIXES_KEY:java.lang.String
-- s:calcTooltipAction(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.ex.TooltipAction
 - s:calcTooltipAction(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.ex.TooltipAction
 - a:getTooltipAction(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.editor.ex.TooltipAction
 - s:isShowActions():Z
@@ -7687,7 +7686,6 @@ f:com.intellij.codeInsight.intention.impl.config.IntentionDescriptionPanel
 - <init>():V
 - dispose():V
 - getComponent():javax.swing.JPanel
-- init(I):V
 - reset(com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData,java.lang.String):V
 - reset(java.lang.String):V
 f:com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
@@ -8346,11 +8344,6 @@ f:com.intellij.codeInsight.navigation.ItemWithPresentation
 - toString():java.lang.String
 f:com.intellij.codeInsight.navigation.ItemWithPresentationKt
 - sf:createItem(com.intellij.psi.PsiElement,java.util.function.Function):com.intellij.codeInsight.navigation.ItemWithPresentation
-a:com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask
-- com.intellij.codeInsight.navigation.BackgroundUpdaterTask
-- p:myPopup:com.intellij.ui.popup.AbstractPopup
-- <init>(com.intellij.openapi.project.Project,java.lang.String,java.util.Comparator):V
-- init(com.intellij.ui.popup.AbstractPopup,java.lang.Object,com.intellij.openapi.util.Ref):V
 f:com.intellij.codeInsight.navigation.MethodDownHandler
 - com.intellij.codeInsight.CodeInsightActionHandler
 - <init>():V
