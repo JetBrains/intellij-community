@@ -40,7 +40,7 @@ final class PatchFileDropHandler extends CustomFileDropHandler {
   public boolean handleDrop(@NotNull Transferable t, @Nullable Editor editor, @NotNull Project project) {
     List<File> list = FileCopyPasteUtil.getFileList(t);
     if (list == null || list.size() != 1) return false;
-    return ApplyPatchAction.showAndGetApplyPatch(project, list.get(0));
+    return ApplyPatchUtil.showAndGetApplyPatch(project, list.get(0));
   }
 
   private static boolean looksLikePatchFile(@NotNull File file) {
