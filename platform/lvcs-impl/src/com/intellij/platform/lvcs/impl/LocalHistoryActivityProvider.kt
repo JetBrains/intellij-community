@@ -5,7 +5,7 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.history.ActivityPresentationProvider
 import com.intellij.history.core.*
 import com.intellij.history.core.changes.ChangeSet
-import com.intellij.history.core.matches
+import com.intellij.history.core.changes.PutLabelChange
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -34,7 +34,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     if (scope is ActivityScope.File) {
       return loadFileActivityList(projectId, scope, scopeFilter)
     }
-    return loadRecentActivityList(projectId, scope)
+    return loadRecentActivityList(projectId, scope, scopeFilter)
   }
 
   private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: String?): ActivityData {
@@ -60,16 +60,19 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return ActivityData(activityItems).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
   }
 
-  private fun loadRecentActivityList(projectId: String, scope: ActivityScope): ActivityData {
+  private fun loadRecentActivityList(projectId: String, scope: ActivityScope, scopeFilter: String?): ActivityData {
     val result = mutableListOf<ActivityItem>()
     val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
+    val pattern = scopeFilter.toPattern()
     for (changeSet in facade.changes) {
       if (changeSet.isSystemLabelOnly) continue
       if (changeSet.isLabelOnly) {
         if (!changeSet.changes.any { it.affectsProject(projectId) }) continue
       }
       else {
-        if (!changeSet.changes.any { change -> paths.any { path -> change.affectsPath(path) } }) continue
+        if (!changeSet.changes.any { change ->
+            change !is PutLabelChange && paths.any { path -> change.matches(projectId, path, pattern) }
+          }) continue
       }
       result.add(changeSet.toActivityItem(scope))
     }
@@ -109,7 +112,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return facade.createSingleFileDiffRequestProducer(project, gateway, scope, changeSetSelection, USE_OLD_CONTENT)
   }
 
-  override fun isScopeFilterSupported(scope: ActivityScope): Boolean = scope is ActivityScope.Directory
+  override fun isScopeFilterSupported(scope: ActivityScope): Boolean = scope.hasMultipleFiles
   override fun isActivityFilterSupported(scope: ActivityScope): Boolean = !scope.hasMultipleFiles
 
   override fun getPresentation(item: ActivityItem): ActivityPresentation? {
