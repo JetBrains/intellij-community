@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.breakpoints.*
 import kotlinx.coroutines.CoroutineScope
@@ -68,6 +69,9 @@ internal class BreakpointVariantPriorityTracker(private val coroutineScope: Coro
 
   private fun addEvent(breakpoint: XBreakpoint<*>, kind: EventKind) {
     if (!isEnabled()) return
+
+    // There are problems because of the way how CWM sets breakpoints, so ignore all this stuff for the sake of simplicity (IDEA-353218).
+    if (PlatformUtils.isJetBrainsClient()) return
 
     val lineBreakpoint = breakpoint as? XLineBreakpoint<*> ?: return
 
@@ -182,7 +186,7 @@ internal class BreakpointVariantPriorityTracker(private val coroutineScope: Coro
       null -> "<whole line>"
       else -> readDocument(fileUrl) { it.getText(range) }
     }
-    return "$kind: $text"
+    return "${t.id}, $kind: $text"
   }
 
   @RequiresReadLock
