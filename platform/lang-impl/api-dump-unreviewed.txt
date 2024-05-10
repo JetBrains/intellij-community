@@ -10432,6 +10432,7 @@ f:com.intellij.codeInspection.ui.UiDslOptPaneRenderer
 - render(com.intellij.codeInspection.options.OptionController,com.intellij.codeInspection.options.OptPane,com.intellij.openapi.Disposable,com.intellij.openapi.project.Project):javax.swing.JComponent
 f:com.intellij.codeInspection.ui.actions.EditSettingsAction
 - com.intellij.codeInspection.ui.actions.InspectionViewActionBase
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.codeInspection.ui.actions.ExportToHTMLAction
