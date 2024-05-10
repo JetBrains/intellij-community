@@ -17084,7 +17084,6 @@ c:com.intellij.ide.projectView.impl.ProjectViewTree
 - expandPath(javax.swing.tree.TreePath):V
 - s:getColorForElement(com.intellij.psi.PsiElement):java.awt.Color
 - getFileColorFor(java.lang.Object):java.awt.Color
-- getSelectedNode():javax.swing.tree.DefaultMutableTreeNode
 - getSizeAndLocation(javax.swing.JComponent):com.intellij.ui.awt.RelativeRectangle
 - isFileColorsEnabled():Z
 - s:isFileColorsEnabledFor(javax.swing.JTree):Z

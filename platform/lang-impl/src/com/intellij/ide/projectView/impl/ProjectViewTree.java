@@ -21,7 +21,6 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -135,16 +134,6 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
   @NotNull
   protected TreeCellRenderer createCellRenderer() {
     return new ProjectViewRenderer();
-  }
-
-  /**
-   * @deprecated Not every tree employs {@link DefaultMutableTreeNode} so
-   * use {@link #getSelectionPaths()} or {@link TreeUtil#getSelectedPathIfOne(JTree)} directly.
-   */
-  @Deprecated(forRemoval = true)
-  public DefaultMutableTreeNode getSelectedNode() {
-    TreePath path = TreeUtil.getSelectedPathIfOne(this);
-    return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
   }
 
   @Override
