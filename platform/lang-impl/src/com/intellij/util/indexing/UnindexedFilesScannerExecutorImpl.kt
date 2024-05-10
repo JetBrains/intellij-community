@@ -63,7 +63,9 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   private var runningTask: Job? = null
 
   init {
-    cs.childScope("Scanning (root)").launch {
+    // Note about Dispatchers.IO: we'll do "runBlocking" in UnindexedFilesScanner.ScanningSession.collectIndexableFilesConcurrently
+    // Make sure that we are not using limited dispatchers here (e.g., Dispatchers.Default).
+    cs.childScope("Scanning (root)", Dispatchers.IO).launch {
       while (true) {
         try {
           waitUntilNextTaskExecutionAllowed()
