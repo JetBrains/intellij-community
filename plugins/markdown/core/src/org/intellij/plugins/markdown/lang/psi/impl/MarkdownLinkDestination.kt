@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.psi.impl
 
+import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.model.Pointer
 import com.intellij.model.psi.PsiExternalReferenceHost
@@ -15,9 +16,9 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.IncorrectOperationException
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
+import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 
-@Suppress("DEPRECATION")
-class MarkdownLinkDestination(node: ASTNode): MarkdownLinkDestinationImpl(node), PsiExternalReferenceHost, NavigationTarget {
+class MarkdownLinkDestination(node: ASTNode): ASTWrapperPsiElement(node), PsiExternalReferenceHost, NavigationTarget, MarkdownPsiElement {
   override fun accept(visitor: PsiElementVisitor) {
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitLinkDestination(this)
