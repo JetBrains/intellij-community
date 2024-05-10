@@ -146,7 +146,6 @@ f:com.intellij.tasks.impl.TaskManagerImpl
 - activateTask(com.intellij.tasks.Task,Z,Z):com.intellij.tasks.LocalTask
 - s:addBranches(com.intellij.tasks.LocalTask,com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo[],Z):V
 - addTask(com.intellij.tasks.Task):com.intellij.tasks.LocalTask
-- addTaskListener(com.intellij.tasks.TaskListener):V
 - addTaskListener(com.intellij.tasks.TaskListener,com.intellij.openapi.Disposable):V
 - callProjectOpened():V
 - constructDefaultBranchName(com.intellij.tasks.Task):java.lang.String

@@ -224,11 +224,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
-  public void addTaskListener(TaskListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  @Override
   public void addTaskListener(@NotNull TaskListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }

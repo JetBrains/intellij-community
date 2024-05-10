@@ -112,7 +112,6 @@ a:com.intellij.tasks.TaskManager
 - <init>():V
 - a:activateTask(com.intellij.tasks.Task,Z):com.intellij.tasks.LocalTask
 - a:addTask(com.intellij.tasks.Task):com.intellij.tasks.LocalTask
-- a:addTaskListener(com.intellij.tasks.TaskListener):V
 - a:addTaskListener(com.intellij.tasks.TaskListener,com.intellij.openapi.Disposable):V
 - a:createLocalTask(java.lang.String):com.intellij.tasks.LocalTask
 - a:findTask(java.lang.String):com.intellij.tasks.LocalTask
