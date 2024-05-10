@@ -46,11 +46,11 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
   @Override
   public CustomPaths customizePaths() {
     Path newConfig;
-    Path tempFolder = Paths.get(PathManager.getTempPath());
+    Path basePerProcessDir = getFolderForPerProcessData();
 
     int directoryCounter = 0;
     while (true) {
-      newConfig = tempFolder.resolve("per_process_config_" + directoryCounter);
+      newConfig = basePerProcessDir.resolve("per_process_config_" + directoryCounter);
 
       FileLock configLock = tryLockDirectory(newConfig);
       if (configLock != null) {
@@ -59,14 +59,14 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
       }
 
       if (directoryCounter > 1000) {
-        System.err.println("Can't lock temp directories in " + tempFolder);
+        System.err.println("Can't lock temp directories in " + basePerProcessDir);
         return null;
       }
 
       directoryCounter++;
     }
 
-    Path newSystem = tempFolder.resolve("per_process_system_" + directoryCounter);
+    Path newSystem = basePerProcessDir.resolve("per_process_system_" + directoryCounter);
     Path baseLogDir = getBaseLogDir();
     Path newLog = computeLogDirPath(baseLogDir, directoryCounter);
     if (newLog == null) {
@@ -86,6 +86,16 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
     P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
     enabled = true;
     return new CustomPaths(newConfig.toString(), newSystem.toString(), pluginsPath, newLog.toString(), startupScriptDir);
+  }
+
+  private static @NotNull Path getFolderForPerProcessData() {
+    if (isInFrontendMode()) {
+      String pathsSelector = PathManager.getPathsSelector();
+      if (pathsSelector != null && !pathsSelector.startsWith("JetBrainsClient")) {
+        return PathManager.getSystemDir().resolve("frontend");
+      }
+    }
+    return Paths.get(PathManager.getTempPath());
   }
 
   private static @NotNull Path getBaseLogDir() {
