@@ -5,7 +5,6 @@ import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -57,7 +56,7 @@ public class TextBlockBlock extends AbstractJavaBlock {
     if (indent == -1) return Collections.emptyList();
     String text = literal.getText();
 
-    return extractTextRangesFromLiteralText(text, indent, false);
+    return extractTextRangesFromLiteralText(text, indent);
   }
 
   @Override

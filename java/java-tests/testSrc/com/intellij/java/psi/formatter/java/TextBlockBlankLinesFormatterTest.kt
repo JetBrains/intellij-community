@@ -9,7 +9,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 
-class AdjustWhitespaceLineTextBlockReformatPostProcessorTest : LightPlatformCodeInsightTestCase() {
+class TextBlockBlankLinesFormatterTest : LightPlatformCodeInsightTestCase() {
   override fun getTestDataPath(): String = "${JavaTestUtil.getJavaTestDataPath()}/psi/formatter/java/textBlock/"
 
   fun testWhitespacesLessThanAlignment() = doTest()
@@ -68,6 +68,26 @@ class AdjustWhitespaceLineTextBlockReformatPostProcessorTest : LightPlatformCode
 
   fun testCaretInWhitespaceLineInMiddleBeforeAlignment() {
     getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true
+    doTest()
+  }
+
+  fun testLastLineWithoutSymbolsAfterAlignment() {
+    doTest()
+  }
+
+  fun testLastLineWithSymbolsAfterAlignment() {
+    doTest()
+  }
+
+  fun testLastLineWithoutSymbolsBeforeAlignment() {
+    doTest()
+  }
+
+  fun testLastLineWithSymbolsBeforeAlignment() {
+    doTest()
+  }
+
+  fun testEmptyLastLine() {
     doTest()
   }
 
