@@ -14,14 +14,6 @@ class KotlinAnnotationsIndex internal constructor() : StringStubIndexExtension<K
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.HIDDEN)
         val INSTANCE: KotlinAnnotationsIndex = KotlinAnnotationsIndex()
 
-        @JvmStatic
-        @Suppress("DeprecatedCallableAddReplaceWith")
-        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
-        @ApiStatus.ScheduledForRemoval
-        fun getInstance(): KotlinAnnotationsIndex {
-            return KotlinAnnotationsIndex()
-        }
-
         override val indexKey: StubIndexKey<String, KtAnnotationEntry> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex")
     }

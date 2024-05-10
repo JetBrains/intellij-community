@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
@@ -92,25 +90,6 @@ fun KtLambdaArgument.getLambdaArgumentName(bindingContext: BindingContext): Name
     val resolvedCall = callExpression.getResolvedCall(bindingContext)
     return (resolvedCall?.getArgumentMapping(this) as? ArgumentMatch)?.valueParameter?.name
 }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
-    ReplaceWith(
-        expression = "this.moveInsideParenthesesAndReplaceWith(replacement, if (lambdaArgumentName != null && shouldLambdaParameterBeNamed(this)) lambdaArgumentName else null)",
-        imports = [
-            "org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith",
-            "org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed"
-        ]
-    ), level = DeprecationLevel.ERROR
-)
-fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
-    replacement: KtExpression,
-    lambdaArgumentName: Name?,
-    withNameCheck: Boolean = true,
-): KtCallExpression = this.moveInsideParenthesesAndReplaceWith(
-    replacement, if (lambdaArgumentName != null && shouldLambdaParameterBeNamed(this)) lambdaArgumentName else null
-)
 
 fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
@@ -248,15 +227,6 @@ private fun deleteElementWithDelimiters(element: PsiElement) {
     val parent = element.parent
 
     parent.deleteChildRange(from, to)
-}
-
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
-    ReplaceWith("this.deleteSingle()", "org.jetbrains.kotlin.idea.base.psi.deleteSingle")
-)
-@ApiStatus.ScheduledForRemoval
-fun PsiElement.deleteSingle() {
-    CodeEditUtil.removeChild(parent?.node ?: return, node ?: return)
 }
 
 @Deprecated(
