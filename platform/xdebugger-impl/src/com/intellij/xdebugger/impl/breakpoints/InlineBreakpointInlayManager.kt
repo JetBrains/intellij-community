@@ -283,8 +283,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     val variants =
       if (breakpointTypes.isNotEmpty()) {
         XDebuggerUtilImpl.getLineBreakpointVariantsSync(project, breakpointTypes, linePosition)
-          // No need to show "all" variant in case of the inline breakpoints approach, it's useful only for the popup based one.
-          .filter { !it.isMultiVariant }
+          .filter { it.shouldUseAsInlineVariant() }
       }
       else {
         emptyList()

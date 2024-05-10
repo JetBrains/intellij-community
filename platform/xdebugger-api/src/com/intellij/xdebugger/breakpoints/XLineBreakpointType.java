@@ -238,6 +238,12 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       return false;
     }
 
+    public boolean shouldUseAsInlineVariant() {
+      // No need to show "all" variant in case of the inline breakpoints approach,
+      // it's useful only for the popup based one.
+      return !isMultiVariant();
+    }
+
     @Nullable
     public abstract P createProperties();
 

@@ -366,6 +366,7 @@ a:com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointVariant
 - f:getTooltipDescription():java.lang.String
 - f:getType():com.intellij.xdebugger.breakpoints.XLineBreakpointType
 - isMultiVariant():Z
+- shouldUseAsInlineVariant():Z
 - toString():java.lang.String
 c:com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLinePsiElementBreakpointVariant
 - com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointAllVariant
