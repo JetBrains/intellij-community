@@ -48,7 +48,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
       patcher.patchModuleOutput(moduleName = BUILT_IN_HELP_MODULE_NAME,
                                 path = "META-INF/plugin.xml",
                                 content = pluginXml(buildContext, pluginVersion),
-                                overwrite = true)
+                                overwrite = PatchOverwriteMode.TRUE)
     }
     LUCENE_LIBRARIES.forEach { spec.withProjectLibrary(it) }
   }

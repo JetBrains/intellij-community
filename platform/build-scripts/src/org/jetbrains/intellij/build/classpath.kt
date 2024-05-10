@@ -59,7 +59,7 @@ fun reorderJar(relativePath: String, file: Path) {
 
 internal val excludedLibJars: Set<String> = java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR, "junit.jar")
 
-fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
+internal fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
   spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
     .useWithoutActiveScope { span ->
@@ -165,11 +165,23 @@ internal data class PluginBuildDescriptor(
   @JvmField val moduleNames: List<String>,
 )
 
-fun writePluginClassPathHeader(out: DataOutputStream, isJarOnly: Boolean, pluginCount: Int) {
+internal fun writePluginClassPathHeader(out: DataOutputStream, isJarOnly: Boolean, pluginCount: Int, moduleOutputPatcher: ModuleOutputPatcher, context: BuildContext) {
   // format version
-  out.write(1)
+  out.write(2)
   // jarOnly
   out.write(if (isJarOnly) 1 else 0)
+
+  // main plugin
+  val mainDescriptor = moduleOutputPatcher.getPatchedContent(context.productProperties.applicationInfoModule)
+    .let { it.get("META-INF/plugin.xml") ?: it.get("META-INF/${context.productProperties.platformPrefix}Plugin.xml") }
+
+  val mainPluginDescriptorContent = requireNotNull(mainDescriptor) {
+    "Cannot find core plugin descriptor (module=${context.productProperties.applicationInfoModule})"
+  }
+  out.writeInt(mainPluginDescriptorContent.size)
+  out.write(mainPluginDescriptorContent)
+
+  // bundled plugin metadata
   out.writeShort(pluginCount)
 }
 

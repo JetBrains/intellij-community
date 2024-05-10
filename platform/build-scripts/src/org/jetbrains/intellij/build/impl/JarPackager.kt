@@ -136,7 +136,7 @@ class JarPackager private constructor(
       isCodesignEnabled: Boolean = true,
       layout: BaseLayout?,
       platformLayout: PlatformLayout?,
-      moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
+      moduleOutputPatcher: ModuleOutputPatcher,
       dryRun: Boolean,
       searchableOptionSet: SearchableOptionSetDescriptor? = null,
       context: BuildContext,
@@ -343,7 +343,7 @@ class JarPackager private constructor(
         }
       }
     }
-    else if (moduleName == (context.productProperties.productPluginSourceModuleName ?: context.productProperties.applicationInfoModule)) {
+    else if (moduleName == context.productProperties.applicationInfoModule) {
       moduleSources.addAll(searchableOptionSet.createSourceByPlugin("com.intellij"))
     }
   }

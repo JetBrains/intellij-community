@@ -88,7 +88,8 @@ internal fun patchPluginXml(
   catch (e: Throwable) {
     throw RuntimeException("Could not patch descriptor (module=${plugin.mainModule})", e)
   }
-  moduleOutputPatcher.patchModuleOutput(moduleName = plugin.mainModule, path = "META-INF/plugin.xml", content = content)
+  // os-specific plugins being built several times - we expect that plugin.xml must be the same
+  moduleOutputPatcher.patchModuleOutput(moduleName = plugin.mainModule, path = "META-INF/plugin.xml", content = content, overwrite = PatchOverwriteMode.IF_EQUAL)
 }
 
 @TestOnly

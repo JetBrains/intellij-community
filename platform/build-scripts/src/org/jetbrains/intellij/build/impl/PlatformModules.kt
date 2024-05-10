@@ -282,7 +282,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
       context = context,
       validateImplicitPlatformModule = false,
     ).asSequence().map { it.first } + explicitModuleNames).toList(),
-    productPluginSourceModuleName = context.productProperties.productPluginSourceModuleName ?: context.productProperties.applicationInfoModule,
   )
 
   val implicit = computeImplicitRequiredModules(
@@ -490,12 +489,12 @@ private fun computeTransitive(
 // result _must be_ consistent, do not use Set.of or HashSet here
 private suspend fun processAndGetProductPluginContentModules(
   context: BuildContext,
-  productPluginSourceModuleName: String,
   layout: PlatformLayout,
   includedPlatformModulesPartialList: List<String>,
 ): Set<ModuleItem> {
   val xIncludePathResolver = createXIncludePathResolver(includedPlatformModulesPartialList, context)
   return withContext(Dispatchers.IO) {
+    val productPluginSourceModuleName = context.productProperties.applicationInfoModule
     val file = requireNotNull(
       context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
       ?: context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")

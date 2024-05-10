@@ -57,9 +57,6 @@ abstract class ProductProperties {
    */
   lateinit var applicationInfoModule: String
 
-  @ApiStatus.Internal
-  var productPluginSourceModuleName: String? = null
-
   /**
    * Enables fast activation of a running IDE instance from the launcher
    * (at the moment, it is only implemented in the native Windows one).

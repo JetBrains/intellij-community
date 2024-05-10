@@ -8,6 +8,7 @@ import com.fasterxml.aalto.`in`.ReaderConfig
 import com.fasterxml.aalto.stax.StreamReaderImpl
 import org.codehaus.stax2.XMLInputFactory2
 import org.codehaus.stax2.XMLStreamReader2
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.InputStream
 import java.io.Reader
 import javax.xml.stream.XMLInputFactory
@@ -41,6 +42,12 @@ fun createXmlStreamReader(input: InputStream, locationSource: String? = null): X
 fun createXmlStreamReader(bytes: ByteArray): XMLStreamReader2 {
   val readerConfig = configWithCoalescing.createNonShared(null, null, "UTF-8")
   return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(readerConfig, bytes, 0, bytes.size))
+}
+
+@Internal
+fun createXmlStreamReader(bytes: ByteArray, start: Int, size: Int): XMLStreamReader2 {
+  val readerConfig = configWithCoalescing.createNonShared(null, null, "UTF-8")
+  return StreamReaderImpl.construct(ByteSourceBootstrapper.construct(readerConfig, bytes, start, size))
 }
 
 @Throws(XMLStreamException::class)

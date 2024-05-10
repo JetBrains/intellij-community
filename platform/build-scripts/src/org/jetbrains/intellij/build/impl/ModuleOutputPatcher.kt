@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "LiftReturnOrAssignment")
+@file:Suppress("ReplaceGetOrSet", "LiftReturnOrAssignment", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
 
@@ -13,17 +13,27 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
+enum class PatchOverwriteMode {
+  TRUE,
+  FALSE,
+  IF_EQUAL,
+}
+
 class ModuleOutputPatcher {
   private val patchDirs = ConcurrentHashMap<String, CopyOnWriteArrayList<Path>>()
   private val patches = ConcurrentHashMap<String, MutableMap<String, ByteArray>>()
 
-  fun patchModuleOutput(moduleName: String, path: String, content: String, overwrite: Boolean = false) {
+  fun patchModuleOutput(moduleName: String, path: String, content: String, overwrite: PatchOverwriteMode = PatchOverwriteMode.FALSE) {
     patchModuleOutput(moduleName = moduleName, path = path, content = content.toByteArray(StandardCharsets.UTF_8), overwrite = overwrite)
   }
 
-  fun patchModuleOutput(moduleName: String, path: String, content: ByteArray, overwrite: Boolean = false) {
+  fun patchModuleOutput(moduleName: String, path: String, content: ByteArray, overwrite: Boolean) {
+    patchModuleOutput(moduleName = moduleName, path = path, content = content, overwrite = if (overwrite) PatchOverwriteMode.TRUE else PatchOverwriteMode.FALSE)
+  }
+
+  fun patchModuleOutput(moduleName: String, path: String, content: ByteArray, overwrite: PatchOverwriteMode = PatchOverwriteMode.FALSE) {
     val pathToData = patches.computeIfAbsent(moduleName) { Collections.synchronizedMap(LinkedHashMap()) }
-    if (overwrite) {
+    if (overwrite == PatchOverwriteMode.TRUE) {
       val overwritten = pathToData.put(path, content) != null
       Span.current().addEvent("patch module output", Attributes.of(
         AttributeKey.stringKey("module"), moduleName,
@@ -36,12 +46,16 @@ class ModuleOutputPatcher {
       val existing = pathToData.putIfAbsent(path, content)
       val span = Span.current()
       if (existing != null) {
-        span.addEvent("failed to patch because path is duplicated", Attributes.of(
-          AttributeKey.stringKey("path"), path,
-          AttributeKey.stringKey("oldContent"), byteArrayToTraceStringValue(existing),
-          AttributeKey.stringKey("newContent"), byteArrayToTraceStringValue(content),
-        ))
-        error("Patched directory $path is already added for module $moduleName")
+        if (overwrite != PatchOverwriteMode.IF_EQUAL && !existing.contentEquals(content)) {
+          span.addEvent("failed to patch because path is duplicated", Attributes.of(
+            AttributeKey.stringKey("path"), path,
+            AttributeKey.stringKey("oldContent"), byteArrayToTraceStringValue(existing),
+            AttributeKey.stringKey("newContent"), byteArrayToTraceStringValue(content),
+          ))
+          error("Patched directory $path is already added for module $moduleName")
+        }
+
+        pathToData.put(path, content)
       }
 
       span.addEvent("patch module output", Attributes.of(

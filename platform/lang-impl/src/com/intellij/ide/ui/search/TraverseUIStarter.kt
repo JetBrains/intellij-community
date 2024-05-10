@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel

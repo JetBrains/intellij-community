@@ -16,13 +16,7 @@ class ClassPathXmlPathResolver(
   override val isFlat: Boolean
     get() = true
 
-  override fun loadXIncludeReference(
-    readInto: RawPluginDescriptor,
-    readContext: ReadModuleContext,
-    dataLoader: DataLoader,
-    base: String?,
-    relativePath: String,
-  ): Boolean {
+  override fun loadXIncludeReference(readInto: RawPluginDescriptor, readContext: ReadModuleContext, dataLoader: DataLoader, base: String?, relativePath: String): Boolean {
     val path = PluginXmlPathResolver.toLoadPath(relativePath, base)
     val reader: XMLStreamReader2
     if (classLoader is UrlClassLoader) {
@@ -65,19 +59,22 @@ class ClassPathXmlPathResolver(
     if (resource == null) {
       val log = logger<ClassPathXmlPathResolver>()
       val moduleName = path.removeSuffix(".xml")
-      if (isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve) {
-        log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
-        val descriptor = RawPluginDescriptor()
-        descriptor.`package` = "unresolved.$moduleName"
-        return descriptor
+      when {
+        isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve -> {
+          log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
+          val descriptor = RawPluginDescriptor()
+          descriptor.`package` = "unresolved.$moduleName"
+          return descriptor
+        }
+        ProductLoadingStrategy.strategy.isOptionalProductModule(moduleName) -> {
+          // this check won't be needed when we are able to load optional modules directly from product-modules.xml
+          log.debug { "Skip module '$path' since its descriptor cannot be found and it's optional" }
+          return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
+        }
+        else -> {
+          throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
+        }
       }
-      if (ProductLoadingStrategy.strategy.isOptionalProductModule(moduleName)) {
-        // this check won't be needed when we are able to load optional modules directly from product-modules.xml
-        log.debug { "Skip module '$path' since its descriptor cannot be found and it's optional" }
-        return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
-      }
-
-      throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
     }
 
     return readModuleDescriptor(

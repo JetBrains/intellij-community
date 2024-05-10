@@ -116,6 +116,8 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
   compileIfNeeded(context)
 
   coroutineScope {
+    val moduleOutputPatcher = ModuleOutputPatcher()
+
     val platformLayout = async {
       createPlatformLayout(pluginsToPublish = emptySet(), context = context)
     }
@@ -136,7 +138,13 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
 
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").useWithScope {
-        layoutPlatform(runDir = runDir, platformLayout = platformLayout.await(), searchableOptionSet = searchableOptionSet, context = context)
+        layoutPlatform(
+          runDir = runDir,
+          platformLayout = platformLayout.await(),
+          searchableOptionSet = searchableOptionSet,
+          moduleOutputPatcher = moduleOutputPatcher,
+          context = context,
+        )
       }
 
       launch(Dispatchers.IO) {
@@ -158,7 +166,6 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
     }
 
-    val moduleOutputPatcher = ModuleOutputPatcher()
     val pluginDistributionEntriesDeferred = async {
       buildPlugins(
         request = request,
@@ -175,13 +182,14 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     launch {
       val (pluginEntries, additionalEntries) = pluginDistributionEntriesDeferred.await()
       spanBuilder("generate plugin classpath").useWithScope(Dispatchers.IO) {
-        val mainData = generatePluginClassPath(pluginEntries, moduleOutputPatcher)
+        val mainData = generatePluginClassPath(pluginEntries = pluginEntries, moduleOutputPatcher = moduleOutputPatcher)
         val additionalData = additionalEntries?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
 
         val byteOut = ByteArrayOutputStream()
         val out = DataOutputStream(byteOut)
         val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
-        writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount)
+        platformDistributionEntriesDeferred.join()
+        writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount, moduleOutputPatcher = moduleOutputPatcher, context = context)
         out.write(mainData)
         additionalData?.let { out.write(it) }
         out.close()
@@ -512,9 +520,10 @@ private suspend fun layoutPlatform(
   platformLayout: PlatformLayout,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
+  moduleOutputPatcher: ModuleOutputPatcher,
 ): Pair<List<DistributionFileEntry>, Set<Path>> {
   val entries = layoutPlatformDistribution(
-    moduleOutputPatcher = ModuleOutputPatcher(),
+    moduleOutputPatcher = moduleOutputPatcher,
     targetDirectory = runDir,
     platform = platformLayout,
     searchableOptionSet = searchableOptionSet,
