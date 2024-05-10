@@ -31,10 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.testFramework.CodeStyleSettingsTracker
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

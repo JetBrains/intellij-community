@@ -33,6 +33,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
@@ -304,23 +305,14 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   private suspend fun <T> updateMavenProjectsUnderLock(update: suspend () -> List<T>): List<T> {
-    val lockSucceed = importMutex.tryLock()
-    try {
-      if (MavenLog.LOG.isDebugEnabled) {
-        MavenLog.LOG.debug("Update maven requested. lock=${lockSucceed}, coroutines dump: ${dumpCoroutines()}")
-      }
-      if (lockSucceed) {
-        return update()
-      }
-      else {
-        MavenLog.LOG.info("Maven import is already in progress")
-        return emptyList()
-      }
+    val time = System.currentTimeMillis();
+    if (MavenLog.LOG.isDebugEnabled) {
+      MavenLog.LOG.debug("Update maven requested in $time. Coroutines dump: ${dumpCoroutines()}")
     }
-    finally {
-      if (lockSucceed) {
-        importMutex.unlock()
-      }
+
+    importMutex.withLock {
+      MavenLog.LOG.debug("Update maven started.Time = $time")
+      return update()
     }
   }
 
@@ -453,9 +445,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   }
 
-  private suspend fun MavenProjectsManagerEx.resolveMavenProjects(syncActivity: StructuredIdeActivity,
-                                                                  projectsToResolve: Collection<MavenProject>,
-                                                                  spec: MavenSyncSpec): MavenProjectResolutionResult {
+  private suspend fun resolveMavenProjects(syncActivity: StructuredIdeActivity,
+                                           projectsToResolve: Collection<MavenProject>,
+                                           spec: MavenSyncSpec): MavenProjectResolutionResult {
     logDebug("importModules started: ${projectsToResolve.size}")
     val resolver = MavenProjectResolver(project)
     val resolutionResult = withBackgroundProgressTraced(myProject, MavenProjectBundle.message("maven.resolving"), true) {
