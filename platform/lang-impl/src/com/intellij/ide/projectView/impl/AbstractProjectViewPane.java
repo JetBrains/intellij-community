@@ -146,13 +146,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  protected final void fireTreeChangeListener() {
-  }
-
   @CalledInAny
   public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getTitle();
 

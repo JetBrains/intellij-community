@@ -1027,7 +1027,6 @@ com.intellij.openapi.roots.ex.ProjectRootManagerEx$ProjectJdkListener
 com.intellij.openapi.roots.impl.FilePropertyPusher
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:acceptsDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
-- acceptsFile(com.intellij.openapi.vfs.VirtualFile):Z
 - acceptsFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 - afterRootsChanged(com.intellij.openapi.project.Project):V
 - a:getDefaultValue():java.lang.Object

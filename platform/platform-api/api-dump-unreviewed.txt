@@ -395,7 +395,6 @@ c:com.intellij.featureStatistics.FeatureDescriptor
 - getLastTimeUsed():J
 - getProvider():java.lang.Class
 - getShownCount():I
-- getTipFileName():java.lang.String
 - getTipId():java.lang.String
 - getUsageCount():I
 - getUtilityScore():I
@@ -1793,7 +1792,6 @@ f:com.intellij.openapi.actionSystem.EmptyAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - s:createEmptyAction(java.lang.String,javax.swing.Icon,Z):com.intellij.openapi.actionSystem.AnAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:registerActionShortcuts(javax.swing.JComponent,javax.swing.JComponent):V
 - s:registerWithShortcutSet(java.lang.String,com.intellij.openapi.actionSystem.ShortcutSet,javax.swing.JComponent):com.intellij.openapi.actionSystem.AnAction
 - s:setupAction(com.intellij.openapi.actionSystem.AnAction,java.lang.String,javax.swing.JComponent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -3777,7 +3775,6 @@ c:com.intellij.openapi.ui.ComponentValidator
 - withFocusValidator(java.util.function.Supplier):com.intellij.openapi.ui.ComponentValidator
 - withHyperlinkListener(javax.swing.event.HyperlinkListener):com.intellij.openapi.ui.ComponentValidator
 - withOutlineProvider(java.util.function.Function):com.intellij.openapi.ui.ComponentValidator
-- withValidator(java.util.function.Consumer):com.intellij.openapi.ui.ComponentValidator
 - withValidator(java.util.function.Supplier):com.intellij.openapi.ui.ComponentValidator
 - s:withinComponent(com.intellij.openapi.ui.ValidationInfo,java.awt.event.MouseEvent):Z
 c:com.intellij.openapi.ui.ComponentWithBrowseButton
@@ -12904,10 +12901,6 @@ c:com.intellij.util.ui.DirProvider
 - <init>():V
 - dir():java.lang.String
 - getDefaultExtension():java.lang.String
-c:com.intellij.util.ui.EditorAdapter
-- <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,Z):V
-- appendString(java.lang.String,com.intellij.openapi.editor.markup.TextAttributes):V
-- getEditor():com.intellij.openapi.editor.Editor
 com.intellij.util.ui.ErrorTreeView
 - com.intellij.openapi.Disposable
 - sf:CURRENT_EXCEPTION_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
@@ -12915,18 +12908,6 @@ com.intellij.util.ui.ErrorTreeView
 - a:addMessage(I,java.lang.String[],com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,I,I,java.lang.Object):V
 - a:addMessage(I,java.lang.String[],java.lang.String,com.intellij.pom.Navigatable,java.lang.String,java.lang.String,java.lang.Object):V
 - a:getComponent():javax.swing.JComponent
-c:com.intellij.util.ui.FileLabel
-- javax.swing.JLabel
-- p:myFile:java.io.File
-- <init>():V
-- <init>(java.io.File):V
-- s:getFilePath(java.io.File):java.lang.String
-- getIconWidth():I
-- p:getPreferredWidth():I
-- getText():java.lang.String
-- pack():V
-- setFile(java.io.File):V
-- setShowIcon(Z):V
 c:com.intellij.util.ui.FormBuilder
 - <init>():V
 - addComponent(javax.swing.JComponent):com.intellij.util.ui.FormBuilder

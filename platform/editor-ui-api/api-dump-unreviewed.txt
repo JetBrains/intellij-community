@@ -1447,9 +1447,6 @@ com.intellij.openapi.actionSystem.ex.AnActionListener
 - beforeActionPerformed(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.AnActionEvent):V
 - beforeEditorTyping(C,com.intellij.openapi.actionSystem.DataContext):V
 - beforeShortcutTriggered(com.intellij.openapi.actionSystem.Shortcut,java.util.List,com.intellij.openapi.actionSystem.DataContext):V
-a:com.intellij.openapi.actionSystem.ex.AnActionListener$Adapter
-- com.intellij.openapi.actionSystem.ex.AnActionListener
-- <init>():V
 com.intellij.openapi.actionSystem.ex.CustomComponentAction
 - sf:ACTION_KEY:com.intellij.openapi.util.Key
 - sf:COMPONENT_KEY:com.intellij.openapi.util.Key

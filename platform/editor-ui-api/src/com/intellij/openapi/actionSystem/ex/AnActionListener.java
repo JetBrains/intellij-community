@@ -41,9 +41,4 @@ public interface AnActionListener {
   @Deprecated(forRemoval = true)
   default void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
   }
-
-  /** @deprecated Use {@link AnActionListener} directly. */
-  @Deprecated(forRemoval = true)
-  abstract class Adapter implements AnActionListener {
-  }
 }

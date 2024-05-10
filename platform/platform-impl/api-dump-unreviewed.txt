@@ -18344,7 +18344,6 @@ c:com.intellij.openapi.ui.FrameWrapper
 - f:setLocation(java.awt.Point):V
 - f:setOnCloseHandler(java.util.function.BooleanSupplier):V
 - setPreferredFocusedComponent(javax.swing.JComponent):V
-- f:setProject(com.intellij.openapi.project.Project):V
 - f:setSize(java.awt.Dimension):V
 - f:setTitle(java.lang.String):V
 - show():V
@@ -24971,7 +24970,6 @@ f:com.intellij.ui.ColorPicker
 - insertUpdate(javax.swing.event.DocumentEvent):V
 - removeUpdate(javax.swing.event.DocumentEvent):V
 - saveRecentColors():V
-- s:showColorPickerPopup(com.intellij.openapi.project.Project,java.awt.Color,com.intellij.openapi.editor.Editor,com.intellij.ui.picker.ColorListener):V
 - s:showColorPickerPopup(com.intellij.openapi.project.Project,java.awt.Color,com.intellij.ui.picker.ColorListener):V
 - s:showColorPickerPopup(com.intellij.openapi.project.Project,java.awt.Color,com.intellij.ui.picker.ColorListener,com.intellij.ui.awt.RelativePoint):V
 - s:showColorPickerPopup(com.intellij.openapi.project.Project,java.awt.Color,com.intellij.ui.picker.ColorListener,com.intellij.ui.awt.RelativePoint,Z):V

@@ -16541,7 +16541,6 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - dispose():V
 - p:enableDnD():V
 - s:extractValueFromNode(java.lang.Object):java.lang.Object
-- pf:fireTreeChangeListener():V
 - getComponentToFocus():javax.swing.JComponent
 - getData(java.lang.String):java.lang.Object
 - getElementsFromNode(java.lang.Object):java.util.List
@@ -27531,7 +27530,6 @@ c:com.intellij.refactoring.ui.ConflictsDialog
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap,java.lang.Runnable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap,java.lang.Runnable,Z,Z):V
-- <init>(com.intellij.openapi.project.Project,java.lang.String[]):V
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:createLeftSideActions():javax.swing.Action[]

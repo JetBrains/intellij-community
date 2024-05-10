@@ -1797,7 +1797,6 @@ c:com.intellij.execution.actions.ConfigurationContext
 - createConfigurationsFromContext():java.util.List
 - s:createEmptyContextForLocation(com.intellij.execution.Location):com.intellij.execution.actions.ConfigurationContext
 - findExisting():com.intellij.execution.RunnerAndConfigurationSettings
-- findPreferredProducers():java.util.List
 - getConfiguration():com.intellij.execution.RunnerAndConfigurationSettings
 - getConfigurationsFromContext():java.util.List
 - getDataContext():com.intellij.openapi.actionSystem.DataContext
