@@ -10,8 +10,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "kind",
     "name"
 })
-public class ContextKindName
-    extends ContextBase
+public class RequiredContextKindName
+    extends RequiredContextBase
 {
 
     /**

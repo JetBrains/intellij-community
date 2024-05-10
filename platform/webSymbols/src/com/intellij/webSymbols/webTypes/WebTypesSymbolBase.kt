@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
@@ -193,6 +194,9 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
     base.isExclusiveFor(qualifiedKind)
         || superContributions.any { it.isExclusiveFor(qualifiedKind) }
+
+  override fun matchContext(context: WebSymbolsContext): Boolean =
+    super.matchContext(context) && base.contribution.requiredContext.evaluate(context)
 
   private inner class HtmlAttributeValueImpl(private val value: HtmlAttributeValue) : WebSymbolHtmlAttributeValue {
     override val kind: WebSymbolHtmlAttributeValue.Kind?

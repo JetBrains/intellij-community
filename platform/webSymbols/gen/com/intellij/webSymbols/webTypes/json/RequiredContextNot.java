@@ -9,8 +9,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({
     "not"
 })
-public class ContextNot
-    extends ContextBase
+public class RequiredContextNot
+    extends RequiredContextBase
 {
 
     /**
@@ -19,7 +19,7 @@ public class ContextNot
      * 
      */
     @JsonProperty("not")
-    private ContextBase not;
+    private RequiredContextBase not;
 
     /**
      * 
@@ -27,7 +27,7 @@ public class ContextNot
      * 
      */
     @JsonProperty("not")
-    public ContextBase getNot() {
+    public RequiredContextBase getNot() {
         return not;
     }
 
@@ -37,7 +37,7 @@ public class ContextNot
      * 
      */
     @JsonProperty("not")
-    public void setNot(ContextBase not) {
+    public void setNot(RequiredContextBase not) {
         this.not = not;
     }
 

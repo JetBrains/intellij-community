@@ -503,12 +503,13 @@ internal fun List<Type>.mapToTypeReferences(): List<WebSymbolTypeSupport.TypeRef
     }
   }
 
-internal fun ContextBase.evaluate(context: WebSymbolsContext): Boolean =
+internal fun RequiredContextBase?.evaluate(context: WebSymbolsContext): Boolean =
   when (this) {
-    is ContextKindName -> context[kind] == name
-    is ContextAllOf -> allOf.all { it.evaluate(context) }
-    is ContextAnyOf -> anyOf.any { it.evaluate(context) }
-    is ContextNot -> !not.evaluate(context)
+    null -> true
+    is RequiredContextKindName -> context[kind] == name
+    is RequiredContextAllOf -> allOf.all { it.evaluate(context) }
+    is RequiredContextAnyOf -> anyOf.any { it.evaluate(context) }
+    is RequiredContextNot -> !not.evaluate(context)
     else -> throw IllegalStateException(this.javaClass.simpleName)
   }
 

@@ -83,6 +83,7 @@
 - isExtension():Z
 - isRequired():java.lang.Boolean
 - isVirtual():Z
+- matchContext(com.intellij.webSymbols.context.WebSymbolsContext):Z
 *f:com.intellij.webSymbols.WebSymbol$Companion
 - sf:KIND_CSS_CLASSES:java.lang.String
 - sf:KIND_CSS_FUNCTIONS:java.lang.String
@@ -594,6 +595,7 @@ a:com.intellij.webSymbols.customElements.impl.CustomElementsContributionSymbol
 - f:getOrigin():com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 - f:getPattern():com.intellij.webSymbols.patterns.WebSymbolsPattern
 - getType():java.lang.Object
+- matchContext(com.intellij.webSymbols.context.WebSymbolsContext):Z
 - f:withQueryExecutorContext(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):com.intellij.webSymbols.WebSymbol
 a:com.intellij.webSymbols.customElements.impl.CustomElementsContributionWithSourceSymbol
 - com.intellij.webSymbols.customElements.impl.CustomElementsContributionSymbol
@@ -626,6 +628,7 @@ f:com.intellij.webSymbols.customElements.impl.CustomElementsCustomElementExportS
 - getNamespace():java.lang.String
 - getOrigin():com.intellij.webSymbols.WebSymbolOrigin
 - getPattern():com.intellij.webSymbols.patterns.WebSymbolsPattern
+- matchContext(com.intellij.webSymbols.context.WebSymbolsContext):Z
 - withQueryExecutorContext(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):com.intellij.webSymbols.WebSymbol
 f:com.intellij.webSymbols.customElements.impl.CustomElementsCustomElementExportSymbol$Companion
 - f:create(com.intellij.webSymbols.customElements.json.CustomElementExport,com.intellij.webSymbols.customElements.CustomElementsJsonOrigin):com.intellij.webSymbols.customElements.impl.CustomElementsCustomElementExportSymbol
@@ -1803,6 +1806,7 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - hashCode():I
 - isEquivalentTo(com.intellij.model.Symbol):Z
 - f:isExclusiveFor(com.intellij.webSymbols.WebSymbolQualifiedKind):Z
+- matchContext(com.intellij.webSymbols.context.WebSymbolsContext):Z
 - pf:setQueryExecutor(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):V
 - toString():java.lang.String
 *:com.intellij.webSymbols.webTypes.WebTypesSymbolFactory

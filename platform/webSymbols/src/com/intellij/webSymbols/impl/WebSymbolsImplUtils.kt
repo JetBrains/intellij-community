@@ -83,7 +83,7 @@ internal fun List<WebSymbol>.sortSymbolsByPriority(extensionsLast: Boolean = tru
 
 internal fun <T : WebSymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsQueryParams): Sequence<T> =
   this.filter { symbol ->
-    symbol.origin.framework.let { it == null || it == params.framework }
+    symbol.matchContext(params.queryExecutor.context)
     && ((params as? WebSymbolsNameMatchQueryParams)?.abstractSymbols == true
         || (params as? WebSymbolsListSymbolsQueryParams)?.abstractSymbols == true
         || !symbol.abstract)

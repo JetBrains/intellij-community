@@ -17,6 +17,7 @@ import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
@@ -313,6 +314,13 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrio
    * The dereferenced symbol should be valid, i.e. any PSI based properties should return valid PsiElements.
    */
   override fun createPointer(): Pointer<out WebSymbol>
+
+  /**
+   * Return `true` if the symbol should be present in the query results
+   * in the particular context. By default, the current symbol framework is checked.
+   */
+  fun matchContext(context: WebSymbolsContext): Boolean =
+    origin.framework == null || context.framework == null || origin.framework == context.framework
 
   /**
    * Returns `true` if two symbols are the same or equivalent for resolve purposes.

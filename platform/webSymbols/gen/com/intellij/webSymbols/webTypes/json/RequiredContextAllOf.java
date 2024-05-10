@@ -9,10 +9,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "anyOf"
+    "allOf"
 })
-public class ContextAnyOf
-    extends ContextBase
+public class RequiredContextAllOf
+    extends RequiredContextBase
 {
 
     /**
@@ -20,17 +20,17 @@ public class ContextAnyOf
      * (Required)
      * 
      */
-    @JsonProperty("anyOf")
-    private List<ContextBase> anyOf = new ArrayList<ContextBase>();
+    @JsonProperty("allOf")
+    private List<RequiredContextBase> allOf = new ArrayList<RequiredContextBase>();
 
     /**
      * 
      * (Required)
      * 
      */
-    @JsonProperty("anyOf")
-    public List<ContextBase> getAnyOf() {
-        return anyOf;
+    @JsonProperty("allOf")
+    public List<RequiredContextBase> getAllOf() {
+        return allOf;
     }
 
     /**
@@ -38,9 +38,9 @@ public class ContextAnyOf
      * (Required)
      * 
      */
-    @JsonProperty("anyOf")
-    public void setAnyOf(List<ContextBase> anyOf) {
-        this.anyOf = anyOf;
+    @JsonProperty("allOf")
+    public void setAllOf(List<RequiredContextBase> allOf) {
+        this.allOf = allOf;
     }
 
 }

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
     "name",
     "description",
     "description-sections",
+    "required-context",
     "doc-url",
     "icon",
     "source",
@@ -62,6 +63,8 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("description-sections")
     @JsonPropertyDescription("Custom sections to be shown below description in the documentation popup.")
     private DescriptionSections descriptionSections;
+    @JsonProperty("required-context")
+    private RequiredContextBase requiredContext;
     /**
      * Link to online documentation.
      * 
@@ -233,6 +236,16 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("description-sections")
     public void setDescriptionSections(DescriptionSections descriptionSections) {
         this.descriptionSections = descriptionSections;
+    }
+
+    @JsonProperty("required-context")
+    public RequiredContextBase getRequiredContext() {
+        return requiredContext;
+    }
+
+    @JsonProperty("required-context")
+    public void setRequiredContext(RequiredContextBase requiredContext) {
+        this.requiredContext = requiredContext;
     }
 
     /**

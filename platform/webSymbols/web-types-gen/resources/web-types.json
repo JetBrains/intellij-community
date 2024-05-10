@@ -10,8 +10,14 @@
       "description": "Framework, for which the components are provided by the library. If the library is not enabled in a particular context, all symbols from this file will not be available as well. If you want symbols to be always available do not specify framework.",
       "type": "string"
     },
+    "required-context": {
+      "description": "Specify contexts, which are required to enable contributions from this file.",
+      "$ref": "#/definitions/required-context"
+    },
     "context": {
-      "$ref": "#/definitions/context"
+      "description": "Deprecated because of ambiguous meaning - use \"required-context\" instead.",
+      "deprecationMessage": "Use \"required-context\" instead.",
+      "$ref": "#/definitions/required-context"
     },
     "name": {
       "description": "Name of the library.",
@@ -76,7 +82,7 @@
         "none"
       ]
     },
-    "context": {
+    "required-context": {
       "oneOf": [
         {
           "type": "object",
@@ -100,7 +106,7 @@
             "anyOf": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/context"
+                "$ref": "#/definitions/required-context"
               }
             }
           },
@@ -115,7 +121,7 @@
             "allOf": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/context"
+                "$ref": "#/definitions/required-context"
               }
             }
           },
@@ -128,7 +134,7 @@
           "type": "object",
           "properties": {
             "not": {
-              "$ref": "#/definitions/context"
+              "$ref": "#/definitions/required-context"
             }
           },
           "required": [
@@ -166,18 +172,37 @@
     "contexts-config": {
       "description": "Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.",
       "type": "object",
+      "additionalProperties":
+          {
+            "$ref": "#/definitions/context-kind-config"
+          }
+
+    },
+    "context-kind-config": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "description": "Context kind. Only a single context of the particular kind will be enabled. An example of context kind is framework, which has dedicated support in Web Types.",
+          "deprecationMessage": "This is deprecated way of defining context. The outer context should be the context kind with a nested context name.",
+          "type": "string"
+        },
+        "enable-when": {
+          "deprecationMessage": "This is deprecated way of defining context. The outer context should be the context kind with a nested context name.",
+          "$ref": "#/definitions/enablement-rules"
+        },
+        "disable-when": {
+          "deprecationMessage": "This is deprecated way of defining context. The outer context should be the context kind with a nested context name.",
+          "$ref": "#/definitions/disablement-rules"
+        }
+      },
       "additionalProperties": {
         "$ref": "#/definitions/context-config"
       }
     },
     "context-config": {
-      "description": "Provide configuration for a specified Web Types context. This allows to contribute additional Web Types for example if a particular library is present in the project.",
+      "description": "Provide rules for setting a particular name for particular context kind. This allows to contribute additional Web Types for example if a particular library is present in the project.",
       "type": "object",
       "properties": {
-        "kind": {
-          "description": "Context kind. Only a single context of the particular kind will be enabled. An example of context kind is framework, which has dedicated support in Web Types.",
-          "type": "string"
-        },
         "enable-when": {
           "$ref": "#/definitions/enablement-rules"
         },
@@ -185,9 +210,6 @@
           "$ref": "#/definitions/disablement-rules"
         }
       },
-      "required": [
-        "kind"
-      ],
       "additionalProperties": false
     },
     "enablement-rules": {
@@ -332,6 +354,10 @@
         },
         "description-sections": {
           "$ref": "#/definitions/description-sections"
+        },
+        "required-context": {
+          "description": "Specify contexts, which are required to enable this contribution.",
+          "$ref": "#/definitions/required-context"
         },
         "doc-url": {
           "$ref": "#/definitions/doc-url"
