@@ -164,7 +164,7 @@ public abstract class Invoker implements Disposable {
     return disposed ? 0 : count.get();
   }
 
-  abstract void offer(@NotNull Runnable runnable, int delay);
+  abstract void offer(@NotNull Runnable runnable, int delay, Promise<?> promise);
 
   /**
    * @param task    a task to execute on the valid thread
@@ -174,7 +174,7 @@ public abstract class Invoker implements Disposable {
   private void offerSafely(@NotNull Task<?, ?> task, int attempt, int delay) {
     try {
       count.incrementAndGet();
-      offer(() -> invokeSafely(task, attempt), delay);
+      offer(() -> invokeSafely(task, attempt), delay, task.promise);
     }
     catch (RejectedExecutionException exception) {
       count.decrementAndGet();
@@ -428,8 +428,8 @@ public abstract class Invoker implements Disposable {
     }
 
     @Override
-    void offer(@NotNull Runnable runnable, int delay) {
-      impl.offer(runnable, delay);
+    void offer(@NotNull Runnable runnable, int delay, Promise<?> promise) {
+      impl.offer(runnable, delay, promise);
     }
   }
 
@@ -468,7 +468,7 @@ public abstract class Invoker implements Disposable {
     }
 
     @Override
-    void offer(@NotNull Runnable runnable, int delay) {
+    void offer(@NotNull Runnable runnable, int delay, Promise<?> promise) {
       impl.offer(() -> {
         Thread thread = Thread.currentThread();
         if (!threads.add(thread)) {
@@ -484,7 +484,7 @@ public abstract class Invoker implements Disposable {
             }
           }
         }
-      }, delay);
+      }, delay, promise);
     }
   }
 

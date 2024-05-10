@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.util.ThreeState
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
 import java.awt.EventQueue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -46,7 +47,7 @@ internal abstract class LegacyInvokerImpl(private val useReadAction: ThreeState)
 }
 
 internal class EdtLegacyInvokerImpl(override val description: String) : LegacyInvokerImpl(ThreeState.UNSURE) {
-  override fun offer(runnable: Runnable, delay: Int) {
+  override fun offer(runnable: Runnable, delay: Int, promise: Promise<*>) {
     if (delay > 0) {
       EdtExecutorService.getScheduledExecutorInstance().schedule(runnable, delay.toLong(), TimeUnit.MILLISECONDS)
     }
@@ -68,7 +69,7 @@ internal class BgtLegacyInvokerImpl(
     executor.shutdown()
   }
 
-  override fun offer(runnable: Runnable, delay: Int) {
+  override fun offer(runnable: Runnable, delay: Int, promise: Promise<*>) {
     if (delay > 0) {
       executor.schedule(runnable, delay.toLong(), TimeUnit.MILLISECONDS);
     }

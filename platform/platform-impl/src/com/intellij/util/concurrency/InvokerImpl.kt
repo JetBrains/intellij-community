@@ -3,9 +3,10 @@ package com.intellij.util.concurrency
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
 
 internal interface InvokerImpl : Disposable {
   val description: String
-  fun offer(runnable: Runnable, delay: Int)
+  fun offer(runnable: Runnable, delay: Int, promise: Promise<*>)
   fun run(task: Runnable, promise: AsyncPromise<*>): Boolean
 }
