@@ -69,27 +69,27 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       mergedSnapshot.removeAssociatedValue(inputId);
     }
 
-    if (removeFromAdded(inputId)) {
-      //FIXME RC: what if inputId is contained in the underlying data, but underlying data wasn't loaded (mergedSnapshot==null)?
-      //          I.e consider scenario:
-      //          1) container X created: { merged=null, added=[], invalidated=[] }
-      //             underlying container (to-be-mergedSnapshot, not yet loaded) = [..., (inputId, value), ... ]
-      //          2) X.addValue(inputId, value) => X{ merged=null, added=[(inputId, value)], invalidated=[] }
-      //          3) X.removeAssociatedValue(inputId) => X{ merged=null, added=[], invalidated=[] }
-      //             I.e. the underlying container remains unchanged.
-      //             But this is wrong: (inputId, value) must be removed from the underlying container?
-      return true;
-    }
+    boolean wasRemovedFromAdded = removeFromAdded(inputId);
+    //RC: It is teasing to short-circuit here if wasRemovedFromAdded=true -- seems like no need to add inputId to invalidatedIds?
+    //    Wrong: inputId could be contained in the (not yet loaded) <mergedSnapshot> -- inputId still needs to be in invalidatedIds then.
+    //    I.e consider scenario:
+    //    1) container X created: { merged=null, added=[], invalidated=[] }
+    //       underlying container (to-be-mergedSnapshot, not yet loaded) = [..., (inputId, value), ... ]
+    //    2) X.addValue(inputId, value) => X{ merged=null, added=[(inputId, value)], invalidated=[] }
+    //    3) X.removeAssociatedValue(inputId) => X{ merged=null, added=[], invalidated=[] }
+    //       I.e. the underlying container remains unchanged.
+    //       But this is wrong: (inputId, value) must be removed from the underlying container
 
-    addToRemoved(inputId);
-    return true;
+    boolean wasAddedToRemoved = addToRemoved(inputId);
+
+    return wasRemovedFromAdded || wasAddedToRemoved;
   }
 
-  private void addToRemoved(int inputId) {
+  private boolean addToRemoved(int inputId) {
     if (myInvalidated == null) {
       myInvalidated = new IntOpenHashSet(1);
     }
-    myInvalidated.add(inputId);
+    return myInvalidated.add(inputId);
   }
 
   protected boolean removeFromAdded(int inputId) {
