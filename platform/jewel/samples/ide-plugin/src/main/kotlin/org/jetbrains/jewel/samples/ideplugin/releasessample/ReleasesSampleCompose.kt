@@ -506,7 +506,7 @@ private fun ItemDetailsText(selectedItem: ContentItem) {
             Text(
                 text = "Released on ${formatter.format(releaseDate.toJavaLocalDate())}",
                 style = Typography.medium(),
-                color = JBUI.CurrentTheme.Label.disabledForeground().toComposeColor(),
+                color = JewelTheme.globalColors.text.info,
             )
         }
 

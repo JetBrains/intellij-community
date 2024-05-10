@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +15,7 @@ import kotlinx.coroutines.cancel
 import org.jetbrains.jewel.bridge.addComposeTab
 import org.jetbrains.jewel.samples.ideplugin.releasessample.ReleasesSampleCompose
 import org.jetbrains.jewel.samples.ideplugin.releasessample.ReleasesSamplePanel
+import javax.swing.JComponent
 
 @Suppress("unused")
 @ExperimentalCoroutinesApi
@@ -24,21 +26,21 @@ internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
             ComponentShowcaseTab()
         }
 
-        addSwingTab(toolWindow)
+        toolWindow.addSwingTab(
+            ReleasesSamplePanel(toolWindow.disposable.createCoroutineScope()),
+            "Swing Sample",
+        )
 
         toolWindow.addComposeTab("Compose Sample") {
             ReleasesSampleCompose(project)
         }
+
+        toolWindow.addSwingTab(SwingComparisonTabPanel(), "Swing Comparison")
     }
 
-    private fun addSwingTab(toolWindow: ToolWindow) {
-        val manager = toolWindow.contentManager
-        val tabContent =
-            manager.factory.createContent(
-                ReleasesSamplePanel(toolWindow.disposable.createCoroutineScope()),
-                "Swing Sample",
-                true,
-            )
+    private fun ToolWindow.addSwingTab(component: JComponent, @TabTitle title: String) {
+        val manager = contentManager
+        val tabContent = manager.factory.createContent(component, title, true)
         tabContent.isCloseable = false
         manager.addContent(tabContent)
     }
