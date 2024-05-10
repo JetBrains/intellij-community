@@ -161,14 +161,6 @@ c:com.intellij.openapi.externalSystem.action.task.AssignShortcutAction
 - <init>():V
 - p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - p:perform(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.model.task.TaskData,com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.externalSystem.action.task.ExternalSystemTaskMenu
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- com.intellij.openapi.project.DumbAware
-- sf:Companion:com.intellij.openapi.externalSystem.action.task.ExternalSystemTaskMenu$Companion
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.externalSystem.action.task.ExternalSystemTaskMenu$Companion
 c:com.intellij.openapi.externalSystem.action.task.GroupModulesAction
 - com.intellij.openapi.externalSystem.action.ExternalSystemViewGearAction
 - <init>():V
