@@ -2,6 +2,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.LocalHistoryFacadeKt;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.ChangeSet;
@@ -35,8 +36,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
   protected static final int TIMESTAMP_INCREMENT = 3000;
@@ -207,6 +210,15 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
       }
       m.commit();
     });
+  }
+
+  protected @NotNull List<String> getContentFor(@NotNull VirtualFile file, @NotNull Set<Long> changeSets) {
+    List<String> result = new ArrayList<>();
+    LocalHistoryFacadeKt.processContents(getVcs(), myGateway, getRootEntry(), myGateway.getPathOrUrl(file), changeSets, true, (changeSet, content) -> {
+      if (content != null) result.add(content);
+      return Boolean.TRUE;
+    });
+    return result;
   }
 
   protected static void addFileListenerDuring(VirtualFileListener l, Runnable r) {

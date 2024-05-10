@@ -17,6 +17,7 @@ import com.intellij.platform.lvcs.impl.diff.createSingleFileDiffRequestProducer
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import org.jetbrains.annotations.ApiStatus
 
 internal const val USE_OLD_CONTENT = true
 
@@ -80,7 +81,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   }
 
   override fun filterActivityList(scope: ActivityScope, data: ActivityData, activityFilter: String?): Set<ActivityItem>? {
-    val changeSets = data.items.filterIsInstance<ChangeSetActivityItem>().mapTo(mutableSetOf()) { it.id }
+    val changeSets = data.getChangeSets()
     if (activityFilter.isNullOrEmpty() || changeSets.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
 
@@ -154,3 +155,8 @@ private fun LocalHistoryFacade.onChangeSetFinished(project: Project, gateway: Id
 }
 
 val ACTIVITY_PRESENTATION_PROVIDER_EP = ExtensionPointName.create<ActivityPresentationProvider>("com.intellij.history.activityPresentationProvider")
+
+@ApiStatus.Internal
+fun ActivityData.getChangeSets(): Set<Long> {
+  return items.filterIsInstance<ChangeSetActivityItem>().mapTo(mutableSetOf()) { it.id }
+}

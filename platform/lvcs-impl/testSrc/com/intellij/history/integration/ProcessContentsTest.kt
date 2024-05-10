@@ -2,14 +2,11 @@
 package com.intellij.history.integration
 
 import com.intellij.history.LocalHistory
-import com.intellij.history.core.processContents
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
 
 class ProcessContentsTest : IntegrationTestCase() {
-
-  private val facade get() = LocalHistoryImpl.getInstanceImpl().facade!!
 
   fun testContentChange() {
     val file = HeavyPlatformTestCase.createChildData(myRoot, "file.txt")
@@ -83,14 +80,6 @@ class ProcessContentsTest : IntegrationTestCase() {
   }
 
   private fun collectLocalHistoryContents(file: VirtualFile): List<String> {
-    val changeSets = getChangesFor(file).mapTo(mutableSetOf()) { it.id }
-
-    val actualContents = mutableListOf<String>()
-    facade.processContents(myGateway, rootEntry, myGateway.getPathOrUrl(file), changeSets, true) { _, content ->
-      if (content != null) actualContents.add(content)
-      true
-    }
-    return actualContents
+    return getContentFor(file, getChangesFor(file).mapTo(mutableSetOf()) { it.id })
   }
-
 }
