@@ -9,7 +9,7 @@ interface ShellCommandSpec : ShellCompletionSuggestion {
     get() = ShellSuggestionType.COMMAND
 
   val requiresSubcommand: Boolean
-  val parserDirectives: ShellCommandParserDirectives
+  val parserOptions: ShellCommandParserOptions
 
   val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>
   val options: List<ShellOptionSpec>

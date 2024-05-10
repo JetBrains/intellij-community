@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.block.completion
 
 import com.intellij.terminal.completion.ShellCommandTreeAssertions
 import com.intellij.terminal.completion.ShellCommandTreeBuilderFixture
-import com.intellij.terminal.completion.spec.ShellCommandParserDirectives
+import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
@@ -79,7 +79,7 @@ class ShellCommandTreeBuilderTest {
       }
 
       subcommand("nonPosix") {
-        parserDirectives = ShellCommandParserDirectives.create(flagsArePosixNonCompliant = true)
+        parserOptions = ShellCommandParserOptions.create(flagsArePosixNonCompliant = true)
         option("-a")
         option("-b")
       }

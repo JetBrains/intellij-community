@@ -4,7 +4,7 @@ package com.intellij.terminal.completion.spec
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class ShellCommandParserDirectives private constructor(
+class ShellCommandParserOptions private constructor(
   val flagsArePosixNonCompliant: Boolean,
   val optionsMustPrecedeArguments: Boolean,
   val optionArgSeparators: List<String>
@@ -20,8 +20,8 @@ class ShellCommandParserDirectives private constructor(
       flagsArePosixNonCompliant: Boolean = false,
       optionsMustPrecedeArguments: Boolean = false,
       optionArgSeparators: List<String> = emptyList()
-    ): ShellCommandParserDirectives {
-      return ShellCommandParserDirectives(flagsArePosixNonCompliant, optionsMustPrecedeArguments, optionArgSeparators)
+    ): ShellCommandParserOptions {
+      return ShellCommandParserOptions(flagsArePosixNonCompliant, optionsMustPrecedeArguments, optionArgSeparators)
     }
   }
 }

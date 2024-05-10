@@ -46,7 +46,7 @@ internal class ShellCommandTreeBuilder private constructor(
         suggestion = suggestions.find { s -> s.names.find { it == fileName || it == "$fileName${File.separatorChar}" } != null }
       }
       if (suggestion == null
-          && !root.getMergedParserDirectives().flagsArePosixNonCompliant
+          && !root.getMergedParserOptions().flagsArePosixNonCompliant
           && name.startsWith("-") && !name.startsWith("--") && name.length > 2) {
         addChainedOptions(root, suggestions, name)
         curIndex++

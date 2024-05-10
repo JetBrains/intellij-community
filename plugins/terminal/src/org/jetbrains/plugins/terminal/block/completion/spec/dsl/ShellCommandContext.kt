@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
-import com.intellij.terminal.completion.spec.ShellCommandParserDirectives
+import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ShellCommandSpecDsl
 sealed interface ShellCommandContext : ShellSuggestionContext {
   var requiresSubcommand: Boolean
-  var parserDirectives: ShellCommandParserDirectives
+  var parserOptions: ShellCommandParserOptions
 
   fun subcommands(content: suspend ShellChildCommandsContext.(ShellRuntimeContext) -> Unit)
   fun option(vararg names: String, content: ShellOptionContext.() -> Unit = {})

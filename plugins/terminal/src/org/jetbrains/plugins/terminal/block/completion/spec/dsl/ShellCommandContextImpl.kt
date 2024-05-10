@@ -15,7 +15,7 @@ internal class ShellCommandContextImpl(
   parentNames: List<String> = emptyList()
 ) : ShellSuggestionContextBase(names), ShellCommandContext {
   override var requiresSubcommand: Boolean = false
-  override var parserDirectives: ShellCommandParserDirectives = ShellCommandParserDirectives.DEFAULT
+  override var parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT
 
   private var subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>? = null
   private var optionSuppliers: MutableList<() -> ShellOptionSpec> = mutableListOf()
@@ -59,7 +59,7 @@ internal class ShellCommandContextImpl(
       insertValue = insertValue,
       priority = priority,
       requiresSubcommand = requiresSubcommand,
-      parserDirectives = parserDirectives,
+      parserOptions = parserOptions,
       subcommandsGenerator = subcommandsGenerator ?: emptyListGenerator(),
       optionsSupplier = { optionSuppliers.map { it() } },
       argumentsSupplier = { argumentSuppliers.map { it() } }

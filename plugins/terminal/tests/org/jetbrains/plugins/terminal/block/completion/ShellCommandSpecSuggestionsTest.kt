@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.block.completion
 
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
-import com.intellij.terminal.completion.spec.ShellCommandParserDirectives
+import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.testFramework.UsefulTestCase.assertNotNull
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -107,7 +107,7 @@ class ShellCommandSpecSuggestionsTest {
       }
 
       subcommand("optPrecedeArgs") {
-        parserDirectives = ShellCommandParserDirectives.create(optionsMustPrecedeArguments = true)
+        parserOptions = ShellCommandParserOptions.create(optionsMustPrecedeArguments = true)
         option("-c")
         option("-d")
         argument {

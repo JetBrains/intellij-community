@@ -58,7 +58,7 @@ internal class ShellCommandTreeSuggestionsProvider(
       }
 
       val lastArg = (node.children.lastOrNull() as? ShellArgumentNode)?.spec
-      if ((!node.getMergedParserDirectives().optionsMustPrecedeArguments || node.children.filterIsInstance<ShellArgumentNode>().isEmpty())
+      if ((!node.getMergedParserOptions().optionsMustPrecedeArguments || node.children.filterIsInstance<ShellArgumentNode>().isEmpty())
           && (lastArg?.isVariadic != true || lastArg.optionsCanBreakVariadicArg)) {
         val options = getAvailableOptions(node)
         suggestions.addAll(options)

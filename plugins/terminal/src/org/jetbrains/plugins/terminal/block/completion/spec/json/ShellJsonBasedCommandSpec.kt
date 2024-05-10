@@ -34,8 +34,8 @@ internal class ShellJsonBasedCommandSpec(
   override val requiresSubcommand: Boolean
     get() = data.requiresSubcommand
 
-  override val parserDirectives: ShellCommandParserDirectives by lazy {
-    ShellCommandParserDirectives.create(
+  override val parserOptions: ShellCommandParserOptions by lazy {
+    ShellCommandParserOptions.create(
       data.parserDirectives.flagsArePosixNoncompliant,
       data.parserDirectives.optionsMustPrecedeArguments,
       data.parserDirectives.optionArgSeparators

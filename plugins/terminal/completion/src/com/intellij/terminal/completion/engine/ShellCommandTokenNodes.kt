@@ -2,7 +2,7 @@
 package com.intellij.terminal.completion.engine
 
 import com.intellij.terminal.completion.spec.ShellArgumentSpec
-import com.intellij.terminal.completion.spec.ShellCommandParserDirectives
+import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellOptionSpec
 
@@ -19,23 +19,23 @@ internal class ShellCommandNode(
   override val spec: ShellCommandSpec,
   parent: ShellCommandTreeNode<*>?
 ) : ShellCommandTreeNode<ShellCommandSpec>(text, spec, parent) {
-  fun getMergedParserDirectives(): ShellCommandParserDirectives {
-    val directives = mutableListOf<ShellCommandParserDirectives>()
-    directives.add(spec.parserDirectives)
+  fun getMergedParserOptions(): ShellCommandParserOptions {
+    val directives = mutableListOf<ShellCommandParserOptions>()
+    directives.add(spec.parserOptions)
     var cur = parent
     while (cur is ShellCommandNode) {
-      directives.add(cur.spec.parserDirectives)
+      directives.add(cur.spec.parserOptions)
       cur = cur.parent
     }
-    return directives.asReversed().reduce { base, child -> mergeDirectives(base, child) }
+    return directives.asReversed().reduce { base, child -> mergeParserOptions(base, child) }
   }
 
   // child values takes precedence over base only if they are not default
-  private fun mergeDirectives(base: ShellCommandParserDirectives, child: ShellCommandParserDirectives): ShellCommandParserDirectives {
+  private fun mergeParserOptions(base: ShellCommandParserOptions, child: ShellCommandParserOptions): ShellCommandParserOptions {
     val flagsArePosixNonCompliant = if (child.flagsArePosixNonCompliant) true else base.flagsArePosixNonCompliant
     val optionsMustPrecedeArguments = if (child.optionsMustPrecedeArguments) true else base.optionsMustPrecedeArguments
     val optionArgSeparators = (base.optionArgSeparators + child.optionArgSeparators).distinct()
-    return ShellCommandParserDirectives.create(flagsArePosixNonCompliant, optionsMustPrecedeArguments, optionArgSeparators)
+    return ShellCommandParserOptions.create(flagsArePosixNonCompliant, optionsMustPrecedeArguments, optionArgSeparators)
   }
 }
 

@@ -14,7 +14,7 @@ internal class ShellCommandSpecImpl(
   override val insertValue: String? = null,
   override val priority: Int = 50,
   override val requiresSubcommand: Boolean = false,
-  override val parserDirectives: ShellCommandParserDirectives = ShellCommandParserDirectives.DEFAULT,
+  override val parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT,
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = emptyListGenerator(),
   private val optionsSupplier: () -> List<ShellOptionSpec> = { emptyList() },
   private val argumentsSupplier: () -> List<ShellArgumentSpec> = { emptyList() }
@@ -32,6 +32,6 @@ internal class ShellCommandSpecImpl(
   }
 
   override fun toString(): String {
-    return "ShellCommandSpecImpl(names=$names, displayName=$displayName, insertValue=$insertValue, priority=$priority, requiresSubcommand=$requiresSubcommand, parserDirectives=$parserDirectives, description=$description, subcommandsGenerator=$subcommandsGenerator, options=$options, arguments=$arguments)"
+    return "ShellCommandSpecImpl(names=$names, displayName=$displayName, insertValue=$insertValue, priority=$priority, requiresSubcommand=$requiresSubcommand, parserOptions=$parserOptions, description=$description, subcommandsGenerator=$subcommandsGenerator, options=$options, arguments=$arguments)"
   }
 }
