@@ -13,6 +13,8 @@ abstract class AbstractExpressionTypeTest : KotlinLightCodeInsightFixtureTestCas
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
+    abstract override fun isFirPlugin(): Boolean
+
     private fun findKotlinExpressionTypeProvider(): KotlinExpressionTypeProvider {
         val providers = LanguageExpressionTypes.INSTANCE
             .allForLanguage(KotlinLanguage.INSTANCE)
@@ -32,4 +34,8 @@ abstract class AbstractExpressionTypeTest : KotlinLightCodeInsightFixtureTestCas
         val expectedTypes = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// TYPE: ")
         UsefulTestCase.assertOrderedEquals(types, expectedTypes)
     }
+}
+
+abstract class AbstractK1ExpressionTypeTest : AbstractExpressionTypeTest() {
+    override fun isFirPlugin(): Boolean = false
 }

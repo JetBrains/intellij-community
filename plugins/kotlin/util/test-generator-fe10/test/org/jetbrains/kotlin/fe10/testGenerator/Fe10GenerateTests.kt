@@ -639,7 +639,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("codeInsight/unwrapAndRemove/unwrapFunctionParameter", testMethodName = "doTestFunctionParameterUnwrapper")
         }
 
-        testClass<AbstractExpressionTypeTest> {
+        testClass<AbstractK1ExpressionTypeTest> {
             model("codeInsight/expressionType")
         }
 

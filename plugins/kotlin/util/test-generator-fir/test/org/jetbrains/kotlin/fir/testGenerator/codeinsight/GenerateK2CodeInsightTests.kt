@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
+import org.jetbrains.kotlin.idea.k2.AbstractK2ExpressionTypeTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
@@ -66,6 +67,11 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapLambda", testMethodName = "doTestLambdaUnwrapper")
             model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter", testMethodName = "doTestFunctionParameterUnwrapper")
         }
+
+        testClass<AbstractK2ExpressionTypeTest> {
+            model("../../../idea/tests/testData/codeInsight/expressionType")
+        }
+
         testClass<AbstractKotlinFirMoveStatementTest> {
             model("../../../idea/tests/testData/codeInsight/moveUpDown/classBodyDeclarations", pattern = KT_OR_KTS, testMethodName = "doTestClassBodyDeclaration")
             model("../../../idea/tests/testData/codeInsight/moveUpDown/closingBraces", testMethodName = "doTestExpression")
