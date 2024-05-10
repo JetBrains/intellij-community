@@ -656,7 +656,7 @@ c:com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 - <init>(com.intellij.openapi.fileTypes.FileType[]):V
 - acceptInput(com.intellij.util.indexing.IndexedFile):Z
 - registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
-*e:com.intellij.util.indexing.DumbModeAccessType
+e:com.intellij.util.indexing.DumbModeAccessType
 - java.lang.Enum
 - sf:RAW_INDEX_DATA_ACCEPTABLE:com.intellij.util.indexing.DumbModeAccessType
 - sf:RELIABLE_DATA_ONLY:com.intellij.util.indexing.DumbModeAccessType
