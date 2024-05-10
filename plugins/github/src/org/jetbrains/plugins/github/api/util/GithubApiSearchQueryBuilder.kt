@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.util
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 
 @DslMarker
@@ -10,13 +9,6 @@ private annotation class SearchQueryDsl
 @SearchQueryDsl
 internal class GithubApiSearchQueryBuilder {
   private val builder = StringBuilder()
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use term instead raw string",
-              replaceWith = ReplaceWith("term(GHPRSearchQuery.Term<*>)", "org.jetbrains.plugins.github.api.util.term"))
-  fun qualifier(name: String, value: String?) {
-    if (value != null) append("$name:$value")
-  }
 
   fun term(term: GHPRSearchQuery.Term<*>) {
     val value = term.apiValue ?: return
