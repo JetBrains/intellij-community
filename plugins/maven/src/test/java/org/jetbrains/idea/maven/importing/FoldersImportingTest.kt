@@ -29,7 +29,7 @@ import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.utils.Path
+import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.Assume
 import org.junit.Test
@@ -38,7 +38,7 @@ import java.io.IOException
 import java.util.function.Consumer
 
 class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
-  
+
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()
@@ -1323,7 +1323,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                     </build>
                     """.trimIndent())
     val targetPath = "$parentPath/target"
-    val targetUrl = Path(targetPath).toUrl().url
+    val targetUrl = MavenPathWrapper(targetPath).toUrl().url
     assertContentRoots("project", projectPath)
     assertModuleOutput("project",
                        "$parentPath/target/classes",

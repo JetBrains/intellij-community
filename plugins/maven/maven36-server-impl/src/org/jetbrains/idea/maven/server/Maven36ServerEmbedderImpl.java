@@ -34,7 +34,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
   protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
     super.customizeComponents(workspaceMap);
 
-    ArtifactResolver customResolver = createCustomResolver();
+    ArtifactResolver customResolver = createCustomArtifactResolver();
     if (customResolver != null) {
 
       addComponent(customResolver, ArtifactResolver.class);
@@ -103,11 +103,12 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
   }
 
   @Nullable
-  private ArtifactResolver createCustomResolver() {
+  private ArtifactResolver createCustomArtifactResolver() {
     if (!myEmbedderSettings.useCustomDependenciesResolver()) {
       return null;
     }
-    String resolverClassName = System.getProperty("intellij.custom.resolver", CustomMaven36ArtifactResolver.class.getCanonicalName());
+    String resolverClassName =
+      System.getProperty("intellij.custom.artifactResolver", CustomMaven36ArtifactResolver.class.getCanonicalName());
     if (resolverClassName == null || resolverClassName.isEmpty()) return null;
     try {
       ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);

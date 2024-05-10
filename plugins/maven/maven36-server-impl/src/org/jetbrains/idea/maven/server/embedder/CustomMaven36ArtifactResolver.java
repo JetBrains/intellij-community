@@ -23,7 +23,7 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver, Resetabl
     myWrapee = wrapee;
   }
 
-  private ArtifactResultData doResolveArtifactAndWrapException(RepositorySystemSession session, ArtifactRequest request) {
+  protected ArtifactResultData doResolveArtifactAndWrapException(RepositorySystemSession session, ArtifactRequest request) {
     try {
       return new ArtifactResultData(myWrapee.resolveArtifact(session, request), null);
     }

@@ -5,10 +5,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class Path {
+public class MavenPathWrapper {
   private final String path;
 
-  public Path(@NotNull String path) {
+  public MavenPathWrapper(@NotNull String path) {
     path = FileUtil.toCanonicalPath(path);
     path = FileUtil.toSystemIndependentName(path);
     this.path = path;
@@ -35,6 +35,6 @@ public class Path {
 
   @Override
   public boolean equals(final Object o) {
-    return (o instanceof Path) && path.equals(((Path)o).path);
+    return (o instanceof MavenPathWrapper) && path.equals(((MavenPathWrapper)o).path);
   }
 }

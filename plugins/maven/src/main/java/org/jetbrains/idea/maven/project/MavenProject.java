@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,6 +37,7 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -61,6 +63,7 @@ public class MavenProject {
   }
 
   private final @NotNull VirtualFile myFile;
+  private final Path myPath;
   private volatile @NotNull State myState = new State();
 
   public enum ProcMode {BOTH, ONLY, NONE}
@@ -101,6 +104,7 @@ public class MavenProject {
 
   public MavenProject(@NotNull VirtualFile file) {
     myFile = file;
+    myPath = file.toNioPath();
   }
 
   @NotNull
@@ -243,7 +247,8 @@ public class MavenProject {
     }
   }
 
-  @NotNull Snapshot getSnapshot() {
+  @NotNull
+  Snapshot getSnapshot() {
     return new Snapshot(myState);
   }
 
@@ -320,13 +325,13 @@ public class MavenProject {
     String basePath = baseDir + "/";
     Map<String, String> result = new LinkedHashMap<>();
     for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel, basePath).entrySet()) {
-      result.put(new Path(basePath + each.getKey()).getPath(), each.getValue());
+      result.put(new MavenPathWrapper(basePath + each.getKey()).getPath(), each.getValue());
     }
     return result;
   }
 
   private Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel, String basePath) {
-    String extension = StringUtil.notNullize(myFile.getExtension());
+    String extension = StringUtil.notNullize(PathUtil.getFileExtension(myPath.toFile().getName()));
     LinkedHashMap<String, String> result = new LinkedHashMap<>();
     for (String name : mavenModel.getModules()) {
       name = name.trim();
@@ -375,11 +380,16 @@ public class MavenProject {
   }
 
   public @NotNull @NonNls String getPath() {
-    return myFile.getPath();
+    return myPath.toString();
   }
 
+  public @NotNull @NonNls Path getNioPath() {
+    return myPath;
+  }
+
+
   public @NotNull @NonNls String getDirectory() {
-    return myFile.getParent().getPath();
+    return myPath.getParent().toString();
   }
 
   public @NotNull VirtualFile getDirectoryFile() {

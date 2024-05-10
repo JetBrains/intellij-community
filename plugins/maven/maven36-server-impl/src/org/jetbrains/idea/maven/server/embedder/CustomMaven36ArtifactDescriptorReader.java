@@ -19,7 +19,7 @@ public class CustomMaven36ArtifactDescriptorReader implements ArtifactDescriptor
     myWrapee = wrapee;
   }
 
-  private ArtifactDescriptorResultData doReadArtifactDescriptor(RepositorySystemSession session, ArtifactDescriptorRequest request) {
+  protected ArtifactDescriptorResultData doReadArtifactDescriptor(RepositorySystemSession session, ArtifactDescriptorRequest request) {
     try {
       return new ArtifactDescriptorResultData(myWrapee.readArtifactDescriptor(session, request), null);
     }

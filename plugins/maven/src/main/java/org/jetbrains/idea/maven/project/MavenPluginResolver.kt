@@ -28,9 +28,9 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
       !it.mavenProject.hasReadingProblems()
       && it.mavenProject.hasUnresolvedPlugins()
     }
-    
+
     if (mavenProjects.isEmpty()) return
-    
+
     val firstProject = sortAndGetFirst(mavenProjects).mavenProject
     val baseDir = MavenUtil.getBaseDir(firstProject.directoryFile).toString()
     process.text(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.displayName))
@@ -110,7 +110,7 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
     }
 
     private fun sortAndGetFirst(mavenProjects: Collection<MavenProjectWithHolder>): MavenProjectWithHolder {
-      return mavenProjects.minBy { it.mavenProject.directoryFile.path }
+      return mavenProjects.minBy { it.mavenProject.directory }
     }
   }
 }

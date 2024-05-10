@@ -16,7 +16,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.platform.workspace.storage.EntitySource
@@ -59,7 +58,8 @@ internal class WorkspaceModuleImporter(
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
   fun importModule(): ModuleEntity {
-    val baseModuleDir = importData.mavenProject.directoryFile.toVirtualFileUrl(virtualFileUrlManager)
+
+    val baseModuleDir = virtualFileUrlManager.getOrCreateFromUrl(importData.mavenProject.directory)
     val moduleName = importData.moduleData.moduleName
 
     val moduleLibrarySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource,

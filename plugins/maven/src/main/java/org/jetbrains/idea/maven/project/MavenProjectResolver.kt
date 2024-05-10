@@ -62,6 +62,7 @@ class MavenProjectResolver(private val myProject: Project) {
   suspend fun resolve(incrementally: Boolean,
                       mavenProjects: Collection<MavenProject>,
                       tree: MavenProjectsTree,
+                      workspaceMap: MavenWorkspaceMap,
                       generalSettings: MavenGeneralSettings,
                       embeddersManager: MavenEmbeddersManager,
                       progressReporter: RawProgressReporter,
@@ -88,7 +89,7 @@ class MavenProjectResolver(private val myProject: Project) {
             embedder,
             progressReporter,
             eventHandler,
-            tree.workspaceMap,
+            workspaceMap,
             updateSnapshots,
             userProperties)
         }

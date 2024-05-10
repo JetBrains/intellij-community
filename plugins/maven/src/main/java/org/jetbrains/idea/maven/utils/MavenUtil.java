@@ -1577,14 +1577,14 @@ public class MavenUtil {
     return baseDir.findFileByRelativePath(fileRelativePath);
   }
 
-  public static Path toPath(@Nullable MavenProject mavenProject, String path) {
+  public static MavenPathWrapper toPath(@Nullable MavenProject mavenProject, String path) {
     if (!Paths.get(path).isAbsolute()) {
       if (mavenProject == null) {
         throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
       }
       path = new File(mavenProject.getDirectory(), path).getPath();
     }
-    return new Path(path);
+    return new MavenPathWrapper(path);
   }
 
   public static @NotNull Sdk getJdk(@NotNull Project project, @NotNull String name) throws ExternalSystemJdkException {

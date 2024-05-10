@@ -28,8 +28,8 @@ import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenPathWrapper;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -211,7 +211,7 @@ class MavenLegacyFoldersImporter {
     for (JpsModuleSourceRootType<?> type : roots.keySet()) {
       for (String path : roots.get(type)) {
         if (path != null) {
-          Path nioPath = MavenUtil.toPath(mavenProject, path);
+          MavenPathWrapper nioPath = MavenUtil.toPath(mavenProject, path);
           String canonicalPath = nioPath.getPath();
           if (!alreadyAdded(canonicalPath, addedPaths)) {
             addedPaths.put(canonicalPath, type);

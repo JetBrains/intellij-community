@@ -8,7 +8,7 @@ import org.eclipse.aether.resolution.ArtifactResult;
 
 import java.util.List;
 
-class ArtifactResultData {
+public class ArtifactResultData {
   private final Artifact artifact;
   private final ArtifactRepository repository;
   private final List<Exception> exceptions;

@@ -10,9 +10,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingRegistry
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jdom.IllegalNameException
 import java.io.IOException
+import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 
 object MavenJDOMUtil {
@@ -28,12 +33,34 @@ object MavenJDOMUtil {
         VfsUtilCore.loadText(file)
       }
       catch (e: IOException) {
+        e.printStackTrace()
         handler?.onReadError(e)
         null
       }
     }
 
     return if (text == null) null else doRead(text, handler)
+  }
+
+  @JvmStatic
+  suspend fun read(file: Path, charset: Charset, handler: ErrorHandler?): Element? {
+    val app = ApplicationManager.getApplication()
+    if (app == null || app.isDisposed) {
+      return null
+    }
+    return withContext(Dispatchers.IO) {
+      try {
+        Files.newInputStream(file).use { inputStream ->
+          return@use inputStream.bufferedReader(charset).readText()?.let {
+            doRead(it, handler)
+          }
+        }
+      }
+      catch (e: IOException) {
+        handler?.onReadError(e)
+        null
+      }
+    }
   }
 
   @JvmStatic

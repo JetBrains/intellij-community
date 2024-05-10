@@ -49,7 +49,9 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
                          importingSettings: MavenImportingSettings,
                          generalSettings: MavenGeneralSettings,
                          reimportExistingFiles: Boolean,
-                         parentActivity: StructuredIdeActivity): PreimportResult {
+                         visitor: MavenStructureProjectVisitor,
+                         parentActivity: StructuredIdeActivity,
+                         commit: Boolean): PreimportResult {
 
     if (!MavenProjectImporter.isImportToWorkspaceModelEnabled(project)) {
       return PreimportResult.empty(project)
@@ -71,7 +73,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       val mavenProjectMappings = HashMap<MavenProject, List<MavenProject>>()
       val allProjects = ArrayList<MavenProject>()
       val projectChanges = HashMap<MavenProject, MavenProjectChanges>()
-      val existingTree = MavenProjectsManager.getInstance(project).let { if (it.isMavenizedProject) it.projectsTree else null }
+      val existingTree = if (!commit) null else MavenProjectsManager.getInstance(project).let { if (it.isMavenizedProject) it.projectsTree else null }
 
       forest.forEach { tree ->
         mavenProjectMappings.putAll(tree.mavenProjectMappings())
@@ -86,6 +88,9 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
             tree.projects().filter { existingTree.findProject(it.file) == null }.associateWith { MavenProjectChanges.ALL })
         }
       }
+      visitor.map(allProjects);
+
+      if (!commit) return PreimportResult.empty(project);
 
 
       projectTree.updater()

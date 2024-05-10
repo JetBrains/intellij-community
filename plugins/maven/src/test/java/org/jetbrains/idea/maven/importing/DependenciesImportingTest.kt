@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.utils.vfs.createFile
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.junit.Assume
