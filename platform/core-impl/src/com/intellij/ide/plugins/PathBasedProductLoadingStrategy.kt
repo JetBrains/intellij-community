@@ -1,0 +1,252 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins
+
+import com.intellij.idea.AppMode
+import com.intellij.openapi.application.PathManager
+import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
+import com.intellij.util.xml.dom.createXmlStreamReader
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import java.io.ByteArrayInputStream
+import java.io.Closeable
+import java.io.DataInputStream
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.*
+import java.util.concurrent.CancellationException
+
+internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
+  // this property returns hardcoded Strings instead of ProductMode, because currently ProductMode class isn't available in dependencies of this module
+  override val currentModeId: String
+    get() = if (AppMode.isRemoteDevHost()) "backend" else "local_IDE"
+
+  override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
+  }
+
+  override fun loadBundledPluginDescriptors(
+    scope: CoroutineScope,
+    bundledPluginDir: Path?,
+    isUnitTestMode: Boolean,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
+    val effectiveBundledPluginDir = when {
+      bundledPluginDir != null -> bundledPluginDir
+      isUnitTestMode -> return Collections.emptyList()
+      else -> Paths.get(PathManager.getPreInstalledPluginsPath())
+    }
+
+    val classPathFile = effectiveBundledPluginDir.resolve("plugin-classpath.txt")
+    val data = try {
+      Files.readAllBytes(classPathFile)
+    }
+    catch (ignored: NoSuchFileException) {
+      null
+    }
+
+    if (data == null || data[0] != 1.toByte()) {
+      return scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
+    }
+    else {
+      return loadFromPluginClasspathDescriptor(data = data, context = context, zipFilePool = zipFilePool, bundledPluginDir = effectiveBundledPluginDir, scope = scope).asList()
+    }
+  }
+
+  override fun loadCustomPluginDescriptors(
+    scope: CoroutineScope,
+    customPluginDir: Path,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+  ): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
+    return scope.loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool)
+  }
+
+  private fun loadFromPluginClasspathDescriptor(
+    data: ByteArray,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+    bundledPluginDir: Path,
+    scope: CoroutineScope,
+  ): Array<Deferred<IdeaPluginDescriptorImpl?>> {
+    val jarOnly = data[1] == 1.toByte()
+    val input = DataInputStream(ByteArrayInputStream(data, 2, data.size))
+    val pluginCount = input.readUnsignedShort()
+    return Array(pluginCount) {
+      val fileCount = input.readUnsignedShort()
+
+      val pluginDir = bundledPluginDir.resolve(input.readUTF())
+      val descriptorSize = input.readInt()
+      val pluginDescriptorData = ByteArray(descriptorSize).also { input.read(it) }
+      val fileItems = Array(fileCount) {
+        val path = input.readUTF()
+        var file = pluginDir.resolve(path)
+        if (!jarOnly) {
+          file = file.normalize()
+        }
+        FileItem(file = file, path = path)
+      }
+
+      scope.async {
+        try {
+          loadPluginDescriptor(
+            fileItems = fileItems,
+            zipFilePool = zipFilePool,
+            jarOnly = jarOnly,
+            pluginDescriptorData = pluginDescriptorData,
+            context = context,
+            pluginDir = pluginDir,
+          )
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          PluginManagerCore.logger.warn("Cannot load plugin descriptor, files:\n  ${fileItems.joinToString(separator = "\n  ")}", e)
+          null
+        }
+      }
+    }
+  }
+
+  private fun loadPluginDescriptor(
+    fileItems: Array<FileItem>,
+    zipFilePool: ZipFilePool,
+    jarOnly: Boolean,
+    pluginDescriptorData: ByteArray,
+    context: DescriptorListLoadingContext,
+    pluginDir: Path,
+  ): IdeaPluginDescriptorImpl {
+    val item = fileItems.first()
+    val dataLoader = MixedDirAndJarDataLoader(files = fileItems, pool = zipFilePool, jarOnly = jarOnly)
+    val pluginPathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
+    val descriptorInput = createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
+    val raw = readModuleDescriptor(reader = descriptorInput, readContext = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
+
+    val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginDir, isBundled = true, id = null, moduleName = null)
+    context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)
+    for (module in descriptor.content.modules) {
+      var classPath: List<Path>? = null
+      val subDescriptorFile = module.configFile ?: "${module.name}.xml"
+      val subRaw = if (module.descriptorContent == null) {
+        val input = dataLoader.load(subDescriptorFile, pluginDescriptorSourceOnly = true)
+        if (input == null) {
+          val jarFile = pluginDir.resolve("lib/modules/${module.name}.jar")
+          classPath = Collections.singletonList(jarFile)
+          loadModuleFromSeparateJar(pool = zipFilePool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
+        }
+        else {
+          readModuleDescriptor(reader = createXmlStreamReader(input), readContext = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
+        }
+      }
+      else {
+        val subRaw = readModuleDescriptor(reader = createXmlStreamReader(module.descriptorContent), readContext = context, dataLoader = dataLoader)
+        if (subRaw.`package` == null || subRaw.isSeparateJar) {
+          classPath = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
+        }
+
+        subRaw
+      }
+
+      val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
+      if (classPath != null) {
+        subDescriptor.jarFiles = classPath
+      }
+      module.descriptor = subDescriptor
+    }
+
+    descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
+    descriptor.jarFiles = fileItems.map { it.file }
+    return descriptor
+  }
+
+  override fun isOptionalProductModule(moduleName: String): Boolean = false
+
+  override fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path {
+    return moduleDir.resolve("$moduleName.jar")
+  }
+
+  override val shouldLoadDescriptorsFromCoreClassPath: Boolean
+    get() = true
+}
+
+private data class FileItem(
+  @JvmField val file: Path,
+  @JvmField val path: String,
+) {
+  @JvmField
+  @Volatile
+  var resolver: ZipFilePool.EntryResolver? = null
+}
+
+private class MixedDirAndJarDataLoader(
+  private val files: Array<FileItem>,
+  private val pool: ZipFilePool,
+  private val jarOnly: Boolean,
+) : DataLoader {
+  // load must return result for sub
+  override fun isExcludedFromSubSearch(jarFile: Path): Boolean = true
+
+  override val emptyDescriptorIfCannotResolve: Boolean
+    get() = true
+
+  override fun load(path: String, pluginDescriptorSourceOnly: Boolean): InputStream? {
+    val effectivePath = if (path[0] == '/') path.substring(1) else path
+    for (item in files) {
+      if (jarOnly || item.path.endsWith(".jar")) {
+        var resolver = item.resolver
+        if (resolver == null) {
+          resolver = pool.load(item.file)
+          if (resolver !is Closeable) {
+            item.resolver = resolver
+          }
+        }
+
+        val result = resolver.loadZipEntry(effectivePath)
+        if (resolver is Closeable) {
+          resolver.close()
+        }
+        if (result != null) {
+          return result
+        }
+      }
+      else {
+        try {
+          return Files.newInputStream(item.file.resolve(effectivePath))
+        }
+        catch (ignore: NoSuchFileException) {
+        }
+      }
+
+      if (jarOnly && pluginDescriptorSourceOnly) {
+        break
+      }
+    }
+
+    return null
+  }
+
+  override fun toString(): String = "plugin-classpath.txt based data loader"
+}
+
+private fun loadModuleFromSeparateJar(
+  pool: ZipFilePool,
+  jarFile: Path,
+  subDescriptorFile: String,
+  context: DescriptorListLoadingContext,
+  dataLoader: DataLoader,
+): RawPluginDescriptor {
+  val resolver = pool.load(jarFile)
+  try {
+    val input = resolver.loadZipEntry(subDescriptorFile) ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
+    // product module is always fully resolved and do not contain `xi:include`
+    return readModuleDescriptor(reader = createXmlStreamReader(input, jarFile.toString()), readContext = context, dataLoader = dataLoader)
+  }
+  finally {
+    (resolver as? Closeable)?.close()
+  }
+}
