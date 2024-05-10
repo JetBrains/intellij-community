@@ -122,20 +122,6 @@ public final class PatchWriter {
   /**
    * @deprecated Use overload without {@code includeBinaries} parameter.
    */
-  @Deprecated(forRemoval = true)
-  public static void writePatches(@NotNull Project project,
-                                  @NotNull Path file,
-                                  @Nullable Path basePath,
-                                  @NotNull List<? extends FilePatch> patches,
-                                  @Nullable CommitContext commitContext,
-                                  @NotNull Charset charset,
-                                  boolean includeBinaries) throws IOException {
-    writePatches(project, file, basePath, patches, commitContext, charset);
-  }
-
-  /**
-   * @deprecated Use overload without {@code includeBinaries} parameter.
-   */
   @Deprecated
   private static void write(@NotNull Project project,
                             @NotNull Writer writer,

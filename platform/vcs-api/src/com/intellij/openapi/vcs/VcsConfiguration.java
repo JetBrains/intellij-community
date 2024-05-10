@@ -222,22 +222,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated(forRemoval = true)
-  public PerformInBackgroundOption getCheckoutOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated(forRemoval = true)
-  public PerformInBackgroundOption getAddRemoveOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
   public String getPatchFileExtension() {
     return DEFAULT_PATCH_EXTENSION;
   }

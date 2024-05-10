@@ -181,14 +181,6 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs);
 
-  /**
-   * Also includes into list all modules under roots
-   *
-   * @deprecated To be removed
-   */
-  @Deprecated(forRemoval = true)
-  public abstract List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs);
-
   public abstract VirtualFile[] getAllVersionedRoots();
 
   public abstract VcsRoot @NotNull [] getAllVcsRoots();
@@ -243,13 +235,6 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
-  @Deprecated(forRemoval = true)
-  public abstract void showConsole();
-
-  /**
-   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
-   */
-  @RequiresEdt
   @Deprecated
   public abstract void showConsole(@Nullable Runnable then);
 
@@ -259,13 +244,6 @@ public abstract class ProjectLevelVcsManager {
   @RequiresEdt
   @Deprecated
   public abstract void scrollConsoleToTheEnd();
-
-  /**
-   * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
-   */
-  @RequiresEdt
-  @Deprecated(forRemoval = true)
-  public abstract boolean isConsoleVisible();
 
   /**
    * Execute the task on pooled thread, delayed until core vcs services are initialized.

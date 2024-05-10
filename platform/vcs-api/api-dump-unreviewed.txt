@@ -357,7 +357,6 @@ a:com.intellij.openapi.vcs.ProjectLevelVcsManager
 - a:getConsolidatedVcsName():java.lang.String
 - a:getContentRevisionCache():com.intellij.openapi.vcs.impl.ContentRevisionCache
 - a:getDescriptor(java.lang.String):com.intellij.openapi.vcs.impl.VcsDescriptor
-- a:getDetailedVcsMappings(com.intellij.openapi.vcs.AbstractVcs):java.util.List
 - a:getDirectoryMappingFor(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.VcsDirectoryMapping
 - a:getDirectoryMappings():java.util.List
 - a:getDirectoryMappings(com.intellij.openapi.vcs.AbstractVcs):java.util.List
@@ -379,7 +378,6 @@ a:com.intellij.openapi.vcs.ProjectLevelVcsManager
 - a:hasActiveVcss():Z
 - a:hasAnyMappings():Z
 - a:isBackgroundVcsOperationRunning():Z
-- a:isConsoleVisible():Z
 - a:isFileInContent(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isIgnored(com.intellij.openapi.vcs.FilePath):Z
 - a:isIgnored(com.intellij.openapi.vfs.VirtualFile):Z
@@ -390,7 +388,6 @@ a:com.intellij.openapi.vcs.ProjectLevelVcsManager
 - a:scrollConsoleToTheEnd():V
 - a:setDirectoryMapping(java.lang.String,java.lang.String):V
 - a:setDirectoryMappings(java.util.List):V
-- a:showConsole():V
 - a:showConsole(java.lang.Runnable):V
 - a:showProjectOperationInfo(com.intellij.openapi.vcs.update.UpdatedFiles,java.lang.String):V
 - a:startBackgroundVcsOperation():V
@@ -520,8 +517,6 @@ f:com.intellij.openapi.vcs.VcsConfiguration
 - <init>():V
 - acceptLastCreatedPatchName(java.lang.String):V
 - addIgnoredUnregisteredRoots(java.util.Collection):V
-- getAddRemoveOption():com.intellij.openapi.progress.PerformInBackgroundOption
-- getCheckoutOption():com.intellij.openapi.progress.PerformInBackgroundOption
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.VcsConfiguration
 - getLastNonEmptyCommitMessage():java.lang.String
 - getPatchFileExtension():java.lang.String
@@ -1315,13 +1310,11 @@ a:com.intellij.openapi.vcs.changes.LocalChangeList
 - a:isDefault():Z
 - a:isReadOnly():Z
 - a:setComment(java.lang.String):V
-- a:setReadOnly(Z):V
 com.intellij.openapi.vcs.changes.LocalChangeListsLoadedListener
 - a:processLoadedLists(java.util.List):V
 a:com.intellij.openapi.vcs.changes.LocalCommitExecutor
 - com.intellij.ide.HelpIdProvider
 - com.intellij.openapi.vcs.changes.CommitExecutor
-- sf:LOCAL_COMMIT_EXECUTOR:com.intellij.openapi.extensions.ProjectExtensionPointName
 - <init>():V
 c:com.intellij.openapi.vcs.changes.LocallyDeletedChange
 - <init>(com.intellij.openapi.vcs.FilePath):V
@@ -1373,8 +1366,6 @@ a:com.intellij.openapi.vcs.changes.VcsDirtyScope
 - a:getRecursivelyDirtyDirectories():java.util.Set
 - a:getVcs():com.intellij.openapi.vcs.AbstractVcs
 - a:isEmpty():Z
-- a:iterate(com.intellij.util.Processor):V
-- a:iterateExistingInsideScope(com.intellij.util.Processor):V
 - a:wasEveryThingDirty():Z
 *:com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder
 - a:addDirtyPathFast(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,Z):V

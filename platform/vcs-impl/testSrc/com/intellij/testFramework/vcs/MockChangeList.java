@@ -70,11 +70,6 @@ public class MockChangeList extends LocalChangeList {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public void setReadOnly(boolean isReadOnly) {
-    throw new UnsupportedOperationException();
-  }
-
   @Nullable
   @Override
   public Object getData() {

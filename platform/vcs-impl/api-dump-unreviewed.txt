@@ -2062,7 +2062,6 @@ f:com.intellij.openapi.vcs.changes.LocalChangeListImpl
 - isDefault():Z
 - isReadOnly():Z
 - setComment(java.lang.String):V
-- setReadOnly(Z):V
 - toString():java.lang.String
 c:com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
@@ -2297,8 +2296,6 @@ f:com.intellij.openapi.vcs.changes.VcsDirtyScopeImpl
 - getRecursivelyDirtyDirectories():java.util.Set
 - getVcs():com.intellij.openapi.vcs.AbstractVcs
 - isEmpty():Z
-- iterate(com.intellij.util.Processor):V
-- iterateExistingInsideScope(com.intellij.util.Processor):V
 - markEverythingDirty():V
 - pack():com.intellij.openapi.vcs.changes.VcsDirtyScopeImpl
 - toString():java.lang.String
@@ -4224,7 +4221,6 @@ f:com.intellij.openapi.vcs.changes.patch.PatchWriter
 - s:writeAsPatchToClipboard(com.intellij.openapi.project.Project,java.util.List,java.nio.file.Path,com.intellij.openapi.vcs.changes.CommitContext):V
 - s:writePatches(com.intellij.openapi.project.Project,java.nio.file.Path,java.nio.file.Path,java.util.List,com.intellij.openapi.vcs.changes.CommitContext):V
 - s:writePatches(com.intellij.openapi.project.Project,java.nio.file.Path,java.nio.file.Path,java.util.List,com.intellij.openapi.vcs.changes.CommitContext,java.nio.charset.Charset):V
-- s:writePatches(com.intellij.openapi.project.Project,java.nio.file.Path,java.nio.file.Path,java.util.List,com.intellij.openapi.vcs.changes.CommitContext,java.nio.charset.Charset,Z):V
 - s:writePatches(com.intellij.openapi.project.Project,java.nio.file.Path,java.nio.file.Path,java.util.List,java.lang.String,com.intellij.openapi.vcs.changes.CommitContext,java.nio.charset.Charset):V
 c:com.intellij.openapi.vcs.changes.patch.PsiPatchBaseDirectoryDetector
 - com.intellij.openapi.vcs.changes.patch.PatchBaseDirectoryDetector
@@ -6712,7 +6708,6 @@ f:com.intellij.openapi.vcs.ex.LocalRange
 - f:getChangelistId():java.lang.String
 - getClientIds():java.util.List
 - f:getExclusionState():com.intellij.openapi.vcs.ex.RangeExclusionState
-- f:isExcludedFromCommit():Z
 c:com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction
 - com.intellij.openapi.vcs.ex.LineStatusActionBase
 - <init>():V
@@ -7316,7 +7311,6 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - getContentManager():com.intellij.ui.content.ContentManager
 - getContentRevisionCache():com.intellij.openapi.vcs.impl.ContentRevisionCache
 - getDescriptor(java.lang.String):com.intellij.openapi.vcs.impl.VcsDescriptor
-- getDetailedVcsMappings(com.intellij.openapi.vcs.AbstractVcs):java.util.List
 - getDirectoryMappingFor(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.VcsDirectoryMapping
 - getDirectoryMappings():java.util.List
 - getDirectoryMappings(com.intellij.openapi.vcs.AbstractVcs):java.util.List
@@ -7342,7 +7336,6 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - haveDefaultMapping():java.lang.String
 - haveVcses():Z
 - isBackgroundVcsOperationRunning():Z
-- isConsoleVisible():Z
 - isFileInContent(com.intellij.openapi.vfs.VirtualFile):Z
 - isIgnored(com.intellij.openapi.vcs.FilePath):Z
 - isIgnored(com.intellij.openapi.vfs.VirtualFile):Z
@@ -7361,7 +7354,6 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - setAutoDirectoryMappings(java.util.List):V
 - setDirectoryMapping(java.lang.String,java.lang.String):V
 - setDirectoryMappings(java.util.List):V
-- showConsole():V
 - showConsole(java.lang.Runnable):V
 - showProjectOperationInfo(com.intellij.openapi.vcs.update.UpdatedFiles,java.lang.String):V
 - showUpdateProjectInfo(com.intellij.openapi.vcs.update.UpdatedFiles,java.lang.String,com.intellij.openapi.vcs.update.ActionInfo,Z):com.intellij.openapi.vcs.update.UpdateInfoTree

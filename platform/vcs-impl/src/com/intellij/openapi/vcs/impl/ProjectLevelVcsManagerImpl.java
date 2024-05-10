@@ -477,12 +477,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  @Deprecated
-  public List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs) {
-    return MappingsToRoots.getDetailedVcsMappings(myProject, myMappings, vcs);
-  }
-
-  @Override
   public VirtualFile[] getAllVersionedRoots() {
     List<VirtualFile> vFiles = new ArrayList<>();
     final AbstractVcs[] vcses = myMappings.getActiveVcses();
@@ -784,11 +778,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public void showConsole() {
-    showConsole(null);
-  }
-
-  @Override
   public void showConsole(@Nullable Runnable then) {
     VcsConsoleTabService.getInstance(myProject).showConsoleTab(true, null);
   }
@@ -796,11 +785,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void scrollConsoleToTheEnd() {
     VcsConsoleTabService.getInstance(myProject).showConsoleTabAndScrollToTheEnd();
-  }
-
-  @Override
-  public boolean isConsoleVisible() {
-    return VcsConsoleTabService.getInstance(myProject).isConsoleVisible();
   }
 
   private static class ActionKey {
