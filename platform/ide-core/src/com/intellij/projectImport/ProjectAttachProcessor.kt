@@ -52,4 +52,6 @@ open class ProjectAttachProcessor {
   open fun getActionText(project: Project): @NlsContexts.Button String? = null
 
   open fun getDescription(project: Project): @NlsContexts.DetailedDescription String? = null
+
+  open val defaultOptionIndex: Int = 0
 }

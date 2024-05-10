@@ -39,4 +39,6 @@ internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
       return LangBundle.message("prompt.open.project.create.workspace")
     }
   }
+
+  override val defaultOptionIndex = 2
 }
