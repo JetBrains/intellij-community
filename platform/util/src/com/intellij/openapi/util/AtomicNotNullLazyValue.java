@@ -4,16 +4,15 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
 @ApiStatus.NonExtendable
 public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
   private volatile T myValue;
 
-  /** @deprecated Use {@link NotNullLazyValue#atomicLazy(Supplier)} */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  protected AtomicNotNullLazyValue() { }
+  /**
+   * Use {@link NotNullLazyValue#atomicLazy} instead
+   */
+  @ApiStatus.Internal
+  AtomicNotNullLazyValue() { }
 
   @Override
   public final @NotNull T getValue() {

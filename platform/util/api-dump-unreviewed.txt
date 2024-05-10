@@ -593,7 +593,6 @@ a:com.intellij.openapi.util.AtomicClearableLazyValue
 - f:isCached():Z
 a:com.intellij.openapi.util.AtomicNotNullLazyValue
 - com.intellij.openapi.util.NotNullLazyValue
-- p:<init>():V
 - s:createValue(com.intellij.openapi.util.NotNullFactory):com.intellij.openapi.util.AtomicNotNullLazyValue
 - f:getValue():java.lang.Object
 - isComputed():Z
@@ -1665,10 +1664,6 @@ f:com.intellij.openapi.util.io.StreamUtil
 - s:readText(java.io.Reader):java.lang.String
 - s:readTextAndConvertSeparators(java.io.Reader):C[]
 - s:readTextFrom(java.io.Reader):java.lang.String
-f:com.intellij.openapi.util.io.UniqueNameBuilder
-- <init>(java.lang.String,java.lang.String,I):V
-- addPath(java.lang.Object,java.lang.String):V
-- getShortPath(java.lang.Object):java.lang.String
 f:com.intellij.openapi.util.io.WindowsRegistryUtil
 - s:readRegistryBranch(java.lang.String):java.util.List
 - s:readRegistryDefault(java.lang.String):java.lang.String
@@ -4010,7 +4005,6 @@ c:com.intellij.util.containers.MultiMap
 - s:createOrderedSet():com.intellij.util.containers.MultiMap
 - s:createSet():com.intellij.util.containers.MultiMap
 - s:createSet(java.util.Map):com.intellij.util.containers.MultiMap
-- s:createSmart():com.intellij.util.containers.MultiMap
 - s:createWeakKey():com.intellij.util.containers.MultiMap
 - s:empty():com.intellij.util.containers.MultiMap
 - f:entrySet():java.util.Set
@@ -4185,9 +4179,6 @@ f:com.intellij.util.containers.SortedList
 - remove(I):java.lang.Object
 - remove(java.lang.Object):Z
 - size():I
-c:com.intellij.util.containers.StringInterner
-- com.intellij.util.containers.Interner
-- <init>():V
 f:com.intellij.util.containers.ThreadLocalRandom
 - <init>():V
 - s:advanceProbe(I):I

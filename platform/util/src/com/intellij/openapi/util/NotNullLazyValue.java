@@ -62,7 +62,6 @@ public abstract class NotNullLazyValue<T> implements Supplier<T> {
     };
   }
 
-  @SuppressWarnings("deprecation")
   public static @NotNull <T> NotNullLazyValue<T> atomicLazy(@NotNull Supplier<? extends @NotNull T> value) {
     return new AtomicNotNullLazyValue<T>() {
       @Override
