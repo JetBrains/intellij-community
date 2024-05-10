@@ -257,6 +257,7 @@ e:com.intellij.formatting.FormattingMode
 - s:valueOf(java.lang.String):com.intellij.formatting.FormattingMode
 - s:values():com.intellij.formatting.FormattingMode[]
 com.intellij.ide.ConsentOptionsProvider
+- a:isActivatedWithFreeLicense():Z
 - a:isEAP():Z
 - a:isSendingUsageStatsAllowed():Z
 - a:setSendingUsageStatsAllowed(Z):V
