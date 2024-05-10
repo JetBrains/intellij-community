@@ -236,7 +236,7 @@ final class LocalHistoryEventDispatcher {
     @Override
     public void afterRefreshFinish(boolean asynchronous) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("activity.name.external.change"), null);
+      if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("activity.name.external.change"), CommonActivity.ExternalChange);
     }
   }
 
@@ -250,7 +250,7 @@ final class LocalHistoryEventDispatcher {
     @Override
     public void commandFinished(@NotNull CommandEvent e) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
-      if (dispatcher != null) dispatcher.endChangeSet(e.getCommandName(), null);
+      if (dispatcher != null) dispatcher.endChangeSet(e.getCommandName(), CommonActivity.Command);
     }
   }
 

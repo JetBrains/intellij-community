@@ -86,6 +86,8 @@
       implementation="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryFileManagerListener"/>
     <advancedSetting id="localHistory.daysToKeep" default="5" groupKey="group.advanced.settings.ide"/>
 
+    <history.activityPresentationProvider implementation="com.intellij.history.integration.CommonActivityPresentationProvider"/>
+
     <notificationGroup displayType="BALLOON" id="LocalHistory.General" bundle="messages.LocalHistoryBundle"
                        key="notification.group.general"/>
 
