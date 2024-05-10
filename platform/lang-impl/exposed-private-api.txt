@@ -16,7 +16,6 @@ com/intellij/codeInspection/ex/GlobalInspectionContextImpl
 com/intellij/codeInspection/ex/VisibleTreeState
 com/intellij/codeInspection/ex/VisibleTreeStateComponent
 com/intellij/conversion/impl/CachedConversionResult
-com/intellij/execution/services/ServiceViewManagerImpl$State
 com/intellij/facet/frameworks/beans/Artifact
 com/intellij/facet/frameworks/beans/ArtifactItem
 com/intellij/ide/actions/searcheverywhere/SearchEverywhereMlService

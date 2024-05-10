@@ -5,13 +5,13 @@ import com.intellij.execution.dashboard.RunDashboardGroup;
 import com.intellij.execution.dashboard.RunDashboardNode;
 import com.intellij.execution.dashboard.actions.RunDashboardGroupNode;
 import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor;
+import com.intellij.platform.execution.serviceView.ServiceViewManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

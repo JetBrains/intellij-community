@@ -1526,43 +1526,6 @@
       <reference ref="EditSource"/>
       <reference ref="TreeNodeExclusion"/>
     </group>
-    <group id="ServiceViewTreeToolbar">
-      <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
-             class="com.intellij.execution.services.AddServiceActionGroup">
-      </group>
-      <group id="ServiceView.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy"
-             class="com.intellij.ide.actions.NonEmptyActionGroup">
-        <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"/>
-        <separator/>
-      </group>
-      <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab"
-             class="com.intellij.execution.services.OpenInNewTabActionGroup">
-        <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
-        <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
-        <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
-      </group>
-    </group>
-    <group id="ServiceViewItemToolbar">
-      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup" id="ServiceViewItemToolbarGroup"/>
-      <separator/>
-    </group>
-    <group id="ServiceViewItemPopup">
-      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup" id="ServiceViewItemPopupGroup"/>
-      <separator/>
-      <reference id="ServiceView.OpenInNewTab"/>
-      <reference id="ServiceView.OpenEachInNewTab"/>
-      <reference id="ServiceView.SplitByType"/>
-      <action id="ServiceView.OpenInToolWindow" class="com.intellij.execution.services.OpenInToolWindowAction"/>
-      <separator/>
-      <reference id="$Delete"/>
-      <separator/>
-      <reference id="EditSource"/>
-      <action id="ServiceView.JumpToServices" class="com.intellij.execution.services.JumpToServicesAction" use-shortcut-of="ShowNavBar"/>
-    </group>
-    <action id="ServiceView.SelectActiveService" class="com.intellij.execution.services.SelectActiveServiceAction"/>
-    <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
-    <action id="ServiceView.ConfigureServices" class="com.intellij.execution.services.ConfigureServicesAction" icon="AllIcons.General.GearPlain"/>
-
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
     </action>
