@@ -11,7 +11,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -83,11 +82,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
       myEditor = null;
       super.tearDown();
     }
-  }
-
-  @Override
-  protected @NotNull PsiTestData createData() {
-    return new CodeInsightTestData();
   }
 
   protected void configureByFile(String filePath) throws Exception {
@@ -187,14 +181,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
-  }
-
-  /**
-   * @deprecated use {@link #configureByFiles(File, VirtualFile...)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public VirtualFile doConfigureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
-    return configureByFiles(rawProjectRoot, vFiles);
   }
 
   protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
@@ -329,16 +315,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     myFile = getPsiFile(editor.getDocument());
   }
 
-  /**
-   * @deprecated usages must be inlined
-   */
-  @Deprecated(forRemoval = true)
-  protected @NotNull List<Editor> openEditorsAndActivateLast(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
-    final List<Editor> list = openEditors(editorInfos);
-    setActiveEditor(list.get(list.size() - 1));
-    return list;
-  }
-
   protected final @NotNull List<Editor> openEditors(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     return ContainerUtil.map(editorInfos.keySet(), newVFile -> {
       PsiFile file = myPsiManager.findFile(newVFile);
@@ -383,43 +359,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
   protected boolean clearModelBeforeConfiguring() {
     return false;
-  }
-
-  /**
-   * @deprecated cursor and selection is automatically configured in {@code configureByFile*} methods 
-   */
-  @Deprecated(forRemoval = true)
-  protected void setupCursorAndSelection(final @NotNull Editor editor) {
-    Document document = editor.getDocument();
-    EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
-    EditorTestUtil.setCaretsAndSelection(editor, caretState);
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-  }
-
-  /**
-   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers} 
-   */
-  @Deprecated(forRemoval = true)
-  @Override
-  protected void configure(@NotNull String path, String dataName) throws Exception {
-    super.configure(path, dataName);
-
-    myEditor = createEditor(myFile.getVirtualFile());
-
-    CodeInsightTestData data = (CodeInsightTestData) myTestDataBefore;
-
-    LogicalPosition pos = new LogicalPosition(data.getLineNumber() - 1, data.getColumnNumber() - 1);
-    myEditor.getCaretModel().moveToLogicalPosition(pos);
-
-    int selectionEnd;
-    int selectionStart = selectionEnd = myEditor.getCaretModel().getOffset();
-
-    if (data.getSelectionStartColumnNumber() >= 0) {
-      selectionStart = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionStartLineNumber() - 1, data.getSelectionStartColumnNumber() - 1));
-      selectionEnd = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionEndLineNumber() - 1, data.getSelectionEndColumnNumber() - 1));
-    }
-
-    myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
   }
 
   protected void checkResultByFile(@NotNull String filePath) throws Exception {
@@ -470,43 +409,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
       EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);
     });
-  }
-
-  /**
-   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers}
-   */
-  @Override
-  @Deprecated(forRemoval = true)
-  protected void checkResult(String dataName) throws Exception {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    super.checkResult(dataName);
-
-    CodeInsightTestData data = (CodeInsightTestData) myTestDataAfter;
-
-    if (data.getColumnNumber() >= 0) {
-      assertEquals(dataName + ":caretColumn", data.getColumnNumber(), myEditor.getCaretModel().getLogicalPosition().column + 1);
-    }
-    if (data.getLineNumber() >= 0) {
-      assertEquals(dataName + ":caretLine", data.getLineNumber(), myEditor.getCaretModel().getLogicalPosition().line + 1);
-    }
-
-    int selectionStart = myEditor.getSelectionModel().getSelectionStart();
-    int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
-    LogicalPosition startPosition = myEditor.offsetToLogicalPosition(selectionStart);
-    LogicalPosition endPosition = myEditor.offsetToLogicalPosition(selectionEnd);
-
-    if (data.getSelectionStartColumnNumber() >= 0) {
-      assertEquals(dataName + ":selectionStartColumn", data.getSelectionStartColumnNumber(), startPosition.column + 1);
-    }
-    if (data.getSelectionStartLineNumber() >= 0) {
-      assertEquals(dataName + ":selectionStartLine", data.getSelectionStartLineNumber(), startPosition.line + 1);
-    }
-    if (data.getSelectionEndColumnNumber() >= 0) {
-      assertEquals(dataName + ":selectionEndColumn", data.getSelectionEndColumnNumber(), endPosition.column + 1);
-    }
-    if (data.getSelectionEndLineNumber() >= 0) {
-      assertEquals(dataName + ":selectionEndLine", data.getSelectionEndLineNumber(), endPosition.line + 1);
-    }
   }
 
   protected @NotNull VirtualFile findVirtualFile(@NotNull String filePath) {

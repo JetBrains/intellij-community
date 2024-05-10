@@ -4,7 +4,6 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.options.ConfigurationException;
@@ -12,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,16 +25,6 @@ public class ProjectNameStep extends ModuleWizardStep {
   protected NamePathComponent myNamePathComponent;
   protected final WizardContext myWizardContext;
   private final ProjectFormatPanel myFormatPanel = new ProjectFormatPanel();
-
-  /**
-   * @see <a href="https://youtrack.jetbrains.com/issue/IDEA-302097"/>IDEA-302097</a>
-   * @deprecated WizardMode hasn't usages, only implementations
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  public ProjectNameStep(WizardContext wizardContext, @Nullable final WizardMode mode) {
-    this(wizardContext);
-  }
 
   public ProjectNameStep(WizardContext wizardContext) {
     myWizardContext = wizardContext;

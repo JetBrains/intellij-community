@@ -9,10 +9,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -21,20 +17,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.StringTokenizer;
 
 public abstract class JavaPsiTestCase extends JavaModuleTestCase {
   protected PsiManagerImpl myPsiManager;
   protected PsiFile myFile;
-  private String myDataRoot;
 
   @Override
   protected void setUp() throws Exception {
@@ -47,8 +39,6 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
     try {
       myPsiManager = null;
       myFile = null;
-      myTestDataBefore = null;
-      myTestDataAfter = null;
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -109,22 +99,6 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
     return myFile.findElementAt(offset);
   }
 
-  /**
-   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
-   */
-  @Deprecated
-  protected void configure(@NotNull String path, String dataName) throws Exception {
-    myDataRoot = getTestDataPath() + path;
-
-    myTestDataBefore = loadData(dataName);
-
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    VirtualFile vDir = createTestProjectStructure(myModule, myDataRoot, true, getTempDir());
-
-    VirtualFile vFile = vDir.findChild(myTestDataBefore.getTextFile());
-    myFile = myPsiManager.findFile(Objects.requireNonNull(vFile));
-  }
-
   @NotNull
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
@@ -135,104 +109,6 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
     String result = FileUtil.loadFile(new File(getTestDataPath() + File.separatorChar + name));
     return StringUtil.convertLineSeparators(result);
   }
-
-  @NotNull
-  private PsiTestData loadData(String dataName) throws Exception {
-    PsiTestData data = createData();
-    Element documentElement = JDOMUtil.load(Paths.get(myDataRoot, "data.xml"));
-    for (Element node : documentElement.getChildren("data")) {
-      String value = node.getAttributeValue("name");
-      if (value.equals(dataName)) {
-        DefaultJDOMExternalizer.readExternal(data, node);
-        data.loadText(myDataRoot);
-
-        return data;
-      }
-    }
-
-    throw new IllegalArgumentException("Cannot find data chunk '" + dataName + "'");
-  }
-
-  /**
-   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  @NotNull
-  protected PsiTestData createData() {
-    return new PsiTestData();
-  }
-
-  /**
-   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
-   */
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  @Deprecated
-  protected void checkResult(String dataName) throws Exception {
-    myTestDataAfter = loadData(dataName);
-
-    final String textExpected = myTestDataAfter.getText();
-    final String actualText = myFile.getText();
-
-    if (!textExpected.equals(actualText)) {
-      System.out.println("Text mismatch: " + getName() + "(" + getClass().getName() + ")");
-      System.out.println("Text expected:");
-      printText(textExpected);
-      System.out.println("Text found:");
-      printText(actualText);
-
-      fail("text");
-    }
-
-//    assertEquals(myTestDataAfter.getText(), myFile.getText());
-  }
-
-  /**
-   * @deprecated printing text to {@code System.out} is discouraged, use other methods instead 
-   */
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  @Deprecated(forRemoval = true)
-  protected static void printText(@NotNull String text) {
-    final String q = "\"";
-    System.out.print(q);
-
-    text = StringUtil.convertLineSeparators(text);
-
-    StringTokenizer tokenizer = new StringTokenizer(text, "\n", true);
-    while (tokenizer.hasMoreTokens()) {
-      final String token = tokenizer.nextToken();
-
-      if (token.equals("\n")) {
-        System.out.print(q);
-        System.out.println();
-        System.out.print(q);
-        continue;
-      }
-
-      System.out.print(token);
-    }
-
-    System.out.print(q);
-    System.out.println();
-  }
-
-  /**
-   * @deprecated use {@link ModuleRootModificationUtil#addModuleLibrary} directly instead
-   */
-  @Deprecated(forRemoval = true)
-  protected void addLibraryToRoots(@NotNull VirtualFile jarFile, @NotNull OrderRootType rootType) {
-    addLibraryToRoots(myModule, jarFile, rootType);
-  }
-
-  /**
-   * @deprecated use {@link ModuleRootModificationUtil#addModuleLibrary} directly instead
-   */
-  @Deprecated(forRemoval = true)
-  protected static void addLibraryToRoots(@NotNull Module module, @NotNull VirtualFile root, @NotNull OrderRootType rootType) {
-    assertEquals(OrderRootType.CLASSES, rootType);
-    ModuleRootModificationUtil.addModuleLibrary(module, root.getUrl());
-  }
-
 
   public PsiFile getFile() {
     return myFile;
@@ -249,18 +125,4 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
   public void commitDocument(@NotNull Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
-
-  /**
-   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed") 
-  @Deprecated(forRemoval = true)
-  protected PsiTestData myTestDataBefore;
-  
-  /**
-   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed") 
-  @Deprecated(forRemoval = true)
-  protected PsiTestData myTestDataAfter;
 }

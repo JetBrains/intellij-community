@@ -1261,17 +1261,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  /**
-   * @deprecated use {@link #checkLiteralExpressionParsingError(PsiLiteralExpression, LanguageLevel, PsiFile, Ref)}
-   */
-  @Deprecated(forRemoval = true)
-  public static HighlightInfo checkLiteralExpressionParsingError(@NotNull PsiLiteralExpression expression,
-                                                                 @NotNull LanguageLevel level,
-                                                                 @Nullable PsiFile file) {
-    HighlightInfo.Builder builder = checkLiteralExpressionParsingError(expression, level, file, null);
-    return builder == null ? null : builder.create();
-  }
-
   public static HighlightInfo.Builder checkLiteralExpressionParsingError(@NotNull PsiLiteralExpression expression,
                                                                          @NotNull LanguageLevel level,
                                                                          @Nullable PsiFile file, @Nullable Ref<? super String> description) {
