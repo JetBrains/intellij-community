@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.AbstractMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
-abstract class AbstractFirMultiModuleSafeDeleteTest: AbstractMultiModuleSafeDeleteTest() {
+abstract class AbstractFirMultiModuleSafeDeleteTest : AbstractMultiModuleSafeDeleteTest() {
 
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2

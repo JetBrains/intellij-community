@@ -4,23 +4,26 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiManager
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import java.io.File
 
 abstract class AbstractMultiModuleRenameTest : KotlinMultiFileTestCase() {
+
     override fun getTestRoot(): String = "/refactoring/renameMultiModule/"
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
 
-    open fun isFirPlugin(): Boolean = false
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     fun doTest(path: String) {
         val renameParamsObject = loadTestConfiguration(File(path))
 
         val file = renameParamsObject.getString("file")
         val newName = renameParamsObject.getString("newName")
-        val isEnabled = renameParamsObject.get(if (isFirPlugin()) "enabledInK2" else "enabledInK1")?.asBoolean != false
+        val isEnabled = renameParamsObject.get("enabledIn${pluginMode.name}")?.asBoolean != false
 
         isMultiModule = true
 

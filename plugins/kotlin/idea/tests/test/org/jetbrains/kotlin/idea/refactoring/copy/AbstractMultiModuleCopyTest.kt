@@ -2,15 +2,20 @@
 
 package org.jetbrains.kotlin.idea.refactoring.copy
 
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import java.io.File
 
 abstract class AbstractMultiModuleCopyTest : KotlinMultiFileTestCase() {
+
     override fun getTestRoot(): String = "/refactoring/copyMultiModule/"
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     fun doTest(path: String) {
         val config = loadTestConfiguration(File(path))

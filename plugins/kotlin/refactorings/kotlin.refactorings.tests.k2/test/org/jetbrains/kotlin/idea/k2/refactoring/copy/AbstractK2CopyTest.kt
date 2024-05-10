@@ -5,6 +5,7 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractCopyTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractMultiModuleCopyTest
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -31,4 +32,8 @@ abstract class AbstractK2CopyTest: AbstractCopyTest() {
         file.name.replace(".k2.kt", ".kt")
 }
 
-abstract class AbstractK2MultiModuleCopyTest: AbstractMultiModuleCopyTest()
+abstract class AbstractK2MultiModuleCopyTest : AbstractMultiModuleCopyTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+}

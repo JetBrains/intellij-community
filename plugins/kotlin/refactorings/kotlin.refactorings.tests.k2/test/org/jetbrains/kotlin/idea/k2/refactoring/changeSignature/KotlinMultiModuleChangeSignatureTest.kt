@@ -17,8 +17,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase(),
-                                             ExpectedPluginModeProvider {
+class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
 
     init {
         isMultiModule = true
@@ -26,10 +25,6 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase(),
 
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
-
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
 
     override fun getTestRoot(): String = "/refactoring/changeSignatureMultiModule/"
 

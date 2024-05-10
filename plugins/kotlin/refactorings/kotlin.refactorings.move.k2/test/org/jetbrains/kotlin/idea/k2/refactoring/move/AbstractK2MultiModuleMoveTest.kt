@@ -8,18 +8,11 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class AbstractK2MultiModuleMoveTest : AbstractMultiModuleMoveTest(),
-                                               ExpectedPluginModeProvider {
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+abstract class AbstractK2MultiModuleMoveTest : AbstractMultiModuleMoveTest() {
 
-    override val isFirPlugin: Boolean = true
-
-    override val pluginMode: KotlinPluginMode = KotlinPluginMode.of(isFirPlugin)
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
         val action = when (config.getString("type")) {

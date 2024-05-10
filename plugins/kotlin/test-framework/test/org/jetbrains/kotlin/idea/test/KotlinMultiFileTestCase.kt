@@ -17,16 +17,17 @@ import com.intellij.refactoring.MultiFileTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import java.io.File
 
-abstract class KotlinMultiFileTestCase : MultiFileTestCase() {
+abstract class KotlinMultiFileTestCase : MultiFileTestCase(),
+                                         ExpectedPluginModeProvider {
+
     protected var isMultiModule = false
     private var vfsDisposable: Ref<Disposable>? = null
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         vfsDisposable = allowProjectRootAccess(this)
 
         runWriteAction {
@@ -89,8 +90,8 @@ abstract class KotlinMultiFileTestCase : MultiFileTestCase() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { disposeVfsRootAccess(vfsDisposable) },
-            ThrowableRunnable { super.tearDown() },
+            { disposeVfsRootAccess(vfsDisposable) },
+            { super.tearDown() },
         )
     }
 }

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import java.io.File
 
 abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
+
     public override fun setUp() {
         super.setUp()
         myDoCompare = false
@@ -27,12 +28,10 @@ abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
 
     protected abstract fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project)
 
-    abstract val isFirPlugin: Boolean
-
     fun doTest(path: String) {
         val config = loadTestConfiguration(File(path))
 
-        val isEnabled = if (isFirPlugin) config.get("enabledInK2").asBoolean else config.get("enabledInK1").asBoolean
+        val isEnabled = config.get("enabledIn${pluginMode.name}").asBoolean
         if (!isEnabled) return
 
         isMultiModule = true

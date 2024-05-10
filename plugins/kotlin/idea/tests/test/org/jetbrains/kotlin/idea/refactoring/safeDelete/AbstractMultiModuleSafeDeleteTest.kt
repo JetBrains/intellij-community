@@ -18,12 +18,7 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import java.io.File
 
-abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase(),
-                                                   ExpectedPluginModeProvider {
-
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
+abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
 
     object SafeDeleteAction : AbstractMultifileRefactoringTest.RefactoringAction {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
@@ -65,11 +60,7 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase(),
 
         isMultiModule = true
 
-        val pluginMode = when (pluginMode) {
-            KotlinPluginMode.K1 -> "K1"
-            KotlinPluginMode.K2 -> "K2"
-        }
-        val isEnabled = config.get("enabledIn$pluginMode")?.asBoolean != false
+        val isEnabled = config.get("enabledIn${pluginMode.name}")?.asBoolean != false
 
         val results = runCatching {
             doTestCommittingDocuments { rootDir, _ ->
