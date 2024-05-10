@@ -3,15 +3,18 @@ package org.jetbrains.plugins.terminal.block.completion.spec.dsl
 
 import com.intellij.terminal.completion.spec.*
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.createCacheKey
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellArgumentSpecImpl
 import java.util.function.Supplier
 
 /**
- * @param [parentCommandNames] used to build cache key/debug name of the generators
+ * Params [parentNames] and [argNumber] used to build cache key/debug name of the generators
  */
-internal class ShellArgumentContextImpl(private val parentCommandNames: List<String>) : ShellArgumentContext {
+internal class ShellArgumentContextImpl(
+  private val parentNames: List<String>,
+  private val argNumber: Int
+) : ShellArgumentContext {
   override var displayName: Supplier<String>? = null
   override var isOptional: Boolean = false
   override var isVariadic: Boolean = false
@@ -20,7 +23,7 @@ internal class ShellArgumentContextImpl(private val parentCommandNames: List<Str
   private val generators: MutableList<ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>>> = mutableListOf()
 
   override fun suggestions(content: suspend (ShellRuntimeContext) -> List<ShellCompletionSuggestion>) {
-    val cacheKey = createCacheKey(parentCommandNames, "arg ${generators.count() + 1}")
+    val cacheKey = createCacheKey()
     generators.add(ShellRuntimeDataGenerator(cacheKey) { content.invoke(it) })
   }
 
@@ -29,11 +32,14 @@ internal class ShellArgumentContextImpl(private val parentCommandNames: List<Str
   }
 
   override fun suggestions(vararg names: String) {
-    val debugName = createCacheKey(parentCommandNames, "arg ${generators.count() + 1}")
-    val generator = ShellRuntimeDataGenerator(debugName = debugName) {
+    val generator = ShellRuntimeDataGenerator(debugName = createCacheKey()) {
       names.map { ShellCompletionSuggestion(it, type = ShellSuggestionType.ARGUMENT) }
     }
     generators.add(generator)
+  }
+
+  private fun createCacheKey(): String {
+    return ShellDataGenerators.createCacheKey(parentNames, "arg$argNumber generator${generators.size + 1}")
   }
 
   fun build(): ShellArgumentSpec {

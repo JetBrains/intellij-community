@@ -22,7 +22,7 @@ internal class ShellOptionContextImpl(
   private val arguments: MutableList<ShellArgumentSpec> = mutableListOf()
 
   override fun argument(content: ShellArgumentContext.() -> Unit) {
-    val context = ShellArgumentContextImpl(parentCommandNames)
+    val context = ShellArgumentContextImpl(parentCommandNames + names.first(), argNumber = arguments.size + 1)
     content.invoke(context)
     arguments.add(context.build())
   }

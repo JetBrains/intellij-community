@@ -42,8 +42,9 @@ internal class ShellCommandContextImpl(
   }
 
   override fun argument(content: ShellArgumentContext.() -> Unit) {
+    val argNumber = argumentSuppliers.size + 1
     val supplier = {
-      val context = ShellArgumentContextImpl(parentNamesWithSelf)
+      val context = ShellArgumentContextImpl(parentNamesWithSelf, argNumber)
       content.invoke(context)
       context.build()
     }
