@@ -16,6 +16,13 @@ private val logger = logger<JsonSettingsModel>()
 @ApiStatus.Experimental
 class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
 
+  private val propertyPluginIdMap: Map<String, String> by lazy {
+    propertyMap.values.filter { it.pluginId != "com.intellij" }.mapNotNull { property ->
+      property.pluginId?.let { "${property.componentName}.${property.name}" to it }
+    }.toMap()
+  }
+
+
   /**
    * Supported property types.
    */
@@ -63,6 +70,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
   )
 
   data class PropertyDescriptor (
+    val pluginId: String?,
     val componentName: String,
     val name: String,
     val type: PropertyType,
@@ -81,6 +89,13 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
   internal class WhiteList (
     val properties: List<String> = emptyList()
   )
+
+  /**
+   * @return Real production Plugin ID instead of "com.intellij" when the IDE is launched in debug or test mode. Not to be used in
+   * production.
+   */
+  @VisibleForTesting
+  fun getPluginId(componentName: String, propertyName: String): String? = propertyPluginIdMap["${componentName}.${propertyName}"]
 
   companion object {
     val instance: JsonSettingsModel by lazy { componentToSettingsModel(loadFromJson()) }
@@ -109,7 +124,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
 
     private fun jsonDataToPropertyDescriptor(componentInfo: ComponentInfo, propertyInfo: ComponentPropertyInfo): PropertyDescriptor? {
       return if (componentInfo.name != null && componentInfo.storage != null) {
-        PropertyDescriptor(componentInfo.name, propertyInfo.name, propertyInfo.type, componentInfo.storage,
+        PropertyDescriptor(componentInfo.pluginId, componentInfo.name, propertyInfo.name, propertyInfo.type, componentInfo.storage,
                            propertyInfo.mapTo ?: propertyInfo.name, propertyInfo.variants)
       }
       else null
