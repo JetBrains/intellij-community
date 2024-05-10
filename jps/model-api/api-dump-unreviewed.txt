@@ -124,7 +124,6 @@ org.jetbrains.jps.model.JpsGlobal
 - a:getPathMapper():org.jetbrains.jps.model.serialization.JpsPathMapper
 - a:setPathMapper(org.jetbrains.jps.model.serialization.JpsPathMapper):V
 org.jetbrains.jps.model.JpsModel
-- commit():V
 - a:getGlobal():org.jetbrains.jps.model.JpsGlobal
 - a:getProject():org.jetbrains.jps.model.JpsProject
 - a:registerExternalReference(org.jetbrains.jps.model.JpsElementReference):V
