@@ -7,8 +7,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -74,11 +72,6 @@ private fun importSettingsFromProject(project: Project, newWorkspace: Boolean): 
   }
   return settings
 }
-
-@Service(Service.Level.PROJECT)
-internal class MyCoroutineScopeService(val scope: CoroutineScope)
-
-internal fun getCoroutineScope(workspace: Project) = workspace.service<MyCoroutineScopeService>().scope
 
 internal suspend fun linkToWorkspace(workspace: Project, projectPath: String) {
   val projectManagerImpl = blockingContext { ProjectManager.getInstance() as ProjectManagerImpl }

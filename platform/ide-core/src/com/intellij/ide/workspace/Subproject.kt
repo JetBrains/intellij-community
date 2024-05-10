@@ -7,9 +7,8 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 interface Subproject {
+  val handler: SubprojectHandler
   val workspace: Project
   val name: @Nls String
   val projectPath: String
-
-  fun removeSubproject()
 }

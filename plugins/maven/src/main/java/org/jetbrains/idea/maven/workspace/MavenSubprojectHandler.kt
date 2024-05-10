@@ -17,7 +17,7 @@ import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 internal class MavenSubprojectHandler : SubprojectHandler {
   override fun getSubprojects(project: Project): List<Subproject> {
     return MavenProjectsManager.getInstance(project).projects
-      .map { MavenSubproject(project, it) }
+      .map { MavenSubproject(project, it, this) }
   }
 
   override fun canImportFromFile(project: Project, file: VirtualFile): Boolean {
@@ -28,6 +28,12 @@ internal class MavenSubprojectHandler : SubprojectHandler {
     if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProjectAsync(project, MavenUtil.SYSTEM_ID)) {
       MavenOpenProjectProvider().forceLinkToExistingProjectAsync(file, project)
     }
+  }
+
+  override fun removeSubprojects(subprojects: List<Subproject>) {
+    val workspace = subprojects.firstOrNull()?.workspace ?: return
+    val files = subprojects.flatMap { MavenUtil.collectFiles(listOf((it as MavenSubproject).mavenProject)) }
+    MavenProjectsManager.getInstance(workspace).removeManagedFiles(files, null, null)
   }
 
   override fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings {
@@ -51,7 +57,7 @@ private class MavenImportedProjectSettings(project: Project) : ImportedProjectSe
   }
 }
 
-private class MavenSubproject(override val workspace: Project, val mavenProject: MavenProject) : Subproject {
+private class MavenSubproject(override val workspace: Project, val mavenProject: MavenProject, override val handler: SubprojectHandler) : Subproject {
   override val name: String get() = mavenProject.displayName
   override val projectPath: String get() = mavenProject.directory
 
@@ -71,10 +77,5 @@ private class MavenSubproject(override val workspace: Project, val mavenProject:
     var result = workspace.hashCode()
     result = 31 * result + mavenProject.hashCode()
     return result
-  }
-
-  override fun removeSubproject() {
-    val files = MavenUtil.collectFiles(listOf(mavenProject))
-    MavenProjectsManager.getInstance(workspace).removeManagedFiles(files, null, null)
   }
 }

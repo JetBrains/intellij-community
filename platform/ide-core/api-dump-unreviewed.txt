@@ -679,16 +679,17 @@ com.intellij.ide.wizard.StepWithSubSteps
 com.intellij.ide.workspace.ImportedProjectSettings
 - a:applyTo(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.ide.workspace.Subproject
+- a:getHandler():com.intellij.ide.workspace.SubprojectHandler
 - a:getName():java.lang.String
 - a:getProjectPath():java.lang.String
 - a:getWorkspace():com.intellij.openapi.project.Project
-- a:removeSubproject():V
 *:com.intellij.ide.workspace.SubprojectHandler
 - *sf:Companion:com.intellij.ide.workspace.SubprojectHandler$Companion
 - a:canImportFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 - a:getSubprojects(com.intellij.openapi.project.Project):java.util.List
 - a:importFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - a:importFromProject(com.intellij.openapi.project.Project,Z):com.intellij.ide.workspace.ImportedProjectSettings
+- a:removeSubprojects(java.util.List):V
 - suppressGenericImportFor(com.intellij.openapi.module.Module):Z
 *f:com.intellij.ide.workspace.SubprojectHandler$Companion
 - f:getAllSubprojects(com.intellij.openapi.project.Project):java.util.List

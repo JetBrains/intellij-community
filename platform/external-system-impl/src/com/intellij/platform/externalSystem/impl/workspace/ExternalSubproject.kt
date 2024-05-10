@@ -2,14 +2,14 @@
 package com.intellij.platform.externalSystem.impl.workspace
 
 import com.intellij.ide.workspace.Subproject
-import com.intellij.openapi.externalSystem.action.DetachExternalProjectAction
+import com.intellij.ide.workspace.SubprojectHandler
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
-class ExternalSubproject(override val workspace: Project, val projectInfo: ExternalProjectInfo) : Subproject {
+class ExternalSubproject(override val workspace: Project, val projectInfo: ExternalProjectInfo, override val handler: SubprojectHandler) : Subproject {
 
   override val name: String
     get() = projectInfo.externalProjectStructure?.data?.externalName
@@ -32,11 +32,5 @@ class ExternalSubproject(override val workspace: Project, val projectInfo: Exter
     var result = workspace.hashCode()
     result = 31 * result + projectInfo.hashCode()
     return result
-  }
-
-  override fun removeSubproject() {
-    val info = requireNotNull(projectInfo)
-    val data = requireNotNull(info.externalProjectStructure?.data)
-    DetachExternalProjectAction.detachProject(workspace, info.projectSystemId, data, null)
   }
 }

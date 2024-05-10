@@ -20,9 +20,7 @@ internal class ManageWorkspaceAction: BaseWorkspaceAction() {
     }
     val set = dialog.selectedPaths.toSet()
     val removed = subprojects.filter { !set.contains(it.projectPath) }
-    removed.forEach {
-      it.removeSubproject()
-    }
+    removeSubprojects(removed)
 
     val added = dialog.selectedPaths.filter { !subprojectPaths.contains(it) }
     getCoroutineScope(project).launch {
