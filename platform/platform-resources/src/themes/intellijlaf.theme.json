@@ -881,6 +881,7 @@
       "lightSelectionForeground": "foreground",
       "lightSelectionInactiveBackground": "grey16",
       "rowHeight": 20,
+      "scrollPaneBorder": "com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder",
       "stripeColor": "#f2f5f9"
     },
 
