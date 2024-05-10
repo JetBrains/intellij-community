@@ -12,9 +12,7 @@ internal class MyCoroutineScopeService(val scope: CoroutineScope)
 internal fun getCoroutineScope(workspace: Project) = workspace.service<MyCoroutineScopeService>().scope
 
 internal fun removeSubprojects(subprojects: Collection<Subproject>) {
-  val first = subprojects.firstOrNull() ?: return
-  val removed = subprojects.groupBy { it.handler }
-  removed.forEach {
+  subprojects.groupBy { it.handler }.forEach {
     it.key.removeSubprojects(it.value)
   }
 }

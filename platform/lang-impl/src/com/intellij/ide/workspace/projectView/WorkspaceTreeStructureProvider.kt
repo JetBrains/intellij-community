@@ -9,7 +9,11 @@ import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ide.workspace.Subproject
+import com.intellij.ide.workspace.SubprojectDeleteProvider
+import com.intellij.ide.workspace.SubprojectHandler
 import com.intellij.ide.workspace.isWorkspace
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -27,6 +31,17 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
       return overrideWorkspaceDirectory(children, settings, parent) ?: return children
     }
     return children
+  }
+
+  override fun getData(selected: MutableCollection<out AbstractTreeNode<*>>, dataId: String): Any? {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId)) {
+      val directoryNodes = selected.filterIsInstance<PsiDirectoryNode>()
+      val workspaceNode = directoryNodes.firstNotNullOfOrNull { it.parent as? WorkspaceNode } ?: return null
+      val subprojects = directoryNodes.mapNotNull { workspaceNode.subprojectMap[it.value.virtualFile.path] }
+      if (subprojects.isEmpty()) return null
+      return SubprojectDeleteProvider(subprojects)
+    }
+    return null
   }
 
   private fun overrideWorkspaceDirectory(children: Collection<AbstractTreeNode<*>>,
@@ -58,8 +73,20 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
                               private val projectNode: ProjectViewProjectNode)
     : PsiDirectoryNode(project, value, viewSettings) {
 
+    val subprojectMap = HashMap<String, Subproject>()
+
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
-      return projectNode.children.filter { it !is ExternalLibrariesNode }
+      val subprojects = SubprojectHandler.getAllSubprojects(project).associateBy { it.projectPath }
+
+      subprojectMap.clear()
+      val children = projectNode.children.filter { it !is ExternalLibrariesNode }
+      for (child in children) {
+        val directoryNode = child as? PsiDirectoryNode ?: continue
+        val path = directoryNode.value.virtualFile.path
+        val subproject = subprojects[path] ?: continue
+        subprojectMap[path] = subproject
+      }
+      return children
     }
 
     override fun update(data: PresentationData) {
