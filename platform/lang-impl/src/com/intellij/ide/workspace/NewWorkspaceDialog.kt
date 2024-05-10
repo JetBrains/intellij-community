@@ -11,9 +11,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.ui.CheckBoxList
+import com.intellij.ui.CollectionListModel
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import java.io.File
@@ -28,7 +29,8 @@ internal class NewWorkspaceDialog(
 ) : DialogWrapper(project) {
   private lateinit var nameField: JBTextField
   private lateinit var locationField: TextFieldWithBrowseButton
-  private val projectList = CheckBoxList<String>()
+  private val listModel = CollectionListModel(initialProjects)
+  private val projectList = JBList(listModel)
 
   val projectName: String get() = nameField.text
   val location: Path get() = Paths.get(locationField.text)
@@ -42,15 +44,11 @@ internal class NewWorkspaceDialog(
       title = LangBundle.message("new.workspace.dialog.title")
       okAction.putValue(Action.NAME, IdeBundle.message("button.create"))
     }
-    initialProjects.forEach {
-      @Suppress("HardCodedStringLiteral")
-      projectList.addItem(it, it, true)
-    }
     init()
   }
 
   val selectedPaths: List<String>
-    get()  = projectList.checkedItems
+    get()  = listModel.items
 
   override fun createCenterPanel(): JComponent {
     val suggestLocation = RecentProjectsManager.getInstance().suggestNewProjectLocation()
@@ -63,7 +61,6 @@ internal class NewWorkspaceDialog(
     val toolbarDecorator = ToolbarDecorator.createDecorator(projectList)
       .setPanelBorder(IdeBorderFactory.createTitledBorder(LangBundle.message("border.title.linked.projects")))
       .disableUpDownActions()
-      .disableRemoveAction()
       .setAddActionName(LangBundle.message("action.add.projects.text"))
       .setAddAction { addProjects() }
     return panel {
@@ -111,11 +108,11 @@ internal class NewWorkspaceDialog(
     descriptor.title = LangBundle.message("chooser.title.select.file.or.directory.to.import")
     descriptor.withFileFilter { file -> handlers.any { it.canImportFromFile(project, file) } }
     val files = FileChooser.chooseFiles(descriptor, project, null)
-    val allItems = projectList.allItems
+    val allItems = listModel.items
     for (file in files) {
       val path = file.path
       if (allItems.contains(path)) continue
-      projectList.addItem(path, path, true)
+      listModel.add(path)
     }
   }
 }
