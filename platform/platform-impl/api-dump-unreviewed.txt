@@ -8922,34 +8922,15 @@ f:com.intellij.ide.projectWizard.NewProjectWizardConstants$Language
 - sf:RUBY:java.lang.String
 - sf:RUST:java.lang.String
 - sf:SCALA:java.lang.String
-f:com.intellij.ide.settings.json.ComponentDescriptor
-- <init>(java.lang.String,java.lang.Class,com.intellij.openapi.extensions.PluginDescriptor,com.intellij.openapi.components.State):V
-- f:collectFieldInfo():java.util.List
-- f:component1():java.lang.String
-- f:component2():java.lang.Class
-- f:component3():com.intellij.openapi.extensions.PluginDescriptor
-- f:component4():com.intellij.openapi.components.State
-- f:copy(java.lang.String,java.lang.Class,com.intellij.openapi.extensions.PluginDescriptor,com.intellij.openapi.components.State):com.intellij.ide.settings.json.ComponentDescriptor
-- bs:copy$default(com.intellij.ide.settings.json.ComponentDescriptor,java.lang.String,java.lang.Class,com.intellij.openapi.extensions.PluginDescriptor,com.intellij.openapi.components.State,I,java.lang.Object):com.intellij.ide.settings.json.ComponentDescriptor
-- equals(java.lang.Object):Z
-- f:findStorage():com.intellij.openapi.components.Storage
-- f:getAClass():java.lang.Class
-- f:getCategoryString():java.lang.String
-- f:getName():java.lang.String
-- f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
-- f:getRoamingTypeString():java.lang.String
-- f:getState():com.intellij.openapi.components.State
-- hashCode():I
-- toString():java.lang.String
-f:com.intellij.ide.settings.json.JsonSettingsModel
-- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel
+- *sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$Companion
 - <init>(java.util.Map):V
 - f:getPropertyMap():java.util.Map
-f:com.intellij.ide.settings.json.JsonSettingsModel$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel$Companion
 - f:componentToSettingsModel(com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel):com.intellij.ide.settings.json.JsonSettingsModel
 - f:getInstance():com.intellij.ide.settings.json.JsonSettingsModel
-f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo
-- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo
+- *sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$Companion
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List):V
 - b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
@@ -8970,7 +8951,7 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo
 - f:getStorage():java.lang.String
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$$serializer
+*f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$$serializer
 - childSerializers():kotlinx.serialization.KSerializer[]
@@ -8978,10 +8959,10 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$$serializer
 - getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
-f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentInfo$Companion
 - f:serializer():kotlinx.serialization.KSerializer
-f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel
-- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel
+- *sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$Companion
 - <init>():V
 - <init>(java.util.List):V
 - b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -8992,7 +8973,7 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel
 - f:getComponents():java.util.List
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$$serializer
+*f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$$serializer
 - childSerializers():kotlinx.serialization.KSerializer[]
@@ -9000,10 +8981,10 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$$serializer
 - getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
-f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel$Companion
 - f:serializer():kotlinx.serialization.KSerializer
-f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo
-- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo
+- *sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$Companion
 - <init>(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.util.List):V
 - b:<init>(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
@@ -9021,7 +9002,7 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo
 - f:getVariants():java.util.List
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$$serializer
+*f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$$serializer
 - childSerializers():kotlinx.serialization.KSerializer[]
@@ -9029,9 +9010,9 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$$serial
 - getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
-f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$Companion
 - f:serializer():kotlinx.serialization.KSerializer
-f:com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
+*f:com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
 - <init>(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List):V
 - b:<init>(java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
@@ -9051,7 +9032,7 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
 - f:getVariants():java.util.List
 - hashCode():I
 - toString():java.lang.String
-e:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+*e:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
 - java.lang.Enum
 - sf:Boolean:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
 - sf:Enum:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
@@ -9063,8 +9044,8 @@ e:com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
 - s:values():com.intellij.ide.settings.json.JsonSettingsModel$PropertyType[]
-f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo
-- sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo
+- *sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$Companion
 - <init>(java.lang.String,java.lang.String):V
 - b:<init>(java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
@@ -9076,7 +9057,7 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo
 - f:getValue():java.lang.String
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$$serializer
+*f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$$serializer
 - childSerializers():kotlinx.serialization.KSerializer[]
@@ -9084,7 +9065,7 @@ f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$$serializer
 - getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
-f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$Companion
+*f:com.intellij.ide.settings.json.JsonSettingsModel$VariantInfo$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.ide.settings.json.SettingsInspectorKt
 - sf:buildComponentModel():com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel

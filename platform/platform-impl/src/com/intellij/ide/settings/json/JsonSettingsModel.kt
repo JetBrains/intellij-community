@@ -4,6 +4,7 @@ package com.intellij.ide.settings.json
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
 private val logger = logger<JsonSettingsModel>()
@@ -12,6 +13,7 @@ private val logger = logger<JsonSettingsModel>()
  * Contains supported settings which are publicly available to end users and can be edited without UI using only Json schema.
  * See [Json Settings](https://youtrack.jetbrains.com/articles/IDEA-A-2100661939/Json-Settings)
  */
+@ApiStatus.Experimental
 class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
 
   /**

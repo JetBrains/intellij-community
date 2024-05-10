@@ -50,7 +50,7 @@ internal fun listAppComponents(): List<ComponentDescriptor> {
 }
 
 
-data class ComponentDescriptor(
+internal data class ComponentDescriptor(
   val name: String,
   val aClass: Class<PersistentStateComponent<*>>,
   val pluginDescriptor: PluginDescriptor?,
