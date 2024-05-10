@@ -656,10 +656,11 @@ public final class InspectionTree extends Tree {
     }
 
     private @Nullable InspectionTreeNode getNextOccurrence(boolean next) {
-      InspectionTreeNode node = ObjectUtils.notNull(getSelectedNode(), getRoot());
+      InspectionTreeNode selected = ObjectUtils.notNull(getSelectedNode(), getRoot());
+      InspectionTreeNode node = selected;
       while (true) {
-         node = next ? next(node) : prev(node);
-        if (node == null) return null;
+        node = next ? next(node) : prev(node);
+        if (node == null || node == selected) return null;
         if (isOccurrenceNode(node)) return node;
       }
     }
@@ -689,7 +690,7 @@ public final class InspectionTree extends Tree {
       while (true) {
         // otherwise: take next sibling (or next sibling of parent (or next sibling of parent))
         InspectionTreeNode parent = node.myParent;
-        if (parent == null) return null;
+        if (parent == null) return TreeUtil.isCyclicScrollingAllowed() ? node : null;
         InspectionTreeNode.Children siblings = parent.myChildren;
         assert siblings != null;
         int index = Arrays.binarySearch(siblings.myChildren, node, InspectionResultsViewComparator.INSTANCE);
@@ -707,14 +708,22 @@ public final class InspectionTree extends Tree {
      */
     private static InspectionTreeNode prev(InspectionTreeNode node) {
       InspectionTreeNode parent = node.myParent;
-      if (parent == null) return null;
-      InspectionTreeNode.Children siblings = parent.myChildren;
-      assert siblings != null;
-      int index = Arrays.binarySearch(siblings.myChildren, node, InspectionResultsViewComparator.INSTANCE);
-      assert index >= 0;
-      index--;
-      if (index < 0) return parent; // if no sibling: go up.
-      InspectionTreeNode sibling = siblings.myChildren[index];
+      InspectionTreeNode sibling;
+      if (parent != null) {
+        InspectionTreeNode.Children siblings = parent.myChildren;
+        assert siblings != null;
+        int index = Arrays.binarySearch(siblings.myChildren, node, InspectionResultsViewComparator.INSTANCE);
+        assert index >= 0;
+        index--;
+        if (index < 0) return parent; // if no sibling: go up.
+        sibling = siblings.myChildren[index];
+      }
+      else if (TreeUtil.isCyclicScrollingAllowed()) {
+        sibling = node;
+      }
+      else {
+        return null;
+      }
       InspectionTreeNode.Children children = sibling.myChildren;
       while (children != null && children.myChildren.length > 0) {
         // if sibling: get its last child (of last child (of last child))
