@@ -394,7 +394,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     VirtualFile file = context.file().getVirtualFile();
     if (file == null) return false;
     Editor finalEditor = editor == null ? getEditor(context.project(), file) : editor;
-    if (editor == null) return false;
+    if (finalEditor == null) return false;
     List<IntentionActionWithTextCaching> actionsWithTextCaching = ContainerUtil.map(
       actions, (actionAndPresentation) -> {
         IntentionAction intention = new ModCommandActionWrapper(actionAndPresentation.action(), actionAndPresentation.presentation());
@@ -421,7 +421,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
         return action.getIcon();
       }
     };
-    IntentionHintComponent.showIntentionHint(context.project(), context.file(), editor, true, intentions);
+    IntentionHintComponent.showIntentionHint(context.project(), context.file(), finalEditor, true, intentions);
     return true;
   }
 
