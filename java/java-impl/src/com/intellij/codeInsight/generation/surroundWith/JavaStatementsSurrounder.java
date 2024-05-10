@@ -27,12 +27,15 @@ abstract class JavaStatementsSurrounder implements Surrounder {
                                               PsiElement @NotNull [] elements) throws IncorrectOperationException {
     PsiElement container = elements[0].getParent();
     if (container == null) return null;
-    return surroundStatements (project, editor, container, elements);
+    return surroundStatements(project, editor, container, elements);
   }
 
- protected abstract @Nullable TextRange surroundStatements(final Project project, final Editor editor, final PsiElement container, final PsiElement[] statements) throws IncorrectOperationException;
+  protected abstract @Nullable TextRange surroundStatements(final Project project,
+                                                            final Editor editor,
+                                                            final PsiElement container,
+                                                            final PsiElement[] statements) throws IncorrectOperationException;
 
-  protected @NotNull PsiStatement addAfter(final PsiStatement statement, final PsiElement container, final PsiElement[] statements) {
+  protected static @NotNull PsiStatement addAfter(final PsiStatement statement, final PsiElement container, final PsiElement[] statements) {
     if (container instanceof PsiSwitchLabeledRuleStatement && !(statement instanceof PsiBlockStatement)) {
       Project project = container.getProject();
       PsiManager manager = PsiManager.getInstance(project);
