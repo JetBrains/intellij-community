@@ -167,7 +167,6 @@ f:org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - s:create(java.lang.String,java.lang.String,java.lang.String,Z):org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - equals(java.lang.Object):Z
 - s:findLanguageById(java.lang.String):com.intellij.lang.Language
-- s:getAvailableLanguageIDs():java.lang.String[]
 - s:getAvailableLanguages():com.intellij.lang.Language[]
 - getID():java.lang.String
 - getLanguage():com.intellij.lang.Language
