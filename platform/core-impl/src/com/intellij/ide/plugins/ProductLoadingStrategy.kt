@@ -10,8 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
- * This class is temporarily added to support two ways of loading the plugin descriptors: [the old one][PathBasedProductLoadingStrategy]
- * which is based on layout of JAR files in the IDE installation directory and [the new one][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy]
+ * This class is added to support two ways of loading the plugin descriptors: [the current one][PathBasedProductLoadingStrategy]
+ * which is based on layout of JAR files in the IDE installation directory and [the experimental one][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy]
  * which uses information from runtime module descriptors.
  */
 @ApiStatus.Internal
@@ -30,12 +30,6 @@ abstract class ProductLoadingStrategy {
       set(value) {
         ourStrategy = value
       }
-
-    /**
-     * Creates an instance of the old path-based strategy even if module-based strategy is used in the product.
-     * This is needed to load plugin descriptors from another IDE during settings import.
-     */
-    internal fun createPathBasedLoadingStrategy(): ProductLoadingStrategy = PathBasedProductLoadingStrategy()
   }
 
   /**
@@ -48,21 +42,16 @@ abstract class ProductLoadingStrategy {
    */
   abstract fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader)
 
-  abstract fun loadBundledPluginDescriptors(
+  abstract fun loadPluginDescriptors(
     scope: CoroutineScope,
+    context: DescriptorListLoadingContext,
+    customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
-    context: DescriptorListLoadingContext,
+    isRunningFromSources: Boolean,
     zipFilePool: ZipFilePool,
+    mainClassLoader: ClassLoader,
   ): List<Deferred<IdeaPluginDescriptorImpl?>>
-
-  /** Loads descriptors for custom (non-bundled) plugins from [customPluginDir] */
-  abstract fun loadCustomPluginDescriptors(
-    scope: CoroutineScope,
-    customPluginDir: Path,
-    context: DescriptorListLoadingContext,
-    zipFilePool: ZipFilePool,
-  ): Collection<Deferred<IdeaPluginDescriptorImpl?>>
   
   abstract fun isOptionalProductModule(moduleName: String): Boolean
 
@@ -71,9 +60,4 @@ abstract class ProductLoadingStrategy {
    * if the mentioned content module isn't present in the distribution.
    */
   abstract fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path?
-
-  /**
-   * Returns `true` if the loader should search for META-INF/plugin.xml files in the core application classpath and load them.
-   */
-  abstract val shouldLoadDescriptorsFromCoreClassPath: Boolean
 }

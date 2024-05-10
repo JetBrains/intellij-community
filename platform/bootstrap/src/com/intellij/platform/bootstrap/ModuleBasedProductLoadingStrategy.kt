@@ -2,6 +2,7 @@
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -18,6 +19,7 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
+import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipFilePool
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +31,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.extension
 
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
-  @OptIn(ExperimentalStdlibApi::class)
   private val currentMode by lazy {
     val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.LOCAL_IDE.id)
     val currentMode = ProductMode.entries.find { it.id == currentModeId }
@@ -66,10 +67,47 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     classPath.addFiles(mainGroupClassPath)
   }
 
-  override fun loadBundledPluginDescriptors(
+  override fun loadPluginDescriptors(
     scope: CoroutineScope,
+    context: DescriptorListLoadingContext,
+    customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
+    isRunningFromSources: Boolean,
+    zipFilePool: ZipFilePool,
+    mainClassLoader: ClassLoader,
+  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
+    val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
+    val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
+      System.getProperty("idea.parent.prefix", PlatformUtils.IDEA_PREFIX)
+    }
+    else {
+      platformPrefixProperty
+    }
+
+    val result = java.util.ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
+    result.addAll(scope.loadCoreModules(
+      context = context,
+      platformPrefix = platformPrefix,
+      isUnitTestMode = isUnitTestMode,
+      isInDevServerMode = AppMode.isDevServer(),
+      isRunningFromSources = isRunningFromSources,
+      classLoader = mainClassLoader,
+      pool = zipFilePool,
+      shouldLoadDescriptorsFromCoreClassPath = false,
+    ))
+    result.addAll(loadCustomPluginDescriptors(
+      scope = scope,
+      customPluginDir = customPluginDir,
+      context = context,
+      zipFilePool = zipFilePool,
+    ))
+    result.addAll(loadBundledPluginDescriptors(scope = scope, context = context, zipFilePool = zipFilePool))
+    return result
+  }
+
+  private fun loadBundledPluginDescriptors(
+    scope: CoroutineScope,
     context: DescriptorListLoadingContext,
     zipFilePool: ZipFilePool,
   ): List<Deferred<IdeaPluginDescriptorImpl?>> {
@@ -96,8 +134,12 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
   }
 
-  override fun loadCustomPluginDescriptors(scope: CoroutineScope, customPluginDir: Path, context: DescriptorListLoadingContext, 
-                                           zipFilePool: ZipFilePool): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
+  private fun loadCustomPluginDescriptors(
+    scope: CoroutineScope,
+    customPluginDir: Path,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+  ): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
     if (!Files.isDirectory(customPluginDir)) {
       return emptyList()
     }
@@ -161,8 +203,15 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
             .filter { it != mainModuleId }
             .mapTo(descriptors) { moduleRepository.getModule(RuntimeModuleId.raw(it)) }
           val moduleGroup = CustomPluginModuleGroup(descriptors, mainModule)
-          loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool, null, emptySet(), 
-                                                isBundled = false, pluginDir = path.parent)
+          loadPluginDescriptorFromRuntimeModule(
+            pluginModuleGroup = moduleGroup,
+            context = context,
+            zipFilePool = zipFilePool,
+            serviceModuleMapping = null,
+            mainGroupResourceRootSet = emptySet(),
+            isBundled = false,
+            pluginDir = path.parent,
+          )
         }
         catch (t: Throwable) {
           logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load custom plugin '$mainModuleId': $t", t)
@@ -197,7 +246,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         it.resourceRootPaths - mainGroupResourceRootSet   
       }
     }
-    val allResourceRootsList = allResourceRoots.toList();
+    val allResourceRootsList = allResourceRoots.toList()
     
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       loadDescriptorFromDir(
@@ -248,9 +297,6 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       }
     }
   }
-
-  override val shouldLoadDescriptorsFromCoreClassPath: Boolean
-    get() = false
 
   override fun isOptionalProductModule(moduleName: String): Boolean {
     return productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleName))
