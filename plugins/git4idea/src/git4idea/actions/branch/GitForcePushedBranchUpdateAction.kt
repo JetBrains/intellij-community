@@ -154,9 +154,17 @@ internal class GitForcePushedBranchUpdateExecutor(private val project: Project, 
           return@updateWithPreserveChanges GitUpdateResult.NOT_READY
         }
 
-        gitCherryPick.cherryPick(localCommits.reversed())
+        val allCherryPicked = gitCherryPick.cherryPick(localCommits.reversed())
 
-        branchWorker.deleteBranch(backupBranchName, listOf(repository))
+        if (allCherryPicked) {
+          branchWorker.deleteBranch(backupBranchName, listOf(repository))
+        }
+        else {
+          VcsNotifier.getInstance(project)
+            .notifyImportantWarning(GitNotificationIdsHolder.BRANCH_UPDATE_FORCE_PUSHED_BRANCH_NOT_ALL_CHERRY_PICKED, "",
+                                    GitBundle.message("action.git.update.force.pushed.branch.not.all.local.commits.chery.picked", backupBranchName))
+          return@updateWithPreserveChanges GitUpdateResult.INCOMPLETE
+        }
       }
 
       return@updateWithPreserveChanges GitUpdateResult.SUCCESS

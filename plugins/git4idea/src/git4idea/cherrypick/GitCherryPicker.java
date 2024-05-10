@@ -52,12 +52,13 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public void cherryPick(@NotNull List<? extends VcsCommitMetadata> commits) {
+  public boolean cherryPick(@NotNull List<? extends VcsCommitMetadata> commits) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setIndeterminate(false);
     }
     IntRef cherryPickedCommitsCount = new IntRef(1);
+    IntRef successfullyCherryPickedCommits = new IntRef(0);
     new GitApplyChangesProcess(myProject, commits, true,
                                GitBundle.message("cherry.pick.name"), GitBundle.message("cherry.pick.applied"),
                                (repository, commit, autoCommit, listeners) -> {
@@ -66,6 +67,9 @@ public class GitCherryPicker extends VcsCherryPicker {
                                    indicator, cherryPickedCommitsCount.get(), commits.size()
                                  );
                                  cherryPickedCommitsCount.inc();
+                                 if (result.success() || isNothingToCommitMessage(result)) {
+                                   successfullyCherryPickedCommits.inc();
+                                 }
                                  return result;
                                },
                                new GitAbortOperationAction.CherryPick(),
@@ -74,6 +78,7 @@ public class GitCherryPicker extends VcsCherryPicker {
                                true,
                                (repository, autoCommit) -> cancelCherryPick(repository, autoCommit),
                                GitBundle.message("activity.name.cherry.pick"), GitActivity.CherryPick).execute();
+    return successfullyCherryPickedCommits.get() == commits.size();
   }
 
   private GitCommandResult cherryPickSingleCommit(

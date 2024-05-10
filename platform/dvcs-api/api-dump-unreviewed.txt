@@ -2,7 +2,7 @@ a:com.intellij.dvcs.cherrypick.VcsCherryPicker
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:canHandleForRoots(java.util.Collection):Z
-- a:cherryPick(java.util.List):V
+- a:cherryPick(java.util.List):Z
 - a:getActionTitle():java.lang.String
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
 com.intellij.dvcs.hosting.RepositoryHostingService

@@ -6,6 +6,7 @@ import com.intellij.notification.impl.NotificationIdsHolder
 class GitNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
     return listOf(
+      BRANCH_UPDATE_FORCE_PUSHED_BRANCH_NOT_ALL_CHERRY_PICKED,
       BRANCH_UPDATE_FORCE_PUSHED_BRANCH_SUCCESS,
       BRANCH_CHECKOUT_FAILED,
       BRANCH_CREATION_FAILED,
@@ -116,6 +117,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
   }
 
   companion object {
+    const val BRANCH_UPDATE_FORCE_PUSHED_BRANCH_NOT_ALL_CHERRY_PICKED = "git.update.force.pushed.branch.not.all.cherry.picked"
     const val BRANCH_UPDATE_FORCE_PUSHED_BRANCH_SUCCESS = "git.update.force.pushed.branch.success"
     const val BRANCH_CHECKOUT_FAILED = "git.branch.checkout.failed"
     const val BRANCH_CREATION_FAILED = "git.branch.creation.failed"

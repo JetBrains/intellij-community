@@ -33,8 +33,9 @@ public abstract class VcsCherryPicker {
    * Cherry-pick selected commits to current branch of appropriate repository
    *
    * @param commits to cherry-pick
+   * @return true if cherry-pick was successful
    */
-  public abstract void cherryPick(@NotNull final List<? extends VcsCommitMetadata> commits);
+  public abstract boolean cherryPick(@NotNull final List<? extends VcsCommitMetadata> commits);
 
   /**
    * Return true if cherry picker can manage all commits from roots
