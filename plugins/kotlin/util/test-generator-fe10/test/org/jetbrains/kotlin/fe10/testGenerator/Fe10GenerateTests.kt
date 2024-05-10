@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.actions.AbstractK1AddImportActionTest
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiPlatformHighlightingTest
@@ -172,7 +173,7 @@ fun generateK1Tests(isUpToDateCheck: Boolean = false) {
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
 }
 
-private fun assembleWorkspace(): TWorkspace = workspace {
+private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
 
     testGroup("gradle/gradle-java/tests.k1", category = GRADLE, testDataPath = "../../../idea/tests/testData") {

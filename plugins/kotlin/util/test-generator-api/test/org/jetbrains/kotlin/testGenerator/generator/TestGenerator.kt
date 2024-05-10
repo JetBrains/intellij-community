@@ -6,6 +6,7 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.TestIndexingModeSupporter
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import junit.framework.ComparisonFailure
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
@@ -76,6 +77,9 @@ internal fun getImports(suite: TSuite, group: TGroup, platform: KMPTestPlatform)
     val imports = mutableSetOf<String>()
 
     imports += TestDataPath::class.java.canonicalName
+    imports += KotlinPluginMode::class.java.canonicalName
+    imports += TestRoot::class.java.canonicalName
+
     suite.models.forEach { imports += it.runWithClass.canonicalName }
 
     if (suite.models.any { it.passTestDataPath }) {
@@ -91,7 +95,6 @@ internal fun getImports(suite: TSuite, group: TGroup, platform: KMPTestPlatform)
     }
 
     imports += TestMetadata::class.java.canonicalName
-    imports += TestRoot::class.java.canonicalName
     imports += RunWith::class.java.canonicalName
 
     if (platform.isSpecified) {
