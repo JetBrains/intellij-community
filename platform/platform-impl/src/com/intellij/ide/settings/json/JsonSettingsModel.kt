@@ -76,7 +76,8 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
     val type: PropertyType,
     val storage: String,
     val mapTo: String,
-    val variants: List<VariantInfo> = emptyList()
+    val variants: List<VariantInfo> = emptyList(),
+    val value: Any? = null
   )
 
   @Serializable
