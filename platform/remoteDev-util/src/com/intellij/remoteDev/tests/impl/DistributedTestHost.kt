@@ -167,7 +167,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           testMethod.invoke(testClassObject)
 
           // Advice for processing events
-          session.runNextAction.setSuspendPreserveClientId { _, actionTitle ->
+          session.runNextAction.setSuspendPreserveClientId { _, parameters ->
+            val actionTitle = parameters.title
+            val actionParameters = parameters.parameters
             val queue = map[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
             val timeout = action.timeout
@@ -188,7 +190,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
                 }
 
                 val result = runLogged(actionTitle, timeout) {
-                  action.action(agentContext)
+                  action.action(agentContext, actionParameters)
                 }
 
                 // Assert state
