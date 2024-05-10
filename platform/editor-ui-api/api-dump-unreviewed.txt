@@ -2729,7 +2729,6 @@ com.intellij.openapi.editor.markup.RangeHighlighter
 - sf:EMPTY_ARRAY:com.intellij.openapi.editor.markup.RangeHighlighter[]
 - a:getCustomRenderer():com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 - a:getEditorFilter():com.intellij.openapi.editor.markup.MarkupEditorFilter
-- getErrorStripeMarkColor():java.awt.Color
 - a:getErrorStripeMarkColor(com.intellij.openapi.editor.colors.EditorColorsScheme):java.awt.Color
 - a:getErrorStripeTooltip():java.lang.Object
 - a:getGutterIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
