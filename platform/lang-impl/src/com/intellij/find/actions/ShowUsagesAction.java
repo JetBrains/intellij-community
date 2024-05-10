@@ -18,6 +18,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -36,6 +37,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
@@ -1122,6 +1124,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
               })
             .expireWith(contentDisposable)
             .submit(AppExecutorUtil.getAppExecutorService());
+        }).exceptionally(throwable -> {
+          Logger.getInstance(ShowUsagesAction.class).error(throwable);
+          return null;
         });
       };
 

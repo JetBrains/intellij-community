@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.Keymap;
@@ -693,6 +694,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           })
           .expireWith(myDisposable)
           .submit(AppExecutorUtil.getAppExecutorService());
+      }).exceptionally(throwable -> {
+        Logger.getInstance(FindPopupPanel.class).error(throwable);
+        return null;
       });
     };
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
