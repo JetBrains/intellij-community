@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal class ClassPathXmlPathResolver(
+@Internal
+class ClassPathXmlPathResolver(
   private val classLoader: ClassLoader,
   @JvmField val isRunningFromSources: Boolean,
 ) : PathResolver {
@@ -39,12 +42,7 @@ internal class ClassPathXmlPathResolver(
     return true
   }
 
-  override fun resolveModuleFile(
-    readContext: ReadModuleContext,
-    dataLoader: DataLoader,
-    path: String,
-    readInto: RawPluginDescriptor?,
-  ): RawPluginDescriptor {
+  override fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String, readInto: RawPluginDescriptor?): RawPluginDescriptor {
     val resource: ByteArray?
     if (classLoader is UrlClassLoader) {
       resource = classLoader.getResourceAsBytes(path, true)
@@ -74,8 +72,8 @@ internal class ClassPathXmlPathResolver(
         return descriptor
       }
       if (ProductLoadingStrategy.strategy.isOptionalProductModule(moduleName)) {
-        //this check won't be needed when we are able to load optional modules directly from product-modules.xml
-        log.debug("Skip module '$path' since its descriptor cannot be found and it's optional")
+        // this check won't be needed when we are able to load optional modules directly from product-modules.xml
+        log.debug { "Skip module '$path' since its descriptor cannot be found and it's optional" }
         return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
       }
 
@@ -93,10 +91,7 @@ internal class ClassPathXmlPathResolver(
     )
   }
 
-  override fun resolvePath(readContext: ReadModuleContext,
-                           dataLoader: DataLoader,
-                           relativePath: String,
-                           readInto: RawPluginDescriptor?): RawPluginDescriptor? {
+  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
     val path = PluginXmlPathResolver.toLoadPath(relativePath)
     return readModuleDescriptor(
       reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null,

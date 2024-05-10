@@ -549,7 +549,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   zipFilePool: ZipFilePool,
   customPluginDir: Path,
   bundledPluginDir: Path?,
-): ArrayList<Deferred<IdeaPluginDescriptorImpl?>> {
+): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
   val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
     System.getProperty("idea.parent.prefix", PlatformUtils.IDEA_PREFIX)
@@ -559,49 +559,49 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   }
 
   val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
-  result.addAll(loadCoreModules(
-    context = context,
-    platformPrefix = platformPrefix,
-    isUnitTestMode = isUnitTestMode,
-    isInDevServerMode = AppMode.isDevServer(),
-    isRunningFromSources = isRunningFromSources,
-    classLoader = mainClassLoader,
-    pool = zipFilePool,
-    shouldLoadDescriptorsFromCoreClassPath = true,
-  ))
-
-  result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
-  result.addAll(loadBundledPluginDescriptors(scope = this, bundledPluginDir = bundledPluginDir, isUnitTestMode = isUnitTestMode, context = context, zipFilePool = zipFilePool))
-  return result
-}
-
-private fun loadBundledPluginDescriptors(
-  scope: CoroutineScope,
-  bundledPluginDir: Path?,
-  isUnitTestMode: Boolean,
-  context: DescriptorListLoadingContext,
-  zipFilePool: ZipFilePool,
-): List<Deferred<IdeaPluginDescriptorImpl?>> {
-  val effectiveBundledPluginDir = when {
-    bundledPluginDir != null -> bundledPluginDir
-    isUnitTestMode -> return Collections.emptyList()
-    else -> Paths.get(PathManager.getPreInstalledPluginsPath())
-  }
-
-  val classPathFile = effectiveBundledPluginDir.resolve("plugin-classpath.txt")
-  val data = try {
-    Files.readAllBytes(classPathFile)
-  }
-  catch (ignored: NoSuchFileException) {
-    null
-  }
-
-  if (data == null || data[0] != 1.toByte()) {
-    return scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
+  if (isUnitTestMode) {
+    result.addAll(loadCoreModules(
+      context = context,
+      platformPrefix = platformPrefix,
+      isUnitTestMode = true,
+      isInDevServerMode = false,
+      isRunningFromSources = true,
+      classLoader = mainClassLoader,
+      pool = zipFilePool,
+      result = result,
+    ))
+    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
   }
   else {
-    return loadFromPluginClasspathDescriptor(data = data, context = context, zipFilePool = zipFilePool, bundledPluginDir = effectiveBundledPluginDir, scope = scope).asList()
+    val effectiveBundledPluginDir = bundledPluginDir ?: Paths.get(PathManager.getPreInstalledPluginsPath())
+    val data = try {
+      Files.readAllBytes(effectiveBundledPluginDir.resolve("plugin-classpath.txt"))
+    }
+    catch (ignored: NoSuchFileException) {
+      null
+    }
+
+    result.addAll(loadCoreModules(
+      context = context,
+      platformPrefix = platformPrefix,
+      isUnitTestMode = false,
+      isInDevServerMode = AppMode.isDevServer(),
+      isRunningFromSources = isRunningFromSources,
+      classLoader = mainClassLoader,
+      pool = zipFilePool,
+      result = result,
+    ))
+
+    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
+
+    if (data == null || data[0] != 1.toByte()) {
+      result.addAll(loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool))
+    }
+    else {
+      result.addAll(loadFromPluginClasspathDescriptor(data = data, context = context, zipFilePool = zipFilePool, bundledPluginDir = effectiveBundledPluginDir, scope = this))
+    }
   }
+  return result
 }
 
 private fun loadFromPluginClasspathDescriptor(
@@ -779,8 +779,7 @@ private data class FileItem(
   var resolver: ZipFilePool.EntryResolver? = null
 }
 
-@Internal
-fun CoroutineScope.loadCoreModules(
+private fun CoroutineScope.loadCoreModules(
   context: DescriptorListLoadingContext,
   platformPrefix: String,
   isUnitTestMode: Boolean,
@@ -788,14 +787,48 @@ fun CoroutineScope.loadCoreModules(
   isRunningFromSources: Boolean,
   pool: ZipFilePool,
   classLoader: ClassLoader,
-  shouldLoadDescriptorsFromCoreClassPath: Boolean,
+  result: MutableList<Deferred<IdeaPluginDescriptorImpl?>>,
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
-  val useCoreClassLoader = pathResolver.isRunningFromSources ||
-                           platformPrefix.startsWith("CodeServer") ||
-                           java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
-  if ((isProductWithTheOnlyDescriptor(platformPrefix)) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
-    return Java11Shim.INSTANCE.listOf(async(Dispatchers.IO) {
+  val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
+  if (loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, context, pathResolver, useCoreClassLoader, classLoader, result)) {
+    return result
+  }
+
+  val urlToFilename = collectPluginFilesInClassPath(classLoader)
+  if (urlToFilename.isNotEmpty()) {
+    val libDir = if (useCoreClassLoader) null else Paths.get(PathManager.getLibPath())
+    urlToFilename.mapTo(result) { (url, filename) ->
+      async(Dispatchers.IO) {
+        loadDescriptorFromResource(
+          resource = url,
+          filename = filename,
+          context = context,
+          pathResolver = pathResolver,
+          useCoreClassLoader = useCoreClassLoader,
+          pool = pool,
+          libDir = libDir,
+        )
+      }
+    }
+  }
+  return result
+}
+
+@Internal
+fun CoroutineScope.loadCorePlugin(
+  platformPrefix: String,
+  isInDevServerMode: Boolean,
+  isUnitTestMode: Boolean,
+  isRunningFromSources: Boolean,
+  context: DescriptorListLoadingContext,
+  pathResolver: ClassPathXmlPathResolver,
+  useCoreClassLoader: Boolean,
+  classLoader: ClassLoader,
+  result: MutableList<Deferred<IdeaPluginDescriptorImpl?>>,
+): Boolean {
+  if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
+    result.add(async(Dispatchers.IO) {
       loadCoreProductPlugin(
         path = PluginManagerCore.PLUGIN_XML_PATH,
         context = context,
@@ -804,12 +837,11 @@ fun CoroutineScope.loadCoreModules(
         reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!,
       )
     })
+    return true
   }
 
-  val fileName = "${platformPrefix}Plugin.xml"
-  val result = mutableListOf<Deferred<IdeaPluginDescriptorImpl?>>()
   result.add(async(Dispatchers.IO) {
-    val path = "${PluginManagerCore.META_INF}$fileName"
+    val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
     loadCoreProductPlugin(
       path = path,
       context = context,
@@ -818,27 +850,7 @@ fun CoroutineScope.loadCoreModules(
       reader = getResourceReader(path, classLoader) ?: return@async null,
     )
   })
-
-  if (shouldLoadDescriptorsFromCoreClassPath) {
-    val urlToFilename = collectPluginFilesInClassPath(classLoader)
-    if (urlToFilename.isNotEmpty()) {
-      val libDir = if (useCoreClassLoader) null else Paths.get(PathManager.getLibPath())
-      urlToFilename.mapTo(result) { (url, filename) ->
-        async(Dispatchers.IO) {
-          loadDescriptorFromResource(
-            resource = url,
-            filename = filename,
-            context = context,
-            pathResolver = pathResolver,
-            useCoreClassLoader = useCoreClassLoader,
-            pool = pool,
-            libDir = libDir,
-          )
-        }
-      }
-    }
-  }
-  return result
+  return false
 }
 
 // should be the only plugin in lib
