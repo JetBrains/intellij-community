@@ -29,6 +29,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -215,6 +216,12 @@ public final class EditorHyperlinkSupport {
    */
   private static @NotNull List<RangeHighlighter> getHyperlinks(int startOffset, int endOffset, @NotNull Editor editor) {
     return getRangeHighlighters(startOffset, endOffset, true, false, editor);
+  }
+
+  @ApiStatus.Internal
+  @TestOnly
+  public @NotNull List<RangeHighlighter> getAllHyperlinks(int startOffset, int endOffset) {
+    return getHyperlinks(startOffset, endOffset, myEditor);
   }
 
   /**

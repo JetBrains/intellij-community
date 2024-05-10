@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -100,24 +99,14 @@ internal class TerminalOutputController(
   }
 
   fun finishCommandBlock(exitCode: Int) {
-    val output = scraper.scrapeOutput()
+    val output = scraper.scrapeOutput().dropLastBlankLine(session.shellIntegration.shellType)
     val terminalWidth = session.model.withContentLock { session.model.width }
     invokeLater(editor.getDisposed(), ModalityState.any()) {
       val block = doWithScrollingAware {
         updateCommandOutput(TerminalOutputSnapshot(terminalWidth, output))
       }
       disposeRunningCommandInteractivity()
-      val document = editor.document
-      val lastLineInd = document.getLineNumber(block.endOffset)
-      val lastLineStart = document.getLineStartOffset(lastLineInd)
-      val lastLineText = document.getText(TextRange(lastLineStart, block.endOffset))
-      // remove the line with empty prompt
-      if (lastLineText.isBlank()) {
-        // remove also the line break if it is not the first block
-        val startRemoveOffset = lastLineStart - if (lastLineStart > 0) 1 else 0
-        outputModel.deleteDocumentRange(block, TextRange(startRemoveOffset, block.endOffset))
-      }
-      if (document.getText(block.textRange).isBlank()) {
+      if (editor.document.getText(block.textRange).isBlank()) {
         outputModel.removeBlock(block)
       }
       else {
