@@ -263,21 +263,6 @@ a:com.intellij.openapi.externalSystem.autoimport.ProjectBatchFileChangeListener
 - f:batchChangeCompleted(com.intellij.openapi.project.Project):V
 - f:batchChangeStarted(com.intellij.openapi.project.Project,java.lang.String):V
 - batchChangeStarted(java.lang.String):V
-f:com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
-- sf:Companion:com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware$Companion
-- <init>(com.intellij.openapi.project.Project):V
-- dispose():V
-- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
-- f:getProjectsWithNotification():java.util.Set
-- getSystemIds():java.util.Set
-- isNotificationVisible():Z
-- notificationExpire():V
-- notificationExpire(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId):V
-- notificationNotify(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware):V
-f:com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware
 f:com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 - com.intellij.openapi.project.DumbAwareAction
 - sf:Companion:com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction$Companion
@@ -2201,9 +2186,8 @@ f:com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboB
 a:com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 - com.intellij.ui.components.fields.ExtendableTextField
 - <init>(com.intellij.openapi.project.Project):V
-- p:getCompletionCollector():com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
+- pa:getCompletionCollector():com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 - f:getCompletionType():com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField$CompletionType
-- p:getCompletionVariants():java.util.List
 - f:getRenderer():com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionRenderer
 - f:getTextToComplete():java.lang.String
 - f:setCompletionType(com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField$CompletionType):V
