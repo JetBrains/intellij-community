@@ -30421,7 +30421,6 @@ a:com.intellij.util.concurrency.Invoker
 f:com.intellij.util.concurrency.Invoker$Background
 - com.intellij.util.concurrency.Invoker
 - <init>(com.intellij.openapi.Disposable,I):V
-- dispose():V
 - isValidThread():Z
 f:com.intellij.util.concurrency.Invoker$EDT
 - com.intellij.util.concurrency.Invoker
