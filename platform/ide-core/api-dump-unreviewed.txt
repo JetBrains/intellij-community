@@ -1429,7 +1429,6 @@ c:com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 - sf:PSI_ELEMENT_ARRAY:com.intellij.openapi.actionSystem.DataKey
 - sf:SELECTED_ITEM:com.intellij.openapi.actionSystem.DataKey
 - sf:SELECTED_ITEMS:com.intellij.openapi.actionSystem.DataKey
-- sf:SLOW_DATA_PROVIDERS:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
 com.intellij.openapi.actionSystem.SeparatorAction
 com.intellij.openapi.application.ApplicationActivationListener
@@ -2234,9 +2233,6 @@ com.intellij.openapi.ui.popup.JBPopup
 com.intellij.openapi.ui.popup.JBPopupListener
 - beforeShown(com.intellij.openapi.ui.popup.LightweightWindowEvent):V
 - onClosed(com.intellij.openapi.ui.popup.LightweightWindowEvent):V
-c:com.intellij.openapi.ui.popup.JBPopupListener$Adapter
-- com.intellij.openapi.ui.popup.JBPopupListener
-- <init>():V
 c:com.intellij.openapi.ui.popup.LightweightWindowEvent
 - <init>(com.intellij.openapi.ui.popup.LightweightWindow):V
 - <init>(com.intellij.openapi.ui.popup.LightweightWindow,Z):V

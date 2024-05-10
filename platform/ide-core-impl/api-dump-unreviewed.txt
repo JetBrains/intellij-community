@@ -3,7 +3,6 @@ a:com.intellij.diagnostic.PerformanceWatcher
 - sf:DUMP_PREFIX:java.lang.String
 - <init>():V
 - a:clearFreezeStacktraces():V
-- f:dumpThreads(java.lang.String,Z):java.nio.file.Path
 - a:dumpThreads(java.lang.String,Z,Z):java.nio.file.Path
 - sf:dumpThreadsToConsole(java.lang.String):V
 - a:getDumpInterval():I

@@ -9,11 +9,4 @@ public interface JBPopupListener {
 
   default void onClosed(@NotNull LightweightWindowEvent event) {
   }
-
-  /**
-   * @deprecated Use {@link JBPopupListener} directly.
-   */
-  @Deprecated(forRemoval = true)
-  class Adapter implements JBPopupListener {
-  }
 }
