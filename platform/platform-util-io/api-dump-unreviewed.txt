@@ -697,7 +697,6 @@ f:com.intellij.util.net.NetUtils
 - s:findAvailableSocketPort():I
 - s:findAvailableSocketPorts(I):I[]
 - s:getLocalHostString():java.lang.String
-- s:getLoopbackAddress():java.net.InetAddress
 - s:isLocalhost(java.lang.String):Z
 - s:isSniEnabled():Z
 - s:isValidHost(java.lang.String):com.intellij.util.net.NetUtils$ValidHostInfo
