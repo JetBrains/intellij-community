@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -18,6 +19,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,16 +44,18 @@ internal open class CreateWorkspaceAction: BaseWorkspaceAction() {
   }
 }
 
+@RequiresEdt
 internal fun createWorkspace(project: Project): Boolean {
   val dialog = NewWorkspaceDialog(project, listOf(requireNotNull(project.basePath)))
   if (!dialog.showAndGet()) return false
+
   val settings = importSettingsFromProject(project, true)
-  project.service<MyCoroutineScopeService>().scope.launch {
+  getCoroutineScope(project).launch {
     createAndOpenWorkspaceProject(project, dialog.projectPath, dialog.projectName) { workspace ->
       for (importedSetting in settings) {
         importedSetting.applyTo(workspace)
       }
-      dialog.selectedPaths.forEach({ linkToWorkspace(workspace, it) })
+      dialog.selectedPaths.forEach { linkToWorkspace(workspace, it) }
     }
   }
   return true
@@ -74,23 +78,21 @@ private fun importSettingsFromProject(project: Project, newWorkspace: Boolean): 
 @Service(Service.Level.PROJECT)
 internal class MyCoroutineScopeService(val scope: CoroutineScope)
 
-private fun getCoroutineScope(workspace: Project) = workspace.service<MyCoroutineScopeService>().scope
+internal fun getCoroutineScope(workspace: Project) = workspace.service<MyCoroutineScopeService>().scope
 
-internal fun linkToWorkspace(workspace: Project, projectPath: String) {
-  val projectManagerImpl = ProjectManager.getInstance() as ProjectManagerImpl
-  getCoroutineScope(workspace).launch {
-    val referentProject = projectManagerImpl.loadProject(Path.of(projectPath), false, false)
-    try {
-      val settings = importSettingsFromProject(referentProject, false)
-      for (importedSettings in settings) {
-        importedSettings.applyTo(workspace)
-      }
+internal suspend fun linkToWorkspace(workspace: Project, projectPath: String) {
+  val projectManagerImpl = blockingContext { ProjectManager.getInstance() as ProjectManagerImpl }
+  val referentProject = projectManagerImpl.loadProject(Path.of(projectPath), false, false)
+  try {
+    val settings = importSettingsFromProject(referentProject, false)
+    for (importedSettings in settings) {
+      importedSettings.applyTo(workspace)
     }
-    finally {
-      // TODO: fix 'already disposed' failures
-      withContext(Dispatchers.EDT) {
-        projectManagerImpl.forceCloseProject(referentProject)
-      }
+  }
+  finally {
+    // TODO: fix 'already disposed' failures
+    withContext(Dispatchers.EDT) {
+      projectManagerImpl.forceCloseProject(referentProject)
     }
   }
 }

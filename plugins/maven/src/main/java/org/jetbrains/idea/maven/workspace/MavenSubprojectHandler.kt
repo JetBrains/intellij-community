@@ -26,7 +26,7 @@ internal class MavenSubprojectHandler : SubprojectHandler {
 
   override suspend fun importFromFile(project: Project, file: VirtualFile) {
     if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProjectAsync(project, MavenUtil.SYSTEM_ID)) {
-      MavenOpenProjectProvider().linkToExistingProjectAsync(file, project)
+      MavenOpenProjectProvider().forceLinkToExistingProjectAsync(file, project)
     }
   }
 
@@ -46,7 +46,7 @@ private class MavenImportedProjectSettings(project: Project) : ImportedProjectSe
   override suspend fun applyTo(workspace: Project) {
     val openProjectProvider = MavenOpenProjectProvider()
     if (openProjectProvider.canOpenProject(projectDir!!)) {
-      openProjectProvider.linkToExistingProjectAsync(projectDir, workspace)
+      openProjectProvider.forceLinkToExistingProjectAsync(projectDir, workspace)
     }
   }
 }

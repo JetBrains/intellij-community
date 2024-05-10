@@ -6,13 +6,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
+import kotlinx.coroutines.launch
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
 internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
   override fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
     if (project.isWorkspace) {
-      linkToWorkspace(project, projectDir.pathString)
+      getCoroutineScope(project).launch {
+        linkToWorkspace(project, projectDir.pathString)
+      }
       return true
     }
     else {
