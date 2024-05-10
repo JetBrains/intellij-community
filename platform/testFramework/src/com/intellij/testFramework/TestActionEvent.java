@@ -22,14 +22,6 @@ public final class TestActionEvent extends AnActionEvent {
   }
 
   /**
-   * @deprecated use {@link #createTestEvent(AnAction)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public TestActionEvent(@NotNull AnAction action) {
-    this(DataManager.getInstance().getDataContext(), action);
-  }
-
-  /**
    * @deprecated use {@link #createTestEvent(DataContext)} instead
    */
   @Deprecated(forRemoval = true)
