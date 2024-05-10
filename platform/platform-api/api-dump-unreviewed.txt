@@ -6222,13 +6222,6 @@ c:com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase
 - getCheckbox():javax.swing.JCheckBox
 - getTextRenderer():com.intellij.ui.ColoredTreeCellRenderer
 - f:getTreeCellRendererComponent(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):java.awt.Component
-e:com.intellij.ui.CheckboxTreeBase$NodeState
-- java.lang.Enum
-- sf:CLEAR:com.intellij.ui.CheckboxTreeBase$NodeState
-- sf:FULL:com.intellij.ui.CheckboxTreeBase$NodeState
-- sf:PARTIAL:com.intellij.ui.CheckboxTreeBase$NodeState
-- s:valueOf(java.lang.String):com.intellij.ui.CheckboxTreeBase$NodeState
-- s:values():com.intellij.ui.CheckboxTreeBase$NodeState[]
 c:com.intellij.ui.CheckboxTreeHelper
 - sf:DEFAULT_POLICY:com.intellij.ui.CheckboxTreeBase$CheckPolicy
 - <init>(com.intellij.ui.CheckboxTreeBase$CheckPolicy,com.intellij.util.EventDispatcher):V
