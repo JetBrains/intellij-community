@@ -280,7 +280,6 @@ f:com.intellij.psi.search.FilenameIndex
 - s:processFilesByName(java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
 - s:processFilesByName(java.lang.String,Z,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.project.Project):Z
 - s:processFilesByName(java.lang.String,Z,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.project.Project,com.intellij.util.indexing.IdFilter):Z
-- s:processFilesByName(java.lang.String,Z,Z,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.project.Project,com.intellij.util.indexing.IdFilter):Z
 - s:processFilesByNames(java.util.Set,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter,com.intellij.util.Processor):Z
 c:com.intellij.psi.search.IndexPattern
 - sf:EMPTY_ARRAY:com.intellij.psi.search.IndexPattern[]

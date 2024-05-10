@@ -117,7 +117,7 @@ public final class FilenameIndex {
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull GlobalSearchScope scope,
                                            @NotNull Project project) {
-    return processFilesByName(name, directories, true, processor, scope, project, null);
+    return processFilesByName(name, directories, processor, scope, project, null);
   }
 
   /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
@@ -128,21 +128,9 @@ public final class FilenameIndex {
                                            @NotNull GlobalSearchScope scope,
                                            @NotNull Project project,
                                            @Nullable IdFilter idFilter) {
-    return processFilesByName(name, directories, true, processor, scope, project, idFilter);
-  }
-
-  /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
-  @Deprecated(forRemoval = true)
-  public static boolean processFilesByName(@NotNull String name,
-                                           boolean directories,
-                                           boolean caseSensitively,
-                                           @NotNull Processor<? super PsiFileSystemItem> processor,
-                                           @NotNull GlobalSearchScope scope,
-                                           @NotNull Project project,
-                                           @Nullable IdFilter idFilter) {
     PsiManager psiManager = PsiManager.getInstance(project);
     boolean[] result = {false}; // keep old semantics
-    processFilesByNames(Set.of(name), caseSensitively, scope, idFilter, file -> {
+    processFilesByNames(Set.of(name), true, scope, idFilter, file -> {
       if (!file.isValid()) return true;
       if (directories != file.isDirectory()) return true;
       PsiFileSystemItem psi = directories ? psiManager.findDirectory(file) : psiManager.findFile(file);
