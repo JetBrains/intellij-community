@@ -398,7 +398,7 @@ object ProjectUtil {
   fun confirmOpenOrAttachProject(project: Project? = null): Int {
     var mode = GeneralSettings.getInstance().confirmOpenNewProject
     if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
-      val processor = ProjectAttachProcessor.getProcessor()
+      val processor = ProjectAttachProcessor.getProcessor(project)
       val exitCode = Messages.showDialog(
         project?.let { processor?.getDescription(it) } ?: IdeBundle.message("prompt.open.project.or.attach"),
         IdeBundle.message("prompt.open.project.or.attach.title"), arrayOf(

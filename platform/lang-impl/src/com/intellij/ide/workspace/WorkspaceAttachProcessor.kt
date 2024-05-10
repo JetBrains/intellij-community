@@ -20,7 +20,7 @@ internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
     }
   }
 
-  override val isEnabled: Boolean = Registry.`is`("ide.enable.project.workspaces")
+  override fun isEnabled(project: Project?): Boolean = Registry.`is`("ide.enable.project.workspaces") && project?.isWorkspace == true
 
   override fun getActionText(project: Project): String {
     if (project.isWorkspace) {

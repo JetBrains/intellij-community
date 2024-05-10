@@ -906,7 +906,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val isValidProject = ProjectUtilCore.isValidProjectPath(projectDir)
-    if (ProjectAttachProcessor.canAttachToProject() &&
+    if (ProjectAttachProcessor.getProcessor(projectToClose) != null &&
         !isDataSpell() &&
         (!isValidProject || GeneralSettings.getInstance().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
       when (withContext(Dispatchers.EDT) { ProjectUtil.confirmOpenOrAttachProject(projectToClose) }) {
