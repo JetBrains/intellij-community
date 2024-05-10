@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -16,6 +15,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.jupiter.api.Assertions
 import org.opentest4j.AssertionFailedError
+import org.opentest4j.MultipleFailuresError
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
@@ -202,7 +202,14 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     }
 
     fun assertListenerFailures() {
-      runAll(failures) { throw it }
+      when {
+        failures.size == 1 -> {
+          throw AssertionError("", failures.single())
+        }
+        failures.size > 1 -> {
+          throw MultipleFailuresError("", failures)
+        }
+      }
     }
 
     fun assertListenerState(expectedCount: Int, messageSupplier: () -> String) {
