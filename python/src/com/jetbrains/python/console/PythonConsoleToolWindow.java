@@ -76,10 +76,15 @@ public final class PythonConsoleToolWindow {
     myInitialized = true;
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+      private ToolWindowManagerEventType lastChangeType = null;
+
       @Override
-      public void toolWindowShown(@NotNull ToolWindow toolwindow) {
-        ToolWindow window = getToolWindow(myProject);
-        if (window.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager,
+                               @NotNull ToolWindow affectedToolWindow,
+                               @NotNull ToolWindowManagerEventType changeType) {
+        if (lastChangeType == changeType || !affectedToolWindow.getId().equals(toolWindow.getId())) return;
+        lastChangeType = changeType;
+        if (lastChangeType == ToolWindowManagerEventType.ActivateToolWindow && affectedToolWindow.getContentManager().getContentCount() == 0) {
           PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null);
           runner.run(true);
         }
