@@ -650,11 +650,12 @@ e:com.intellij.lang.ParserDefinition$SpaceRequirements
 com.intellij.lang.PsiBuilder
 - com.intellij.lang.SyntaxTreeBuilder
 - com.intellij.openapi.util.UserDataHolder
-- com.intellij.openapi.util.UserDataHolderUnprotected
 - a:getLightTree():com.intellij.util.diff.FlyweightCapableTreeStructure
 - a:getProject():com.intellij.openapi.project.Project
 - a:getTreeBuilt():com.intellij.lang.ASTNode
+- getUserDataUnprotected(com.intellij.openapi.util.Key):java.lang.Object
 - a:mark():com.intellij.lang.PsiBuilder$Marker
+- putUserDataUnprotected(com.intellij.openapi.util.Key,java.lang.Object):V
 com.intellij.lang.PsiBuilder$Marker
 - com.intellij.lang.SyntaxTreeBuilder$Marker
 - a:doneBefore(com.intellij.psi.tree.IElementType,com.intellij.lang.PsiBuilder$Marker):V

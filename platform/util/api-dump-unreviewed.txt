@@ -1261,7 +1261,6 @@ f:com.intellij.openapi.util.UnorderedPair
 - toString():java.lang.String
 c:com.intellij.openapi.util.UnprotectedUserDataHolder
 - com.intellij.openapi.util.UserDataHolder
-- com.intellij.openapi.util.UserDataHolderUnprotected
 - <init>():V
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - getUserDataUnprotected(com.intellij.openapi.util.Key):java.lang.Object
@@ -1315,9 +1314,6 @@ com.intellij.openapi.util.UserDataHolderEx
 f:com.intellij.openapi.util.UserDataHolderExKt
 - sf:getOrCreateUserData(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:nullableLazyValue(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function0):java.lang.Object
-com.intellij.openapi.util.UserDataHolderUnprotected
-- a:getUserDataUnprotected(com.intellij.openapi.util.Key):java.lang.Object
-- a:putUserDataUnprotected(com.intellij.openapi.util.Key,java.lang.Object):V
 com.intellij.openapi.util.ValueKey
 - a:getName():java.lang.String
 - match():com.intellij.openapi.util.ValueKey$BeforeIf
