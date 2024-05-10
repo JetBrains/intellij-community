@@ -167,16 +167,8 @@ public final class GitBranchUtil {
   public static @Nls @NotNull String getDisplayableBranchText(@NotNull GitRepository repository,
                                                               @NotNull Function<@NotNull @NlsSafe String, @NotNull @NlsSafe String> branchNameTruncator) {
     GitRepository.State state = repository.getState();
-    if (state == GitRepository.State.DETACHED) {
-      String currentRevision = repository.getCurrentRevision();
-      if (currentRevision != null) {
-        return DvcsUtil.getShortHash(currentRevision);
-      }
-      else {
-        LOG.warn(String.format("Current revision is null in DETACHED state. isFresh: %s", repository.isFresh()));
-        return GitBundle.message("git.status.bar.widget.text.unknown");
-      }
-    }
+    String currentRevision = getDetachedPresentableText(repository, state);
+    if (currentRevision != null) return currentRevision;
 
     GitBranch branch = repository.getCurrentBranch();
     String branchName = (branch == null ? "" : branchNameTruncator.apply(branch.getName()));
@@ -196,6 +188,21 @@ public final class GitBranchUtil {
     else {
       return branchName;
     }
+  }
+
+  @Nls
+  private static @Nullable String getDetachedPresentableText(@NotNull GitRepository repository, GitRepository.State state) {
+    if (state == GitRepository.State.DETACHED) {
+      String currentRevision = repository.getCurrentRevision();
+      if (currentRevision != null) {
+        return DvcsUtil.getShortHash(currentRevision);
+      }
+      else {
+        LOG.warn(String.format("Current revision is null in DETACHED state. isFresh: %s", repository.isFresh()));
+        return GitBundle.message("git.status.bar.widget.text.unknown");
+      }
+    }
+    return null;
   }
 
   /**
