@@ -972,4 +972,22 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/surroundWithNullCheck/javaReceiverNullabilityInvoke.test");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration")
+    public static class AddOpenToClassDeclaration extends AbstractHighLevelQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("finalJavaSupertype.before.Main.kt")
+        public void testFinalJavaSupertype() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalJavaSupertype.before.Main.kt");
+        }
+
+        @TestMetadata("finalJavaUpperBound.before.Main.kt")
+        public void testFinalJavaUpperBound() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalJavaUpperBound.before.Main.kt");
+        }
+    }
 }
