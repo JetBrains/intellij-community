@@ -9,7 +9,7 @@ import java.awt.Color
 import java.awt.Dimension
 import javax.swing.JPanel
 
-class NotebookAboveCellDelimiterPanelNew(
+class NotebookAboveCellDelimiterPanel(
   val editor: Editor,
   val isCodeCell: Boolean,
   private val isFirstCell: Boolean
