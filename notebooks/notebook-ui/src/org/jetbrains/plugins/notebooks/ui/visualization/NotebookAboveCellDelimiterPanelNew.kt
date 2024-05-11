@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.uiDesigner.UIFormXmlConstants
 import java.awt.BorderLayout
@@ -10,12 +11,13 @@ import javax.swing.JPanel
 
 class NotebookAboveCellDelimiterPanelNew(
   val editor: Editor,
-  private val isCodeCell: Boolean,
+  val isCodeCell: Boolean,
   private val isFirstCell: Boolean
 ) : JPanel(BorderLayout()) {
   private var backgroundColor: Color = editor.colorsScheme.defaultBackground
   private var cellRoofColor: Color? = null
   private val standardDelimiterHeight = editor.notebookAppearance.CELL_BORDER_HEIGHT / 2
+  val project get() = editor.project ?: ProjectManager.getInstance().defaultProject
 
   init {
     if (!editor.editorKind.isDiff()) {
