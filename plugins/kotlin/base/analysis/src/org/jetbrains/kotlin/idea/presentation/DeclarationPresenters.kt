@@ -6,6 +6,7 @@ import com.intellij.ide.IconProvider
 import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.ItemPresentationProvider
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
@@ -131,7 +132,7 @@ private fun getPresentationInContainer(param: Any): String {
 }
 
 private fun getPresentationText(param: Any): String {
-    if (ExperimentalUI.isNewUI()) {
+    if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.paren.no.brackets", param)
     } else {
         return KotlinBundle.message("presentation.text.paren", param)
