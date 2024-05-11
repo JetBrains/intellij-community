@@ -4831,12 +4831,6 @@ c:com.intellij.util.indexing.impl.MapInputDataDiffBuilder
 - getClassToBlame():java.lang.Class
 com.intellij.util.indexing.impl.RemovedKeyProcessor
 - a:process(java.lang.Object,I):V
-a:com.intellij.util.indexing.impl.UpdatableValueContainer
-- com.intellij.util.indexing.ValueContainer
-- <init>():V
-- a:addValue(I,java.lang.Object):V
-- a:removeAssociatedValue(I):Z
-- a:saveTo(java.io.DataOutput,com.intellij.util.io.DataExternalizer):V
 f:com.intellij.util.indexing.impl.UpdateData
 - com.intellij.util.indexing.impl.AbstractUpdateData
 - <init>(I,java.util.Map,com.intellij.openapi.util.ThrowableComputable,com.intellij.util.indexing.IndexId,com.intellij.util.ThrowableRunnable):V

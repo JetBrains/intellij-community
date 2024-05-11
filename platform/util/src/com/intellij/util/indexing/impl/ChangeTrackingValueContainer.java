@@ -186,13 +186,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   public boolean containsCachedMergedData() {
     return myMergedSnapshot != null;
   }
-
-  @Override
-  public void setNeedsCompacting(boolean value) {
-    //just to make it public (probably, original method must be public instead?)
-    super.setNeedsCompacting(value);
-  }
-
+  
   @Override
   public void saveTo(@NotNull DataOutput out,
                      @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
