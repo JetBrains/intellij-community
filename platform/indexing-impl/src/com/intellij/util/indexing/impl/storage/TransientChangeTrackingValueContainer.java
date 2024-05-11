@@ -2,15 +2,15 @@
 package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.impl.ChangeTrackingValueContainer;
+import com.intellij.util.indexing.impl.UpdatableValueContainer;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
 
 final class TransientChangeTrackingValueContainer<Value> extends ChangeTrackingValueContainer<Value> {
-  TransientChangeTrackingValueContainer(@NotNull Computable<? extends ValueContainer<Value>> initializer) {
+  TransientChangeTrackingValueContainer(@NotNull Computable<? extends UpdatableValueContainer<Value>> initializer) {
     super(initializer);
   }
 

@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -76,7 +75,7 @@ final class ValueContainerMap<Key, Value> {
   @NotNull
   ChangeTrackingValueContainer<Value> getModifiableValueContainer(final Key key) {
     return new ChangeTrackingValueContainer<>(() -> {
-      ValueContainer<Value> value;
+      UpdatableValueContainer<Value> value;
       try {
         value = myPersistentMap.get(key);
         if (value == null) {

@@ -196,7 +196,7 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
     return myMap.computeIfAbsent(key, k -> {
       return new TransientChangeTrackingValueContainer<>(() -> {
         try {
-          return myBackendStorage.read(key);
+          return (UpdatableValueContainer<Value>)myBackendStorage.read(key);
         }
         catch (StorageException e) {
           throw new RuntimeException(e);

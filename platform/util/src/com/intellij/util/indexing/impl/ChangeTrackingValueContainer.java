@@ -43,9 +43,9 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
    */
   private volatile ValueContainerImpl<Value> myMergedSnapshot;
   //RC: why is it Nullable? It seems quite NPE-prone
-  private final @Nullable Computable<? extends ValueContainer<Value>> myInitializer;
+  private final @Nullable Computable<? extends UpdatableValueContainer<Value>> myInitializer;
 
-  public ChangeTrackingValueContainer(@Nullable Computable<? extends ValueContainer<Value>> initializer) {
+  public ChangeTrackingValueContainer(@Nullable Computable<? extends UpdatableValueContainer<Value>> initializer) {
     myInitializer = initializer;
   }
 
@@ -116,7 +116,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       return mergedSnapshot;
     }
 
-    ValueContainer<Value> fromDisk = myInitializer.compute();
+    UpdatableValueContainer<Value> fromDisk = myInitializer.compute();
 
     // it makes sense to check it again before cloning and modifications application
     mergedSnapshot = myMergedSnapshot;
@@ -165,7 +165,8 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
         return true;
       });
     }
-    setNeedsCompacting(((UpdatableValueContainer<Value>)fromDisk).needsCompacting());
+
+    setNeedsCompacting(fromDisk.needsCompacting());
 
     myMergedSnapshot = newMerged;
     return newMerged;
