@@ -595,13 +595,14 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  private boolean removeValue(FileId2ValueMapping<Value> mapping, int inputId) {
+  /** @return true if something was actually removed */
+  private boolean removeValue(@Nullable FileId2ValueMapping<Value> mapping,
+                              int inputId) {
     if (mapping != null) {
       return mapping.removeFileId(inputId);
     }
     else {
-      removeAssociatedValue(inputId);
-      return true;
+      return removeAssociatedValue(inputId);
     }
   }
 
