@@ -509,7 +509,7 @@ private suspend fun processAndGetProductPluginContentModules(
 fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>, context: BuildContext): XIncludePathResolver {
   return object : XIncludePathResolver {
     override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean): Path? {
-      if (isOptional) {
+      if (isOptional || relativePath == "/META-INF/ultimate.xml") {
         // It isn't safe to resolve includes at build time if they're optional.
         // This could lead to issues when running another product using this distribution.
         // E.g., if the corresponding module is somehow being excluded on runtime.
