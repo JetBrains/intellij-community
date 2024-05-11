@@ -124,7 +124,7 @@ class KtFunctionPresenter : ItemPresentationProvider<KtFunction> {
 }
 
 private fun getPresentationInContainer(param: Any): String {
-    if (ExperimentalUI.isNewUI()) {
+    if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.in.container.paren.no.brackets", param)
     } else {
         return KotlinBundle.message("presentation.text.in.container.paren", param)

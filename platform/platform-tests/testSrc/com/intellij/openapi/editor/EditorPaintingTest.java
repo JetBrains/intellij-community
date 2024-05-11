@@ -143,7 +143,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     configureSoftWraps(5);
     addBlockInlay(0);
     addLineHighlighter(0, 0, HighlighterLayer.CARET_ROW + 1, null, Color.red);
-    checkResultWithGutter();
+    checkResultWithGutterForNewUI();
   }
 
   public void testBlockInlaysWithSelection() throws Exception {
@@ -215,7 +215,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   public void testEmptyEditorWithGutterIcon() throws Exception {
     initText("");
     addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
-    checkResultWithGutter();
+    checkResultWithGutterForNewUI();
   }
 
   public void testBlockInlaysInAnEmptyEditor() throws Exception {
@@ -223,7 +223,7 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
     getEditor().getInlayModel().addBlockElement(0, false, true, 0, new ColorBlockElementRenderer(Color.red));
     getEditor().getInlayModel().addBlockElement(0, false, false, 0, new ColorBlockElementRenderer(Color.blue));
-    checkResultWithGutter();
+    checkResultWithGutterForNewUI();
   }
 
   public void testAfterLineEndInlayWithLineExtension() throws Exception {
@@ -267,25 +267,25 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   public void testCaretAtFoldRegion() throws Exception {
     initText("test");
     addCollapsedFoldRegion(0, 4, ".");
-    checkResultWithGutter();
+    checkResultWithGutterForNewUI();
   }
 
   public void testCustomFoldRegion() throws Exception {
     initText("a\nb\nc");
     addCustomLinesFolding(1, 1);
-    checkResultWithGutter();
+    checkResultWithGutterForNewUI();
   }
 
   public void testCustomFoldRegionWithCaret() throws Exception {
     initText("a\n<caret>b\nc");
     addCustomLinesFolding(1, 1);
-    checkResultWithGutter();
+    checkResultWithGutterForNewUI();
   }
 
   public void testCustomFoldRegionWithCaretAtEnd() throws Exception {
     initText("a\nb<caret>\nc");
     addCustomLinesFolding(1, 1);
-    checkResultWithGutter();
+    checkResultWithGutterForNewUI();
   }
 
   public void testCustomFoldRegionInsideSelection() throws Exception {

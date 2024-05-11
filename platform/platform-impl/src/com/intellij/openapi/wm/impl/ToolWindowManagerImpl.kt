@@ -1188,7 +1188,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   internal fun isButtonNeeded(task: RegisterToolWindowTask, info: WindowInfoImpl?, stripeManager: ToolWindowStripeManager): Boolean {
     return (task.shouldBeAvailable
-            && (info?.isShowStripeButton ?: !(isNewUi && isToolwindowOfBundledPlugin(task)))
+            && (info?.isShowStripeButton ?: !(isNewUi && isToolwindowOfBundledPlugin(task)) || ApplicationManager.getApplication().isUnitTestMode)
             && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi))
   }
 
