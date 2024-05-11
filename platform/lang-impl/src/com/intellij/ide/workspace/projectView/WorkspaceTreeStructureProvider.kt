@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
@@ -37,7 +38,7 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId)) {
       val directoryNodes = selected.filterIsInstance<PsiDirectoryNode>()
       val workspaceNode = directoryNodes.firstNotNullOfOrNull { it.parent as? WorkspaceNode } ?: return null
-      val subprojects = directoryNodes.mapNotNull { workspaceNode.subprojectMap[it.value.virtualFile.path] }
+      val subprojects = directoryNodes.mapNotNull { workspaceNode.subprojectMap[it] }
       if (subprojects.isEmpty()) return null
       return SubprojectDeleteProvider(subprojects)
     }
@@ -73,24 +74,26 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
                               private val projectNode: ProjectViewProjectNode)
     : PsiDirectoryNode(project, value, viewSettings) {
 
-    val subprojectMap = HashMap<String, Subproject>()
+    val subprojectMap = HashMap<PsiDirectoryNode, Subproject?>()
 
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
       val subprojects = SubprojectHandler.getAllSubprojects(project).associateBy { it.projectPath }
-
       subprojectMap.clear()
       val children = projectNode.children.filter { it !is ExternalLibrariesNode }
       for (child in children) {
         val directoryNode = child as? PsiDirectoryNode ?: continue
         val path = directoryNode.value.virtualFile.path
-        val subproject = subprojects[path] ?: continue
-        subprojectMap[path] = subproject
+        subprojectMap[directoryNode] = subprojects[path]
       }
       return children
     }
 
     override fun update(data: PresentationData) {
       projectNode.update(data)
+    }
+
+    override fun contains(file: VirtualFile): Boolean {
+      return subprojectMap.keys.any { node -> node.contains(file) }
     }
   }
 }
