@@ -18,6 +18,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
@@ -63,7 +64,8 @@ sealed interface K2MoveTargetModel {
             row(KotlinBundle.message("label.text.destination")) {
                 destinationChooser = cell(object : KotlinDestinationFolderComboBox() {
                     override fun getTargetPackage(): String {
-                        return pkgChooser.text
+                        val basePkg = directory.getFqNameWithImplicitPrefixOrRoot()
+                        return pkgChooser.text.removePrefix(basePkg.asString())
                     }
                 }).align(AlignX.FILL).component
             }
