@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
@@ -107,7 +108,7 @@ internal class NewWorkspaceDialog(
     val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
     descriptor.title = LangBundle.message("chooser.title.select.file.or.directory.to.import")
     descriptor.withFileFilter { file -> handlers.any { it.canImportFromFile(project, file) } }
-    val files = FileChooser.chooseFiles(descriptor, project, null)
+    val files = FileChooser.chooseFiles(descriptor, project, project.guessProjectDir()?.parent)
     val allItems = listModel.items
     for (file in files) {
       val path = file.path
