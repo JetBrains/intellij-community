@@ -167,7 +167,7 @@ sealed class K2MoveModel {
             fun isMultiFileMove(movedElements: List<KtElement>) = movedElements.map { it.containingFile }.toSet().size > 1
 
             fun PsiElement?.isSingleClassContainer(): Boolean {
-                if (this !is KtClass) return false
+                if (this !is KtClassOrObject) return false
                 val file = parent as? KtFile ?: return false
                 return this == file.declarations.singleOrNull()
             }
