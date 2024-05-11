@@ -104,10 +104,17 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
   //
   // We should include cool-library only to cool.module.core (same group).
   fun hasLibraryInDependencyChainOfModuleDependencies(dependentModule: JpsModule, libraryName: String, siblings: Collection<ModuleItem>): Boolean {
-    val prefix = dependentModule.name.let { it.substring(0, it.lastIndexOf('.') + 1) }
+    val parentGroup = dependentModule.name.let { it.substring(0, it.lastIndexOf('.')) }
+    val prefix = "$parentGroup."
     for (dependency in getModuleDependencies(dependentModule)) {
       val moduleName = dependency.moduleReference.moduleName
-      if (moduleName.startsWith(prefix) &&
+      // intellij.space.kotlin depends on module intellij.space and both uses library org.apache.ivy
+      if (moduleName == parentGroup) {
+        if (getLibraryDependencies(dependency.module ?: continue).any { it.libraryReference.libraryName == libraryName }) {
+          return true
+        }
+      }
+      else if (moduleName.startsWith(prefix) &&
           siblings.none { it.moduleName == moduleName } &&
           getLibraryDependencies(dependency.module ?: continue).any { it.libraryReference.libraryName == libraryName }) {
         return true
