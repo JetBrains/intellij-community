@@ -178,7 +178,7 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
 
   private static void cleanDirectory(@NotNull Path directory) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
-      stream.forEach(path -> {
+      for (Path path : stream) {
         if (!FILES_TO_KEEP.contains(path.getFileName().toString())) {
           try {
             NioFiles.deleteRecursively(path);
@@ -187,7 +187,9 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
             System.err.println("Failed to delete " + path + ": " + e);
           }
         }
-      });
+      }
+    }
+    catch (NoSuchFileException ignore) {
     }
     catch (IOException e) {
       System.err.println("Failed to clean directory " + directory + ": " + e);
