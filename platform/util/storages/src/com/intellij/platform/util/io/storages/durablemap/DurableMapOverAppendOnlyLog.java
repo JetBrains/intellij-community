@@ -91,9 +91,9 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
     int foundRecordId = keyHashToIdMap.lookup(adjustedHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
       return keyValuesLog.read(logRecordId, recordBuffer -> {
-        //TODO RC: in this case we don't need to read value at all -- regardless of key matching
-        Entry<K, V> entry = entryExternalizer.readIfKeyMatch(recordBuffer, key);
-        return entry != null;
+        
+        K recordKey = entryExternalizer.readKey(recordBuffer);
+        return recordKey != null;
       });
     });
 
@@ -135,28 +135,37 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
     //Abstraction break: synchronize on keyHashToIdMap because we know keyHashToIdMap uses this-monitor to synchronize
     //    itself
     synchronized (keyHashToIdMap) {
-      Ref<Entry<K, V>> resultRef = new Ref<>();
+      Ref<Boolean> valueIsSameRef = new Ref<>(Boolean.FALSE);
       int foundRecordId = keyHashToIdMap.lookup(
         adjustedHash,
         candidateRecordId -> {
           long logRecordId = convertStoredIdToLogId(candidateRecordId);
-          Entry<K, V> entryWithSameKey = readEntryIfKeyMatch(logRecordId, key);
-          if (entryWithSameKey == null) {
-            return false; // [record.key != key] => hash collision => look further
+          if (valueEquality != null) {
+            Entry<K, V> entryWithSameKey = readEntryIfKeyMatch(logRecordId, key);
+            if (entryWithSameKey == null) {
+              return false; // [record.key != key] => hash collision => look further
+            }
+
+            boolean valueIsSame = valuesEqualNullSafe(value, entryWithSameKey.value());
+            valueIsSameRef.set(valueIsSame);
           }
-          if (nullSafeEquals(value, entryWithSameKey.value())) {
-            //record with key existed, and with the same value
-            // => just return, don't store entry ref -- we already know both key & value
-            return true;
+          else {
+            //without valueEquality we don't use .value at all -> don't need to read it then
+            K candidateKey = readKey(logRecordId);
+            if (candidateKey == null
+                || !keyEquality.isEqual(key, candidateKey)) {
+              return false; // [record.key != key] => hash collision => look further
+            }
+
+            valueIsSameRef.set(Boolean.FALSE);
           }
-          //record with key exists, but with different value
-          resultRef.set(entryWithSameKey);
+
           return true;
         }
       );
 
       boolean keyRecordExists = (foundRecordId != DurableIntToMultiIntMap.NO_VALUE);
-      boolean valueIsSame = resultRef.isNull();
+      boolean valueIsSame = valueIsSameRef.get();
 
       //Check is value differ from current value -- we don't need to append the log with the same (key,value)
       // again and again
@@ -350,20 +359,24 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
   // ============================= infrastructure: ============================================================================ //
 
   static int convertLogIdToStoredId(long logRecordId) {
-    int storeId = (int)(logRecordId);
-    if (storeId != logRecordId) {
-      throw new IllegalStateException("logRecordId(=" + logRecordId + ") doesn't fit into int32");
+    if ((logRecordId & 0b11) != 1) {
+      throw new AssertionError("logRecordId(=" + logRecordId + ") expected to be int32-aligned");
     }
-    return storeId;
+    long storeId = ((logRecordId - 1) >> 2) + 1;
+    int intStoreId = (int)storeId;
+    if (intStoreId != storeId) {
+      throw new IllegalStateException("logRecordId(=" + logRecordId + ", " + storeId + ") doesn't fit into int32");
+    }
+    return intStoreId;
   }
 
   static long convertStoredIdToLogId(int storedRecordId) {
-    return storedRecordId;
+    return (((long)storedRecordId - 1) << 2) + 1;
   }
 
   /** valueDescriptor is expected to NOT process null values, so we compare null values separately */
-  private boolean nullSafeEquals(@Nullable V value,
-                                 @Nullable V anotherValue) {
+  private boolean valuesEqualNullSafe(@Nullable V value,
+                                      @Nullable V anotherValue) {
     if ((anotherValue == null && value == null)) {
       return true;
     }

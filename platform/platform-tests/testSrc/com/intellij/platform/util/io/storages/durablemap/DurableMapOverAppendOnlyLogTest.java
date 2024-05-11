@@ -2,6 +2,8 @@
 package com.intellij.platform.util.io.storages.durablemap;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.util.io.Unmappable;
@@ -27,7 +29,12 @@ public class DurableMapOverAppendOnlyLogTest extends DurableMapTestBase<String, 
 
   @Override
   protected @NotNull StorageFactory<DurableMapOverAppendOnlyLog<String, String>> factory() {
-    return DurableMapFactory.withDefaults(stringAsUTF8(), stringAsUTF8());
+    KeyDescriptorEx<String> stringAsUTF8 = stringAsUTF8();
+    //TODO RC: test both cases: with and without valueEquality
+    return DurableMapFactory.withDefaults(
+      stringAsUTF8,
+      (DataExternalizerEx<String>)stringAsUTF8
+    );
   }
 
 
@@ -193,7 +200,6 @@ public class DurableMapOverAppendOnlyLogTest extends DurableMapTestBase<String, 
       );
     }
   }
-
 
 
   ///////
