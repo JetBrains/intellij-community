@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.fileActions.importFrom.docx
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FileDropEvent
 import com.intellij.openapi.editor.FileDropHandler
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -13,15 +13,14 @@ import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
-import java.awt.datatransfer.Transferable
 import java.io.File
 
 internal class MarkdownDocxFileDropHandler : FileDropHandler {
-  override suspend fun handleDrop(project: Project, t: Transferable, files: Collection<File>, editor: Editor?): Boolean {
-    if (files.size != 1) return false
-    if (!isDocxFile(files.first())) return false
+  override suspend fun handleDrop(e: FileDropEvent): Boolean {
+    if (e.files.size != 1) return false
+    if (!isDocxFile(e.files.first())) return false
 
-    return handleDrop(files.first(), project)
+    return handleDrop(e.files.first(), e.project)
   }
 
   private suspend fun handleDrop(file: File, project: Project): Boolean {

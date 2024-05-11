@@ -20,7 +20,6 @@ import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 import org.intellij.plugins.markdown.images.editor.ImageUtils
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
-import java.awt.datatransfer.Transferable
 import java.io.File
 import java.net.URLEncoder
 import java.nio.charset.Charset
@@ -31,12 +30,12 @@ import kotlin.io.path.relativeTo
 
 internal class MarkdownFileDropHandler : FileDropHandler {
 
-  override suspend fun handleDrop(project: Project, t: Transferable, files: Collection<File>, editor: Editor?): Boolean {
-    if (editor == null) return false
+  override suspend fun handleDrop(e: FileDropEvent): Boolean {
+    if (e.editor == null) return false
 
-    if (!readAction { canHandle(project, editor) }) return false
+    if (!readAction { canHandle(e.project, e.editor!!) }) return false
 
-    return handleDrop(project, files, editor)
+    return handleDrop(e.project, e.files, e.editor!!)
   }
 
   private fun canHandle(project: Project, editor: Editor): Boolean {

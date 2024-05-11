@@ -54,8 +54,9 @@ class FileDropManager(private val project: Project,
                                  editor: Editor?,
                                  editorWindowCandidate: EditorWindow?,
                                  fileList: Collection<File>) {
+    val event = FileDropEvent(project, t, fileList, editor)
     val dropHandled = (listOf(CustomFileDropHandlerBridge()) + EP_NAME.extensionList)
-      .any { it.handleDrop(project, t, fileList, editor) }
+      .any { it.handleDrop(event) }
 
     if (!dropHandled) {
       val editorWindow = editorWindowCandidate ?: readAction {
@@ -119,15 +120,15 @@ class FileDropManager(private val project: Project,
 
 @Suppress("DEPRECATION")
 private class CustomFileDropHandlerBridge : FileDropHandler {
-  override suspend fun handleDrop(project: Project, t: Transferable, files: Collection<File>, editor: Editor?): Boolean {
-    val extensions = CustomFileDropHandler.CUSTOM_DROP_HANDLER_EP.getExtensions(project)
+  override suspend fun handleDrop(e: FileDropEvent): Boolean {
+    val extensions = CustomFileDropHandler.CUSTOM_DROP_HANDLER_EP.getExtensions(e.project)
     if (extensions.isEmpty()) return false
 
     return withContext(Dispatchers.EDT) {
       blockingContext {
         extensions.any {
-          it.canHandle(t, editor)
-          && it.handleDrop(t, editor, project)
+          it.canHandle(e.transferable, e.editor)
+          && it.handleDrop(e.transferable, e.editor, e.project)
         }
       }
     }

@@ -12899,8 +12899,15 @@ a:com.intellij.openapi.editor.EditorLinePainter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:getLineExtensions(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):java.util.Collection
+f:com.intellij.openapi.editor.FileDropEvent
+- <init>(com.intellij.openapi.project.Project,java.awt.datatransfer.Transferable,java.util.Collection,com.intellij.openapi.editor.Editor):V
+- f:getEditor():com.intellij.openapi.editor.Editor
+- f:getFiles():java.util.Collection
+- f:getProject():com.intellij.openapi.project.Project
+- f:getTransferable():java.awt.datatransfer.Transferable
+- toString():java.lang.String
 com.intellij.openapi.editor.FileDropHandler
-- a:handleDrop(com.intellij.openapi.project.Project,java.awt.datatransfer.Transferable,java.util.Collection,com.intellij.openapi.editor.Editor,kotlin.coroutines.Continuation):java.lang.Object
+- a:handleDrop(com.intellij.openapi.editor.FileDropEvent,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.editor.FileDropManager
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:handleDrop(java.awt.datatransfer.Transferable,com.intellij.openapi.editor.Editor,com.intellij.openapi.fileEditor.impl.EditorWindow,kotlin.coroutines.Continuation):java.lang.Object
