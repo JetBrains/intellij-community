@@ -23,7 +23,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
   private static final boolean ENABLE_WAL = SystemProperties.getBooleanProperty("idea.index.enable.wal", false);
 
-  protected ValueContainerMap<Key, Value> myMap;
+  private ValueContainerMap<Key, Value> myMap;
 
   private MapIndexStorageCache<Key, Value> myCache;
 
@@ -32,6 +32,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   private final int myCacheSize;
 
   private final DataExternalizer<Value> myDataExternalizer;
+  /** {@link FileBasedIndexExtension#keyIsUniqueForIndexedFile} and {@link SingleEntryFileBasedIndexExtension} */
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
   private final boolean myEnableWal;
@@ -301,6 +302,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   private void updateSingleValueDirectly(Key key, int inputId, Value newValue) throws IOException {
     assert myKeyIsUniqueForIndexedFile;
+
     ChangeTrackingValueContainer<Value> cached = readIfCached(key);
 
     if (cached != null) {
@@ -316,8 +318,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   private void putSingleValueDirectly(Key key, int inputId, Value value) throws IOException {
     assert myKeyIsUniqueForIndexedFile;
-    ChangeTrackingValueContainer<Value> cached;
-    cached = readIfCached(key);
+
+    ChangeTrackingValueContainer<Value> cached = readIfCached(key);
 
     if (cached != null) {
       cached.addValue(inputId, value);

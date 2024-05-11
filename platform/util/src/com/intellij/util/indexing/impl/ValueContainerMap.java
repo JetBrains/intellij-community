@@ -44,9 +44,9 @@ final class ValueContainerMap<Key, Value> {
 
   void merge(Key key,
              ChangeTrackingValueContainer<Value> valueContainer) throws IOException {
-    // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files
-    // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
-    // file) and there is no benefit to accumulate values for particular key because only one value exists
+    // Try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files.
+    // Note: keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for
+    // particular file) and there is no benefit to accumulate values for particular key because only one value exists.
     if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
       myPersistentMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
