@@ -381,14 +381,18 @@ private fun getContentPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): Lis
   val result = ArrayList<Pair<String, String?>>(modules.size)
   for (item in modules) {
     val module = item.requireDescriptor()
+    if (!module.jarFiles.isNullOrEmpty()) {
+      continue
+    }
+
     val packagePrefix = module.packagePrefix
     if (packagePrefix == null) {
-      if (module.jarFiles.isNullOrEmpty() && module.pluginClassLoader != null) {
-        // If jarFiles is not set for a module, the only way to separate it is by package prefix. Therefore, we require the package prefix.
-        throw PluginException("Package is not specified (module=$module)", module.pluginId)
+      if (module.pluginClassLoader == null) {
+        continue
       }
       else {
-        continue
+        // If jarFiles is not set for a module, the only way to separate it is by package prefix. Therefore, we require the package prefix.
+        throw PluginException("Package is not specified (module=$module)", module.pluginId)
       }
     }
     result.add("$packagePrefix." to module.moduleName)
