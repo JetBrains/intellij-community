@@ -29,7 +29,7 @@
     <externalAnnotator language="XHTML"
                        implementationClass="com.intellij.htmltools.lang.annotation.HtmlNonExistentInternetResourcesAnnotator"/>
 
-    <customFileDropHandler implementation="com.intellij.htmltools.ide.HtmlFileDropHandler"/>
+    <fileDropHandler implementation="com.intellij.htmltools.ide.HtmlFileDropHandler"/>
 
     <localInspection language="XML" shortName="HtmlPresentationalElement"
                      bundle="messages.HtmlToolsBundle" key="html.inspections.check.presentational.tag"
