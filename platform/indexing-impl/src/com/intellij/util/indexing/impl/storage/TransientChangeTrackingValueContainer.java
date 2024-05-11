@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.openapi.util.Computable;
@@ -23,7 +23,8 @@ final class TransientChangeTrackingValueContainer<Value> extends ChangeTrackingV
   }
 
   @Override
-  public void saveTo(DataOutput out, DataExternalizer<? super Value> externalizer) {
+  public void saveTo(@NotNull DataOutput out,
+                     @NotNull DataExternalizer<? super Value> externalizer) {
     throw new UnsupportedOperationException();
   }
 }

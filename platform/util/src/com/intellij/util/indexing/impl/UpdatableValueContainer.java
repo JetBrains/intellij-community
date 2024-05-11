@@ -4,6 +4,7 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -33,5 +34,6 @@ public abstract class UpdatableValueContainer<T> extends ValueContainer<T> {
     myNeedsCompacting = value;
   }
 
-  public abstract void saveTo(DataOutput out, DataExternalizer<? super T> externalizer) throws IOException;
+  public abstract void saveTo(@NotNull DataOutput out,
+                              @NotNull DataExternalizer<? super T> externalizer) throws IOException;
 }

@@ -193,7 +193,8 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   }
 
   @Override
-  public void saveTo(DataOutput out, DataExternalizer<? super Value> externalizer) throws IOException {
+  public void saveTo(@NotNull DataOutput out,
+                     @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
     if (needsCompacting()) {
       getMergedData().saveTo(out, externalizer);
     }

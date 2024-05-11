@@ -41,7 +41,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
    * 1 entry:    (myInputIdMapping, myInputIdMappingValue) = (value, inputId*)
    * >1 entries: (myInputIdMapping, myInputIdMappingValue) = (ValueToInputMap[ Value -> inputId*], null)
    * </pre>
-   *
+   * <p>
    * inputId* (=set of inputId, also mentioned as FileSet in code) is also stored to optimize for the most
    * frequent case of 0-1 inputIds: it is either null (empty set), Integer (1-element set) or {@link ChangeBufferingList}
    * for a >1 inputIds.
@@ -473,8 +473,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   }
 
   @Override
-  public void saveTo(final @NotNull DataOutput out,
-                     final @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
+  public void saveTo(@NotNull DataOutput out,
+                     @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
     DataInputOutputUtil.writeINT(out, size());
 
     for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
@@ -486,8 +486,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  public static void storeFileSet(final @NotNull DataOutput out,
-                                  final @NotNull Object fileSetObject) throws IOException {
+  public static void storeFileSet(@NotNull DataOutput out,
+                                  @NotNull Object fileSetObject) throws IOException {
     // format is either <single id> (positive int value)
     //               or <-ids count> <id_1> <id_2-id_1> <id_3-id_2> ... (i.e. diff-encoded ids)
     if (fileSetObject instanceof Integer) {
