@@ -184,6 +184,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkArrayAccessOverloads(myFixture)
     }
 
+    fun testPrimitiveOperator() {
+        checkPrimitiveOperator(myFixture)
+    }
+
     fun testOperatorOverloads() {
         checkOperatorOverloads(myFixture)
     }

@@ -1055,6 +1055,42 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("E", augmentedResolved.returnType?.canonicalText)
     }
 
+    fun checkPrimitiveOperator(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                fun testString(s1: String, s2: String) {
+                    return s1 + s2
+                }
+
+                fun testLong(l1: Long, l2: Long) {
+                    return l1 + l2
+                }
+
+                fun testInt(i1: Int, i2: Int) {
+                    return i1 + i2
+                }
+
+                fun testIntRange(ir1: IntRange, ir2: IntRange) {
+                    return ir1 + ir2
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+
+        var count = 0
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
+                    val resolved = node.resolveOperator()
+                    TestCase.assertEquals(node.sourcePsi?.text, "plus", resolved?.name)
+                    count++
+                    return super.visitBinaryExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(4, count)
+    }
+
     fun checkOperatorOverloads(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -1273,7 +1309,11 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val plusEq = uFile.findElementByTextFromPsi<UBinaryExpression>("x.foo +=", strict = false)
             .orFail("cant convert to UBinaryExpression")
         val wholePlusEq = plusEq.resolveOperator()
-        TestCase.assertNull(wholePlusEq)
+        if (isK2) {
+            TestCase.assertNull(wholePlusEq)
+        } else {
+            TestCase.assertEquals("plus", wholePlusEq?.name)
+        }
         // `x.foo` from `x.foo += 42`
         val left = (plusEq.leftOperand as? UResolvable)?.resolve() as? PsiMethod
         if (isK2) {
@@ -1293,7 +1333,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val plusPlus = uFile.findElementByTextFromPsi<UUnaryExpression>("x.foo++", strict = false)
             .orFail("cant convert to UUnaryExpression")
         val wholePlusPlus = plusPlus.resolveOperator()
-        TestCase.assertNull(wholePlusPlus)
+        TestCase.assertEquals("inc", wholePlusPlus?.name)
         // `x.foo` from `x.foo++`
         val operand = (plusPlus.operand as? UResolvable)?.resolve() as? PsiMethod
         if (isK2) {
