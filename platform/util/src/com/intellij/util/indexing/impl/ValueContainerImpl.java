@@ -539,7 +539,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
         boolean doCompact = false;
         if (inputIds instanceof int[]) {
           for (int inputId : (int[])inputIds) {
-            doCompact = removeValue(mapping, inputId);
+            doCompact |= removeValue(mapping, inputId);
           }
         }
         else {
