@@ -2,11 +2,12 @@
 package com.intellij.ide.workspace
 
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.workspace.projectView.isWorkspaceNode
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.ex.ProjectEx
-import kotlinx.coroutines.launch
 
-internal class ManageWorkspaceAction: BaseWorkspaceAction() {
+internal class ManageWorkspaceAction: BaseWorkspaceAction(true) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = requireNotNull(e.project)
     val subprojects = SubprojectHandler.getAllSubprojects(project)
@@ -23,15 +24,13 @@ internal class ManageWorkspaceAction: BaseWorkspaceAction() {
     removeSubprojects(removed)
 
     val added = dialog.selectedPaths.filter { !subprojectPaths.contains(it) }
-    getCoroutineScope(project).launch {
-      added.forEach { s ->
-        linkToWorkspace(project, s)
-      }
-    }
+    addToWorkspace(project, added)
   }
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && e.project?.isWorkspace == true
+    if (ActionPlaces.PROJECT_VIEW_POPUP == e.place) {
+      e.presentation.isEnabledAndVisible = isWorkspaceNode(e)
+    }
   }
 }

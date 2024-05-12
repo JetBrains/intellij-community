@@ -13,6 +13,8 @@ import com.intellij.ide.workspace.Subproject
 import com.intellij.ide.workspace.SubprojectDeleteProvider
 import com.intellij.ide.workspace.SubprojectHandler
 import com.intellij.ide.workspace.isWorkspace
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -22,6 +24,10 @@ import com.intellij.project.stateStore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import kotlin.io.path.invariantSeparatorsPathString
+
+private val WORKSPACE_NODE = DataKey.create<Boolean>("project.view.workspace.node")
+
+internal fun isWorkspaceNode(e: AnActionEvent) = WORKSPACE_NODE.getData(e.dataContext) == true
 
 internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStructureProvider, DumbAware {
   override fun modify(parent: AbstractTreeNode<*>,
@@ -35,10 +41,13 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
   }
 
   override fun getData(selected: MutableCollection<out AbstractTreeNode<*>>, dataId: String): Any? {
+    if (WORKSPACE_NODE.`is`(dataId) && selected.firstOrNull() is WorkspaceNode) {
+      return true
+    }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId)) {
       val directoryNodes = selected.filterIsInstance<PsiDirectoryNode>()
       val workspaceNode = directoryNodes.firstNotNullOfOrNull { it.parent as? WorkspaceNode } ?: return null
-      val subprojects = directoryNodes.mapNotNull { workspaceNode.subprojectMap[it] }
+      val subprojects = directoryNodes.mapNotNull { workspaceNode.getSubproject(it.value) }
       if (subprojects.isEmpty()) return null
       return SubprojectDeleteProvider(subprojects)
     }
@@ -74,7 +83,7 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
                               private val projectNode: ProjectViewProjectNode)
     : PsiDirectoryNode(project, value, viewSettings) {
 
-    val subprojectMap = HashMap<PsiDirectoryNode, Subproject?>()
+    private val subprojectMap = HashMap<PsiDirectory, Subproject?>()
 
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
       val subprojects = SubprojectHandler.getAllSubprojects(project).associateBy { it.projectPath }
@@ -83,7 +92,7 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
       for (child in children) {
         val directoryNode = child as? PsiDirectoryNode ?: continue
         val path = directoryNode.value.virtualFile.path
-        subprojectMap[directoryNode] = subprojects[path]
+        subprojectMap[directoryNode.value] = subprojects[path]
       }
       return children
     }
@@ -93,7 +102,9 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
     }
 
     override fun contains(file: VirtualFile): Boolean {
-      return subprojectMap.keys.any { node -> node.contains(file) }
+      return projectNode.contains(file)
     }
+
+    fun getSubproject(directory: PsiDirectory) = subprojectMap[directory]
   }
 }

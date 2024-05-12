@@ -1746,6 +1746,13 @@
       <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
     </group>
 
+    <group id="WorkspaceContextMenuGroup">
+      <action id="AddToWorkspace" class="com.intellij.ide.workspace.AddProjectsToWorkspaceAction"/>
+      <reference ref="ManageWorkspace"/>
+      <separator/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+    </group>
+
     <action id="FileChooser.LightEditGotoOpenedFile"
             class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
             icon="AllIcons.General.Locate">

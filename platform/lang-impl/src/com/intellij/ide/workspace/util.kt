@@ -5,11 +5,20 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 internal class MyCoroutineScopeService(val scope: CoroutineScope)
 
 internal fun getCoroutineScope(workspace: Project) = workspace.service<MyCoroutineScopeService>().scope
+
+internal fun addToWorkspace(project: Project, projectPaths: List<String>) {
+  getCoroutineScope(project).launch {
+    projectPaths.forEach { s ->
+      linkToWorkspace(project, s)
+    }
+  }
+}
 
 internal fun removeSubprojects(subprojects: Collection<Subproject>) {
   subprojects.groupBy { it.handler }.forEach {

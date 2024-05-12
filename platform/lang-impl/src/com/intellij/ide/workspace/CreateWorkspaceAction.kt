@@ -24,17 +24,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
-internal abstract class BaseWorkspaceAction: DumbAwareAction() {
+internal abstract class BaseWorkspaceAction(private val workspaceOnly: Boolean): DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun update(e: AnActionEvent) {
     val project = e.project
     e.presentation.isEnabledAndVisible = Registry.`is`("ide.enable.project.workspaces", false) &&
                                          project != null &&
-                                         (project.isWorkspace || SubprojectHandler.getAllSubprojects(project).isNotEmpty())
+                                         (workspaceOnly && project.isWorkspace
+                                         || SubprojectHandler.getAllSubprojects(project).isNotEmpty())
   }
 }
 
-internal open class CreateWorkspaceAction: BaseWorkspaceAction() {
+internal open class CreateWorkspaceAction: BaseWorkspaceAction(false) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = requireNotNull(e.project)
     createWorkspace(project)

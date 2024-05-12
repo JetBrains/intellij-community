@@ -3,7 +3,9 @@ package com.intellij.ide.workspace
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.workspace.projectView.isWorkspaceNode
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -12,6 +14,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ToolbarDecorator
@@ -104,16 +107,33 @@ internal class NewWorkspaceDialog(
   }
 
   private fun addProjects() {
-    val handlers = SubprojectHandler.EP_NAME.extensionList
-    val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
-    descriptor.title = LangBundle.message("chooser.title.select.file.or.directory.to.import")
-    descriptor.withFileFilter { file -> handlers.any { it.canImportFromFile(project, file) } }
-    val files = FileChooser.chooseFiles(descriptor, project, project.guessProjectDir()?.parent)
+    val files = browseForProjects(project)
     val allItems = listModel.items
     for (file in files) {
       val path = file.path
       if (allItems.contains(path)) continue
       listModel.add(path)
     }
+  }
+}
+
+private fun browseForProjects(project: Project): Array<out VirtualFile> {
+  val handlers = SubprojectHandler.EP_NAME.extensionList
+  val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
+  descriptor.title = LangBundle.message("chooser.title.select.file.or.directory.to.import")
+  descriptor.withFileFilter { file -> handlers.any { it.canImportFromFile(project, file) } }
+  return FileChooser.chooseFiles(descriptor, project, project.guessProjectDir()?.parent)
+}
+
+internal class AddProjectsToWorkspaceAction: BaseWorkspaceAction(true) {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = requireNotNull(e.project)
+    val files = browseForProjects(project)
+    if (files.isEmpty()) return
+    addToWorkspace(project, files.map { it.path })
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isWorkspaceNode(e)
   }
 }
