@@ -355,6 +355,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             runTest("../../idea/tests/testData/refactoring/introduceParameter/lastParameterHasEolCommentAndTrailingComma.kt");
         }
 
+        @TestMetadata("overrideFunction.kt")
+        public void testOverrideFunction() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/overrideFunction.kt");
+        }
+
         @TestMetadata("partialSubstitution.kt")
         public void testPartialSubstitution() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/partialSubstitution.kt");

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
@@ -361,13 +363,16 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
 }
 
 fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(onExit: (() -> Unit)? = null) {
-    val methodDescriptor = KotlinMethodDescriptor((callable as? KtClass)?.primaryConstructor ?: callable)
+    val superMethods = checkSuperMethods(callable, emptyList(), RefactoringBundle.message("to.refactor"))
+    val targetCallable = superMethods.filterIsInstance<KtNamedDeclaration>().firstOrNull() ?: return
+
+    val methodDescriptor = KotlinMethodDescriptor((targetCallable as? KtClass)?.primaryConstructor ?: targetCallable)
     val changeInfo = KotlinChangeInfo(methodDescriptor)
 
     val defaultValue = if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue
 
     if (!withDefaultValue) {
-        val parameters = callable.getValueParameters()
+        val parameters = targetCallable.getValueParameters()
         val withReceiver = methodDescriptor.receiver != null
         parametersToRemove
             .map {
@@ -382,18 +387,18 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(onExit: 
     }
 
     val parameterInfo = KotlinParameterInfo(
-        originalType = KotlinTypeInfo(newParameterTypeText, callable),
+        originalType = KotlinTypeInfo(newParameterTypeText, targetCallable),
         name = newParameterName,
         originalIndex = -1,
         valOrVar = valVar,
         defaultValueForCall = defaultValue,
         defaultValueAsDefaultParameter = withDefaultValue,
         defaultValue = if (withDefaultValue) defaultValue else null,
-        context = callable
+        context = targetCallable
     )
     changeInfo.addParameter(parameterInfo)
 
-    object : KotlinChangeSignatureProcessor(callable.project, changeInfo) {
+    object : KotlinChangeSignatureProcessor(targetCallable.project, changeInfo) {
         override fun performRefactoring(usages: Array<out UsageInfo?>) {
             super.performRefactoring(usages)
             occurrencesToReplace.forEach {

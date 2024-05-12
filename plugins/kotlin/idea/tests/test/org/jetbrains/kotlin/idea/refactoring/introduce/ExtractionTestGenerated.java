@@ -3601,6 +3601,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/lastParameterHasEolCommentAndTrailingComma.kt");
             }
 
+            @TestMetadata("overrideFunction.kt")
+            public void testOverrideFunction() throws Exception {
+                runTest("testData/refactoring/introduceParameter/overrideFunction.kt");
+            }
+
             @TestMetadata("partialSubstitution.kt")
             public void testPartialSubstitution() throws Exception {
                 runTest("testData/refactoring/introduceParameter/partialSubstitution.kt");
