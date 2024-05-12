@@ -43,7 +43,5 @@ suspend fun ShellRuntimeContext.getFileSuggestions(
       val type = if (it.endsWith(separator)) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
       ShellCompletionSuggestion(it, type)
     }
-    // add an empty choice to be able to handle the case when the folder is chosen
-    .let { if (path.isNotEmpty()) it.plus(ShellCompletionSuggestion("")) else it }
     .toList()
 }
