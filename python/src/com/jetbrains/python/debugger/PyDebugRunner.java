@@ -101,6 +101,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   protected static final @NonNls String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
   protected static final @NonNls String PYCHARM_DEBUG = "PYCHARM_DEBUG";
   protected static final @NonNls String USE_LOW_IMPACT_MONITORING = "USE_LOW_IMPACT_MONITORING";
+  protected static final @NonNls String USE_PROCESSES_FOR_RESOLVE = "USE_PROCESSES_FOR_RESOLVE";
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
@@ -702,6 +703,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
     if (RegistryManager.getInstance().is("python.debug.enable.diagnostic.prints")) {
       environmentController.putFixedValue(PYCHARM_DEBUG, "True");
+    }
+
+    if (RegistryManager.getInstance().is("python.debug.use.processes.for.resolve")) {
+      environmentController.putFixedValue(USE_PROCESSES_FOR_RESOLVE, "True");
     }
   }
 
