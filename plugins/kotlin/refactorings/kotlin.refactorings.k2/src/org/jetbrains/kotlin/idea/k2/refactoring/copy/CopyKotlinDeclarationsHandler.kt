@@ -117,7 +117,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
     private fun MoveDestination.toSourceDirectory(
         sourceData: SourceData
-    ): SourceDirectory = SourceDirectory(FqName(targetPackage.qualifiedName), getTargetDirectory(sourceData.initialTargetDirectory))
+    ): SourceDirectory = SourceDirectory(FqName(targetPackage.qualifiedName), runWriteAction { getTargetDirectory(sourceData.initialTargetDirectory) })
 
     private fun PsiDirectory.toSourceDirectory(
     ): SourceDirectory = SourceDirectory(getFqNameWithImplicitPrefixOrRoot(), this)
