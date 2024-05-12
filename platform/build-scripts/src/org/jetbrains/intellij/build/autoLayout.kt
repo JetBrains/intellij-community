@@ -65,7 +65,8 @@ internal suspend fun computeModuleSourcesByContent(
 ) {
   for (moduleName in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule), jarPackager.moduleOutputPatcher)) {
     // todo PyCharm team why this module is being incorrectly published
-    if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter" || !addedModules.add(moduleName)) {
+    // CWM plugin is overcomplicated without any valid reason - it must be refactored
+    if ((layout.mainModule == "intellij.pycharm.ds.remoteInterpreter" || moduleName == "intellij.cwm.plugin.driver") || !addedModules.add(moduleName)) {
       continue
     }
 

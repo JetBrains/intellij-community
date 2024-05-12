@@ -922,7 +922,6 @@ private fun checkProductLayout(context: BuildContext) {
   val messages = context.messages
 
   val pluginLayouts = layout.pluginLayouts
-  checkScrambleClasspathPlugins(pluginLayouts)
   checkPluginDuplicates(pluginLayouts)
   checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", context)
   checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", context)
@@ -1041,18 +1040,6 @@ private fun checkArtifacts(names: Collection<String>, fieldName: String, context
   val unknownArtifacts = names - JpsArtifactService.getInstance().getArtifacts(context.project).map { it.name }.toSet()
   check(unknownArtifacts.isEmpty()) {
     "The following artifacts from $fieldName aren\'t found in the project: $unknownArtifacts"
-  }
-}
-
-private fun checkScrambleClasspathPlugins(pluginLayoutList: List<PluginLayout>) {
-  val pluginDirectories = pluginLayoutList.mapTo(HashSet()) { it.directoryName }
-  for (pluginLayout in pluginLayoutList) {
-    for ((pluginDirectoryName, _) in pluginLayout.scrambleClasspathPlugins) {
-      check(pluginDirectories.contains(pluginDirectoryName)) {
-        "Layout of plugin '${pluginLayout.mainModule}' declares an unresolved plugin directory name" +
-        " in ${pluginLayout.scrambleClasspathPlugins}: $pluginDirectoryName"
-      }
-    }
   }
 }
 

@@ -649,10 +649,11 @@ internal suspend fun buildPlugins(
       for (scrambleTask in scrambleTasks) {
         launch {
           scrambleTool.scramblePlugin(
-            context = context,
             pluginLayout = scrambleTask.plugin,
             targetDir = scrambleTask.pluginDir,
-            additionalPluginsDir = scrambleTask.targetDir,
+            additionalPluginDir = scrambleTask.targetDir,
+            layouts = plugins,
+            context = context,
           )
         }
       }
@@ -1331,11 +1332,11 @@ private fun buildBlockMap(file: Path, json: JSON) {
   }
 }
 
-suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext): Set<String> {
+suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext): Collection<String> {
   val (lib, plugins) = generateProjectStructureMapping(context = context, platformLayout = platform)
 
   val pluginLayouts = context.productProperties.productLayout.pluginLayouts
-  val classPath = LinkedHashSet<String>()
+  val classPath = LinkedHashSet<Path>()
 
   val libDir = context.paths.distAllDir.resolve("lib")
   for (entry in lib) {
@@ -1348,9 +1349,9 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
 
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
+        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)))
       }
-      is LibraryFileEntry -> classPath.add(entry.libraryFile.toString())
+      is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
     }
   }
@@ -1365,17 +1366,14 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
 
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
-        (pluginLayouts.firstOrNull { it.mainModule == entry.moduleName } ?: continue)
-          .scrambleClasspathPlugins
-          .asSequence()
-          .map { it.first }
-          .map { directoryName -> pluginLayouts.single { it.directoryName == directoryName } }
-          .mapTo(classPath) { context.getModuleOutputDir(context.findRequiredModule(it.mainModule)).toString() }
+        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)))
+        for (classpathPluginEntry in pluginLayouts.firstOrNull { it.mainModule == entry.moduleName }?.scrambleClasspathPlugins ?: emptyList()) {
+          context.getModuleOutputDir(context.findRequiredModule(classpathPluginEntry.pluginMainModuleName)).toString()
+        }
       }
-      is LibraryFileEntry -> classPath.add(entry.libraryFile.toString())
+      is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
     }
   }
-  return classPath
+  return classPath.map { it.toString() }
 }

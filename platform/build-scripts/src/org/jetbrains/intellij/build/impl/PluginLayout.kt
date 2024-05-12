@@ -59,7 +59,9 @@ class PluginLayout private constructor(
   var scrambleSkipStatements: PersistentList<Pair<String, String>> = persistentListOf()
     private set
 
-  var scrambleClasspathPlugins: PersistentList<Pair<String /*plugin directory name*/, String /*relative path*/>> = persistentListOf()
+  data class ScrambleClasspathPluginEntry(@JvmField val pluginMainModuleName: String, @JvmField val relativePath: String?)
+
+  var scrambleClasspathPlugins: PersistentList<ScrambleClasspathPluginEntry> = persistentListOf()
     private set
 
   var scrambleClasspathFilter: (BuildContext, Path) -> Boolean = { _, _ -> true }
@@ -374,11 +376,15 @@ class PluginLayout private constructor(
      * If scramble tool is not defined, scrambling will not be performed
      * Multiple invocations of this method will add corresponding plugin names to a list of name to be added to scramble classpath
      *
-     * @param pluginDirectoryName - a name of the dependent plugin's directory, whose jars should be added to scramble classpath
+     * @param pluginMainModuleName - a name of the dependent plugin's directory, whose jars should be added to scramble classpath
      * @param relativePath - a directory where jars should be searched (relative to plugin home directory, "lib" by default)
      */
-    fun scrambleClasspathPlugin(pluginDirectoryName: String, relativePath: String = "lib") {
-      layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(Pair(pluginDirectoryName, relativePath))
+    fun scrambleClasspathPlugin(pluginMainModuleName: String) {
+      layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(ScrambleClasspathPluginEntry(pluginMainModuleName = pluginMainModuleName, relativePath = null))
+    }
+
+    fun scrambleClasspathPlugin(pluginId: String, relativePath: String) {
+      layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(ScrambleClasspathPluginEntry(pluginMainModuleName = pluginId, relativePath = relativePath))
     }
 
     /**
