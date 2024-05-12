@@ -225,10 +225,8 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
   }
 
   @Override
-  public void navigate(DomElement element) {
-  }
+  public void navigate(DomElement element) { }
 
   protected abstract @Nullable T getValue();
   protected abstract void setValue(T value);
-
 }

@@ -20,22 +20,21 @@ public class PsiTypeControl extends JavaControlBase<PsiTypePanel> {
 
   @Override
   protected @NotNull String getValue() {
-    final String rawValue = super.getValue();
+    String rawValue = super.getValue();
     try {
-      final PsiType psiType = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(rawValue, null);
-      final String s = JvmPsiTypeConverterImpl.convertToString(psiType);
+      PsiType psiType = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(rawValue, null);
+      String s = JvmPsiTypeConverterImpl.convertToString(psiType);
       if (s != null) {
         return s;
       }
     }
-    catch (IncorrectOperationException ignored) {
-    }
+    catch (IncorrectOperationException ignored) { }
     return rawValue;
   }
 
   @Override
   protected void setValue(String value) {
-    final PsiType type = JvmPsiTypeConverterImpl.convertFromString(value, new AbstractConvertContext() {
+    PsiType type = JvmPsiTypeConverterImpl.convertFromString(value, new AbstractConvertContext() {
       @Override
       public @NotNull DomElement getInvocationElement() {
         return getDomElement();
@@ -48,12 +47,12 @@ public class PsiTypeControl extends JavaControlBase<PsiTypePanel> {
   }
 
   @Override
-  protected EditorTextField getEditorTextField(final @NotNull PsiTypePanel component) {
+  protected EditorTextField getEditorTextField(@NotNull PsiTypePanel component) {
     return ((ReferenceEditorWithBrowseButton)component.getComponent(0)).getEditorTextField();
   }
 
   @Override
-  protected PsiTypePanel createMainComponent(PsiTypePanel boundedComponent, final Project project) {
+  protected PsiTypePanel createMainComponent(PsiTypePanel boundedComponent, Project project) {
     if (boundedComponent == null) {
       boundedComponent = new PsiTypePanel();
     }
