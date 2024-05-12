@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -56,6 +55,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -224,25 +224,33 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
             replacementMap = replacementMap,
             controlFlow = flow,
             returnType = returnType,
-            modifiers = if (hasSuspendReference(extractionData)) listOf(KtTokens.SUSPEND_KEYWORD) else emptyList(),
+            modifiers = emptyList(),
             optInMarkers = experimentalMarkers.optInMarkers,
             annotationClassIds = experimentalMarkers.propagatingMarkerClassIds
         )
+        val config = ExtractionGeneratorConfiguration(
+            descriptor,
+            ExtractionGeneratorOptions(inTempFile = true, allowExpressionBody = false)
+        )
+
+        val generatedDeclaration = Generator.generateDeclaration(config, null).declaration
+        val illegalSuspendInside = analyzeCopy(generatedDeclaration, DanglingFileResolutionMode.PREFER_SELF) {
+            generatedDeclaration.descendantsOfType<KtExpression>()
+                .flatMap {
+                    it.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                        .map { it.diagnosticClass }
+                }
+                .any { it == KtFirDiagnostic.IllegalSuspendFunctionCall::class || it == KtFirDiagnostic.IllegalSuspendPropertyAccess::class }
+        }
+        if (illegalSuspendInside) {
+            descriptor = descriptor.copy(modifiers = listOf(KtTokens.SUSPEND_KEYWORD))
+        }
+
+
         for (analyser in ExtractFunctionDescriptorModifier.EP_NAME.extensionList) {
             descriptor = analyser.modifyDescriptor(descriptor)
         }
         return descriptor
-    }
-
-    private fun hasSuspendReference(extractionData: ExtractionData): Boolean {
-        return extractionData.expressions
-            .flatMap { it.descendantsOfType<KtSimpleNameExpression>() }
-            .any { nameExpression ->
-                analyze(nameExpression) {
-                    val symbol = nameExpression.mainReference.resolveToSymbol()
-                    symbol is KtFunctionSymbol && symbol.isSuspend
-                }
-            }
     }
 }
 
