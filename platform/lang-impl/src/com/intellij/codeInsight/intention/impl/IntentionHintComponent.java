@@ -9,7 +9,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
+import com.intellij.codeInsight.intention.impl.preview.PreviewHandler;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
@@ -31,7 +32,6 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -71,7 +71,10 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -593,7 +596,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private final @NotNull Editor myEditor;
     private final @NotNull PsiFile myFile;
     private final @NotNull IntentionContainer myCachedIntentions;
-    private final IntentionPreviewPopupUpdateProcessor myPreviewPopupUpdateProcessor;
+    private PreviewHandler<IntentionActionWithTextCaching> myPreviewHandler;
     private PopupMenuListener myOuterComboboxPopupListener;
     private IntentionHintComponent myHint;
     private ListPopup myListPopup;
@@ -608,7 +611,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myEditor = editor;
       myFile = file;
       myCachedIntentions = cachedIntentions;
-      myPreviewPopupUpdateProcessor = new IntentionPreviewPopupUpdateProcessor(project, myFile, myEditor);
     }
 
     @Override
@@ -640,9 +642,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         myListPopup.showInBestPositionFor(myEditor);
       }
 
-      if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
-        ApplicationManager.getApplication().invokeLater(this::showPreview);
-      }
+      myPreviewHandler.showInitially();
 
       IntentionFUSCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage(), myEditor);
       myPopupShown = true;
@@ -689,6 +689,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         return;
       }
       popup.myListPopup = JBPopupFactory.getInstance().createListPopup(step);
+      popup.myPreviewHandler = popup.getPreviewHandler();
       if (popup.myListPopup instanceof WizardPopup wizardPopup) {
         Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcuts();
         for (Shortcut shortcut : shortcuts) {
@@ -701,7 +702,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
 
         popup.registerIntentionShortcuts();
-        popup.registerShowPreviewAction();
       }
 
       HighlightingContext context = new HighlightingContext(popup);
@@ -714,34 +714,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         if (source instanceof DataProvider dataProvider) {
           Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData(dataProvider);
           if (selectedItem instanceof IntentionActionWithTextCaching actionWithCaching) {
-            IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
-            if (list != null) {
-              popup.updatePreviewPopup(actionWithCaching, list.getOriginalSelectedIndex());
-            }
             highlightOnHover(actionWithCaching, context, popup);
             return;
           }
         }
         context.dropHighlight();
       };
-      ListPopup listPopup = popup.myListPopup;
-      if (listPopup instanceof ListPopupImpl listPopupImpl) {
-        listPopupImpl.getList().addFocusListener(new FocusListener() {
-          @Override
-          public void focusGained(FocusEvent e) {
-            if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
-              popup.showPreview();
-            }
-          }
-
-          @Override
-          public void focusLost(FocusEvent e) {
-            if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
-              popup.myPreviewPopupUpdateProcessor.hide();
-            }
-          }
-        });
-      }
       popup.myListPopup.addListSelectionListener(selectionListener);
 
       popup.myListPopup.addListener(new JBPopupListener() {
@@ -756,7 +734,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           context.dropHighlight();
-          popup.myPreviewPopupUpdateProcessor.hide();
           popup.myPopupShown = false;
         }
       });
@@ -793,6 +770,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       else {
         context.dropHighlight();
       }
+    }
+
+    private @NotNull PreviewHandler<IntentionActionWithTextCaching> getPreviewHandler() {
+      return new PreviewHandler<>(
+        myProject, myListPopup,
+        IntentionActionWithTextCaching.class,
+        action -> new IntentionPreviewComputable(
+          myProject, action.getAction(), myFile, myEditor, action.getFixOffset()).call());
     }
 
     /**
@@ -882,12 +867,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     }
 
-    @RequiresEdt
-    private void updatePreviewPopup(IntentionActionWithTextCaching action, int index) {
-      myPreviewPopupUpdateProcessor.setup(myListPopup, index);
-      myPreviewPopupUpdateProcessor.updatePopup(action);
-    }
-
     /** Add all intention shortcuts to also be available as actions in the popover */
     private void registerIntentionShortcuts() {
       for (Object object : myListPopup.getListStep().getValues()) {
@@ -912,45 +891,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
       }
     }
-
-    @RequiresEdt
-    private void registerShowPreviewAction() {
-      KeyStroke keyStroke = KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet());
-      Action action = createAction(e -> maybeShowPreview());
-      ((WizardPopup)myListPopup).registerAction("showIntentionPreview", keyStroke, action);
-      advertisePopup(myListPopup);
-    }
-
-    private void maybeShowPreview() {
-      IntentionPreviewPopupUpdateProcessor processor = myPreviewPopupUpdateProcessor;
-      boolean shouldShow = !processor.isShown();
-      EditorSettingsExternalizable.getInstance().setShowIntentionPreview(shouldShow);
-      if (shouldShow) {
-        processor.activate();
-        showPreview();
-      }
-      else {
-        processor.hide();
-      }
-    }
-
-    private void showPreview() {
-      myPreviewPopupUpdateProcessor.show();
-      if (myListPopup instanceof ListPopupImpl listPopup) {
-        JList<?> list = listPopup.getList();
-        if (list.getSelectedValue() instanceof IntentionActionWithTextCaching actionWithCaching) {
-          updatePreviewPopup(actionWithCaching, list.getSelectedIndex());
-        }
-      }
-    }
-
-    private static void advertisePopup(@NotNull ListPopup popup) {
-      if (!popup.isDisposed()) {
-        String shortcutText = IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText();
-        popup.setAdText(CodeInsightBundle.message("intention.preview.adv.toggle.text", shortcutText), SwingConstants.LEFT);
-      }
-    }
   }
+
   private static @NotNull Action createAction(@NotNull Consumer<ActionEvent> perform) {
     return new AbstractAction() {
       @Override

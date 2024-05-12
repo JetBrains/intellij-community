@@ -19,7 +19,6 @@ import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -793,8 +792,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     IntentionActionWithTextCaching action = findCachingAction(hint);
     if (action == null) return null;
     IntentionPreviewInfo info =
-      new IntentionPreviewComputable(getProject(), action.getAction(), getFile(), getEditor(), action.getFixOffset()).generatePreview();
-    return info == null ? null : ((IntentionPreviewDiffResult)info).getNewText();
+      IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), action.getAction(), getFile(), getEditor(), action.getFixOffset());
+    return info == IntentionPreviewInfo.EMPTY ? null : ((IntentionPreviewDiffResult)info).getNewText();
   }
 
   @Override

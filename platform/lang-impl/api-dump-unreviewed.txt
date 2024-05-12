@@ -7870,10 +7870,10 @@ e:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult$Hig
 f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor
 - com.intellij.ui.popup.PopupUpdateProcessor
 - sf:Companion:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor$Companion
-- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - f:activate():V
 - sf:getPreviewContent(com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):java.lang.String
 - sf:getPreviewInfo(com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- sf:getPreviewInfo(com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - sf:getPreviewText(com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):java.lang.String
 - f:hide():V
 - f:isShown():Z
@@ -7883,12 +7883,17 @@ f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdatePro
 f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor$Companion
 - f:getPreviewContent(com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):java.lang.String
 - f:getPreviewInfo(com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- f:getPreviewInfo(com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- bs:getPreviewInfo$default(com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor$Companion,com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,I,java.lang.Object):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - f:getPreviewText(com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):java.lang.String
 - f:getShortcutSet():com.intellij.openapi.actionSystem.ShortcutSet
 - f:getShortcutText():java.lang.String
 f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException
 - java.lang.UnsupportedOperationException
 - <init>():V
+f:com.intellij.codeInsight.intention.impl.preview.PreviewHandler
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.ListPopup,java.lang.Class,java.util.function.Function):V
+- showInitially():V
 com.intellij.codeInsight.lookup.LookupActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:fillActions(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.lookup.Lookup,com.intellij.util.Consumer):V

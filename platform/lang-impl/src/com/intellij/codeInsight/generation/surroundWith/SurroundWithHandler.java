@@ -5,6 +5,8 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.intention.impl.preview.PreviewHandler;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable;
 import com.intellij.codeInsight.template.impl.SurroundWithLogger;
@@ -19,6 +21,9 @@ import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
 import com.intellij.lang.surroundWith.ModCommandSurrounder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -30,12 +35,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -203,7 +210,20 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
     JBPopupFactory.ActionSelectionAid mnemonics = JBPopupFactory.ActionSelectionAid.MNEMONICS;
     DefaultActionGroup group = new DefaultActionGroup(applicable.toArray(AnAction.EMPTY_ARRAY));
-    JBPopupFactory.getInstance().createActionGroupPopup(CodeInsightBundle.message("surround.with.chooser.title"), group, context, mnemonics, true).showInBestPositionFor(editor);
+    ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(CodeInsightBundle.message("surround.with.chooser.title"), group, context, mnemonics, true);
+    Project project = editor.getProject();
+    if (project != null) {
+      PreviewHandler<PopupFactoryImpl.ActionItem> handler = new PreviewHandler<>(project, popup, PopupFactoryImpl.ActionItem.class, act -> {
+        AnAction action = act.getAction();
+        if (action instanceof AnActionWithPreview actionWithPreview) {
+          return actionWithPreview.getPreview();
+        }
+        return IntentionPreviewInfo.EMPTY;
+      });
+      popup.showInBestPositionFor(editor);
+      handler.showInitially();
+    }
   }
 
   public static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
@@ -288,7 +308,7 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     return applicable.isEmpty() ? null : applicable;
   }
 
-  private static final class InvokeSurrounderAction extends AnAction {
+  private static final class InvokeSurrounderAction extends AnAction implements AnActionWithPreview {
     private final Surrounder mySurrounder;
     private final Project myProject;
     private final Editor myEditor;
@@ -300,6 +320,19 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
       myProject = project;
       myEditor = editor;
       myElements = elements;
+    }
+    
+    @Override
+    public @NotNull IntentionPreviewInfo getPreview() {
+      if (mySurrounder instanceof ModCommandSurrounder modCommandSurrounder) {
+        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+        if (file != null) {
+          ActionContext context = ActionContext.from(myEditor, file);
+          ModCommand command = modCommandSurrounder.surroundElements(context, myElements);
+          return ModCommandExecutor.getInstance().getPreview(command, context);
+        }
+      }
+      return IntentionPreviewInfo.EMPTY;
     }
 
     @Override
