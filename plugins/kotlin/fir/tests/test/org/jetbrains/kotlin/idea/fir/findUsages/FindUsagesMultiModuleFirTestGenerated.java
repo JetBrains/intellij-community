@@ -28,6 +28,16 @@ public class FindUsagesMultiModuleFirTestGenerated extends AbstractFindUsagesMul
         runTest("../../idea/tests/testData/multiModuleFindUsages/findActualInterface/");
     }
 
+    @TestMetadata("findByConvention")
+    public void testFindByConvention() throws Exception {
+        runTest("../../idea/tests/testData/multiModuleFindUsages/findByConvention/");
+    }
+
+    @TestMetadata("findByConventionInPlatform")
+    public void testFindByConventionInPlatform() throws Exception {
+        runTest("../../idea/tests/testData/multiModuleFindUsages/findByConventionInPlatform/");
+    }
+
     @TestMetadata("findClassConstructors")
     public void testFindClassConstructors() throws Exception {
         runTest("../../idea/tests/testData/multiModuleFindUsages/findClassConstructors/");

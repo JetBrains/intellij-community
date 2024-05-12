@@ -13,7 +13,10 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.KotlinBaseAnalysisBundle
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.forceResolveReferences
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.getReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
@@ -60,7 +63,14 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
     protected fun processReferenceElement(element: TReferenceElement): Boolean {
         val reference = extractReference(element) ?: return true
         testLog { "Resolved ${logPresentation(element)}" }
-        return if (reference.isReferenceTo(targetDeclaration)) {
+        if (reference.isReferenceTo(targetDeclaration)) {
+            return consumer.process(reference)
+        }
+
+        val currentTarget = reference.resolve() as? KtDeclaration ?: return true
+        if (targetDeclaration !is KtDeclaration) return true
+        return if ((targetDeclaration.expectedDeclarationIfAny() ?: targetDeclaration) == (currentTarget.expectedDeclarationIfAny() ?: currentTarget)
+        ) {
             consumer.process(reference)
         } else {
             true

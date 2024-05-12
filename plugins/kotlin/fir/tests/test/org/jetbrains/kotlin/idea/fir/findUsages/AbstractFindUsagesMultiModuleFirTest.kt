@@ -20,13 +20,15 @@ abstract class AbstractFindUsagesMultiModuleFirTest : AbstractFindUsagesMultiMod
         )
     }
 
+    override val ignoreLog: Boolean = true
+
     override fun doTest(path: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             getTestdataFile().toPath().resolve("directives.txt"),
             IgnoreTests.DIRECTIVES.IGNORE_K2,
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
-            super.doTest(path)
+            super.doTestInternal(path)
         }
     }
 }

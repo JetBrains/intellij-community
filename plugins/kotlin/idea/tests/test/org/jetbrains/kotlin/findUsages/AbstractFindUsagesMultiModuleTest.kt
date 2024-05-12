@@ -7,6 +7,7 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -28,7 +29,19 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
             file.text.contains("// ")
         }
 
-    protected open fun doTest(path: String) {
+    open val ignoreLog: Boolean = false
+
+    open fun doTest(path: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            getTestdataFile().toPath().resolve("directives.txt"),
+            IgnoreTests.DIRECTIVES.IGNORE_K1,
+            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+        ) {
+            doTestInternal(path)
+        }
+    }
+
+    protected fun doTestInternal(path: String) {
         setupMppProjectFromDirStructure(File(path))
 
         val virtualFile = mainFile.virtualFile!!
@@ -67,6 +80,7 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
             project,
             alwaysAppendFileName = true,
             testType = testType,
+            ignoreLog = ignoreLog
         )
     }
 }
