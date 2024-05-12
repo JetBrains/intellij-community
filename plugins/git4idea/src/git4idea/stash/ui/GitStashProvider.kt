@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
@@ -238,9 +237,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
     fun CompletableFuture<*>.propagateCancellationTo(future: CompletableFuture<*>) {
       whenComplete { _, t ->
-        if (t is CancellationException || t is ProcessCanceledException) {
-          future.cancel(false)
-        }
+        if (t is CancellationException) future.cancel(false)
       }
     }
   }
