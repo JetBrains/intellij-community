@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.lang.LanguageExpressionTypes
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -16,6 +18,8 @@ import org.jetbrains.kotlin.psi.KtFile
 abstract class AbstractExpressionTypeTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
+    override fun runInDispatchThread(): Boolean = false
 
     abstract override fun isFirPlugin(): Boolean
 
@@ -43,11 +47,13 @@ abstract class AbstractExpressionTypeTest : KotlinMultiFileLightCodeInsightFixtu
 
         myFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
         val expressionTypeProvider = findKotlinExpressionTypeProvider()
-        val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!!
-        val expressions = expressionTypeProvider.getExpressionsAt(elementAtCaret)
-        val types = expressions.map { "${it.text.replace('\n', ' ')} -> ${expressionTypeProvider.getInformationHint(it)}" }
-        val expectedTypes = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, expectedTypeDirective)
-        UsefulTestCase.assertOrderedEquals(types, expectedTypes)
+        val elementAtCaret = runReadAction { myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!! }
+        val expressions = runInEdtAndGet { expressionTypeProvider.getExpressionsAt(elementAtCaret) }
+        runReadAction {
+            val types = expressions.map { "${it.text.replace('\n', ' ')} -> ${expressionTypeProvider.getInformationHint(it)}" }
+            val expectedTypes = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, expectedTypeDirective)
+            UsefulTestCase.assertOrderedEquals(types, expectedTypes)
+        }
     }
 }
 
