@@ -25,18 +25,6 @@ internal suspend fun buildPlugins(
   buildPlatformJob: Job,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).useWithScope {
-    launch {
-      val plugin = plugins.firstOrNull { it.mainModule == "intellij.rider.plugins.clion.radler" && hasResourcePaths(it) } ?: return@launch
-      // copy custom resources
-      spanBuilder("build plugin")
-        .setAttribute("mainModule", plugin.mainModule)
-        .setAttribute("dir", plugin.directoryName)
-        .setAttribute("reason", "copy custom resources")
-        .useWithScope(Dispatchers.IO) {
-          layoutResourcePaths(layout = plugin, context = context, targetDirectory = pluginRootDir.resolve(plugin.directoryName), overwrite = true)
-        }
-    }
-
     buildPlugins(
       moduleOutputPatcher = ModuleOutputPatcher(),
       plugins = plugins,
