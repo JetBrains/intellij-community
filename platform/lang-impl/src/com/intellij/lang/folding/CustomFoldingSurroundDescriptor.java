@@ -7,19 +7,23 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
+import com.intellij.lang.surroundWith.ModCommandSurrounder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +82,7 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
     //   <selection>1
     // ]</selection>
     // E.g. in case shown, because of that adjustment, closing bracket and number literal won't have the same parent
-    // and next test will fail.
+    // and the next test will fail.
     PsiElement newStartParent = getParent(newStart);
     if (newStartParent != null && newStartParent.getFirstChild() == newStart && newStart.getFirstChild() == null) {
       newStart = newStartParent;
@@ -227,7 +231,7 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
     return false;
   }
 
-  private static final class CustomFoldingRegionSurrounder implements Surrounder {
+  private static final class CustomFoldingRegionSurrounder extends ModCommandSurrounder {
 
     private final CustomFoldingProvider myProvider;
 
@@ -255,25 +259,28 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
     }
 
     @Override
-    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
-      throws IncorrectOperationException {
-      if (elements.length == 0) return null;
-      PsiElement firstElement = elements[0];
-      PsiElement lastElement = elements[elements.length - 1];
+    public @NotNull ModCommand surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elements) {
+      return ModCommand.psiUpdate(context, updater -> doSurround(context, ContainerUtil.map(elements, updater::getWritable), updater));
+    }
+
+    private void doSurround(@NotNull ActionContext context, @NotNull List<@NotNull PsiElement> elements, @NotNull ModPsiUpdater updater) {
+      if (elements.isEmpty()) return;
+      PsiElement firstElement = elements.get(0);
+      PsiElement lastElement = elements.get(elements.size() - 1);
       PsiFile psiFile = firstElement.getContainingFile();
       String linePrefix;
       String lineSuffix;
       Language language = psiFile.getLanguage();
       if (myProvider.wrapStartEndMarkerTextInLanguageSpecificComment()) {
         Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
-        if (commenter == null) return null;
+        if (commenter == null) return;
         linePrefix = commenter.getLineCommentPrefix();
         lineSuffix = "";
         if (linePrefix == null) {
           linePrefix = commenter.getBlockCommentPrefix();
           lineSuffix = StringUtil.notNullize(commenter.getBlockCommentSuffix());
         }
-        if (linePrefix == null) return null;
+        if (linePrefix == null) return;
       }
       else {
         linePrefix = "";
@@ -282,7 +289,7 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
       int prefixLength = linePrefix.length();
 
       int startOffset = firstElement.getTextRange().getStartOffset();
-      final Document document = editor.getDocument();
+      final Document document = firstElement.getContainingFile().getFileDocument();
       final int startLineNumber = document.getLineNumber(startOffset);
       final String startIndent = document.getText(new TextRange(document.getLineStartOffset(startLineNumber), startOffset));
       int endOffset = lastElement.getTextRange().getEndOffset();
@@ -303,20 +310,22 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
       delta += startString.length();
       
       RangeMarker rangeMarkerToSelect = document.createRangeMarker(rangeToSelect.shiftRight(prefixLength));
+      Project project = context.project();
       PsiDocumentManager.getInstance(project).commitDocument(document);
       adjustLineIndent(project, psiFile, language, TextRange.from(endOffset + delta - endString.length(), endString.length()));
       adjustLineIndent(project, psiFile, language, TextRange.from(startOffset, startString.length()));
       rangeToSelect = TextRange.create(rangeMarkerToSelect.getStartOffset(), rangeMarkerToSelect.getEndOffset());
       rangeMarkerToSelect.dispose();
-      return rangeToSelect;
+      updater.select(rangeToSelect);
     }
 
     private static void adjustLineIndent(@NotNull Project project, PsiFile file, Language language, TextRange range) {
-      CommonCodeStyleSettings formatSettings = CodeStyle.getLanguageSettings(file, language);
-      boolean keepAtFirstCol = formatSettings.KEEP_FIRST_COLUMN_COMMENT;
+      CodeStyleSettings settings = CodeStyle.getSettings(file);
+      CodeStyleSettings cloneSettings = CodeStyleSettingsManager.getInstance(project).cloneSettings(settings);
+      CommonCodeStyleSettings formatSettings = cloneSettings.getCommonSettings(language);
       formatSettings.KEEP_FIRST_COLUMN_COMMENT = false;
-      CodeStyleManager.getInstance(project).adjustLineIndent(file, range);
-      formatSettings.KEEP_FIRST_COLUMN_COMMENT = keepAtFirstCol;
+      CodeStyle.runWithLocalSettings(project, cloneSettings,
+                                     () -> CodeStyleManager.getInstance(project).adjustLineIndent(file, range));
     }
   }
 }
