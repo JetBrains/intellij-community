@@ -94,8 +94,8 @@ fun findElementAtRange(
             KtEscapeStringTemplateEntry::class.java
         ) == null
     ) {
-        firstElement = firstElement.getNextSiblingIgnoringWhitespaceAndComments(true)!!
-        lastElement = lastElement.getPrevSiblingIgnoringWhitespaceAndComments(true)!!
+        firstElement = firstElement.getNextSiblingIgnoringWhitespaceAndComments(true) ?: firstElement
+        lastElement = lastElement.getPrevSiblingIgnoringWhitespaceAndComments(true) ?: lastElement
         adjustedStart = firstElement.textRange.startOffset
         adjustedEnd = lastElement.textRange.endOffset
     }

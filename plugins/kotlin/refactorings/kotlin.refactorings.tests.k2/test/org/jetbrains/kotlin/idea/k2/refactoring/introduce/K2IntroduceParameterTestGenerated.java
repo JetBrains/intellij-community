@@ -275,6 +275,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             runTest("../../idea/tests/testData/refactoring/introduceParameter/foreignParameterRef.kt");
         }
 
+        @TestMetadata("fromComment.kt")
+        public void testFromComment() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/fromComment.kt");
+        }
+
         @TestMetadata("fun.kt")
         public void testFun() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/fun.kt");

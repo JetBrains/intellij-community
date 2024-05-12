@@ -3521,6 +3521,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/foreignParameterRef.kt");
             }
 
+            @TestMetadata("fromComment.kt")
+            public void testFromComment() throws Exception {
+                runTest("testData/refactoring/introduceParameter/fromComment.kt");
+            }
+
             @TestMetadata("fun.kt")
             public void testFun() throws Exception {
                 runTest("testData/refactoring/introduceParameter/fun.kt");
