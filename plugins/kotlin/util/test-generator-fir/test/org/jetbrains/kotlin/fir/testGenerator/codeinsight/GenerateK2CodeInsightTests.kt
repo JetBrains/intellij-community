@@ -15,7 +15,9 @@ import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTe
 import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 
 internal fun MutableTWorkspace.generateK2CodeInsightTests() {
@@ -69,7 +71,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         }
 
         testClass<AbstractK2ExpressionTypeTest> {
-            model("../../../idea/tests/testData/codeInsight/expressionType")
+            model("../../../idea/tests/testData/codeInsight/expressionType", pattern = KT or TEST)
         }
 
         testClass<AbstractKotlinFirMoveStatementTest> {

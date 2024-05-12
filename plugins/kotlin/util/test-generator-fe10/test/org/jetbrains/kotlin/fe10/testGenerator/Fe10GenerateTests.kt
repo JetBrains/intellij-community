@@ -640,7 +640,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractK1ExpressionTypeTest> {
-            model("codeInsight/expressionType")
+            model("codeInsight/expressionType", pattern = KT or TEST)
         }
 
         testClass<AbstractRenderingKDocTest> {

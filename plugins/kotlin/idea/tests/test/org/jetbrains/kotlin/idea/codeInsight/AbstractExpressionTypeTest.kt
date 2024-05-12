@@ -3,14 +3,17 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.lang.LanguageExpressionTypes
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.psi.KtFile
 
-abstract class AbstractExpressionTypeTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractExpressionTypeTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
@@ -32,8 +35,13 @@ abstract class AbstractExpressionTypeTest : KotlinLightCodeInsightFixtureTestCas
             KotlinPluginMode.K2 -> "// K2_TYPE: "
         }
 
-    protected fun doTest(path: String) {
-        myFixture.configureByFile(fileName())
+    override fun doMultiFileTest(
+        files: List<PsiFile>,
+        globalDirectives: Directives
+    ) {
+        val mainFile = files.first() as KtFile
+
+        myFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
         val expressionTypeProvider = findKotlinExpressionTypeProvider()
         val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!!
         val expressions = expressionTypeProvider.getExpressionsAt(elementAtCaret)
