@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.project.Project
@@ -214,7 +214,7 @@ fun isConflicted(index: StatusCode, workTree: StatusCode): Boolean {
 sealed class LightFileStatus {
   internal abstract fun getFileStatus(): FileStatus
 
-  object Blank : LightFileStatus() {
+  data object Blank : LightFileStatus() {
     override fun getFileStatus(): FileStatus = FileStatus.NOT_CHANGED
   }
 
