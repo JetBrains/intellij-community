@@ -13,9 +13,8 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.JvmPsiTypeConverterImpl;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
-
-  public PsiTypeControl(final DomWrapper<String> domWrapper, final boolean commitOnEveryChange) {
+public class PsiTypeControl extends JavaControlBase<PsiTypePanel> {
+  public PsiTypeControl(DomWrapper<String> domWrapper, boolean commitOnEveryChange) {
     super(domWrapper, commitOnEveryChange);
   }
 
@@ -58,10 +57,8 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
     if (boundedComponent == null) {
       boundedComponent = new PsiTypePanel();
     }
-    return PsiClassControl.initReferenceEditorWithBrowseButton(boundedComponent,
-                                                               new ReferenceEditorWithBrowseButton(null, project,
-                                                                                                   s -> JavaReferenceEditorUtil.createTypeDocument(s, project), ""), this);
+    return initReferenceEditorWithBrowseButton(
+      boundedComponent,
+      new ReferenceEditorWithBrowseButton(null, project, s -> JavaReferenceEditorUtil.createTypeDocument(s, project), ""), this);
   }
-
-
 }

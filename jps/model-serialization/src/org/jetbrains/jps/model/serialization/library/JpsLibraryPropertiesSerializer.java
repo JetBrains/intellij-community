@@ -20,7 +20,7 @@ public abstract class JpsLibraryPropertiesSerializer<P extends JpsElement> exten
   @Deprecated
   public P loadProperties(@Nullable Element propertiesElement) {
     throw new AbstractMethodError();
-  };
+  }
 
   public P loadProperties(@Nullable Element propertiesElement, @NotNull JpsPathMapper pathMapper) {
     return loadProperties(propertiesElement);

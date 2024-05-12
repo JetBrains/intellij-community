@@ -22,8 +22,8 @@ import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.quickfix.RenameIdentifierFix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
+import org.jetbrains.kotlin.idea.quickfix.RenameIdentifierFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -363,6 +363,7 @@ class LocalVariableNameInspection : PropertyNameInspectionBase(
     override fun getNamingRules(): Array<NamingRule> = arrayOf(START_LOWER, NO_UNDERSCORES, NO_BAD_CHARACTERS)
 }
 
+@Suppress("InspectionDescriptionNotFoundInspection")
 private class PackageNameInspectionLocal(
     val parentInspection: InspectionProfileEntry,
     val namingSettings: NamingConventionInspectionSettings
