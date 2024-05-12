@@ -11,6 +11,7 @@
                              implementationClass="org.jetbrains.lang.manifest.psi.impl.HeaderValuePartManipulator"/>
     <completion.contributor language="Manifest" implementationClass="org.jetbrains.lang.manifest.completion.ManifestCompletionContributor"/>
     <manifest.parser.provider implementation="org.jetbrains.lang.manifest.header.impl.StandardManifestHeaderParsers"/>
+    <manifest.parser.provider implementation="org.jetbrains.lang.manifest.header.impl.OsgiManifestHeaderParsers" />
 
     <localInspection language="Manifest" groupKey="inspection.group"
                      enabledByDefault="true" level="ERROR" implementationClass="org.jetbrains.lang.manifest.highlighting.MissingFinalNewlineInspection"
