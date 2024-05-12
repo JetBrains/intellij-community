@@ -184,25 +184,28 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     Collection<PsiField> fields = psiClass.isRecord() ? RecordAugmentProvider.getFieldAugments(psiClass)
                                                       : PsiClassUtil.collectClassFieldsIntern(psiClass);
     for (PsiField psiField : fields) {
-      // skip fields named $
-      boolean addField = !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-
-      final PsiModifierList modifierList = psiField.getModifierList();
-      if (null != modifierList) {
-        // skip static fields
-        addField &= !modifierList.hasModifierProperty(PsiModifier.STATIC);
-
-        boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
-        // skip initialized final fields
-        addField &= (!isFinal || !psiField.hasInitializer() ||
-                     PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION) != null);
-      }
-
-      if (addField) {
+      if (isNotInitializedAndNotStaticField(psiField, classAnnotatedWithValue)) {
         allNotInitializedNotStaticFields.add(psiField);
       }
     }
     return allNotInitializedNotStaticFields;
+  }
+
+  static boolean isNotInitializedAndNotStaticField(@NotNull PsiField psiField, boolean classAnnotatedWithValue) {
+    // skip fields named $
+    boolean addField = !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+
+    final PsiModifierList modifierList = psiField.getModifierList();
+    if (null != modifierList) {
+      // skip static fields
+      addField &= !modifierList.hasModifierProperty(PsiModifier.STATIC);
+
+      boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
+      // skip initialized final fields
+      addField &= (!isFinal || !psiField.hasInitializer() ||
+                   PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION) != null);
+    }
+    return addField;
   }
 
   @NotNull
@@ -221,17 +224,23 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     final boolean classAnnotatedWithValue = PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.VALUE);
 
     for (PsiField psiField : getAllNotInitializedAndNotStaticFields(psiClass)) {
-      final PsiModifierList modifierList = psiField.getModifierList();
-      if (null != modifierList) {
-        final boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
-        final boolean isNonNull = !ignoreNonNull && PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokUtils.NONNULL_ANNOTATIONS);
-        // accept initialized final or nonnull fields
-        if ((isFinal || isNonNull) && !psiField.hasInitializer()) {
-          result.add(psiField);
-        }
+      if (isRequiredField(psiField, ignoreNonNull, classAnnotatedWithValue)) {
+        result.add(psiField);
       }
     }
     return result;
+  }
+
+  static boolean isRequiredField(@NotNull PsiField psiField, boolean ignoreNonNull, boolean classAnnotatedWithValue) {
+    final PsiModifierList modifierList = psiField.getModifierList();
+    boolean shouldAddField = false;
+    if (null != modifierList) {
+      final boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
+      final boolean isNonNull = !ignoreNonNull && PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokUtils.NONNULL_ANNOTATIONS);
+      // accept initialized final or nonnull fields
+      shouldAddField = (isFinal || isNonNull) && !psiField.hasInitializer();
+    }
+    return shouldAddField;
   }
 
   private static boolean isFieldFinal(@NotNull PsiField psiField, @NotNull PsiModifierList modifierList, boolean classAnnotatedWithValue) {

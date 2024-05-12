@@ -65,7 +65,9 @@ public final class FieldNameConstantsOldProcessor extends AbstractClassProcessor
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+  protected void generatePsiElements(@NotNull PsiClass psiClass,
+                                     @NotNull PsiAnnotation psiAnnotation,
+                                     @NotNull List<? super PsiElement> target,
                                      @Nullable String nameHint) {
     final Collection<PsiField> psiFields = filterFields(psiClass);
     for (PsiField psiField : psiFields) {
@@ -79,35 +81,34 @@ public final class FieldNameConstantsOldProcessor extends AbstractClassProcessor
   private static Collection<PsiField> filterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiField> psiFields = new ArrayList<>();
 
-    FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
+    final FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      boolean useField = true;
-      PsiModifierList modifierList = psiField.getModifierList();
-      if (null != modifierList) {
-        //Skip static fields.
-        useField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
-        //Skip fields having same annotation already
-        useField &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClasses());
-        //Skip fields that start with $
-        useField &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-      }
-
-      if (useField) {
+      if (shouldUseField(psiField, fieldProcessor)) {
         psiFields.add(psiField);
       }
     }
     return psiFields;
   }
 
+  private static boolean shouldUseField(@NotNull PsiField psiField, @NotNull FieldNameConstantsFieldProcessor fieldProcessor) {
+    boolean useField = true;
+    PsiModifierList modifierList = psiField.getModifierList();
+    if (null != modifierList) {
+      //Skip static fields.
+      useField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
+      //Skip fields having same annotation already
+      useField &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClasses());
+      //Skip fields that start with $
+      useField &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+    }
+    return useField;
+  }
+
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiClass containingClass = psiField.getContainingClass();
-    if (null != containingClass) {
-      if (PsiClassUtil.getNames(filterFields(containingClass)).contains(psiField.getName())) {
-        return LombokPsiElementUsage.USAGE;
-      }
+    if (shouldUseField(psiField, getFieldNameConstantsFieldProcessor())) {
+      return LombokPsiElementUsage.USAGE;
     }
     return LombokPsiElementUsage.NONE;
   }
-
 }

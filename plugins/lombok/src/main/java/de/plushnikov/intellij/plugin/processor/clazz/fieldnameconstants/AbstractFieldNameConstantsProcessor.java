@@ -49,20 +49,34 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
   Collection<PsiMember> filterMembers(@NotNull PsiClass psiClass, PsiAnnotation psiAnnotation) {
     final Collection<PsiMember> result = new ArrayList<>();
 
-    final boolean onlyExplicitlyIncluded = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded", false);
+    final boolean onlyExplicitlyIncluded = isOnlyExplicitlyIncluded(psiAnnotation);
 
     Collection<? extends PsiMember> psiMembers;
-    if(psiClass.isRecord()) {
+    if (psiClass.isRecord()) {
       psiMembers = List.of(psiClass.getRecordComponents());
-    }else{
-      psiMembers =  PsiClassUtil.collectClassFieldsIntern(psiClass);
+    }
+    else {
+      psiMembers = PsiClassUtil.collectClassFieldsIntern(psiClass);
     }
 
     for (PsiMember psiMember : psiMembers) {
-      boolean useField = true;
+      if (shouldUseField(psiMember, onlyExplicitlyIncluded)) {
+        result.add(psiMember);
+      }
+    }
+    return result;
+  }
+
+  private static boolean shouldUseField(@NotNull PsiMember psiMember, boolean onlyExplicitlyIncluded) {
+    boolean useField = true;
+
+    if (onlyExplicitlyIncluded) {
+      //Only use fields annotated with @FieldNameConstants.Include, Include annotation overrides other rules
+      useField = PsiAnnotationSearchUtil.isAnnotatedWith(psiMember, FIELD_NAME_CONSTANTS_INCLUDE);
+    }
+    else {
       PsiModifierList modifierList = psiMember.getModifierList();
       if (null != modifierList) {
-
         //Skip static fields.
         useField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
         //Skip transient fields
@@ -72,17 +86,8 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
       useField &= !StringUtil.notNullize(psiMember.getName()).startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
       //Skip fields annotated with @FieldNameConstants.Exclude
       useField &= !PsiAnnotationSearchUtil.isAnnotatedWith(psiMember, FIELD_NAME_CONSTANTS_EXCLUDE);
-
-      if (onlyExplicitlyIncluded) {
-        //Only use fields annotated with @FieldNameConstants.Include, Include annotation overrides other rules
-        useField = PsiAnnotationSearchUtil.isAnnotatedWith(psiMember, FIELD_NAME_CONSTANTS_INCLUDE);
-      }
-
-      if (useField) {
-        result.add(psiMember);
-      }
     }
-    return result;
+    return useField;
   }
 
   @NotNull
@@ -97,10 +102,15 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      if (PsiClassUtil.getNames(filterMembers(containingClass, psiAnnotation)).contains(psiField.getName())) {
+      final boolean onlyExplicitlyIncluded = isOnlyExplicitlyIncluded(psiAnnotation);
+      if (shouldUseField(psiField, onlyExplicitlyIncluded)) {
         return LombokPsiElementUsage.USAGE;
       }
     }
     return LombokPsiElementUsage.NONE;
+  }
+
+  private static boolean isOnlyExplicitlyIncluded(@NotNull PsiAnnotation psiAnnotation) {
+    return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded", false);
   }
 }
