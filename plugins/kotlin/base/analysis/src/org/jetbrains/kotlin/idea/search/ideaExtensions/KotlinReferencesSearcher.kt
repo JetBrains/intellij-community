@@ -7,6 +7,8 @@ import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.*
@@ -95,15 +97,15 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
         val kotlinOptions = (parameters as? KotlinAwareReferencesSearchParameters)?.kotlinOptions ?: Empty
         if (!kotlinOptions.acceptImportAlias) return
 
-        val queryFunction = ReadAction.nonBlocking(Callable {
+        val queryFunction = DumbService.getInstance(parameters.project).runReadActionInSmartMode(Computable {
             val element = parameters.elementToSearch
 
-            if (!element.isValid) return@Callable null
-            val unwrappedElement = element.namedUnwrappedElement ?: return@Callable null
+            if (!element.isValid) return@Computable null
+            val unwrappedElement = element.namedUnwrappedElement ?: return@Computable null
             val elementToSearch = getElementToSearch(kotlinOptions, unwrappedElement)
 
             val name = elementToSearch.name
-            if (name.isNullOrBlank()) return@Callable null
+            if (name.isNullOrBlank()) return@Computable null
 
             val effectiveSearchScope = parameters.effectiveSearchScope(elementToSearch)
 
@@ -120,7 +122,7 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
                 )
             }
             function
-        }).executeSynchronously()
+        })
         queryFunction?.invoke()
     }
 
@@ -170,12 +172,13 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             var element: SmartPsiElementPointer<PsiElement>? = null
             var classNameForCompanionObject: String? = null
 
-            val (elementToSearchPointer: SmartPsiElementPointer<PsiNamedElement>, effectiveSearchScope) = ReadAction.nonBlocking(Callable {
+            val (elementToSearchPointer: SmartPsiElementPointer<PsiNamedElement>, effectiveSearchScope) =
+                DumbService.getInstance(queryParameters.project).runReadActionInSmartMode( Computable{
                 val psiElement = queryParameters.elementToSearch
 
-                if (!psiElement.isValid) return@Callable null
+                if (!psiElement.isValid) return@Computable null
 
-                val unwrappedElement = psiElement.namedUnwrappedElement ?: return@Callable null
+                val unwrappedElement = psiElement.namedUnwrappedElement ?: return@Computable null
 
                 val elementToSearch = getElementToSearch(kotlinOptions, unwrappedElement)
 
@@ -185,7 +188,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 classNameForCompanionObject = elementToSearch.getClassNameForCompanionObject()
 
                 SmartPointerManager.createPointer(elementToSearch) to effectiveSearchScope
-            }).executeSynchronously() ?: return
+            }) ?: return
 
             runReadAction { element?.element } ?: return
 
@@ -224,17 +227,17 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
                 if (elementToSearchPointer.element is KtParameter && kotlinOptions.searchNamedArguments) {
                     longTasks.add {
-                        ReadAction.nonBlocking(Callable {
+                        DumbService.getInstance(queryParameters.project).runReadActionInSmartMode(Runnable {
                             elementToSearchPointer.element.safeAs<KtParameter>()?.let(::searchNamedArguments)
-                        }).executeSynchronously()
+                        })
                     }
                 }
 
                 if (!(elementToSearchPointer.element is KtElement && runReadAction { isOnlyKotlinSearch(effectiveSearchScope) })) {
                     longTasks.add {
-                        ReadAction.nonBlocking(Callable {
+                        DumbService.getInstance(queryParameters.project).runReadActionInSmartMode(Runnable {
                             element?.element?.let(::searchLightElements)
-                        }).executeSynchronously()
+                        })
                     }
                 }
 
@@ -422,10 +425,10 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
         }
 
         private fun searchForComponentConventions(elementPointer: SmartPsiElementPointer<PsiElement>) {
-            ReadAction.nonBlocking(Callable {
+            DumbService.getInstance(queryParameters.project).runReadActionInSmartMode(Runnable {
                 when (val element = elementPointer.element) {
                     is KtParameter -> {
-                        val componentMethodName = element.dataClassComponentMethodName ?: return@Callable
+                        val componentMethodName = element.dataClassComponentMethodName ?: return@Runnable
 
                         searchNamedElement(element, componentMethodName)
 
@@ -444,8 +447,8 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                     }
 
                     is KtLightParameter -> {
-                        val componentMethodName = element.kotlinOrigin?.dataClassComponentMethodName ?: return@Callable
-                        val containingClass = element.method.containingClass ?: return@Callable
+                        val componentMethodName = element.kotlinOrigin?.dataClassComponentMethodName ?: return@Runnable
+                        val containingClass = element.method.containingClass ?: return@Runnable
                         searchDataClassComponentUsages(
                             containingClass = containingClass,
                             componentMethodName = componentMethodName,
@@ -453,9 +456,9 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                         )
                     }
 
-                    else -> return@Callable
+                    else -> return@Runnable
                 }
-            }).executeSynchronously()
+            })
         }
 
         @RequiresReadLock
