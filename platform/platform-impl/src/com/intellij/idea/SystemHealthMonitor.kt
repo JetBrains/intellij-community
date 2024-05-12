@@ -3,13 +3,11 @@ package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.process.UnixProcessManager
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.EditCustomVmOptionsAction
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.jna.JnaLoader
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -37,7 +35,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.IoErrorText
-import com.sun.jna.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.PropertyKey
@@ -48,7 +45,6 @@ import java.nio.file.FileStore
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -64,7 +60,6 @@ internal suspend fun startSystemHealthMonitor() {
   checkEnvironment()
   withContext(Dispatchers.IO) {
     checkLauncher()
-    checkSignalBlocking()
     checkTempDirSanity()
     checkTempDirEnvVars()
     checkAncientOs()
@@ -260,46 +255,6 @@ private fun checkLauncher() {
       val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) { BrowserUtil.browse("https://intellij.com/launcher") }
       showNotification("ide.script.launcher.used", suppressable = true, action, prefix + scriptName, prefix + binName)
     }
-  }
-}
-
-private fun checkSignalBlocking() {
-  if (!SystemInfo.isUnix || !JnaLoader.isLoaded()) {
-    return
-  }
-
-  try {
-    val libC = Native.load("c", LibC::class.java)
-    val sa = Memory(256)
-    if (libC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN == sa.getPointer(0)) {
-      libC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE)
-      LOG.info("restored ignored INT handler")
-    }
-  }
-  catch (e: Throwable) {
-    LOG.warn(e)
-  }
-}
-
-private interface LibC : Library {
-  interface Handler : Callback {
-    fun callback(sig: Int)
-
-    companion object {
-      /** ref: [java.lang.Terminator] */
-      @JvmField
-      val TERMINATE: Handler = object : Handler {
-        override fun callback(sig: Int) = exitProcess(128 + sig)
-      }
-    }
-  }
-
-  fun sigaction(sig: Int, action: Pointer?, oldAction: Pointer?): Int
-  fun signal(sig: Int, handler: Handler?): Pointer?
-
-  companion object {
-    @JvmField
-    val SIG_IGN = Pointer(1L)
   }
 }
 
