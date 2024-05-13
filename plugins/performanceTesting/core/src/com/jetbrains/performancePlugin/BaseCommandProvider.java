@@ -116,7 +116,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(AssertCaretPositionCommand.PREFIX, AssertCaretPositionCommand::new),
       Map.entry(AssertCurrentFileCommand.PREFIX, AssertCurrentFileCommand::new),
       Map.entry(AwaitCompleteProjectConfigurationCommand.PREFIX, AwaitCompleteProjectConfigurationCommand::new),
-      Map.entry(RenameModuleCommand.PREFIX, RenameModuleCommand::new)
+      Map.entry(RenameModuleCommand.PREFIX, RenameModuleCommand::new),
+      Map.entry(WaitForProjectViewCommand.PREFIX, WaitForProjectViewCommand::new)
     );
   }
 }

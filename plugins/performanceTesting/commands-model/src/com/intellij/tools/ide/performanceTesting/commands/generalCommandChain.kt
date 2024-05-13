@@ -1093,3 +1093,11 @@ fun <T : CommandChain> T.assertCaretPosition(line: Int, column: Int): T = apply 
 fun <T : CommandChain> T.assertCurrentFile(name: String): T = apply {
   addCommand("${CMD_PREFIX}assertCurrentFile $name")
 }
+
+/**
+ * Wait till project view is ready.
+ * Should be used with `context.executeRightAfterIdeOpened()`.
+ */
+fun <T : CommandChain> T.waitForProjectView(): T = apply {
+  addCommand("${CMD_PREFIX}waitForProjectView")
+}
