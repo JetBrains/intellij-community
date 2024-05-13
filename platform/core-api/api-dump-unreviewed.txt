@@ -2572,7 +2572,6 @@ e:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Action:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:ActionWithoutId:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Android:com.intellij.openapi.project.DumbModeBlockedFunctionality
-- sf:CDI:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:CodeCompletion:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:CtrlMouseHandler:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:DupLocator:com.intellij.openapi.project.DumbModeBlockedFunctionality
@@ -2580,11 +2579,14 @@ e:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:FindUsages:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:FrameworkDetection:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GlobalInspectionContext:com.intellij.openapi.project.DumbModeBlockedFunctionality
+- sf:GotoBeanDeclarations:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoClass:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoDeclaration:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoDeclarationOnly:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoDeclarationOrUsage:com.intellij.openapi.project.DumbModeBlockedFunctionality
+- sf:GotoEventPublisher:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoImplementations:com.intellij.openapi.project.DumbModeBlockedFunctionality
+- sf:GotoInjectionPoints:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoSuperMethod:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoTarget:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:GotoTypeDeclaration:com.intellij.openapi.project.DumbModeBlockedFunctionality
@@ -2596,8 +2598,8 @@ e:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Kotlin:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:LineProfiler:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:MemberInplaceRenamer:com.intellij.openapi.project.DumbModeBlockedFunctionality
-- sf:Micronaut:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:MultipleActionIds:com.intellij.openapi.project.DumbModeBlockedFunctionality
+- sf:OpenInHTTPClient:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:Other:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:PackageDependencies:com.intellij.openapi.project.DumbModeBlockedFunctionality
 - sf:PostCommitCheck:com.intellij.openapi.project.DumbModeBlockedFunctionality
