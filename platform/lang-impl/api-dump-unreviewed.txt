@@ -13706,6 +13706,9 @@ c:com.intellij.ide.actions.WeighingNewActionGroup
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.actionSystem.ActionWithDelegate
 - com.intellij.openapi.project.DumbAware
+- sf:DEFAULT_WEIGHT:java.lang.Double
+- sf:HIGHER_WEIGHT:java.lang.Double
+- sf:WEIGHT_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
