@@ -8,7 +8,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 
-class JdkUpdaterConfigurable: UpdateSettingsUIProvider {
+internal class JdkUpdaterConfigurable: UpdateSettingsUIProvider {
 
   override fun init(panel: Panel) {
     panel.apply {
