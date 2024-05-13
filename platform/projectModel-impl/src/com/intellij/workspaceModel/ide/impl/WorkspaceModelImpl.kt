@@ -412,8 +412,10 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
 
-    logErrorOnEventHandling {
-      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).beforeChanged(change)
+    onBeforeChangedTimeMs.addMeasuredTime {
+      logErrorOnEventHandling {
+        project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).beforeChanged(change)
+      }
     }
   }
 
@@ -429,8 +431,10 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     // We emit async changes before running other listeners under write action
     cs.launch { updatesFlow.emit(change) }
 
-    logErrorOnEventHandling {
-      project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)
+    onChangedTimeMs.addMeasuredTime { // Measure only the time of WorkspaceModelChangeListener
+      logErrorOnEventHandling {
+        project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)
+      }
     }
   }
 
@@ -507,6 +511,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     private val fullReplaceProjectModelTimeMs = MillisecondsMeasurer()
     private val initializeBridgesTimeMs = MillisecondsMeasurer()
 
+    private val onBeforeChangedTimeMs = MillisecondsMeasurer()
+    private val onChangedTimeMs = MillisecondsMeasurer()
+
     /**
      * This setup is in static part because meters will not be collected if the same instrument (gauge, counter ...) are registered more than once.
      * In that case WARN by OpenTelemetry will be logged 'Instrument XYZ has recorded multiple values for the same attributes.'
@@ -527,6 +534,8 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       val replaceProjectModelTimeCounter = meter.counterBuilder("workspaceModel.replace.project.model.ms").buildObserver()
       val fullReplaceProjectModelTimeCounter = meter.counterBuilder("workspaceModel.full.replace.project.model.ms").buildObserver()
       val initializeBridgesTimeCounter = meter.counterBuilder("workspaceModel.init.bridges.ms").buildObserver()
+      val onBeforeChangedTimeCounter = meter.counterBuilder("workspaceModel.on.before.changed.ms").buildObserver()
+      val onChangedTimeCounter = meter.counterBuilder("workspaceModel.on.changed.ms").buildObserver()
 
       meter.batchCallback(
         {
@@ -546,12 +555,16 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
           replaceProjectModelTimeCounter.record(replaceProjectModelTimeMs.asMilliseconds())
           fullReplaceProjectModelTimeCounter.record(fullReplaceProjectModelTimeMs.asMilliseconds())
           initializeBridgesTimeCounter.record(initializeBridgesTimeMs.asMilliseconds())
+
+          onBeforeChangedTimeCounter.record(onBeforeChangedTimeMs.asMilliseconds())
+          onChangedTimeCounter.record(onChangedTimeMs.asMilliseconds())
         },
         loadingTotalCounter, loadingFromCacheCounter, updatesTimesCounter,
         updateTimePreciseCounter, preHandlersTimeCounter, collectChangesTimeCounter,
         initializingTimeCounter, toSnapshotTimeCounter, totalUpdatesTimeCounter,
         checkRecursiveUpdateTimeCounter, updateUnloadedEntitiesTimeCounter,
-        replaceProjectModelTimeCounter, fullReplaceProjectModelTimeCounter, initializeBridgesTimeCounter
+        replaceProjectModelTimeCounter, fullReplaceProjectModelTimeCounter, initializeBridgesTimeCounter,
+        onBeforeChangedTimeCounter, onChangedTimeCounter,
       )
     }
 
