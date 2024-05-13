@@ -1,3 +1,0 @@
-com/intellij/platform/diagnostic/telemetry/IJTracer
-com/intellij/platform/diagnostic/telemetry/NoopIntelliJTracer
-com/intellij/platform/diagnostic/telemetry/Scope

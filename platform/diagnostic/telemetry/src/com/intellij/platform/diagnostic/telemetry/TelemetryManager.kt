@@ -133,6 +133,7 @@ private val instance = SynchronizedClearableLazy {
   instance
 }
 
+@Internal
 class NoopTelemetryManager : TelemetryManager {
   override var verboseMode: Boolean = false
 

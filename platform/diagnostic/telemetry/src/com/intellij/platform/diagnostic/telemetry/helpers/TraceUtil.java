@@ -7,10 +7,12 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
 @SuppressWarnings("RedundantThrows") //Kotlin doesn't support checked exception, so we need to create inter-op java / kotlin
+@ApiStatus.Internal
 public final class TraceUtil {
 
   @NotNull
