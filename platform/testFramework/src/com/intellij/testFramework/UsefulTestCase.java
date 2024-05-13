@@ -120,8 +120,6 @@ public abstract class UsefulTestCase extends TestCase {
   private static final ObjectIntMap<String> TOTAL_TEARDOWN_COST_MILLIS = new ObjectIntHashMap<>();
   private static final ObjectIntMap<String> TOTAL_TEARDOWN_COUNT = new ObjectIntHashMap<>();
 
-  protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
-
   private @Nullable Disposable myTestRootDisposable;
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
@@ -130,6 +128,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   static {
     initializeTestEnvironment();
+  }
+  protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
+  static {
+    assert LOG.getClass().getName().equals("com.intellij.testFramework.TestLoggerFactory$TestLogger") : "Logger must be queried after initializeTestEnvironment() call to get TestLogger, but got: "+LOG.getClass();
   }
 
   protected void setDefaultCodeInsightSettings(@NotNull CodeInsightSettings settings) {
