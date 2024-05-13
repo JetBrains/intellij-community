@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -55,3 +56,17 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
     return call.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
             functionNames.contains(call.callableName)
 }
+
+/**
+ * Determines whether [this] call expression is an implicit `invoke` operator call.
+ *
+ * @return `true` if the expression is an implicit `invoke` call, `false` if it is not,
+ * and `null` if the function resolve was unsuccessful.
+ */
+context(KtAnalysisSession)
+fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
+    val functionCall = this.resolveCall()?.singleFunctionCallOrNull() ?: return null
+
+    return functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
+}
+

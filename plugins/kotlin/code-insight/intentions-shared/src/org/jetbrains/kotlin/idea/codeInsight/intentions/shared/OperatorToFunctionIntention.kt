@@ -7,12 +7,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.utils.isImplicitInvokeCall
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -108,14 +107,8 @@ internal class OperatorToFunctionIntention :
     }
 
     context(KtAnalysisSession)
-    private fun isImplicitInvokeFunctionCall(element: KtCallExpression): Boolean {
-        val functionCall = element.resolveCall()?.singleFunctionCallOrNull()
-        return functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
-    }
-
-    context(KtAnalysisSession)
     private fun isApplicableCall(element: KtCallExpression): Boolean {
-        if (isImplicitInvokeFunctionCall(element)) {
+        if (element.isImplicitInvokeCall() == true) {
             return element.valueArgumentList != null || element.lambdaArguments.isNotEmpty()
         }
         return false

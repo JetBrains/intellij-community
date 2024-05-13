@@ -7,8 +7,6 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
@@ -16,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatement
 import org.jetbrains.kotlin.idea.base.psi.prependDotQualifiedReceiver
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpressionOrThis
+import org.jetbrains.kotlin.idea.codeinsight.utils.isImplicitInvokeCall
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.insertSafeCallsAfterReceiver
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.replaceVariableCallsWithExplicitInvokeCalls
@@ -220,7 +219,7 @@ sealed class IfThenTransformationStrategy {
         private fun KtExpression.collectVariableCalls(): Set<KtCallExpression> = this
             .parentsOfType<KtExpression>(withSelf = true)
             .mapNotNull { it.getSelectorOrThis() as? KtCallExpression }
-            .filter { it.resolveCall()?.singleCallOrNull<KtSimpleFunctionCall>()?.isImplicitInvoke == true }
+            .filter { it.isImplicitInvokeCall() == true }
             .toSet()
     }
 }

@@ -5,10 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.codeinsight.utils.isImplicitInvokeCall
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -16,7 +13,6 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
-import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getContentRange
@@ -64,7 +60,7 @@ fun <Descriptor, ResolvedCall> IExtractionData.encodeReferences(
         override fun visitCallExpression(expression: KtCallExpression) {
             if (processImplicitInvoke) {
                 val implicitInvoke =
-                    analyze(expression) { (expression.resolveCall()?.singleFunctionCallOrNull() as? KtSimpleFunctionCall)?.isImplicitInvoke }
+                    analyze(expression) { expression.isImplicitInvokeCall() }
                 if (implicitInvoke == true) {
                     expression.resolveResult = resolveResultProvider(expression)
                 }
