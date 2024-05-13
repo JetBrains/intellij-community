@@ -175,7 +175,6 @@ a:com.intellij.vcs.log.data.SingleTaskController
 - cancelCurrentTask():V
 - p:cancelRunningTasks(java.util.List):Z
 - dispose():V
-- p:disposeLongTimeout():I
 - isClosed():Z
 - f:peekRequests():java.util.List
 - f:popRequest():java.lang.Object
