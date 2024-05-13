@@ -120,6 +120,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     val uiTextList = findAllText()
     return stringList.indices.all { index ->
       val uiTextIndex = index + indexOffset
+      println(stringList[index]+" comparing to "+uiTextList[uiTextIndex].text)
       uiTextIndex in uiTextList.indices && stringList[index] == uiTextList[uiTextIndex].text
     }
   }

@@ -42,6 +42,9 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
 
   fun getCaretLine() = caretPosition.getLine() + 1
+  fun getCaretColumn() = caretPosition.getColumn() + 1
+
+
 
   fun setCaretPosition(line: Int, column: Int) {
     click()
