@@ -3,10 +3,8 @@ package com.intellij.platform.ijent.fs
 
 import com.intellij.platform.ijent.IjentPlatform
 import com.intellij.platform.ijent.fs.IjentPath.Absolute.OS
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 
-@ApiStatus.Experimental
 sealed interface IjentPathResult<P : IjentPath> {
   data class Ok<P : IjentPath>(val path: P) : IjentPathResult<P>
   data class Err<P : IjentPath>(val raw: String, val reason: String) : IjentPathResult<P>
@@ -20,7 +18,6 @@ sealed interface IjentPathResult<P : IjentPath> {
  *
  * It consists of all methods of nio.Path which don't require any I/O.
  */
-@ApiStatus.Experimental
 sealed interface IjentPath {
   companion object {
     @JvmStatic

@@ -4,9 +4,7 @@ package com.intellij.platform.ijent.community.impl
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentPosixInfo
 import com.intellij.platform.ijent.IjentWindowsInfo
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
 data class IjentPosixInfoImpl(
   override val architecture: String,
   override val remotePid: IjentApi.Pid,
@@ -14,7 +12,6 @@ data class IjentPosixInfoImpl(
   override val user: IjentPosixInfo.User,
 ) : IjentPosixInfo
 
-@Internal
 data class IjentWindowsInfoImpl(
   override val architecture: String,
   override val remotePid: IjentApi.Pid,
@@ -22,11 +19,9 @@ data class IjentWindowsInfoImpl(
   override val user: IjentWindowsInfo.User,
 ) : IjentWindowsInfo
 
-@Internal
 data class IjentPosixInfoUserImpl(
   override val uid: Int,
   override val gid: Int
 ) : IjentPosixInfo.User
 
-@Internal
 data object IjentWindowsInfoUserImpl : IjentWindowsInfo.User

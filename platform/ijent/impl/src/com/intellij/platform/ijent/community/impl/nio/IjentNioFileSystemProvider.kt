@@ -13,7 +13,6 @@ import com.intellij.platform.ijent.fs.IjentFileSystemApi.SameFile
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.Stat
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import kotlinx.coroutines.job
-import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
@@ -25,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
-@ApiStatus.Experimental
 class IjentNioFileSystemProvider : FileSystemProvider() {
   companion object {
     @JvmStatic

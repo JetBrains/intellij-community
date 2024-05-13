@@ -3,12 +3,10 @@ package com.intellij.platform.ijent.fs
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import java.io.IOException
 
 /** Every API result must include all variants of this sealed interface. */
-@ApiStatus.Experimental
 sealed interface IjentFsResult {
   interface Ok<T> : IjentFsResult {
     val value: T

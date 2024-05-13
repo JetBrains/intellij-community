@@ -8,6 +8,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit
  *
  * See also [IjentChildProcessAdapter].
  */
+@ApiStatus.Internal
 class IjentChildPtyProcessAdapter(
   coroutineScope: CoroutineScope,
   ijentId: IjentId,

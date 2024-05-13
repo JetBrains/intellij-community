@@ -61,7 +61,6 @@ internal class DefaultIjentSessionProvider : IjentSessionProvider {
 }
 
 /** A shortcut for terminating an [IjentApi] when the [coroutineScope] completes. */
-@ApiStatus.Experimental
 fun IjentApi.bindToScope(coroutineScope: CoroutineScope) {
   coroutineScope.coroutineContext.job.invokeOnCompletion {
     this@bindToScope.close()
@@ -75,7 +74,6 @@ fun IjentApi.bindToScope(coroutineScope: CoroutineScope) {
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
  * [bindToScope] may be useful for terminating the IJent process earlier.
  */
-@ApiStatus.Experimental
 suspend fun connectToRunningIjent(ijentName: String, platform: IjentPlatform, process: Process): IjentApi =
   IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
     val mediator = IjentSessionMediator.create(process, ijentId)
@@ -128,7 +126,6 @@ suspend fun connectToRunningIjent(
  * which turned out to be unreliable unfortunately.
  */
 // TODO Change string paths to IjentPath.Absolute.
-@ApiStatus.Experimental
 @Throws(IjentStartupError::class)
 suspend fun bootstrapOverShellSession(
   ijentName: String,

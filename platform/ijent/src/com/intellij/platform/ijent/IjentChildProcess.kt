@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents some process which was launched by IJent via [IjentApi.executeProcess].
@@ -12,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus
  * There are adapters for already written code: [com.intellij.execution.ijent.IjentChildProcessAdapter]
  * and [com.intellij.execution.ijent.IjentChildPtyProcessAdapter].
  */
-@ApiStatus.Experimental
 interface IjentChildProcess {
   val pid: IjentApi.Pid
 

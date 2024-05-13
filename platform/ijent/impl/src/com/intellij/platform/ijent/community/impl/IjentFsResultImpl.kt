@@ -2,10 +2,8 @@
 package com.intellij.platform.ijent.community.impl
 
 import com.intellij.platform.ijent.fs.*
-import org.jetbrains.annotations.ApiStatus.Internal
 
 @Suppress("unused") // Usages are to be implemented later.
-@Internal
 object IjentFsResultImpl {
   data class DoesNotExist(override val where: IjentPath.Absolute, override val message: String) : IjentFsResult.DoesNotExist
 

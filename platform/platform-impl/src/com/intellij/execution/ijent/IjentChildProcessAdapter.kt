@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
  *
  * See also [IjentChildPtyProcessAdapter].
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 class IjentChildProcessAdapter(coroutineScope: CoroutineScope, ijentId: IjentId, private val ijentChildProcess: IjentChildProcess) : Process(), SelfKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
     ijentId,

@@ -4,7 +4,6 @@ package com.intellij.platform.ijent
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides access to an IJent process running on some machine. An instance of this interface gives ability to run commands
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Usually, [IjentSessionProvider] creates instances of [IjentApi].
  */
-@ApiStatus.Experimental
 sealed interface IjentApi : AutoCloseable {
   val id: IjentId
 

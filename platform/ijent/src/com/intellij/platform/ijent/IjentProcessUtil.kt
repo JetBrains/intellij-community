@@ -6,12 +6,10 @@ package com.intellij.platform.ijent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.map2Array
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * If [selfDeleteOnExit] is true, IJent tries to delete itself AND its parent directory during/after it has exited.
  */
-@ApiStatus.Experimental
 fun getIjentGrpcArgv(
   remotePathToIjent: String,
   additionalEnv: Map<String, String> = mapOf(),
@@ -35,20 +33,6 @@ fun getIjentGrpcArgv(
     "grpc-stdio-server",
     if (selfDeleteOnExit) "--self-delete-on-exit" else null,
   )
-}
-
-@ApiStatus.Internal
-fun ByteArray.toDebugString(offset: Int = 0, length: Int = size - offset): String = (offset until length).joinToString("") {
-  var code = this[it].toInt()
-  if (code < 0) {
-    code += 0x100
-  }
-  if (code in 0x20..0x7e) {
-    code.toChar().toString()
-  }
-  else {
-    "\\x${code.toString(16).padStart(2, '0')}"
-  }
 }
 
 private val LOG = Logger.getInstance("com.intellij.platform.ijent.IjentProcessUtil")

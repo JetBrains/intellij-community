@@ -15,8 +15,6 @@ com/jetbrains/WindowDecorations$CustomTitleBar
 com/jetbrains/plugin/blockmap/core/BlockMap
 com/jetbrains/plugin/blockmap/core/Chunk
 com/jetbrains/plugin/blockmap/core/ChunkMerger
-com/pty4j/PtyProcess
-com/pty4j/WinSize
 com/sun/jna/Callback
 com/sun/jna/Memory
 com/sun/jna/Pointer

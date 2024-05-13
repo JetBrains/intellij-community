@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Experimental
 sealed interface IjentPlatform {
   sealed interface Posix : IjentPlatform
   sealed interface Linux : Posix
@@ -38,7 +35,6 @@ sealed interface IjentPlatform {
   }
 }
 
-@get:ApiStatus.Experimental
 val IjentPlatform.executableName: String
   get() = when (this) {
     IjentPlatform.Arm64Darwin -> "ijent-aarch64-apple-darwin-release"
