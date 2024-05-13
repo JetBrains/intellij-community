@@ -22,9 +22,13 @@ interface ABExperimentOption {
    * In such a case, you need to communicate with related persons of other options
    * to handle such a case and rearrange option groups accordingly.
    *
+   * @param isPopularIde true if the current IDE is popular.
+   * It can be used to adjust the group size of the option accordingly.
+   * Popular IDEs have more users and the group size should be smaller than it is in other IDEs.
+   *
    * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperiment.TOTAL_NUMBER_OF_GROUPS
    */
-  fun getGroupSizeForIde(isPopular: Boolean): ABExperimentOptionGroupSize
+  fun getGroupSizeForIde(isPopularIde: Boolean): ABExperimentOptionGroupSize
 
   /**
    * Check if the option should be enabled in a certain IDE.
