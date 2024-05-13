@@ -20,7 +20,7 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.launch
 
-class ShowInFileHistoryAnnotationActionProvider : AnnotationGutterActionProvider {
+internal class ShowInFileHistoryAnnotationActionProvider : AnnotationGutterActionProvider {
   override fun createAction(annotation: FileAnnotation): AnAction {
     return ShowInFileHistoryAnnotationAction(annotation)
   }

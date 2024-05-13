@@ -23,9 +23,11 @@ import com.intellij.util.OpenSourceUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.history.FileHistoryUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class OpenRepositoryVersionFromHistoryAction extends FileHistoryMetadataAction {
 
   @Override

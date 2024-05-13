@@ -20,8 +20,10 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ExpandGraphAction extends CollapseOrExpandGraphAction {
 
   private static final GraphAction ourGraphAction = new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND);

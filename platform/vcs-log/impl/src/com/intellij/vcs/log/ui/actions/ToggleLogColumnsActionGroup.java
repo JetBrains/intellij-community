@@ -11,6 +11,7 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
+@ApiStatus.Internal
 public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
 
   public ToggleLogColumnsActionGroup() {

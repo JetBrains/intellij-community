@@ -10,12 +10,14 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+@ApiStatus.Internal
 public class EnableMatchCaseAction extends BooleanPropertyToggleAction {
   public EnableMatchCaseAction() {
     getTemplatePresentation().setSelectedIcon(AllIcons.Actions.MatchCaseSelected);

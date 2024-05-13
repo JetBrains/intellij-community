@@ -12,10 +12,12 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.history.FileHistoryModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.vcs.log.util.VcsLogUtil.createCommittedChangeList;
 
+@ApiStatus.Internal
 public class ShowAllAffectedFromHistoryAction extends FileHistoryOneCommitAction<VcsFullCommitDetails> {
 
   @Override

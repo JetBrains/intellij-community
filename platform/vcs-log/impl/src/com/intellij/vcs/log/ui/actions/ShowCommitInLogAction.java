@@ -33,6 +33,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+@ApiStatus.Internal
 public class ShowCommitInLogAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(ShowCommitInLogAction.class);
 

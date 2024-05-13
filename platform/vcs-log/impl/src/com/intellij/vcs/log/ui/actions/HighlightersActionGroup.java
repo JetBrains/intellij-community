@@ -8,6 +8,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 
+@ApiStatus.Internal
 public class HighlightersActionGroup extends ActionGroup implements DumbAware {
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {

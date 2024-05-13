@@ -29,9 +29,11 @@ import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class GetVersionFromHistoryAction implements AnActionExtensionProvider {
   private static final AnAction myDelegate = new Delegate();
 

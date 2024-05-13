@@ -11,8 +11,10 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Commit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ShowCommitTooltipAction extends DumbAwareAction {
   public ShowCommitTooltipAction() {
     super(VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.text"),

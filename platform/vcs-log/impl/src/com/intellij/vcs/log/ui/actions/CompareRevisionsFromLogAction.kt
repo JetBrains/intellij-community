@@ -9,7 +9,7 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.util.VcsLogUtil
 
-class CompareRevisionsFromLogAction : DumbAwareAction() {
+internal class CompareRevisionsFromLogAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }

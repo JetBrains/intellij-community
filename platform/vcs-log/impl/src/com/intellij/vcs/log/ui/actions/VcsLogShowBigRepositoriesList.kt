@@ -10,7 +10,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import javax.swing.ScrollPaneConstants
 
-class VcsLogShowBigRepositoriesList: DumbAwareAction() {
+internal class VcsLogShowBigRepositoriesList: DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val repositories = VcsLogBigRepositoriesList.getInstance().repositoryPaths
     val textArea = JBTextArea(repositories.joinToString("\n"), 15, 80).also {

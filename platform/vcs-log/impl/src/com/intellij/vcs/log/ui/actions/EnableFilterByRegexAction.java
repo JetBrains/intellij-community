@@ -18,7 +18,9 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class EnableFilterByRegexAction extends BooleanPropertyToggleAction {
   public EnableFilterByRegexAction() {
     getTemplatePresentation().setSelectedIcon(AllIcons.Actions.RegexSelected);

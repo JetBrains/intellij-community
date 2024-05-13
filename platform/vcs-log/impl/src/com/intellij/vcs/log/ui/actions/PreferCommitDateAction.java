@@ -11,6 +11,7 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.table.column.Date;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.Set;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.isVisible;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.supportsColumnsToggling;
 
+@ApiStatus.Internal
 public class PreferCommitDateAction extends BooleanPropertyToggleAction implements DumbAware {
   public PreferCommitDateAction() {
     super(VcsLogBundle.messagePointer("prefer.commit.timestamp.action.text"),
