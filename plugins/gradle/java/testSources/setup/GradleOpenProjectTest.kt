@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.gradle.setup
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.workspace.setWorkspace
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.writeText
@@ -17,6 +21,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import java.nio.file.Files.createTempDirectory
 
 
 class GradleOpenProjectTest : GradleOpenProjectTestCase() {
@@ -283,6 +288,23 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
           assertProjectState(project, projectInfo)
         }
+    }
+  }
+
+  @Test
+  fun `test attach to non-gradle project`() {
+    val foo = createTempDirectory("foo")
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    val project = projectManager.newProject(foo, OpenProjectTask(isNewProject = true)) as ProjectEx
+    project.setProjectName("foo")
+    setWorkspace(project) // todo: remove, this should work for any project
+    runBlocking {
+      project.useProjectAsync {
+        val projectInfo = getSimpleProjectInfo("linked_project")
+        initProject(projectInfo)
+        invokeAttach(project, "linked_project")
+        Assertions.assertEquals("foo", project.name)
+      }
     }
   }
 }

@@ -4,11 +4,14 @@ package com.intellij.ide.workspace
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 @get:ApiStatus.Internal
 val Project.isWorkspace get() = WorkspaceSettings.getInstance(this).isWorkspace
 
-internal fun setWorkspace(project: Project) {
+@VisibleForTesting
+@ApiStatus.Internal
+fun setWorkspace(project: Project) {
   WorkspaceSettings.getInstance(project).isWorkspace = true
 }
 
