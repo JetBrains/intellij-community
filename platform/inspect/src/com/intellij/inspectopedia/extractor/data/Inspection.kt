@@ -1,151 +1,58 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.inspectopedia.extractor.data;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.inspectopedia.extractor.data
 
-import org.jetbrains.annotations.NotNull;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.safety.Safelist;
+import com.intellij.openapi.util.NlsSafe
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+import org.jsoup.safety.Safelist
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+private val WHITELIST = Safelist()
+  .addTags("p", "br", "li", "ul", "ol", "b", "i", "code", "a")
+  .addAttributes("a", "href")
 
-public class Inspection implements Comparable<Inspection> {
-  private static final Safelist WHITELIST = new Safelist()
-    .addTags("p", "br", "li", "ul", "ol", "b", "i", "code", "a")
-    .addAttributes("a", "href");
-  public String id;
+data class Inspection(
+  @JvmField var id: String? = null,
 
-  public String name = "";
-  public String severity = "WARNING";
-  public List<String> path = new ArrayList<>();
-  public String language = "";
-  public boolean appliesToDialects = true;
-  public boolean isCleanup = false;
-  public boolean isEnabledDefault = true;
-  public String briefDescription = "";
-  public String extendedDescription = "";
-  public boolean hasOptionsPanel = false;
-  public List<OptionsPanelInfo> options = null;
-  public List<Integer> cweIds = null;
+  @JvmField val name: String,
+  @JvmField val severity: String = "WARNING",
+  @JvmField val path: List<String> = mutableListOf(),
+  @JvmField val language: String? = null,
+  @JvmField val isAppliesToDialects: Boolean = true,
+  @JvmField val isCleanup: Boolean = false,
+  @JvmField val isEnabledDefault: Boolean = true,
+  @JvmField val briefDescription: String? = null,
+  @JvmField val extendedDescription: String? = null,
+  @JvmField val isHasOptionsPanel: Boolean = false,
+  @JvmField val options: List<OptionsPanelInfo>? = null,
+  @JvmField val cweIds: List<Int>? = null
+) : Comparable<Inspection> {
+  fun cleanHtml(@NlsSafe src: String): String {
+    val doc = Jsoup.parse(Jsoup.clean(src, WHITELIST))
+    doc.select("ul").forEach { it.tagName("list") }
+    doc.select("ol").forEach {
+      it.tagName("list")
+      it.attr("type", "decimal")
+    }
 
-  public Inspection(String id,
-                    String name,
-                    String severity,
-                    String language,
-                    String briefDescription,
-                    String extendedDescription,
-                    List<String> path,
-                    boolean appliesToDialects,
-                    boolean partOfCodeCleanup,
-                    boolean enabledByDefault,
-                    List<OptionsPanelInfo> options,
-                    List<Integer> cweIds) {
-    this.id = id;
-    this.name = name;
-    this.severity = severity;
-    this.language = language;
-    this.briefDescription = briefDescription;
-    this.extendedDescription = extendedDescription;
-    this.path = path;
-    this.appliesToDialects = appliesToDialects;
-    this.isCleanup = partOfCodeCleanup;
-    this.isEnabledDefault = enabledByDefault;
-    this.hasOptionsPanel = options != null;
-    this.options = options;
-    this.cweIds = cweIds;
+    doc.select("code").forEach { it.text(it.text()) }
+    doc.outputSettings().syntax(Document.OutputSettings.Syntax.xml)
+    return doc.body().html()
   }
 
-  public Inspection() {
-  }
+  override fun compareTo(other: Inspection) = name.compareTo(other.name)
+}
 
-  public boolean isAppliesToDialects() {
-    return appliesToDialects;
-  }
+data class OptionsPanelInfo(
+  @JvmField var type: String? = null,
+  @JvmField var text: String? = null,
+) {
+  @JvmField
+  var description: String? = null
+  @JvmField
+  var value: Any? = null
+  @JvmField
+  var content: List<String>? = null // drop-down content
 
-  public boolean isCleanup() {
-    return isCleanup;
-  }
-
-  public boolean isEnabledDefault() {
-    return isEnabledDefault;
-  }
-
-  public boolean isHasOptionsPanel() {
-    return hasOptionsPanel;
-  }
-
-  @NotNull
-  String cleanHtml(final @NotNull String src) {
-    final Document doc = Jsoup.parse(Jsoup.clean(src, WHITELIST));
-
-    doc.select("ul").forEach(e -> e.tagName("list"));
-    doc.select("ol").forEach(e -> {
-      e.tagName("list");
-      e.attr("type", "decimal");
-    });
-
-    doc.select("code").forEach(element -> element.text(element.text()));
-
-    doc.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
-
-    return doc.body().html();
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getSeverity() {
-    return severity;
-  }
-
-  public String getLanguage() {
-    return language;
-  }
-
-  public String getExtendedDescription() {
-    return extendedDescription;
-  }
-
-  public String getBriefDescription() {
-    return briefDescription;
-  }
-
-  public List<String> getPath() {
-    return List.copyOf(path);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof Inspection that)) return false;
-    return appliesToDialects == that.appliesToDialects &&
-           isCleanup == that.isCleanup &&
-           isEnabledDefault == that.isEnabledDefault &&
-           hasOptionsPanel == that.hasOptionsPanel &&
-           id.equals(that.id) &&
-           name.equals(that.name) &&
-           severity.equals(that.severity) &&
-           path.equals(that.path) &&
-           language.equals(that.language) &&
-           Objects.equals(briefDescription, that.briefDescription) &&
-           Objects.equals(extendedDescription, that.extendedDescription) &&
-           Objects.equals(options, that.options);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, name, severity, path, language, appliesToDialects, isCleanup, isEnabledDefault, briefDescription,
-                        extendedDescription, hasOptionsPanel, options);
-  }
-
-  @Override
-  public int compareTo(@NotNull Inspection o) {
-    return name.compareTo(o.name);
-  }
+  @JvmField
+  var children: List<OptionsPanelInfo>? = null
 }
