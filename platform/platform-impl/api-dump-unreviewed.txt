@@ -8887,7 +8887,7 @@ f:com.intellij.ide.projectWizard.NewProjectWizardConstants$Language
 *f:com.intellij.ide.settings.json.JsonSettingsModel
 - *sf:Companion:com.intellij.ide.settings.json.JsonSettingsModel$Companion
 - <init>(java.util.Map):V
-- f:getPluginId(java.lang.String,java.lang.String):java.lang.String
+- f:getPluginId(java.lang.String):java.lang.String
 - f:getPropertyMap():java.util.Map
 *f:com.intellij.ide.settings.json.JsonSettingsModel$Companion
 - f:componentToSettingsModel(com.intellij.ide.settings.json.JsonSettingsModel$ComponentModel):com.intellij.ide.settings.json.JsonSettingsModel
@@ -8976,8 +8976,8 @@ f:com.intellij.ide.projectWizard.NewProjectWizardConstants$Language
 *f:com.intellij.ide.settings.json.JsonSettingsModel$ComponentPropertyInfo$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 *f:com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
-- <init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,java.lang.Object):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,java.lang.Object,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():java.lang.String
 - f:component2():java.lang.String
 - f:component3():java.lang.String
@@ -8985,8 +8985,9 @@ f:com.intellij.ide.projectWizard.NewProjectWizardConstants$Language
 - f:component5():java.lang.String
 - f:component6():java.lang.String
 - f:component7():java.util.List
-- f:copy(java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List):com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
-- bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
+- f:component8():java.lang.Object
+- f:copy(java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
+- bs:copy$default(com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor,java.lang.String,java.lang.String,java.lang.String,com.intellij.ide.settings.json.JsonSettingsModel$PropertyType,java.lang.String,java.lang.String,java.util.List,java.lang.Object,I,java.lang.Object):com.intellij.ide.settings.json.JsonSettingsModel$PropertyDescriptor
 - equals(java.lang.Object):Z
 - f:getComponentName():java.lang.String
 - f:getMapTo():java.lang.String
@@ -8994,6 +8995,7 @@ f:com.intellij.ide.projectWizard.NewProjectWizardConstants$Language
 - f:getPluginId():java.lang.String
 - f:getStorage():java.lang.String
 - f:getType():com.intellij.ide.settings.json.JsonSettingsModel$PropertyType
+- f:getValue():java.lang.Object
 - f:getVariants():java.util.List
 - hashCode():I
 - toString():java.lang.String
