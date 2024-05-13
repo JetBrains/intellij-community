@@ -5065,6 +5065,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("equalsCallToEqEqOperatorInsideElvis.java")
+        public void testEqualsCallToEqEqOperatorInsideElvis() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/equalsCallToEqEqOperatorInsideElvis.java");
+        }
+
         @TestMetadata("parenthesized.java")
         public void testParenthesized() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/parenthesized.java");

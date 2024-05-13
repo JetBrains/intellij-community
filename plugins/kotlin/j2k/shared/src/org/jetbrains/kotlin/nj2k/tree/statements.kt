@@ -35,6 +35,9 @@ class JKForInStatement(variable: JKForLoopVariable, iterationExpression: JKExpre
     override fun accept(visitor: JKVisitor) = visitor.visitForInStatement(this)
 }
 
+/**
+ * @see JKIfElseExpression
+ */
 class JKIfElseStatement(condition: JKExpression, thenBranch: JKStatement, elseBranch: JKStatement) : JKStatement() {
     var condition by child(condition)
     var thenBranch by child(thenBranch)

@@ -162,6 +162,9 @@ class JKSuperExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitSuperExpression(this)
 }
 
+/**
+ * @see JKIfElseStatement
+ */
 class JKIfElseExpression(
     condition: JKExpression,
     thenBranch: JKExpression,

@@ -64,7 +64,8 @@ class RemoveUnnecessaryParenthesesConversion(context: NewJ2kConverterContext) : 
         }
 
         // Conditions in if-else/while/do-while expressions have their own parentheses (e.g. the `(isEnabled)` in `if (isEnabled) return`)
-        if ((parent is JKIfElseStatement && parent.condition === expression) ||
+        if ((parent is JKIfElseExpression && parent.condition === expression) ||
+            (parent is JKIfElseStatement && parent.condition === expression) ||
             (parent is JKWhileStatement && parent.condition === expression) ||
             (parent is JKDoWhileStatement && parent.condition === expression)
         ) {
