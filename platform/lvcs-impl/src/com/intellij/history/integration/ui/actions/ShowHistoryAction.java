@@ -28,11 +28,13 @@ import com.intellij.platform.lvcs.impl.ActivityScope;
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.platform.lvcs.impl.ui.ActivityView;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class ShowHistoryAction extends LocalHistoryAction {
   @Override
   public void update(@NotNull AnActionEvent e) {

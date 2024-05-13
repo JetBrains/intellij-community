@@ -18,7 +18,7 @@ import com.intellij.platform.lvcs.impl.diff.getChanges
 import com.intellij.platform.lvcs.impl.diff.getDiff
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 
-class CreatePatchAction : ChangeSetSelectionAction() {
+internal class CreatePatchAction : ChangeSetSelectionAction() {
 
   override fun actionPerformed(project: Project,
                                facade: LocalHistoryFacade,

@@ -4,6 +4,6 @@ package com.intellij.history.integration.ui.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.guessProjectDir
 
-class ShowProjectHistoryAction : ShowHistoryAction() {
+internal class ShowProjectHistoryAction : ShowHistoryAction() {
   override fun getFile(e: AnActionEvent) = e.project?.guessProjectDir()
 }

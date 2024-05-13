@@ -11,7 +11,9 @@ import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import com.intellij.platform.lvcs.impl.toChangeSetSelection
 import com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ChangeSetSelectionAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     if (e.project == null) {

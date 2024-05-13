@@ -13,7 +13,7 @@ import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.platform.lvcs.impl.toChangeSetSelection
 import com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 
-class RevertDifferencesAction : DumbAwareAction() {
+internal class RevertDifferencesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     if (e.project == null) {
       e.presentation.isEnabledAndVisible = false
