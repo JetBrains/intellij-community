@@ -1134,6 +1134,7 @@ com.intellij.vcs.log.impl.VcsProjectLog$ProjectLogListener
 f:com.intellij.vcs.log.impl.VcsProjectLogManager
 - com.intellij.vcs.log.impl.VcsLogManager
 - <init>(com.intellij.openapi.project.Project,com.intellij.vcs.log.impl.VcsLogProjectTabsProperties,java.util.Map,java.util.function.BiConsumer):V
+- dispose():V
 - f:getTabsManager():com.intellij.vcs.log.impl.VcsLogTabsManager
 f:com.intellij.vcs.log.impl.VcsRefImpl
 - com.intellij.vcs.log.VcsRef

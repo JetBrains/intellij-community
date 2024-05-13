@@ -203,12 +203,17 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     return myRefsStorageId;
   }
 
-  @Override
-  public void dispose() {
-  }
-
   private void checkDisposed() {
     if (myDisposed) throw new ProcessCanceledException();
+  }
+
+  @ApiStatus.Internal
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {
