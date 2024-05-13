@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TypeSelectorManagerImpl implements TypeSelectorManager {
+  private final Project myProject;
   private SmartTypePointer myPointer;
   private PsiType myDefaultType;
   private final PsiExpression myMainOccurrence;
@@ -48,7 +49,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences, boolean areTypesDirected) {
-    myFactory = JavaPsiFacade.getElementFactory(project);
+    myProject = project;
+    myFactory = JavaPsiFacade.getElementFactory(myProject);
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
     myMainOccurrence = null;
@@ -77,6 +79,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
                                  PsiMethod containingMethod,
                                  PsiExpression mainOccurrence,
                                  PsiExpression[] occurrences) {
+    myProject = project;
     myFactory = JavaPsiFacade.getElementFactory(project);
     mySmartTypePointerManager = SmartTypePointerManager.getInstance(project);
     setDefaultType(type);
@@ -158,10 +161,13 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   private ExpectedTypesProvider.ExpectedClassProvider createOccurrenceClassProvider() {
     final Set<PsiClass> occurrenceClasses = new HashSet<>();
-    for (final PsiExpression occurrence : myOccurrences) {
-      final PsiType occurrenceType = occurrence.getType();
-      collectOccurrenceClasses(occurrenceClasses, occurrenceType);
-    }
+    DumbService.getInstance(myProject)
+      .withAlternativeResolveEnabled(() -> {
+        for (final PsiExpression occurrence : myOccurrences) {
+          final PsiType occurrenceType = occurrence.getType();
+          collectOccurrenceClasses(occurrenceClasses, occurrenceType);
+        }
+      });
     return new ExpectedTypeUtil.ExpectedClassesFromSetProvider(occurrenceClasses);
   }
 
