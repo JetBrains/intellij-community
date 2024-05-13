@@ -186,7 +186,7 @@ class K1ReferenceMutateService : KtReferenceMutateServiceBase() {
         return selector as KtNameReferenceExpression
     }
 
-    override fun canMoveLambdaOutsideParentheses(newExpression: KtDotQualifiedExpression): Boolean {
-        return newExpression.getPossiblyQualifiedCallExpression()?.canMoveLambdaOutsideParentheses() == true
+    override fun canMoveLambdaOutsideParentheses(callExpression: KtCallExpression?): Boolean {
+        return callExpression?.canMoveLambdaOutsideParentheses() == true
     }
 }

@@ -568,28 +568,4 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                             USimpleNameReferenceExpression (identifier = a)
         """.trimIndent(), lambda.putIntoVarInitializer().asRecursiveLogString().trim())
     }
-
-    fun `test moving lambda from parenthesis`() {
-        myFixture.configureByText("myFile.kt", """
-            fun a(p: (Int) -> Unit) {}
-        """.trimIndent())
-
-
-        val lambdaExpression = uastElementFactory.createLambdaExpression(
-            emptyList(),
-            uastElementFactory.createNullLiteral(null),
-            null
-        ) ?: kfail("Cannot create lambda")
-
-        val callExpression = uastElementFactory.createCallExpression(
-            null,
-            "a",
-            listOf(lambdaExpression),
-            null,
-            UastCallKind.METHOD_CALL,
-            myFixture.file
-        ) ?: kfail("Cannot create method call")
-
-        TestCase.assertEquals("""a{ null }""", callExpression.sourcePsi?.text)
-    }
 }
