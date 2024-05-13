@@ -43,9 +43,9 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
    */
   private volatile ValueContainerImpl<Value> myMergedSnapshot;
   //RC: why is it Nullable? It seems quite NPE-prone
-  private final @Nullable Computable<? extends UpdatableValueContainer<Value>> myInitializer;
+  private final @NotNull Computable<? extends UpdatableValueContainer<Value>> myInitializer;
 
-  public ChangeTrackingValueContainer(@Nullable Computable<? extends UpdatableValueContainer<Value>> initializer) {
+  public ChangeTrackingValueContainer(@NotNull Computable<? extends UpdatableValueContainer<Value>> initializer) {
     myInitializer = initializer;
   }
 
@@ -114,10 +114,6 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     ValueContainerImpl<Value> mergedSnapshot = myMergedSnapshot;
     if (mergedSnapshot != null) {
       return mergedSnapshot;
-    }
-
-    if (myInitializer == null) {
-      throw new AssertionError("Can't evaluate mergedData with .initializer=null");
     }
 
     UpdatableValueContainer<Value> fromDisk = myInitializer.compute();

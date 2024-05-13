@@ -319,10 +319,9 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     }
 
     // do not pollute the cache with keys unique to indexed file
-    //TODO RC: cheaper to use ValueContainerImpl instead of ChangeTracking?
-    ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<>(null);
+    UpdatableValueContainer<Value> valueContainer = new ValueContainerImpl<>();
     valueContainer.addValue(inputId, newValue);
-    myMap.merge(key, valueContainer);
+    myMap.put(key, valueContainer);
   }
 
   private void putSingleValueDirectly(Key key, int inputId, Value value) throws IOException {
@@ -336,10 +335,9 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     }
 
     // do not pollute the cache with keys unique to indexed file
-    //TODO RC: cheaper to use ValueContainerImpl instead of ChangeTracking?
-    ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<>(null);
+    UpdatableValueContainer<Value> valueContainer = new ValueContainerImpl<>();
     valueContainer.addValue(inputId, value);
-    myMap.merge(key, valueContainer);
+    myMap.put(key, valueContainer);
   }
 
   private @Nullable ChangeTrackingValueContainer<Value> readIfCached(Key key) {

@@ -34,9 +34,10 @@ final class ValueContainerMap<Key, Value> {
                     boolean isReadonly,
                     boolean compactOnClose) throws IOException {
     myPersistentMap = new PersistentMapImpl<>(PersistentMapBuilder
-            .newBuilder(file, keyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping))
-            .withReadonly(isReadonly)
-            .withCompactOnClose(compactOnClose));
+                                                .newBuilder(file, keyDescriptor,
+                                                            new ValueContainerExternalizer<>(valueExternalizer, inputRemapping))
+                                                .withReadonly(isReadonly)
+                                                .withCompactOnClose(compactOnClose));
     myValueExternalizer = valueExternalizer;
     myKeyDescriptor = keyDescriptor;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
@@ -59,6 +60,10 @@ final class ValueContainerMap<Key, Value> {
       // rewrite the value container for defragmentation
       myPersistentMap.put(key, valueContainer);
     }
+
+  void put(Key key,
+           UpdatableValueContainer<Value> valueContainer) throws IOException {
+    myPersistentMap.put(key, valueContainer);
   }
 
   void remove(Key key) throws IOException {
