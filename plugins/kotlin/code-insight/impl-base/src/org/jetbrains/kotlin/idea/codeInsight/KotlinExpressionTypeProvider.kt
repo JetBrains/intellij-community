@@ -7,7 +7,14 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -43,9 +50,30 @@ abstract class KotlinExpressionTypeProvider : ExpressionTypeProvider<KtExpressio
         else -> getQualifiedExpressionForSelector() == null && parent !is KtCallableReferenceExpression && !isFunctionCallee()
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
     private fun KtExpression.isFunctionCallee(): Boolean {
         val callExpression = parent as? KtCallExpression ?: return false
         if (callExpression.calleeExpression != this) return false
-        return mainReference?.resolve() is KtFunction
+
+        // getExpressionsAt is executed from EDT
+        allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(callExpression) {
+                    return callExpression.isImplicitInvokeCall() == false
+                }
+            }
+        }
     }
+}
+
+/**
+ * Determines whether the given expression is an implicit `invoke` operator call.
+ *
+ * @return `true` if the expression is an implicit `invoke` call, `false` if it is not, and `null` if the function resolve was unsuccessful.
+ */
+context(KtAnalysisSession)
+private fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
+    val functionCall = this.resolveCall()?.singleFunctionCallOrNull() ?: return null
+
+    return functionCall is KtSimpleFunctionCall && functionCall.isImplicitInvoke
 }

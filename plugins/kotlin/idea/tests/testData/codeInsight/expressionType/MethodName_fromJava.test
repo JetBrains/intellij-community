@@ -5,9 +5,10 @@ fun usage() {
     JavaClass.fo<caret>o()
 }
 
-// K1_TYPE: foo -> <html>Type is unknown</html>
+// K1_TYPE: JavaClass.foo() -> <html>String!</html>
 
-// K2_TYPE: foo -> Type is unknown
+// K2_TYPE: JavaClass.foo() -> String!
+
 
 // FILE: dependency/JavaClass.java
 package dependency;

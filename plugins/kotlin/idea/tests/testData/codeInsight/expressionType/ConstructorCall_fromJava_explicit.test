@@ -5,10 +5,8 @@ fun usage() {
     Java<caret>Class()
 }
 
-// K1_TYPE: JavaClass -> <html>Type is unknown</html>
 // K1_TYPE: JavaClass() -> <html>JavaClass</html>
 
-// K2_TYPE: JavaClass -> Type is unknown
 // K2_TYPE: JavaClass() -> JavaClass
 
 // FILE: dependency/JavaClass.java
