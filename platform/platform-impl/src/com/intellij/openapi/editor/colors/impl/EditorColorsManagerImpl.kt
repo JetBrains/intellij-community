@@ -557,13 +557,20 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     override fun onCurrentSchemeSwitched(oldScheme: EditorColorsScheme?,
                                          newScheme: EditorColorsScheme?,
                                          processChangeSynchronously: Boolean) {
+      // the method receives the base scheme as the argument, but the actual scheme might be different
+      val actualNewScheme = if (schemeManager.activeScheme == newScheme) {
+        activeVisibleScheme
+      }
+      else {
+        newScheme
+      }
       if (processChangeSynchronously) {
-        handleCurrentSchemeSwitched(newScheme)
+        handleCurrentSchemeSwitched(actualNewScheme)
       }
       else {
         // don't do heavy operations right away
         ApplicationManager.getApplication().invokeLater {
-          handleCurrentSchemeSwitched(newScheme)
+          handleCurrentSchemeSwitched(actualNewScheme)
         }
       }
     }

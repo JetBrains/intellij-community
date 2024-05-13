@@ -4,26 +4,31 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.editor.EditorColorSchemeTestCase;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.TestFor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
-import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.assertj.core.api.Assertions;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.xml.sax.SAXException;
 
 import java.awt.*;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   private EditorColorsSchemeImpl myScheme;
@@ -759,5 +764,34 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
     assertEquals("NonExistentBundled", exceptionMessage);
   }
+
+  @TestFor(issues = "IJPL-148477")
+  public void testAnnounceEditableCopy() throws IOException, SAXException, InterruptedException {
+    final String fontName = FontPreferencesTest.getExistingNonDefaultFontName();
+    EditorColorsScheme userScheme = EditorColorSchemeTestCase.loadScheme(
+      "<scheme name=\"_@user_Default\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <option name=\"FONT_SCALE\" value=\"1.5\" />\n" +
+      "  <option name=\"EDITOR_FONT_SIZE\" value=\"18\" />\n" +
+      "  <option name=\"EDITOR_LIGATURES\" value=\"true\" />\n" +
+      "  <option name=\"EDITOR_FONT_NAME\" value=\"" + fontName + "\" />\n" +
+      "</scheme>"
+    );
+    EditorColorsManagerImpl editorColorsManagerImpl = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
+    SchemeManager<EditorColorsScheme> schemeManager = editorColorsManagerImpl.getSchemeManager();
+    schemeManager.addScheme(userScheme, true);
+    schemeManager.save();
+
+    final AtomicBoolean handlerProcessed = new AtomicBoolean();
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, scheme -> {
+      assertEquals("Should have received actual scheme", fontName, scheme.getEditorFontName());
+      handlerProcessed.set(true);
+    });
+    EditorColorsScheme bundledDefault = EditorColorsManager.getInstance().getScheme("Default");
+    assertNotSame("Should have have default font name in bundled scheme", fontName, bundledDefault.getEditorFontName());
+    EditorColorsManager.getInstance().setGlobalScheme(bundledDefault);
+    UIUtil.dispatchAllInvocationEvents();
+    assertTrue("Should have processed EditorColorsManager.TOPIC in 50ms", handlerProcessed.get());
+  }
+
 
 }
