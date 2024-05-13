@@ -105,7 +105,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
     String enteredName = null;
     boolean replaceAllOccurrences = true;
 
-    final AbstractInplaceIntroducer activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
+    final AbstractInplaceIntroducer<?, ?> activeIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
     if (activeIntroducer != null) {
       activeIntroducer.stopIntroduce(editor);
       expr = (PsiExpression)activeIntroducer.getExpr();

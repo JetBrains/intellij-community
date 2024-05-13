@@ -99,5 +99,5 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   protected abstract boolean invokeImpl(Project project, PsiLocalVariable localVariable, @Nullable Editor editor);
 
   @TestOnly
-  public abstract AbstractInplaceIntroducer getInplaceIntroducer();
+  public abstract AbstractInplaceIntroducer<?, ?> getInplaceIntroducer();
 }

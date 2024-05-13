@@ -55,7 +55,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected final String myExprText;
   private final String myLocalName;
 
-  public static final Key<AbstractInplaceIntroducer> ACTIVE_INTRODUCE = Key.create("ACTIVE_INTRODUCE");
+  public static final Key<AbstractInplaceIntroducer<?, ?>> ACTIVE_INTRODUCE = Key.create("ACTIVE_INTRODUCE");
 
   private EditorEx myPreview;
   private final JComponent myPreviewComponent;
@@ -632,7 +632,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   @Nullable
-  public static AbstractInplaceIntroducer getActiveIntroducer(@Nullable Editor editor) {
+  public static AbstractInplaceIntroducer<?, ?> getActiveIntroducer(@Nullable Editor editor) {
     if (editor == null) return null;
     return editor.getUserData(ACTIVE_INTRODUCE);
   }
