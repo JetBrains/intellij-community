@@ -3025,15 +3025,6 @@ f:com.intellij.codeInspection.ex.InspectionToolsSupplier$Simple
 - com.intellij.codeInspection.ex.InspectionToolsSupplier
 - <init>(java.util.List):V
 - createTools():java.util.List
-f:com.intellij.codeInspection.ex.InspectionsMetaInformation
-- <init>(java.util.List):V
-- f:component1():java.util.List
-- f:copy(java.util.List):com.intellij.codeInspection.ex.InspectionsMetaInformation
-- bs:copy$default(com.intellij.codeInspection.ex.InspectionsMetaInformation,java.util.List,I,java.lang.Object):com.intellij.codeInspection.ex.InspectionsMetaInformation
-- equals(java.lang.Object):Z
-- f:getInspections():java.util.List
-- hashCode():I
-- toString():java.lang.String
 c:com.intellij.codeInspection.ex.JsonInspectionsReportConverter
 - com.intellij.codeInspection.InspectionsReportConverter
 - sf:DUPLICATED_CODE:java.lang.String
@@ -3082,8 +3073,8 @@ f:com.intellij.codeInspection.ex.MetaInformation
 - hashCode():I
 - toString():java.lang.String
 f:com.intellij.codeInspection.ex.MetaInformationState
+- f:inspections:java.util.Map
 - <init>(java.util.Map):V
-- f:getInspections():java.util.Map
 a:com.intellij.codeInspection.ex.NewInspectionProfile
 - com.intellij.profile.ProfileEx
 - com.intellij.codeInspection.InspectionProfile
