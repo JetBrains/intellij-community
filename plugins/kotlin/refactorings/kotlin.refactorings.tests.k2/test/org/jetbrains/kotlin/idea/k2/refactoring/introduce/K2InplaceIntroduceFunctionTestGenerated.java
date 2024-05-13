@@ -53,6 +53,11 @@ public class K2InplaceIntroduceFunctionTestGenerated extends AbstractK2InplaceIn
         runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/ExtractLocal.kt");
     }
 
+    @TestMetadata("ExtractLocalWithLambda.kt")
+    public void testExtractLocalWithLambda() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/ExtractLocalWithLambda.kt");
+    }
+
     @TestMetadata("MoveLambdaOutsideParenthesis.kt")
     public void testMoveLambdaOutsideParenthesis() throws Exception {
         runTest("../../idea/tests/testData/refactoring/extractFunctionInplace/MoveLambdaOutsideParenthesis.kt");

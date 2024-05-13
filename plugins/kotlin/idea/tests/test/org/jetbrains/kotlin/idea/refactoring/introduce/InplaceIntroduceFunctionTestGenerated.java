@@ -53,6 +53,11 @@ public class InplaceIntroduceFunctionTestGenerated extends AbstractInplaceIntrod
         runTest("testData/refactoring/extractFunctionInplace/ExtractLocal.kt");
     }
 
+    @TestMetadata("ExtractLocalWithLambda.kt")
+    public void testExtractLocalWithLambda() throws Exception {
+        runTest("testData/refactoring/extractFunctionInplace/ExtractLocalWithLambda.kt");
+    }
+
     @TestMetadata("MoveLambdaOutsideParenthesis.kt")
     public void testMoveLambdaOutsideParenthesis() throws Exception {
         runTest("testData/refactoring/extractFunctionInplace/MoveLambdaOutsideParenthesis.kt");
