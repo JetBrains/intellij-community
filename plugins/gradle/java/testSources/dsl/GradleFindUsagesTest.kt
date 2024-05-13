@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
@@ -30,6 +31,29 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
         codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle"))
         val method = fixture.elementAtCaret // what
         val usages = ReferencesSearch.search(method).findAll()
+        Assertions.assertTrue(usages.size == 1)
+        Assertions.assertTrue(usages.single().element.containingFile.name == "build.gradle")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testLocalProperty(gradleVersion: GradleVersion) {
+    test(gradleVersion, VERSION_CATALOG_FIXTURE) {
+      writeTextAndCommit("build.gradle", """
+        tasks.register('hello') {
+            doLast {
+                def <caret>a = 0
+                println a
+            }
+        }
+      """.trimIndent())
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle"))
+        val property = fixture.elementAtCaret // what
+        Assertions.assertTrue(property.useScope is LocalSearchScope)
+        val usages = ReferencesSearch.search(property).findAll()
         Assertions.assertTrue(usages.size == 1)
         Assertions.assertTrue(usages.single().element.containingFile.name == "build.gradle")
       }
