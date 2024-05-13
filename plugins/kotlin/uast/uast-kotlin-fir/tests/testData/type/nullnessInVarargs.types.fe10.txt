@@ -37,7 +37,7 @@ UFile (package = test.pkg) [package test.pkg...]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] : java.lang.Void
                 UReturnExpression [return null] : java.lang.Void
-                    ULiteralExpression (value = null) [null] : java.lang.Void
+                    ULiteralExpression (value = null) [null] : null
     UClass (name = ArrayMap) [public final class ArrayMap : java.util.HashMap<K,V> {...}]
         UMethod (name = ArrayMap) [public fun ArrayMap() {...}]
             UBlockExpression [{...}]

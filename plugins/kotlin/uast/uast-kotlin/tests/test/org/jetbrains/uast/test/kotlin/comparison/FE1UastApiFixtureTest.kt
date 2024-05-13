@@ -134,4 +134,8 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testNameReferenceVisitInConstructorCall() {
         checkNameReferenceVisitInConstructorCall(myFixture)
     }
+
+    fun testNullLiteral() {
+        checkNullLiteral(myFixture)
+    }
 }

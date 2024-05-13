@@ -276,4 +276,31 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     )
     TestCase.assertEquals(1, count)
   }
+
+  @Test
+  fun testNullLiteral() {
+    val file = myFixture.configureByText(
+      "Test.java",
+      """
+        class Test {
+          static void test() {
+            Object foo = null;
+          }
+        }
+      """.trimIndent()
+    )
+    val uFile = file.toUElementOfType<UFile>()!!
+    var count = 0
+    uFile.accept(
+      object : AbstractUastVisitor() {
+        override fun visitLiteralExpression(node: ULiteralExpression): Boolean {
+          TestCase.assertTrue(node.isNull)
+          TestCase.assertEquals("null", node.getExpressionType()?.canonicalText)
+          count++
+          return super.visitLiteralExpression(node)
+        }
+      }
+    )
+    TestCase.assertEquals(1, count)
+  }
 }

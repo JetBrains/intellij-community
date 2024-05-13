@@ -55,17 +55,17 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                         UIdentifier (Identifier (isBlank)) [UIdentifier (Identifier (isBlank))]
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield null]
-                                        ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
+                                        ULiteralExpression (value = null) [null] : null
                             USwitchClauseExpressionWithBody [str.isNotEmpty() != null -> {...]
                                 UBinaryExpression (operator = !=) [str.isNotEmpty() != null] : boolean
                                     UQualifiedReferenceExpression [str.isNotEmpty()] : boolean
                                         USimpleNameReferenceExpression (identifier = str) [str] : java.lang.String
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isNotEmpty()] : boolean
                                             UIdentifier (Identifier (isNotEmpty)) [UIdentifier (Identifier (isNotEmpty))]
-                                    ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
+                                    ULiteralExpression (value = null) [null] : null
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield null]
-                                        ULiteralExpression (value = null) [null] : @org.jetbrains.annotations.Nullable() java.lang.Void
+                                        ULiteralExpression (value = null) [null] : null
                             USwitchClauseExpressionWithBody [ -> {...]
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield 1]
