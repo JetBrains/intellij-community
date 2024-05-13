@@ -24,7 +24,7 @@ import java.awt.event.ActionListener
 import java.util.Comparator.comparing
 import javax.swing.tree.DefaultTreeModel
 
-class ActivityChangesBrowser(project: Project, private val isSwitchingDiffModeAllowed: Boolean) : AsyncChangesBrowserBase(project, false, false), Disposable {
+internal class ActivityChangesBrowser(project: Project, private val isSwitchingDiffModeAllowed: Boolean) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private var diffData: ActivityDiffData? = null
 
   init {

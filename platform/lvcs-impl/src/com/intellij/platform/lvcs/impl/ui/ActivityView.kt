@@ -42,6 +42,7 @@ import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.KeyEvent
@@ -51,6 +52,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 
+@ApiStatus.Internal
 class ActivityView(private val project: Project, gateway: IdeaGateway, val activityScope: ActivityScope,
                    private val isFrameDiffPreview: Boolean = false) :
   JBPanel<ActivityView>(BorderLayout()), DataProvider, Disposable {
@@ -376,7 +378,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 }
 
 @Service(Service.Level.PROJECT)
-class ActivityService(val coroutineScope: CoroutineScope)
+internal class ActivityService(val coroutineScope: CoroutineScope)
 
 private fun dumbAwareAction(runnable: () -> Unit): DumbAwareAction {
   return object : DumbAwareAction() {

@@ -1,8 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
-import com.intellij.history.core.LocalHistoryFacade
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 sealed interface ChangeSetSelection {
   val data: ActivityData
 
@@ -22,10 +23,10 @@ sealed interface ChangeSetSelection {
   }
 }
 
-val ChangeSetSelection.leftRevision: RevisionId get() = leftItem.revisionId
-val ChangeSetSelection.rightRevision: RevisionId get() = rightItem.revisionId
+internal val ChangeSetSelection.leftRevision: RevisionId get() = leftItem.revisionId
+internal val ChangeSetSelection.rightRevision: RevisionId get() = rightItem.revisionId
 
-fun ActivitySelection.toChangeSetSelection(): ChangeSetSelection? {
+internal fun ActivitySelection.toChangeSetSelection(): ChangeSetSelection? {
   if (selectedItems.isEmpty()) return null
   if (selectedItems.size == 1) {
     val selectedActivityItem = selectedItems.single()

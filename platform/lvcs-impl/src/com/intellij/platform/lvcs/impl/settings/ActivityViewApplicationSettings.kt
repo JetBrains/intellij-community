@@ -8,7 +8,7 @@ import com.intellij.util.EventDispatcher
 import java.util.*
 
 @State(name = "Lvcs.Activity.App.Settings", storages = [Storage("lvcs.xml")], category = SettingsCategory.UI)
-class ActivityViewApplicationSettings : SimplePersistentStateComponent<ActivityViewApplicationSettings.State>(State()) {
+internal class ActivityViewApplicationSettings : SimplePersistentStateComponent<ActivityViewApplicationSettings.State>(State()) {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   class State : BaseState() {

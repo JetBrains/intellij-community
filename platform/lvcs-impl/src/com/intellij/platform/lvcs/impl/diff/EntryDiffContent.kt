@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.platform.lvcs.impl.diff
 
 import com.intellij.diff.DiffContentFactory
@@ -13,6 +15,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lvcs.impl.RevisionId
+import org.jetbrains.annotations.ApiStatus
 
 fun createDiffContent(project: Project?, gateway: IdeaGateway, e: Entry): DiffContent {
   val content = e.content.getBytes()

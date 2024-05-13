@@ -120,7 +120,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
   }
 }
 
-interface ActivityModelListener : EventListener {
+internal interface ActivityModelListener : EventListener {
   fun onItemsLoadingStarted() = Unit
   fun onItemsLoadingStopped(data: ActivityData) = Unit
   fun onSelectionChanged(selection: ActivitySelection?) = Unit

@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.ActivityId
@@ -8,7 +10,9 @@ import com.intellij.history.integration.CommonActivity
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ChangeSetActivityItem(changeSet: ChangeSet) : ActivityItem {
   override val timestamp: Long = changeSet.timestamp
   val id = changeSet.id
@@ -23,6 +27,8 @@ abstract class ChangeSetActivityItem(changeSet: ChangeSet) : ActivityItem {
 
   override fun hashCode(): Int = id.hashCode()
 }
+
+val ChangeSetActivityItem?.revisionId: RevisionId get() = if (this != null) RevisionId.ChangeSet(id) else RevisionId.Current
 
 internal class ChangeActivityItem(changeSet: ChangeSet, scope: ActivityScope) : ChangeSetActivityItem(changeSet) {
   override val name = getName(changeSet, scope)
