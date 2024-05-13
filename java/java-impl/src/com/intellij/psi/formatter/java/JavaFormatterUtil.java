@@ -563,11 +563,11 @@ public final class JavaFormatterUtil {
   }
 
   /**
-   * Extracts text ranges from a given literal text.
+   * Extracts text ranges corresponding to the lines in a given literal multiline text.
    *
    * @param text              the literal text to extract text ranges from
    * @param indent            the number of spaces used for indentation
-   * @param shouldTreatWholeLine  specifies whether the entire line should be treated as a text range
+   * @param shouldTreatWholeLine  specifies whether the entire line should be treated as a text range or
    * @return a list of {@code TextRange} objects representing the extracted text ranges
    */
   public static @NotNull List<TextRange> extractTextRangesFromLiteralText(@NotNull String text, int indent, boolean shouldTreatWholeLine) {
