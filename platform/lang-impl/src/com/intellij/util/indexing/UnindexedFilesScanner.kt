@@ -234,12 +234,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
       scanUnindexedFiles(indicator, progressReporter, markRef)
     }
     finally {
-      // Scanning may throw exception (or error).
-      // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
-      if (flushQueueAfterScanning) {
-        flushPerProjectIndexingQueue()
-      }
-
       (myProject as UserDataHolderEx).replace(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED, FirstScanningState.PERFORMED)
     }
   }
@@ -265,10 +259,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
     else {
       service.scheduleInitialVfsRefresh()
     }
-  }
-
-  private fun flushPerProjectIndexingQueue() {
-    myProject.getService(PerProjectIndexingQueue::class.java).flushNow(this.indexingReason)
   }
 
   internal class ScanningSession(private val project: Project,
@@ -535,11 +525,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
     if (!myProject.isDisposed) {
       myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)?.completeToken(taskToken)
     }
-  }
-
-  @TestOnly
-  fun setFlushQueueAfterScanning(flushQueueAfterScanning: Boolean) {
-    this.flushQueueAfterScanning = flushQueueAfterScanning
   }
 
   // we declare separate method instead of `inline markStage` to make stacktraces more readable

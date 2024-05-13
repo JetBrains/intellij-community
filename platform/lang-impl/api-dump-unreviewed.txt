@@ -29076,26 +29076,6 @@ f:com.intellij.util.indexing.IndexingStampStorageOverRegularAttributes
 - readTimestamps(I):com.intellij.util.indexing.TimestampsImmutable
 - writeTimestamps(I,com.intellij.util.indexing.TimestampsImmutable):V
 f:com.intellij.util.indexing.IndexingStampStorageOverRegularAttributes$Companion
-f:com.intellij.util.indexing.PerProjectIndexingQueue
-- sf:Companion:com.intellij.util.indexing.PerProjectIndexingQueue$Companion
-- <init>(com.intellij.openapi.project.Project):V
-- f:cancelAllTasksAndWait():V
-- f:clear():V
-- f:estimatedFilesCount():kotlinx.coroutines.flow.StateFlow
-- f:flushNow(java.lang.String):V
-- f:getFilesAndClear():java.util.Map
-- f:getSink(com.intellij.util.indexing.roots.IndexableFilesIterator,J):com.intellij.util.indexing.PerProjectIndexingQueue$PerProviderSink
-- f:resumeQueue():V
-f:com.intellij.util.indexing.PerProjectIndexingQueue$Companion
-com.intellij.util.indexing.PerProjectIndexingQueue$PerProviderSink
-- java.lang.AutoCloseable
-- a:addFile(com.intellij.openapi.vfs.VirtualFile):V
-- a:clear():V
-- a:close():V
-- a:commit():V
-f:com.intellij.util.indexing.PerProjectIndexingQueue$TestCompanion
-- <init>(com.intellij.util.indexing.PerProjectIndexingQueue):V
-- f:getAndResetQueuedFiles():kotlin.Pair
 f:com.intellij.util.indexing.PersistentIndexingStampEnumeratorKt
 - sf:createTimestampsEnumerator(java.nio.file.Path):com.intellij.util.io.DurableDataEnumerator
 e:com.intellij.util.indexing.RebuildStatus

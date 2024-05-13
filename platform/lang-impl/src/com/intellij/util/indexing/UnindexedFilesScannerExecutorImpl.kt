@@ -99,6 +99,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
                 catch (t: Throwable) {
                   task.futureHistory.setException(t)
                   throw t
+                } finally {
+                  // Scanning may throw exception (or error).
+                  // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
+                  project.service<PerProjectIndexingQueue>().flushNow(task.task.indexingReason)
                 }
               }
             }

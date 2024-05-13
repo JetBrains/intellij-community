@@ -343,13 +343,10 @@ class UnindexedFilesScannerTest {
   }
 
   private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
-    val scanningTask = UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL, null)
-    scanningTask.setFlushQueueAfterScanning(false)
-    val scanningHistoryFuture = scanningTask.queue()
-
-    val history = scanningHistoryFuture.get()
-    val dirtyFilesPerOrigin = project.service<PerProjectIndexingQueue>().getFilesAndClear()
-    return Pair(history, dirtyFilesPerOrigin)
+    return project.service<PerProjectIndexingQueue>().getFilesSubmittedDuring {
+      val scanningTask = UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL, null)
+      return@getFilesSubmittedDuring scanningTask.queue().get()
+    }
   }
 
   /**
