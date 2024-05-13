@@ -46,8 +46,7 @@ public final class HtmlUtils {
     "code[style=block] > *"
   );
 
-  @NotNull
-  public static String cleanupHtml(@NotNull String source, @Nullable String languageForCodeBlocks) {
+  public static @NotNull String cleanupHtml(@NotNull String source, @Nullable String languageForCodeBlocks) {
     final Document document = Jsoup.parse(source);
 
     RENAME_MAP.forEach(map -> document.select(map.first).tagName(map.second));

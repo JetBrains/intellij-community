@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.inspectopedia.extractor.data;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.Function;
 
-public class Plugin {
+public final class Plugin {
   public String id;
 
   public String name;
@@ -37,8 +37,7 @@ public class Plugin {
     return version;
   }
 
-  @NotNull
-  public List<Inspection> getInspections() {
+  public @NotNull List<Inspection> getInspections() {
     return Optional.ofNullable(inspections)
       .map((Function<List<Inspection>, List<Inspection>>)ArrayList::new)
       .orElse(Collections.emptyList());
