@@ -4888,6 +4888,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/nullability/notNullCast.java");
         }
 
+        @TestMetadata("nullableBoxedBooleanParameter.java")
+        public void testNullableBoxedBooleanParameter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/nullableBoxedBooleanParameter.java");
+        }
+
         @TestMetadata("nullableField.java")
         public void testNullableField() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/nullableField.java");
