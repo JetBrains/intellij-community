@@ -6,9 +6,9 @@ import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer;
 import org.jetbrains.annotations.NotNull;
 
-public final class PyTodoIndexer extends LexerBasedTodoIndexer {
+final class PyTodoIndexer extends LexerBasedTodoIndexer {
   @Override
   public @NotNull Lexer createLexer(@NotNull OccurrenceConsumer consumer) {
-    return PyIdIndexer.Companion.createIndexingLexer(consumer);
+    return PyIdIndexerKt.createPyIndexingLexer(consumer);
   }
 }
