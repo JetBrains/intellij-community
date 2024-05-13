@@ -48,6 +48,36 @@ public class K2ExpressionTypeTestGenerated extends AbstractK2ExpressionTypeTest 
         runTest("../../idea/tests/testData/codeInsight/expressionType/IfAsExpressionInsideBlock.kt");
     }
 
+    @TestMetadata("ImplicitInvoke_fromCompanionObject.kt")
+    public void testImplicitInvoke_fromCompanionObject() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/ImplicitInvoke_fromCompanionObject.kt");
+    }
+
+    @TestMetadata("ImplicitInvoke_fromJava.kt")
+    public void testImplicitInvoke_fromJava() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/ImplicitInvoke_fromJava.kt");
+    }
+
+    @TestMetadata("ImplicitInvoke_fromKotlin.kt")
+    public void testImplicitInvoke_fromKotlin() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/ImplicitInvoke_fromKotlin.kt");
+    }
+
+    @TestMetadata("ImplicitInvoke_fromKotlin_onJavaSynthethicProperty.kt")
+    public void testImplicitInvoke_fromKotlin_onJavaSynthethicProperty() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/ImplicitInvoke_fromKotlin_onJavaSynthethicProperty.kt");
+    }
+
+    @TestMetadata("ImplicitInvoke_functionalType.kt")
+    public void testImplicitInvoke_functionalType() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/ImplicitInvoke_functionalType.kt");
+    }
+
+    @TestMetadata("ImplicitInvoke_functionalType_onJavaSynthethicProperty.kt")
+    public void testImplicitInvoke_functionalType_onJavaSynthethicProperty() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/ImplicitInvoke_functionalType_onJavaSynthethicProperty.kt");
+    }
+
     @TestMetadata("IntersectionTypeWithStarProjection.kt")
     public void testIntersectionTypeWithStarProjection() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/expressionType/IntersectionTypeWithStarProjection.kt");
@@ -86,6 +116,11 @@ public class K2ExpressionTypeTestGenerated extends AbstractK2ExpressionTypeTest 
     @TestMetadata("MethodName.kt")
     public void testMethodName() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/expressionType/MethodName.kt");
+    }
+
+    @TestMetadata("MethodName_fromJava.test")
+    public void testMethodName_fromJava() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/MethodName_fromJava.test");
     }
 
     @TestMetadata("MethodReference.kt")
