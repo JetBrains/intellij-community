@@ -1,26 +1,26 @@
 <component name="libraryTable">
   <library name="layoutinspector-view-proto" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps.android.tools.base:layoutinspector-view-proto:231.0.26.0">
+    <properties maven-id="org.jetbrains.intellij.deps.android.tools.base:layoutinspector-view-proto:232.1.23.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layoutinspector-view-proto/231.0.26.0/layoutinspector-view-proto-231.0.26.0.jar">
-          <sha256sum>effac2eb475ab77d0447b5f42d8a0f05e7632aa30acbaf303e1b930200d05ddc</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layoutinspector-view-proto/232.1.23.0/layoutinspector-view-proto-232.1.23.0.jar">
+          <sha256sum>5aa817451385d40d601329c0f66f590b214f28215c8943787af9103bf9154eb5</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_compose_java_proto/231.0.26.0/layout_inspector_compose_java_proto-231.0.26.0.jar">
-          <sha256sum>48b5319d11953f45ed584ba484d09c625f0b8081b6476f61deaa86388b9a323d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_compose_java_proto/232.1.23.0/layout_inspector_compose_java_proto-232.1.23.0.jar">
+          <sha256sum>7019fcff4211ff291ca7e6676a3e9a6efb23e61bc3040a8cdd9306dea47b773f</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_snapshot_java_proto/231.0.26.0/layout_inspector_snapshot_java_proto-231.0.26.0.jar">
-          <sha256sum>4f991453b3bda2e4196328e4b95fa23af87b81dbe4cb0129006764f33cfed902</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_snapshot_java_proto/232.1.23.0/layout_inspector_snapshot_java_proto-232.1.23.0.jar">
+          <sha256sum>7114c8c944107a7d98b4f432857ebe87e5cc21096e67cde77b6ddcf8f861fde7</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_view_java_proto/231.0.26.0/layout_inspector_view_java_proto-231.0.26.0.jar">
-          <sha256sum>0c55d7b1470662a7e26c4cfa98b814ce4a5352466c1dc8aa95585ffa68a99d46</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_view_java_proto/232.1.23.0/layout_inspector_view_java_proto-232.1.23.0.jar">
+          <sha256sum>ed6a299fb192ea8f57c83c563862b087ea9b72677d69a714a7db99d5796157af</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layoutinspector-view-proto/231.0.26.0/layoutinspector-view-proto-231.0.26.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_compose_java_proto/231.0.26.0/layout_inspector_compose_java_proto-231.0.26.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_snapshot_java_proto/231.0.26.0/layout_inspector_snapshot_java_proto-231.0.26.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_view_java_proto/231.0.26.0/layout_inspector_view_java_proto-231.0.26.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layoutinspector-view-proto/232.1.23.0/layoutinspector-view-proto-232.1.23.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_compose_java_proto/232.1.23.0/layout_inspector_compose_java_proto-232.1.23.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_snapshot_java_proto/232.1.23.0/layout_inspector_snapshot_java_proto-232.1.23.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/layout_inspector_view_java_proto/232.1.23.0/layout_inspector_view_java_proto-232.1.23.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

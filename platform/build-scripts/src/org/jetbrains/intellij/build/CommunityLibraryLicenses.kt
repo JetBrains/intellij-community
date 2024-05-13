@@ -46,8 +46,6 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Annotations", libraryName = "precompiled-android-annotations"),
     androidDependency(name = "Android Apk Analyzer", libraryName = "precompiled-analyzer"),
     androidDependency(name = "Android Apk Binary Resources", libraryName = "precompiled-binary-resources"),
-    androidDependency(name = "Android Apk Sig", libraryName = "apksig"),
-    androidDependency(name = "Android Apk ZLib", libraryName = "apkzlib"),
     androidDependency(name = "Android App Inspector (Background Task, proto)", libraryName = "background-inspector-proto"),
     androidDependency(name = "Android App Inspector (Network, proto)", libraryName = "network_inspector_java_proto"),
     androidDependency(name = "Android Archive Patcher (explainer)", libraryName = "explainer"),
@@ -75,6 +73,7 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android dvlib library", libraryName = "precompiled-dvlib"),
     androidDependency(name = "Android Dynamic Layout Inspector", libraryName = "precompiled-dynamic-layout-inspector.common"),
     androidDependency(name = "Android Emulator gRPC API", libraryName = "emulator-proto"),
+    androidDependency(name = "Android Environment Services", libraryName = "precompiled-environment-services"),
     androidDependency(name = "Android Flags", libraryName = "precompiled-flags"),
     LibraryLicense(name = "Android Gradle model", attachedTo = "intellij.android.core", version = "0.4-SNAPSHOT",
                    url = "https://android.googlesource.com/platform/tools/build/+/master/gradle-model/").apache(
@@ -101,8 +100,8 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Lint Api", libraryName = "precompiled-lint-api"),
     androidDependency(name = "Android Lint Checks", libraryName = "precompiled-lint-checks"),
     androidDependency(name = "Android Lint Checks (proto)", libraryName = "liblint-checks-proto"),
-    androidDependency(name = "Android Lint Cli", libraryName = "precompiled-lint-cli"),
     androidDependency(name = "Android Lint Model", libraryName = "precompiled-lint-model"),
+    androidDependency(name = "Android Logcat Proto", libraryName = "logcat-proto"),
     androidDependency(name = "Android Manifest Merger", libraryName = "precompiled-manifest-merger"),
     androidDependency(name = "Android Manifest Parser", libraryName = "precompiled-manifest-parser"),
     androidDependency(name = "Android MLKit Common Library", libraryName = "precompiled-mlkit-common"),
@@ -640,6 +639,18 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JetBrains Annotations for Java 5", libraryName = "jetbrains-annotations-java5",
                    url = "https://github.com/JetBrains/java-annotations")
       .apache("https://github.com/JetBrains/java-annotations/blob/master/LICENSE.txt"),
+    LibraryLicense(name = "Jetbrains Jewel IDE LaF Bridge",
+                   url = "https://github.com/JetBrains/jewel",
+                   libraryName= "jetbrains-jewel-ide-laf-bridge",
+    )
+      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+    LibraryLicense(name = "Jetbrains Jewel Int UI Standalone",
+                   url = "https://github.com/JetBrains/jewel",
+                   libraryName= "jetbrains-jewel-int-ui-standalone",
+    )
+      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "JetBrains Runtime", attachedTo = "intellij.platform.ide.impl", version = "11",
                    license = "GNU General Public License, version 2, with the Classpath Exception",
                    url = "https://github.com/JetBrains/JetBrainsRuntime",
@@ -948,8 +959,6 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/JetBrains/package-search-api-models").apache(),
     LibraryLicense(name = "Package Search Version Utils", libraryName = "package-search-version-utils",
                    url = "https://github.com/JetBrains/package-search-version-utils").apache(),
-    LibraryLicense(name = "PEPK", libraryName = "pepk", url = "https://source.android.com/",
-                   version = LibraryLicense.CUSTOM_REVISION).apache(),
     androidDependency(name = "Perfetto Library", libraryName = "trace-perfetto-library"),
     androidDependency(name = "Perfetto protos", libraryName = "perfetto-proto"),
 
