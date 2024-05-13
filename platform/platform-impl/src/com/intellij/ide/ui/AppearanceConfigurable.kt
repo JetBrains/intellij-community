@@ -377,16 +377,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         }
       }
 
-      group(message("group.trees")) {
-        twoColumnsRow(
-          { checkBox(cdShowTreeIndents) },
-          { checkBox(cdUseCompactTreeIndents) },
-        )
-        twoColumnsRow(
-          { checkBox(cdExpandNodesWithSingleClick) },
-        )
-      }
-
       group(message("group.ui.options")) {
         val leftColumnControls = sequence<Row.() -> Unit> {
           if (ExperimentalUI.isNewUI()) {
@@ -502,6 +492,16 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               .enabled(ProjectManager.getInstance().openProjects.isNotEmpty())
           }
         }
+      }
+
+      group(message("group.trees")) {
+        twoColumnsRow(
+          { checkBox(cdShowTreeIndents) },
+          { checkBox(cdUseCompactTreeIndents) },
+        )
+        twoColumnsRow(
+          { checkBox(cdExpandNodesWithSingleClick) },
+        )
       }
 
       groupRowsRange(message("group.window.options")) {
