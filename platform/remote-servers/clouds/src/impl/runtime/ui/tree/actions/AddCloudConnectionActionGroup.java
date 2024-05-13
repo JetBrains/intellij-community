@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.clouds.impl.runtime.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.clouds.impl.runtime.ui.DefaultRemoteServersServiceViewContributor;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
-import com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

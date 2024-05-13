@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.remoteServer.impl.runtime.ui;
+package com.intellij.platform.clouds.impl.runtime.ui;
 
 import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewManager;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerBase;
+import com.intellij.remoteServer.impl.runtime.ui.RemoteServersServiceViewContributor;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.DeploymentLogNode;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.DeploymentNodeImpl;

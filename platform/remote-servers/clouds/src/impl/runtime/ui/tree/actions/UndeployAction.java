@@ -1,4 +1,5 @@
-package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.clouds.impl.runtime.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
