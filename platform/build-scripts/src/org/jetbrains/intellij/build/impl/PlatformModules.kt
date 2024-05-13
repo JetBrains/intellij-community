@@ -140,7 +140,6 @@ private fun addModule(relativeJarPath: String, moduleNames: Collection<String>, 
                        .toList())
 }
 
-@Suppress("RedundantSuspendModifier")
 suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: BuildContext): PlatformLayout {
   val enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
   val productLayout = context.productProperties.productLayout

@@ -13,7 +13,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 
-@Suppress("RedundantSuspendModifier")
 suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
@@ -22,7 +21,6 @@ suspend fun <T> withBackgroundProgress(
   return withBackgroundProgress(project, title, TaskCancellation.cancellable(), action)
 }
 
-@Suppress("RedundantSuspendModifier")
 suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
@@ -58,7 +56,6 @@ suspend fun <T> withBackgroundProgress(
   return taskSupport().withBackgroundProgressInternal(project, title, cancellation, action)
 }
 
-@Suppress("RedundantSuspendModifier")
 suspend fun <T> withModalProgress(
   project: Project,
   title: @ProgressTitle String,
