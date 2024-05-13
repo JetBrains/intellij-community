@@ -94,7 +94,12 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
           myMap.remove(key);
           return;
         }
-        else if (valueContainer.containsCachedMergedData()) {
+
+        //RC: afaicu, this is done just to ensure we do NOT use append-changes branch in a .merge().
+        //    Append-changes is useless in keyIsUniqueForFile case because there is always <=1 (inputId, value) entry in
+        //    ValueContainer, and at this point container could contain only 1 update change that container has changes (isDirty) and those changes are not removals
+        //    (!containsOnlyInvalidatedChange) which (for keyIsUniqueForFile) implies there is 1 and only 1 added change
+        if (valueContainer.containsCachedMergedData()) {
           valueContainer.setNeedsCompacting(true);
         }
       }
@@ -209,6 +214,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   @Override
   public void flush() throws IOException {
     if (!myMap.isClosed()) {
+      //TODO RC: inefficiency: we do need to _store_ all cached data -- but we don't want to clear the cache!
+      //         With current implementation we get empty cache every time the flush() is called.
       clearCachedMappings();
       if (myMap.isDirty()) myMap.force();
     }
@@ -311,6 +318,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
       return;
     }
 
+    // do not pollute the cache with keys unique to indexed file
+    //TODO RC: cheaper to use ValueContainerImpl instead of ChangeTracking?
     ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<>(null);
     valueContainer.addValue(inputId, newValue);
     myMap.merge(key, valueContainer);
@@ -325,7 +334,9 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
       cached.addValue(inputId, value);
       return;
     }
+
     // do not pollute the cache with keys unique to indexed file
+    //TODO RC: cheaper to use ValueContainerImpl instead of ChangeTracking?
     ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<>(null);
     valueContainer.addValue(inputId, value);
     myMap.merge(key, valueContainer);
