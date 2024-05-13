@@ -93,21 +93,28 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
           LOG.info("Cannot create options panel ${wrapper.shortName}", e)
         }
 
-        val language = wrapper.language
-        availablePlugins.get(pluginId)!!.inspections.add(Inspection(
-          id = wrapper.shortName,
-          name = wrapper.displayName,
-          severity = wrapper.defaultLevel.name,
-          language = language,
-          briefDescription = description.firstOrNull()?.let { HtmlUtils.cleanupHtml(it, language) },
-          extendedDescription = if (description.size > 1) HtmlUtils.cleanupHtml(description[1], language) else null,
-          path = wrapper.groupPath.asList(),
-          isAppliesToDialects = wrapper.applyToDialects(),
-          isCleanup = wrapper.isCleanupTool,
-          isEnabledDefault = wrapper.isEnabledByDefault,
-          options = panelInfo,
-          cweIds = inspectionExtraState.inspections.get(wrapper.id)?.cweIds,
-        ))
+        try {
+          val language = wrapper.language
+          availablePlugins.get(pluginId)!!.inspections.add(Inspection(
+            id = wrapper.shortName,
+            name = wrapper.displayName,
+            severity = wrapper.defaultLevel.name,
+            language = language,
+            briefDescription = description.firstOrNull()?.let { HtmlUtils.cleanupHtml(it, language) },
+            extendedDescription = if (description.size > 1) HtmlUtils.cleanupHtml(description[1], language) else null,
+            path = wrapper.groupPath.asList(),
+            isAppliesToDialects = wrapper.applyToDialects(),
+            isCleanup = wrapper.isCleanupTool,
+            isEnabledDefault = wrapper.isEnabledByDefault,
+            options = panelInfo,
+            cweIds = inspectionExtraState.inspections.get(wrapper.id)?.cweIds,
+          ))
+        }
+        catch (e: Throwable) {
+          System.err.println("Error while processing ${wrapper.extension}")
+          e.printStackTrace()
+          exitProcess(-1)
+        }
       }
 
       val sortedPlugins = availablePlugins.values
