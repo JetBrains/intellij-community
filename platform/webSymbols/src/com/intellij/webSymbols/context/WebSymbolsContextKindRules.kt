@@ -16,8 +16,7 @@ interface WebSymbolsContextKindRules {
                              val projectToolExecutables: List<String>,
                              val fileExtensions: List<String>,
                              val ideLibraries: List<String>,
-                             val fileNamePatterns: List<Regex>,
-                             val scriptUrlPatterns: List<Regex>)
+                             val fileNamePatterns: List<Regex>)
 
   companion object {
 

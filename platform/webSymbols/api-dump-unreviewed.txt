@@ -448,22 +448,20 @@
 - hashCode():I
 - toString():java.lang.String
 *f:com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
-- <init>(java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List):V
+- <init>(java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List):V
 - f:component1():java.util.Map
 - f:component2():java.util.List
 - f:component3():java.util.List
 - f:component4():java.util.List
 - f:component5():java.util.List
-- f:component6():java.util.List
-- f:copy(java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
-- bs:copy$default(com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules,java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,I,java.lang.Object):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
+- f:copy(java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
+- bs:copy$default(com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules,java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List,I,java.lang.Object):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
 - equals(java.lang.Object):Z
 - f:getFileExtensions():java.util.List
 - f:getFileNamePatterns():java.util.List
 - f:getIdeLibraries():java.util.List
 - f:getPkgManagerDependencies():java.util.Map
 - f:getProjectToolExecutables():java.util.List
-- f:getScriptUrlPatterns():java.util.List
 - hashCode():I
 - toString():java.lang.String
 *:com.intellij.webSymbols.context.WebSymbolsContextProvider

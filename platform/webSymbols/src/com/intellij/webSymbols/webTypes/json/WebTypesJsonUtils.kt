@@ -285,8 +285,7 @@ internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules 
     projectToolExecutables,
     fileExtensions,
     ideLibraries,
-    fileNamePatterns.mapNotNull { it.toRegex() },
-    scriptUrlPatterns.mapNotNull { it.toRegex() }
+    fileNamePatterns.mapNotNull { it.toRegex() }
   )
 
 internal fun DisablementRules.wrap(): WebSymbolsContextKindRules.DisablementRules =

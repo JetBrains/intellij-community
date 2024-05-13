@@ -230,13 +230,6 @@
             "type": "string"
           }
         },
-        "script-url-patterns": {
-          "description": "RegExps to match script URLs, which enable framework support within a particular HTML.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/pattern"
-          }
-        },
         "file-extensions": {
           "description": "Extensions of files, which should have the framework support enabled. Use this to support custom file extensions like '.vue' or '.svelte'. Never specify generic extensions like '.html', '.js' or '.ts'. If you need your contributions to be present in every file don't specify the framework at all",
           "type": "array",

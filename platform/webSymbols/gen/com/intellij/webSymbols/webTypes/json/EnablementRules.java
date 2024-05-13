@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({
     "node-packages",
     "ruby-gems",
-    "script-url-patterns",
     "file-extensions",
     "file-name-patterns",
     "ide-libraries",
@@ -44,13 +43,6 @@ public class EnablementRules {
     @JsonProperty("ruby-gems")
     @JsonPropertyDescription("Ruby gem names, which enable framework support within the particular Ruby module.")
     private List<String> rubyGems = new ArrayList<String>();
-    /**
-     * RegExps to match script URLs, which enable framework support within a particular HTML.
-     * 
-     */
-    @JsonProperty("script-url-patterns")
-    @JsonPropertyDescription("RegExps to match script URLs, which enable framework support within a particular HTML.")
-    private List<Pattern> scriptUrlPatterns = new ArrayList<Pattern>();
     /**
      * Extensions of files, which should have the framework support enabled. Use this to support custom file extensions like '.vue' or '.svelte'. Never specify generic extensions like '.html', '.js' or '.ts'. If you need your contributions to be present in every file don't specify the framework at all
      * 
@@ -116,24 +108,6 @@ public class EnablementRules {
     @JsonProperty("ruby-gems")
     public void setRubyGems(List<String> rubyGems) {
         this.rubyGems = rubyGems;
-    }
-
-    /**
-     * RegExps to match script URLs, which enable framework support within a particular HTML.
-     * 
-     */
-    @JsonProperty("script-url-patterns")
-    public List<Pattern> getScriptUrlPatterns() {
-        return scriptUrlPatterns;
-    }
-
-    /**
-     * RegExps to match script URLs, which enable framework support within a particular HTML.
-     * 
-     */
-    @JsonProperty("script-url-patterns")
-    public void setScriptUrlPatterns(List<Pattern> scriptUrlPatterns) {
-        this.scriptUrlPatterns = scriptUrlPatterns;
     }
 
     /**
