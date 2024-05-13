@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.style
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import java.awt.Color
-import java.awt.Insets
 import javax.swing.AbstractButton
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -23,7 +22,7 @@ internal sealed class StyleProperty(
   companion object {
     fun getPropertySnapshot(component: JComponent): Properties {
       val base = Properties()
-      for (p in arrayOf(FOREGROUND, BACKGROUND, OPAQUE, BORDER, ICON, MARGIN)) {
+      for (p in arrayOf(FOREGROUND, BACKGROUND, OPAQUE, BORDER, ICON)) {
         if (p.componentType.isInstance(component))
           base.setValue(p, p.getProperty(component))
       }
@@ -65,13 +64,6 @@ internal sealed class StyleProperty(
     { component, icon -> (component as AbstractButton).icon = icon as Icon? },
     { component -> (component as AbstractButton).icon },
     Icon::class.java,
-    AbstractButton::class.java
-  )
-
-  object MARGIN : StyleProperty(
-    { component, margin -> (component as AbstractButton).margin = margin as Insets? },
-    { component -> (component as AbstractButton).margin },
-    Insets::class.java,
     AbstractButton::class.java
   )
 

@@ -6,11 +6,11 @@ import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
 import javax.swing.Action
 
-internal class ResizableCustomFrameTitleButtons(closeAction: Action,
-                                                private val myRestoreAction: Action,
-                                                private val myIconifyAction: Action,
-                                                private val myMaximizeAction: Action
-) : CustomFrameTitleButtons(closeAction) {
+internal class LinuxResizableCustomFrameTitleButtons(closeAction: Action,
+                                                     private val myRestoreAction: Action,
+                                                     private val myIconifyAction: Action,
+                                                     private val myMaximizeAction: Action
+) : LinuxCustomFrameTitleButtons(closeAction) {
   companion object {
     private val restoreIcon = AllIcons.Windows.Restore
     private val restoreInactiveIcon = AllIcons.Windows.RestoreInactive
@@ -24,8 +24,8 @@ internal class ResizableCustomFrameTitleButtons(closeAction: Action,
     fun create(myCloseAction: Action,
                myRestoreAction: Action,
                myIconifyAction: Action,
-               myMaximizeAction: Action): ResizableCustomFrameTitleButtons {
-      val darculaTitleButtons = ResizableCustomFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
+               myMaximizeAction: Action): CustomFrameButtons {
+      val darculaTitleButtons = LinuxResizableCustomFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }
@@ -56,7 +56,7 @@ internal class ResizableCustomFrameTitleButtons(closeAction: Action,
   }
 
   fun fillContent(state: WindowButtonsConfiguration.State?) {
-    getView().removeAll()
+    getContent().removeAll()
 
     val buttons: List<WindowButtonsConfiguration.WindowButton> =
       state?.buttons

@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.style
 
 import java.awt.Color
-import java.awt.Insets
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
@@ -28,9 +27,6 @@ internal class Properties {
   var icon: Icon?
     set(value) = setValue(StyleProperty.ICON, value)
     get() = getValue(StyleProperty.ICON) as Icon
-  var margin: Insets?
-    set(value) = setValue(StyleProperty.MARGIN, value)
-    get() = getValue(StyleProperty.MARGIN) as Insets
 
   fun setValue(prop: StyleProperty, value: Any?) {
     map[prop] = value

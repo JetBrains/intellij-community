@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
@@ -19,10 +19,10 @@ import javax.swing.*
 import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonUI
 
-internal open class CustomFrameTitleButtons(myCloseAction: Action) {
+internal open class LinuxCustomFrameTitleButtons(myCloseAction: Action): CustomFrameButtons {
   companion object {
-    fun create(closeAction: Action): CustomFrameTitleButtons {
-      val darculaTitleButtons = CustomFrameTitleButtons(closeAction)
+    fun create(closeAction: Action): CustomFrameButtons {
+      val darculaTitleButtons = LinuxCustomFrameTitleButtons(closeAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }
@@ -68,7 +68,7 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
 
   val closeButton: JButton = createButton("Close", myCloseAction)
 
-  internal var isCompactMode: Boolean
+  override var isCompactMode: Boolean
     set(value) {
       panel.isCompactMode = value
     }
@@ -94,9 +94,9 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     updateStyles()
   }
 
-  fun getView(): JComponent = panel
+  override fun getContent(): JComponent = panel
 
-  open fun updateVisibility() {
+  override fun updateVisibility() {
   }
 
   protected fun addComponent(component: JComponent) {

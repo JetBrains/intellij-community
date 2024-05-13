@@ -3,7 +3,8 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.IdeRootPane
-import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxCustomFrameTitleButtons
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -31,7 +32,7 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
     val gb = GridBag().setDefaultFill(GridBagConstraints.VERTICAL).setDefaultAnchor(GridBagConstraints.WEST)
     add(productIcon, gb.next())
     add(titleLabel, gb.next().fillCell().weightx(1.0))
-    createButtonsPane()?.let { add(it.getView(), gb.next().anchor(GridBagConstraints.EAST)) }
+    createButtonsPane()?.let { add(it.getContent(), gb.next().anchor(GridBagConstraints.EAST)) }
   }
 
   private val dragListener = object : MouseAdapter() { //passing events to OS handler to make it draggable
@@ -89,7 +90,7 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
   }
 
-  private fun createButtonsPane(): CustomFrameTitleButtons? {
-    return if (IdeRootPane.hideNativeLinuxTitle) CustomFrameTitleButtons.create(createCloseAction(this)) else null
+  private fun createButtonsPane(): CustomFrameButtons? {
+    return if (IdeRootPane.hideNativeLinuxTitle) LinuxCustomFrameTitleButtons.create(createCloseAction(this)) else null
   }
 }

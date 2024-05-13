@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxResizableCustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.HEADER_HEIGHT_DFM
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
@@ -92,7 +93,7 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
           // Skip initial call
           if (currentContentState !== value) {
             fillContent(value)
-            buttonPanes?.fillContent(value)
+            (buttonPanes as? LinuxResizableCustomFrameTitleButtons)?.fillContent(value)
           }
         }
       }
@@ -181,10 +182,10 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     if (state == null || state.rightPosition) {
       add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
       add(headerContent, gb.next().fillCell().anchor(GridBagConstraints.CENTER).weightx(1.0).weighty(1.0))
-      buttonPanes?.let { add(wrap(it.getView()), gb.next().anchor(GridBagConstraints.EAST)) }
+      buttonPanes?.let { add(wrap(it.getContent()), gb.next().anchor(GridBagConstraints.EAST)) }
     }
     else {
-      buttonPanes?.let { add(wrap(it.getView()), gb.nextLine().next().anchor(WEST)) }
+      buttonPanes?.let { add(wrap(it.getContent()), gb.nextLine().next().anchor(WEST)) }
       add(headerContent, gb.next().fillCell().anchor(GridBagConstraints.CENTER).weightx(1.0).weighty(1.0))
       add(productIcon, gb.next().anchor(GridBagConstraints.EAST).insets(0, H, 0, H))
     }
