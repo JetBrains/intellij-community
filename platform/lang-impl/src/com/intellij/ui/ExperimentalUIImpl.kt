@@ -43,7 +43,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
     if (isFirstCheck) {
       isFirstCheck = false
-      changeValue(super.earlyInitValue(), newUi)
+      changeValue(super.earlyInitValue() && !forcedSwitchedUi, newUi)
     }
 
     return newUi

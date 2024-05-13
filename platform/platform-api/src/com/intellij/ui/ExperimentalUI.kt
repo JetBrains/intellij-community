@@ -33,7 +33,6 @@ abstract class ExperimentalUI {
     // Means that IDE is started after enabling the New UI (not necessary the first time).
     // Should be unset by the client, or it will be unset on the IDE close.
     const val NEW_UI_SWITCH: String = "experimental.ui.switch"
-    const val NEW_UI_PROMO_BANNER_DISABLED_PROPERTY: String = "experimental.ui.promo.banner.disabled"
     var forcedSwitchedUi: Boolean = false
 
     @Internal
