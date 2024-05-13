@@ -324,30 +324,24 @@ class PluginClassLoader(
   override fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long, forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
     synchronized(getClassLoadingLock(name)) {
       var c = findLoadedClass(name)
-      if (c != null && c.classLoader === this) {
+      if (c?.classLoader === this) {
         return c
       }
 
-      val logStream = logStream
       c = try {
         classPath.findClass(name, fileName, packageNameHash, classDataConsumer)
       }
       catch (e: LinkageError) {
         logStream?.let { logClass(name = name, logStream = it, exception = e) }
         flushDebugLog()
-        throw PluginException("""Cannot load class $name (
-  error: ${e.message},
-  classLoader=$this
-)""", e, pluginId)
+        throw PluginException("Cannot load class $name (\n  error: ${e.message},\n  classLoader=$this\n)", e, pluginId)
       }
       if (c == null) {
         return null
       }
 
       loadedClassCounter.incrementAndGet()
-      if (logStream != null) {
-        logClass(name = name, logStream = logStream, exception = null)
-      }
+      logStream?.let { logClass(name = name, logStream = it, exception = null) }
       return c
     }
   }
