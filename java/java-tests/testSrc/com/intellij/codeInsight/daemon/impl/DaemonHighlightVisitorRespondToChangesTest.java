@@ -463,20 +463,22 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     TestTimeOut timeOut = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
     myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), TextEditorProvider.getInstance().getTextEditor(getEditor()), ArrayUtilRt.EMPTY_INT_ARRAY, true, () -> {
       if (timeOut.isTimedOut()) {
+        String dump = ThreadDumper.dumpThreadsToString();
         List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
+        String message = "Timed out\ninfos=" + infos + "\n"
+                         + "; ForkJoinPool.commonPool().getParallelism()=" + ForkJoinPool.commonPool().getParallelism()
+                         + ";visitor1.myState().THINKING.get()=" + visitor1.myState().THINKING.get()
+                         + ";visitor2.myState().THINKING.get()=" + visitor2.myState().THINKING.get()
+                         + ";visitor1.myState().THINK.get()=" + visitor1.myState().THINK.get()
+                         + ";visitor2.myState().THINK.get()=" + visitor2.myState().THINK.get()
+                         + ";visitor1.myState().COMMENT_HIGHLIGHTED.get()=" + visitor1.myState().COMMENT_HIGHLIGHTED.get()
+                         + ";visitor2.myState().COMMENT_HIGHLIGHTED.get()=" + visitor2.myState().COMMENT_HIGHLIGHTED.get()
+                         + "\n" + dump;
         visitor1.myState().THINK.set(false);
         visitor2.myState().THINK.set(false);
         visitor1.myState().THINKING.set(false);
         visitor2.myState().THINKING.set(false);
-        fail("Timed out\ninfos=" + infos + "\n"
-             + "; ForkJoinPool.commonPool().getParallelism()=" + ForkJoinPool.commonPool().getParallelism()
-             + ";visitor1.myState().THINKING.get()=" + visitor1.myState().THINKING.get()
-             + ";visitor2.myState().THINKING.get()=" + visitor2.myState().THINKING.get()
-             + ";visitor1.myState().THINK.get()=" + visitor1.myState().THINK.get()
-             + ";visitor2.myState().THINK.get()=" + visitor2.myState().THINK.get()
-             + ";visitor1.myState().COMMENT_HIGHLIGHTED.get()=" + visitor1.myState().COMMENT_HIGHLIGHTED.get()
-             + ";visitor2.myState().COMMENT_HIGHLIGHTED.get()=" + visitor2.myState().COMMENT_HIGHLIGHTED.get()
-             + "\n" + ThreadDumper.dumpThreadsToString());
+        fail(message);
       }
       if (visitor1.myState().THINKING.get() && visitor2.myState().THINKING.get()) {
         // if two visitors are paused, it means they both have visited comments. Check that corresponding highlights are in the markup model
@@ -515,16 +517,22 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
 
     @Override
     public void visit(@NotNull PsiElement element) {
+      LOG.debug("about to visit " + element + "; this=" + this+"; myState="+myState()+"; "+Thread.currentThread());
       if (element instanceof PsiComment) {
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element.getTextRange()).description(MSG).create());
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element.getTextRange()).description(MSG).create();
+        myHolder.add(info);
         myState().COMMENT_HIGHLIGHTED.set(true);
+        LOG.debug("highlighted " + element + "; "+info+"; this=" + this+"; myState="+myState()+"; "+Thread.currentThread());
       }
       else if (myState().COMMENT_HIGHLIGHTED.get()) {
+        LOG.debug("start thinking about " + element + "; this=" + this+"; myState="+myState()+"; "+Thread.currentThread());
         myState().THINKING.set(true);
         while (myState().THINK.get()) {
           TimeoutUtil.sleep(1);
         }
+        LOG.debug("stopped thinking about " + element + "; this=" + this+"; myState="+myState()+"; "+Thread.currentThread());
       }
+      LOG.debug("end of visit " + element + "; this=" + this+"; myState="+myState()+"; "+Thread.currentThread());
     }
 
     @Override
