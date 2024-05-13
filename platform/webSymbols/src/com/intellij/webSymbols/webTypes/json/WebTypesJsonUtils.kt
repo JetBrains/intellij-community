@@ -280,19 +280,21 @@ internal fun Reference.codeCompletion(name: String,
 }
 
 internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules =
-  WebSymbolsContextKindRules.EnablementRules(
-    mapOf(PKG_MANAGER_NODE_PACKAGES to nodePackages, PKG_MANAGER_RUBY_GEMS to rubyGems) + additionalProperties,
-    projectToolExecutables,
-    fileExtensions,
-    ideLibraries,
-    fileNamePatterns.mapNotNull { it.toRegex() }
-  )
+  WebSymbolsContextKindRules.createEnablementRules {
+    pkgManagerDependencies(PKG_MANAGER_NODE_PACKAGES, nodePackages)
+    pkgManagerDependencies(PKG_MANAGER_RUBY_GEMS, rubyGems)
+    pkgManagerDependencies(additionalProperties)
+    projectToolExecutables(projectToolExecutables)
+    fileExtensions(fileExtensions)
+    ideLibraries(ideLibraries)
+    fileNamePatterns(fileNamePatterns.mapNotNull { it.toRegex() })
+  }
 
 internal fun DisablementRules.wrap(): WebSymbolsContextKindRules.DisablementRules =
-  WebSymbolsContextKindRules.DisablementRules(
-    fileExtensions,
-    fileNamePatterns.mapNotNull { it.toRegex() },
-  )
+  WebSymbolsContextKindRules.createDisablementRules {
+    fileExtensions(fileExtensions)
+    fileNamePatterns(fileNamePatterns.mapNotNull { it.toRegex() })
+  }
 
 internal fun BaseContribution.Priority.wrap() =
   WebSymbol.Priority.values()[ordinal]

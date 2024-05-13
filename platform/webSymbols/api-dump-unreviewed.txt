@@ -432,38 +432,46 @@
 *:com.intellij.webSymbols.context.WebSymbolsContextKindRules
 - *sf:Companion:com.intellij.webSymbols.context.WebSymbolsContextKindRules$Companion
 - s:create(java.util.Map,java.util.Map):com.intellij.webSymbols.context.WebSymbolsContextKindRules
+- s:create(kotlin.jvm.functions.Function1):com.intellij.webSymbols.context.WebSymbolsContextKindRules
+- s:createDisablementRules(kotlin.jvm.functions.Function1):com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRules
+- s:createEnablementRules(kotlin.jvm.functions.Function1):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
+- s:disablementRulesBuilder():com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRulesBuilder
+- s:enablementRulesBuilder():com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRulesBuilder
 - a:getDisable():java.util.Map
 - a:getEnable():java.util.Map
+*:com.intellij.webSymbols.context.WebSymbolsContextKindRules$Builder
+- a:contextName(java.lang.String,kotlin.jvm.functions.Function1):V
 *f:com.intellij.webSymbols.context.WebSymbolsContextKindRules$Companion
 - f:create(java.util.Map,java.util.Map):com.intellij.webSymbols.context.WebSymbolsContextKindRules
-*f:com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRules
-- <init>(java.util.List,java.util.List):V
-- f:component1():java.util.List
-- f:component2():java.util.List
-- f:copy(java.util.List,java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRules
-- bs:copy$default(com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRules,java.util.List,java.util.List,I,java.lang.Object):com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRules
-- equals(java.lang.Object):Z
-- f:getFileExtensions():java.util.List
-- f:getFileNamePatterns():java.util.List
-- hashCode():I
-- toString():java.lang.String
-*f:com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
-- <init>(java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List):V
-- f:component1():java.util.Map
-- f:component2():java.util.List
-- f:component3():java.util.List
-- f:component4():java.util.List
-- f:component5():java.util.List
-- f:copy(java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
-- bs:copy$default(com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules,java.util.Map,java.util.List,java.util.List,java.util.List,java.util.List,I,java.lang.Object):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
-- equals(java.lang.Object):Z
-- f:getFileExtensions():java.util.List
-- f:getFileNamePatterns():java.util.List
-- f:getIdeLibraries():java.util.List
-- f:getPkgManagerDependencies():java.util.Map
-- f:getProjectToolExecutables():java.util.List
-- hashCode():I
-- toString():java.lang.String
+- f:create(kotlin.jvm.functions.Function1):com.intellij.webSymbols.context.WebSymbolsContextKindRules
+- f:createDisablementRules(kotlin.jvm.functions.Function1):com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRules
+- f:createEnablementRules(kotlin.jvm.functions.Function1):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
+- f:disablementRulesBuilder():com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRulesBuilder
+- f:enablementRulesBuilder():com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRulesBuilder
+*:com.intellij.webSymbols.context.WebSymbolsContextKindRules$ContextKindBuilder
+- a:disableWhen(kotlin.jvm.functions.Function1):V
+- a:enabledWhen(kotlin.jvm.functions.Function1):V
+*:com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRules
+- a:getFileExtensions():java.util.List
+- a:getFileNamePatterns():java.util.List
+*:com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRulesBuilder
+- a:build():com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRules
+- a:fileExtensions(java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRulesBuilder
+- a:fileNamePatterns(java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$DisablementRulesBuilder
+*:com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
+- a:getFileExtensions():java.util.List
+- a:getFileNamePatterns():java.util.List
+- a:getIdeLibraries():java.util.List
+- a:getPkgManagerDependencies():java.util.Map
+- a:getProjectToolExecutables():java.util.List
+*:com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRulesBuilder
+- a:build():com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRules
+- a:fileExtensions(java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRulesBuilder
+- a:fileNamePatterns(java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRulesBuilder
+- a:ideLibraries(java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRulesBuilder
+- a:pkgManagerDependencies(java.lang.String,java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRulesBuilder
+- a:pkgManagerDependencies(java.util.Map):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRulesBuilder
+- a:projectToolExecutables(java.util.List):com.intellij.webSymbols.context.WebSymbolsContextKindRules$EnablementRulesBuilder
 *:com.intellij.webSymbols.context.WebSymbolsContextProvider
 - isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.util.CachedValueProvider$Result
 - isEnabled(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
