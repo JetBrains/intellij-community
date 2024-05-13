@@ -1,10 +1,3 @@
-c:com.intellij.diff.DiffApplicationSettings
-- com.intellij.openapi.components.PersistentStateComponent
-- SHOW_LST_WORD_DIFFERENCES:Z
-- <init>():V
-- s:getInstance():com.intellij.diff.DiffApplicationSettings
-- getState():com.intellij.diff.DiffApplicationSettings
-- loadState(com.intellij.diff.DiffApplicationSettings):V
 a:com.intellij.diff.DiffContentFactory
 - <init>():V
 - a:create(com.intellij.openapi.editor.Document,com.intellij.diff.contents.DocumentContent):com.intellij.diff.contents.DocumentContent
