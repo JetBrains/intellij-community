@@ -96,7 +96,7 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
    * production.
    */
   @VisibleForTesting
-  fun getPluginId(componentName: String, propertyName: String): String? = propertyPluginIdMap["${componentName}.${propertyName}"]
+  fun getPluginId(key: String): String? = propertyPluginIdMap[key]
 
   companion object {
     val instance: JsonSettingsModel by lazy { componentToSettingsModel(loadFromJson()) }
