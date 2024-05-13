@@ -14,7 +14,12 @@ sealed interface ShellArgumentContext {
   /**
    * The short name used to describe the meaning of this argument. For example `path`.
    */
-  var displayName: Supplier<@Nls String>?
+  fun displayName(@Nls text: String)
+
+  /**
+   * The short name used to describe the meaning of this argument. For example `path`.
+   */
+  fun displayName(supplier: Supplier<@Nls String>)
 
   /**
    * Whether this argument is not required to have a value.

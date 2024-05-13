@@ -31,7 +31,7 @@ internal class ShellOptionContextImpl(
     return ShellOptionSpecImpl(
       names = names,
       displayName = displayName,
-      descriptionSupplier = description,
+      descriptionSupplier = descriptionSupplier,
       insertValue = insertValue,
       priority = priority,
       isRequired = isRequired,

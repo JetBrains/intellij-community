@@ -55,7 +55,7 @@ internal class ShellCommandContextImpl(
     return ShellCommandSpecImpl(
       names = names,
       displayName = displayName,
-      descriptionSupplier = description,
+      descriptionSupplier = descriptionSupplier,
       insertValue = insertValue,
       priority = priority,
       requiresSubcommand = requiresSubcommand,

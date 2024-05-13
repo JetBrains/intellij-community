@@ -10,9 +10,9 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGene
 import org.jetbrains.plugins.terminal.block.completion.spec.getFileSuggestions
 
 internal fun cdCommandSpec() = ShellCommandSpec("cd") {
-  description = TerminalBundle.messagePointer("cd.command.description")
+  description(TerminalBundle.messagePointer("cd.command.description"))
   argument {
-    displayName = TerminalBundle.messagePointer("cd.command.arg.displayName")
+    displayName(TerminalBundle.messagePointer("cd.command.arg.displayName"))
 
     val generator = ShellRuntimeDataGenerator(
       debugName = "cd suggestions",

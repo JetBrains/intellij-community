@@ -22,7 +22,12 @@ sealed interface ShellSuggestionContext {
   /**
    * Text to be shown in the documentation popup for this command/option.
    */
-  var description: Supplier<@Nls String>?
+  fun description(@Nls text: String)
+
+  /**
+   * Text to be shown in the documentation popup for this command/option.
+   */
+  fun description(supplier: Supplier<@Nls String>)
 
   /**
    * The string to be inserted on completion instead of command/option name.
