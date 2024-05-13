@@ -1,4 +1,0 @@
-f:com.intellij.platform.diagnostic.startUpPerformanceReporter.ExposingCharArrayWriter
-- java.io.CharArrayWriter
-- <init>():V
-- f:toByteBuffer():java.nio.ByteBuffer
