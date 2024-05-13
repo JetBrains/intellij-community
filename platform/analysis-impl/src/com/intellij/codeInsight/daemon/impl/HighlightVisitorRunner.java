@@ -112,7 +112,7 @@ class HighlightVisitorRunner {
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(visitorInfos, ProgressManager.getGlobalProgressIndicator(), visitorInfo -> {
         HighlightVisitor visitor = visitorInfo.visitor();
         if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-          GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: running visitor: " + visitor+"("+visitor.getClass()+"); psiFile="+psiFile);
+          GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: running visitor: " + visitor+"("+visitor.getClass()+"); psiFile="+psiFile+"; "+Thread.currentThread());
         }
         try {
           int[] sizeAfterRunVisitor = new int[1];
@@ -125,19 +125,19 @@ class HighlightVisitorRunner {
           reportOutOfRunVisitorInfos(sizeAfterRunVisitor[0], ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT, holder, visitor, resultSink);
           if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
             GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: visitor finished " + visitor + "(" + visitor.getClass() + ")" +
-                                              (result ? "" : " returned false") + "; holder: "+holder.size()+" results");
+                                              (result ? "" : " returned false") + "; holder: "+holder.size()+" results"+"; "+Thread.currentThread());
           }
           return result;
         }
         catch (Exception e) {
           if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-            GeneralHighlightingPass.LOG.debug("GHP: visitor " + visitor + "(" + visitor.getClass() + ") threw " + ExceptionUtil.getThrowableText(e));
+            GeneralHighlightingPass.LOG.debug("GHP: visitor " + visitor + "(" + visitor.getClass() + ") threw " + ExceptionUtil.getThrowableText(e)+"; "+Thread.currentThread());
           }
           throw e;
         }
       });
     if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-      GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: all visitors ran; result="+res+" visitorInfos="+visitorInfos);
+      GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: all visitors ran; result="+res+" visitorInfos="+visitorInfos+"; "+Thread.currentThread());
     }
     return res;
   }

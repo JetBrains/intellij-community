@@ -562,6 +562,10 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
       public @NotNull HighlightVisitor clone() {
         return new MyThinkingHighlightVisitor1();
       }
+      @Override
+      public void visit(@NotNull PsiElement element) {
+        super.visit(element); // for stacktrace
+      }
     }
     private static class MyThinkingHighlightVisitor2 extends MyThinkingHighlightVisitor {
       private MyThinkingHighlightVisitor2() {
