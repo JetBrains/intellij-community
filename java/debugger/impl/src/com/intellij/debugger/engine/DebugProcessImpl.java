@@ -2169,6 +2169,27 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (!suspendingContexts.isEmpty()) {
         LOG.error("Trying to freeze already suspended thread " + myThread + " : " + suspendingContexts);
       }
+
+      if (myThread.isEvaluating()) {
+        throw new IllegalStateException("Trying to freeze evaluating thread " + myThread);
+      }
+
+      List<SuspendContextImpl> pausedSuspendAllContexts =
+        ContainerUtil.filter(mySuspendManager.getPausedContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
+
+      if (!pausedSuspendAllContexts.isEmpty()) {
+        if (pausedSuspendAllContexts.size() > 1) {
+          LOG.error("A lot of paused suspend-all contexts: " + pausedSuspendAllContexts);
+        }
+        for (SuspendContextImpl suspendAllContext : pausedSuspendAllContexts) {
+          if (!suspendAllContext.suspends(myThread)) {
+            mySuspendManager.suspendThread(suspendAllContext, myThread);
+          }
+        }
+        mySuspendManager.myExplicitlyResumedThreads.remove(myThread);
+        return;
+      }
+
       if (!mySuspendManager.isFrozen(myThread)) {
         mySuspendManager.freezeThread(myThread);
         SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_EVENT_THREAD, 0);
