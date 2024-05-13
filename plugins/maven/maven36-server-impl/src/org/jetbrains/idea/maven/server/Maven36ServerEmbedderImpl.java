@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven36ArtifactDescriptorReader;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven36ArtifactResolver;
+import org.jetbrains.idea.maven.server.embedder.Resetable;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -126,12 +127,12 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
     super.resetComponents();
 
     ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
-    if (artifactResolver instanceof CustomMaven36ArtifactResolver) {
-      ((CustomMaven36ArtifactResolver)artifactResolver).reset();
+    if (artifactResolver instanceof Resetable) {
+      ((Resetable)artifactResolver).reset();
     }
     ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
-    if (artifactDescriptorReader instanceof CustomMaven36ArtifactDescriptorReader) {
-      ((CustomMaven36ArtifactDescriptorReader)artifactDescriptorReader).reset();
+    if (artifactDescriptorReader instanceof Resetable) {
+      ((Resetable)artifactDescriptorReader).reset();
     }
   }
 

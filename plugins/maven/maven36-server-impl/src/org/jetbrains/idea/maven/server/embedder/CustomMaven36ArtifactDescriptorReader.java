@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CustomMaven36ArtifactDescriptorReader implements ArtifactDescriptorReader {
+public class CustomMaven36ArtifactDescriptorReader implements ArtifactDescriptorReader, Resetable {
   private final ArtifactDescriptorReader myWrapee;
   private final Map<ArtifactDescriptorRequestData, ArtifactDescriptorResultData> descriptorCache = new ConcurrentHashMap<>();
 
@@ -60,6 +60,7 @@ public class CustomMaven36ArtifactDescriptorReader implements ArtifactDescriptor
   }
 
 
+  @Override
   public void reset() {
     descriptorCache.clear();
   }
