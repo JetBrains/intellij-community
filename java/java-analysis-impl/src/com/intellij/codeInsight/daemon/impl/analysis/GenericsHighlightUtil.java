@@ -269,12 +269,16 @@ public final class GenericsHighlightUtil {
       if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && GenericsUtil.checkNotInBounds(type, bound, referenceParameterList)) {
         PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
-        @NonNls String messageKey = boundClass == null || referenceClass == null || referenceClass.isInterface() == boundClass.isInterface()
-                                          ? "generics.type.parameter.is.not.within.its.bound.extend"
-                                          : "generics.type.parameter.is.not.within.its.bound.implement";
-
-        String description = JavaErrorBundle.message(messageKey,
-                                                       referenceClass != null ? HighlightUtil.formatClass(referenceClass) : type.getPresentableText(),
+        boolean extend = boundClass == null ||
+                         referenceClass == null ||
+                         referenceClass.isInterface() == boundClass.isInterface() ||
+                         referenceClass instanceof PsiTypeParameter;
+        String description = JavaErrorBundle.message(extend
+                                                     ? "generics.type.parameter.is.not.within.its.bound.extend"
+                                                     : "generics.type.parameter.is.not.within.its.bound.implement",
+                                                     referenceClass != null
+                                                     ? HighlightUtil.formatClass(referenceClass)
+                                                     : type.getPresentableText(),
                                                      JavaHighlightUtil.formatType(bound));
 
         HighlightInfo.Builder builder =
