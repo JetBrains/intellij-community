@@ -9,17 +9,21 @@ import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.*
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.feedback.newUi.NewUIInfoService
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -32,6 +36,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   private var shouldUnsetNewUiSwitchKey: Boolean = true
   private val isIconPatcherSet = AtomicBoolean()
   private var isFirstCheck = true
+  private var isResetLaf = false
 
   override fun earlyInitValue(): Boolean {
     val newUi = !IconMapperBean.EP_NAME_REVERSE.hasAnyExtensions()
@@ -73,6 +78,8 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       return
     }
 
+    isResetLaf = true
+
     for (listener in EP_LISTENER.extensionList) {
       listener.changeUI(enabled)
     }
@@ -89,6 +96,10 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   override fun lookAndFeelChanged() {
     if (isNewUI()) {
       patchUiDefaultsForNewUi()
+    }
+    if (isResetLaf) {
+      isResetLaf = false
+      resetLafSettingsToDefault()
     }
   }
 
@@ -176,6 +187,27 @@ interface ExperimentalUIJetBrainsClientDelegate {
   }
 
   fun changeUi(isEnabled: Boolean, updateLocally: (Boolean) -> Unit)
+}
+
+private fun resetLafSettingsToDefault() {
+  val lafManager = LafManager.getInstance()
+  val defaultLightLaf = lafManager.defaultLightLaf ?: return
+  val defaultDarkLaf = lafManager.defaultDarkLaf ?: return
+  val laf = if (JBColor.isBright()) defaultLightLaf else defaultDarkLaf
+  lafManager.currentUIThemeLookAndFeel = laf
+
+  val editorColorsManager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
+  var editorSchemeId = laf.editorSchemeId
+  if (editorSchemeId == null && !isNewUI() && DarculaLaf.NAME == laf.name) {
+    editorSchemeId = DarculaLaf.NAME
+  }
+  editorColorsManager.setGlobalScheme(if (editorSchemeId == null) null else editorColorsManager.getScheme(editorSchemeId), true)
+
+  if (lafManager.autodetect) {
+    lafManager.setPreferredLightLaf(defaultLightLaf)
+    lafManager.setPreferredDarkLaf(defaultDarkLaf)
+    lafManager.resetPreferredEditorColorScheme()
+  }
 }
 
 private fun patchUiDefaultsForNewUi() {
