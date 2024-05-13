@@ -60,8 +60,14 @@ public final class Presentation implements Cloneable {
   @Deprecated(forRemoval = true)
   public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("SECONDARY_TEXT");
 
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double DEFAULT_WEIGHT = 0;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double HIGHER_WEIGHT = 42;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
   private static final int IS_ENABLED = 0x1;
@@ -86,7 +92,6 @@ public final class Presentation implements Cloneable {
   private Icon selectedIcon;
 
   private @NotNull FList<PropertyChangeListener> myListeners = FList.emptyList();
-  private double myWeight = DEFAULT_WEIGHT;
 
   private static final @NotNull NotNullLazyValue<Boolean> outRemoveMnemonics = NotNullLazyValue.createValue(() -> {
     return SystemInfoRt.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions();
@@ -584,7 +589,6 @@ public final class Presentation implements Cloneable {
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
     setHoveredIcon(presentation.getHoveredIcon());
-    setWeight(presentation.getWeight());
 
     if (!myUserMap.equals(presentation.myUserMap)) {
       Set<String> allKeys = new HashSet<>(presentation.myUserMap.keySet());
@@ -632,17 +636,15 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(key, oldValue, value);
   }
 
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public double getWeight() {
-    return myWeight;
+    return DEFAULT_WEIGHT;
   }
 
-  /**
-   * Some action groups (like 'New...') may filter out actions with non-highest priority.
-   *
-   * @param weight please use {@link #HIGHER_WEIGHT} or {@link #EVEN_HIGHER_WEIGHT}
-   */
-  public void setWeight(double weight) {
-    myWeight = weight;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
+  public void setWeight(double ignore) {
   }
 
   public boolean isEnabledAndVisible() {

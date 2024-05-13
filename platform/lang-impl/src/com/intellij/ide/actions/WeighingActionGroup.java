@@ -17,6 +17,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +28,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 abstract class WeighingActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
+
+  public static final Key<Double> WEIGHT_KEY = Key.create("WeighingActionGroup.WEIGHT");
+  public static final Double DEFAULT_WEIGHT = Presentation.DEFAULT_WEIGHT;
+  public static final Double HIGHER_WEIGHT = Presentation.HIGHER_WEIGHT;
 
   @Override
   public abstract @NotNull ActionGroup getDelegate();
@@ -49,17 +55,19 @@ abstract class WeighingActionGroup extends ActionGroup implements ActionWithDele
   @Override
   public List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren, @NotNull UpdateSession updateSession) {
     LinkedHashSet<AnAction> heaviest = null;
-    double maxWeight = Presentation.DEFAULT_WEIGHT;
+    double maxWeight = DEFAULT_WEIGHT.doubleValue();
     for (AnAction action : visibleChildren) {
       Presentation presentation = updateSession.presentation(action);
-      if (presentation.isEnabled() && presentation.isVisible()) {
-        if (presentation.getWeight() > maxWeight) {
-          maxWeight = presentation.getWeight();
-          heaviest = new LinkedHashSet<>();
-        }
-        if (presentation.getWeight() == maxWeight && heaviest != null) {
-          heaviest.add(action);
-        }
+      if (!presentation.isEnabled() || !presentation.isVisible()) {
+        continue;
+      }
+      double weight = ObjectUtils.notNull(presentation.getClientProperty(WEIGHT_KEY), DEFAULT_WEIGHT).doubleValue();
+      if (weight > maxWeight) {
+        maxWeight = weight;
+        heaviest = new LinkedHashSet<>();
+      }
+      if (weight == maxWeight && heaviest != null) {
+        heaviest.add(action);
       }
     }
 
