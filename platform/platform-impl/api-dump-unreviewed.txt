@@ -4165,7 +4165,6 @@ f:com.intellij.ide.SystemLanguage
 - f:doChooseLanguage(java.util.List):V
 - sf:getInstance():com.intellij.ide.SystemLanguage
 - f:getLocale():java.util.Locale
-- f:needInstallPlugin():Z
 f:com.intellij.ide.SystemLanguage$Companion
 - f:getInstance():com.intellij.ide.SystemLanguage
 f:com.intellij.ide.TooltipEvent
