@@ -30,12 +30,12 @@ import java.util.EventListener;
 import java.util.List;
 
 public class NameSuggestionsField extends JPanel {
-  private final JComponent myComponent;
+  private final @NotNull JComponent myComponent;
   private final EventListenerList myListenerList = new EventListenerList();
-  private final MyComboBoxModel myComboBoxModel;
+  private final @Nullable MyComboBoxModel myComboBoxModel;
   private final @NotNull Project myProject;
-  private MyDocumentListener myDocumentListener;
-  private MyComboBoxItemListener myComboBoxItemListener;
+  private @Nullable MyDocumentListener myDocumentListener;
+  private @Nullable MyComboBoxItemListener myComboBoxItemListener;
 
   private boolean myNonHumanChange = false;
 
@@ -53,7 +53,7 @@ public class NameSuggestionsField extends JPanel {
    * @deprecated specify the file type explicitly as the third constructor argument 
    */
   @Deprecated
-  public NameSuggestionsField(String[] nameSuggestions, Project project) {
+  public NameSuggestionsField(String @Nullable [] nameSuggestions, @NotNull Project project) {
     this(nameSuggestions, project, StdFileTypes.JAVA);
   }
   
@@ -61,7 +61,7 @@ public class NameSuggestionsField extends JPanel {
     return myProject;
   }
 
-  public NameSuggestionsField(String[] nameSuggestions, @NotNull Project project, FileType fileType) {
+  public NameSuggestionsField(String @Nullable [] nameSuggestions, @NotNull Project project, FileType fileType) {
     super(new BorderLayout());
     myProject = project;
     if (nameSuggestions == null || nameSuggestions.length <= 1 && !forceCombobox()) {
@@ -88,7 +88,7 @@ public class NameSuggestionsField extends JPanel {
     return false;
   }
 
-  public NameSuggestionsField(final String[] suggestedNames, final Project project, final FileType fileType, @Nullable final Editor editor) {
+  public NameSuggestionsField(final String[] suggestedNames, final @NotNull Project project, final FileType fileType, @Nullable final Editor editor) {
     this(suggestedNames, project, fileType);
     if (editor == null) return;
     // later here because EditorTextField creates Editor during addNotify()
@@ -146,7 +146,7 @@ public class NameSuggestionsField extends JPanel {
     });
   }
 
-  public void setSuggestions(final String[] suggestions) {
+  public void setSuggestions(final String @NotNull [] suggestions) {
     if(myComboBoxModel == null) return;
     @SuppressWarnings("unchecked") JComboBox<String> comboBox = (JComboBox<String>)myComponent;
     final String oldSelectedItem = (String)comboBox.getSelectedItem();
@@ -165,7 +165,7 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 
@@ -189,7 +189,7 @@ public class NameSuggestionsField extends JPanel {
     return myComponent instanceof JComboBox;
   }
 
-  private JComponent createTextFieldForName(String[] nameSuggestions, FileType fileType) {
+  private @NotNull JComponent createTextFieldForName(String @Nullable [] nameSuggestions, FileType fileType) {
     final String text;
     if (nameSuggestions != null && nameSuggestions.length > 0 && nameSuggestions[0] != null) {
       text = nameSuggestions[0];
@@ -230,7 +230,7 @@ public class NameSuggestionsField extends JPanel {
 
   }
 
-  private void setupComboBox(final ComboBox<String> combobox, FileType fileType) {
+  private void setupComboBox(final @NotNull ComboBox<String> combobox, FileType fileType) {
     final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, fileType, combobox) {
       @Override
       public void setItem(Object anObject) {
@@ -257,7 +257,7 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
-  public Editor getEditor() {
+  public @Nullable Editor getEditor() {
     return getEditorTextField().getEditor();
   }
 
