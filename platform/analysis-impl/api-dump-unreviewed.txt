@@ -2857,7 +2857,6 @@ a:com.intellij.codeInspection.ex.InspectionElementsMergerBase
 - p:writeOldSettings(java.lang.String):org.jdom.Element
 f:com.intellij.codeInspection.ex.InspectionMetaInformationService
 - <init>(kotlinx.coroutines.CoroutineScope):V
-- f:getServiceScope():kotlinx.coroutines.CoroutineScope
 - f:getState(kotlin.coroutines.Continuation):java.lang.Object
 - f:invalidateState():V
 f:com.intellij.codeInspection.ex.InspectionMetainformationServiceKt
