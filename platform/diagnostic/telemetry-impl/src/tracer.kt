@@ -176,6 +176,7 @@ private class CoroutineTimeMeasurer(private val parentActivity: ActivityImpl?,
   fun getActivity() = CURRENT_ACTIVITY.getVolatile(this) as ActivityImpl?
 }
 
+@Internal
 open class DefaultTraceReporter(private val reportScheduleTimeForRoot: Boolean) : TraceReporter {
   override fun start(coroutineName: String, scheduleTime: Long, parentActivity: ActivityImpl?): ActivityImpl {
     val start = System.nanoTime()
