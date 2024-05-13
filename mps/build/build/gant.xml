@@ -165,19 +165,6 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
-        <property name="DisableActivityView"
-                  value="${basedir}/patches/DisableActivityView.patch"/>
-        <echo message="Applying ${DisableActivityView}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="${DisableActivityView}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${DisableActivityView}"/>
-        </exec>
-
         <property name="patchIconLoader"
                   value="${basedir}/patches/IconLoader-MPS-36435.patch"/>
         <echo message="Applying ${patchIconLoader}"/>

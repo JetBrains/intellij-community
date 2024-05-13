@@ -57,7 +57,6 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.bundledPluginModules.add("intellij.vcs.git")
         productLayout.bundledPluginModules.add("intellij.vcs.svn")
         productLayout.bundledPluginModules.add("intellij.vcs.github.community")
-        productLayout.bundledPluginModules.add("intellij.yaml")
         productLayout.bundledPluginModules.add("intellij.ant")
         productLayout.bundledPluginModules.add("intellij.sh")
         productLayout.bundledPluginModules.add("intellij.vcs.changeReminder")
