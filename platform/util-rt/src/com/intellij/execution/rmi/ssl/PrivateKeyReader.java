@@ -63,6 +63,11 @@ final class PrivateKeyReader {
   }
 
   private static Pair<PrivateKey, List<X509Certificate>> read(String fileName, @Nullable char[] password) throws IOException {
+    KeyFactory factory = getKeyFactory();
+    return readKey(factory, fileName, password);
+  }
+
+  private static @NotNull KeyFactory getKeyFactory() throws IOException {
     KeyFactory factory;
     try {
       factory = KeyFactory.getInstance("RSA");
@@ -70,7 +75,7 @@ final class PrivateKeyReader {
     catch (NoSuchAlgorithmException e) {
       throw new IOException("JCE error: " + e.getMessage());
     }
-    return readKey(factory, fileName, password);
+    return factory;
   }
 
   @NotNull
@@ -91,6 +96,14 @@ final class PrivateKeyReader {
   @NotNull
   private static PrivateKey readDerKey(KeyFactory factory, InputStream stream, char[] password) throws IOException {
     byte[] bytes = FileUtilRt.loadBytes(stream);
+    return readDerKey(factory, bytes, password);
+  }
+
+  public static PrivateKey readDerKey(byte[] bytes, char[] password) throws IOException {
+    return readDerKey(getKeyFactory(), bytes, password);
+  }
+
+  private static PrivateKey readDerKey(KeyFactory factory, byte[] bytes, char[] password) throws IOException {
     try {
       return generatePrivateKey(factory, new PKCS8EncodedKeySpec(bytes), "PKCS#8");
     }
@@ -179,7 +192,7 @@ final class PrivateKeyReader {
     return Pair.create(createEncryptedKeySpec(mat.first, password), mat.second);
   }
 
-  private static PKCS8EncodedKeySpec createEncryptedKeySpec(byte[] keyBytes, char [] password) throws IOException {
+  static PKCS8EncodedKeySpec createEncryptedKeySpec(byte[] keyBytes, char[] password) throws IOException {
     EncryptedPrivateKeyInfo encrypted = new EncryptedPrivateKeyInfo(keyBytes);
     PBEKeySpec encryptedKeySpec = new PBEKeySpec(password);
     try {
@@ -187,7 +200,7 @@ final class PrivateKeyReader {
       return encrypted.getKeySpec(pbeKeyFactory.generateSecret(encryptedKeySpec));
     }
     catch (GeneralSecurityException e) {
-      throw new IOException("JCE error: " + e.getMessage());
+      throw new IOException("JCE error: " + e.getMessage(), e);
     }
   }
 
@@ -243,7 +256,7 @@ final class PrivateKeyReader {
    * @param keyBytes PKCS#1 encoded key
    * @return KeySpec
    */
-  private static RSAPrivateCrtKeySpec getRSAKeySpec(byte[] keyBytes) throws IOException {
+  static RSAPrivateCrtKeySpec getRSAKeySpec(byte[] keyBytes) throws IOException {
     DerParser parser = new DerParser(keyBytes);
 
     Asn1Object sequence = parser.read();
