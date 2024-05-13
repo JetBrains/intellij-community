@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -647,6 +647,7 @@ public abstract class AbstractVcs extends StartedActivated {
     return new VcsKey(name);
   }
 
+  @NotNull
   public final VcsKey getKeyInstanceMethod() {
     return myKey;
   }
