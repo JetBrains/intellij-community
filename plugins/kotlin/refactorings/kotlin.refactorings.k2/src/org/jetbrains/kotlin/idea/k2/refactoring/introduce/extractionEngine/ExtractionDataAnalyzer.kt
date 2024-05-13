@@ -170,7 +170,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                 !extractionData.options.inferUnitTypeForUnusedValues || defaultExpressionInfo.expression.isUsedAsExpression()
             }
 
-            val scope = extractionData.targetSibling as KtElement
+            val scope = extractionData.targetSibling
             return OutputDescriptor(
                 defaultResultExpression = defaultExpressionInfo?.expression,
                 typeOfDefaultFlow = approximateWithResolvableType(typeOfDefaultFlow, scope) ?: builtinTypes.UNIT,

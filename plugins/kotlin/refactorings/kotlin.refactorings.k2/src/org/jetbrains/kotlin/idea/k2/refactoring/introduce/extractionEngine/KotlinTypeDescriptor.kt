@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -26,8 +27,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.collectR
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
@@ -113,9 +113,8 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         typeToCheck: KtType,
         typeParameters: MutableSet<TypeParameter>,
     ): Boolean {
-        val ktElement = data.targetSibling as KtElement
-        return analyze(ktElement) {
-            isResolvableInScope(typeToCheck, ktElement, typeParameters)
+        return analyze(data.commonParent) {
+            isResolvableInScope(typeToCheck, data.targetSibling, typeParameters)
         }
     }
 }
@@ -126,7 +125,8 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
  * @return true if [typeToCheck] doesn't contain unresolved components in the scope of [scope] and is "denotable"
  */
 context(KtAnalysisSession)
-fun isResolvableInScope(typeToCheck: KtType, scope: KtElement, typeParameters: MutableSet<TypeParameter>): Boolean {
+fun isResolvableInScope(typeToCheck: KtType, scope: PsiElement, typeParameters: MutableSet<TypeParameter>): Boolean {
+    require(scope.containingFile is KtFile)
     ((typeToCheck as? KtTypeParameterType)?.symbol?.psi as? KtTypeParameter)?.let { typeParameter ->
         val typeParameterListOwner = typeParameter.parentOfType<KtTypeParameterListOwner>()
         if (typeParameterListOwner == null || !PsiTreeUtil.isAncestor(typeParameterListOwner, scope, true)) {
@@ -147,8 +147,11 @@ fun isResolvableInScope(typeToCheck: KtType, scope: KtElement, typeParameters: M
             return false
         }
 
-        if (classSymbol is KtSymbolWithVisibility && !isVisible(classSymbol, scope.containingKtFile.getFileSymbol(), null, scope)) {
-            return false
+        if (classSymbol is KtSymbolWithVisibility) {
+            val fileSymbol = (scope.containingFile as KtFile).getFileSymbol()
+            if (!isVisible(classSymbol, fileSymbol, null, scope)) {
+                return false
+            }
         }
         typeToCheck.ownTypeArguments.mapNotNull { it.type }.forEach {
             if (!isResolvableInScope(it, scope, typeParameters)) return false
@@ -168,7 +171,7 @@ fun isResolvableInScope(typeToCheck: KtType, scope: KtElement, typeParameters: M
 
 
 context(KtAnalysisSession)
-fun approximateWithResolvableType(type: KtType?, scope: KtElement): KtType? {
+fun approximateWithResolvableType(type: KtType?, scope: PsiElement): KtType? {
     if (type == null) return null
     if (!(type is KtNonErrorClassType && type.classSymbol is KtAnonymousObjectSymbol)
         && isResolvableInScope(type, scope, mutableSetOf())
