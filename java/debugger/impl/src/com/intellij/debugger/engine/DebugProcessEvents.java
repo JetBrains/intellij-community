@@ -641,7 +641,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
         ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
         boolean isEvaluationOnCurrentThread = threadProxy != null && threadProxy.isEvaluating();
-        if ((isEvaluationOnCurrentThread || mySuspendAllInvocation.get() > 0) &&
+        if ((isEvaluationOnCurrentThread || myThreadBlockedMonitor.isInResumeAllMode()) &&
             !(requestor instanceof InstrumentationTracker.InstrumentationMethodBreakpoint) &&
             !DebuggerSession.enableBreakpointsDuringEvaluation()) {
           notifySkippedBreakpointInEvaluation(event, suspendContext);

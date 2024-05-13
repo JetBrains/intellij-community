@@ -105,7 +105,6 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -151,7 +150,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myStatusUpdateAlarm = new Alarm();
 
-  private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
+  final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
 
   // These 3 fields are needs to switching from found suspend-thread context to user-friendly suspend-all context.
   // The main related logic is in [SuspendOtherThreadsRequestor].
@@ -163,8 +162,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private SingleAlarm myOtherThreadsAlarm = null;
   private int myOtherThreadsReachBreakpointNumber = 0;
-
-  protected AtomicInteger mySuspendAllInvocation = new AtomicInteger(0);
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
