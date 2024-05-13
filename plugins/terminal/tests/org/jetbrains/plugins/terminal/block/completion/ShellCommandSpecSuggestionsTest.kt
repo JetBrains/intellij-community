@@ -316,7 +316,7 @@ class ShellCommandSpecSuggestionsTest {
     )
     val suggestions = completion.computeCompletionItems(commandName, arguments.toList() + typedPrefix)
     assertNotNull("Completion suggestions are null", suggestions)
-    val actual = suggestions!!.flatMap { it.names }
+    val actual = suggestions!!.map { it.name }
     assertSameElements(actual, expected)
   }
 

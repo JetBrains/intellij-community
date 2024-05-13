@@ -39,11 +39,11 @@ internal class ShellCommandTreeBuilder private constructor(
       val name = arguments[curIndex]
       val suggestionsProvider = createSuggestionsProvider(name)
       val suggestions = suggestionsProvider.getSuggestionsOfNext(root, name)
-      var suggestion = suggestions.find { it.names.contains(name) }
+      var suggestion = suggestions.find { it.name == name }
       if (suggestion == null && name.contains(File.separatorChar)) {
         // most probably it is a file path
         val fileName = name.substringAfterLast(File.separatorChar)
-        suggestion = suggestions.find { s -> s.names.find { it == fileName || it == "$fileName${File.separatorChar}" } != null }
+        suggestion = suggestions.find { it.name == fileName || it.name == "$fileName${File.separatorChar}" }
       }
       if (suggestion == null
           && !root.getMergedParserOptions().flagsArePosixNonCompliant
@@ -73,7 +73,7 @@ internal class ShellCommandTreeBuilder private constructor(
       val name = arguments[curIndex]
       val suggestionsProvider = createSuggestionsProvider(name)
       val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root)
-      val suggestion = suggestions.find { it.names.contains(name) }
+      val suggestion = suggestions.find { it.name == name }
       val node = if (suggestion == null) {
         // option requires an argument, then probably provided name is this argument
         suggestionsProvider.getAvailableArguments(root).find { !it.isOptional }?.let {
@@ -95,7 +95,7 @@ internal class ShellCommandTreeBuilder private constructor(
   private suspend fun addChainedOptions(root: ShellCommandNode, suggestions: List<ShellCompletionSuggestion>, options: String) {
     val flags = options.removePrefix("-").toCharArray().map { "-$it" }
     for (flag in flags) {
-      val option = suggestions.find { it.names.contains(flag) }
+      val option = suggestions.find { it.name == flag }
       val node = if (option != null) {
         createChildNode(flag, option, root)
       }
@@ -108,7 +108,7 @@ internal class ShellCommandTreeBuilder private constructor(
     return suggestions.mapNotNull { s ->
       val option = s as? ShellOptionSpec ?: return@mapNotNull null
       val separator = option.separator ?: return@mapNotNull null
-      val optName = option.names.find { name.startsWith(it + separator) } ?: return@mapNotNull null
+      val optName = option.name.takeIf { name.startsWith(it + separator) } ?: return@mapNotNull null
       val argValue = name.removePrefix(optName + separator)
       Triple(option, optName, argValue)
     }.firstOrNull()?.let { (option, optName, argValue) ->

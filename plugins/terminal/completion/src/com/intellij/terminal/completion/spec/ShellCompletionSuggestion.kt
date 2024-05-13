@@ -12,9 +12,9 @@ import javax.swing.Icon
 @ApiStatus.NonExtendable
 interface ShellCompletionSuggestion {
   /**
-   * The strings to be shown in the completion popup and inserted on completion.
+   * The string to be shown in the completion popup and inserted on completion.
    */
-  val names: List<@NonNls String>
+  val name: @NonNls String
 
   /**
    * Used for now only to automatically configure the icon.

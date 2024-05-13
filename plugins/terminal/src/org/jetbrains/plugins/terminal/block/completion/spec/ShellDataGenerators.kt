@@ -56,14 +56,13 @@ object ShellDataGenerators {
         yieldAll(shellEnv.functions)
         yieldAll(shellEnv.commands)
       }.map {
-        commandSpecManager.getLightCommandSpec(it) ?: ShellCommandSpecImpl(listOf(it))
+        commandSpecManager.getLightCommandSpec(it) ?: ShellCommandSpecImpl(it)
       }
       val aliases = shellEnv.aliases.asSequence().map { (alias, command) ->
-        ShellCommandSpecImpl(names = listOf(alias),
-                             descriptionSupplier = TerminalBundle.messagePointer("doc.popup.alias.text", command))
+        ShellCommandSpecImpl(name = alias, descriptionSupplier = TerminalBundle.messagePointer("doc.popup.alias.text", command))
       }
       // place aliases first, so the alias will have preference over the command, if there is the command with the same name
-      (aliases + commands).distinctBy { it.names.single() }.toList()
+      (aliases + commands).distinctBy { it.name }.toList()
     }
   }
 

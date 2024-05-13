@@ -127,9 +127,7 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
       val specInfos = provider.getCommandSpecs()
       for (specInfo in specInfos) {
         val specData = ShellCommandSpecData(specInfo.spec, specInfo.conflictStrategy, provider)
-        for (name in specData.spec.names) {
-          specsDataMap.putValue(name, specData)
-        }
+        specsDataMap.putValue(specData.spec.name, specData)
       }
     }
     return specsDataMap.entrySet().associateByTo(HashMap(), keySelector = { it.key }) {
@@ -201,7 +199,7 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
     val command: ShellCommand = withContext(Dispatchers.IO) {
       loadAndParseJson(path, provider.javaClass.classLoader)
     } ?: return null
-    return ShellJsonBasedCommandSpec(command, parentNames = mainCommand?.let { listOf(it) } ?: emptyList())
+    return ShellJsonBasedCommandSpec(command.names.first(), command, parentNames = mainCommand?.let { listOf(it) } ?: emptyList())
   }
 
   /**

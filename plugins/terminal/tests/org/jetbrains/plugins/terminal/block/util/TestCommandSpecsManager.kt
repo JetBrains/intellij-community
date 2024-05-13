@@ -5,7 +5,7 @@ import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 
 class TestCommandSpecsManager(vararg specs: ShellCommandSpec) : ShellCommandSpecsManager {
-  private val specs: Map<String, ShellCommandSpec> = specs.flatMap { spec -> spec.names.map { it to spec } }.associate { it }
+  private val specs: Map<String, ShellCommandSpec> = specs.associateBy { it.name }
 
   override suspend fun getCommandSpec(commandName: String): ShellCommandSpec? {
     return specs[commandName]

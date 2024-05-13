@@ -14,9 +14,11 @@ internal abstract class ShellJsonCommandSpecsProvider : ShellCommandSpecsProvide
   final override fun getCommandSpecs(): List<ShellCommandSpecInfo> {
     val shellCommands: List<ShellCommand> = loadAndParseJson(shortDescriptionsJsonPath, this::class.java.classLoader)
                                             ?: return emptyList()
-    return shellCommands.map {
-      // Use default conflict strategy, because json-based specs are used as base for other specs.
-      ShellCommandSpecInfo.create(ShellJsonBasedCommandSpec(it), ShellCommandSpecConflictStrategy.DEFAULT)
+    return shellCommands.flatMap { cmd ->
+      cmd.names.map { name ->
+        // Use default conflict strategy, because json-based specs are used as base for other specs.
+        ShellCommandSpecInfo.create(ShellJsonBasedCommandSpec(name, cmd), ShellCommandSpecConflictStrategy.DEFAULT)
+      }
     }
   }
 }

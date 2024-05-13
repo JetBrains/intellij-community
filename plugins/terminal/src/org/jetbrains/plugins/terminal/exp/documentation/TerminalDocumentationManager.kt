@@ -219,7 +219,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
   private fun LookupElement.toDocRequest(): DocumentationRequest? {
     val suggestion = `object` as? ShellCompletionSuggestion ?: return null
     val description = suggestion.description ?: return null
-    val docTarget = TerminalDocumentationTarget(suggestion.names.first(), description)
+    val docTarget = TerminalDocumentationTarget(suggestion.name, description)
     return DocumentationRequest(docTarget.createPointer(), docTarget.computePresentation())
   }
 

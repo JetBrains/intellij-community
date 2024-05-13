@@ -18,7 +18,7 @@ internal class ShellCommandContextImpl(
   override var parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT
 
   private var subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>? = null
-  private var optionSuppliers: MutableList<() -> ShellOptionSpec> = mutableListOf()
+  private var optionSuppliers: MutableList<() -> List<ShellOptionSpec>> = mutableListOf()
   private val argumentSuppliers: MutableList<() -> ShellArgumentSpec> = mutableListOf()
 
   private val parentNamesWithSelf: List<String> = parentNames + names.first()
@@ -51,18 +51,20 @@ internal class ShellCommandContextImpl(
     argumentSuppliers.add(supplier)
   }
 
-  fun build(): ShellCommandSpec {
-    return ShellCommandSpecImpl(
-      names = names,
-      displayName = displayName,
-      descriptionSupplier = descriptionSupplier,
-      insertValue = insertValue,
-      priority = priority,
-      requiresSubcommand = requiresSubcommand,
-      parserOptions = parserOptions,
-      subcommandsGenerator = subcommandsGenerator ?: emptyListGenerator(),
-      optionsSupplier = { optionSuppliers.map { it() } },
-      argumentsSupplier = { argumentSuppliers.map { it() } }
-    )
+  fun build(): List<ShellCommandSpec> {
+    return names.map { name ->
+      ShellCommandSpecImpl(
+        name = name,
+        displayName = displayName,
+        descriptionSupplier = descriptionSupplier,
+        insertValue = insertValue,
+        priority = priority,
+        requiresSubcommand = requiresSubcommand,
+        parserOptions = parserOptions,
+        subcommandsGenerator = subcommandsGenerator ?: emptyListGenerator(),
+        optionsSupplier = { optionSuppliers.flatMap { it() } },
+        argumentsSupplier = { argumentSuppliers.map { it() } }
+      )
+    }
   }
 }

@@ -26,7 +26,7 @@ internal class ShellChildCommandsContextImpl(private val parentNames: List<Strin
   override fun subcommand(vararg names: String, content: ShellCommandContext.() -> Unit) {
     val context = ShellCommandContextImpl(names.toList(), parentNames)
     content.invoke(context)
-    commands.add(context.build())
+    commands.addAll(context.build())
   }
 
   fun build(): List<ShellCommandSpec> = commands

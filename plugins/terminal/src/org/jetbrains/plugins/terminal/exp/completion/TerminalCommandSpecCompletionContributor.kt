@@ -55,7 +55,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val suggestions = runBlockingCancellable {
       computeSuggestions(allTokens, context)
     }
-    val elements = suggestions.flatMap { it.toLookupElements() }
+    val elements = suggestions.map { it.toLookupElement() }
     resultSet.addAllElements(elements)
 
     if (elements.isNotEmpty()) {
@@ -120,29 +120,27 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     return (expandedTokens ?: completeTokens) + tokens.last() // add incomplete token to the end
   }
 
-  private fun ShellCompletionSuggestion.toLookupElements(): List<LookupElement> {
-    return names.map { name ->
-      val actualIcon = icon ?: findIconForSuggestion(name, type)
-      val realInsertValue = insertValue?.replace("{cursor}", "")
-      val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
-      val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
-      // Remove path separator from insert value, so there will be an exact match
-      // if the prefix is the same string, but without path separator.
-      // It is needed, for example, to place the './' item in the first place when '.' is typed.
-      // It is a hack, because generally this logic should be solved by overriding LookupArranger#isPrefixItem.
-      // But there is no API to substitute our own implementation of LookupArranger.
-      val (lookupString, appendPathSeparator) = if (escapedInsertValue.endsWith(File.separatorChar)) {
-        escapedInsertValue.removeSuffix(File.separator) to true
-      }
-      else escapedInsertValue to false
-      val element = LookupElementBuilder.create(this, lookupString)
-        .withPresentableText(displayName ?: name)
-        .withTailText(nextSuggestions, true)
-        .withIcon(actualIcon)
-        .withInsertHandler(MyInsertHandler(this, appendPathSeparator))
-      val adjustedPriority = priority.coerceIn(0, 100)
-      PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
+  private fun ShellCompletionSuggestion.toLookupElement(): LookupElement {
+    val actualIcon = icon ?: findIconForSuggestion(name, type)
+    val realInsertValue = insertValue?.replace("{cursor}", "")
+    val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
+    val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
+    // Remove path separator from insert value, so there will be an exact match
+    // if the prefix is the same string, but without path separator.
+    // It is needed, for example, to place the './' item in the first place when '.' is typed.
+    // It is a hack, because generally this logic should be solved by overriding LookupArranger#isPrefixItem.
+    // But there is no API to substitute our own implementation of LookupArranger.
+    val (lookupString, appendPathSeparator) = if (escapedInsertValue.endsWith(File.separatorChar)) {
+      escapedInsertValue.removeSuffix(File.separator) to true
     }
+    else escapedInsertValue to false
+    val element = LookupElementBuilder.create(this, lookupString)
+      .withPresentableText(displayName ?: name)
+      .withTailText(nextSuggestions, true)
+      .withIcon(actualIcon)
+      .withInsertHandler(MyInsertHandler(this, appendPathSeparator))
+    val adjustedPriority = priority.coerceIn(0, 100)
+    return PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
   }
 
   private class MyInsertHandler(private val suggestion: ShellCompletionSuggestion,

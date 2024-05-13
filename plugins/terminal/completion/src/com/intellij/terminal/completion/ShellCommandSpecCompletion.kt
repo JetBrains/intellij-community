@@ -45,10 +45,6 @@ class ShellCommandSpecCompletion(
                                          lastArgument: String): List<ShellCompletionSuggestion> {
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as ShellCommandTreeNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: root
-    return suggestionsProvider.getSuggestionsOfNext(lastNode, lastArgument).filterEmptyNames()
-  }
-
-  private fun Iterable<ShellCompletionSuggestion>.filterEmptyNames(): List<ShellCompletionSuggestion> {
-    return filter { s -> s.names.all { it.isNotEmpty() } }
+    return suggestionsProvider.getSuggestionsOfNext(lastNode, lastArgument).filter { it.name.isNotEmpty() }
   }
 }

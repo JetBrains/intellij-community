@@ -74,8 +74,8 @@ internal class ShellCommandTreeSuggestionsProvider(
     val existingOptions = node.children.mapNotNull { (it as? ShellOptionNode)?.spec }
     return getAllOptions(node).filter { opt ->
       (opt.repeatTimes == 0 || existingOptions.count { it == opt } < opt.repeatTimes)
-      && opt.exclusiveOn.none { exclusive -> existingOptions.any { it.names.contains(exclusive) } }
-      && opt.dependsOn.all { dependant -> existingOptions.any { it.names.contains(dependant) } }
+      && opt.exclusiveOn.none { exclusive -> existingOptions.any { it.name == exclusive } }
+      && opt.dependsOn.all { dependant -> existingOptions.any { it.name == dependant } }
     }
   }
 
@@ -89,7 +89,7 @@ internal class ShellCommandTreeSuggestionsProvider(
      */
     suspend fun isSubcommand(parent: ShellCommandNode, child: ShellCommandNode): Boolean {
       val subcommands = parent.spec.getSubcommands()
-      return subcommands.find { subCmd -> child.spec.names.any { subCmd.names.contains(it) } } != null
+      return subcommands.find { subCmd -> child.spec.name == subCmd.name } != null
     }
 
     var child = node

@@ -8,7 +8,7 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 internal class ShellOptionSpecImpl(
-  names: List<String>,
+  name: String,
   override val displayName: String?,
   descriptionSupplier: Supplier<@Nls String>?,
   override val insertValue: String?,
@@ -20,7 +20,7 @@ internal class ShellOptionSpecImpl(
   override val exclusiveOn: List<String>,
   override val dependsOn: List<String>,
   override val arguments: List<ShellArgumentSpec>
-) : ShellCompletionSuggestionBase(names, descriptionSupplier), ShellOptionSpec {
+) : ShellCompletionSuggestionBase(name, descriptionSupplier), ShellOptionSpec {
   // the icon of option will be specified in the completion logic
   override val icon: Icon? = null
 
@@ -31,6 +31,6 @@ internal class ShellOptionSpecImpl(
   }
 
   override fun toString(): String {
-    return "ShellOptionSpecImpl(names=$names, displayName=$displayName, isRequired=$isRequired, isPersistent=$isPersistent, separator=$separator, repeatTimes=$repeatTimes, exclusiveOn=$exclusiveOn, dependsOn=$dependsOn, insertValue=$insertValue, priority=$priority)"
+    return "ShellOptionSpecImpl(name=$name, displayName=$displayName, isRequired=$isRequired, isPersistent=$isPersistent, separator=$separator, repeatTimes=$repeatTimes, exclusiveOn=$exclusiveOn, dependsOn=$dependsOn, insertValue=$insertValue, priority=$priority)"
   }
 }

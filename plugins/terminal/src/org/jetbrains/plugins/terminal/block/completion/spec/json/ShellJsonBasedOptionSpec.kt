@@ -10,12 +10,10 @@ import javax.swing.Icon
  * @param [parentCommandNames] used to build cache key/debug name of the argument's generators
  */
 internal class ShellJsonBasedOptionSpec(
+  override val name: String,
   private val data: ShellOption,
   private val parentCommandNames: List<String>
 ) : ShellOptionSpec {
-  override val names: List<String>
-    get() = data.names
-
   override val displayName: String?
     get() = data.displayName
 
@@ -54,6 +52,6 @@ internal class ShellJsonBasedOptionSpec(
   }
 
   override fun toString(): String {
-    return "ShellJsonBasedOptionSpec(parentCommandNames=$parentCommandNames, data=$data)"
+    return "ShellJsonBasedOptionSpec(name=$name, parentCommandNames=$parentCommandNames, data=$data)"
   }
 }

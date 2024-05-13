@@ -27,20 +27,22 @@ internal class ShellOptionContextImpl(
     arguments.add(context.build())
   }
 
-  fun build(): ShellOptionSpec {
-    return ShellOptionSpecImpl(
-      names = names,
-      displayName = displayName,
-      descriptionSupplier = descriptionSupplier,
-      insertValue = insertValue,
-      priority = priority,
-      isRequired = isRequired,
-      isPersistent = isPersistent,
-      separator = separator,
-      repeatTimes = repeatTimes,
-      exclusiveOn = exclusiveOn,
-      dependsOn = dependsOn,
-      arguments = arguments
-    )
+  fun build(): List<ShellOptionSpec> {
+    return names.map { name ->
+      ShellOptionSpecImpl(
+        name = name,
+        displayName = displayName,
+        descriptionSupplier = descriptionSupplier,
+        insertValue = insertValue,
+        priority = priority,
+        isRequired = isRequired,
+        isPersistent = isPersistent,
+        separator = separator,
+        repeatTimes = repeatTimes,
+        exclusiveOn = exclusiveOn,
+        dependsOn = dependsOn,
+        arguments = arguments
+      )
+    }
   }
 }

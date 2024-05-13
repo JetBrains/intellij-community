@@ -78,7 +78,7 @@ class ShellBaseGeneratorsTest(private val shellPath: Path) {
     // fileSuggestionsGenerator is using 'typedPrefix' property of ShellRuntimeContext to determine the location
     val typedPrefix = testDirectory.toString() + File.separatorChar
     val suggestions = runGenerator(session, fileSuggestionsGenerator(), typedPrefix)
-    val actualNames = suggestions.flatMap { it.names }.filter { it.isNotEmpty() }
+    val actualNames = suggestions.map { it.name }.filter { it.isNotEmpty() }
     val expectedNames = expected.map { it.toString() }
     UsefulTestCase.assertSameElements(actualNames, expectedNames)
   }

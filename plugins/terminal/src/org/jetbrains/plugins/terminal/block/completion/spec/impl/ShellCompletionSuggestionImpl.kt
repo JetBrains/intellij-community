@@ -7,14 +7,14 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 internal class ShellCompletionSuggestionImpl(
-  names: List<String>,
+  name: String,
   override val type: ShellSuggestionType,
   override val displayName: String?,
   descriptionSupplier: Supplier<@Nls String>?,
   override val insertValue: String?,
   override val priority: Int,
   override val icon: Icon?
-) : ShellCompletionSuggestionBase(names, descriptionSupplier) {
+) : ShellCompletionSuggestionBase(name, descriptionSupplier) {
   init {
     if (priority !in 0..100) {
       error("Priority must be between 0 and 100")
@@ -22,6 +22,6 @@ internal class ShellCompletionSuggestionImpl(
   }
 
   override fun toString(): String {
-    return "ShellCompletionSuggestionImpl(names=$names, type=$type, displayName=$displayName, insertValue=$insertValue, priority=$priority, description=$description)"
+    return "ShellCompletionSuggestionImpl(name=$name, type=$type, displayName=$displayName, insertValue=$insertValue, priority=$priority, description=$description)"
   }
 }

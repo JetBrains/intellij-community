@@ -24,7 +24,7 @@ internal object TerminalCompletionUtil {
   private fun getNextOptionsAndArgumentsString(spec: ShellCommandSpec): String {
     return buildString {
       for (option in spec.options.filter { it.isRequired }) {
-        append(option.names.first())
+        append(option.name)
         val arguments = getNextArgumentsString(option.arguments)
         if (arguments.isNotEmpty()) {
           append(' ')

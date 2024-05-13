@@ -23,7 +23,7 @@ import javax.swing.Icon
 fun ShellCommandSpec(name: String, content: ShellCommandContext.() -> Unit = {}): ShellCommandSpec {
   val context = ShellCommandContextImpl(listOf(name))
   content.invoke(context)
-  return context.build()
+  return context.build().first()
 }
 
 /**
@@ -50,5 +50,5 @@ fun ShellCompletionSuggestion(
   priority: Int = 50,
   icon: Icon? = null,
 ): ShellCompletionSuggestion {
-  return ShellCompletionSuggestionImpl(listOf(name), type, displayName, description, insertValue, priority, icon)
+  return ShellCompletionSuggestionImpl(name, type, displayName, description, insertValue, priority, icon)
 }

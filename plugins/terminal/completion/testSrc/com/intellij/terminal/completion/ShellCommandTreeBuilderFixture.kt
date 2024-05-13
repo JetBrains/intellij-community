@@ -13,7 +13,7 @@ class ShellCommandTreeBuilderFixture(
 ) {
   suspend fun buildCommandTreeAndTest(spec: ShellCommandSpec, arguments: List<String>, assert: (ShellCommandTreeAssertions) -> Unit) {
     val rootNode: ShellCommandNode = ShellCommandTreeBuilder.build(contextProvider, generatorsExecutor, commandSpecManager,
-                                                                   spec.names.first(), spec, arguments)
+                                                                   spec.name, spec, arguments)
     val assertions = ShellCommandTreeAssertionsImpl(rootNode)
     assert(assertions)
   }

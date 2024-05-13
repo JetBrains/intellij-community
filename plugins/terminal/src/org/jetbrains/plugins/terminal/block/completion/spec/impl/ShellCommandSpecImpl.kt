@@ -8,7 +8,7 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 internal class ShellCommandSpecImpl(
-  names: List<String>,
+  name: String,
   override val displayName: String? = null,
   descriptionSupplier: Supplier<@Nls String>? = null,
   override val insertValue: String? = null,
@@ -18,7 +18,7 @@ internal class ShellCommandSpecImpl(
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = emptyListGenerator(),
   private val optionsSupplier: () -> List<ShellOptionSpec> = { emptyList() },
   private val argumentsSupplier: () -> List<ShellArgumentSpec> = { emptyList() }
-) : ShellCompletionSuggestionBase(names, descriptionSupplier), ShellCommandSpec {
+) : ShellCompletionSuggestionBase(name, descriptionSupplier), ShellCommandSpec {
   override val options: List<ShellOptionSpec> by lazy { optionsSupplier() }
   override val arguments: List<ShellArgumentSpec> by lazy { argumentsSupplier() }
 
@@ -32,6 +32,6 @@ internal class ShellCommandSpecImpl(
   }
 
   override fun toString(): String {
-    return "ShellCommandSpecImpl(names=$names, displayName=$displayName, insertValue=$insertValue, priority=$priority, requiresSubcommand=$requiresSubcommand, parserOptions=$parserOptions, description=$description, subcommandsGenerator=$subcommandsGenerator, options=$options, arguments=$arguments)"
+    return "ShellCommandSpecImpl(name=$name, displayName=$displayName, insertValue=$insertValue, priority=$priority, requiresSubcommand=$requiresSubcommand, parserOptions=$parserOptions, description=$description, subcommandsGenerator=$subcommandsGenerator, options=$options, arguments=$arguments)"
   }
 }

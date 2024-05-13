@@ -10,12 +10,10 @@ import javax.swing.Icon
  * @param [parentNames] used to build cache key/debug name of the subcommand/option/argument generators
  */
 internal class ShellJsonBasedCommandSpec(
+  override val name: String,
   private val data: ShellCommand,
   parentNames: List<String> = emptyList()
 ) : ShellCommandSpec {
-  override val names: List<String>
-    get() = data.names
-
   override val displayName: String?
     get() = data.displayName
 
@@ -45,13 +43,17 @@ internal class ShellJsonBasedCommandSpec(
   val fullSpecRef: String?
     get() = data.loadSpec
 
-  private val parentNamesWithSelf: List<String> = parentNames + data.names.first()
+  private val parentNamesWithSelf: List<String> = parentNames + name
 
   private val subcommands: List<ShellCommandSpec> by lazy {
-    data.subcommands.map { ShellJsonBasedCommandSpec(it, parentNamesWithSelf) }
+    data.subcommands.flatMap { cmd ->
+      cmd.names.map { name -> ShellJsonBasedCommandSpec(name, cmd, parentNamesWithSelf) }
+    }
   }
   override val options: List<ShellOptionSpec> by lazy {
-    data.options.map { ShellJsonBasedOptionSpec(it, parentNamesWithSelf) }
+    data.options.flatMap { opt ->
+      opt.names.map { name -> ShellJsonBasedOptionSpec(name, opt, parentNamesWithSelf) }
+    }
   }
   override val arguments: List<ShellArgumentSpec> by lazy {
     data.args.map { ShellJsonBasedArgumentSpec(it, parentNamesWithSelf) }
@@ -60,6 +62,6 @@ internal class ShellJsonBasedCommandSpec(
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = ShellRuntimeDataGenerator { subcommands }
 
   override fun toString(): String {
-    return "ShellJsonBasedCommandSpec(parentNamesWithSelf=$parentNamesWithSelf, data=$data)"
+    return "ShellJsonBasedCommandSpec(name=$name, parentNamesWithSelf=$parentNamesWithSelf, data=$data)"
   }
 }
