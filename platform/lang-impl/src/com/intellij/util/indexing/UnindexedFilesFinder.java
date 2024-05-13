@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Predicate;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -40,7 +40,7 @@ final class UnindexedFilesFinder {
   private final FileBasedIndexImpl myFileBasedIndex;
   private final UpdatableIndex<FileType, Void, FileContent, ?> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
-  private final @Nullable Predicate<? super IndexedFile> myForceReindexingTrigger;
+  private final @Nullable BiPredicate<? super IndexedFile, ? super FileIndexingStamp> myForceReindexingTrigger;
   private final FilesFilterScanningHandler myFilterHandler;
   private final boolean myShouldProcessUpToDateFiles;
   private final IndexingReasonExplanationLogger explanationLogger;
@@ -140,7 +140,7 @@ final class UnindexedFilesFinder {
 
   UnindexedFilesFinder(@NotNull Project project,
                        IndexingReasonExplanationLogger explanationLogger,
-                       @Nullable Predicate<? super IndexedFile> forceReindexingTrigger,
+                       @Nullable BiPredicate<? super IndexedFile, ? super FileIndexingStamp> forceReindexingTrigger,
                        ScanningRequestToken indexingRequest,
                        @NotNull FilesFilterScanningHandler filterHandler) {
     this.explanationLogger = explanationLogger;
@@ -225,7 +225,7 @@ final class UnindexedFilesFinder {
         FileIndexingState fileTypeIndexState = null;
         boolean shouldCheckContentIndexes;
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
-          if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
+          if ((fileTypeIndexState = myFileBasedIndex.getIndexingState(indexedFile, myFileTypeIndex, indexingStamp)) == FileIndexingState.OUT_DATED) {
             if (FileBasedIndexEx.doTraceIndexUpdates()) {
               LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
             }
@@ -258,7 +258,7 @@ final class UnindexedFilesFinder {
             if (shouldCheckAgainstSingleIndex && !(FileTypeIndex.NAME.equals(indexId) && fileTypeIndexAlreadyUpToData)) {
               long contentlessStartTime = needsFileContentLoading ? -1 : System.nanoTime(); // measure contentless indexes only
               try {
-                applyOrScheduleRequiredIndex(indexId, fileStatusBuilder, indexedFile, inputId);
+                applyOrScheduleRequiredIndex(indexId, fileStatusBuilder, indexedFile, inputId, indexingStamp);
               }
               finally {
                 if (contentlessStartTime >= 0) {
@@ -304,7 +304,8 @@ final class UnindexedFilesFinder {
   private void applyOrScheduleRequiredIndex(ID<?, ?> indexId,
                                             UnindexedFileStatusBuilder fileStatusBuilder,
                                             IndexedFileImpl indexedFile,
-                                            int inputId) {
+                                            int inputId,
+                                            @NotNull FileIndexingStamp indexingStamp) {
     if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) return;
     if (!RebuildStatus.isOk(indexId)) {
       fileStatusBuilder.mayMarkFileIndexed = false;
@@ -312,9 +313,9 @@ final class UnindexedFilesFinder {
     }
 
     try {
-      FileIndexingState fileIndexingState = myFileBasedIndex.getIndexingState(indexedFile, indexId);
+      FileIndexingState fileIndexingState = myFileBasedIndex.getIndexingState(indexedFile, indexId, indexingStamp);
       if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
-        fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder);
+        fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder, indexingStamp);
       }
       if (fileIndexingState.updateRequired()) {
         if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
@@ -349,7 +350,8 @@ final class UnindexedFilesFinder {
   private FileIndexingState processUpToDateFileByInfrastructureExtensions(IndexedFileImpl indexedFile,
                                                                           int inputId,
                                                                           ID<?, ?> indexId,
-                                                                          UnindexedFileStatusBuilder fileStatusBuilder) {
+                                                                          UnindexedFileStatusBuilder fileStatusBuilder,
+                                                                          @NotNull FileIndexingStamp indexingStamp) {
     // quick path: shared indexes do not have data for contentless indexes
     if (!myFileBasedIndex.needsFileContentLoading(indexId)) return FileIndexingState.UP_TO_DATE;
 
@@ -362,7 +364,7 @@ final class UnindexedFilesFinder {
         }
       }
       if (fileStatusBuilder.indexInfrastructureExtensionInvalidated) {
-        ret = myFileBasedIndex.getIndexingState(indexedFile, indexId);
+        ret = myFileBasedIndex.getIndexingState(indexedFile, indexId, indexingStamp);
       }
       return ret;
     }
@@ -430,8 +432,8 @@ final class UnindexedFilesFinder {
                                    IndexedFileImpl indexedFile,
                                    int inputId,
                                    UnindexedFileStatusBuilder fileStatusBuilder,
-                                   FileIndexingStamp indexingStamp) {
-    if (myForceReindexingTrigger != null && myForceReindexingTrigger.test(indexedFile)) {
+                                   @NotNull FileIndexingStamp indexingStamp) {
+    if (myForceReindexingTrigger != null && myForceReindexingTrigger.test(indexedFile, indexingStamp)) {
       myFileBasedIndex.dropNontrivialIndexedStates(inputId);
       fileStatusBuilder.shouldIndex = true;
     }

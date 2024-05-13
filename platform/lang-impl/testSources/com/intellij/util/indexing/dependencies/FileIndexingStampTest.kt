@@ -1,16 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependencies
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
 import org.junit.Test
 
 class FileIndexingStampTest {
   @Test
   fun `test WriteOnlyFileIndexingStampImpl is not equal to any other int`() {
-    Assert.assertFalse(WriteOnlyFileIndexingStampImpl(0).isSame(0))
-    Assert.assertFalse(WriteOnlyFileIndexingStampImpl(0).isSame(42))
-    Assert.assertFalse(WriteOnlyFileIndexingStampImpl(42).isSame(0))
-    Assert.assertFalse(WriteOnlyFileIndexingStampImpl(42).isSame(42))
+    assertThat(WriteOnlyFileIndexingStampImpl(0).isFileChanged(0)).isEqualTo(IsFileChangedResult.UNKNOWN)
+    assertThat(WriteOnlyFileIndexingStampImpl(0, true).isFileChanged(0)).isEqualTo(IsFileChangedResult.NO)
+    assertThat(WriteOnlyFileIndexingStampImpl(0, true).isFileChanged(42)).isEqualTo(IsFileChangedResult.YES)
+    assertThat(WriteOnlyFileIndexingStampImpl(42.withIndexingRequestId(0), true).isFileChanged(0)).isEqualTo(IsFileChangedResult.YES)
+    assertThat(WriteOnlyFileIndexingStampImpl(0.withIndexingRequestId(42), true).isFileChanged(0)).isEqualTo(IsFileChangedResult.NO)
 
     Assert.assertEquals(WriteOnlyFileIndexingStampImpl(0), WriteOnlyFileIndexingStampImpl(0))
     Assert.assertEquals(WriteOnlyFileIndexingStampImpl(42), WriteOnlyFileIndexingStampImpl(42))
@@ -19,20 +21,21 @@ class FileIndexingStampTest {
 
   @Test
   fun `test ReadWriteFileIndexingStampImpl`() {
-    Assert.assertFalse(ReadWriteFileIndexingStampImpl(0).isSame(0))
-    Assert.assertFalse(ReadWriteFileIndexingStampImpl(0).isSame(42))
-    Assert.assertFalse(ReadWriteFileIndexingStampImpl(42).isSame(0))
-    Assert.assertTrue(ReadWriteFileIndexingStampImpl(42).isSame(42))
+    assertThat(ReadWriteFileIndexingStampImpl(0).isFileChanged(0)).isEqualTo(IsFileChangedResult.UNKNOWN)
+    assertThat(ReadWriteFileIndexingStampImpl(0, true).isFileChanged(0)).isEqualTo(IsFileChangedResult.NO)
+    assertThat(ReadWriteFileIndexingStampImpl(0, true).isFileChanged(42)).isEqualTo(IsFileChangedResult.YES)
+    assertThat(ReadWriteFileIndexingStampImpl(42.withIndexingRequestId(0), true).isFileChanged(0)).isEqualTo(IsFileChangedResult.YES)
+    assertThat(ReadWriteFileIndexingStampImpl(0.withIndexingRequestId(42), true).isFileChanged(0)).isEqualTo(IsFileChangedResult.NO)
 
-    Assert.assertEquals(ReadWriteFileIndexingStampImpl(0), ReadWriteFileIndexingStampImpl(0))
+    Assert.assertEquals(ReadWriteFileIndexingStampImpl(0), ReadWriteFileIndexingStampImpl(0));
     Assert.assertEquals(ReadWriteFileIndexingStampImpl(42), ReadWriteFileIndexingStampImpl(42))
     Assert.assertNotEquals(ReadWriteFileIndexingStampImpl(41), ReadWriteFileIndexingStampImpl(42))
   }
 
   @Test
   fun `test NULL_STAMP is not equal to any other int, not even to NULL_INDEXING_STAMP`() {
-    Assert.assertFalse(ProjectIndexingDependenciesService.NULL_STAMP.isSame(0))
-    Assert.assertFalse(ProjectIndexingDependenciesService.NULL_STAMP.isSame(42))
+    assertThat(ProjectIndexingDependenciesService.NULL_STAMP.isFileChanged(0)).isEqualTo(IsFileChangedResult.UNKNOWN)
+    assertThat(ProjectIndexingDependenciesService.NULL_STAMP.isFileChanged(42)).isEqualTo(IsFileChangedResult.UNKNOWN)
 
     Assert.assertNotEquals(ProjectIndexingDependenciesService.NULL_STAMP, ReadWriteFileIndexingStampImpl(0))
     Assert.assertNotEquals(ProjectIndexingDependenciesService.NULL_STAMP, WriteOnlyFileIndexingStampImpl(0))

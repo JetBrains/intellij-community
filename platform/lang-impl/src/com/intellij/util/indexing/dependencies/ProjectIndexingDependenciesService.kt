@@ -132,21 +132,22 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   @RequiresBackgroundThread
   fun newScanningToken(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
-    val token = WriteOnlyScanningRequestTokenImpl(appCurrent)
+    val token = WriteOnlyScanningRequestTokenImpl(appCurrent, false)
     registerIssuedToken(token)
     return token
   }
 
+  @ApiStatus.Internal
   @RequiresBackgroundThread
-  fun newScanningTokenOnProjectOpen(): ScanningRequestToken {
+  fun newScanningTokenOnProjectOpen(allowCheckingForOutdatedIndexesUsingFileModCount: Boolean): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
     val token = if (heavyScanningOnProjectOpen || issuedScanningTokens.contains(RequestFullHeavyScanningToken)) {
       thisLogger().info("Heavy scanning on startup because of incomplete scanning from previous IDE session")
       heavyScanningOnProjectOpen = false
-      WriteOnlyScanningRequestTokenImpl(appCurrent)
+      WriteOnlyScanningRequestTokenImpl(appCurrent, allowCheckingForOutdatedIndexesUsingFileModCount)
     }
     else {
-      ReadWriteScanningRequestTokenImpl(appCurrent)
+      ReadWriteScanningRequestTokenImpl(appCurrent, allowCheckingForOutdatedIndexesUsingFileModCount)
     }
     registerIssuedToken(token)
     completeTokenOrFutureToken(RequestFullHeavyScanningToken, null, true)
@@ -212,6 +213,6 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   @TestOnly
   fun getReadOnlyTokenForTest(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
-    return ReadWriteScanningRequestTokenImpl(appCurrent)
+    return ReadWriteScanningRequestTokenImpl(appCurrent, true)
   }
 }

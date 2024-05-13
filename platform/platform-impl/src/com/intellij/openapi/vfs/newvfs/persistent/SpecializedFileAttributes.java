@@ -5,9 +5,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.Unmappable;
-import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
@@ -166,6 +166,11 @@ public final class SpecializedFileAttributes {
       public void update(int fileId, @NotNull LongUnaryOperator updater) throws IOException {
         throw new UnsupportedOperationException("Method is not implemented");
       }
+
+      @Override
+      public void close() {
+        // noop
+      }
     };
   }
 
@@ -185,10 +190,28 @@ public final class SpecializedFileAttributes {
       Long.BYTES
     );
 
+    return specializeAsFastLong(vfs, storageHelper);
+  }
+
+  private static @NotNull FastLongFileAttributeAccessor specializeAsFastLong(@NotNull FSRecordsImpl vfs, @NotNull MappedFileStorageHelper storageHelper) {
     FastLongFileAttributeAccessor accessor = new FastLongFileAttributeAccessor(storageHelper);
     vfs.addCloseable(accessor);
     vfs.addFileIdIndexedStorage(accessor);
     return accessor;
+  }
+
+  public static LongFileAttributeAccessor specializeAsFastLong(@NotNull FSRecordsImpl vfs,
+                                                               @NotNull FileAttribute attribute,
+                                                               @NotNull Path absolutePath) throws IOException {
+    MappedFileStorageHelper storageHelper = MappedFileStorageHelper.openHelperAndVerifyVersions(
+      vfs,
+      absolutePath,
+      attribute.getVersion(),
+      Long.BYTES,
+      true
+    );
+
+    return specializeAsFastLong(vfs, storageHelper);
   }
 
   public static IntFileAttributeAccessor specializeAsFastInt(@NotNull FileAttribute attribute) throws IOException {
@@ -269,7 +292,7 @@ public final class SpecializedFileAttributes {
   }
 
 
-  public interface LongFileAttributeAccessor {
+  public interface LongFileAttributeAccessor extends Closeable {
     default long read(@NotNull VirtualFile vFile) throws IOException {
       return read(vFile, 0);
     }

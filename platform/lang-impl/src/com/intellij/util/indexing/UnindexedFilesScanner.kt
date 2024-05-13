@@ -29,6 +29,7 @@ import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler
 import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilterScanningHandler
 import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator
+import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.ScanningRequestToken
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
@@ -50,7 +51,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.Future
-import java.util.function.Predicate
+import java.util.function.BiPredicate
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -65,8 +66,9 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
                                                       val scanningType: ScanningType,
                                                       private val startCondition: Future<*>?,
                                                       private val shouldHideProgressInSmartMode: Boolean?= null,
-                                                      private val forceReindexingTrigger: Predicate<IndexedFile>? = null) : FilesScanningTask,
-                                                                                                                            Closeable {
+                                                      private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
+                                                      private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false) : FilesScanningTask, Closeable {
+
   enum class TestMode {
     PUSHING, PUSHING_AND_SCANNING
   }
@@ -155,9 +157,9 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
 
     val triggerA = forceReindexingTrigger
     val triggerB = oldTask.forceReindexingTrigger
-    val mergedPredicate = Predicate { f: IndexedFile ->
-      (triggerA != null && triggerA.test(f)) ||
-      (triggerB != null && triggerB.test(f))
+    val mergedPredicate = BiPredicate { f: IndexedFile, stamp: FileIndexingStamp ->
+      (triggerA != null && triggerA.test(f, stamp)) ||
+      (triggerB != null && triggerB.test(f, stamp))
     }
     return UnindexedFilesScanner(
       myProject,
@@ -168,7 +170,9 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
       reason,
       ScanningType.merge(scanningType, oldTask.scanningType),
       startCondition ?: oldTask.startCondition,
-      mergedHideProgress, mergedPredicate
+      mergedHideProgress,
+      mergedPredicate,
+      allowCheckingForOutdatedIndexesUsingFileModCount || oldTask.allowCheckingForOutdatedIndexesUsingFileModCount
     )
   }
 
@@ -179,7 +183,8 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
 
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
       val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
-      val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen() else projectIndexingDependenciesService.newScanningToken()
+      val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen(allowCheckingForOutdatedIndexesUsingFileModCount)
+      else projectIndexingDependenciesService.newScanningToken()
 
       try {
         ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, progressReporter, scanningRequest)
@@ -267,12 +272,12 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
   }
 
   internal class ScanningSession(private val project: Project,
-                                private val scanningHistory: ProjectScanningHistoryImpl,
-                                private val forceReindexingTrigger: Predicate<IndexedFile>?,
-                                private val filterHandler: FilesFilterScanningHandler,
-                                private val indicator: CheckPauseOnlyProgressIndicator,
-                                private val progressReporter: IndexingProgressReporter,
-                                private val scanningRequest: ScanningRequestToken) {
+                                 private val scanningHistory: ProjectScanningHistoryImpl,
+                                 private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>?,
+                                 private val filterHandler: FilesFilterScanningHandler,
+                                 private val indicator: CheckPauseOnlyProgressIndicator,
+                                 private val progressReporter: IndexingProgressReporter,
+                                 private val scanningRequest: ScanningRequestToken) {
 
     fun collectIndexableFilesConcurrently(providers: List<IndexableFilesIterator>) {
       if (providers.isEmpty()) {

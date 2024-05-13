@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.application
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
+import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -19,7 +20,7 @@ import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
-import java.util.function.Predicate
+import java.util.function.BiPredicate
 
 @ApiStatus.Internal
 class RescanIndexesAction : RecoveryAction {
@@ -30,12 +31,14 @@ class RescanIndexesAction : RecoveryAction {
   override val actionKey: String
     get() = "rescan"
 
-  class ForceReindexingTrigger : Predicate<IndexedFile> {
+  class ForceReindexingTrigger : BiPredicate<IndexedFile, FileIndexingStamp> {
     val stubAndIndexingStampInconsistencies: MutableList<CacheInconsistencyProblem> = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
 
     private val stubIndex =
       runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
         .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()
+
+    private val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
 
     private class StubAndIndexStampInconsistency(private val path: String) : CacheInconsistencyProblem {
       override val message: String
@@ -46,20 +49,18 @@ class RescanIndexesAction : RecoveryAction {
       StubTreeBuilder.buildStubTree(FileContentImpl.createByFile(file))
     }.getOrNull() != null
 
-    override fun test(it: IndexedFile): Boolean {
-      if (stubIndex != null) {
-        val fileId = (it.file as VirtualFileWithId).id
-        if (stubIndex.getIndexingStateForFile(fileId, it) == FileIndexingState.UP_TO_DATE &&
-            stubIndex.getIndexedFileData(fileId).isEmpty() &&
-            isAbleToBuildStub(it.file)) {
-          stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
-          return true
-        }
-        return false
-      }
-      else {
+    override fun test(it: IndexedFile, indexingStamp: FileIndexingStamp): Boolean {
+      if (stubIndex == null) {
         return false;
       }
+      val fileId = (it.file as VirtualFileWithId).id
+      if (fileBasedIndex.getIndexingState(it, stubIndex, indexingStamp) == FileIndexingState.UP_TO_DATE &&
+          stubIndex.getIndexedFileData(fileId).isEmpty() &&
+          isAbleToBuildStub(it.file)) {
+        stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
+        return true
+      }
+      return false
     }
   }
 

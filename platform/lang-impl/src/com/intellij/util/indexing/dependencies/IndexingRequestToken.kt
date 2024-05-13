@@ -4,12 +4,15 @@ package com.intellij.util.indexing.dependencies
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
+@ApiStatus.Internal
 interface IndexingRequestToken {
   fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp
 }
 
+@ApiStatus.Internal
 @VisibleForTesting
 data class IndexingRequestTokenImpl(val appIndexingRequest: AppIndexingDependenciesToken) : IndexingRequestToken {
   private val appIndexingRequestId = appIndexingRequest.toInt()
@@ -24,6 +27,6 @@ data class IndexingRequestTokenImpl(val appIndexingRequest: AppIndexingDependenc
     // we assume that appIndexingRequestId and file.modificationStamp never decrease => their sum only grow up
     // in the case of overflow we hope that new value does not match any previously used value
     // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
-    return WriteOnlyFileIndexingStampImpl(fileStamp + appIndexingRequestId)
+    return WriteOnlyFileIndexingStampImpl.create(appIndexingRequestId, fileStamp, false)
   }
 }

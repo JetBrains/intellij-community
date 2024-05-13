@@ -18,7 +18,9 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.writeText
@@ -31,6 +33,7 @@ import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.util.CommonProcessors
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueuesDir
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.readJsonIndexingActivityDiagnostic
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
@@ -69,6 +72,10 @@ class DirtyFilesQueueTest {
   @Before
   fun setup() {
     testRootDisposable = Disposer.newCheckedDisposable("DirtyFilesQueueTest")
+    ShutDownTracker.getInstance().registerShutdownTask { // delete files after they are persisted by FileBasedIndexImpl.performShutdown
+      FileUtil.delete(getQueueFile())
+      FileUtil.deleteRecursively(getQueuesDir())
+    }
   }
 
   @After
@@ -120,9 +127,19 @@ class DirtyFilesQueueTest {
     doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount = 5, expectFullScanning = false)
   }
 
+  @Test
+  fun `test file is indexed after it was edited when project was closed (with full scanning using mod count)`() {
+    setOrphanDirtyFilesQueueMaxSize(5)
+    doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount = 30, expectFullScanning = true)
+  }
+
+  private fun setOrphanDirtyFilesQueueMaxSize(value: Int) {
+    Registry.get("maximum.size.of.orphan.dirty.files.queue").setValue(value, testRootDisposable)
+  }
+
   private fun doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount: Int, expectFullScanning: Boolean) {
     runBlocking {
-      val name = "test_file_is_indexed_after_it_was_edited_when_project_was_closed"
+      val name = "test_file_is_indexed_after_it_was_edited_when_project_was_closed_fileCount_${fileCount}_expecteFullScanning_${expectFullScanning}"
       val projectFile = TemporaryDirectory.generateTemporaryPath("project_${name}")
       val fileNames = (0 until fileCount).map { "A$it.txt" }
       val commonPrefix1 = "common_prefix_1_" + (0 until 10).map { Random.nextInt('A'.code, 'Z'.code).toChar() }.joinToString("")

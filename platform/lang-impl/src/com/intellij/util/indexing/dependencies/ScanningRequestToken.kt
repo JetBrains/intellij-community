@@ -4,8 +4,10 @@ package com.intellij.util.indexing.dependencies
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
+@ApiStatus.Internal
 abstract class ScanningRequestToken {
   @Volatile
   private var successful = true
@@ -28,8 +30,9 @@ internal object RequestFullHeavyScanningToken : ScanningRequestToken() {
 }
 
 
+@ApiStatus.Internal
 @VisibleForTesting
-class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken) : ScanningRequestToken() {
+class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningRequestToken() {
   override val appIndexingRequestId: AppIndexingDependenciesToken = appIndexingRequest
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     if (file !is VirtualFileWithId) return ProjectIndexingDependenciesService.NULL_STAMP
@@ -39,13 +42,14 @@ class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenc
 
   @VisibleForTesting
   fun getFileIndexingStamp(fileStamp: Int): FileIndexingStamp {
-    return WriteOnlyFileIndexingStampImpl(fileStamp + appIndexingRequestId.toInt())
+    return WriteOnlyFileIndexingStampImpl.create(appIndexingRequestId.toInt(), fileStamp, allowCheckingForOutdatedIndexesUsingFileModCount)
   }
 }
 
 
+@ApiStatus.Internal
 @VisibleForTesting
-class ReadWriteScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken) : ScanningRequestToken() {
+class ReadWriteScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningRequestToken() {
   override val appIndexingRequestId: AppIndexingDependenciesToken = appIndexingRequest
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     if (file !is VirtualFileWithId) return ProjectIndexingDependenciesService.NULL_STAMP
@@ -55,6 +59,6 @@ class ReadWriteScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenc
 
   @VisibleForTesting
   fun getFileIndexingStamp(fileStamp: Int): FileIndexingStamp {
-    return ReadWriteFileIndexingStampImpl(fileStamp + appIndexingRequestId.toInt())
+    return ReadWriteFileIndexingStampImpl.create(appIndexingRequestId.toInt(), fileStamp, allowCheckingForOutdatedIndexesUsingFileModCount)
   }
 }

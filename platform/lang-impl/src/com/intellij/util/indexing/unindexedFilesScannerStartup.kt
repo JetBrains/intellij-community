@@ -120,7 +120,8 @@ private fun scheduleFullScanning(project: Project,
   else CompletableDeferred(Unit)
 
   UnindexedFilesScanner(project, true, isFilterUpToDate, null, null, indexingReason,
-                        ScanningType.FULL_ON_PROJECT_OPEN, someDirtyFilesScheduledForIndexing.asCompletableFuture())
+                        ScanningType.FULL_ON_PROJECT_OPEN, someDirtyFilesScheduledForIndexing.asCompletableFuture(),
+                        allowCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds)
     .queue()
   return someDirtyFilesScheduledForIndexing
 }

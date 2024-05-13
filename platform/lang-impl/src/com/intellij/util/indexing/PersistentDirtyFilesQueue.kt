@@ -152,4 +152,9 @@ class OrphanDirtyFilesQueue(val fileIds: List<Int>, val untrimmedSize: Long) {
     newIds.addAll(ids)
     return OrphanDirtyFilesQueue(newIds, untrimmedSize + ids.size)
   }
+
+  fun takeLast(maxSize: Int): OrphanDirtyFilesQueue {
+    return if (maxSize <= 0) this
+    else OrphanDirtyFilesQueue(fileIds.takeLast(maxSize), untrimmedSize)
+  }
 }
