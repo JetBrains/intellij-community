@@ -52,14 +52,22 @@ final class ValueContainerMap<Key, Value> {
       myPersistentMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
         public void append(final @NotNull DataOutput out) throws IOException {
-          valueContainer.saveTo(out, myValueExternalizer);
+          valueContainer.saveDiffTo(out, myValueExternalizer);
         }
       });
     }
-    else {
-      // rewrite the value container for defragmentation
-      myPersistentMap.put(key, valueContainer);
+    else {//needsCompacting || keyIsUniqueForIndexedFile
+      //FIXME RC: here WAS a hack -- this branch processed a case (keyIsUniqueForIndexedFile=true && !needsCompacting)
+      //          i.e. with diff and without mergedSnapshot. In this case the diff WAS written, but diff == snapshot
+      //          because keyIsUnique.
+      //          Currently CTValueContainer.saveTo() always store a merged snapshot -- which in this case creates a useless
+      //          overhead, because it involves _reading_ the current content first -- just for it to be entirely overwritten
+      //          by the new value.
+
+      //rewrite the value container for defragmentation
+      put(key, valueContainer);
     }
+  }
 
   void put(Key key,
            UpdatableValueContainer<Value> valueContainer) throws IOException {

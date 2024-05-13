@@ -186,25 +186,27 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   public boolean containsCachedMergedData() {
     return myMergedSnapshot != null;
   }
-  
+
   @Override
   public void saveTo(@NotNull DataOutput out,
                      @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
-    if (needsCompacting()) {
-      getMergedData().saveTo(out, externalizer);
-    }
-    else {
-      IntSet set = myInvalidated;
-      if (set != null && !set.isEmpty()) {
-        for (int inputId : myInvalidated.toIntArray()) {
-          DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
-        }
-      }
+    getMergedData().saveTo(out, externalizer);
+  }
 
-      final UpdatableValueContainer<Value> toAppend = myAdded;
-      if (toAppend != null && toAppend.size() > 0) {
-        toAppend.saveTo(out, externalizer);
+  public void saveDiffTo(@NotNull DataOutput out,
+                         @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
+    assert !needsCompacting() : "Full state must be written, instead of diff";
+
+    IntSet set = myInvalidated;
+    if (set != null && !set.isEmpty()) {
+      for (int inputId : myInvalidated.toIntArray()) {
+        DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
       }
+    }
+
+    final UpdatableValueContainer<Value> toAppend = myAdded;
+    if (toAppend != null && toAppend.size() > 0) {
+      toAppend.saveTo(out, externalizer);
     }
   }
 }
