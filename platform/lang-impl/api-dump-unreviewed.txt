@@ -1599,11 +1599,6 @@ f:com.intellij.application.options.codeStyle.group.CodeStyleGroupProvider$CodeSt
 f:com.intellij.application.options.codeStyle.group.CodeStyleGroupProviderFactory
 - <init>(com.intellij.application.options.codeStyle.CodeStyleSchemesModel,com.intellij.application.options.CodeStyleSchemesConfigurable):V
 - getGroupProvider(com.intellij.psi.codeStyle.CodeStyleGroup):com.intellij.application.options.codeStyle.group.CodeStyleGroupProvider
-f:com.intellij.application.options.colors.EditorColorSchemeDropHandler
-- com.intellij.openapi.editor.CustomFileDropHandler
-- <init>():V
-- canHandle(java.awt.datatransfer.Transferable,com.intellij.openapi.editor.Editor):Z
-- handleDrop(java.awt.datatransfer.Transferable,com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
 f:com.intellij.application.options.colors.JumpToColorsAndFontsAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
