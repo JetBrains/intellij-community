@@ -2,9 +2,11 @@
 package com.intellij.platform.ide.newUiOnboarding
 
 import com.intellij.ide.plugins.MultiPanel
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.IconLoader
@@ -27,8 +29,9 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JRootPane
 import javax.swing.border.Border
+import javax.swing.event.HyperlinkEvent
 
-class NewUiOnboardingDialog(project: Project)
+class NewUiOnboardingDialog(private val project: Project)
   : DialogWrapper(project, null, false, IdeModalityType.IDE, false) {
   private val backgroundColor: Color
     get() = JBColor.namedColor("NewUiOnboarding.Dialog.background", UIUtil.getPanelBackground())
@@ -65,8 +68,13 @@ class NewUiOnboardingDialog(project: Project)
           val maxWidth = videoSize.width - JBUI.scale(contentGaps.width)
           val charWidth = window.getFontMetrics(JBFont.label()).charWidth('0')
           val maxLineLength = maxWidth / charWidth
-          text(NewUiOnboardingBundle.message("dialog.text"), maxLineLength)
-            .customize(UnscaledGaps(top = 8))
+          text(NewUiOnboardingBundle.message("dialog.text"), maxLineLength) { event ->
+            if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+              ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) { c ->
+                c.openMarketplaceTab(NewUiOnboardingBundle.message("classic.ui.plugin.name"))
+              }
+            }
+          }.customize(UnscaledGaps(top = 8))
         }
         row {
           button(NewUiOnboardingBundle.message("start.tour")) { close(0) }
