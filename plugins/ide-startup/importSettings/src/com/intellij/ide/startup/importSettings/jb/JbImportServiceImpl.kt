@@ -285,7 +285,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     }
     warmUpComplete.completeWith(Result.success(true))
     if (!hasDataProcessed.isCompleted) {
-      hasDataProcessed.completeWith(Result.success(products().isNotEmpty()))
+      hasDataProcessed.completeWith(Result.success(filterProducts(old = false).isNotEmpty()))
     }
   }
 
