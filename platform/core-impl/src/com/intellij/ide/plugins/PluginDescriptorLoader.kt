@@ -571,59 +571,62 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       result = result,
     ))
     result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
+    bundledPluginDir?.let {
+      result.addAll(loadDescriptorsFromDir(dir = it, context = context, isBundled = true, pool = zipFilePool))
+    }
+    return result
+  }
+
+  val effectiveBundledPluginDir = bundledPluginDir ?: Paths.get(PathManager.getPreInstalledPluginsPath())
+  val data = try {
+    // use only if the format is supported (first byte it is a version)
+    Files.readAllBytes(effectiveBundledPluginDir.resolve("plugin-classpath.txt")).takeIf { it[0] == 2.toByte() }
+  }
+  catch (ignored: NoSuchFileException) {
+    null
+  }
+
+  if (data == null) {
+    result.addAll(loadCoreModules(
+      context = context,
+      platformPrefix = platformPrefix,
+      isUnitTestMode = false,
+      isInDevServerMode = AppMode.isDevServer(),
+      isRunningFromSources = isRunningFromSources,
+      classLoader = mainClassLoader,
+      pool = zipFilePool,
+      result = result,
+    ))
+    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
+    result.addAll(loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool))
   }
   else {
-    val effectiveBundledPluginDir = bundledPluginDir ?: Paths.get(PathManager.getPreInstalledPluginsPath())
-    val data = try {
-      // use only if the format is supported (first byte it is a version)
-      Files.readAllBytes(effectiveBundledPluginDir.resolve("plugin-classpath.txt")).takeIf { it[0] == 2.toByte() }
-    }
-    catch (ignored: NoSuchFileException) {
-      null
-    }
-
-    if (data == null) {
-      result.addAll(loadCoreModules(
+    val byteInput = ByteArrayInputStream(data, 2, data.size)
+    val input = DataInputStream(byteInput)
+    val descriptorSize = input.readInt()
+    val descriptorStart = data.size - byteInput.available()
+    input.skipBytes(descriptorSize)
+    result.add(async {
+      loadCoreProductPlugin(
+        path = PluginManagerCore.PLUGIN_XML_PATH,
         context = context,
-        platformPrefix = platformPrefix,
-        isUnitTestMode = false,
-        isInDevServerMode = AppMode.isDevServer(),
-        isRunningFromSources = isRunningFromSources,
-        classLoader = mainClassLoader,
-        pool = zipFilePool,
-        result = result,
-      ))
-      result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
-      result.addAll(loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool))
-    }
-    else {
-      val byteInput = ByteArrayInputStream(data, 2, data.size)
-      val input = DataInputStream(byteInput)
-      val descriptorSize = input.readInt()
-      val descriptorStart = data.size - byteInput.available()
-      input.skipBytes(descriptorSize)
-      result.add(async {
-        loadCoreProductPlugin(
-          path = PluginManagerCore.PLUGIN_XML_PATH,
-          context = context,
-          pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSources = false),
-          useCoreClassLoader = platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader"),
-          reader = createXmlStreamReader(data, descriptorStart, descriptorSize),
-        )
-      })
-
-      result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
-
-      loadFromPluginClasspathDescriptor(
-        input = input,
-        jarOnly = data[1] == 1.toByte(),
-        context = context,
-        zipFilePool = zipFilePool,
-        bundledPluginDir = effectiveBundledPluginDir,
-        scope = this,
-        result = result,
+        pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSources = false),
+        useCoreClassLoader = platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader"),
+        reader = createXmlStreamReader(data, descriptorStart, descriptorSize),
       )
-    }
+    })
+
+    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
+
+    loadFromPluginClasspathDescriptor(
+      input = input,
+      jarOnly = data[1] == 1.toByte(),
+      context = context,
+      zipFilePool = zipFilePool,
+      bundledPluginDir = effectiveBundledPluginDir,
+      scope = this,
+      result = result,
+    )
   }
   return result
 }
