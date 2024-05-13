@@ -130,7 +130,7 @@ object PluginManagerCore {
   private var ourBuildNumber: BuildNumber? = null
 
 
-  private val findLoadedClassHandle : MethodHandle by lazy {
+  private val findLoadedClassHandle: MethodHandle by lazy(LazyThreadSafetyMode.NONE) {
     val method = ClassLoader::class.java.getDeclaredMethod("findLoadedClass", String::class.java)
     method.isAccessible = true
     MethodHandles.lookup().unreflect(method)
@@ -237,11 +237,12 @@ object PluginManagerCore {
           break
         }
       }
-      else if (findLoadedClassHandle.invoke(classLoader, className) != null) {
+      else if (classLoader != null && findLoadedClassHandle.invoke(classLoader, className) != null) {
         result = descriptor
         break
       }
     }
+
     if (result == null) {
       return null
     }
