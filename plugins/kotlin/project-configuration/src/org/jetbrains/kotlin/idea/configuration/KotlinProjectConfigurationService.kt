@@ -30,16 +30,21 @@ class KotlinProjectConfigurationService(private val project: Project, private va
     }
 
     @Volatile
-    private var checkingAutoConfig: Boolean = false
+    private var checkingAndPerformingAutoConfig: Boolean = false
 
     // A small cooldown after configuration was performed, to bridge the gap between the files being created and the Gradle sync starting
     @Volatile
     private var notificationCooldownEnd: Long? = null
 
     fun shouldShowNotConfiguredDialog(): Boolean {
-        if (checkingAutoConfig) return false
+        if (checkingAndPerformingAutoConfig) return false
+        // If notificationCooldownEnd wasn't set, then the autoconfiguration didn't take place
         val cooldownEnd = notificationCooldownEnd ?: return true
         return System.currentTimeMillis() >= cooldownEnd
+    }
+
+    fun isSyncPending(): Boolean {
+        return isGradleSyncPending() || isMavenSyncPending()
     }
 
     fun isGradleSyncPending(): Boolean {
@@ -48,9 +53,15 @@ class KotlinProjectConfigurationService(private val project: Project, private va
         return notificationVisibleProperty.get()
     }
 
+    fun isMavenSyncPending(): Boolean {
+        val notificationVisibleProperty =
+            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("MAVEN")).get()
+        return notificationVisibleProperty
+    }
+
     fun refreshEditorNotifications() {
         // We want to remove the "Kotlin not configured" notification banner as fast as possible
-        // once a gradle reload was started.
+        // once a Gradle reload was started or Maven reload is pending.
         val openFiles = FileEditorManager.getInstance(project).openFiles
         val openKotlinFiles = openFiles.filter { it.isKotlinFileType() }
         if (openKotlinFiles.isEmpty()) return
@@ -106,7 +117,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
      * is displayed, if configuration is necessary.
      */
     fun runAutoConfigurationIfPossible(module: Module) {
-        checkingAutoConfig = true
+        checkingAndPerformingAutoConfig = true
         // Removes the notification showing for a split second
         refreshEditorNotifications()
         coroutineScope.launch(Dispatchers.Default) {
@@ -131,7 +142,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
                 configured = true
                 notificationCooldownEnd = System.currentTimeMillis() + 2000
             } finally {
-                checkingAutoConfig = false
+                checkingAndPerformingAutoConfig = false
                 if (!configured) {
                     // Immediately refresh editor notifications to show Kotlin not-configured notification, if necessary
                     refreshEditorNotifications()

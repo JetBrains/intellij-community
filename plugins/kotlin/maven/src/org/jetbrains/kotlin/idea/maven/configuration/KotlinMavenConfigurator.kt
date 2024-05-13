@@ -141,6 +141,7 @@ protected constructor(
 
                 override fun redo() {}
             })
+            ConfigureKotlinNotificationManager.expireOldNotifications(project)
         }
         return configuredModules
     }
