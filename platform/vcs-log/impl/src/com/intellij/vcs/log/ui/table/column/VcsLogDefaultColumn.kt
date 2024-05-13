@@ -18,6 +18,7 @@ import com.intellij.vcs.log.impl.onPropertyChange
 import com.intellij.vcs.log.paint.GraphCellPainter
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter
 import com.intellij.vcs.log.ui.VcsLogBookmarkReferenceProvider.Companion.getBookmarkRefs
+import com.intellij.vcs.log.ui.VcsLogBookmarksListener
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.ui.render.GraphCommitCell
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer
@@ -117,6 +118,12 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
       }
     }
     updateTableOnCommitDetailsLoaded(this, table)
+
+    table.logData.project.messageBus.connect(table).subscribe(VcsLogBookmarksListener.TOPIC, object : VcsLogBookmarksListener {
+      override fun logBookmarksChanged() {
+        table.repaint()
+      }
+    })
 
     return commitCellRenderer
   }

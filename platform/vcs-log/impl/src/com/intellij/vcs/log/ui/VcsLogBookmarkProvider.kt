@@ -5,7 +5,6 @@ import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -14,9 +13,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.Alarm
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.messages.Topic
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
@@ -126,24 +123,12 @@ private fun getDefaultBookmarkDescription(project: Project, root: VirtualFile, h
 }
 
 @Service(Service.Level.PROJECT)
-internal class VcsLogBookmarkReferenceProvider(val project: Project) : Disposable {
+internal class VcsLogBookmarkReferenceProvider(val project: Project) {
   companion object {
     @JvmStatic
     fun getBookmarkRefs(project: Project, hash: Hash, root: VirtualFile): List<VcsBookmarkRef> {
       return project.service<VcsLogBookmarkReferenceProvider>().getBookmarkRefs(hash, root)
     }
-  }
-
-  private val queue = MergingUpdateQueue("VcsLogBookmarkReferenceProvider", 300, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
-
-  override fun dispose() {
-  }
-
-  fun updateVcsLogBookmarks(root: VirtualFile) {
-    queue.queue(Update.create(root) {
-      val logManager = VcsProjectLog.getInstance(project).logManager ?: return@create
-      logManager.dataManager.refresh(listOf(root), true)
-    })
   }
 
   fun getBookmarkRefs(hash: Hash, root: VirtualFile): List<VcsBookmarkRef> {
@@ -162,10 +147,10 @@ internal class VcsLogBookmarkReferenceProvider(val project: Project) : Disposabl
   }
 }
 
-internal class VcsLogBookmarksListener(val project: Project) : BookmarksListener {
+internal class VcsLogBookmarksManagerListener(val project: Project) : BookmarksListener {
   private fun updateBookmark(bookmark: Bookmark) {
     if (bookmark is VcsLogBookmark) {
-      project.service<VcsLogBookmarkReferenceProvider>().updateVcsLogBookmarks(bookmark.root)
+      project.messageBus.syncPublisher(VcsLogBookmarksListener.TOPIC).logBookmarksChanged()
     }
   }
 
@@ -187,3 +172,16 @@ internal class VcsLogBookmarksListener(val project: Project) : BookmarksListener
 }
 
 class VcsBookmarkRef(val bookmark: Bookmark, val type: BookmarkType, val text: @Nls String)
+
+internal interface VcsLogBookmarksListener : EventListener {
+  companion object {
+    @JvmField
+    @Topic.AppLevel
+    val TOPIC = Topic(VcsLogBookmarksListener::class.java, Topic.BroadcastDirection.NONE)
+  }
+
+  /**
+   * Allows notifying VCS Log that the [VcsLogBookmarkReferenceProvider.getBookmarkRefs] might have changed.
+   */
+  fun logBookmarksChanged() = Unit
+}
