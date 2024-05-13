@@ -34,7 +34,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
   protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap) {
     super.customizeComponents(workspaceMap);
 
-    ArtifactResolver customResolver = createCustomArtifactResolver();
+    ArtifactResolver customResolver = createCustomArtifactResolver(workspaceMap);
     if (customResolver != null) {
 
       addComponent(customResolver, ArtifactResolver.class);
@@ -103,7 +103,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
   }
 
   @Nullable
-  private ArtifactResolver createCustomArtifactResolver() {
+  protected ArtifactResolver createCustomArtifactResolver(@Nullable MavenWorkspaceMap workspaceMap) {
     if (!myEmbedderSettings.useCustomDependenciesResolver()) {
       return null;
     }

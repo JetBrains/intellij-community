@@ -14,7 +14,7 @@ public class ArtifactResultData {
   private final List<Exception> exceptions;
   private final ArtifactResolutionException resolutionException;
 
-  ArtifactResultData(ArtifactResult result, ArtifactResolutionException resolutionException) {
+  public ArtifactResultData(ArtifactResult result, ArtifactResolutionException resolutionException) {
     this(result.getArtifact(), result.getRepository(), result.getExceptions(), resolutionException);
   }
 
