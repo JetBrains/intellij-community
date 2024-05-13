@@ -53,7 +53,7 @@ private class KotlinCompilationReflectionImpl(private val instance: Any) : Kotli
     }
     override val wasmTargetName: String? by lazy {
         if (instance.javaClass.getMethodOrNull("getWasmTarget") == null) null
-        else instance.callReflectiveAnyGetter("getWasmTarget", logger)
+        else instance.callReflectiveGetter<Any?>("getWasmTarget", logger)
             ?.callReflectiveGetter("getAlias", logger)
     }
     override val compileKotlinTaskName: String? by lazy {
