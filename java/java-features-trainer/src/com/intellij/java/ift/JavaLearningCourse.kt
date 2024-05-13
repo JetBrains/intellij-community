@@ -7,6 +7,7 @@ import com.intellij.java.ift.lesson.basic.JavaSelectLesson
 import com.intellij.java.ift.lesson.basic.JavaSurroundAndUnwrapLesson
 import com.intellij.java.ift.lesson.completion.*
 import com.intellij.java.ift.lesson.essential.JavaOnboardingTourLesson
+import com.intellij.java.ift.lesson.essential.JavaReworkedOnboardingTourLesson
 import com.intellij.java.ift.lesson.navigation.*
 import com.intellij.java.ift.lesson.refactorings.JavaExtractMethodCocktailSortLesson
 import com.intellij.java.ift.lesson.refactorings.JavaRefactoringMenuLesson
@@ -29,12 +30,13 @@ import training.learn.lesson.general.assistance.ParameterInfoLesson
 import training.learn.lesson.general.assistance.QuickPopupsLesson
 import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
+import training.util.useShortOnboardingLesson
 
 class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
   override fun modules(): List<IftModule> = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
 
   private val isOnboardingLessonEnabled: Boolean
-    get() = PlatformUtils.isIntelliJ()
+    get() = PlatformUtils.isIntelliJ() && !useShortOnboardingLesson
 
   private fun onboardingTour() = if (isOnboardingLessonEnabled) listOf(
     LearningModule(id = "Java.Onboarding",
@@ -54,7 +56,8 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
-      listOf(
+      val adjust = if (useShortOnboardingLesson) listOf(JavaReworkedOnboardingTourLesson()) else emptyList()
+      adjust + listOf(
         JavaContextActionsLesson(),
         GotoActionLesson(ls("00.Actions.java.sample"), firstLesson = false),
         JavaSearchEverywhereLesson(),

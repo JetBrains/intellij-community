@@ -110,6 +110,10 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ift.short.onboarding.lesson"
+                 description="Use short onborading lesson followed after UI overview"
+                 defaultValue="FALSE"
+                 restartRequired="true"/>
     <registryKey key="ift.help.links"
                  description="Turn on IFT Help and Resources section"
                  defaultValue="TRUE"
