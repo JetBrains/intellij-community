@@ -285,7 +285,7 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
   }
 
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     Supplier<? extends Icon> icon = this.icon;
     return icon == null ? null : icon.get();
   }
@@ -331,7 +331,7 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_ICON, oldIcon, newIcon);
   }
 
-  public Icon getDisabledIcon() {
+  public @Nullable Icon getDisabledIcon() {
     return disabledIcon;
   }
 
@@ -341,7 +341,7 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, disabledIcon);
   }
 
-  public Icon getHoveredIcon() {
+  public @Nullable Icon getHoveredIcon() {
     return hoveredIcon;
   }
 
@@ -351,7 +351,7 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_HOVERED_ICON, old, this.hoveredIcon);
   }
 
-  public Icon getSelectedIcon() {
+  public @Nullable Icon getSelectedIcon() {
     return selectedIcon;
   }
 

@@ -207,7 +207,7 @@ class ActionMenuItem internal constructor(action: AnAction,
     }
     else if (UISettings.getInstance().showIconsInMenus) {
       var icon = presentation.icon
-      if (isToggleable && isToggled) {
+      if (isToggleable && isToggled && icon != null) {
         icon = PoppedIcon(icon, 16, 16)
       }
       var disabled = presentation.disabledIcon

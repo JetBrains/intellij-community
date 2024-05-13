@@ -127,7 +127,7 @@ class FilenameToolbarWidgetAction : ExpandableComboAction(), DumbAware, ActionRe
     fun update(presentation: Presentation) {
       val path = presentation.getClientProperty(FILE_FULL_PATH)
       isOpaque = false
-      leftIcons = listOf(presentation.icon)
+      leftIcons = listOf(presentation.icon!!)
       foreground = presentation.getClientProperty(FILE_COLOR)
       text = presentation.textWithMnemonic
       toolTipText = presentation.description
