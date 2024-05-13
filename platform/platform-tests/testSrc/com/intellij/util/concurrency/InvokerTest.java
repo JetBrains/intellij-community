@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -13,6 +14,7 @@ import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -35,6 +37,12 @@ public class InvokerTest {
   private static final TestApplicationManager application = TestApplicationManager.getInstance();
   private final List<Promise<?>> futures = Collections.synchronizedList(new ArrayList<>());
   private final Disposable parent = Disposer.newDisposable();
+  private AtomicReference<Thread> edt;
+
+  @Before
+  public void setUp() throws Exception {
+    edt = new AtomicReference<>();
+  }
 
   @After
   public void tearDown() throws Exception {
@@ -304,87 +312,87 @@ public class InvokerTest {
 
   @Test
   public void testThreadChangingOnEDT() {
-    testThreadChanging(new Invoker.EDT(parent));
+    testThreadChanging(new Invoker.EDT(parent), true);
   }
 
   @Test
   public void testThreadChangingOnBgPool() {
-    testThreadChanging(new Invoker.Background(parent, 10));
+    testThreadChanging(new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testThreadChangingOnBgThread() {
-    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent));
+    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), false);
   }
 
-  private void testThreadChanging(Invoker invoker) {
-    testThreadChanging(invoker, invoker, true);
+  private void testThreadChanging(Invoker invoker, boolean isEDT) {
+    testThreadChanging(invoker, invoker, isEDT, isEDT, true);
   }
 
   @Test
   public void testThreadChangingOnEDTfromEDT() {
-    testThreadChanging(new Invoker.EDT(parent), new Invoker.EDT(parent), true);
+    testThreadChanging(new Invoker.EDT(parent), new Invoker.EDT(parent), true, true, true);
   }
 
   @Test
   public void testThreadChangingOnEDTfromBgPool() {
-    testThreadChanging(new Invoker.EDT(parent), new Invoker.Background(parent, 10), false);
+    testThreadChanging(new Invoker.EDT(parent), new Invoker.Background(parent, 10), true, false, false);
   }
 
   @Test
   public void testThreadChangingOnEDTfromBgThread() {
-    testThreadChanging(new Invoker.EDT(parent), Invoker.forBackgroundThreadWithReadAction(parent), false);
+    testThreadChanging(new Invoker.EDT(parent), Invoker.forBackgroundThreadWithReadAction(parent), true, false, false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromEDT() {
-    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.EDT(parent), false);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.EDT(parent), false, true, false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromBgPool() {
-    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.Background(parent, 10), false);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.Background(parent, 10), false, false, false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromBgThread() {
-    testThreadChanging(new Invoker.Background(parent, 10), Invoker.forBackgroundThreadWithReadAction(parent), false);
+    testThreadChanging(new Invoker.Background(parent, 10), Invoker.forBackgroundThreadWithReadAction(parent), false, false, false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromEDT() {
-    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), new Invoker.EDT(parent), false);
+    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), new Invoker.EDT(parent), false, true, false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromBgPool() {
-    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), new Invoker.Background(parent, 10), false);
+    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), new Invoker.Background(parent, 10), false, false, false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromBgThread() {
-    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), Invoker.forBackgroundThreadWithReadAction(parent), false);
+    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), Invoker.forBackgroundThreadWithReadAction(parent), false, false, false);
   }
 
-  private void testThreadChanging(Invoker foreground, Invoker background, boolean equal) {
+  private void testThreadChanging(Invoker foreground, Invoker background, boolean isForegroundEDT, boolean isBackgroundEDT, boolean callsInPlace) {
     CountDownLatch latch = new CountDownLatch(1);
     test(foreground, latch, error
-      -> process(background, foreground, () -> new BackgroundThread(Thread.currentThread()), thread
-      -> countDown(latch, 0, error, "unexpected thread", ()
-      -> isExpected(thread, equal))));
+      -> process(background, foreground, () -> new BackgroundThread(Thread.currentThread(), new AtomicBoolean(true)), thread
+      -> countDown(latch, 0, error, ()
+      -> checkThreads(thread, isBackgroundEDT, isForegroundEDT, callsInPlace)),
+     postInvoke -> {
+       postInvoke.isRunningTask.set(false);
+     }
+    ));
   }
 
-  private record BackgroundThread(@NotNull Thread thread) {}
+  private record BackgroundThread(@NotNull Thread thread, @NotNull AtomicBoolean isRunningTask) {}
 
   /**
    * Lets the specified supplier to produce a value on the background thread
    * and the specified consumer to accept this value on the foreground thread.
+   * The other consumer is called on the background thread right after scheduling the foreground consumer.
    */
-  private static <T> void process(@NotNull Invoker background, @NotNull Invoker foreground, @NotNull Supplier<? extends T> supplier,
-                                  @NotNull Consumer<? super T> consumer) {
-    process(background, foreground, supplier, consumer, value -> {});
-  }
-
   private static <T> void process(@NotNull Invoker background, @NotNull Invoker foreground, @NotNull Supplier<? extends T> supplier,
                                   @NotNull Consumer<? super T> consumer, @NotNull Consumer<? super T> postInvokeBackgroundConsumer) {
     background.invoke(() -> {
@@ -396,14 +404,48 @@ public class InvokerTest {
     });
   }
 
-  private static boolean isExpected(BackgroundThread thread, boolean equal) {
+  private String checkThreads(BackgroundThread backgroundThread, boolean isBackgroundEDT, boolean isForegroundEDT, boolean callsInPlace) {
     Thread foregroundThread = Thread.currentThread();
-    return equal == (thread.thread == foregroundThread);
+    if (isBackgroundEDT) {
+      if (backgroundThread.thread != edt.get()) {
+        return "Expected background to be EDT, got " + backgroundThread.thread;
+      }
+    }
+    else {
+      if (backgroundThread.thread == edt.get()) {
+        return "Expected background NOT to be EDT, got " + backgroundThread.thread;
+      }
+    }
+    if (isForegroundEDT) {
+      if (foregroundThread != edt.get()) {
+        return "Expected foreground to be EDT, got " + foregroundThread;
+      }
+    }
+    else {
+      if (foregroundThread == edt.get()) {
+        return "Expected foreground NOT to be EDT, got " + foregroundThread;
+      }
+    }
+    if (callsInPlace) {
+      if (!backgroundThread.isRunningTask.get()) {
+        return "Expected foreground to be called in place, but the background task has already finished";
+      }
+    }
+    // If callsInPlace is false, we can't check because the background task MIGHT still be running.
+    return null;
   }
 
 
   private void test(Invoker invoker, CountDownLatch latch, Consumer<? super AtomicReference<String>> consumer) {
     Assert.assertFalse("EDT should not be used to start this test", invoker instanceof Invoker.EDT && isEventDispatchThread());
+    if (isEventDispatchThread()) {
+      edt.set(Thread.currentThread());
+    }
+    else {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        edt.set(Thread.currentThread());
+      });
+    }
     AtomicReference<String> error = new AtomicReference<>();
     register(invoker.invokeLater(() -> consumer.accept(error)));
     String message;
