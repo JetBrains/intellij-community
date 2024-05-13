@@ -109,14 +109,18 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   @Override
   public boolean isTestClass(@NotNull PsiElement clazz) {
     //other languages are not ready for dumb-mode
-    if (DumbService.isDumb(clazz.getProject()) && clazz.getLanguage() != JavaLanguage.INSTANCE) return false;
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return false;
     return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, false);
+  }
+
+  private static boolean supportDumbMode(@NotNull PsiElement psiElement) {
+    return psiElement.getLanguage() == JavaLanguage.INSTANCE || JavaTestFrameworkInDumbMode.isSupported(psiElement);
   }
 
   @Override
   public boolean isPotentialTestClass(@NotNull PsiElement clazz) {
     //other languages are not ready for dumb-mode
-    if (DumbService.isDumb(clazz.getProject()) && clazz.getLanguage() != JavaLanguage.INSTANCE) return false;
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return false;
     return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, true);
   }
 
