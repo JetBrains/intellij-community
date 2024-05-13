@@ -38,6 +38,36 @@ public class K1ExpressionTypeTestGenerated extends AbstractK1ExpressionTypeTest 
         runTest("testData/codeInsight/expressionType/BlockBodyFunction.kt");
     }
 
+    @TestMetadata("ConstructorCall_fromJava_explicit.test")
+    public void testConstructorCall_fromJava_explicit() throws Exception {
+        runTest("testData/codeInsight/expressionType/ConstructorCall_fromJava_explicit.test");
+    }
+
+    @TestMetadata("ConstructorCall_fromJava_implicit.test")
+    public void testConstructorCall_fromJava_implicit() throws Exception {
+        runTest("testData/codeInsight/expressionType/ConstructorCall_fromJava_implicit.test");
+    }
+
+    @TestMetadata("ConstructorCall_fromKotlin_explicit_1.kt")
+    public void testConstructorCall_fromKotlin_explicit_1() throws Exception {
+        runTest("testData/codeInsight/expressionType/ConstructorCall_fromKotlin_explicit_1.kt");
+    }
+
+    @TestMetadata("ConstructorCall_fromKotlin_explicit_2.kt")
+    public void testConstructorCall_fromKotlin_explicit_2() throws Exception {
+        runTest("testData/codeInsight/expressionType/ConstructorCall_fromKotlin_explicit_2.kt");
+    }
+
+    @TestMetadata("ConstructorCall_fromKotlin_explicit_3.kt")
+    public void testConstructorCall_fromKotlin_explicit_3() throws Exception {
+        runTest("testData/codeInsight/expressionType/ConstructorCall_fromKotlin_explicit_3.kt");
+    }
+
+    @TestMetadata("ConstructorCall_fromKotlin_implicit.kt")
+    public void testConstructorCall_fromKotlin_implicit() throws Exception {
+        runTest("testData/codeInsight/expressionType/ConstructorCall_fromKotlin_implicit.kt");
+    }
+
     @TestMetadata("IfAsExpression.kt")
     public void testIfAsExpression() throws Exception {
         runTest("testData/codeInsight/expressionType/IfAsExpression.kt");
