@@ -67,6 +67,20 @@ inline fun Logger.trace(@NonNls lazyMessage: () -> String) {
   }
 }
 
+/* Cannot name it `trace` due to the clash with the function above */
+inline fun Logger.traceThrowable(lazyThrowable: () -> Throwable) {
+  if (isTraceEnabled) {
+    return trace(lazyThrowable())
+  }
+}
+
+inline fun <T : Any> Logger.ifTraceEnabled(lazyValue: () -> T): T? {
+  if (isTraceEnabled) {
+    return lazyValue()
+  }
+  return null
+}
+
 /** Consider using [Result.getOrLogException] for more straight-forward API instead. */
 inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   return runCatching {
