@@ -3,7 +3,9 @@ package com.intellij.ide.workspace
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@get:ApiStatus.Internal
 val Project.isWorkspace get() = WorkspaceSettings.getInstance(this).isWorkspace
 
 internal fun setWorkspace(project: Project) {

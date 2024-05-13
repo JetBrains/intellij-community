@@ -19492,8 +19492,6 @@ c:com.intellij.ide.util.treeView.SmartElementDescriptor
 - p:isMarkModified():Z
 - p:isMarkReadOnly():Z
 - update():Z
-f:com.intellij.ide.workspace.WorkspaceSettingsKt
-- sf:isWorkspace(com.intellij.openapi.project.Project):Z
 f:com.intellij.internal.AddInlayBlockInternalAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
