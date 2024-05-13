@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
-import org.jetbrains.kotlin.idea.refactoring.appendElement
+import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.ExpressionValue
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.Initializer
@@ -242,7 +242,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
                     // In the case of lazy property absence of default value means that output values are of OutputValue.Initializer type
                     // We just add resulting expressions without return, since returns are prohibited in the body of lazy property
                     if (defaultValue == null) {
-                        body.appendElement(returnExpression.returnedExpression!!)
+                        body.addElement(returnExpression.returnedExpression!!)
                     }
                     return
                 }
@@ -251,7 +251,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
             }
 
             when {
-                defaultValue == null -> body.appendElement(returnExpression)
+                defaultValue == null -> body.addElement(returnExpression)
                 !defaultValue.callSiteReturn || defaultValue.hasImplicitReturn -> lastExpression!!.replaceWithReturn(returnExpression)
             }
 

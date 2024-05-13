@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
@@ -206,6 +207,11 @@ private fun FunctionDescriptor.allowsMoveOfLastParameterOutsideParentheses(
         it.type.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)
     }
     return movableParametersOfCandidateCount == lambdaAndCallableReferencesInOriginalCallCount
+}
+
+@Deprecated("Use addElement directly", ReplaceWith("addElement", "org.jetbrains.kotlin.idea.refactoring.addElement"))
+fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
+   return addElement(element, addNewLine)
 }
 
 //TODO: git rid of this method

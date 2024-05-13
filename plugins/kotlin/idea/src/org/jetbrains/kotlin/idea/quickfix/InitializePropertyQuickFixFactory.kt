@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelaye
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.getOrCreateBody
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
-import org.jetbrains.kotlin.idea.refactoring.appendElement
+import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.psi.*
@@ -178,7 +178,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                         val psiFactory = KtPsiFactory(project)
                         val name = newParam.name ?: return
                         constructor.safeAs<KtSecondaryConstructor>()?.getOrCreateBody()
-                            ?.appendElement(psiFactory.createExpression("this.${element.name} = $name"))
+                            ?.addElement(psiFactory.createExpression("this.${element.name} = $name"))
                             ?: element.setInitializer(psiFactory.createExpression(name))
                     }
                 }

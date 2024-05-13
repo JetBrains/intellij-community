@@ -289,7 +289,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
     }
 }
 
-fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
+fun KtBlockExpression.addElement(element: KtElement, addNewLine: Boolean = false): KtElement {
     val rBrace = rBrace
     val newLine = KtPsiFactory(project).createNewLine()
     val anchor = if (rBrace == null) {
