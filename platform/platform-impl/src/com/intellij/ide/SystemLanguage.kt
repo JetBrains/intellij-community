@@ -85,7 +85,7 @@ class SystemLanguage private constructor() {
 
     locale = Locale.getDefault()
 
-    if (ConfigImportHelper.isNewUser() || ConfigImportHelper.isConfigImported()) {
+    if (ConfigImportHelper.isFirstSession() || ConfigImportHelper.isConfigImported()) {
       if (Locale.ENGLISH.language != locale.language) {
         val path = Path.of(PathManager.getPreInstalledPluginsPath(), LANGUAGE_PLUGINS_FILE)
         if (Files.exists(path)) {
@@ -148,8 +148,6 @@ class SystemLanguage private constructor() {
   }
 
   fun getLocale() = locale
-
-  fun needInstallPlugin() = needInstallPlugin
 
   fun doChooseLanguage(args: List<String>) {
     if (!needInstallPlugin) {
