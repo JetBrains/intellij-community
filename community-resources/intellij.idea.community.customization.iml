@@ -10,15 +10,15 @@
     <orderEntry type="module" module-name="intellij.java.ide.resources" scope="RUNTIME" />
     <orderEntry type="module-library" exported="" scope="RUNTIME">
       <library name="tips-idea-ce" type="repository">
-        <properties maven-id="com.jetbrains.intellij.documentation:tips-intellij-idea-community:241.36">
+        <properties maven-id="com.jetbrains.intellij.documentation:tips-intellij-idea-community:241.47">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea-community/241.36/tips-intellij-idea-community-241.36.jar">
-              <sha256sum>237df90a8e3a9fb7c6878383f439d184917f85d7948b54192eecafdba55d61a2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea-community/241.47/tips-intellij-idea-community-241.47.jar">
+              <sha256sum>e583b36172d981b55e9a024cddd9737e01d0d9dfb4a1727be119c29908c89922</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea-community/241.36/tips-intellij-idea-community-241.36.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-intellij-idea-community/241.47/tips-intellij-idea-community-241.47.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
