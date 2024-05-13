@@ -187,6 +187,7 @@ private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUG
   "org.jetbrains.android",
   "androidx.compose.plugins.idea",
   "org.jetbrains.compose.desktop.ide",
+  "org.jetbrains.plugins.kotlin.jupyter",
 ))
 
 private fun readRootElementChild(
