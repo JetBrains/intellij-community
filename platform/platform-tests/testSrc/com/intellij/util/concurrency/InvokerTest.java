@@ -366,13 +366,15 @@ public class InvokerTest {
     testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), Invoker.forBackgroundThreadWithReadAction(parent), false);
   }
 
-  private void testThreadChanging(Invoker foreground, Invoker background, Boolean equal) {
+  private void testThreadChanging(Invoker foreground, Invoker background, boolean equal) {
     CountDownLatch latch = new CountDownLatch(1);
     test(foreground, latch, error
-      -> process(background, foreground, Thread::currentThread, thread
+      -> process(background, foreground, () -> new BackgroundThread(Thread.currentThread()), thread
       -> countDown(latch, 0, error, "unexpected thread", ()
       -> isExpected(thread, equal))));
   }
+
+  private record BackgroundThread(@NotNull Thread thread) {}
 
   /**
    * Lets the specified supplier to produce a value on the background thread
@@ -380,12 +382,23 @@ public class InvokerTest {
    */
   private static <T> void process(@NotNull Invoker background, @NotNull Invoker foreground, @NotNull Supplier<? extends T> supplier,
                                   @NotNull Consumer<? super T> consumer) {
-    background.compute(supplier).onSuccess(value -> foreground.invoke(() -> consumer.accept(value)));
+    process(background, foreground, supplier, consumer, value -> {});
   }
 
-  private static boolean isExpected(Thread thread, Boolean equal) {
-    if (equal != null) return equal.equals(thread == Thread.currentThread());
-    return true; // debug only: thread may be reused
+  private static <T> void process(@NotNull Invoker background, @NotNull Invoker foreground, @NotNull Supplier<? extends T> supplier,
+                                  @NotNull Consumer<? super T> consumer, @NotNull Consumer<? super T> postInvokeBackgroundConsumer) {
+    background.invoke(() -> {
+      var value = supplier.get();
+      foreground.invoke(() -> {
+        consumer.accept(value);
+      });
+      postInvokeBackgroundConsumer.accept(value);
+    });
+  }
+
+  private static boolean isExpected(BackgroundThread thread, boolean equal) {
+    Thread foregroundThread = Thread.currentThread();
+    return equal == (thread.thread == foregroundThread);
   }
 
 
@@ -404,16 +417,20 @@ public class InvokerTest {
     if (message != null) Assert.fail(message + " @ " + invoker);
   }
 
-  private static void countDown(CountDownLatch latch, long ms, AtomicReference<? super String> error, String message, BooleanSupplier success) {
+  private static void countDown(CountDownLatch latch, long ms, AtomicReference<? super String> error, Supplier<String> errorSupplier) {
     try {
       if (ms > 0) Thread.sleep(ms);
     }
     catch (InterruptedException ignore) {
     }
     finally {
-      if (!success.getAsBoolean()) error.set(message);
+      error.set(errorSupplier.get());
       latch.countDown();
     }
+  }
+
+  private static void countDown(CountDownLatch latch, long ms, AtomicReference<? super String> error, String message, BooleanSupplier success) {
+    countDown(latch, ms, error, () -> success.getAsBoolean() ? null : message);
   }
 
   @Test
