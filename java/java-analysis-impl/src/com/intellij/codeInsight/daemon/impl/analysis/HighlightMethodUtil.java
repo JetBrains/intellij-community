@@ -876,6 +876,12 @@ public final class HighlightMethodUtil {
     String description;
     PsiElement elementToHighlight = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
     if (element != null && !resolveResult.isAccessible()) {
+      PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceToMethod);
+      if (qualifierClass!=null &&
+          IncompleteModelUtil.isIncompleteModel(file) &&
+          IncompleteModelUtil.canBeAugmented(qualifierClass)) {
+        return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+      }
       description = HighlightUtil.accessProblemDescription(referenceToMethod, element, resolveResult);
     }
     else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
@@ -900,6 +906,9 @@ public final class HighlightMethodUtil {
         if (qualifierExpression == null &&
             IncompleteModelUtil.isIncompleteModel(file) &&
             IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
+          return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+        }
+        if (IncompleteModelUtil.isIncompleteModel(file) && IncompleteModelUtil.canBeAugmented(qualifierClass)) {
           return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
         }
         description = JavaErrorBundle.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), className);
