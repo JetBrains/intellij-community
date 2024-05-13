@@ -1101,3 +1101,10 @@ fun <T : CommandChain> T.assertCurrentFile(name: String): T = apply {
 fun <T : CommandChain> T.waitForProjectView(): T = apply {
   addCommand("${CMD_PREFIX}waitForProjectView")
 }
+
+/**
+ * Expand relative path in project view
+ */
+fun <T : CommandChain> T.expandProjectView(relativePath: String): T = apply {
+  addCommand("${CMD_PREFIX}expandProjectView $relativePath")
+}

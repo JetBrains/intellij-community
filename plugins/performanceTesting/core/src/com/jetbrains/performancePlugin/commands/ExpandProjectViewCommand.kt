@@ -1,0 +1,27 @@
+package com.jetbrains.performancePlugin.commands
+
+import com.intellij.ide.projectView.ProjectView
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+/**
+ * Wait till a project tree is fully initialized.
+ * projectView#cachedNodesLoaded might be missing if there are not cached nodes
+ * Command should be executed as soon as possible since project view initialization happens very early and the command might hang.
+ */
+class ExpandProjectViewCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+
+  companion object {
+    const val PREFIX: String = CMD_PREFIX + "expandProjectView"
+  }
+
+  override suspend fun doExecute(context: PlaybackContext) {
+    val file = OpenFileCommand.findFile(extractCommandArgument(PREFIX), context.project)
+    withContext(Dispatchers.EDT) {
+      ProjectView.getInstance(context.project).select(null, file, false)
+    }
+  }
+}
