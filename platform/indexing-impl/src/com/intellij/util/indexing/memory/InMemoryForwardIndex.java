@@ -51,5 +51,10 @@ public final class InMemoryForwardIndex implements ForwardIndex, MeasurableIndex
   }
 
   @Override
+  public boolean isClosed() {
+    return false;
+  }
+
+  @Override
   public void close() { }
 }

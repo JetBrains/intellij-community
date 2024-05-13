@@ -74,6 +74,11 @@ public final class PersistentMapBasedForwardIndex implements ForwardIndex, Measu
     myPersistentMap.close();
   }
 
+  @Override
+  public boolean isClosed() {
+    return myPersistentMap.isClosed();
+  }
+
   public boolean containsMapping(int key) throws IOException {
     return myPersistentMap.containsMapping(key);
   }

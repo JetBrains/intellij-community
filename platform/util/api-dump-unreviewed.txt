@@ -4866,6 +4866,7 @@ f:com.intellij.util.indexing.impl.forward.EmptyForwardIndex
 - close():V
 - force():V
 - get(java.lang.Integer):com.intellij.openapi.util.io.ByteArraySequence
+- isClosed():Z
 - isDirty():Z
 - keysCountApproximately():I
 - put(java.lang.Integer,com.intellij.openapi.util.io.ByteArraySequence):V
@@ -4873,6 +4874,7 @@ com.intellij.util.indexing.impl.forward.ForwardIndex
 - com.intellij.util.io.KeyValueStore
 - a:clear():V
 - a:get(java.lang.Integer):com.intellij.openapi.util.io.ByteArraySequence
+- a:isClosed():Z
 - a:put(java.lang.Integer,com.intellij.openapi.util.io.ByteArraySequence):V
 com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
 - a:getDiffBuilder(I,com.intellij.openapi.util.io.ByteArraySequence):com.intellij.util.indexing.impl.InputDataDiffBuilder
@@ -4896,6 +4898,7 @@ f:com.intellij.util.indexing.impl.forward.IntMapForwardIndex
 - close():V
 - force():V
 - getInt(I):I
+- isClosed():Z
 - isDirty():Z
 - keysCountApproximately():I
 - putInt(I,I):V
