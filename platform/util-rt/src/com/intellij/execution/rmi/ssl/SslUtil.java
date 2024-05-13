@@ -6,15 +6,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.X509TrustManager;
-import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class SslUtil {
   public static final String SSL_CA_CERT_PATH = "sslCaCertPath";
@@ -23,40 +24,83 @@ public final class SslUtil {
   public static final String SSL_TRUST_EVERYBODY = "sslTrustEverybody";
   public static final String SSL_USE_FACTORY = "sslUseFactory";
 
+  private static final Map<String, Pair<Long, List<? extends SslEntityReader.Entity>>> entityCache = new ConcurrentHashMap<>();
+
   @NotNull
-  public static List<X509Certificate> loadCertificates(@NotNull String caCertPath)
-    throws IOException, CertificateException {
-    return SslEntityReader.getInstance().loadCertificates(caCertPath);
+  private static List<? extends SslEntityReader.Entity> readWithCache(@NotNull String path) throws IOException {
+    File file = new File(path);
+    long stamp = file.lastModified();
+    Pair<Long, List<? extends SslEntityReader.Entity>> cached = entityCache.get(path);
+    if (cached != null && cached.first.equals(stamp)) {
+      return cached.second;
+    }
+    try (FileInputStream stream = new FileInputStream(file)) {
+      List<? extends SslEntityReader.Entity> res = SslEntityReader.getInstance().read(stream);
+      entityCache.put(path, new Pair<Long, List<? extends SslEntityReader.Entity>>(stamp, res));
+      return res;
+    }
   }
 
   @NotNull
-  public static InputStream stringStream(@NotNull String str) {
-    return new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+  public static List<X509Certificate> loadCertificates(@NotNull String caCertPath) throws IOException, CertificateException {
+    return loadCertificates(readWithCache(caCertPath));
   }
 
   @NotNull
   public static X509Certificate readCertificate(@NotNull String filePath) throws CertificateException, IOException {
-    return SslEntityReader.getInstance().readCertificate(new FileInputStream(filePath));
+    List<X509Certificate> certificates = loadCertificates(filePath);
+    if (certificates.isEmpty()) {
+      throw new IOException("Certificate not found");
+    }
+    return certificates.get(0);
   }
 
-  @NotNull
-  public static X509Certificate readCertificateFromString(@NotNull String s) throws CertificateException, IOException {
-    return SslEntityReader.getInstance().readCertificate(stringStream(s));
-  }
 
   @NotNull
   public static PrivateKey readPrivateKey(@NotNull String filePath) throws IOException {
     return readPrivateKey(filePath, null);
   }
 
+  private static @NotNull List<X509Certificate> loadCertificates(@NotNull List<? extends SslEntityReader.Entity> entities) throws IOException {
+    List<X509Certificate> certs = new ArrayList<>();
+    for (SslEntityReader.Entity entity : entities) {
+      if (entity instanceof SslEntityReader.CertificateEntity) {
+        certs.add(((SslEntityReader.CertificateEntity)entity).get());
+      }
+    }
+    return certs;
+  }
+
   @NotNull
   public static Pair<PrivateKey, List<X509Certificate>> readPrivateKeyAndCertificate(@NotNull String filePath, @Nullable char[] password) throws IOException {
-    return SslEntityReader.getInstance().readPrivateKeyAndCertificate(filePath, password);
+    return loadPrivateKeyAndCerts(readWithCache(filePath), filePath, password);
+  }
+
+  private static @NotNull Pair<PrivateKey, List<X509Certificate>> loadPrivateKeyAndCerts(
+    @NotNull List<? extends SslEntityReader.Entity> entities, @NotNull String filePath, char[] password)
+    throws IOException {
+    PrivateKey key = null;
+    List<X509Certificate> certs = new ArrayList<>();
+    for (SslEntityReader.Entity entity : entities) {
+      if (entity instanceof SslEntityReader.EncryptedPrivateKeyEntity) {
+        key = ((SslEntityReader.EncryptedPrivateKeyEntity)entity).get(password);
+      }
+      else if (entity instanceof SslEntityReader.UnencryptedPrivateKeyEntity) {
+        key = ((SslEntityReader.UnencryptedPrivateKeyEntity)entity).get();
+      }
+      else if (entity instanceof SslEntityReader.CertificateEntity) {
+        certs.add(((SslEntityReader.CertificateEntity)entity).get());
+      }
+    }
+    if (key == null) {
+      throw new IOException("Failed to find key in file " + filePath);
+    }
+    return Pair.create(key, certs.isEmpty() ? null : certs);
   }
 
   @NotNull
   public static PrivateKey readPrivateKey(@NotNull String filePath, @Nullable char[] password) throws IOException {
-    return SslEntityReader.getInstance().readPrivateKey(filePath, password);
+    return readPrivateKeyAndCertificate(filePath, password).first;
   }
 
   static class TrustEverybodyManager implements X509TrustManager {

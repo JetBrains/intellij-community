@@ -1,14 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.PrivateKey;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
@@ -24,18 +21,6 @@ public abstract class SslEntityReader {
     }
     return res;
   }
-
-  @NotNull
-  public abstract Pair<PrivateKey, List<X509Certificate>> readPrivateKeyAndCertificate(@NotNull String filePath, @Nullable char[] password) throws IOException;
-
-  @NotNull
-  public abstract List<X509Certificate> loadCertificates(@NotNull String caCertPath) throws CertificateException, IOException;
-
-  @NotNull
-  public abstract X509Certificate readCertificate(@NotNull InputStream stream) throws CertificateException, IOException;
-
-  @NotNull
-  public abstract PrivateKey readPrivateKey(@NotNull String filePath, @Nullable char[] password) throws IOException;
 
   @NotNull
   public abstract List<? extends Entity> read(@NotNull InputStream stream) throws IOException;
