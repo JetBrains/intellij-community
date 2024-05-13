@@ -34,7 +34,7 @@ UFile (package = ) [public final class ClassLiteralKt {...]
                 UIfExpression [if (other == null) return false] : kotlin.Unit
                     UBinaryExpression (operator = ==) [other == null] : boolean
                         USimpleNameReferenceExpression (identifier = other) [other] : java.lang.Object
-                        ULiteralExpression (value = null) [null] : java.lang.Void
+                        ULiteralExpression (value = null) [null] : null
                     UReturnExpression [return false] : java.lang.Void
                         ULiteralExpression (value = false) [false] : boolean
                 UIfExpression [if (java.lang.Object != Foo) return false] : kotlin.Unit

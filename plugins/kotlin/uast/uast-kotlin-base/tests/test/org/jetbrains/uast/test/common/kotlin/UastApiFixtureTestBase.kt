@@ -1153,4 +1153,27 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         )
         TestCase.assertEquals(1, count)
     }
+
+    fun checkNullLiteral(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                fun test() {
+                  val foo : Any? = null
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        var count = 0
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitLiteralExpression(node: ULiteralExpression): Boolean {
+                    TestCase.assertTrue(node.isNull)
+                    TestCase.assertEquals("null", node.getExpressionType()?.canonicalText)
+                    count++
+                    return super.visitLiteralExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(1, count)
+    }
 }
