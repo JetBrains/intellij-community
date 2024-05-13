@@ -570,6 +570,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (e.get() != null) throw e.get();
   }
 
+  @IJIgnore(issue = "https://youtrack.jetbrains.com/issue/IDEA-351874/")
   public void testReadActionInImpatientModeShouldThrowWhenThereIsAPendingWrite() throws Throwable {
     AtomicBoolean stopRead = new AtomicBoolean();
     AtomicBoolean readAcquired = new AtomicBoolean();
