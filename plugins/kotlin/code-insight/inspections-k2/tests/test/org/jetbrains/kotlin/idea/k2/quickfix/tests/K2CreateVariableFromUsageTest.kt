@@ -16,4 +16,5 @@ abstract class K2CreateVariableFromUsageTest : K2AbstractCreateFromUsageTest() {
      * E.g. test class [LocalVariable] will find all test files inside `[getTestDataPath]/localVariable` and execute corresponding tests on them
      */
     class LocalVariable : K2CreateVariableFromUsageTest()
+    class Parameter : K2CreateVariableFromUsageTest()
 }

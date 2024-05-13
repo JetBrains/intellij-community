@@ -1,10 +1,14 @@
-// "Create property 'address' as constructor parameter" "true"
-data class Person(val name: String, val age: Int, val address: Any)
+// "Create parameter 'foo'" "true"
+// ERROR: No value passed for parameter 'foo'
+// ERROR: No value passed for parameter 'foo'
+// ERROR: No value passed for parameter 'foo'
 
-fun person(): Person = TODO()
+enum class E(foo: Int) {
+    A(foo),
+    B(foo),
+    C(foo);
 
-fun main(args: Array<String>) {
-    val (name, age, address) = person()
+    val t: Int = foo
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction

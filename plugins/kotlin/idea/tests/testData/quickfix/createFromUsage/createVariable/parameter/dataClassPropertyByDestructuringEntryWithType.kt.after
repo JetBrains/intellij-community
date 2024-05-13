@@ -1,5 +1,5 @@
 // "Create property 'address' as constructor parameter" "true"
-data class Person(val name: String, val age: Int, val address: String<caret>)
+data class Person(val name: String, val age: Int, val address: String)
 
 fun person(): Person = TODO()
 

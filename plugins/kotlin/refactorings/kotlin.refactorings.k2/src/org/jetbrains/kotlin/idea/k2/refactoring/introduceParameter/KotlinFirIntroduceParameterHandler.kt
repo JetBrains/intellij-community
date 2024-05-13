@@ -111,30 +111,13 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     }
 
     operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
-        val physicalExpression = expression.substringContextOrThis
-        if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
-            showErrorHintByKey(project, editor, "cannot.refactor.no.expression", INTRODUCE_PARAMETER)
-            return
+        val expressionTypeEvaluator: KtAnalysisSession.() -> KtType? = {
+            val physicalExpression = expression.substringContextOrThis
+            getExpressionType(physicalExpression, expression)
         }
-
-        var message: String? = null
-        val suggestedNames = SmartList<String>()
-        val descriptorToType = analyzeInModalWindow(targetParent, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            val expressionType = getExpressionType(physicalExpression, expression)
-            message = if (expressionType == null) {
-                KotlinBundle.message("error.text.expression.has.no.type")
-            } else if (expressionType.isUnit || expressionType.isNothing) {
-                KotlinBundle.message(
-                    "cannot.introduce.parameter.of.0.type",
-                    expressionType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
-                )
-            } else null
-
-            if (message != null) {
-                return@analyzeInModalWindow null
-            }
-
-            require(expressionType != null)
+        val nameSuggester: KtAnalysisSession.(KtType) -> List<String> = { expressionType ->
+            val suggestedNames = SmartList<String>()
+            val physicalExpression = expression.substringContextOrThis
             val body = when (targetParent) {
                 is KtFunction -> targetParent.bodyExpression
                 is KtClass -> targetParent.body
@@ -152,6 +135,40 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
                 suggestedNames.addIfNotNull(physicalExpression.name)
             }
             suggestedNames.addAll(KotlinNameSuggester.suggestNamesByType(expressionType, targetParent, nameValidator, "p"))
+            suggestedNames
+        }
+        addParameter(project, editor, expression, targetParent, expressionTypeEvaluator, nameSuggester)
+    }
+
+    /**
+     * run change signature refactoring, just like [invoke], but with configurable expression type, and name
+     * (to be reused in "create parameter from usage" where both type and name are fixed, and computed a bit differently from the regular "introduce parameter")
+     */
+    fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KtAnalysisSession.()->KtType?, nameSuggester:  KtAnalysisSession.(KtType)->List<String>) {
+        val physicalExpression = expression.substringContextOrThis
+        if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
+            showErrorHintByKey(project, editor, "cannot.refactor.no.expression", INTRODUCE_PARAMETER)
+            return
+        }
+
+        var message: String? = null
+        var suggestedNames: List<String> = listOf()
+        val descriptorToType = analyzeInModalWindow(targetParent, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            val expressionType = expressionTypeEvaluator.invoke(this)
+            message = if (expressionType == null) {
+                KotlinBundle.message("error.text.expression.has.no.type")
+            } else if (expressionType.isUnit || expressionType.isNothing) {
+                KotlinBundle.message(
+                    "cannot.introduce.parameter.of.0.type",
+                    expressionType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
+                )
+            } else null
+
+            if (message != null) {
+                return@analyzeInModalWindow null
+            }
+            require (expressionType!=null)
+            suggestedNames = nameSuggester.invoke(this, expressionType)
 
             val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent)
 
@@ -254,7 +271,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         editor: Editor,
         physicalExpression: KtExpression,
         replacementType: KtType,
-        suggestedNames: SmartList<String>,
+        suggestedNames: List<String>,
         introduceParameterDescriptor: IntroduceParameterDescriptor<KtNamedDeclaration>
     ) {
         val types = analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
@@ -278,7 +295,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     private fun introduceParameterDescriptor(
         originalExpression: KtExpression,
         targetParent: KtNamedDeclaration,
-        suggestedNames: SmartList<String>,
+        suggestedNames: List<String>,
         physicalExpression: KtExpression,
         replacementType: KtType,
         parametersUsages: MultiMap<KtElement, KtElement>,
