@@ -54,6 +54,10 @@ class FirInplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
         doTest()
     }
 
+    fun testExtractLocal() {
+        doTest()
+    }
+
     fun testStringTemplateWithNameConflict() {
         doTest(changedName = "substring")
     }
@@ -74,7 +78,7 @@ class FirInplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTest(changedName: String? = null, checkResult: Boolean = true) {
         TemplateManagerImpl.setTemplateTesting(testRootDisposable)
         myFixture.configureByFile("${getTestName(false)}.kt")
-        KotlinFirExtractFunctionHandler().invoke(myFixture.project, myFixture.editor, myFixture.file, null)
+        KotlinFirExtractFunctionHandler(getTestName(true).contains("Local")).invoke(myFixture.project, myFixture.editor, myFixture.file, null)
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         val template = getActiveTemplate()
         require(template != null) { "Failed to start refactoring" }
