@@ -885,8 +885,6 @@
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector$FacetTypeUtilValidator"/>
     <statistics.validation.customValidationRule
-      implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector$RunConfigurationTypeValidator"/>
-    <statistics.validation.customValidationRule
       implementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl$ProductivityUtilValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator"/>

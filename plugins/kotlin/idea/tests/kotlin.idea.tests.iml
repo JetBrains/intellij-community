@@ -139,5 +139,6 @@
     <orderEntry type="module" module-name="kotlin.ide" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.navbar.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="TEST" />
   </component>
 </module>

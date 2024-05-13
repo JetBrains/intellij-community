@@ -11,5 +11,6 @@
     <module name="intellij.platform.navbar.frontend.compatibility"/>
     <module name="intellij.platform.navbar.monolith.compatibility"/>
     <module name="intellij.platform.clouds"/>
+    <module name="intellij.platform.execution.dashboard"/>
   </content>
 </idea-plugin>

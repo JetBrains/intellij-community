@@ -1,38 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.RunDashboardServiceViewContributor;
-import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.execution.services.ServiceViewActionUtils;
-import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class RunDashboardActionUtils {
+@Internal
+public final class RunDashboardActionUtils {
   private RunDashboardActionUtils() {
   }
 
   @NotNull
-  static List<RunDashboardRunConfigurationNode> getTargets(@NotNull AnActionEvent e) {
+  public static List<RunDashboardRunConfigurationNode> getTargets(@NotNull AnActionEvent e) {
     return ServiceViewActionUtils.getTargets(e, RunDashboardRunConfigurationNode.class);
   }
 
   @Nullable
-  static RunDashboardRunConfigurationNode getTarget(@NotNull AnActionEvent e) {
+  public static RunDashboardRunConfigurationNode getTarget(@NotNull AnActionEvent e) {
     return ServiceViewActionUtils.getTarget(e, RunDashboardRunConfigurationNode.class);
   }
 
   @NotNull
-  static JBIterable<RunDashboardRunConfigurationNode> getLeafTargets(@NotNull AnActionEvent e) {
+  public static JBIterable<RunDashboardRunConfigurationNode> getLeafTargets(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return JBIterable.empty();
 
@@ -46,11 +44,10 @@ final class RunDashboardActionUtils {
   private static boolean getLeaves(Project project, AnActionEvent e, List<Object> items, List<Object> valueSubPath,
                                    Set<? super RunDashboardRunConfigurationNode> result) {
     for (Object item : items) {
-      if (item instanceof RunDashboardServiceViewContributor || item instanceof GroupingNode) {
+      if (item instanceof RunDashboardGroupNode groupNode) {
         List<Object> itemSubPath = new ArrayList<>(valueSubPath);
         itemSubPath.add(item);
-        List<Object> children = ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project))
-          .getChildrenSafe(e, itemSubPath, RunDashboardServiceViewContributor.class);
+        List<Object> children = groupNode.getChildren(project, e);
         if (!getLeaves(project, e, children, itemSubPath, result)) {
           return false;
         }

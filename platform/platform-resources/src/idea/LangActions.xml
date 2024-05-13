@@ -1526,40 +1526,6 @@
       <reference ref="EditSource"/>
       <reference ref="TreeNodeExclusion"/>
     </group>
-
-    <group id="RunDashboardContentToolbar">
-      <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass">
-        <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
-        <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
-        <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
-      </action>
-      <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass">
-        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
-        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar.Old"/>
-        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="XDebugger.ToolWindow.TopToolbar3"/>
-      </action>
-      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" icon="AllIcons.Actions.Suspend"
-              use-shortcut-of="Stop"/>
-    </group>
-    <group id="RunDashboardPopup">
-      <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSourceInNewWindow"/>
-      <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction" icon="AllIcons.Actions.Copy" use-shortcut-of="EditorDuplicate"/>
-      <separator/>
-      <action id="RunDashboard.HideConfiguration" class="com.intellij.execution.dashboard.actions.HideConfigurationAction"/>
-      <action id="RunDashboard.RestoreHiddenConfigurations" class="com.intellij.execution.dashboard.actions.RestoreHiddenConfigurationsAction"/>
-      <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"/>
-      <action id="RunDashboard.OpenRunningConfigInNewTab" class="com.intellij.execution.dashboard.actions.OpenRunningConfigInNewTabAction"/>
-      <separator/>
-      <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction" icon="AllIcons.Actions.Cancel"/>
-      <action id="RunDashboard.RestoreConfiguration" class="com.intellij.execution.dashboard.actions.RestoreConfigurationAction" icon="AllIcons.Actions.Rollback"/>
-      <separator/>
-      <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction" icon="AllIcons.Actions.GroupByPackage"/>
-      <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions" icon="AllIcons.General.Remove" use-shortcut-of="$Delete"/>
-      <separator/>
-    </group>
-
     <group id="ServiceViewTreeToolbar">
       <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
              class="com.intellij.execution.services.AddServiceActionGroup">
@@ -1596,21 +1562,6 @@
     <action id="ServiceView.SelectActiveService" class="com.intellij.execution.services.SelectActiveServiceAction"/>
     <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
     <action id="ServiceView.ConfigureServices" class="com.intellij.execution.services.ConfigureServicesAction" icon="AllIcons.General.GearPlain"/>
-    <group id="RunDashboard.ViewOptions" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
-      <separator key="separator.RunDashboard.GroupBy"/>
-      <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
-      <action id="RunDashboard.GroupByStatus" class="com.intellij.execution.dashboard.actions.GroupByConfigurationStatusAction"/>
-      <separator/>
-      <separator key="separator.RunDashboard.Filter"/>
-      <group id="RunDashboard.Filter" class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup"/>
-      <add-to-group group-id="ServiceView.ViewOptions"/>
-    </group>
-    <action id="RunDashboard.AddType" class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction">
-      <add-to-group group-id="ServiceView.AddService"/>
-    </action>
-    <reference id="RunDashboard.RestoreHiddenConfigurations">
-      <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddType"/>
-    </reference>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>

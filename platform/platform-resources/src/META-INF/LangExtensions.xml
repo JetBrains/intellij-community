@@ -1234,7 +1234,6 @@
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.InspectionUsageFUSCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.KeymapUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.KeymapChangesCollector"/>
-    <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.hints.InlayProviderUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFileCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.ui.tabs.FileColorsUsagesCollector"/>
@@ -1358,30 +1357,14 @@
                     serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
                     serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager"
-                    serviceImplementation="com.intellij.execution.dashboard.RunDashboardManagerImpl"/>
-    <backgroundPostStartupActivity implementation="com.intellij.execution.dashboard.RunDashboardCheckerActivity"/>
-
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="notification.group.jdk.update.error"/>
     <notificationGroup id="ColorSchemeDrop" displayType="BALLOON" hideFromSettings="true"/>
-    <notificationGroup id="Services Tool Window" displayType="BALLOON" isLogByDefault="true" bundle="messages.ExecutionBundle"
-                       key="notification.group.services"
-                       notificationIds="run.dashboard.multiple.run.configurations"/>
     <notificationGroup id="Batch quick fix" displayType="BALLOON" bundle="messages.LangBundle" key="notification.group.batch.quick.fix"/>
     <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager"
                     serviceImplementation="com.intellij.execution.services.ServiceViewManagerImpl"/>
     <postStartupActivity implementation="com.intellij.execution.services.ServiceViewStartupActivity"/>
-    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"
-                              id="type" order="first"/>
-    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"
-                              id="status" order="after type"/>
-    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule"
-                              id="folder" order="after status"/>
-    <actionPromoter implementation="com.intellij.execution.dashboard.actions.RunDashboardActionPromoter"/>
     <actionPromoter implementation="com.intellij.execution.services.ServiceViewActionPromoter"/>
-    <serviceViewContributor implementation="com.intellij.execution.dashboard.RunDashboardServiceViewContributor"/>
     <navbar implementation="com.intellij.execution.services.ServiceViewNavBarExtension"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
                     serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
