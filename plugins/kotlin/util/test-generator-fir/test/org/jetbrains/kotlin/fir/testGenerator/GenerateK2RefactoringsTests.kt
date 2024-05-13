@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToFq
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2CopyTest
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2MultiModuleCopyTest
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTest
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2InplaceIntroduceFunctionTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2IntroduceConstantTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2PsiUnifierTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
@@ -83,6 +84,10 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2IntroduceFunctionTest> {
             model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest")
+        }
+
+        testClass<AbstractK2InplaceIntroduceFunctionTest> {
+            model("refactoring/extractFunctionInplace")
         }
 
         testClass<AbstractK2IntroduceParameterTest> {

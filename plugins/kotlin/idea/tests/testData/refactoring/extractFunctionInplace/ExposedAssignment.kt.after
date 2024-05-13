@@ -1,3 +1,4 @@
+// CHANGED_NAME: getX
 fun sample(){
     val x = getX<caret>()
 

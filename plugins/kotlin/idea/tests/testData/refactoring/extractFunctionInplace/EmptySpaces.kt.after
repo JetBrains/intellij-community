@@ -16,3 +16,4 @@ private fun bool(v: IntRange): Boolean {
     }
     return false
 }
+// IGNORE_K1

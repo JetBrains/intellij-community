@@ -107,6 +107,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineMultiFileTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTestWithSomeDescriptors
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
+import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractInplaceIntroduceFunctionTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractK1MultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMoveTest
 import org.jetbrains.kotlin.idea.refactoring.pullUp.AbstractPullUpTest
@@ -1150,7 +1151,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("idea/tests", category = EXTRACT_REFACTORING) {
         testClass<AbstractExtractionTest> {
             model("refactoring/introduceVariable", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
-            model("refactoring/extractFunction", pattern = KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("inplace"))
+            model("refactoring/extractFunction", pattern = KT_OR_KTS, testMethodName = "doExtractFunctionTest")
             model("refactoring/introduceProperty", pattern = KT_OR_KTS, testMethodName = "doIntroducePropertyTest")
             model("refactoring/introduceParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceSimpleParameterTest")
             model("refactoring/introduceLambdaParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceLambdaParameterTest")
@@ -1160,6 +1161,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/introduceConstant", pattern = KT_OR_KTS, testMethodName = "doIntroduceConstantTest")
             model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
             model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
+        }
+        testClass<AbstractInplaceIntroduceFunctionTest> {
+            model("refactoring/extractFunctionInplace")
         }
     }
 
