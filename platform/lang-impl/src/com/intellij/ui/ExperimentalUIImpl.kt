@@ -135,7 +135,9 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   }
 
   fun appClosing() {
-    unsetForcedSwitchNewUi()
+    if (shouldUnsetNewUiSwitchKey) {
+      PropertiesComponent.getInstance().unsetValue(NEW_UI_SWITCH)
+    }
   }
 
   override fun saveCurrentValueAndReapplyDefaultLaf() {
@@ -152,20 +154,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     }
     propertyComponent.setValue(NEW_UI_SWITCH, true)
     shouldUnsetNewUiSwitchKey = false
-  }
-
-  private fun unsetForcedSwitchNewUi() {
-    try {
-      EarlyAccessRegistryManager.setBoolean(FORCED_SWITCH_TO_NEW_UI, false)
-      EarlyAccessRegistryManager.syncAndFlush()
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
-
-    if (shouldUnsetNewUiSwitchKey) {
-      PropertiesComponent.getInstance().unsetValue(NEW_UI_SWITCH)
-    }
   }
 }
 

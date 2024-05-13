@@ -98,7 +98,7 @@ private suspend fun enableNewUi(logDeferred: Deferred<Logger>, isBackgroundSwitc
     if (shouldEnableNewUi) {
       EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true", "moved.to.new.ui" to "true"))
       if (!isBackgroundSwitch) {
-        EarlyAccessRegistryManager.setAndFlush(mapOf(ExperimentalUI.FORCED_SWITCH_TO_NEW_UI to "true"))
+        ExperimentalUI.forcedSwitchedUi = true
       }
     }
   }
