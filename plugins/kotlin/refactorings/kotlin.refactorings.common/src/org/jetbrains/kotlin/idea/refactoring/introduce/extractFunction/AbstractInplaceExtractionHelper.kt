@@ -11,6 +11,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -61,7 +62,7 @@ interface AbstractInplaceExtractionHelper<KotlinType,
         val first = elements.first()
         val callTextRange =
             editor.document.createRangeMarker(
-                max(rangeOf(PsiTreeUtil.skipWhitespacesAndCommentsBackward(first) ?: first).startOffset - 1, 0),
+                max(rangeOf(PsiTreeUtil.skipSiblingsBackward(first, PsiComment::class.java) ?: first).startOffset - 1, 0),
                 rangeOf(elements.last()).endOffset
             ).apply {
                 isGreedyToLeft = true

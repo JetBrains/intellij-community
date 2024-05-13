@@ -50,6 +50,10 @@ class FirInplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
         doTest()
     }
 
+    fun testDontSkipWhitespacesBefore() {
+        doTest()
+    }
+
     fun testStringTemplateWithNameConflict() {
         doTest(changedName = "substring")
     }
