@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionListener
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
