@@ -81,6 +81,10 @@ internal class StickyLinesManager(
     }
   }
 
+  fun clearStickyModel() {
+    stickyModel.removeAllStickyLines(editor.project!!)
+  }
+
   override fun visibleAreaChanged(event: VisibleAreaEvent) {
     if (editor.settings.areStickyLinesShown() && isAreaChanged(event)) {
       activeVisualArea = event.newRectangle

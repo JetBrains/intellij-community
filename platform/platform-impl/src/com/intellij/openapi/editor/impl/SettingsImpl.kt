@@ -128,6 +128,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
           editor?.updateCaretCursor()
           editor?.contentComponent?.repaint()
         }
+
+        if (propertyName == state::myStickyLinesShownForLanguage.name) {
+          editor?.stickyLinesForLangChanged(event)
+        }
       }
     })
   }

@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl.stickyLines
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 
@@ -16,8 +15,8 @@ internal abstract class StickyLinesAbstractAction : DumbAwareAction() {
   protected fun showStickyLinesSettingsDialog(project: Project?) {
     ShowSettingsUtilImpl.showSettingsDialog(
       project,
-      "editor.preferences.appearance",
-      ApplicationBundle.message("checkbox.show.sticky.lines")
+      "editor.stickyLines",
+      null
     )
   }
 }

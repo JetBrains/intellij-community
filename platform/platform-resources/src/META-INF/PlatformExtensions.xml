@@ -1053,6 +1053,10 @@
 
     <fileBreadcrumbsCollector implementation="com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector" order="last"/>
 
+    <applicationConfigurable parentId="preferences.editor" id="editor.stickyLines"
+                             key="configurable.sticky.lines" bundle="messages.ApplicationBundle"
+                             instance="com.intellij.openapi.editor.impl.stickyLines.configurable.StickyLinesConfigurable"/>
+
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
     <registryKey key="ide.check.windows.defender.rules"
                  defaultValue="true"

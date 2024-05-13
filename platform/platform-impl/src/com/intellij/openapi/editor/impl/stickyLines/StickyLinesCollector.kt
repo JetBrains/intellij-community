@@ -4,9 +4,12 @@ package com.intellij.openapi.editor.impl.stickyLines
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.CachedValue
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -17,6 +20,16 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 @Internal
 class StickyLinesCollector(private val project: Project, private val document: Document) {
+
+  companion object {
+    val CACHED_LINES_KEY: Key<CachedValue<Runnable>> = Key.create("editor.sticky.lines.cached")
+  }
+
+  fun invalidateCachedValue() {
+    PsiDocumentManager.getInstance(project)
+      .getCachedPsiFile(document)
+      ?.putUserData(CACHED_LINES_KEY, null)
+  }
 
   fun collectLines(vFile: VirtualFile): Set<StickyLineInfo> {
     ThreadingAssertions.assertReadAccess()

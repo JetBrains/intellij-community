@@ -72,10 +72,12 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
 
   private final MarkupModelEx myMarkupModel;
   private final List<Listener> myListeners;
+  private boolean myIsCleared;
 
   private StickyLinesModelImpl(MarkupModelEx markupModel) {
     myMarkupModel = markupModel;
     myListeners = new ArrayList<>();
+    myIsCleared = false;
   }
 
   @Override
@@ -96,6 +98,7 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
     highlighter.putUserData(STICKY_LINE_IMPL_KEY, stickyLine);
     highlighter.putUserData(STICKY_LINE_SOURCE, source);
     skipInAllEditors(highlighter);
+    myIsCleared = false;
     return stickyLine;
   }
 
@@ -146,6 +149,20 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
     }
   }
 
+  @Override
+  public void removeAllStickyLines(@Nullable Project project) {
+    if (myIsCleared) {
+      return;
+    }
+    for (StickyLine line : getAllStickyLines()) {
+      removeStickyLine(line);
+    }
+    if (project != null) {
+      restartStickyLinesPass(project);
+    }
+    myIsCleared = true;
+  }
+
   private void processStickyLines(
     @Nullable SourceID source,
     int startOffset,
@@ -176,6 +193,10 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
 
   private static boolean alwaysFalsePredicate(@NotNull Editor editor) {
     return false;
+  }
+
+  private void restartStickyLinesPass(@NotNull Project project) {
+    new StickyLinesCollector(project, myMarkupModel.getDocument()).invalidateCachedValue();
   }
 
   private record StickyLineImpl(

@@ -42,6 +42,8 @@ public interface StickyLinesModel {
 
   @NotNull List<@NotNull StickyLine> getAllStickyLines();
 
+  void removeAllStickyLines(@Nullable Project project);
+
   void addListener(@NotNull Listener listener);
 
   void removeListener(@NotNull Listener listener);

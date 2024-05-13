@@ -76,6 +76,38 @@ public final class StickyLinesTest extends AbstractEditorTest {
     );
   }
 
+  public void testRemoveStickyLine() {
+    initText("""
+               line0
+               """);
+    StickyLine line = addStickyLine(0);
+    stickyModel.removeStickyLine(line);
+    assertEmpty(stickyModel.getAllStickyLines());
+  }
+
+  public void testRemoveAllStickyLines() {
+    initText("""
+               line0
+               line1
+               """);
+    addStickyLine(0);
+    addStickyLine(1);
+    stickyModel.removeAllStickyLines(null);
+    assertEmpty(stickyModel.getAllStickyLines());
+  }
+
+  public void testRemoveAllStickyLinesTwice() {
+    initText("""
+               line0
+               line1
+               """);
+    stickyModel.removeAllStickyLines(null);
+    addStickyLine(0);
+    addStickyLine(1);
+    stickyModel.removeAllStickyLines(null);
+    assertEmpty(stickyModel.getAllStickyLines());
+  }
+
   public void testStickyLineText() {
     initText("""
                line0
