@@ -26,7 +26,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <module value="com.intellij.modules.python"/>
 
   <!-- Python bundled modules for content -->
-  <xi:include href="/META-INF/python-v2-core-plugin-content-include.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-v2-core-plugin-content-include.xml"/>
   <content>
     <!--Mini-IDes support community python only-->
     <module name="intellij.python.community.plugin.minor"/> <!-- Python for Mini-IDEs-->

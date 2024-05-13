@@ -10,7 +10,6 @@
   <resource-bundle>messages.PyBundle</resource-bundle>
 
   <xi:include href="/META-INF/PythonParser.xml"/>
-  <xi:include href="/META-INF/PythonPsi.xml"/>
   <xi:include href="/META-INF/PythonPsiImpl.xml"/>
   <xi:include href="/META-INF/PythonSdk.xml"/>
   <xi:include href="/META-INF/PythonSyntax.xml"/>
