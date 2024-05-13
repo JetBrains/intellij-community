@@ -534,7 +534,13 @@ object PluginManagerCore {
       val sinceBuild = descriptor.getSinceBuild()
       if (sinceBuild != null) {
         val pluginName = descriptor.getName()
-        val sinceBuildNumber = BuildNumber.fromString(sinceBuild, pluginName, null)
+        val sinceBuildNumber = try {
+          BuildNumber.fromString(sinceBuild, pluginName, null)
+        }
+        catch (e: RuntimeException) {
+          logger.error(e)
+          null
+        }
         if (sinceBuildNumber != null && sinceBuildNumber > ideBuildNumber) {
           return PluginLoadingError(
             plugin = descriptor,
