@@ -20,12 +20,10 @@ import com.intellij.util.ui.update.Update
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
-import kotlinx.coroutines.FlowPreview
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -127,7 +125,6 @@ private fun getDefaultBookmarkDescription(project: Project, root: VirtualFile, h
   return details.subject.ifBlank { VcsLogBundle.message("vcs.log.bookmark.description.empty.subject") }
 }
 
-@OptIn(FlowPreview::class)
 @Service(Service.Level.PROJECT)
 internal class VcsLogBookmarkReferenceProvider(val project: Project) : Disposable {
   companion object {
@@ -151,7 +148,6 @@ internal class VcsLogBookmarkReferenceProvider(val project: Project) : Disposabl
 
   fun getBookmarkRefs(hash: Hash, root: VirtualFile): List<VcsBookmarkRef> {
     val bookmarksManager = BookmarksManager.getInstance(project) ?: return emptyList()
-    val factory = project.service<VcsLogObjectsFactory>()
     return bookmarksManager.bookmarks
       .filterIsInstance<VcsLogBookmark>()
       .filter { it.hash == hash && it.root == root }
