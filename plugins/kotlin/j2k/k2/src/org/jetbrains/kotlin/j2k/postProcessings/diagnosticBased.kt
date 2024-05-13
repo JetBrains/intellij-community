@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 // Adapted from org.jetbrains.kotlin.idea.k2.codeinsight.fixes.TypeMismatchFactories.getSmartcastImpossibleFactory
 // to avoid dependency on v2 module
+// TODO try to refactor this code after the K1 J2K is dropped and the single j2k module itself becomes a v2 module
 private val smartcastImpossibleFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: SmartcastImpossible ->
     val psi = diagnostic.psi
     val actualType = psi.getKtType() ?: return@IntentionBased emptyList()
