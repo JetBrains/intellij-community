@@ -116,6 +116,10 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       return mergedSnapshot;
     }
 
+    if (myInitializer == null) {
+      throw new AssertionError("Can't evaluate mergedData with .initializer=null");
+    }
+
     UpdatableValueContainer<Value> fromDisk = myInitializer.compute();
 
     // it makes sense to check it again before cloning and modifications application
