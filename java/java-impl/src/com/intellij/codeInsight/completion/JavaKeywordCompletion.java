@@ -1066,7 +1066,7 @@ public class JavaKeywordCompletion {
           }
         }
       }
-      if (!psiClass.isInterface()) {
+      if (!psiClass.isInterface() && !(psiClass instanceof PsiTypeParameter)) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPLEMENTS), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
