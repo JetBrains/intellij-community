@@ -8,14 +8,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.kotlin.idea.artifacts.KmpAwareLibraryDependency
+import org.jetbrains.kotlin.idea.artifacts.KmpLightFixtureDependencyDownloader
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -24,49 +26,55 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 /**
  * The project is created with three modules: Common, Jvm -> Common, Js -> Common.
  *
- * Standard library dependency is added to all modules.
+ * Standard library and kotlinx-coroutines-core of fixed versions are added to all modules.
+ *
+ * Since we can't use Gradle in light fixture tests due to performance reasons, correct libraries should be mapped to modules manually.
  */
 object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
     enum class PlatformDescriptor(
         val moduleName: String,
-        val sourceRootName: String? = null,
         val targetPlatform: TargetPlatform,
         val isKotlinSdkUsed: Boolean = true,
         val refinementDependencies: List<PlatformDescriptor> = emptyList(),
-        val dependencyCoordinates: List<String> = emptyList(),
+        val libraryDependencies: List<KmpAwareLibraryDependency> = emptyList(),
     ) {
         COMMON(
             moduleName = "Common",
-            sourceRootName = "src_common",
             targetPlatform = TargetPlatform(
                 setOf(
                     JvmPlatforms.jvm8.single(),
                     JsPlatforms.defaultJsPlatform.single()
                 )
             ),
-            dependencyCoordinates = listOf(
-                "org.jetbrains.kotlin:kotlin-stdlib-common:1.9.23", // TODO (KTIJ-29725): make stdlib version dynamic
+            libraryDependencies = listOf(
+                KmpAwareLibraryDependency.allMetadataJar("org.jetbrains.kotlin:kotlin-stdlib:commonMain:1.9.23"), // TODO (KTIJ-29725): sliding version
+                KmpAwareLibraryDependency.metadataKlib("org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0")
             ),
         ),
         JVM(
             moduleName = "Jvm",
-            sourceRootName = "src_jvm",
             targetPlatform = JvmPlatforms.jvm8,
             isKotlinSdkUsed = false,
             refinementDependencies = listOf(COMMON),
-            dependencyCoordinates = listOf(
-                "org.jetbrains.kotlin:kotlin-stdlib:1.9.23",
+            libraryDependencies = listOf(
+                KmpAwareLibraryDependency.jar("org.jetbrains.kotlin:kotlin-stdlib:1.9.23"),
+                KmpAwareLibraryDependency.jar("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0"),
+                KmpAwareLibraryDependency.jar("org.jetbrains:annotations:23.0.0"),
             ),
         ),
         JS(
             moduleName = "Js",
-            sourceRootName = "src_js",
             targetPlatform = JsPlatforms.defaultJsPlatform,
             refinementDependencies = listOf(COMMON),
-            dependencyCoordinates = listOf(
-                "org.jetbrains.kotlin:kotlin-stdlib-js:1.9.23",
+            libraryDependencies = listOf(
+                KmpAwareLibraryDependency.klib("org.jetbrains.kotlin:kotlin-stdlib-js:1.9.23"),
+                KmpAwareLibraryDependency.klib("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.8.0"),
+                KmpAwareLibraryDependency.klib("org.jetbrains.kotlinx:atomicfu-js:0.23.1"),
             ),
         );
+
+        val sourceRootName: String
+            get() = "src_${moduleName.lowercase()}"
 
         fun sourceRoot(): VirtualFile? = findRoot(sourceRootName)
 
@@ -102,10 +110,8 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
 
     private fun configureModule(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {
         model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.HIGHEST
-        if (descriptor.sourceRootName != null) {
-            val sourceRoot = createSourceRoot(module, descriptor.sourceRootName)
-            model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
-        }
+        val sourceRoot = createSourceRoot(module, descriptor.sourceRootName)
+        model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
 
         setUpSdk(module, model, descriptor)
 
@@ -115,9 +121,18 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
             dependsOnModuleNames = descriptor.refinementDependencies.map(PlatformDescriptor::moduleName),
             pureKotlinSourceFolders = listOf(descriptor.sourceRoot()!!.path),
         )
+        for (libraryCoordinates in descriptor.libraryDependencies) {
+            val library = setUpLibraryFromCoordinates(module.project, libraryCoordinates)
+            model.addLibraryEntry(library)
+        }
+    }
 
-        for (libraryCoordinates in descriptor.dependencyCoordinates) {
-            MavenDependencyUtil.addFromMaven(model, libraryCoordinates)
+    private fun setUpLibraryFromCoordinates(project: Project, dependency: KmpAwareLibraryDependency): Library {
+        val dependencyRoot = KmpLightFixtureDependencyDownloader.resolveDependency(dependency)?.toFile()
+            ?: error("Unable to download library ${dependency.coordinates}")
+        return ConfigLibraryUtil.addProjectLibrary(project = project, name = dependency.coordinates.toString()) {
+            addRoot(dependencyRoot, OrderRootType.CLASSES)
+            commit()
         }
     }
 

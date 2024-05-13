@@ -1,5 +1,5 @@
 // PLATFORM: Common
-// FILE: A.kt
+// FILE: common.kt
 
 fun common() {
     val f: Float = 0.0f
@@ -14,7 +14,7 @@ fun common() {
 }
 
 // PLATFORM: Jvm
-// FILE: B.kt
+// FILE: jvm.kt
 
 fun jvm() {
     val f: Float = 0.0f
@@ -29,7 +29,7 @@ fun jvm() {
 }
 
 // PLATFORM: Js
-// FILE: C.kt
+// FILE: js.kt
 
 fun js() {
     val f: Float = 0.0f

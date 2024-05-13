@@ -1,5 +1,5 @@
 // PLATFORM: Common
-// FILE: A.kt
+// FILE: common.kt
 
 expect fun foo(): String
 
@@ -8,7 +8,7 @@ fun useFoo() {
 }
 
 // PLATFORM: Jvm
-// FILE: B.kt
+// FILE: jvm.kt
 
 actual fun foo(): String = "JVM"
 
@@ -17,7 +17,7 @@ fun useFoo() {
 }
 
 // PLATFORM: Js
-// FILE: C.kt
+// FILE: js.kt
 
 actual fun foo(): String = "JS"
 

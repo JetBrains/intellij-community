@@ -1,5 +1,5 @@
 // PLATFORM: Common
-// FILE: A.kt
+// FILE: common.kt
 
 fun commonThings() {
     val c = listOf(1, 2, 3)
@@ -8,7 +8,7 @@ fun commonThings() {
 }
 
 // PLATFORM: Jvm
-// FILE: B.kt
+// FILE: jvm.kt
 
 fun jvmThings() {
     val c = listOf(1, 2, 3)
@@ -17,7 +17,7 @@ fun jvmThings() {
 }
 
 // PLATFORM: Js
-// FILE: C.kt
+// FILE: js.kt
 
 fun jsThings() {
     val c = listOf(1, 2, 3)

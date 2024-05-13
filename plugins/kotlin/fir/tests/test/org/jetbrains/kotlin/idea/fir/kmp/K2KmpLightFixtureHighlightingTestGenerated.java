@@ -28,6 +28,11 @@ public class K2KmpLightFixtureHighlightingTestGenerated extends AbstractK2KmpLig
         runTest("testData/kmp/highlighting/collectionBuilders.kt");
     }
 
+    @TestMetadata("coroutines.kt")
+    public void testCoroutines() throws Exception {
+        runTest("testData/kmp/highlighting/coroutines.kt");
+    }
+
     @TestMetadata("expectActualFunctions.kt")
     public void testExpectActualFunctions() throws Exception {
         runTest("testData/kmp/highlighting/expectActualFunctions.kt");
