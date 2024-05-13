@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
@@ -197,7 +197,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
     private fun createTestModuleFromDir(dir: File): Module {
         return createTestModuleByName(dir.name).apply {
             val findFileByIoFile = LocalFileSystem.getInstance().findFileByIoFile(dir) ?: error("unable to locate $dir")
-            PlatformTestCase.copyDirContentsTo(findFileByIoFile, contentRoot())
+            HeavyPlatformTestCase.copyDirContentsTo(findFileByIoFile, contentRoot())
         }
     }
 
