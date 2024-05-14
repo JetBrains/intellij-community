@@ -128,7 +128,7 @@ __jetbrains_intellij_command_terminated() {
     builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
     __jetbrains_intellij_debug_log 'initialized'
     builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode $shell_info)"
-    builtin local hist="$(builtin history)"
+    builtin local hist="$(HISTTIMEFORMAT="" builtin history)"
     builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode "$hist")"
   else
     __jetbrains_intellij_debug_log "command_finished exit_code=$last_exit_code"
