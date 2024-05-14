@@ -171,12 +171,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       robotService.robot.click(component, point)
     }
     else {
-      try {
-        robotService.robot.click(component)
-      } catch (_: Throwable){
-        //sometimes component "disappears" between mouse move and click so we need to retry
-        robotService.robot.click(component)
-      }
+      robotService.robot.click(component)
     }
   }
 
