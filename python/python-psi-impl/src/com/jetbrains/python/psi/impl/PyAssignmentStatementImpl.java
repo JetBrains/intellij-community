@@ -13,8 +13,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import one.util.streamex.IntStreamEx;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,17 +117,17 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return ret;
   }
 
-  private static void mapToValues(PyExpression lhs, PyExpression rhs, List<Pair<PyExpression, PyExpression>> map) {
+  private static void mapToValues(@Nullable PyExpression lhs, @Nullable PyExpression rhs, List<Pair<PyExpression, PyExpression>> map) {
     // cast for convenience
     PySequenceExpression lhs_tuple = null;
     PyExpression lhs_one = null;
-    if (PyPsiUtils.flattenParens(lhs) instanceof PySequenceExpression tupleExpr) lhs_tuple = tupleExpr;
+    if (PyPsiUtils.flattenParens(lhs) instanceof PyTupleExpression tupleExpr) lhs_tuple = tupleExpr;
     else if (lhs != null) lhs_one = lhs;
 
     PySequenceExpression rhs_tuple = null;
     PyExpression rhs_one = null;
 
-    if (PyPsiUtils.flattenParens(rhs) instanceof PySequenceExpression tupleExpr) rhs_tuple = tupleExpr;
+    if (PyPsiUtils.flattenParens(rhs) instanceof PyTupleExpression tupleExpr) rhs_tuple = tupleExpr;
     else if (rhs != null) rhs_one = rhs;
     //
     if (lhs_one != null) { // single LHS, single RHS (direct mapping) or multiple RHS (packing)
@@ -144,7 +142,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
         try {
           final PyExpression expression =
             elementGenerator.createExpressionFromText(languageLevel, "(" + rhs_one.getText() + ")[" + counter + "]");
-          map.add(Pair.create(tuple_elt, expression));
+          mapToValues(tuple_elt, expression, map);
         }
         catch (IncorrectOperationException e) {
           // not parsed, no problem
@@ -156,16 +154,11 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
       final List<PyExpression> lhsTupleElements = Arrays.asList(lhs_tuple.getElements());
       final List<PyExpression> rhsTupleElements = Arrays.asList(rhs_tuple.getElements());
       final int size = Math.max(lhsTupleElements.size(), rhsTupleElements.size());
-
-      map.addAll(StreamEx.zip(alignToSize(lhsTupleElements, size), alignToSize(rhsTupleElements, size), Pair::create).toList());
+      for (int index = 0; index < size; index++) {
+        mapToValues(ContainerUtil.getOrElse(lhsTupleElements, index, null),
+                    ContainerUtil.getOrElse(rhsTupleElements, index, null), map);
+      }
     }
-  }
-
-  @NotNull
-  private static <T> List<T> alignToSize(@NotNull List<T> list, int size) {
-    return list.size() == size
-           ? list
-           : IntStreamEx.range(size).mapToObj(index -> ContainerUtil.getOrElse(list, index, null)).toList();
   }
 
   @Nullable
