@@ -48,6 +48,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
@@ -206,16 +207,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     val project = ProjectImpl(filePath = path, projectName = null, parent = ApplicationManager.getApplication() as ComponentManagerImpl)
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking(modalityState.asContextElement()) {
-      initProject(
-        file = path,
-        project = project,
-        isRefreshVfsNeeded = refreshNeeded,
-        preloadServices = preloadServices,
-        template = null,
-        isTrustCheckNeeded = false,
-      )
+    runBlockingCancellable {
+      withContext(modalityState.asContextElement()) {
+        initProject(
+          file = path,
+          project = project,
+          isRefreshVfsNeeded = refreshNeeded,
+          preloadServices = preloadServices,
+          template = null,
+          isTrustCheckNeeded = false,
+        )
+      }
     }
     return project
   }
