@@ -217,7 +217,7 @@ class UISettingsState : BaseState() {
   @get:Internal
   @set:Internal
   @get:OptionTag("SHOW_INPLACE_COMMENTS_INTERNAL")
-  var showInplaceCommentsInternal: Boolean by property(true)
+  var showInplaceCommentsInternal: Boolean by property(false)
 
   @get:OptionTag("SHOW_VISUAL_FORMATTING_LAYER")
   var showVisualFormattingLayer: Boolean by property(false)

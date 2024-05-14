@@ -2,10 +2,9 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -14,21 +13,14 @@ import java.awt.Window
 import javax.swing.JTree
 
 @Internal
-class ShowHideDebugInfoInUiAction : DumbAwareAction() {
+class ShowHideDebugInfoInUiAction : DumbAwareToggleAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.text = if (UISettings.getInstance().showInplaceCommentsInternal) {
-      ActionsBundle.message("action.ShowHideDebugInfoInUi.text")
-    }
-    else {
-      ActionsBundle.message("action.ShowHideDebugInfoInUi.show.text")
-    }
-  }
+  override fun isSelected(e: AnActionEvent): Boolean = UISettings.getInstance().showInplaceCommentsInternal
 
-  override fun actionPerformed(e: AnActionEvent) {
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
     val uiSettings = UISettings.getInstance()
-    uiSettings.showInplaceCommentsInternal = !uiSettings.showInplaceCommentsInternal
+    uiSettings.showInplaceCommentsInternal = state
     for (tree in UIUtil.uiTraverser(null).withRoots(*Window.getWindows()).filter(JTree::class.java)) {
       TreeUtil.invalidateCacheAndRepaint(tree.ui)
     }
