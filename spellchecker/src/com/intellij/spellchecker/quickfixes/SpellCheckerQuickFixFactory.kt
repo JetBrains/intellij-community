@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.DictionaryLayer
 import org.jetbrains.annotations.ApiStatus.Internal
 
+/**
+ * Extension point for product-wide spellchecking inspection quickfixes customization.
+ */
 @Internal
 interface SpellCheckerQuickFixFactory {
   companion object {
