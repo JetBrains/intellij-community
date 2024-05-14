@@ -86,9 +86,21 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
 
   private @NotNull JPanel createNorthPanel() {
     var northPanel = new JPanel();
-    northPanel.setLayout(new BorderLayout());
-    northPanel.add(myTitle, BorderLayout.WEST);
-    northPanel.add(myTimestamp, BorderLayout.EAST);
+    var layout = new GroupLayout(northPanel);
+    var hg = layout.createSequentialGroup();
+    var vg = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
+
+    hg.addComponent(myTitle);
+    hg.addGap(JBUI.scale(8), JBUI.scale(8), Short.MAX_VALUE);
+    hg.addComponent(myTimestamp, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE);
+    hg.addGap(JBUI.scale(8));
+
+    vg.addComponent(myTitle);
+    vg.addComponent(myTimestamp);
+
+    layout.setHorizontalGroup(hg);
+    layout.setVerticalGroup(vg);
+    northPanel.setLayout(layout);
     return northPanel;
   }
 
