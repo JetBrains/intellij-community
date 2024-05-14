@@ -58,7 +58,7 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
   fun markCorrupted()
 }
 
-interface VcsLogWriter {
+internal interface VcsLogWriter {
   @Throws(IOException::class)
   fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails)
   fun flush()

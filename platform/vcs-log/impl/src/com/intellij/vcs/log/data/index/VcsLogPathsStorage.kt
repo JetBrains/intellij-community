@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.StorageException
 import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.VcsLogIndexer
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.util.function.ObjIntConsumer
 
@@ -19,6 +20,7 @@ internal interface VcsLogPathsStorage {
   fun getPathsEncoder(): VcsLogIndexer.PathsEncoder
 }
 
+@ApiStatus.Internal
 enum class ChangeKind(@JvmField val id: Byte) {
   MODIFIED(0.toByte()),
   NOT_CHANGED(1.toByte()),  // we do not want to have nulls in lists
