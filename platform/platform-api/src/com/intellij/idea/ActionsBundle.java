@@ -3,7 +3,10 @@ package com.intellij.idea;
 
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.util.NlsActions;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
@@ -33,10 +36,5 @@ public final class ActionsBundle {
 
   public static @NlsActions.ActionDescription String actionDescription(@NonNls String actionId) {
     return message("action." + actionId + ".description");
-  }
-
-  @ApiStatus.Internal
-  public static void clearCache() {
-    ourInstance.clearLocaleCache();
   }
 }

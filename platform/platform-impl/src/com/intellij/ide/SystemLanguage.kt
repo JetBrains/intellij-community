@@ -212,7 +212,6 @@ class SystemLanguage private constructor() {
 
   private fun clearCaches() {
     JBUIScale.drop()
-    IdeBundle.clearCache()
   }
 
   private class ProgressDialog(bundle: ResourceBundle) : JDialog(null as Frame?, null, true) {

@@ -2,7 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -23,10 +22,5 @@ public final class IdeBundle {
   }
 
   private IdeBundle() {
-  }
-
-  @ApiStatus.Internal
-  public static void clearCache() {
-    INSTANCE.clearLocaleCache();
   }
 }
