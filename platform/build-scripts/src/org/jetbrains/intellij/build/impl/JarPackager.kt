@@ -35,7 +35,6 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readLines
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
-private val isUnpackedDist = System.getProperty("idea.dev.build.unpacked").toBoolean()
 
 private val libsThatUsedInJps = java.util.Set.of(
   "ASM",
@@ -181,7 +180,7 @@ class JarPackager private constructor(
             cache = cacheManager,
             context = context,
             isCodesignEnabled = isCodesignEnabled,
-            useCacheAsTargetFile = !dryRun && isUnpackedDist,
+            useCacheAsTargetFile = !dryRun && context.options.isUnpackedDist,
             dryRun = dryRun,
           )
         }
@@ -264,7 +263,7 @@ class JarPackager private constructor(
     val moduleOutDir = context.getModuleOutputDir(module)
     val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
 
-    val packToDir = isUnpackedDist &&
+    val packToDir = context.options.isUnpackedDist &&
                     !item.relativeOutputFile.contains('/') &&
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
                     patchedDirs.isEmpty() &&

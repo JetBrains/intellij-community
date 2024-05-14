@@ -376,12 +376,11 @@ class BuildContextImpl internal constructor(
     createDevModeProductRunner(this@BuildContextImpl)
   }
 
-  override suspend fun createProductRunner(): IntellijProductRunner {
-    if (useModularLoader) {
-      return ModuleBasedProductRunner(productProperties.rootModuleForModularLoader!!, this)
-    }
-    else {
-      return devModeProductRunner.await()
+  override suspend fun createProductRunner(additionalPluginModules: List<String>): IntellijProductRunner {
+    when {
+      useModularLoader -> return ModuleBasedProductRunner(productProperties.rootModuleForModularLoader!!, this)
+      additionalPluginModules.isEmpty() -> return devModeProductRunner.await()
+      else -> return createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this)
     }
   }
 }

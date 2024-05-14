@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
@@ -89,6 +90,8 @@ data class BuildOptions(
   @JvmField val unpackCompiledClassesArchives: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK, true),
 
   @JvmField internal val validateModuleStructure: Boolean = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false")),
+
+  @JvmField internal val isUnpackedDist: Boolean = false,
 ) {
   companion object {
     /**

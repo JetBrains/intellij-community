@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.productRunner
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProduct
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
@@ -15,14 +16,15 @@ import kotlin.time.Duration.Companion.seconds
  * Only for use in build scripts, not for dev mode / integrations tests.
  * Use [BuildContext.createProductRunner] instead of calling this function directly.
  */
-internal suspend fun createDevModeProductRunner(context: BuildContext): IntellijProductRunner {
+internal suspend fun createDevModeProductRunner(context: BuildContext, additionalPluginModules: List<String> = emptyList()): IntellijProductRunner {
   var newClassPath: Collection<Path>? = null
   val homeDir = context.paths.projectHome
   val runDir = buildProduct(
     request = BuildRequest(
       isUnpackedDist = true,
+      writeCoreClasspath = false,
       platformPrefix = context.productProperties.platformPrefix ?: "idea",
-      additionalModules = emptyList(),
+      additionalModules = additionalPluginModules,
       projectDir = homeDir,
       devRootDir = context.paths.tempDir.resolve("dev-run"),
       jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
@@ -42,14 +44,15 @@ private class DevModeProductRunner(
   private val homePath: Path,
   private val classPath: Collection<String>,
 ) : IntellijProductRunner {
-  override suspend fun runProduct(args: List<String>, additionalSystemProperties: Map<String, String>, isLongRunning: Boolean) {
+  override suspend fun runProduct(args: List<String>, additionalVmProperties: VmProperties, isLongRunning: Boolean) {
     runApplicationStarter(
       context = context,
-      ideClasspath = classPath,
-      arguments = args,
+      classpath = classPath,
+      args = args,
       timeout = if (isLongRunning) DEFAULT_TIMEOUT else 30.seconds,
       homePath = homePath,
-      systemProperties = additionalSystemProperties + getIdeSystemProperties(homePath),
+      vmProperties = additionalVmProperties + getIdeSystemProperties(homePath),
+      isFinalClassPath = true,
     )
   }
 }

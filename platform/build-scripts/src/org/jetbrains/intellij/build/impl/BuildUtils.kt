@@ -1,8 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtilRt
-import org.jetbrains.intellij.build.impl.BuildUtils.addVmProperty
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
@@ -25,21 +26,7 @@ object BuildUtils {
     Files.writeString(targetPath, content)
   }
 
-  internal fun addVmProperty(args: MutableList<String>, key: String, value: String?) {
-    if (value != null) {
-      args.add("-D$key=$value")
-    }
-  }
-
   fun getPluginJars(pluginPath: Path): List<Path> {
     return Files.newDirectoryStream(pluginPath.resolve("lib"), "*.jar").use { it.toList() }
   }
-}
-
-fun propertiesToJvmArgs(properties: Map<String, String>): List<String> {
-  val result = ArrayList<String>(properties.size)
-  for ((key, value) in properties) {
-    addVmProperty(result, key, value)
-  }
-  return result
 }

@@ -143,7 +143,7 @@ interface BuildContext : CompilationContext {
 
   suspend fun cleanupJarCache()
 
-  suspend fun createProductRunner(): IntellijProductRunner
+  suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
 }
 
 suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,

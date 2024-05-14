@@ -53,7 +53,7 @@ internal fun readSearchableOptionIndex(baseDir: Path): SearchableOptionSetDescri
   }
 }
 
-suspend fun buildSearchableOptions(context: BuildContext, systemProperties: Map<String, String> = emptyMap()): SearchableOptionSetDescriptor? {
+suspend fun buildSearchableOptions(context: BuildContext, systemProperties: VmProperties = VmProperties(emptyMap())): SearchableOptionSetDescriptor? {
   return buildSearchableOptions(productRunner = context.createProductRunner(), context = context, systemProperties = systemProperties)
 }
 
@@ -63,7 +63,7 @@ suspend fun buildSearchableOptions(context: BuildContext, systemProperties: Map<
 internal suspend fun buildSearchableOptions(
   productRunner: IntellijProductRunner,
   context: BuildContext,
-  systemProperties: Map<String, String> = emptyMap(),
+  systemProperties: VmProperties = VmProperties(emptyMap()),
 ): SearchableOptionSetDescriptor? {
   val span = Span.current()
   if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
@@ -104,7 +104,7 @@ internal suspend fun buildSearchableOptions(
     // It'll process all UI elements in the `Settings` dialog and build an index for them.
     productRunner.runProduct(
       args = listOf("traverseUI", targetDirectory.toString(), "true"),
-      additionalSystemProperties = systemProperties + getSystemPropertiesForSearchableOptions(langTag),
+      additionalVmProperties = systemProperties + getSystemPropertiesForSearchableOptions(langTag),
       isLongRunning = true,
     )
   }
@@ -116,14 +116,14 @@ internal suspend fun buildSearchableOptions(
   return index
 }
 
-private fun getSystemPropertiesForSearchableOptions(langTag: String): Map<String, String> {
+private fun getSystemPropertiesForSearchableOptions(langTag: String): VmProperties {
   if (Locale.ENGLISH.toLanguageTag().equals(langTag)) {
-    return emptyMap()
+    return VmProperties(emptyMap())
   }
   else {
-    return mapOf(
+    return VmProperties(mapOf(
       "intellij.searchableOptions.i18n.enabled" to "true",
       "intellij.searchableOptions.i18n.locale" to langTag //TODO: use corresponding property after IJPL-148813
-    )
+    ))
   }
 }

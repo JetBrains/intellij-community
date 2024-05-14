@@ -62,6 +62,8 @@ data class BuildRequest(
 
   @JvmField val isUnpackedDist: Boolean = System.getProperty("idea.dev.build.unpacked").toBoolean(),
 
+  @JvmField val writeCoreClasspath: Boolean = true,
+
   @JvmField val buildOptionsTemplate: BuildOptions? = null,
 ) {
   override fun toString(): String =
@@ -147,12 +149,14 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         )
       }
 
-      launch(Dispatchers.IO) {
-        val cp = classPath
-          .asSequence()
-          .filter { !excludedLibJars.contains(it.fileName.toString()) }
-          .joinToString(separator = "\n")
-        Files.writeString(runDir.resolve("core-classpath.txt"), cp)
+      if (request.writeCoreClasspath) {
+        launch(Dispatchers.IO) {
+          val cp = classPath
+            .asSequence()
+            .filter { !excludedLibJars.contains(it.fileName.toString()) }
+            .joinToString(separator = "\n")
+          Files.writeString(runDir.resolve("core-classpath.txt"), cp)
+        }
       }
 
       request.platformClassPathConsumer?.invoke(classPath, runDir)
@@ -405,6 +409,8 @@ private suspend fun createBuildContext(
           outRootDir = runDir,
           compilationLogEnabled = false,
           logDir = buildDir.resolve("log"),
+
+          isUnpackedDist = request.isUnpackedDist,
         )
         options.setTargetOsAndArchToCurrent()
         options.buildStepsToSkip += listOf(

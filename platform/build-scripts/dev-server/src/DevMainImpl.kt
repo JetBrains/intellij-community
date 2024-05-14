@@ -61,7 +61,7 @@ fun buildDevMain(): Collection<Path> {
             newClassPath = classPath
             homePath = runDir.toString().replace(File.separator, "/")
 
-            for ((name, value) in getIdeSystemProperties(runDir)) {
+            for ((name, value) in getIdeSystemProperties(runDir).map) {
               System.setProperty(name, value)
             }
           },

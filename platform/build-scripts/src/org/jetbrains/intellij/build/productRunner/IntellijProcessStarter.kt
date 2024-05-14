@@ -8,9 +8,9 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.getCommandLineArgumentsForOpenPackages
-import org.jetbrains.intellij.build.impl.propertiesToJvmArgs
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.io.runJava
 import java.nio.file.Files
@@ -28,31 +28,55 @@ import kotlin.time.Duration
  */
 suspend fun runApplicationStarter(
   context: BuildContext,
-  ideClasspath: Collection<String>,
-  arguments: List<String>,
-  systemProperties: Map<String, String> = emptyMap(),
+  classpath: Collection<String>,
+  args: List<String>,
+  vmProperties: VmProperties = VmProperties(emptyMap()),
   vmOptions: List<String> = emptyList(),
   homePath: Path = context.paths.projectHome,
   timeout: Duration = DEFAULT_TIMEOUT,
+  isFinalClassPath: Boolean = false,
 ) {
-  val tempFileNamePrefix = arguments.firstOrNull() ?: "appStarter"
+  val tempFileNamePrefix = args.firstOrNull() ?: "appStarter"
   val tempDir = createTempDirectory(context.paths.tempDir, tempFileNamePrefix)
   Files.createDirectories(tempDir)
-  val jvmArgs = mutableListOf<String>()
+
+  val jvmArgs = getCommandLineArgumentsForOpenPackages(context).toMutableList()
+
   val systemDir = tempDir.resolve("system")
-  BuildUtils.addVmProperty(jvmArgs, PathManager.PROPERTY_HOME_PATH, homePath.toString())
-  BuildUtils.addVmProperty(jvmArgs, "idea.system.path", systemDir.toString())
-  BuildUtils.addVmProperty(jvmArgs, "idea.config.path", "$tempDir/config")
-  BuildUtils.addVmProperty(jvmArgs, "idea.builtin.server.disabled", "true")
-  BuildUtils.addVmProperty(jvmArgs, "java.system.class.loader", "com.intellij.util.lang.PathClassLoader")
-  BuildUtils.addVmProperty(jvmArgs, "idea.platform.prefix", context.productProperties.platformPrefix)
-  jvmArgs.addAll(propertiesToJvmArgs(systemProperties))
+  jvmArgs.addAll(vmProperties.mutate {
+    put(PathManager.PROPERTY_HOME_PATH, homePath.toString())
+
+    put("idea.system.path", systemDir.toString())
+    put("idea.config.path", "$tempDir/config")
+
+    put("idea.builtin.server.disabled", "true")
+    put("java.system.class.loader", "com.intellij.util.lang.PathClassLoader")
+    context.productProperties.platformPrefix?.let {
+      put("idea.platform.prefix", it)
+    }
+
+    put("ij.dir.lock.debug", "true")
+    put("intellij.log.to.json.stdout", "true")
+  }.toJvmArgs())
   jvmArgs.addAll(vmOptions.takeIf { it.isNotEmpty() } ?: listOf("-Xmx2g"))
-  System.getProperty("intellij.build.${arguments.first()}.debug.port")?.let {
+  System.getProperty("intellij.build.${args.first()}.debug.port")?.let {
     jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it")
   }
 
-  val effectiveIdeClasspath = LinkedHashSet(ideClasspath)
+  val effectiveIdeClasspath = if (isFinalClassPath) classpath else prepareFlatClasspath(classpath = classpath, tempDir = tempDir, context = context)
+  runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = timeout) {
+    val logFile = findLogFile(systemDir)
+    if (logFile != null) {
+      val logFileToPublish = Files.createTempFile(tempFileNamePrefix, ".log")
+      Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
+      context.notifyArtifactBuilt(logFileToPublish)
+      Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
+    }
+  }
+}
+
+private fun prepareFlatClasspath(classpath: Collection<String>, tempDir: Path, context: BuildContext): LinkedHashSet<String> {
+  val effectiveIdeClasspath = LinkedHashSet(classpath)
 
   val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
   val additionalPluginIds = LinkedHashSet<String>()
@@ -66,23 +90,10 @@ suspend fun runApplicationStarter(
       }
     }
   }
+
   disableCompatibleIgnoredPlugins(context = context, configDir = tempDir.resolve("config"), explicitlyEnabledPlugins = additionalPluginIds)
-  runJavaForIntellijModule(
-    context = context,
-    mainClass = context.ideMainClassName,
-    args = arguments,
-    jvmArgs = jvmArgs,
-    classPath = effectiveIdeClasspath.toList(),
-    timeout = timeout
-  ) {
-    val logFile = findLogFile(systemDir)
-    if (logFile != null) {
-      val logFileToPublish = Files.createTempFile(tempFileNamePrefix, ".log")
-      Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
-      context.notifyArtifactBuilt(logFileToPublish)
-      Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
-    }
-  }
+
+  return effectiveIdeClasspath
 }
 
 @OptIn(ExperimentalPathApi::class)
