@@ -147,7 +147,7 @@ private class LinuxCredentialStoreFactory : CredentialStoreFactory {
 }
 
 @TestOnly
-fun wrappedInMemory(): CredentialStore = NativeCredentialStoreWrapper(InMemoryCredentialStore(), QueueProcessor<() -> Unit>(
+internal fun wrappedInMemory(): CredentialStore = NativeCredentialStoreWrapper(InMemoryCredentialStore(), QueueProcessor<() -> Unit>(
   BiConsumer { item, continuation ->
     try {
       QueueProcessor.runSafely(item)

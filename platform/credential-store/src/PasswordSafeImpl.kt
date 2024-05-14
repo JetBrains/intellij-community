@@ -34,6 +34,7 @@ import java.nio.file.Paths
 private val LOG: Logger
   get() = logger<CredentialStore>()
 
+@Internal
 abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : PasswordSafe() {
   protected abstract val settings: PasswordSafeSettings
 
@@ -155,6 +156,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
 }
 
 @TestOnly
+@Internal
 class TestPasswordSafeImpl @NonInjectable constructor(
   override val settings: PasswordSafeSettings
 ) : BasePasswordSafe(coroutineScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()) {
@@ -174,6 +176,7 @@ class PasswordSafeImpl(coroutineScope: CoroutineScope) : BasePasswordSafe(corout
     get() = service<PasswordSafeSettings>()
 }
 
+@Internal
 fun getDefaultKeePassDbFile(): Path = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
@@ -239,6 +242,7 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   return InMemoryCredentialStore()
 }
 
+@Internal
 fun createPersistentCredentialStore(): CredentialStore? {
   for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensionList) {
     return factory.create() ?: continue
@@ -247,6 +251,7 @@ fun createPersistentCredentialStore(): CredentialStore? {
 }
 
 @TestOnly
+@Internal
 fun createKeePassStore(dbFile: Path, mainPasswordFile: Path): PasswordSafe {
   val store = KeePassCredentialStore(dbFile, mainPasswordFile)
   val settings = PasswordSafeSettings()

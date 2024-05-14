@@ -21,7 +21,7 @@ import javax.swing.JPasswordField
 
 internal val NOTIFICATION_MANAGER by lazy { SingletonNotificationManager("Password Safe", NotificationType.ERROR) }
 
-class CredentialStoreUiServiceImpl : CredentialStoreUiService {
+internal class CredentialStoreUiServiceImpl : CredentialStoreUiService {
   override fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?, action: NotificationAction?) {
     NOTIFICATION_MANAGER.notify(title, content, project) {
       if (action != null) {

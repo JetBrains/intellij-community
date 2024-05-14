@@ -117,7 +117,7 @@ internal class KWalletCredentialStore private constructor(private val connection
 }
 
 @DBusInterfaceName("org.kde.KWallet")
-interface KWallet : DBusInterface {
+private interface KWallet : DBusInterface {
   fun localWallet(): String?
   fun wallets(): List<String>
   fun users(wallet: String): List<String>
