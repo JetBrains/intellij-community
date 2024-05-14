@@ -15,7 +15,7 @@ import org.jetbrains.annotations.VisibleForTesting
 // If a plugin does not include any module dependency tags in its plugin.xml,
 // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
 @ApiStatus.Internal
-class PluginLoadingResult(private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
+class PluginLoadingResult(private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ() && PlatformUtils.getPlatformPrefix() != PlatformUtils.QODANA_PREFIX) {
   private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
   @JvmField
