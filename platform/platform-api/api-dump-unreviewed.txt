@@ -652,6 +652,11 @@ f:com.intellij.ide.Prefs
 - s:putInt(java.lang.String,I):V
 - s:putLong(java.lang.String,J):V
 - s:remove(java.lang.String):V
+f:com.intellij.ide.RegionSettings
+- s:getCountry():java.lang.String
+- s:getCountry(java.lang.String):java.lang.String
+- s:resetCountry():V
+- s:setCountry(java.lang.String):Z
 a:com.intellij.ide.RemoteDesktopService
 - <init>():V
 - s:getInstance():com.intellij.ide.RemoteDesktopService
