@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## 0.0.22
+- Updated Mermaid.js version to `10.9.1`
+
 ## 0.0.21
 - Updated Mermaid.js version to `10.9.0`
 
