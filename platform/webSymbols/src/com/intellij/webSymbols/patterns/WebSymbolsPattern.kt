@@ -9,7 +9,9 @@ import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.NonExtendable
 abstract class WebSymbolsPattern {
 
   internal abstract fun getStaticPrefixes(): Sequence<String>
