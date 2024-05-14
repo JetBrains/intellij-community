@@ -24,12 +24,6 @@ internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstan
     return canOpenGradleProject(file)
   }
 
-  override suspend fun importFromFile(project: Project, file: VirtualFile) {
-    if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProjectAsync(project, GradleConstants.SYSTEM_ID)) {
-      linkAndSyncGradleProject(project, file)
-    }
-  }
-
   override fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings = GradleImportedProjectSettings(project)
 
   override fun suppressGenericImportFor(module: Module): Boolean {
@@ -37,17 +31,21 @@ internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstan
   }
 }
 
-private class GradleImportedProjectSettings(project: Project) : ImportedProjectSettings {
+private class GradleImportedProjectSettings(private val project: Project) : ImportedProjectSettings {
   private val gradleProjectsSettings: Collection<GradleProjectSettings> = GradleSettings.getInstance(project).linkedProjectsSettings
-  private val projectDir = project.guessProjectDir()
+  private val projectDir = requireNotNull(project.guessProjectDir())
 
   override suspend fun applyTo(workspace: Project) {
-    if (gradleProjectsSettings.isEmpty() && projectDir != null && canOpenGradleProject(projectDir)) {
-      linkAndSyncGradleProject(workspace, projectDir)
+    if (gradleProjectsSettings.isEmpty()) {
+      if (canOpenGradleProject(projectDir) && isTrusted(projectDir, project)) {
+        linkAndSyncGradleProject(workspace, projectDir)
+      }
+      return
+    }
+    if (!isTrusted(projectDir, project)) {
       return
     }
     val targetGradleSettings = GradleSettings.getInstance(workspace)
-
     val specBuilder = ImportSpecBuilder(workspace, GradleConstants.SYSTEM_ID)
       .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
     for (setting in gradleProjectsSettings) {
@@ -59,3 +57,6 @@ private class GradleImportedProjectSettings(project: Project) : ImportedProjectS
     }
   }
 }
+
+private suspend fun isTrusted(projectDir: VirtualFile, project: Project) =
+  ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProjectAsync(project, GradleConstants.SYSTEM_ID, projectDir.toNioPath())

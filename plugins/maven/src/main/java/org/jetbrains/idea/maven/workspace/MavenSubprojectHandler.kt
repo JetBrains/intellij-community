@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.workspace
 import com.intellij.ide.workspace.ImportedProjectSettings
 import com.intellij.ide.workspace.Subproject
 import com.intellij.ide.workspace.SubprojectHandler
-import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -22,12 +21,6 @@ internal class MavenSubprojectHandler : SubprojectHandler {
 
   override fun canImportFromFile(project: Project, file: VirtualFile): Boolean {
     return MavenOpenProjectProvider().canOpenProject(file)
-  }
-
-  override suspend fun importFromFile(project: Project, file: VirtualFile) {
-    if (ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProjectAsync(project, MavenUtil.SYSTEM_ID)) {
-      MavenOpenProjectProvider().forceLinkToExistingProjectAsync(file, project)
-    }
   }
 
   override fun removeSubprojects(subprojects: List<Subproject>) {
