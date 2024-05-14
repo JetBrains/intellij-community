@@ -8,12 +8,14 @@ import com.intellij.notification.impl.NotificationIdsHolder
 
 internal class LocalHistoryNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
-    return listOf(STORAGE_CORRUPTED)
+    return listOf(STORAGE_CORRUPTED, LABEL_CREATED)
   }
 
   companion object {
     const val NOTIFICATION_GROUP_ID = "LocalHistory.General"
     const val STORAGE_CORRUPTED = "lvcs.storage.corrupted"
+    const val LABEL_CREATED = "lvcs.label.created"
+    const val LABEL_CREATION_FAILED = "lvcs.label.creation.failed"
   }
 }
 
