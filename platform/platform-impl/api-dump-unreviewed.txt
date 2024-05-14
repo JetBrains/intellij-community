@@ -29021,6 +29021,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - p:afterShow():V
 - p:afterShowSync():V
 - p:beforeShow():Z
+- p:calculateSizeForPack(Z,Z):java.awt.Dimension
 - canClose():Z
 - canShow():Z
 - f:cancel():V

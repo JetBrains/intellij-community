@@ -11837,9 +11837,11 @@ f:com.intellij.find.actions.ShowUsagesAction
 - s:startFindUsages(com.intellij.psi.PsiElement,com.intellij.ui.awt.RelativePoint,com.intellij.openapi.editor.Editor):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.find.actions.ShowUsagesActionHandler
-- a:beforeClose(java.lang.String):V
+- afterOpen(com.intellij.ui.popup.AbstractPopup):V
+- beforeClose(java.lang.String):V
 - a:buildFinishEventData(com.intellij.usageView.UsageInfo):java.util.List
 - a:createUsageSearcher():com.intellij.usages.UsageSearcher
+- createUsageView(com.intellij.openapi.project.Project):com.intellij.usages.impl.UsageViewImpl
 - a:findUsages():V
 - a:getEventData():java.util.List
 - a:getMaximalScope():com.intellij.psi.search.SearchScope
@@ -13584,14 +13586,11 @@ a:com.intellij.ide.actions.SearchEverywhereBaseAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.ide.actions.SearchEverywhereClassifier
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- getEverywhereScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - a:getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
-- getProjectScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - a:getVirtualFile(java.lang.Object):com.intellij.openapi.vfs.VirtualFile
 - a:isClass(java.lang.Object):Z
 - a:isSymbol(java.lang.Object):Z
 f:com.intellij.ide.actions.SearchEverywhereClassifier$EP_Manager
-- s:getEverywhereScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - s:getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 - s:getProjectScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 - s:getVirtualFile(java.lang.Object):com.intellij.openapi.vfs.VirtualFile
