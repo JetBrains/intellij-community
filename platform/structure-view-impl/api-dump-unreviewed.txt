@@ -26,15 +26,6 @@ c:com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 - getValue():java.lang.Object
 - navigate(Z):V
 - toString():java.lang.String
-c:com.intellij.ide.structureView.impl.StructureViewElementWrapper
-- com.intellij.ide.structureView.StructureViewTreeElement
-- canNavigate():Z
-- canNavigateToSource():Z
-- getChildren():com.intellij.ide.structureView.StructureViewTreeElement[]
-- getPresentation():com.intellij.navigation.ItemPresentation
-- getValue():com.intellij.psi.PsiElement
-- getWrappedElement():com.intellij.ide.structureView.StructureViewTreeElement
-- navigate(Z):V
 a:com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 - com.intellij.ide.structureView.StructureViewTreeElement
 - com.intellij.ide.util.treeView.NodeDescriptorProvidingKey
