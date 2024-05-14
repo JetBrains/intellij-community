@@ -37,7 +37,7 @@ public class DynamicBundle extends AbstractBundle {
   private static @NotNull String ourLangTag = System.getProperty("intellij.searchableOptions.i18n.locale", Locale.ENGLISH.toLanguageTag());
 
   private static final ConcurrentMap<String, ResourceBundle> bundles = CollectionFactory.createConcurrentWeakValueMap();
-  private boolean isUpdateNeeded;
+  private boolean isInitializedBeforeL10Plugin;
   /**
    * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
    * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
@@ -47,7 +47,7 @@ public class DynamicBundle extends AbstractBundle {
    */
   public DynamicBundle(@NotNull Class<?> bundleClass, @NotNull String pathToBundle) {
     super(bundleClass, pathToBundle);
-    isUpdateNeeded = LocalizationUtil.INSTANCE.isL10nPluginInitialized();
+    isInitializedBeforeL10Plugin = !LocalizationUtil.INSTANCE.isL10nPluginInitialized();
   }
 
   /**
@@ -61,7 +61,7 @@ public class DynamicBundle extends AbstractBundle {
   @Obsolete
   protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
-    isUpdateNeeded = LocalizationUtil.INSTANCE.isL10nPluginInitialized();
+    isInitializedBeforeL10Plugin = !LocalizationUtil.INSTANCE.isL10nPluginInitialized();
   }
 
   // see BundleUtil
@@ -245,12 +245,11 @@ public class DynamicBundle extends AbstractBundle {
   @Override
   @ApiStatus.Internal
   protected ResourceBundle getBundle(boolean isDefault) {
-    ResourceBundle bundle = super.getBundle(isDefault);
-    if (bundle != null && LocalizationUtil.INSTANCE.isL10nPluginInitialized() && isUpdateNeeded) {
-      isUpdateNeeded = false;
+    if (!isDefault && LocalizationUtil.INSTANCE.isL10nPluginInitialized() && isInitializedBeforeL10Plugin) {
+      isInitializedBeforeL10Plugin = false;
       return null;
     }
-    return bundle;
+    return super.getBundle(isDefault);
   }
 
   /**
