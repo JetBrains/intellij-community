@@ -1,11 +1,3 @@
-f:com.intellij.application.options.codeStyle.cache.CodeStyleCachingServiceImpl
-- com.intellij.openapi.Disposable
-- sf:MAX_CACHE_SIZE:I
-- <init>(com.intellij.openapi.project.Project):V
-- dispose():V
-- getDataHolder(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.util.UserDataHolder
-- scheduleWhenSettingsComputed(com.intellij.psi.PsiFile,java.lang.Runnable):V
-- tryGetSettings(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.codeStyle.CodeStyleSettings
 a:com.intellij.formatting.AbstractBlockAlignmentProcessor
 - com.intellij.formatting.BlockAlignmentProcessor
 - <init>():V
@@ -391,19 +383,8 @@ c:com.intellij.formatting.SpacingImpl
 - f:shouldKeepLineFeeds():Z
 - toString():java.lang.String
 f:com.intellij.formatting.VirtualFormattingImplKt
-- sf:getVirtualFormattingListener(com.intellij.psi.PsiElement):com.intellij.lang.VirtualFormattingListener
 - sf:isEligibleForVirtualFormatting(com.intellij.psi.PsiElement):Z
-- sf:setVirtualFormattingListener(com.intellij.psi.PsiElement,com.intellij.lang.VirtualFormattingListener):V
 - sf:wrapForVirtualFormatting(com.intellij.psi.PsiElement,com.intellij.formatting.FormattingModelBuilder):com.intellij.formatting.FormattingModelBuilder
-f:com.intellij.formatting.VirtualFormattingModelBuilder
-- com.intellij.formatting.FormattingModelBuilder
-- <init>(com.intellij.formatting.FormattingModelBuilder,com.intellij.psi.PsiFile,com.intellij.lang.VirtualFormattingListener):V
-- createModel(com.intellij.formatting.FormattingContext):com.intellij.formatting.FormattingModel
-- createModel(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingModel
-- createModel(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.formatting.FormattingModel
-- createModel(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingModel
-- f:getFile():com.intellij.psi.PsiFile
-- f:getListener():com.intellij.lang.VirtualFormattingListener
 f:com.intellij.formatting.WhiteSpace
 - <init>(I,Z):V
 - arrangeLineFeeds(com.intellij.formatting.SpacingImpl,com.intellij.formatting.engine.BlockRangesMap):V

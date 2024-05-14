@@ -2,8 +2,9 @@
 package com.intellij.lang
 
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 
-
+@ApiStatus.Internal
 interface VirtualFormattingListener {
 
   fun shiftIndentInsideRange(node: ASTNode?, range: TextRange, indent: Int)

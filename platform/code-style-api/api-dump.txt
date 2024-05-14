@@ -1,7 +1,3 @@
-f:com.intellij.CodeStyleBundle
-- sf:BUNDLE:java.lang.String
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 f:com.intellij.application.options.CodeStyle
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
 - s:createTestSettings():com.intellij.psi.codeStyle.CodeStyleSettings
@@ -88,17 +84,6 @@ com.intellij.formatting.Block
 com.intellij.formatting.BlockEx
 - com.intellij.formatting.Block
 - a:getLanguage():com.intellij.lang.Language
-e:com.intellij.formatting.BraceStyle
-- java.lang.Enum
-- sf:EndOfLine:com.intellij.formatting.BraceStyle
-- sf:NextLine:com.intellij.formatting.BraceStyle
-- sf:NextLineEachShifted:com.intellij.formatting.BraceStyle
-- sf:NextLineIfWrapped:com.intellij.formatting.BraceStyle
-- sf:NextLineShifted:com.intellij.formatting.BraceStyle
-- s:fromInt(I):com.intellij.formatting.BraceStyle
-- f:intValue():I
-- s:valueOf(java.lang.String):com.intellij.formatting.BraceStyle
-- s:values():com.intellij.formatting.BraceStyle[]
 c:com.intellij.formatting.ChildAttributes
 - sf:DELEGATE_TO_NEXT_CHILD:com.intellij.formatting.ChildAttributes
 - sf:DELEGATE_TO_PREV_CHILD:com.intellij.formatting.ChildAttributes
@@ -127,15 +112,6 @@ e:com.intellij.formatting.DependentSpacingRule$Trigger
 - sf:HAS_LINE_FEEDS:com.intellij.formatting.DependentSpacingRule$Trigger
 - s:valueOf(java.lang.String):com.intellij.formatting.DependentSpacingRule$Trigger
 - s:values():com.intellij.formatting.DependentSpacingRule$Trigger[]
-e:com.intellij.formatting.ForceBraces
-- java.lang.Enum
-- sf:Always:com.intellij.formatting.ForceBraces
-- sf:IfMultiline:com.intellij.formatting.ForceBraces
-- sf:Never:com.intellij.formatting.ForceBraces
-- s:fromInt(I):com.intellij.formatting.ForceBraces
-- intValue():I
-- s:valueOf(java.lang.String):com.intellij.formatting.ForceBraces
-- s:values():com.intellij.formatting.ForceBraces[]
 com.intellij.formatting.Formatter
 - a:createAlignment(Z,com.intellij.formatting.Alignment$Anchor):com.intellij.formatting.Alignment
 - a:createChildAlignment(com.intellij.formatting.Alignment):com.intellij.formatting.Alignment
@@ -320,14 +296,6 @@ e:com.intellij.formatting.WrapType
 - getLegacyRepresentation():I
 - s:valueOf(java.lang.String):com.intellij.formatting.WrapType
 - s:values():com.intellij.formatting.WrapType[]
-c:com.intellij.formatting.fileSet.AnyFileDescriptor
-- com.intellij.formatting.fileSet.FileSetDescriptor
-- sf:TYPE:java.lang.String
-- <init>():V
-- getPattern():java.lang.String
-- getType():java.lang.String
-- matches(com.intellij.psi.PsiFile):Z
-- setPattern(java.lang.String):V
 com.intellij.formatting.fileSet.FileSetDescriptor
 - getName():java.lang.String
 - a:getPattern():java.lang.String
@@ -422,9 +390,6 @@ com.intellij.lang.LanguageFormattingRestriction
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - isAutoFormatAllowed(com.intellij.psi.PsiElement):Z
 - a:isFormatterAllowed(com.intellij.psi.PsiElement):Z
-com.intellij.lang.VirtualFormattingListener
-- a:replaceWhiteSpace(com.intellij.openapi.util.TextRange,java.lang.String):V
-- a:shiftIndentInsideRange(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange,I):V
 c:com.intellij.openapi.editor.DefaultLineWrapPositionStrategy
 - com.intellij.openapi.editor.GenericLineWrapPositionStrategy
 - <init>():V
@@ -470,9 +435,6 @@ f:com.intellij.openapi.editor.LanguageLineWrapPositionStrategy
 - sf:INSTANCE:com.intellij.openapi.editor.LanguageLineWrapPositionStrategy
 - forEditor(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.LineWrapPositionStrategy
 - getDefaultImplementation():com.intellij.openapi.editor.LineWrapPositionStrategy
-f:com.intellij.psi.codeStyle.AppCodeStyleSettingsManager
-- com.intellij.psi.codeStyle.CodeStyleSettingsManager
-- <init>():V
 com.intellij.psi.codeStyle.CodeStyleConstraints
 - sf:MAX_INDENT_SIZE:I
 - sf:MAX_RIGHT_MARGIN:I
@@ -921,8 +883,6 @@ c:com.intellij.psi.codeStyle.CommonCodeStyleSettings
 - setArrangementSettings(com.intellij.psi.codeStyle.arrangement.ArrangementSettings):V
 - setForceArrangeMenuAvailable(Z):V
 - setSoftMargins(java.util.List):V
-- writeExternal(org.jdom.Element):V
-- writeExternal(org.jdom.Element,com.intellij.psi.codeStyle.LanguageCodeStyleProvider):V
 @:com.intellij.psi.codeStyle.CommonCodeStyleSettings$BraceStyleConstant
 - java.lang.annotation.Annotation
 @:com.intellij.psi.codeStyle.CommonCodeStyleSettings$ForceBraceConstant
@@ -1084,11 +1044,6 @@ c:com.intellij.psi.codeStyle.LegacyCodeStyleSettings
 - SPACE_WITHIN_PARENTHESES:Z
 - SPACE_WITHIN_WHILE_PARENTHESES:Z
 - <init>():V
-f:com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager
-- com.intellij.openapi.components.PersistentStateComponent
-- <init>():V
-- getState():org.jdom.Element
-- loadState(org.jdom.Element):V
 c:com.intellij.psi.codeStyle.PackageEntry
 - sf:ALL_OTHER_IMPORTS_ENTRY:com.intellij.psi.codeStyle.PackageEntry
 - sf:ALL_OTHER_STATIC_IMPORTS_ENTRY:com.intellij.psi.codeStyle.PackageEntry
@@ -1134,14 +1089,6 @@ a:com.intellij.psi.codeStyle.PredefinedCodeStyle
 - hashCode():I
 - isApplicableToLanguage(com.intellij.lang.Language):Z
 - toString():java.lang.String
-f:com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager
-- com.intellij.psi.codeStyle.CodeStyleSettingsManager
-- <init>(com.intellij.openapi.project.Project):V
-- getMainProjectCodeStyle():com.intellij.psi.codeStyle.CodeStyleSettings
-- getState():org.jdom.Element
-- initializeComponent():V
-- loadState(org.jdom.Element):V
-- setMainProjectCodeStyle(com.intellij.psi.codeStyle.CodeStyleSettings):V
 a:com.intellij.psi.codeStyle.PsiBasedFileIndentOptionsProvider
 - com.intellij.psi.codeStyle.FileIndentOptionsProvider
 - <init>():V

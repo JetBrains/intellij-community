@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Disposable {
   public static final int MAX_CACHE_SIZE = 100;
 
