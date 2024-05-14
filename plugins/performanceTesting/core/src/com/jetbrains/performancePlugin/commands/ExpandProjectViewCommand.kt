@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 
 /**
@@ -20,8 +21,12 @@ class ExpandProjectViewCommand(text: String, line: Int) : PlaybackCommandCorouti
 
   override suspend fun doExecute(context: PlaybackContext) {
     val file = OpenFileCommand.findFile(extractCommandArgument(PREFIX), context.project)
+    val mutex = Mutex(true)
     withContext(Dispatchers.EDT) {
-      ProjectView.getInstance(context.project).select(null, file, false)
+      ProjectView.getInstance(context.project).selectCB(null, file, false).doWhenProcessed {
+        mutex.unlock()
+      }
     }
+    mutex.lock()
   }
 }
