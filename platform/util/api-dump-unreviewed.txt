@@ -4,7 +4,6 @@ c:com.intellij.AbstractBundle
 - clearLocaleCache():V
 - containsKey(java.lang.String):Z
 - p:findBundle(java.lang.String,java.lang.ClassLoader,java.util.ResourceBundle$Control):java.util.ResourceBundle
-- p:getBundle(Z):java.util.ResourceBundle
 - getLazyMessage(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 - getMessage(java.lang.String,java.lang.Object[]):java.lang.String
 - getPartialMessage(java.lang.String,I,java.lang.Object[]):java.lang.String

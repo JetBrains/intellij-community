@@ -141,6 +141,7 @@ public class AbstractBundle {
     return bundle;
   }
 
+  @ApiStatus.Internal
   protected ResourceBundle getBundle(boolean isDefault) {
     return com.intellij.reference.SoftReference.dereference(isDefault ? myDefaultBundle : myBundle);
   }

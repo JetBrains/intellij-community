@@ -243,6 +243,7 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   @Override
+  @ApiStatus.Internal
   protected ResourceBundle getBundle(boolean isDefault) {
     ResourceBundle bundle = super.getBundle(isDefault);
     if (bundle != null && LocalizationUtil.INSTANCE.isL10nPluginInitialized() && isUpdateNeeded) {
