@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
-import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
@@ -32,7 +31,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
 /**
- * A usage from the K2 move refactoring.
+ * A usage from the K2 move refactoring. Not all usages need to be updated, some are only used for conflict checking.
+ * Moving, for example, an instance method can result in the method losing visibility to a usage, but just this method doesn't need updating.
  */
 sealed class K2MoveRenameUsageInfo(
     element: PsiElement,
@@ -44,6 +44,14 @@ sealed class K2MoveRenameUsageInfo(
         this is PsiMethod && isConstructor -> containingClass ?: error("Constructor had no containing class")
         else -> this
     }
+
+    /**
+     * Returns whether this usage info is actually required for updating.
+     * Sometimes it can depend on the language of the usage whether the usage info is updatable.
+     * In Kotlin, for example, object members can be imported and might require updating, but in Java these are regular instance methods and
+     * references to these methods can't be updated.
+     */
+    abstract fun isUpdatable(): Boolean
 
     abstract fun retarget(to: PsiNamedElement): PsiElement?
 
@@ -58,6 +66,10 @@ sealed class K2MoveRenameUsageInfo(
         private val oldContainingFqn: String?,
         private val lightElementIndex: Int,
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
+        override fun isUpdatable(): Boolean {
+            return true // TODO write better updatable check for light references
+        }
+
         override fun retarget(to: PsiNamedElement): PsiElement? {
             if (to !is KtNamedDeclaration) error("Usage must reference a Kotlin element")
             val element = element ?: return element
@@ -120,6 +132,46 @@ sealed class K2MoveRenameUsageInfo(
         referencedElement: PsiNamedElement,
         val isInternal: Boolean
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
+        override fun isUpdatable(): Boolean {
+            val refExpr = element as KtSimpleNameExpression
+            if (refExpr is KtEnumEntrySuperclassReferenceExpression) return false
+            if (refExpr.parent is KtThisExpression || refExpr.parent is KtSuperExpression) return false
+            if (refExpr.isUnqualifiable()) return true
+            analyze(refExpr) {
+                val resolvedSymbol = refExpr.mainReference.resolveToSymbol()
+                if (resolvedSymbol is KtConstructorSymbol) return true
+                val containingSymbol = resolvedSymbol?.getContainingSymbol()
+                if (containingSymbol == null) return true // top levels are static
+                if (containingSymbol is KtSymbolWithMembers) {
+                    val staticScope = containingSymbol.getStaticMemberScope()
+                    return resolvedSymbol in staticScope.getAllSymbols()
+                }
+                return false
+            }
+        }
+
+        private fun KtSimpleNameExpression.isUnqualifiable(): Boolean {
+            // example: a.foo() where foo is an extension function
+            fun KtSimpleNameExpression.isExtensionReference(): Boolean {
+                return analyze(this) {
+                    val callable = mainReference.resolveToSymbol() as? KtCallableSymbol
+                    if (callable?.isExtension == true) return true
+                    if (callable is KtPropertySymbol) {
+                        val returnType = callable.returnType
+                        returnType is KtFunctionalType && returnType.receiverType != null
+                    } else false
+                }
+            }
+
+            // example: ::foo
+            fun KtSimpleNameExpression.isCallableReferenceExpressionWithoutQualifier(): Boolean {
+                val parent = parent
+                return parent is KtCallableReferenceExpression && parent.receiverExpression == null
+            }
+            if (parentOfType<KtImportDirective>() != null) return false
+            return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
+        }
+
         fun refresh(referenceElement: PsiElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
             if (referenceElement !is KtElement) return this
             val reference = (referenceElement.mainReference as? KtSimpleNameReference) ?: return this
@@ -182,25 +234,12 @@ sealed class K2MoveRenameUsageInfo(
         @OptIn(KtAllowAnalysisFromWriteAction::class)
         fun unMarkNonUpdatableUsages(containing: KtElement) = allowAnalysisFromWriteAction {
             containing.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
-                if (!refExpr.isImportable()) refExpr.internalUsageInfo = null
+                val usageInfo = refExpr.internalUsageInfo ?: return@forEachDescendantOfType
+                if (!usageInfo.isUpdatable()) refExpr.internalUsageInfo = null
             }
         }
 
-        private fun KtSimpleNameExpression.isImportable(): Boolean = analyze(this) {
-            val refExpr = this@isImportable
-            if (refExpr is KtEnumEntrySuperclassReferenceExpression) return false
-            if (refExpr.parent is KtThisExpression || refExpr.parent is KtSuperExpression) return false
-            if (refExpr.isUnqualifiable()) return true
-            val resolvedSymbol = refExpr.mainReference.resolveToSymbol()
-            if (resolvedSymbol is KtConstructorSymbol) return true
-            val containingSymbol = resolvedSymbol?.getContainingSymbol()
-            if (containingSymbol == null) return true // top levels are static
-            if (containingSymbol is KtSymbolWithMembers) {
-                val staticScope = containingSymbol.getStaticMemberScope()
-                return resolvedSymbol in staticScope.getAllSymbols()
-            }
-            return false
-        }
+
 
         /**
          * Finds usages to [declaration] excluding the usages inside [declaration].
@@ -222,28 +261,6 @@ sealed class K2MoveRenameUsageInfo(
                         Light(ref.element, ref, declaration, lightElement is PsiMember, fqn, lightElements.indexOf(lightElement))
                     }
                 }
-        }
-
-        private fun KtSimpleNameExpression.isUnqualifiable(): Boolean {
-            // example: a.foo() where foo is an extension function
-            fun KtSimpleNameExpression.isExtensionReference(): Boolean {
-                return analyze(this) {
-                    val callable = mainReference.resolveToSymbol() as? KtCallableSymbol
-                    if (callable?.isExtension == true) return true
-                    if (callable is KtPropertySymbol) {
-                        val returnType = callable.returnType
-                        returnType is KtFunctionalType && returnType.receiverType != null
-                    } else false
-                }
-            }
-
-            // example: ::foo
-            fun KtSimpleNameExpression.isCallableReferenceExpressionWithoutQualifier(): Boolean {
-                val parent = parent
-                return parent is KtCallableReferenceExpression && parent.receiverExpression == null
-            }
-            if (parentOfType<KtImportDirective>() != null) return false
-            return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
         }
 
         internal fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
