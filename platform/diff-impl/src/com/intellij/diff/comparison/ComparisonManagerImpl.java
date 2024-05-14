@@ -19,6 +19,7 @@ import com.intellij.util.IntPair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.DiffConfig;
 import com.intellij.util.text.CharSequenceSubSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.util.List;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
 import static java.util.Collections.singletonList;
 
+@ApiStatus.Internal
 public final class ComparisonManagerImpl extends ComparisonManager {
   @NotNull
   public static ComparisonManagerImpl getInstanceImpl() {

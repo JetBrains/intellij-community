@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -9,11 +9,13 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class RefreshDirDiffAction extends DirDiffAction {
   /**
    * @deprecated Use {@link #getShortcut()} instead

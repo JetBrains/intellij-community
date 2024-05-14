@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl.ui
 
 import com.intellij.diff.FrameDiffTool
@@ -9,9 +9,11 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.FontUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
+@ApiStatus.Experimental
 abstract class DiffInfo : FrameDiffTool.DiffInfo {
   private val leftLabel = createLabel()
   private val rightLabel = createLabel()

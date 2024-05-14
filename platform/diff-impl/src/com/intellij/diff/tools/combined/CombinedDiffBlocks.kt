@@ -27,6 +27,7 @@ import com.intellij.util.FontUtil
 import com.intellij.util.IconUtil.getIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.FlowLayout
@@ -37,13 +38,16 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.properties.Delegates
 
+@ApiStatus.Experimental
 class CombinedBlockProducer(
   val id: CombinedBlockId,
   val producer: DiffRequestProducer
 )
 
+@ApiStatus.Experimental
 interface CombinedBlockId
 
+@ApiStatus.Experimental
 interface CombinedDiffBlock<ID : CombinedBlockId> : Disposable {
   val id: ID
 
@@ -57,23 +61,28 @@ interface CombinedDiffBlock<ID : CombinedBlockId> : Disposable {
   fun updateBlockContent(newContent: CombinedDiffBlockContent) {}
 }
 
+@ApiStatus.Experimental
 interface CombinedSelectableDiffBlock<ID : CombinedBlockId> : CombinedDiffBlock<ID> {
   fun setSelected(selected: Boolean)
   fun updateBorder(updateStickyHeaderBottomBorder: Boolean) {}
 }
 
+@ApiStatus.Experimental
 interface CombinedCollapsibleDiffBlock<ID : CombinedBlockId> : CombinedSelectableDiffBlock<ID> {
   fun setCollapsed(collapsed: Boolean)
 
   fun addListener(listener: CombinedDiffBlockListener, parentDisposable: Disposable)
 }
 
+@ApiStatus.Experimental
 interface CombinedDiffBlockListener : EventListener {
   fun onCollapseStateChanged(id: CombinedBlockId, collapseState: Boolean)
 }
 
+@ApiStatus.Experimental
 class CombinedDiffBlockContent(val viewer: FrameDiffTool.DiffViewer, val blockId: CombinedBlockId)
 
+@ApiStatus.Experimental
 interface CombinedDiffBlockFactory<ID : CombinedBlockId> {
   fun createBlock(project: Project, content: CombinedDiffBlockContent, isCollapsed: Boolean): CombinedDiffBlock<ID>
 }
@@ -182,6 +191,7 @@ private class CombinedSimpleDiffHeader(project: Project,
   }
 }
 
+@ApiStatus.Experimental
 data class CombinedPathBlockId(val path: FilePath, val fileStatus: FileStatus?, val tag: Any? = null) : CombinedBlockId
 
 internal class CombinedSimpleDiffBlock(project: Project,

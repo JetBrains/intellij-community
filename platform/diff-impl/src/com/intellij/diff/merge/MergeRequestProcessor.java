@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.CommonBundle;
@@ -41,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,7 @@ import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 // TODO: support merge request chains
 // idea - to keep in memory all viewers that were modified (so binary conflict is not the case and OOM shouldn't be too often)
 // suspend() / resume() methods for viewers? To not interfere with MergeRequest lifecycle: single request -> single viewer -> single applyResult()
+@ApiStatus.Internal
 public abstract class MergeRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(MergeRequestProcessor.class);
 

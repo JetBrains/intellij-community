@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir;
 
 import com.google.common.collect.BiMap;
@@ -37,6 +37,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class DirDiffTableModel extends AbstractTableModel implements DirDiffModel, Disposable {
   private static final Logger LOG = Logger.getInstance(DirDiffTableModel.class);
 

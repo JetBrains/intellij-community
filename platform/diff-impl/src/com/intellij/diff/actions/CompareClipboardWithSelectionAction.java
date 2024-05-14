@@ -42,9 +42,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @Nullable
   private static Editor getEditor(@NotNull AnActionEvent e) {

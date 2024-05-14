@@ -338,6 +338,7 @@ private class ShowActionGroupPopupAction(
 /**
  * Various ui states which shared between the main ui and the combined diff viewer
  */
+@ApiStatus.Experimental
 class CombinedDiffUIState {
   private val searchMode: MutableStateFlow<Boolean> = MutableStateFlow(false)
   private val stickyHeaderUnderBorder: MutableStateFlow<Boolean> = MutableStateFlow(false)

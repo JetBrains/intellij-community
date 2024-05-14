@@ -2,8 +2,9 @@
 package com.intellij.diff.util
 
 import com.intellij.diff.tools.combined.CombinedDiffRegistry
+import org.jetbrains.annotations.ApiStatus
 
-
+@ApiStatus.Experimental
 interface CombinedDiffToggle {
   var isCombinedDiffEnabled: Boolean
 

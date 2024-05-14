@@ -57,7 +57,7 @@ import java.io.File
 import javax.swing.JComponent
 import kotlin.math.max
 
-class ShowBlankDiffWindowAction : DumbAwareAction() {
+internal class ShowBlankDiffWindowAction : DumbAwareAction() {
 
   init {
     isEnabledInModalContext = true
@@ -289,7 +289,7 @@ internal class BlankToggleThreeSideModeAction : DumbAwareAction() {
 }
 
 
-class ShowBlankDiffWindowDiffExtension : DiffExtension() {
+internal class ShowBlankDiffWindowDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: DiffViewer, context: DiffContext, request: DiffRequest) {
     val helper = MutableDiffRequestChain.createHelper(context, request) ?: return
     if (helper.chain.getUserData(BlankDiffWindowUtil.BLANK_KEY) != true) return

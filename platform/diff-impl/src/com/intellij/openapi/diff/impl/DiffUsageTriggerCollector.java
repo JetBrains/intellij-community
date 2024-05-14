@@ -11,12 +11,14 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
   private final static EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 5);
   private static final StringEventField DIFF_PLACE_FIELD = EventFields.String("diff_place",

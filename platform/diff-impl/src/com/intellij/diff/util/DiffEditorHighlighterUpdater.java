@@ -14,11 +14,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
   @NotNull private final DocumentContent myContent;
 

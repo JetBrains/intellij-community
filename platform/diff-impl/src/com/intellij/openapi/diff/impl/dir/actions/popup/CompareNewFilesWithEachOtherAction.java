@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -9,10 +9,12 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class CompareNewFilesWithEachOtherAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

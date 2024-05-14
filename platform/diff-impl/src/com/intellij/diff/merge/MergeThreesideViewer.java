@@ -93,6 +93,7 @@ import java.util.function.Consumer;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
 
+@ApiStatus.Internal
 public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   @NotNull protected final MergeModelBase<TextMergeChange.State> myModel;
 

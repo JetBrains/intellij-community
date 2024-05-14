@@ -3,6 +3,7 @@ package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +23,12 @@ public class GenericDataProvider implements DataProvider {
     myGenericData = new HashMap<>();
   }
 
+  /**
+   * @see com.intellij.diff.util.DiffUtil#putDataKey
+   */
+  @ApiStatus.Internal
   public <T> void putData(DataKey<T> key, T value) {
     myGenericData.put(key.getName(), value);
-  }
-
-  public void putData(String key, Object value) {
-    myGenericData.put(key, value);
   }
 
   @Override

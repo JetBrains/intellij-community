@@ -926,6 +926,7 @@ private fun Rectangle.intersects(bb: BlockBounds): Boolean =
   (bb.maxY > minY && bb.maxY <= maxY) ||
   (bb.minY <= minY && bb.maxY >= maxY)
 
+@ApiStatus.Experimental
 interface BlockListener : EventListener {
   fun blocksHidden(blockIds: Collection<CombinedBlockId>)
   fun blocksVisible(blockIds: Collection<CombinedBlockId>)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
 import com.intellij.openapi.components.service
@@ -32,7 +32,7 @@ interface DiffEditorTabFilesManager {
 @JvmField
 val DIFF_OPENED_IN_NEW_WINDOW = Key<Boolean>("DIFF_OPENED_IN_NEW_WINDOW")
 
-class DefaultDiffTabFilesManager(private val project: Project) : DiffEditorTabFilesManager {
+internal class DefaultDiffTabFilesManager(private val project: Project) : DiffEditorTabFilesManager {
 
   override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
     return FileEditorManager.getInstance(project).openFile(diffFile, true)

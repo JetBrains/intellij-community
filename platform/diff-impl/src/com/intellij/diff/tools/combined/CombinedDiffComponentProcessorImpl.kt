@@ -249,6 +249,7 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
   }
 }
 
+@ApiStatus.Experimental
 data class CombinedDiffEditorState(
   val currentBlockIds: Set<CombinedBlockId>,
   val activeBlockId: CombinedBlockId?,
