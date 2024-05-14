@@ -367,6 +367,14 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   }
 
   @Synchronized
+  fun showBuildIssue(buildIssue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcess {
+    hasErrors =  hasErrors || kind == MessageEvent.Kind.ERROR
+    val key = getKeyPrefix(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
+    startTask(mySyncId, key)
+    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(key, buildIssue, kind))
+  }
+
+  @Synchronized
   private fun startTask(parentId: Any, @NlsSafe taskName: String) = doIfImportInProcess {
     debugLog("Maven sync: start $taskName")
     if (myStartedSet.add(parentId to taskName)) {
