@@ -978,53 +978,39 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - *sf:Companion:com.intellij.webSymbols.webTypes.WebTypesSymbol$Companion
 - a:getLocation():com.intellij.webSymbols.webTypes.WebTypesSymbol$Location
 *f:com.intellij.webSymbols.webTypes.WebTypesSymbol$Companion
-*f:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport
+*:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport
 - com.intellij.webSymbols.webTypes.WebTypesSymbol$FileLocation
 - com.intellij.webSymbols.webTypes.WebTypesSymbol$Location
-- <init>(java.lang.String,java.lang.String,java.util.List):V
-- f:component1():java.lang.String
-- f:component2():java.lang.String
-- f:component3():java.util.List
-- f:copy(java.lang.String,java.lang.String,java.util.List):com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport
-- bs:copy$default(com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport,java.lang.String,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport
-- equals(java.lang.Object):Z
-- getContext():java.util.List
-- getFileName():java.lang.String
-- f:getSymbolName():java.lang.String
-- hashCode():I
-- toString():java.lang.String
+- *sf:Companion:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport$Companion
+- s:create(java.lang.String,java.lang.String,java.util.List):com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport
+- a:getContext():java.util.List
+- a:getFileName():java.lang.String
+- a:getSymbolName():java.lang.String
+*f:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport$Companion
+- f:create(java.lang.String,java.lang.String,java.util.List):com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport
 *:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileLocation
 - findFile():com.intellij.openapi.vfs.VirtualFile
 - a:getContext():java.util.List
 - a:getFileName():java.lang.String
-*f:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileOffset
+*:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileOffset
 - com.intellij.webSymbols.webTypes.WebTypesSymbol$FileLocation
 - com.intellij.webSymbols.webTypes.WebTypesSymbol$Location
-- <init>(java.lang.String,I,java.util.List):V
-- f:component1():java.lang.String
-- f:component2():I
-- f:component3():java.util.List
-- f:copy(java.lang.String,I,java.util.List):com.intellij.webSymbols.webTypes.WebTypesSymbol$FileOffset
-- bs:copy$default(com.intellij.webSymbols.webTypes.WebTypesSymbol$FileOffset,java.lang.String,I,java.util.List,I,java.lang.Object):com.intellij.webSymbols.webTypes.WebTypesSymbol$FileOffset
-- equals(java.lang.Object):Z
-- getContext():java.util.List
-- getFileName():java.lang.String
-- f:getOffset():I
-- hashCode():I
-- toString():java.lang.String
+- *sf:Companion:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileOffset$Companion
+- s:create(java.lang.String,I,java.util.List):com.intellij.webSymbols.webTypes.WebTypesSymbol$FileOffset
+- a:getContext():java.util.List
+- a:getFileName():java.lang.String
+- a:getOffset():I
+*f:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileOffset$Companion
+- f:create(java.lang.String,I,java.util.List):com.intellij.webSymbols.webTypes.WebTypesSymbol$FileOffset
 *:com.intellij.webSymbols.webTypes.WebTypesSymbol$Location
-*f:com.intellij.webSymbols.webTypes.WebTypesSymbol$ModuleExport
+*:com.intellij.webSymbols.webTypes.WebTypesSymbol$ModuleExport
 - com.intellij.webSymbols.webTypes.WebTypesSymbol$Location
-- <init>(java.lang.String,java.lang.String):V
-- f:component1():java.lang.String
-- f:component2():java.lang.String
-- f:copy(java.lang.String,java.lang.String):com.intellij.webSymbols.webTypes.WebTypesSymbol$ModuleExport
-- bs:copy$default(com.intellij.webSymbols.webTypes.WebTypesSymbol$ModuleExport,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.webSymbols.webTypes.WebTypesSymbol$ModuleExport
-- equals(java.lang.Object):Z
-- f:getModuleName():java.lang.String
-- f:getSymbolName():java.lang.String
-- hashCode():I
-- toString():java.lang.String
+- *sf:Companion:com.intellij.webSymbols.webTypes.WebTypesSymbol$ModuleExport$Companion
+- s:create(java.lang.String,java.lang.String):com.intellij.webSymbols.webTypes.WebTypesSymbol$ModuleExport
+- a:getModuleName():java.lang.String
+- a:getSymbolName():java.lang.String
+*f:com.intellij.webSymbols.webTypes.WebTypesSymbol$ModuleExport$Companion
+- f:create(java.lang.String,java.lang.String):com.intellij.webSymbols.webTypes.WebTypesSymbol$ModuleExport
 *c:com.intellij.webSymbols.webTypes.WebTypesSymbolBase
 - com.intellij.webSymbols.webTypes.WebTypesSymbol
 - p:queryExecutor:com.intellij.webSymbols.query.WebSymbolsQueryExecutor

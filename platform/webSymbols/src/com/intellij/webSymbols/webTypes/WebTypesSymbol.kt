@@ -4,7 +4,6 @@ package com.intellij.webSymbols.webTypes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
-import org.jetbrains.annotations.ApiStatus.Internal
 
 interface WebTypesSymbol : PsiSourcedWebSymbol {
 
@@ -12,7 +11,7 @@ interface WebTypesSymbol : PsiSourcedWebSymbol {
 
   sealed interface Location
 
-  interface FileLocation {
+  sealed interface FileLocation {
     val fileName: String
     val context: List<VirtualFile>
 
@@ -23,22 +22,52 @@ interface WebTypesSymbol : PsiSourcedWebSymbol {
 
   }
 
-  data class ModuleExport(
-    val moduleName: String,
-    val symbolName: String,
-  ) : Location
+  sealed interface ModuleExport : Location {
+    val moduleName: String
+    val symbolName: String
 
-  data class FileExport(
-    override val fileName: String,
-    val symbolName: String,
-    override val context: List<VirtualFile>,
-  ) : Location, FileLocation
+    companion object {
+      @JvmStatic
+      fun create(
+        moduleName: String,
+        symbolName: String,
+      ): ModuleExport =
+        ModuleExportData(moduleName, symbolName)
+    }
+  }
 
-  data class FileOffset(
-    override val fileName: String,
-    val offset: Int,
-    override val context: List<VirtualFile>,
-  ) : Location, FileLocation
+  sealed interface FileExport : Location, FileLocation {
+    override val fileName: String
+    val symbolName: String
+    override val context: List<VirtualFile>
+
+    companion object {
+      @JvmStatic
+      fun create(
+        fileName: String,
+        symbolName: String,
+        context: List<VirtualFile>,
+      ): FileExport =
+        FileExportData(fileName, symbolName, context)
+    }
+  }
+
+  sealed interface FileOffset : Location, FileLocation {
+    override val fileName: String
+    val offset: Int
+    override val context: List<VirtualFile>
+
+    companion object {
+      @JvmStatic
+      fun create(
+        fileName: String,
+        offset: Int,
+        context: List<VirtualFile>,
+      ): FileOffset =
+        FileOffsetData(fileName, offset, context)
+
+    }
+  }
 
   companion object {
     internal val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
@@ -47,3 +76,20 @@ interface WebTypesSymbol : PsiSourcedWebSymbol {
   }
 
 }
+
+private data class ModuleExportData(
+  override val moduleName: String,
+  override val symbolName: String,
+) : WebTypesSymbol.ModuleExport
+
+private data class FileExportData(
+  override val fileName: String,
+  override val symbolName: String,
+  override val context: List<VirtualFile>,
+) : WebTypesSymbol.FileExport
+
+private data class FileOffsetData(
+  override val fileName: String,
+  override val offset: Int,
+  override val context: List<VirtualFile>,
+) : WebTypesSymbol.FileOffset
