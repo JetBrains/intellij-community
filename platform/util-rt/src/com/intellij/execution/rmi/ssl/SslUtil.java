@@ -2,8 +2,10 @@
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.net.ssl.X509TrustManager;
 import java.io.File;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@ApiStatus.Internal
 public final class SslUtil {
   public static final String SSL_CA_CERT_PATH = "sslCaCertPath";
   public static final String SSL_CLIENT_CERT_PATH = "sslClientCertPath";
@@ -39,6 +42,11 @@ public final class SslUtil {
       entityCache.put(path, new Pair<Long, List<? extends SslEntityReader.Entity>>(stamp, res));
       return res;
     }
+  }
+
+  @TestOnly
+  public static void resetCache() {
+    entityCache.clear();
   }
 
   @NotNull

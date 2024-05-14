@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +11,7 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class SslEntityReader {
   private static SslEntityReader ourInstance;
 
@@ -20,6 +23,13 @@ public abstract class SslEntityReader {
       ourInstance = res;
     }
     return res;
+  }
+
+  @Nullable
+  public static SslEntityReader setInstance(@Nullable SslEntityReader reader) {
+    SslEntityReader prev = ourInstance;
+    ourInstance = reader;
+    return prev;
   }
 
   @NotNull
