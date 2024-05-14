@@ -185,6 +185,10 @@ private fun isContextAwareComputation(runnable: Any): Boolean {
  * ## Exception guarantees
  * This function is intended to be executed in blocking context, hence it always emits [ProcessCanceledException]
  *
+ * ## Impact on thread context
+ * This function is often used in combination with [ContextRunnable].
+ * It is important that [runAsCoroutine] runs _on top of_ [ContextRunnable], as [async] in this function exposes the scope of [GlobalScope].
+ *
  * @param completeOnFinish whether to complete [continuation] on the computation finish. Most of the time, this is the desired default behavior.
  * However, sometimes in non-linear execution scenarios (such as NonBlockingReadAction), more precise control over the completion of a job is needed.
  */

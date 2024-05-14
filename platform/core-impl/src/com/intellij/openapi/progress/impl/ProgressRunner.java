@@ -462,9 +462,11 @@ public final class ProgressRunner<R> {
       Runnable runnable = new ProgressRunnable<>(resultFuture, task, progressIndicator);
       Runnable contextRunnable = context.equals(EmptyCoroutineContext.INSTANCE) ? runnable : (ContextAwareRunnable)() -> {
         CoroutineContext effectiveContext = context.plus(asContextElement(progressIndicator.getModalityState()));
-        try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
-          childContext.runAsCoroutine(runnable);
-        }
+        childContext.runAsCoroutine(() -> {
+          try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
+            runnable.run();
+          }
+        });
       };
       switch (myThreadToUse) {
         case POOLED:
