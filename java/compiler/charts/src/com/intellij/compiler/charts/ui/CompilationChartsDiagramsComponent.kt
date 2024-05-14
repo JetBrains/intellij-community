@@ -15,6 +15,7 @@ import kotlin.math.exp
 
 
 class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewModel,
+                                         private val zoom: Zoom,
                                          private val getViewport: () -> JViewport) : JBPanelWithEmptyText() {
   companion object {
     val ROW_HEIGHT = JBTable().rowHeight * 1.5
@@ -26,8 +27,6 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
   var statistic: Statistic = Statistic()
   var cpuMemory: CpuMemoryStatisticsType = CpuMemoryStatisticsType.MEMORY
   private val mouseAdapter: CompilationChartsMouseAdapter
-
-  private var zoom: Zoom = Zoom()
 
   init {
     addMouseWheelListener { e ->

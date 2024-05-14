@@ -13,8 +13,14 @@ import javax.swing.ScrollPaneConstants
 class CompilationChartsView(private val vm: CompilationChartsViewModel) : BorderLayoutPanel() {
   init {
     val init = Initialization()
-    val diagrams = CompilationChartsDiagramsComponent(vm, init.init())
-    val scroll = JBScrollPane(diagrams).apply {
+    val zoom = Zoom()
+
+    val diagrams = CompilationChartsDiagramsComponent(vm, zoom, init.init()).apply {
+      name = "compilation-charts-diagrams-component"
+    }
+    val scroll = object : JBScrollPane(diagrams) {
+      override fun createViewport(): JViewport = CompilationChartsViewport(zoom)
+    }.apply {
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
       verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
       border = JBUI.Borders.empty()
