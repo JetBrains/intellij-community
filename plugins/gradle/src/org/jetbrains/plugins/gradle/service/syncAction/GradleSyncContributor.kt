@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
  * @see com.intellij.platform.backend.workspace.WorkspaceModel
  * @see com.intellij.openapi.externalSystem.util.Order
  */
+@ApiStatus.Experimental
 interface GradleSyncContributor {
 
   val name: String
