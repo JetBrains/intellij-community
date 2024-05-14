@@ -46,8 +46,17 @@ import java.time.Duration
  */
 @Service
 internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
-  /** Cache for all command specs with their providers. Key is the name of the command. */
-  private val specsDataCache: Cache<String, ShellCommandSpecData> = Caffeine.newBuilder()
+  /**
+   * Cache for all **Light** json-based and code based specs with resolved conflicts.
+   * Key is the name of the command.
+   */
+  private val lightSpecsCache: Cache<String, ShellCommandSpec> = Caffeine.newBuilder()
+    .expireAfterAccess(Duration.ofMinutes(5))
+    .scheduler(Scheduler.systemScheduler())
+    .build()
+
+  /** Cache for json-based **Light** command spec providers. Key is the name of the command */
+  private val jsonBasedSpecProviders: Cache<String, ShellJsonCommandSpecsProvider> = Caffeine.newBuilder()
     .expireAfterAccess(Duration.ofMinutes(5))
     .scheduler(Scheduler.systemScheduler())
     .build()
@@ -62,13 +71,11 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
   init {
     ShellCommandSpecsProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ShellCommandSpecsProvider> {
       override fun extensionAdded(extension: ShellCommandSpecsProvider, pluginDescriptor: PluginDescriptor) {
-        specsDataCache.invalidateAll()
-        fullSpecsCache.invalidateAll()
+        clearCaches()
       }
 
       override fun extensionRemoved(extension: ShellCommandSpecsProvider, pluginDescriptor: PluginDescriptor) {
-        specsDataCache.invalidateAll()
-        fullSpecsCache.invalidateAll()
+        clearCaches()
       }
     })
   }
@@ -77,8 +84,8 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
    * @return the full spec for provided [commandName] if any.
    */
   override suspend fun getCommandSpec(commandName: String): ShellCommandSpec? {
-    val specInfo = getShellCommandSpecInfo(commandName) ?: return null
-    return getFullCommandSpec(specInfo.spec)
+    val spec = getLightCommandSpec(commandName) ?: return null
+    return getFullCommandSpec(spec)
   }
 
   /**
@@ -96,10 +103,7 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
       LOG.error("Failed to load full command spec '$specRef'")
       return spec
     }
-    // We don't need to cache the code-based specs, because they are lazy by default
-    if (fullSpec is ShellJsonBasedCommandSpec) {
-      fullSpecsCache.put(specRef, fullSpec)
-    }
+    fullSpecsCache.put(specRef, fullSpec)
     return fullSpec
   }
 
@@ -110,18 +114,34 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
    * Intended that this method should return fast in most of the cases, because it should not load the whole command specification.
    */
   fun getLightCommandSpec(commandName: String): ShellCommandSpec? {
-    return getShellCommandSpecInfo(commandName)?.spec
+    loadCommandSpecsIfNeeded()
+    return lightSpecsCache.getIfPresent(commandName)
   }
 
-  private fun getShellCommandSpecInfo(commandName: String): ShellCommandSpecData? {
-    if (specsDataCache.estimatedSize() == 0L) {
-      val specsInfoMap = loadCommandSpecs()
-      specsDataCache.putAll(specsInfoMap)
+  private fun getJsonCommandSpecProvider(commandName: String): ShellJsonCommandSpecsProvider? {
+    loadCommandSpecsIfNeeded()
+    return jsonBasedSpecProviders.getIfPresent(commandName)
+  }
+
+  private fun loadCommandSpecsIfNeeded() {
+    if (lightSpecsCache.estimatedSize() == 0L || jsonBasedSpecProviders.estimatedSize() == 0L) {
+      val specsDataMap: MultiMap<String, ShellCommandSpecData> = loadCommandSpecs()
+      for ((name, specs) in specsDataMap.entrySet()) {
+        val specData = if (specs.size > 1) {
+          resolveSpecsConflict(specs)
+        }
+        else specs.first()
+        lightSpecsCache.put(name, specData.spec)
+
+        val jsonSpecData = specs.find { it.spec is ShellJsonBasedCommandSpec }
+        if (jsonSpecData != null) {
+          jsonBasedSpecProviders.put(name, jsonSpecData.provider as ShellJsonCommandSpecsProvider)
+        }
+      }
     }
-    return specsDataCache.getIfPresent(commandName)
   }
 
-  private fun loadCommandSpecs(): Map<String, ShellCommandSpecData> {
+  private fun loadCommandSpecs(): MultiMap<String, ShellCommandSpecData> {
     val specsDataMap = MultiMap<String, ShellCommandSpecData>()
     for (provider in ShellCommandSpecsProvider.EP_NAME.extensionList) {
       val specInfos = provider.getCommandSpecs()
@@ -130,13 +150,13 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
         specsDataMap.putValue(specData.spec.name, specData)
       }
     }
-    return specsDataMap.entrySet().associateByTo(HashMap(), keySelector = { it.key }) {
-      val specs = it.value
-      if (specs.size > 1) {
-        resolveSpecsConflict(specs)
-      }
-      else specs.first()
-    }
+    return specsDataMap
+  }
+
+  private fun clearCaches() {
+    lightSpecsCache.invalidateAll()
+    jsonBasedSpecProviders.invalidateAll()
+    fullSpecsCache.invalidateAll()
   }
 
   private fun resolveSpecsConflict(specs: Collection<ShellCommandSpecData>): ShellCommandSpecData {
@@ -172,47 +192,28 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
    *     - sub.json
    *     - sub2.json
    */
-  private suspend fun loadFullCommandSpec(specRef: String): ShellCommandSpec? {
+  private suspend fun loadFullCommandSpec(specRef: String): ShellJsonBasedCommandSpec? {
     val mainCommand = if (specRef.contains('/')) {
       specRef.substringBefore('/')
     }
     else null
-    val (provider, path) = if (mainCommand != null) {
-      // If it is the reference of the subcommand inside the main command, we first should get the main command spec
-      // It is required to get the provider of the main command.
-      // This is because the subcommand spec should be loaded using its classloader.
-      val mainCommandInfo = getShellCommandSpecInfo(mainCommand) ?: return null
-      mainCommandInfo.provider to getSpecPath(mainCommandInfo.provider, specRef)
-    }
-    else {
-      // It is just a reference of the other command, we should get it and load if it is a json based command spec.
-      val commandInfo = getShellCommandSpecInfo(specRef) ?: return null
-      if (commandInfo.spec !is ShellJsonBasedCommandSpec || commandInfo.spec.fullSpecRef == null) {
-        return commandInfo.spec
-      }
-      commandInfo.provider to getSpecPath(commandInfo.provider, commandInfo.spec.fullSpecRef!!)
-    }
-    if (path == null) {
-      return null
-    }
+    // If it is the reference of the subcommand inside the main command, we need to get the main command spec.
+    // Command spec should be loaded by the classloader of the main command provider.
+    // If there is no main command, then we consider specRef as the main command.
+    val specProvider = getJsonCommandSpecProvider(mainCommand ?: specRef) ?: return null
+    val path = getSpecPath(specProvider, specRef)
 
     val command: ShellCommand = withContext(Dispatchers.IO) {
-      loadAndParseJson(path, provider.javaClass.classLoader)
+      loadAndParseJson(path, specProvider.javaClass.classLoader)
     } ?: return null
     return ShellJsonBasedCommandSpec(command.names.first(), command, parentNames = mainCommand?.let { listOf(it) } ?: emptyList())
   }
 
   /**
    * Returns the path of the command spec referenced by [specRef] inside the Jar.
-   * It is implied that [provider] is a [ShellJsonCommandSpecsProvider],
-   * because spec references are supported only in json based command specs.
    */
-  private fun getSpecPath(provider: ShellCommandSpecsProvider, specRef: String): String? {
-    val jsonSpecProvider = provider as? ShellJsonCommandSpecsProvider ?: run {
-      LOG.error("Failed to get spec path for '$specRef'. Provider must be a ShellJsonCommandSpecsProvider")
-      return null
-    }
-    val basePath = jsonSpecProvider.commandSpecsPath.let { if (it.isEmpty() || it.endsWith("/")) it else "$it/" }
+  private fun getSpecPath(provider: ShellJsonCommandSpecsProvider, specRef: String): String {
+    val basePath = provider.commandSpecsPath.let { if (it.isEmpty() || it.endsWith("/")) it else "$it/" }
     return "$basePath$specRef.json"
   }
 
