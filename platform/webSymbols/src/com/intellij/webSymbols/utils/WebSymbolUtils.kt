@@ -362,7 +362,7 @@ fun WebSymbolsScope.getDefaultCodeCompletions(qualifiedName: WebSymbolQualifiedN
                                               params: WebSymbolsCodeCompletionQueryParams,
                                               scope: Stack<WebSymbolsScope>) =
   getSymbols(qualifiedName.qualifiedKind,
-             WebSymbolsListSymbolsQueryParams(
+             WebSymbolsListSymbolsQueryParams.create(
                params.queryExecutor,
                expandPatterns = false,
                virtualSymbols = params.virtualSymbols

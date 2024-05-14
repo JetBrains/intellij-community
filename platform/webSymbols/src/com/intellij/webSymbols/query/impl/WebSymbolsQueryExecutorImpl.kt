@@ -65,7 +65,7 @@ internal class WebSymbolsQueryExecutorImpl(rootScope: List<WebSymbolsScope>,
                                  abstractSymbols: Boolean,
                                  strictScope: Boolean,
                                  additionalScope: List<WebSymbolsScope>): List<WebSymbol> =
-    runNameMatchQuery(path, WebSymbolsNameMatchQueryParams(this, virtualSymbols, abstractSymbols, strictScope), additionalScope)
+    runNameMatchQuery(path, WebSymbolsNameMatchQueryParams.create(this, virtualSymbols, abstractSymbols, strictScope), additionalScope)
 
   override fun runListSymbolsQuery(path: List<WebSymbolQualifiedName>,
                                    qualifiedKind: WebSymbolQualifiedKind,
@@ -75,14 +75,14 @@ internal class WebSymbolsQueryExecutorImpl(rootScope: List<WebSymbolsScope>,
                                    strictScope: Boolean,
                                    additionalScope: List<WebSymbolsScope>): List<WebSymbol> =
     runListSymbolsQuery(path + qualifiedKind.withName(""),
-                        WebSymbolsListSymbolsQueryParams(this, expandPatterns = expandPatterns, virtualSymbols = virtualSymbols,
+                        WebSymbolsListSymbolsQueryParams.create(this, expandPatterns = expandPatterns, virtualSymbols = virtualSymbols,
                                                          abstractSymbols = abstractSymbols, strictScope = strictScope), additionalScope)
 
   override fun runCodeCompletionQuery(path: List<WebSymbolQualifiedName>,
                                       position: Int,
                                       virtualSymbols: Boolean,
                                       additionalScope: List<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    runCodeCompletionQuery(path, WebSymbolsCodeCompletionQueryParams(this, position, virtualSymbols), additionalScope)
+    runCodeCompletionQuery(path, WebSymbolsCodeCompletionQueryParams.create(this, position, virtualSymbols), additionalScope)
 
   override fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor =
     if (rules.isEmpty())
@@ -249,7 +249,7 @@ internal class WebSymbolsQueryExecutorImpl(rootScope: List<WebSymbolsScope>,
 
     val scope = buildQueryScope(additionalScope)
     return RecursionManager.doPreventingRecursion(Pair(path, params.virtualSymbols), false) {
-      val contextQueryParams = WebSymbolsNameMatchQueryParams(this, true, false)
+      val contextQueryParams = WebSymbolsNameMatchQueryParams.create(this, true, false)
       var i = 0
       while (i < path.size - 1) {
         val qName = path[i++]

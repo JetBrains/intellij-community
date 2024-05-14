@@ -810,21 +810,18 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.webSymbols.query.WebSymbolNamesProvider$Target
 - s:values():com.intellij.webSymbols.query.WebSymbolNamesProvider$Target[]
-*f:com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+*:com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 - com.intellij.webSymbols.query.WebSymbolsQueryParams
-- <init>(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,I,Z):V
-- b:<init>(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-- f:component2():I
-- f:component3():Z
-- f:copy(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,I,Z):com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
-- bs:copy$default(com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,I,Z,I,java.lang.Object):com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
-- equals(java.lang.Object):Z
-- f:getPosition():I
-- getQueryExecutor():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-- getVirtualSymbols():Z
-- hashCode():I
-- toString():java.lang.String
+- *sf:Companion:com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams$Companion
+- s:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,I):com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+- s:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,I,Z):com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+- a:getPosition():I
+- a:getQueryExecutor():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+- a:getVirtualSymbols():Z
+*f:com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams$Companion
+- f:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,I):com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+- f:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,I,Z):com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+- bs:create$default(com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams$Companion,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,I,Z,I,java.lang.Object):com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 *a:com.intellij.webSymbols.query.WebSymbolsCompoundScope
 - com.intellij.webSymbols.WebSymbolsScope
 - <init>():V
@@ -836,42 +833,39 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - f:getScopes(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):java.util.List
 - f:getSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind,com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
 - f:isExclusiveFor(com.intellij.webSymbols.WebSymbolQualifiedKind):Z
-*f:com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
+*:com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 - com.intellij.webSymbols.query.WebSymbolsQueryParams
-- <init>(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,Z):V
-- b:<init>(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-- f:component2():Z
-- f:component3():Z
-- f:component4():Z
-- f:component5():Z
-- f:copy(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,Z):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
-- bs:copy$default(com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,Z,I,java.lang.Object):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
-- equals(java.lang.Object):Z
-- f:getAbstractSymbols():Z
-- f:getExpandPatterns():Z
-- getQueryExecutor():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-- f:getStrictScope():Z
-- getVirtualSymbols():Z
-- hashCode():I
-- toString():java.lang.String
-*f:com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+- *sf:Companion:com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams$Companion
+- s:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
+- s:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
+- s:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,Z):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
+- a:getAbstractSymbols():Z
+- a:getExpandPatterns():Z
+- a:getQueryExecutor():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+- a:getStrictScope():Z
+- a:getVirtualSymbols():Z
+*f:com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams$Companion
+- f:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
+- f:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
+- f:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,Z):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
+- bs:create$default(com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams$Companion,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,I,java.lang.Object):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
+- bs:create$default(com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams$Companion,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,Z,I,java.lang.Object):com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
+*:com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 - com.intellij.webSymbols.query.WebSymbolsQueryParams
-- <init>(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z):V
-- b:<init>(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-- f:component2():Z
-- f:component3():Z
-- f:component4():Z
-- f:copy(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-- bs:copy$default(com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,I,java.lang.Object):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-- equals(java.lang.Object):Z
-- f:getAbstractSymbols():Z
-- getQueryExecutor():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-- f:getStrictScope():Z
-- getVirtualSymbols():Z
-- hashCode():I
-- toString():java.lang.String
+- *sf:Companion:com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams$Companion
+- s:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+- s:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+- s:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+- a:getAbstractSymbols():Z
+- a:getQueryExecutor():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+- a:getStrictScope():Z
+- a:getVirtualSymbols():Z
+*f:com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams$Companion
+- f:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+- f:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+- f:create(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+- bs:create$default(com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams$Companion,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,I,java.lang.Object):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+- bs:create$default(com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams$Companion,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,Z,Z,Z,I,java.lang.Object):com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 *:com.intellij.webSymbols.query.WebSymbolsQueryConfigurator
 - *sf:Companion:com.intellij.webSymbols.query.WebSymbolsQueryConfigurator$Companion
 - beforeQueryExecutorCreation(com.intellij.openapi.project.Project):V

@@ -77,7 +77,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
 
   override fun getOptions(queryExecutor: WebSymbolsQueryExecutor,
                           scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions {
-    val queryParams = WebSymbolsNameMatchQueryParams(queryExecutor, true, false)
+    val queryParams = WebSymbolsNameMatchQueryParams.create(queryExecutor, true, false)
     val delegate = pattern.delegate?.resolve(scopeStack, queryParams.queryExecutor)?.firstOrNull()
 
     // Allow delegate pattern to override settings
