@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -394,6 +395,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   private volatile UsageNodePresentation myCachedPresentation;
 
+  @ApiStatus.Internal
   @Override
   public @Nullable UsageNodePresentation getCachedPresentation() {
     return myCachedPresentation;

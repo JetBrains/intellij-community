@@ -97,7 +97,6 @@ c:com.intellij.usages.impl.GroupNode
 - canNavigate():Z
 - canNavigateToSource():Z
 - compareTo(com.intellij.usages.impl.GroupNode):I
-- getCachedPresentation():com.intellij.usages.UsageNodePresentation
 - getGroup():com.intellij.usages.UsageGroup
 - p:getNodeText():java.lang.String
 - getSubGroups():java.util.Collection
@@ -130,7 +129,7 @@ a:com.intellij.usages.impl.UsageContextPanelBase
 c:com.intellij.usages.impl.UsageGroupingRuleProviderImpl
 - com.intellij.usages.rules.UsageGroupingRuleProviderEx
 - <init>():V
-- s:createGroupByFileStructureAction(com.intellij.usages.impl.UsageViewImpl):com.intellij.usages.impl.UsageGroupingRuleProviderImpl$GroupByFileStructureAction
+- s:createGroupByFileStructureAction(com.intellij.usages.impl.UsageViewImpl):com.intellij.openapi.actionSystem.AnAction
 - createGroupingActions(com.intellij.usages.UsageView):com.intellij.openapi.actionSystem.AnAction[]
 - getActiveRules(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewSettings,com.intellij.usages.UsageViewPresentation):com.intellij.usages.rules.UsageGroupingRule[]
 - getAllRules(com.intellij.openapi.project.Project,com.intellij.usages.UsageView):com.intellij.usages.rules.UsageGroupingRule[]
@@ -148,11 +147,10 @@ c:com.intellij.usages.impl.UsageNode
 - com.intellij.pom.Navigatable
 - java.lang.Comparable
 - javax.swing.tree.DefaultMutableTreeNode
-- <init>(com.intellij.usages.impl.Node,com.intellij.usages.Usage):V
+- <init>(com.intellij.usages.Usage):V
 - canNavigate():Z
 - canNavigateToSource():Z
 - compareTo(com.intellij.usages.impl.UsageNode):I
-- getCachedPresentation():com.intellij.usages.UsageNodePresentation
 - p:getNodeText():java.lang.String
 - getUsage():com.intellij.usages.Usage
 - p:isDataExcluded():Z
