@@ -9,13 +9,14 @@ fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null) = x(x
                                                                                SearchEverywherePopupUI::class.java)
 
 class SearchEverywherePopupUI(data: ComponentData): PopupUiComponent(data) {
-  private val searchField = x("//div[@class='SearchField']")
   val resultsList = x("//div[@class='JBList']", JListUiComponent::class.java)
 
-  fun searchAndChooseFirst(text: String) {
+  fun searchAndChooseFirst(text: String, exactMatch: Boolean = true) {
     keyboard {
       enterText(text)
-      resultsList.should(15) { hasText(text) }
+      resultsList.should(15) {
+        if (exactMatch) hasText(text) else hasSubtext(text)
+      }
       enter()
     }
   }
