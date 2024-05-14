@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NonNls
 import java.security.InvalidParameterException
 import kotlin.reflect.KProperty
 
-// region Base low level fields
+// region Base low-level fields
 
 sealed class EventField<T> {
   abstract val name: String
@@ -31,7 +31,7 @@ abstract class PrimitiveEventField<T>(@NonNls override val description: String? 
   abstract val validationRule: List<String>
 }
 
-abstract class ListEventField<T>() : EventField<List<T>>() {
+abstract class ListEventField<T> : EventField<List<T>>() {
   abstract val validationRule: List<String>
 }
 
@@ -39,7 +39,7 @@ data class EventPair<T>(val field: EventField<T>, val data: T) {
   fun addData(featureUsageData: FeatureUsageData): Unit = field.addData(featureUsageData, data)
 }
 
-// endregion Base low level fields
+// endregion Base low-level fields
 
 abstract class StringEventField(override val name: String) : PrimitiveEventField<String?>() {
   override fun addData(fuData: FeatureUsageData, value: String?) {
@@ -292,7 +292,6 @@ data class AnonymizedListEventField @JvmOverloads constructor(@NonNls @EventFiel
     get() = listOf("{regexp#hash}")
 }
 
-
 internal data class ShortAnonymizedEventField(@NonNls @EventFieldName override val name: String,
                                               @NonNls override val description: String? = null) : PrimitiveEventField<String?>() {
   override val shouldBeAnonymized: Boolean = true
@@ -420,7 +419,7 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
   }
 }
 
-val classCheckAndTransform: (Class<*>) -> String = {
+private val classCheckAndTransform: (Class<*>) -> String = {
   if (getPluginInfo(it).isSafeToReport()) StringUtil.substringBeforeLast(it.name, "$\$Lambda$", true) else "third.party"
 }
 
@@ -441,8 +440,8 @@ data class ClassEventField @JvmOverloads constructor(@NonNls @EventFieldName ove
 data class ClassListEventField @JvmOverloads constructor(override val name: String,
                                                          @NonNls override val description: String? = null) : ListEventField<Class<*>?>() {
 
-  override fun addData(fuData: FeatureUsageData, values: List<Class<*>?>) {
-    val classList = values.filterNotNull()
+  override fun addData(fuData: FeatureUsageData, value: List<Class<*>?>) {
+    val classList = value.filterNotNull()
     if (classList.isEmpty()) {
       return
     }
@@ -531,6 +530,10 @@ class ObjectEventData(private val values: List<EventPair<*>>) {
 
     return values == other.values
   }
+
+  override fun hashCode(): Int {
+    return values.hashCode()
+  }
 }
 
 class EventFieldDelegate<T>(val eventField: EventField<T>) {
@@ -552,7 +555,6 @@ class EventFieldDelegate<T>(val eventField: EventField<T>) {
     }
   }
 }
-
 
 class ObjectListEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
                            vararg val fields: EventField<*>,

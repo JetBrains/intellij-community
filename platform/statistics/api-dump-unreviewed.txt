@@ -87,6 +87,7 @@ f:com.intellij.internal.statistic.eventLog.EventLogGroup
 - f:registerVarargEvent(java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.eventLog.events.VarargEventId
 - f:registerVarargEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.eventLog.events.VarargEventId
 - bs:registerVarargEvent$default(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[],I,java.lang.Object):com.intellij.internal.statistic.eventLog.events.VarargEventId
+- toString():java.lang.String
 a:com.intellij.internal.statistic.eventLog.EventLogRecorderConfigOptionsListener
 - com.intellij.internal.statistic.eventLog.EventLogConfigOptionsListener
 - p:<init>(java.lang.String):V

@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
@@ -39,6 +38,10 @@ class EventId(
   }
 
   override fun getFields(): List<EventField<*>> = emptyList()
+
+  override fun toString(): String {
+    return "EventId(eventId='$eventId')"
+  }
 }
 
 class EventId1<in T>(
@@ -67,6 +70,10 @@ class EventId1<in T>(
   }
 
   override fun getFields(): List<EventField<*>> = listOf(field1)
+
+  override fun toString(): String {
+    return "EventId1(eventId='$eventId')"
+  }
 }
 
 class EventId2<in T1, in T2>(
@@ -97,6 +104,10 @@ class EventId2<in T1, in T2>(
   }
 
   override fun getFields(): List<EventField<*>> = listOf(field1, field2)
+
+  override fun toString(): String {
+    return "EventId2(eventId='$eventId')"
+  }
 }
 
 class EventId3<in T1, in T2, in T3>(
@@ -129,6 +140,10 @@ class EventId3<in T1, in T2, in T3>(
   }
 
   override fun getFields(): List<EventField<*>> = listOf(field1, field2, field3)
+
+  override fun toString(): String {
+    return "EventId3(eventId='$eventId')"
+  }
 }
 
 class EventDataCollector : ArrayList<EventPair<*>>() {
@@ -208,7 +223,7 @@ class VarargEventId internal constructor(
 
   override fun getFields(): List<EventField<*>> = fields.toList()
 
-  companion object {
-    val LOG = Logger.getInstance(VarargEventId::class.java)
+  override fun toString(): String {
+    return "VarargEventId(eventId='$eventId')"
   }
 }
