@@ -3,8 +3,8 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.IdeRootPane
-import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameButtons
-import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxCustomFrameTitleButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.CustomFrameButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxCustomFrameButtons
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -91,6 +91,6 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
   }
 
   private fun createButtonsPane(): CustomFrameButtons? {
-    return if (IdeRootPane.hideNativeLinuxTitle) LinuxCustomFrameTitleButtons.create(createCloseAction(this)) else null
+    return if (IdeRootPane.hideNativeLinuxTitle) LinuxCustomFrameButtons.create(createCloseAction(this)) else null
   }
 }

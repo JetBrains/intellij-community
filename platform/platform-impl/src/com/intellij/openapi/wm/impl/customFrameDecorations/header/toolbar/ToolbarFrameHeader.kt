@@ -9,7 +9,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxResizableCustomFrameTitleButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxResizableCustomFrameButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxThemeConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.HEADER_HEIGHT_DFM
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
@@ -93,8 +94,17 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
           // Skip initial call
           if (currentContentState !== value) {
             fillContent(value)
-            (buttonPanes as? LinuxResizableCustomFrameTitleButtons)?.fillContent(value)
+            (buttonPanes as? LinuxResizableCustomFrameButtons)?.fillContent(value)
           }
+        }
+      }
+    }
+
+    updateTheme(LinuxThemeConfiguration.getInstance()?.state?.theme)
+    LinuxThemeConfiguration.getInstance()?.let {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        it.stateFlow.collect { value ->
+          updateTheme(value?.theme)
         }
       }
     }
@@ -189,6 +199,10 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
       add(headerContent, gb.next().fillCell().anchor(GridBagConstraints.CENTER).weightx(1.0).weighty(1.0))
       add(productIcon, gb.next().anchor(GridBagConstraints.EAST).insets(0, H, 0, H))
     }
+  }
+
+  private fun updateTheme(theme: String?) {
+    (buttonPanes as? LinuxResizableCustomFrameButtons)?.updateTheme(theme)
   }
 
   private fun createToolbarPlaceholder(): JPanel {

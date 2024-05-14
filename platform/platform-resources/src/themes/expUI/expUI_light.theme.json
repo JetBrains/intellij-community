@@ -740,7 +740,8 @@
       "background": "Gray13",
       "inactiveBackground": "Gray13",
       "Button": {
-        "preferredSize": "44,40",
+        "preferredSize": "40,40",
+        "preferredSize.compact": "40,30",
         "hoverBackground": "#FFFFFF1A"
       }
     },

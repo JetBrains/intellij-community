@@ -751,6 +751,27 @@ public class AllIcons {
 
   public static final class Linux {
     /** 16x16 */ public static final @NotNull Icon Linux = load("linux/linux.svg", 122737916, 2);
+
+    public static final class Theme {
+      public static final class Gnome {
+        /** 24x24 */ public static final @NotNull Icon Close = load("linux/theme/gnome/close.svg", 1041465849, 2);
+        /** 24x24 */ public static final @NotNull Icon CloseHover = load("linux/theme/gnome/closeHover.svg", 1128310649, 2);
+        /** 24x24 */ public static final @NotNull Icon CloseInactive = load("linux/theme/gnome/closeInactive.svg", -235239049, 2);
+        /** 24x24 */ public static final @NotNull Icon ClosePressed = load("linux/theme/gnome/closePressed.svg", 1451669122, 2);
+        /** 24x24 */ public static final @NotNull Icon Maximize = load("linux/theme/gnome/maximize.svg", -621030100, 2);
+        /** 24x24 */ public static final @NotNull Icon MaximizeHover = load("linux/theme/gnome/maximizeHover.svg", 1326518692, 2);
+        /** 24x24 */ public static final @NotNull Icon MaximizeInactive = load("linux/theme/gnome/maximizeInactive.svg", -28016208, 2);
+        /** 24x24 */ public static final @NotNull Icon MaximizePressed = load("linux/theme/gnome/maximizePressed.svg", -420670284, 2);
+        /** 24x24 */ public static final @NotNull Icon Minimize = load("linux/theme/gnome/minimize.svg", 2127745494, 2);
+        /** 24x24 */ public static final @NotNull Icon MinimizeHover = load("linux/theme/gnome/minimizeHover.svg", -162281172, 2);
+        /** 24x24 */ public static final @NotNull Icon MinimizeInactive = load("linux/theme/gnome/minimizeInactive.svg", -593078237, 2);
+        /** 24x24 */ public static final @NotNull Icon MinimizePressed = load("linux/theme/gnome/minimizePressed.svg", 206506381, 2);
+        /** 24x24 */ public static final @NotNull Icon Restore = load("linux/theme/gnome/restore.svg", 1668500755, 2);
+        /** 24x24 */ public static final @NotNull Icon RestoreHover = load("linux/theme/gnome/restoreHover.svg", 801105303, 2);
+        /** 24x24 */ public static final @NotNull Icon RestoreInactive = load("linux/theme/gnome/restoreInactive.svg", -1904649367, 2);
+        /** 24x24 */ public static final @NotNull Icon RestorePressed = load("linux/theme/gnome/restorePressed.svg", -304033883, 2);
+      }
+    }
   }
 
   public static final class Mac {

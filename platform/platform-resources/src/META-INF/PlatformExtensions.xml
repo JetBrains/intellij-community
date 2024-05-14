@@ -1798,6 +1798,8 @@
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings" />
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.WindowButtonsConfiguration" headlessImplementation=""
                         preload="notHeadless" os="linux"/>
+    <applicationService serviceImplementation="com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxThemeConfiguration" headlessImplementation=""
+                        preload="notHeadless" os="linux"/>
   </extensions>
 
   <applicationListeners>
