@@ -8,8 +8,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyParsingBundle;
-import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,11 +74,11 @@ public class Parsing {
     LOG.assertTrue(myBuilder.getTokenType() == tokenType);
   }
 
-  protected boolean atToken(@Nullable final IElementType tokenType) {
+  protected boolean atToken(final @Nullable IElementType tokenType) {
     return myBuilder.getTokenType() == tokenType;
   }
 
-  protected boolean atToken(@NotNull final IElementType tokenType, @NotNull String tokenText) {
+  protected boolean atToken(final @NotNull IElementType tokenType, @NotNull String tokenText) {
     return myBuilder.getTokenType() == tokenType && tokenText.equals(myBuilder.getTokenText());
   }
 

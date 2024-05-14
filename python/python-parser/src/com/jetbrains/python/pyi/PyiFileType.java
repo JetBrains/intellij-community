@@ -20,28 +20,24 @@ import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
 public final class PyiFileType extends PythonFileType {
-  @NotNull
-  public static final PythonFileType INSTANCE = new PyiFileType();
+  public static final @NotNull PythonFileType INSTANCE = new PyiFileType();
 
   private PyiFileType() {
     super(new PyiLanguageDialect());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return PyiLanguageDialect.ID;
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return PyParsingBundle.message("filetype.python.stub.description");
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "pyi";
   }
 }

@@ -29,7 +29,6 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public class PythonFileType extends LanguageFileType {
   private static final Pattern ENCODING_PATTERN = Pattern.compile("coding[:=]\\s*([-\\w.]+)");
   public static final int MAX_CHARSET_ENCODING_LINE = 2;
@@ -45,22 +44,17 @@ public class PythonFileType extends LanguageFileType {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return "Python";
   }
 
   @Override
-  @NotNull
-  @NlsSafe
-  public String getDescription() {
+  public @NotNull @NlsSafe String getDescription() {
     return "Python";
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "py";
   }
 
@@ -93,8 +87,7 @@ public class PythonFileType extends LanguageFileType {
     }
   }
 
-  @Nullable
-  public static String getCharsetFromEncodingDeclaration(@NotNull PsiFile file) {
+  public static @Nullable String getCharsetFromEncodingDeclaration(@NotNull PsiFile file) {
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     final String content;
     if (document != null && document.getLineCount() > MAX_CHARSET_ENCODING_LINE) {
@@ -107,9 +100,8 @@ public class PythonFileType extends LanguageFileType {
     return getCharsetFromEncodingDeclaration(content);
   }
 
-  @Nullable
-  private static String getCharsetFromEncodingDeclaration(@Nullable CharSequence content) {
-    if (content == null || content.length() == 0) {
+  private static @Nullable String getCharsetFromEncodingDeclaration(@Nullable CharSequence content) {
+    if (content == null || content.isEmpty()) {
       return null;
     }
     try (BufferedReader reader = new BufferedReader(new CharSequenceReader(content))) {
@@ -130,8 +122,7 @@ public class PythonFileType extends LanguageFileType {
     return null;
   }
 
-  @Nullable
-  private static String normalizeCharset(String charset) {
+  private static @Nullable String normalizeCharset(String charset) {
     if (charset == null) {
       return null;
     }

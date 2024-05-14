@@ -18,15 +18,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public final class PythonDialectsTokenSetProvider implements Disposable {
 
-  @NotNull
-  private final ConcurrentHashMap<String, TokenSet> myCache = new ConcurrentHashMap<>(7); // number of token types
+  private final @NotNull ConcurrentHashMap<String, TokenSet> myCache = new ConcurrentHashMap<>(7); // number of token types
 
   public PythonDialectsTokenSetProvider() {
     PythonDialectsTokenSetContributor.EP_NAME.addChangeListener(myCache::clear, this);
   }
 
-  @NotNull
-  public static PythonDialectsTokenSetProvider getInstance() {
+  public static @NotNull PythonDialectsTokenSetProvider getInstance() {
     return ApplicationManager.getApplication().getService(PythonDialectsTokenSetProvider.class);
   }
 

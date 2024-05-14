@@ -76,11 +76,10 @@ public class PyLazyParser extends PyParser {
     rootMarker.setCustomEdgeTokenBinders(LeadingCommentsBinder.INSTANCE, FollowingCommentBinder.INSTANCE);
   }
 
-  @Nullable
-  public ASTNode parseLazyElement(@NotNull IElementType rootElement,
-                                  @NotNull PsiBuilder builder,
-                                  @NotNull LanguageLevel languageLevel,
-                                  @NotNull TriConsumer<? super IElementType, ? super SyntaxTreeBuilder, ? super LanguageLevel> parsingFunction) {
+  public @Nullable ASTNode parseLazyElement(@NotNull IElementType rootElement,
+                                            @NotNull PsiBuilder builder,
+                                            @NotNull LanguageLevel languageLevel,
+                                            @NotNull TriConsumer<? super IElementType, ? super SyntaxTreeBuilder, ? super LanguageLevel> parsingFunction) {
     long start = System.currentTimeMillis();
     parsingFunction.accept(rootElement, builder, languageLevel);
     try {

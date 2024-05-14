@@ -25,11 +25,10 @@ public class PythonHighlightingLexer extends PythonLexer {
     hasPrintFunctionImport = false;
   }
 
-  @NotNull
-  public static IElementType convertStringType(@NotNull IElementType tokenType,
-                                               @NotNull String tokenText,
-                                               @NotNull LanguageLevel languageLevel,
-                                               boolean unicodeImport) {
+  public static @NotNull IElementType convertStringType(@NotNull IElementType tokenType,
+                                                        @NotNull String tokenText,
+                                                        @NotNull LanguageLevel languageLevel,
+                                                        boolean unicodeImport) {
     final String prefix = PyStringLiteralCoreUtil.getPrefix(tokenText);
 
     if (tokenType == PyTokenTypes.SINGLE_QUOTED_STRING) {

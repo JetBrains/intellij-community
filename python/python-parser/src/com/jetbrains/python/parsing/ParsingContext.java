@@ -42,8 +42,7 @@ public class ParsingContext {
     myScopes.push(emptyParsingScope());
   }
 
-  @NotNull
-  public ParsingScope popScope() {
+  public @NotNull ParsingScope popScope() {
     final ParsingScope prevScope = myScopes.pop();
     resetBuilderCache(prevScope);
     return prevScope;
@@ -55,8 +54,7 @@ public class ParsingContext {
     resetBuilderCache(prevScope);
   }
 
-  @NotNull
-  public ParsingScope getScope() {
+  public @NotNull ParsingScope getScope() {
     return myScopes.peek();
   }
 

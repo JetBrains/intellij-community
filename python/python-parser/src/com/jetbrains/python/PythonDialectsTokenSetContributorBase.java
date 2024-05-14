@@ -19,45 +19,38 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PythonDialectsTokenSetContributorBase implements PythonDialectsTokenSetContributor {
-  @NotNull
   @Override
-  public TokenSet getStatementTokens() {
+  public @NotNull TokenSet getStatementTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getExpressionTokens() {
+  public @NotNull TokenSet getExpressionTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getKeywordTokens() {
+  public @NotNull TokenSet getKeywordTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getParameterTokens() {
+  public @NotNull TokenSet getParameterTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getFunctionDeclarationTokens() {
+  public @NotNull TokenSet getFunctionDeclarationTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getUnbalancedBracesRecoveryTokens() {
+  public @NotNull TokenSet getUnbalancedBracesRecoveryTokens() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public TokenSet getReferenceExpressionTokens() {
+  public @NotNull TokenSet getReferenceExpressionTokens() {
     return TokenSet.EMPTY;
   }
 }

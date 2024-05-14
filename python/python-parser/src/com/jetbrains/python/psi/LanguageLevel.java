@@ -86,8 +86,7 @@ public enum LanguageLevel {
   @ApiStatus.Internal
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
-  @NotNull
-  public static LanguageLevel getDefault() {
+  public static @NotNull LanguageLevel getDefault() {
     return getLatest();
   }
 
@@ -125,9 +124,8 @@ public enum LanguageLevel {
     return myVersion >= other.myVersion;
   }
 
-  @Nullable
   @Contract("null->null;!null->!null")
-  public static LanguageLevel fromPythonVersion(@Nullable String pythonVersion) {
+  public static @Nullable LanguageLevel fromPythonVersion(@Nullable String pythonVersion) {
     if (pythonVersion == null) return null;
 
     if (pythonVersion.startsWith("2")) {
@@ -193,18 +191,15 @@ public enum LanguageLevel {
     return getDefault();
   }
 
-  @NotNull
-  public String toPythonVersion() {
+  public @NotNull String toPythonVersion() {
     return getMajorVersion() + "." + getMinorVersion();
   }
 
-  @NotNull
-  public static LanguageLevel forElement(@NotNull PsiElement element) {
+  public static @NotNull LanguageLevel forElement(@NotNull PsiElement element) {
     return PyLanguageFacade.Companion.getINSTANCE().forLanguage(element);
   }
 
-  @NotNull
-  public static LanguageLevel getLatest() {
+  public static @NotNull LanguageLevel getLatest() {
     return ArrayUtil.getLastElement(values());
   }
 

@@ -10,8 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Pattern;
 
-@NonNls
-public final class PyNames {
+public final @NonNls class PyNames {
   public static final String SITE_PACKAGES = "site-packages";
   public static final String DIST_PACKAGES = "dist-packages";
   /**
@@ -52,7 +51,7 @@ public final class PyNames {
 
   public static final String PYTHON_SDK_ID_NAME = "Python SDK";
   public static final String VERBOSE_REG_EXP_LANGUAGE_ID = "PythonVerboseRegExp";
-  @NonNls public static final String PYTHON_MODULE_ID = "PYTHON_MODULE";
+  public static final @NonNls String PYTHON_MODULE_ID = "PYTHON_MODULE";
   public static final String TESTCASE_SETUP_NAME = "setUp";
   public static final String PY_DOCSTRING_ID = "Doctest";
   public static final String END_WILDCARD = ".*";
@@ -460,8 +459,7 @@ public final class PyNames {
     Map.entry(CLASS_GETITEM, new BuiltinDescription("(cls, item)")),
     Map.entry("__mro_entries__", new BuiltinDescription("(self, bases)")));
 
-  @NotNull
-  private static final Map<String, BuiltinDescription> PY37_MODULE_BUILTIN_METHODS = Map.of(
+  private static final @NotNull Map<String, BuiltinDescription> PY37_MODULE_BUILTIN_METHODS = Map.of(
     "__getattr__", new BuiltinDescription("(name)"),
     "__dir__", new BuiltinDescription("()"));
 
@@ -472,8 +470,7 @@ public final class PyNames {
     return Map.copyOf(r);
   }
 
-  @NotNull
-  public static Map<String, BuiltinDescription> getBuiltinMethods(@NotNull LanguageLevel level) {
+  public static @NotNull Map<String, BuiltinDescription> getBuiltinMethods(@NotNull LanguageLevel level) {
     if (level.isAtLeast(LanguageLevel.PYTHON37)) {
       return PY37_BUILTIN_METHODS;
     }
@@ -598,7 +595,7 @@ public final class PyNames {
 
   // NOTE: includes unicode only good for py3k
   public static final String IDENTIFIER_RE = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*";
-  private final static Pattern IDENTIFIER_PATTERN = Pattern.compile(IDENTIFIER_RE);
+  private static final Pattern IDENTIFIER_PATTERN = Pattern.compile(IDENTIFIER_RE);
 
   /**
    * TODO: dependency on language level.
@@ -625,8 +622,7 @@ public final class PyNames {
     return referencedName != null && calleeName != null && calleeName.equals(leftToRightComparisonOperatorName(referencedName));
   }
 
-  @Nullable
-  public static String leftToRightOperatorName(@Nullable String name) {
+  public static @Nullable String leftToRightOperatorName(@Nullable String name) {
     if (name == null) return null;
 
     final String rightComparisonOperatorName = leftToRightComparisonOperatorName(name);
@@ -635,8 +631,7 @@ public final class PyNames {
     return name.replaceFirst("__([a-z]+)__", "__r$1__");
   }
 
-  @Nullable
-  private static String leftToRightComparisonOperatorName(@NotNull String name) {
+  private static @Nullable String leftToRightComparisonOperatorName(@NotNull String name) {
     return switch (name) {
       case "__lt__" -> "__gt__";
       case "__gt__" -> "__lt__";

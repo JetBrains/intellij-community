@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public class PyElementType extends IElementType {
-  @NotNull private final Function<? super ASTNode, ? extends PsiElement> myPsiCreator;
+  private final @NotNull Function<? super ASTNode, ? extends PsiElement> myPsiCreator;
 
   private final String mySpecialMethodName;
 
@@ -34,16 +34,14 @@ public class PyElementType extends IElementType {
     mySpecialMethodName = specialMethodName;
   }
 
-  @NotNull
-  public PsiElement createElement(@NotNull ASTNode node) {
+  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return myPsiCreator.apply(node);
   }
 
   /**
    * @return name of special method for operation marked by this token; e.g. "__add__" for "+".
    */
-  @Nullable
-  public String getSpecialMethodName() {
+  public @Nullable String getSpecialMethodName() {
     return mySpecialMethodName;
   }
 

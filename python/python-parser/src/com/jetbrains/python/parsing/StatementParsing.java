@@ -10,10 +10,10 @@ import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyParsingBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,26 +23,26 @@ import java.util.Set;
 
 public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   private static final Logger LOG = Logger.getInstance(StatementParsing.class);
-  @NonNls protected static final String TOK_FUTURE_IMPORT = PyNames.FUTURE_MODULE;
-  @NonNls protected static final String TOK_PRINT_FUNCTION = "print_function";
-  @NonNls protected static final String TOK_WITH = PyNames.WITH;
-  @NonNls protected static final String TOK_AS = PyNames.AS;
-  @NonNls protected static final String TOK_PRINT = PyNames.PRINT;
-  @NonNls protected static final String TOK_NONE = PyNames.NONE;
-  @NonNls protected static final String TOK_TRUE = PyNames.TRUE;
-  @NonNls protected static final String TOK_DEBUG = PyNames.DEBUG;
-  @NonNls protected static final String TOK_FALSE = PyNames.FALSE;
-  @NonNls protected static final String TOK_NONLOCAL = PyNames.NONLOCAL;
-  @NonNls protected static final String TOK_EXEC = PyNames.EXEC;
-  @NonNls public static final String TOK_ASYNC = PyNames.ASYNC;
-  @NonNls protected static final String TOK_AWAIT = PyNames.AWAIT;
-  @NonNls protected static final  String TOK_OBJECT = PyNames.OBJECT;
-  @NonNls protected static final  String TOK_TYPE = PyNames.TYPE;
-  @NonNls protected static final  String TOK_IMPORT = PyNames.IMPORT;
-  @NonNls protected static final  String TOK_IN = PyNames.IN;
-  @NonNls protected static final  String TOK_FROM = PyNames.FROM;
-  @NonNls protected static final String TOK_MATCH = PyNames.MATCH;
-  @NonNls protected static final String TOK_CASE = PyNames.CASE;
+  protected static final @NonNls String TOK_FUTURE_IMPORT = PyNames.FUTURE_MODULE;
+  protected static final @NonNls String TOK_PRINT_FUNCTION = "print_function";
+  protected static final @NonNls String TOK_WITH = PyNames.WITH;
+  protected static final @NonNls String TOK_AS = PyNames.AS;
+  protected static final @NonNls String TOK_PRINT = PyNames.PRINT;
+  protected static final @NonNls String TOK_NONE = PyNames.NONE;
+  protected static final @NonNls String TOK_TRUE = PyNames.TRUE;
+  protected static final @NonNls String TOK_DEBUG = PyNames.DEBUG;
+  protected static final @NonNls String TOK_FALSE = PyNames.FALSE;
+  protected static final @NonNls String TOK_NONLOCAL = PyNames.NONLOCAL;
+  protected static final @NonNls String TOK_EXEC = PyNames.EXEC;
+  public static final @NonNls String TOK_ASYNC = PyNames.ASYNC;
+  protected static final @NonNls String TOK_AWAIT = PyNames.AWAIT;
+  protected static final @NonNls String TOK_OBJECT = PyNames.OBJECT;
+  protected static final @NonNls String TOK_TYPE = PyNames.TYPE;
+  protected static final @NonNls String TOK_IMPORT = PyNames.IMPORT;
+  protected static final @NonNls String TOK_IN = PyNames.IN;
+  protected static final @NonNls String TOK_FROM = PyNames.FROM;
+  protected static final @NonNls String TOK_MATCH = PyNames.MATCH;
+  protected static final @NonNls String TOK_CASE = PyNames.CASE;
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
 
@@ -606,8 +606,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
   }
 
-  @Nullable
-  private String parseIdentifier(final IElementType elementType) {
+  private @Nullable String parseIdentifier(final IElementType elementType) {
     final SyntaxTreeBuilder.Marker idMarker = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
       String id_text = myBuilder.getTokenText();

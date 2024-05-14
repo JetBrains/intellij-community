@@ -84,8 +84,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     }
   }
 
-  @Nullable
-  protected IElementType getBaseTokenType() {
+  protected @Nullable IElementType getBaseTokenType() {
     return super.getTokenType();
   }
 
@@ -97,8 +96,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     return super.getTokenEnd();
   }
 
-  @NotNull
-  protected String getBaseTokenText() {
+  protected @NotNull String getBaseTokenText() {
     return getBufferSequence().subSequence(getBaseTokenStart(), getBaseTokenEnd()).toString();
   }
 
@@ -108,7 +106,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
 
   @Override
   public IElementType getTokenType() {
-    if (myTokenQueue.size() > 0) {
+    if (!myTokenQueue.isEmpty()) {
       return myTokenQueue.get(0).getType();
     }
     return super.getTokenType();
@@ -116,7 +114,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
 
   @Override
   public int getTokenStart() {
-    if (myTokenQueue.size() > 0) {
+    if (!myTokenQueue.isEmpty()) {
       return myTokenQueue.get(0).getStart();
     }
     return super.getTokenStart();
@@ -124,7 +122,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
 
   @Override
   public int getTokenEnd() {
-    if (myTokenQueue.size() > 0) {
+    if (!myTokenQueue.isEmpty()) {
       return myTokenQueue.get(0).getEnd();
     }
     return super.getTokenEnd();
@@ -148,7 +146,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     else if (getTokenType() == PyTokenTypes.TAB) {
       myCurrentNewLineIndent += 8;
     }
-    if (myTokenQueue.size() > 0) {
+    if (!myTokenQueue.isEmpty()) {
       myTokenQueue.remove(0);
       if (myProcessSpecialTokensPending) {
         myProcessSpecialTokensPending = false;

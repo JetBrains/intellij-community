@@ -20,7 +20,7 @@ public class PythonConsoleLexer extends PythonIndentingLexer {
     super(PythonLexerKind.CONSOLE);
   }
 
-  private final static Map<String, PyElementType> SPECIAL_IPYTHON_SYMBOLS = Map.of(
+  private static final Map<String, PyElementType> SPECIAL_IPYTHON_SYMBOLS = Map.of(
     "?", PyConsoleTokenTypes.QUESTION_MARK,
     "!", PyConsoleTokenTypes.PLING,
     "$", PyConsoleTokenTypes.DOLLAR
