@@ -30,10 +30,6 @@ interface KotlinRenameRefactoringSupport {
         fun getInstance(): KotlinRenameRefactoringSupport = service()
     }
 
-    fun processForeignUsages(element: PsiElement, newName: String, usages: Array<UsageInfo>, fallbackHandler: (UsageInfo) -> Unit)
-
-    fun prepareForeignUsagesRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope)
-
     fun checkUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, originalUsages: MutableList<UsageInfo>, newUsages: MutableList<UsageInfo>)
 
     fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement>
