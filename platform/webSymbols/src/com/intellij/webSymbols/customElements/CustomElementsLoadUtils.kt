@@ -8,6 +8,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 
+@ApiStatus.Internal
 fun readCustomElementsManifest(path: String): CustomElementsManifest =
   FileInputStream(File(path)).readCustomElementsManifest()
 

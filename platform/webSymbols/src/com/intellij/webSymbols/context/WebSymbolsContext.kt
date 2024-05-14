@@ -3,6 +3,7 @@ package com.intellij.webSymbols.context
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.ContextKind
@@ -25,7 +26,8 @@ interface WebSymbolsContext {
 
     @TestOnly
     @JvmField
-    val WEB_SYMBOLS_CONTEXT_EP = WebSymbolsContextProviderExtensionCollector(ExtensionPointName("com.intellij.webSymbols.context"))
+    val WEB_SYMBOLS_CONTEXT_EP: KeyedExtensionCollector<WebSymbolsContextProvider, String> =
+      WebSymbolsContextProviderExtensionCollector(ExtensionPointName("com.intellij.webSymbols.context"))
 
     @JvmField
     val KIND_FRAMEWORK = "framework"

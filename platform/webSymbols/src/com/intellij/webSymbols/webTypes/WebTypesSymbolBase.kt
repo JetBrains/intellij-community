@@ -85,7 +85,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
                           params: WebSymbolsListSymbolsQueryParams,
                           scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
     base.rootScope
-      .getSymbols(base.contributionForQuery, this.origin, qualifiedKind, params)
+      .getSymbols(base.contributionForQuery, this.origin as WebTypesJsonOrigin, qualifiedKind, params)
       .toList()
 
   final override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
@@ -98,7 +98,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override val kind: SymbolKind
     get() = base.kind
 
-  final override val origin: WebTypesJsonOrigin
+  final override val origin: WebSymbolOrigin
     get() = base.jsonOrigin
 
   final override val namespace: SymbolNamespace
@@ -152,7 +152,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
             ?: superContributions.asSequence().mapNotNull { it.type }.firstOrNull()
 
   final override val apiStatus: WebSymbolApiStatus
-    get() = base.contribution.toApiStatus(origin)
+    get() = base.contribution.toApiStatus(origin as WebTypesJsonOrigin)
 
   final override val virtual: Boolean
     get() = base.contribution.virtual == true
@@ -182,7 +182,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
             ?: superContributions.firstOrNull()?.defaultValue
 
   final override val pattern: WebSymbolsPattern?
-    get() = base.jsonPattern?.wrap(base.contribution.name, origin)
+    get() = base.jsonPattern?.wrap(base.contribution.name, origin as WebTypesJsonOrigin)
 
 
   final override val queryScope: List<WebSymbolsScope>

@@ -6,12 +6,9 @@ import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
 import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
 interface WebTypesSymbol : PsiSourcedWebSymbol {
 
   val location: Location?
-
-  override val origin: WebTypesJsonOrigin
 
   sealed interface Location
 

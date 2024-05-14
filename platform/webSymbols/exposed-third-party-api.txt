@@ -1,4 +1,1 @@
-com/fasterxml/jackson/core/JsonParser
-com/fasterxml/jackson/databind/DeserializationContext
-com/fasterxml/jackson/databind/JsonDeserializer
 kotlin/jvm/internal/DefaultConstructorMarker

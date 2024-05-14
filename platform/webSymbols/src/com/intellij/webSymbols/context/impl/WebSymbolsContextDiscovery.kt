@@ -43,7 +43,6 @@ import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.context.WebSymbolContextChangeListener
 import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.context.WebSymbolsContext.Companion.WEB_SYMBOLS_CONTEXT_EP
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider
@@ -58,6 +57,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
+private val WEB_SYMBOLS_CONTEXT_EP get() = WebSymbolsContext.WEB_SYMBOLS_CONTEXT_EP as WebSymbolsContextProviderExtensionCollector
 private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("web.isContext.reloadMarker")
 private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(WebSymbolsContext::class.java)

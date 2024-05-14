@@ -11,10 +11,13 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.text.SemVer
+import com.intellij.webSymbols.impl.StaticWebSymbolsScope
 import com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP
 import com.intellij.webSymbols.webTypes.json.WebTypes
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposable {
   companion object {
     fun getInstance(project: Project): WebTypesEmbeddedDefinitionsLoader = project.service()
@@ -29,7 +32,7 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
 
     fun getPackagesEnabledByDefault(project: Project): Map<String, SemVer?> = getInstance(project).packagesEnabledByDefault
 
-    fun getDefaultWebTypesScope(project: Project): WebTypesScopeBase = getInstance(project).defaultWebTypesScope
+    fun getDefaultWebTypesScope(project: Project): StaticWebSymbolsScope = getInstance(project).defaultWebTypesScope
 
     private val LOG = logger<WebTypesEmbeddedDefinitionsLoader>()
   }
