@@ -322,7 +322,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
         }
         else {
           if (addedRoots.add(root)) result.add(root)
-          if (root.fileType is ArchiveFileType) {
+          if (root.fileSystem.protocol == StandardFileSystems.JAR_PROTOCOL) {
             root.findChild("META-INF")?.findChild("versions")?.children?.forEach { versionRoot -> 
               val version = versionRoot.name.toIntOrNull()
               if (version != null && version >= 9) {
