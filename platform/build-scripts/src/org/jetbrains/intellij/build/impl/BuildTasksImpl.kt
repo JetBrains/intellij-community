@@ -35,6 +35,7 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.impl.productRunner.createProductRunner
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
@@ -673,7 +674,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
         Files.deleteIfExists(providedModuleFile)
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-        IntellijProductRunner.createRunner(context = context).runProduct(
+        createProductRunner(context = context).runProduct(
           listOf("listBundledPlugins", providedModuleFile.toString()),
         )
 

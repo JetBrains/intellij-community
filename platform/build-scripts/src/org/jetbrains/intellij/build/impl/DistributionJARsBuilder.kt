@@ -21,11 +21,10 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.impl.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.impl.productRunner.createProductRunner
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -64,7 +63,7 @@ internal suspend fun buildDistribution(
   context.productProperties.validateLayout(state.platform, context)
   createBuildBrokenPluginListJob(context)
 
-  val productRunner = IntellijProductRunner.createRunner(context)
+  val productRunner = createProductRunner(context)
   if (context.productProperties.buildDocAuthoringAssets) {
     launch {
       buildAdditionalAuthoringArtifacts(productRunner = productRunner, context = context)
@@ -1082,11 +1081,7 @@ suspend fun layoutDistribution(
   return entries to targetDirectory
 }
 
-@Internal
-fun hasResourcePaths(layout: BaseLayout): Boolean = !layout.resourcePaths.isEmpty()
-
-@Internal
-fun layoutResourcePaths(layout: BaseLayout, context: BuildContext, targetDirectory: Path, overwrite: Boolean) {
+private fun layoutResourcePaths(layout: BaseLayout, context: BuildContext, targetDirectory: Path, overwrite: Boolean) {
   for (resourceData in layout.resourcePaths) {
     val source = basePath(buildContext = context, moduleName = resourceData.moduleName).resolve(resourceData.resourcePath).normalize()
     var target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()

@@ -13,6 +13,7 @@ import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.getLocalizationDir
 import org.jetbrains.intellij.build.impl.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.impl.productRunner.createProductRunner
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -54,7 +55,7 @@ internal fun readSearchableOptionIndex(baseDir: Path): SearchableOptionSetDescri
 }
 
 suspend fun buildSearchableOptions(context: BuildContext, systemProperties: Map<String, String> = emptyMap()): SearchableOptionSetDescriptor? {
-  return buildSearchableOptions(productRunner = IntellijProductRunner.createRunner(context), context = context, systemProperties = systemProperties)
+  return buildSearchableOptions(productRunner = createProductRunner(context), context = context, systemProperties = systemProperties)
 }
 
 /**

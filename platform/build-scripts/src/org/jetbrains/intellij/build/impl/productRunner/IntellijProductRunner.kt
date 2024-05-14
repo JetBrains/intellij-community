@@ -9,13 +9,13 @@ import org.jetbrains.intellij.build.BuildContext
  */
 internal interface IntellijProductRunner {
   suspend fun runProduct(arguments: List<String>, additionalSystemProperties: Map<String, String> = emptyMap(), isLongRunning: Boolean = false)
-  
-  companion object {
-    suspend fun createRunner(context: BuildContext): IntellijProductRunner {
-      if (context.useModularLoader) {
-        return ModuleBasedProductRunner(context.productProperties.rootModuleForModularLoader!!, context)
-      }
-      return createDevIdeBuild(context) 
-    }
+}
+
+internal suspend fun createProductRunner(context: BuildContext): IntellijProductRunner {
+  if (context.useModularLoader) {
+    return ModuleBasedProductRunner(context.productProperties.rootModuleForModularLoader!!, context)
+  }
+  else {
+    return createDevIdeBuild(context)
   }
 }

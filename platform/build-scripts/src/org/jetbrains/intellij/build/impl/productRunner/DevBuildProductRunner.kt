@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Only for use in build scripts, not for dev mode / integrations tests.
- * Use [IntellijProductRunner.createRunner] instead of calling this function directly. 
+ * Use [createProductRunner] instead of calling this function directly.
  */
 internal suspend fun createDevIdeBuild(context: BuildContext): IntellijProductRunner {
   var newClassPath: Collection<Path>? = null
