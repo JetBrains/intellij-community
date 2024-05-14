@@ -528,7 +528,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
         LOG.debug("start thinking about " + element + "; this=" + this+"; myState="+myState()+"; "+Thread.currentThread());
         myState().THINKING.set(true);
         while (myState().THINK.get()) {
-          TimeoutUtil.sleep(1);
+          fjpAwareSleep(1);
         }
         LOG.debug("stopped thinking about " + element + "; this=" + this+"; myState="+myState()+"; "+Thread.currentThread());
       }
@@ -581,6 +581,26 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
       public void visit(@NotNull PsiElement element) {
         super.visit(element); // for stacktrace
       }
+    }
+  }
+
+  private static void fjpAwareSleep(int millis) {
+    try {
+      ForkJoinPool.managedBlock(new ForkJoinPool.ManagedBlocker() {
+        @Override
+        public boolean block() {
+          TimeoutUtil.sleep(millis);
+          return true;
+        }
+
+        @Override
+        public boolean isReleasable() {
+          return false;
+        }
+      });
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
   }
 }
