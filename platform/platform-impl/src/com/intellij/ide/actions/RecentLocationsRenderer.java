@@ -80,11 +80,16 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
 
     setLayout(new BorderLayout());
     add(getEditor().getComponent(), BorderLayout.CENTER);
+    var northPanel = createNorthPanel();
+    add(northPanel, BorderLayout.NORTH);
+  }
+
+  private @NotNull JPanel createNorthPanel() {
     var northPanel = new JPanel();
     northPanel.setLayout(new BorderLayout());
     northPanel.add(myTitle, BorderLayout.WEST);
     northPanel.add(myTimestamp, BorderLayout.EAST);
-    add(northPanel, BorderLayout.NORTH);
+    return northPanel;
   }
 
   @Override
