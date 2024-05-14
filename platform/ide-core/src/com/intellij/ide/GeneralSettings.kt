@@ -187,6 +187,10 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
 
   override fun getState(): GeneralSettingsState = state
 
+  override fun noStateLoaded() {
+    loadState(GeneralSettingsState())
+  }
+
   override fun loadState(state: GeneralSettingsState) {
     this.state = state
   }
