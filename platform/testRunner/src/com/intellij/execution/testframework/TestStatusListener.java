@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TestStatusListener {
-  public static final ExtensionPointName<TestStatusListener> EP_NAME = ExtensionPointName.create("com.intellij.testStatusListener");
+  private static final ExtensionPointName<TestStatusListener> EP_NAME = ExtensionPointName.create("com.intellij.testStatusListener");
 
   public abstract void testSuiteFinished(@Nullable AbstractTestProxy root);
 

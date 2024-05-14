@@ -46,7 +46,7 @@ class JvmTestDiffProvider : TestDiffProvider {
     searchStacktrace.lines().forEach { line ->
       lineParser.execute(line, line.length) ?: return@findExpected null
       val file = lineParser.file ?: return@findExpected null
-      val diffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(file.language).asSafely<JvmTestDiffProvider>()
+      val diffProvider = TestDiffProvider.getProviderByLanguage(file.language).asSafely<JvmTestDiffProvider>()
                          ?: return@findExpected null
       val failedCall = findFailedCall(file, lineParser.info.lineNumber, expectedParam?.getContainingUMethod()) ?: return@findExpected null
       expectedArgCandidates.addAll(failedCall.valueArguments.mapNotNull { diffProvider.getExpectedElement(it, expected) })

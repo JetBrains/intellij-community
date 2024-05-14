@@ -112,7 +112,7 @@ public final class TestDiffRequestProcessor {
       if (testRoot == null) return null;
       Location<?> loc = testProxy.getLocation(myProject, testRoot.getTestConsoleProperties().getScope());
       if (loc == null) return null;
-      return TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(loc.getPsiElement().getLanguage());
+      return TestDiffProvider.getProviderByLanguage(loc.getPsiElement().getLanguage());
     }
 
     private @Nullable PsiElement getExpected(@NotNull TestDiffProvider provider, @NotNull AbstractTestProxy testProxy) {

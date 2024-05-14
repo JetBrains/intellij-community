@@ -68,7 +68,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract boolean shouldSkipRootNodeForExport();
 
-  public void fireOnNewPrintable(@NotNull final Printable printable) {
+  protected void fireOnNewPrintable(@NotNull final Printable printable) {
     if (myPrinter != null) {
       myPrinter.onNewAvailable(printable);
     }

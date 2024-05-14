@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
@@ -20,6 +21,7 @@ import com.intellij.execution.testframework.sm.runner.history.actions.AbstractIm
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.history.LocalHistory;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -85,6 +87,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
+  private static final Color RED = new JBColor(new Color(250, 220, 220), new Color(104, 67, 67));
+  private static final Color GREEN = new JBColor(new Color(220, 250, 220), new Color(44, 66, 60));
 
   private SMTRunnerTestTreeView myTreeView;
 
@@ -263,7 +267,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myUpdateTreeRequests.cancelAllRequests();
     myTreeBuilder.updateFromRoot();
 
-    LvcsHelper.addLabel(this);
+    addLabel(this);
 
     if (myLastSelected == null) {
       selectAndNotify(myTestsRootNode);
@@ -773,15 +777,42 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myHistoryFileName;
   }
 
-  AnAction[] getToolbarActions() { return myToolbarPanel.actionsToMerge; }
+  AnAction[] getToolbarActions() { return myToolbarPanel.getActionsToMerge(); }
 
-  AnAction[] getAdditionalToolbarActions() { return myToolbarPanel.additionalActionsToMerge; }
+  AnAction[] getAdditionalToolbarActions() { return myToolbarPanel.getAdditionalActionsToMerge(); }
 
 
   @Override
   protected void hideToolbar() {
     super.hideToolbar();
     myToolbarPanel.setVisible(false);
+  }
+
+  private static void addLabel(final TestFrameworkRunningModel model) {
+
+    AbstractTestProxy root = model.getRoot();
+
+    if (root.isInterrupted()) return;
+
+    TestConsoleProperties consoleProperties = model.getProperties();
+    String configName = consoleProperties.getConfiguration().getName();
+
+    String name;
+    int color;
+
+    if (root.isPassed() || root.isIgnored()) {
+      color = GREEN.getRGB();
+      name = ExecutionBundle.message("junit.running.info.tests.passed.with.test.name.label", configName);
+    }
+    else {
+      color = RED.getRGB();
+      name = ExecutionBundle.message("junit.running.info.tests.failed.with.test.name.label", configName);
+    }
+
+    Project project = consoleProperties.getProject();
+    if (project.isDisposed()) return;
+
+    LocalHistory.getInstance().putSystemLabel(project, name, color);
   }
 
   private static class MySaveHistoryTask extends Task.Backgroundable {
