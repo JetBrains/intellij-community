@@ -1534,14 +1534,14 @@ private fun buildInInspectionsIntentionsLocalization(
   resourceRoots: List<JpsTypedModuleSourceRoot<JavaResourceRootProperties>>,
 ) {
   for (resourceRoot in resourceRoots) {
-    val isInspectionIntentionsPresentInModule = sequenceOf("fileTemplates", "intentionDescriptions", "inspectionDescriptions")
+    val isInspectionIntentionsPresentInModule = sequenceOf("fileTemplates", "intentionDescriptions", "inspectionDescriptions", "postfixTemplates")
       .map { resourceRoot.path.resolve(it) }
       .any { Files.exists(it) }
     if (!isInspectionIntentionsPresentInModule) {
       return
     }
 
-    inspectionsIntentionsLocalization.walk()
+    inspectionsIntentionsLocalization.walk(PathWalkOption.INCLUDE_DIRECTORIES)
       .filter { Files.isDirectory(it) && it.name == module.name }
       .forEach { moduleLocalizationSources ->
         val sourcesLang = inspectionsIntentionsLocalization.relativize(moduleLocalizationSources).getName(0)
