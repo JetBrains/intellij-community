@@ -301,17 +301,26 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     for (FileEditor fileEditor : getFileEditorManager().getAllEditorList(vFile)) {
       List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-      if (infos != null) {
-        infos.remove(info);
-        JComponent component = info.getFileLevelComponent(fileEditor);
+      if (infos == null) {
+        continue;
+      }
+      infos.removeIf(i-> {
+        if (!info.attributesEqual(i)) {
+          return false;
+        }
+        JComponent component = i.getFileLevelComponent(fileEditor);
         if (component != null) {
           getFileEditorManager().removeTopComponent(fileEditor, component);
-          info.removeFileLeverComponent(fileEditor);
+          i.removeFileLeverComponent(fileEditor);
         }
-        RangeHighlighterEx highlighter = info.highlighter;
+        RangeHighlighterEx highlighter = i.highlighter;
         if (highlighter != null) {
           highlighter.dispose();
         }
+        return true;
+      });
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("removeFileLevelHighlight [" + info + "]: fileLevelInfos:" + infos);
       }
     }
   }

@@ -468,23 +468,21 @@ public class HighlightInfo implements Segment {
     if (obj == this) return true;
     if (!(obj instanceof HighlightInfo info)) return false;
 
-    return info.getSeverity() == getSeverity() &&
-           info.startOffset == startOffset &&
+    return info.startOffset == startOffset &&
            info.endOffset == endOffset &&
-           Comparing.equal(info.type, type) &&
-           Comparing.equal(info.toolId, toolId) &&
-           Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
-           Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
-           Comparing.equal(info.forcedTextAttributesKey, forcedTextAttributesKey) &&
-           Comparing.strEqual(info.getDescription(), getDescription());
+           attributesEqual(info);
   }
 
   protected boolean equalsByActualOffset(@NotNull HighlightInfo info) {
     if (info == this) return true;
 
-    return info.getSeverity() == getSeverity() &&
-           info.getActualStartOffset() == getActualStartOffset() &&
+    return info.getActualStartOffset() == getActualStartOffset() &&
            info.getActualEndOffset() == getActualEndOffset() &&
+           attributesEqual(info);
+  }
+
+  boolean attributesEqual(@NotNull HighlightInfo info) {
+    return info.getSeverity() == getSeverity() &&
            Comparing.equal(info.type, type) &&
            Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
            Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
