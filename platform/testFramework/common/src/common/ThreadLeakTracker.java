@@ -102,6 +102,7 @@ public final class ThreadLeakTracker {
       "RMI GC Daemon",
       "RMI TCP ",
       "Save classpath indexes for file loader",
+      "Shared Index Hash Index Flushing Queue",
       "Signal Dispatcher",
       "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
       "timer-int", //serverIm,
