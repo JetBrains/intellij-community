@@ -60,6 +60,7 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
@@ -500,7 +501,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           { checkBox(cdUseCompactTreeIndents) },
         )
         twoColumnsRow(
-          { checkBox(cdExpandNodesWithSingleClick) },
+          { checkBox(cdExpandNodesWithSingleClick).visible(Tree.isExpandWithSingleClickSettingEnabled()) },
         )
       }
 

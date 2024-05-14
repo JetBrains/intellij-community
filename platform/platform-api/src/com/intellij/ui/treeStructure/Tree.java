@@ -95,6 +95,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return Registry.is("ide.tree.bulk.expand.api", true);
   }
 
+  @ApiStatus.Internal
+  public static boolean isExpandWithSingleClickSettingEnabled() {
+    return Registry.is("ide.tree.show.expand.with.single.click.setting", true);
+  }
+
   public Tree() {
     this(new DefaultMutableTreeNode());
   }
@@ -1888,7 +1893,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       applyingUiSettings = true;
       try {
-        if (!toggleClickCountOverridden) { // Only set it if the client has never called setToggleClickCount() directly.
+        // Only set it if the client has never called setToggleClickCount() directly. And if the setting is enabled, of course.
+        if (!toggleClickCountOverridden && isExpandWithSingleClickSettingEnabled()) {
           setToggleClickCount(uiSettings.getExpandNodesWithSingleClick() ? 1 : 2);
         }
       }
