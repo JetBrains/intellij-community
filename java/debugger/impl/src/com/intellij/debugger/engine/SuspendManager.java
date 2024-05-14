@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -10,17 +10,17 @@ import java.util.List;
 
 public interface SuspendManager {
   @NotNull
-  SuspendContextImpl pushSuspendContext(EventSet eventSet);
+  SuspendContextImpl pushSuspendContext(@NotNull EventSet eventSet);
 
   @NotNull
   SuspendContextImpl pushSuspendContext(int suspendAll, int i);
 
-  void resume(SuspendContextImpl suspendContext);
+  void resume(@NotNull SuspendContextImpl suspendContext);
 
   /**
    * Replaces current context with new one at the same location and fires 'paused' event.
    */
-  void popFrame(SuspendContextImpl suspendContext);
+  void popFrame(@NotNull SuspendContextImpl suspendContext);
 
   /**
    * Get first of paused contexts or {@code null} if there are no ones.
@@ -30,23 +30,24 @@ public interface SuspendManager {
   /**
    * Get all paused contexts.
    */
+  @NotNull
   List<SuspendContextImpl> getPausedContexts();
 
-  boolean isFrozen(ThreadReferenceProxyImpl thread);
+  boolean isFrozen(@NotNull ThreadReferenceProxyImpl thread);
 
-  boolean isSuspended(ThreadReferenceProxyImpl thread) throws ObjectCollectedException;
+  boolean isSuspended(@NotNull ThreadReferenceProxyImpl thread) throws ObjectCollectedException;
 
-  void freezeThread(ThreadReferenceProxyImpl invokeThread);
+  void freezeThread(@NotNull ThreadReferenceProxyImpl invokeThread);
 
-  void unfreezeThread(ThreadReferenceProxyImpl thread);
+  void unfreezeThread(@NotNull ThreadReferenceProxyImpl thread);
 
-  void resumeThread(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl invokeThread);
+  void resumeThread(@NotNull SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl invokeThread);
 
-  void suspendThread(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl invokeThread);
+  void suspendThread(@NotNull SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl invokeThread);
 
-  void voteResume(SuspendContextImpl suspendContext);
+  void voteResume(@NotNull SuspendContextImpl suspendContext);
 
-  void voteSuspend(SuspendContextImpl suspendContext);
+  void voteSuspend(@NotNull SuspendContextImpl suspendContext);
 
   List<SuspendContextImpl> getEventContexts();
 }

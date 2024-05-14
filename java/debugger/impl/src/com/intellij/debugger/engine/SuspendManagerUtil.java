@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -7,12 +7,11 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.request.EventRequest;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class SuspendManagerUtil {
   private static final Logger LOG = Logger.getInstance(SuspendManagerUtil.class);
@@ -21,7 +20,11 @@ public final class SuspendManagerUtil {
    * Returns suspend context that suspends the thread specified (may be currently evaluating)
    */
   @Nullable
-  public static SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
+  public static SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, @Nullable ThreadReferenceProxyImpl thread) {
+    if (thread == null) {
+      return ContainerUtil.find(suspendManager.getEventContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
+    }
+
     for (SuspendContextImpl context : suspendManager.getEventContexts()) {
       if ((context.getEventThread() == thread || context.getSuspendPolicy() == EventRequest.SUSPEND_ALL)
           && !context.isExplicitlyResumed(thread)) {
@@ -49,15 +52,14 @@ public final class SuspendManagerUtil {
   }
 
   @NotNull
-  public static Set<SuspendContextImpl> getSuspendingContexts(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
+  public static Set<SuspendContextImpl> getSuspendingContexts(@NotNull SuspendManager suspendManager,
+                                                              @NotNull ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return suspendManager.getEventContexts().stream()
-      .filter(suspendContext -> suspendContext.suspends(thread))
-      .collect(Collectors.toCollection(HashSet::new));
+    return StreamEx.of(suspendManager.getEventContexts()).filter(suspendContext -> suspendContext.suspends(thread)).toSet();
   }
 
   @Nullable
-  public static SuspendContextImpl getSuspendingContext(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
+  public static SuspendContextImpl getSuspendingContext(@NotNull SuspendManager suspendManager, @NotNull ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return ContainerUtil.find(suspendManager.getEventContexts(), suspendContext -> suspendContext.suspends(thread));
   }
