@@ -12,7 +12,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -517,10 +516,7 @@ public final class JavaCompletionUtil {
               final PsiJavaModule targetModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByElement(psiClass));
               if (targetModule != null && targetModule != currentModule &&
                   !JavaModuleGraphUtil.reads(currentModule, targetModule)) {
-                LookupElementDecorator<LookupElement> element = generator.apply(presentation -> {
-                  presentation.setItemTextForeground(JBColor.RED);
-                  presentation.setTailText(JavaBundle.message("completion.requires.module.tail.text", targetModule.getName()), true);
-                });
+                LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextForeground(JBColor.RED));
                 return PrioritizedLookupElement.withExplicitProximity(element, -1);
               }
             }

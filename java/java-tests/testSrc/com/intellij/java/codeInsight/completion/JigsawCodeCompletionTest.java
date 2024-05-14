@@ -82,7 +82,7 @@ public class JigsawCodeCompletionTest extends LightFixtureCompletionTestCase {
       }
       """)
       .variants(new Variant("MyBClass", " org.jetbrains.b", JBColor.foreground()),
-                new Variant("MyAClass", " (requires 'module.a' module)", Color.RED))
+                new Variant("MyAClass", " org.jetbrains.a", Color.RED))
       .choose(new Variant("MyAClass", " org.jetbrains.a", Color.RED))
       .check("Main.java", """
         import org.jetbrains.a.MyAClass;
@@ -108,8 +108,8 @@ public class JigsawCodeCompletionTest extends LightFixtureCompletionTestCase {
         }
       }
       """)
-      .variants(new Variant("MyAClass", " (requires 'module.a' module)", Color.RED),
-                new Variant("MyBClass", " (requires 'module.b' module)", Color.RED))
+      .variants(new Variant("MyAClass", " org.jetbrains.a", Color.RED),
+                new Variant("MyBClass", " org.jetbrains.b", Color.RED))
       .choose(new Variant("MyBClass", " org.jetbrains.b", Color.RED))
       .check("Main.java", """
         import org.jetbrains.b.MyBClass;
@@ -134,7 +134,7 @@ public class JigsawCodeCompletionTest extends LightFixtureCompletionTestCase {
         }
       }
       """)
-      .variants(new Variant("MyBClass", " (requires 'module.b' module)", Color.RED))
+      .variants(new Variant("MyBClass", " org.jetbrains.b", Color.RED))
       .choose(new Variant("MyBClass", " org.jetbrains.b", Color.RED))
       .check("Main.java", """
         import org.jetbrains.b.MyBClass;
