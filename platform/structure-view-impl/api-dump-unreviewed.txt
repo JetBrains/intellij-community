@@ -50,7 +50,6 @@ a:com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 a:com.intellij.ide.util.InheritedMembersNodeProvider
 - com.intellij.ide.util.ActionShortcutProvider
 - com.intellij.ide.util.FileStructureNodeProvider
-- sf:ID:java.lang.String
 - <init>():V
 - getActionIdForShortcut():java.lang.String
 - getCheckBoxText():java.lang.String

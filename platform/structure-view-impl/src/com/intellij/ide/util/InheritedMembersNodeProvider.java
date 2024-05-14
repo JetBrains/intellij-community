@@ -22,6 +22,7 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public abstract class InheritedMembersNodeProvider<T extends TreeElement> implements FileStructureNodeProvider<T>, ActionShortcutProvider {
+  @ApiStatus.Internal
   @NonNls public static final String ID = "SHOW_INHERITED";
 
   @NotNull
