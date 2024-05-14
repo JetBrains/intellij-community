@@ -2,6 +2,8 @@
 package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.impl.canUnwrapSymbols
+import com.intellij.webSymbols.impl.withOffset
 import com.intellij.webSymbols.query.WebSymbolMatch
 
 internal class ListResult(

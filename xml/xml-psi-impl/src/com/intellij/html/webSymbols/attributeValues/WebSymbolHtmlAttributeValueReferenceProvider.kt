@@ -57,7 +57,7 @@ class WebSymbolHtmlAttributeValueReferenceProvider : WebSymbolReferenceProvider<
         ?.asSingleSymbol()
       ?: WebSymbolMatch.create(
         name,
-        listOf(WebSymbolNameSegment(0, name.length, problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL)),
+        listOf(WebSymbolNameSegment.create(0, name.length, problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL)),
         WebSymbol.NAMESPACE_HTML,
         WebSymbol.KIND_HTML_ATTRIBUTE_VALUES,
         WebSymbolOrigin.empty()

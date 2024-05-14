@@ -30,6 +30,7 @@ import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_R
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_NODE_PACKAGES
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.js.WebSymbolJsKind
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules

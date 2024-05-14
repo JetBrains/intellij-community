@@ -9,6 +9,7 @@ import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
+import com.intellij.webSymbols.impl.copy
 
 internal fun WebSymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop: Boolean): WebSymbolCodeCompletionItem =
   if ((this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation != stop)
@@ -44,7 +45,7 @@ internal fun <T : MatchResult> T.addOwner(owner: WebSymbol): T {
     }
   }
   if (!applied) {
-    newSegments.add(0, WebSymbolNameSegment(start, start, owner))
+    newSegments.add(0, WebSymbolNameSegment.create(start, start, owner))
   }
   return copy(segments = newSegments)
 }

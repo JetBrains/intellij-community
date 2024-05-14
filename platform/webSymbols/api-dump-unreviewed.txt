@@ -212,25 +212,26 @@
 - sf:unwrapAllDelegates(com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.WebSymbol
 *f:com.intellij.webSymbols.WebSymbolDelegate$Companion
 - f:unwrapAllDelegates(com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.WebSymbol
-*f:com.intellij.webSymbols.WebSymbolNameSegment
-- <init>(I,I,com.intellij.webSymbols.WebSymbol):V
-- <init>(I,I,java.util.List,com.intellij.webSymbols.WebSymbolNameSegment$MatchProblem,java.lang.String,I,java.util.Set,com.intellij.webSymbols.WebSymbolApiStatus,com.intellij.webSymbols.WebSymbol$Priority,java.lang.Integer):V
-- b:<init>(I,I,java.util.List,com.intellij.webSymbols.WebSymbolNameSegment$MatchProblem,java.lang.String,I,java.util.Set,com.intellij.webSymbols.WebSymbolApiStatus,com.intellij.webSymbols.WebSymbol$Priority,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- <init>(I,I,com.intellij.webSymbols.WebSymbol[]):V
-- <init>(com.intellij.webSymbols.WebSymbol):V
-- f:createPointer():com.intellij.model.Pointer
-- f:getApiStatus():com.intellij.webSymbols.WebSymbolApiStatus
-- f:getDisplayName():java.lang.String
-- f:getEnd():I
-- f:getMatchScore():I
-- f:getName(com.intellij.webSymbols.WebSymbol):java.lang.String
-- f:getPriority():com.intellij.webSymbols.WebSymbol$Priority
-- f:getProblem():com.intellij.webSymbols.WebSymbolNameSegment$MatchProblem
-- f:getProximity():java.lang.Integer
-- f:getStart():I
-- f:getSymbolKinds():java.util.Set
-- f:getSymbols():java.util.List
-- toString():java.lang.String
+*:com.intellij.webSymbols.WebSymbolNameSegment
+- *sf:Companion:com.intellij.webSymbols.WebSymbolNameSegment$Companion
+- a:createPointer():com.intellij.model.Pointer
+- a:getApiStatus():com.intellij.webSymbols.WebSymbolApiStatus
+- a:getDisplayName():java.lang.String
+- a:getEnd():I
+- a:getMatchScore():I
+- getName(com.intellij.webSymbols.WebSymbol):java.lang.String
+- a:getPriority():com.intellij.webSymbols.WebSymbol$Priority
+- a:getProblem():com.intellij.webSymbols.WebSymbolNameSegment$MatchProblem
+- a:getProximity():java.lang.Integer
+- a:getStart():I
+- a:getSymbolKinds():java.util.Set
+- a:getSymbols():java.util.List
+*f:com.intellij.webSymbols.WebSymbolNameSegment$Companion
+- f:create(I,I,com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.WebSymbolNameSegment
+- f:create(I,I,java.util.List,com.intellij.webSymbols.WebSymbolNameSegment$MatchProblem,java.lang.String,I,java.util.Set,com.intellij.webSymbols.WebSymbolApiStatus,com.intellij.webSymbols.WebSymbol$Priority,java.lang.Integer):com.intellij.webSymbols.WebSymbolNameSegment
+- f:create(I,I,com.intellij.webSymbols.WebSymbol[]):com.intellij.webSymbols.WebSymbolNameSegment
+- f:create(com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.WebSymbolNameSegment
+- bs:create$default(com.intellij.webSymbols.WebSymbolNameSegment$Companion,I,I,java.util.List,com.intellij.webSymbols.WebSymbolNameSegment$MatchProblem,java.lang.String,I,java.util.Set,com.intellij.webSymbols.WebSymbolApiStatus,com.intellij.webSymbols.WebSymbol$Priority,java.lang.Integer,I,java.lang.Object):com.intellij.webSymbols.WebSymbolNameSegment
 *e:com.intellij.webSymbols.WebSymbolNameSegment$MatchProblem
 - java.lang.Enum
 - sf:DUPLICATE:com.intellij.webSymbols.WebSymbolNameSegment$MatchProblem

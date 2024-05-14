@@ -19,14 +19,14 @@ internal class StaticPattern(val content: String) : WebSymbolsPattern() {
                      start: Int,
                      end: Int): List<MatchResult> =
     if (content.length <= end - start && params.name.startsWith(content, start))
-      listOf(MatchResult(WebSymbolNameSegment(start, start + content.length)))
+      listOf(MatchResult(WebSymbolNameSegment.create(start, start + content.length)))
     else emptyList()
 
   override fun list(owner: WebSymbol?,
                     scopeStack: Stack<WebSymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
-    listOf(ListResult(content, WebSymbolNameSegment(0, content.length)))
+    listOf(ListResult(content, WebSymbolNameSegment.create(0, content.length)))
 
   override fun complete(owner: WebSymbol?,
                         scopeStack: Stack<WebSymbolsScope>,

@@ -60,7 +60,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
   protected fun unresolvedSymbol(qualifiedKind: WebSymbolQualifiedKind, name: String) =
     WebSymbolMatchImpl.create(
       name,
-      listOf(WebSymbolNameSegment(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)),
+      listOf(WebSymbolNameSegment.create(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)),
       qualifiedKind.namespace, qualifiedKind.kind, WebSymbolOrigin.empty(),
       null, null
     )
@@ -108,7 +108,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
           .takeWhile { it.nameSegments.size == 1 }
 
         if (unwrappedSymbols.isNotEmpty()) {
-          result.putValue(range, WebSymbolNameSegment(0, nameSegment.end, unwrappedSymbols))
+          result.putValue(range, WebSymbolNameSegment.create(0, nameSegment.end, unwrappedSymbols))
           problemOnlyRanges[range] = false
         }
         else {

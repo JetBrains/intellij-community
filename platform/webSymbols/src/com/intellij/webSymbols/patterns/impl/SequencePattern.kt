@@ -84,8 +84,8 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     var stop = false
     process(
       listOf(SequenceCompletionResult(
-        MatchResult(WebSymbolNameSegment(start, start)),
-        MatchResult(WebSymbolNameSegment(start, start)),
+        MatchResult(WebSymbolNameSegment.create(start, start)),
+        MatchResult(WebSymbolNameSegment.create(start, start)),
         null))
     ) { matches, pattern, staticPrefixes ->
       val completeAfterChars = staticPrefixes.mapNotNull { it.getOrNull(0) }.toList()
@@ -157,8 +157,8 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
           if (symbolsResolver == null || matchResult.segments.any { it.problem == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART })
             emptyList()
           else
-            listOf(SequenceCompletionResult(MatchResult(WebSymbolNameSegment(matchResult.end, matchResult.end)),
-                                            MatchResult(WebSymbolNameSegment(matchResult.end, matchResult.end)),
+            listOf(SequenceCompletionResult(MatchResult(WebSymbolNameSegment.create(matchResult.end, matchResult.end)),
+                                            MatchResult(WebSymbolNameSegment.create(matchResult.end, matchResult.end)),
                                             null))
         else
           listOf(SequenceCompletionResult(matchResult, matchResult, null))
@@ -269,8 +269,9 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
         if (pattern.isSticky)
           results.add(SequenceCompletionResult(matchResult, matchResult, requiredPart))
         else
-          results.add(SequenceCompletionResult(MatchResult(WebSymbolNameSegment(matchResult.end, matchResult.end)),
-                                               MatchResult(WebSymbolNameSegment(matchResult.end, matchResult.end)), null)
+          results.add(SequenceCompletionResult(
+            MatchResult(WebSymbolNameSegment.create(matchResult.end, matchResult.end)),
+            MatchResult(WebSymbolNameSegment.create(matchResult.end, matchResult.end)), null)
           )
       }
     }
@@ -387,11 +388,11 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
 
     fun WebSymbol?.toNameSegments(nameStart: Int, nameEnd: Int): List<WebSymbolNameSegment> =
       if (this == null)
-        listOf(WebSymbolNameSegment(nameStart, nameEnd))
+        listOf(WebSymbolNameSegment.create(nameStart, nameEnd))
       else if (this is WebSymbolMatch && StringUtil.equals(matchedName, CharSequenceSubSequence(name, nameStart, nameEnd)))
         this.nameSegments.withOffset(nameStart)
       else
-        listOf(WebSymbolNameSegment(nameStart, nameEnd, this))
+        listOf(WebSymbolNameSegment.create(nameStart, nameEnd, this))
 
     val mainSymbol = second ?: first ?: return null
 
