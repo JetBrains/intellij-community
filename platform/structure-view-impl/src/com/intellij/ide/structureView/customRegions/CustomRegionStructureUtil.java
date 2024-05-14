@@ -14,11 +14,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class CustomRegionStructureUtil {
 
   public static Collection<StructureViewTreeElement> groupByCustomRegions(@NotNull PsiElement rootElement,

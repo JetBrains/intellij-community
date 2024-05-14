@@ -17,9 +17,6 @@ a:com.intellij.ide.structureView.StructureViewFactoryEx
 - a:setActiveAction(java.lang.String,Z):V
 com.intellij.ide.structureView.StructureViewWrapper
 - a:selectCurrentElement(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.vfs.VirtualFile,Z):Z
-f:com.intellij.ide.structureView.customRegions.CustomRegionStructureUtil
-- <init>():V
-- s:groupByCustomRegions(com.intellij.psi.PsiElement,java.util.Collection):java.util.Collection
 c:com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 - com.intellij.ide.structureView.StructureViewTreeElement
 - <init>(com.intellij.psi.PsiElement,com.intellij.lang.folding.CustomFoldingProvider):V
