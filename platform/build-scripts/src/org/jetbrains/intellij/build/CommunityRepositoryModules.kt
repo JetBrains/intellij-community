@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
+import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAutoWithDeprecatedCustomDirName
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
@@ -232,7 +233,7 @@ object CommunityRepositoryModules {
   )
 
   private fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin.descriptor"): PluginLayout {
-    return plugin (mainModuleName, auto = true) { spec ->
+    return pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "design-tools"
       spec.mainJarName = "design-tools.jar"
 
@@ -282,7 +283,7 @@ object CommunityRepositoryModules {
                                         additionalModulesToJars: Map<String, String> = emptyMap(),
                                         allPlatforms: Boolean,
                                         addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?): PluginLayout =
-    plugin(mainModuleName, auto = true) { spec ->
+    pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
       spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
@@ -722,7 +723,7 @@ object CommunityRepositoryModules {
     }
 
   fun javaFXPlugin(mainModuleName: String): PluginLayout {
-    return plugin(mainModuleName) { spec ->
+    return pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "javaFX"
       spec.mainJarName = "javaFX.jar"
       spec.withModule("intellij.javaFX")
