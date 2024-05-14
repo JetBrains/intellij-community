@@ -716,7 +716,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/intellij.platform.lvcs.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/intellij.platform.lvcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/macro/intellij.platform.macro.iml" filepath="$PROJECT_DIR$/platform/macro/intellij.platform.macro.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/platform-main/intellij.platform.main.iml" filepath="$PROJECT_DIR$/platform/platform-main/intellij.platform.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" filepath="$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" filepath="$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-embeddings/intellij.platform.ml.embeddings.iml" filepath="$PROJECT_DIR$/platform/ml-embeddings/intellij.platform.ml.embeddings.iml" />
@@ -760,6 +759,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/vcs/intellij.platform.smRunner.vcs.iml" filepath="$PROJECT_DIR$/platform/smRunner/vcs/intellij.platform.smRunner.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/sqlite/intellij.platform.sqlite.iml" filepath="$PROJECT_DIR$/platform/sqlite/intellij.platform.sqlite.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/starter/intellij.platform.starter.iml" filepath="$PROJECT_DIR$/platform/starter/intellij.platform.starter.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/intellij.platform.statistics.iml" filepath="$PROJECT_DIR$/platform/statistics/intellij.platform.statistics.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/config/intellij.platform.statistics.config.iml" filepath="$PROJECT_DIR$/platform/statistics/config/intellij.platform.statistics.config.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" filepath="$PROJECT_DIR$/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" />

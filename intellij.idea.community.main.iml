@@ -41,7 +41,7 @@
     <orderEntry type="module" module-name="intellij.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.starter" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.resources.en" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties" scope="RUNTIME" />

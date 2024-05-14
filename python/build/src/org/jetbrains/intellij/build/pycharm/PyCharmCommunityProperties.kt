@@ -26,7 +26,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     productLayout.productApiModules = listOf("intellij.xml.dom")
     productLayout.productImplementationModules = listOf(
       "intellij.xml.dom.impl",
-      "intellij.platform.main",
+      "intellij.platform.starter",
       "intellij.pycharm.community",
       "intellij.platform.whatsNew",
     )
