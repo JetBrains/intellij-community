@@ -185,7 +185,8 @@ private suspend fun saveResults(outDir: Path, roots: Map<OptionSetId, List<Confi
         .groupBy(keySelector = { it.module.moduleName ?: it.module.pluginId.idString })
         .mapValues { entry ->
           val item = entry.value.single().item
-          listOf(SearchableOptionSetIndexItem(file = item.file, hash = item.hash, size = item.size)) + (existing.get(entry.key) ?: emptyList())
+          setOf(SearchableOptionSetIndexItem(file = item.file, hash = item.hash, size = item.size))
+            .plus(existing.get(entry.key) ?: emptyList()).toList()
         }
     ))
   }
