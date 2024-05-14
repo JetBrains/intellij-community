@@ -178,12 +178,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   }
 
   override fun putUserLabel(project: Project, name: @NlsContexts.Label String): Label {
-    if (!isInitialized()) {
-      return Label.NULL_INSTANCE
-    }
-
-    gateway!!.registerUnsavedDocuments(facade!!)
-    return label(facade!!.putUserLabel(name, getProjectId(project)))
+    return putEventLabel(project, name, CommonActivity.UserLabel)
   }
 
   override fun putSystemLabel(project: Project, name: @NlsContexts.Label String, color: Int): Label {

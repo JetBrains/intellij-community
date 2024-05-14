@@ -19,4 +19,6 @@ object CommonActivity {
   val Command = ActivityId(CommonActivityPresentationProvider.ID, "Command")
   @JvmField
   val ExternalChange = ActivityId(CommonActivityPresentationProvider.ID, "ExternalChange")
+  @JvmField
+  val UserLabel = ActivityId(CommonActivityPresentationProvider.ID, "UserLabel")
 }
