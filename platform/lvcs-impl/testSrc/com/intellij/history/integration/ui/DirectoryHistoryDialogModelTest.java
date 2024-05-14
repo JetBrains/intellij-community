@@ -43,8 +43,8 @@ public class DirectoryHistoryDialogModelTest extends LocalHistoryUITestCase {
     m.selectRevisions(1, 1);
     List<Change> cc = m.getChanges();
     assertEquals(2, cc.size());
-    assertEquals("dir", ((DirectoryChange)cc.get(0)).getModel().getEntryName(1));
-    assertEquals("file.txt", ((DirectoryChange)cc.get(1)).getModel().getEntryName(1));
+    assertEquals("dir", ((DirectoryChange)cc.get(0)).getRightEntry().getName());
+    assertEquals("file.txt", ((DirectoryChange)cc.get(1)).getRightEntry().getName());
   }
 
   private void initModelFor(VirtualFile dir) {

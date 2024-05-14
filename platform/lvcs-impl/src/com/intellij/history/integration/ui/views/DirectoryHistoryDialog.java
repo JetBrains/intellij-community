@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.diff.DiffDialogHints;
@@ -200,7 +200,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
       List<Difference> diffs = new ArrayList<>();
       for (DirectoryChange each : selected) {
-        diffs.add(each.getModel().getDifference());
+        diffs.add(each.getDifference());
       }
       revert(model.createRevisionReverter(diffs));
     }

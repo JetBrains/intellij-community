@@ -550,14 +550,6 @@ f:com.intellij.history.integration.revertion.UndoChangeRevertingVisitor
 f:com.intellij.history.integration.revertion.UndoChangeRevertingVisitor$RuntimeIOException
 - java.lang.RuntimeException
 - <init>(java.lang.Throwable):V
-f:com.intellij.history.integration.ui.models.DirectoryChangeModel
-- <init>(com.intellij.history.core.revisions.Difference,com.intellij.history.integration.IdeaGateway):V
-- canShowFileDifference():Z
-- getContentRevision(I):com.intellij.openapi.vcs.changes.ContentRevision
-- getDifference():com.intellij.history.core.revisions.Difference
-- getEntry(I):com.intellij.history.core.tree.Entry
-- getEntryName(I):java.lang.String
-- isFile():Z
 c:com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
 - com.intellij.history.integration.ui.models.HistoryDialogModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile):V
@@ -686,10 +678,11 @@ f:com.intellij.history.integration.ui.models.SelectionDifferenceModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.integration.ui.models.RevisionSelectionCalculator,com.intellij.history.core.revisions.Revision,com.intellij.history.core.revisions.Revision,I,I,Z):V
 f:com.intellij.history.integration.ui.views.DirectoryChange
 - com.intellij.openapi.vcs.changes.Change
-- <init>(com.intellij.history.integration.ui.models.DirectoryChangeModel):V
+- <init>(com.intellij.history.integration.IdeaGateway,com.intellij.history.core.revisions.Difference):V
 - canShowFileDifference():Z
 - getDifference():com.intellij.history.core.revisions.Difference
-- getModel():com.intellij.history.integration.ui.models.DirectoryChangeModel
+- getLeftEntry():com.intellij.history.core.tree.Entry
+- getRightEntry():com.intellij.history.core.tree.Entry
 c:com.intellij.history.integration.ui.views.DirectoryHistoryDialog
 - com.intellij.history.integration.ui.views.HistoryDialog
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile):V

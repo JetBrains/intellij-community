@@ -6,7 +6,6 @@ import com.intellij.history.core.revisions.Difference
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
-import com.intellij.history.integration.ui.models.DirectoryChangeModel
 import com.intellij.history.integration.ui.views.DirectoryChange
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.platform.lvcs.impl.*
@@ -64,7 +63,7 @@ internal fun getEntryPath(gateway: IdeaGateway, scope: ActivityScope.File) = gat
 internal fun getChanges(gateway: IdeaGateway, scope: ActivityScope, diff: List<Difference>): List<Change> {
   return diff.map { difference ->
     if (scope is ActivityScope.Directory) {
-      return@map DirectoryChange(DirectoryChangeModel(difference, gateway))
+      return@map DirectoryChange(gateway, difference)
     }
     return@map Change(difference.getLeftContentRevision(gateway), difference.getRightContentRevision(gateway))
   }
