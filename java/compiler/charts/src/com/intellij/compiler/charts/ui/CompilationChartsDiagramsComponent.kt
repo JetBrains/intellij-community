@@ -3,6 +3,9 @@ package com.intellij.compiler.charts.ui
 
 import com.intellij.compiler.charts.CompilationChartsViewModel
 import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
+import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
+import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
+import com.intellij.compiler.charts.ui.RenderType.FULL
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.table.JBTable
@@ -16,22 +19,40 @@ import kotlin.math.exp
 
 class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewModel,
                                          private val zoom: Zoom,
-                                         private val getViewport: () -> JViewport) : JBPanelWithEmptyText() {
+                                         private val viewport: JViewport) : JBPanelWithEmptyText() {
   companion object {
     val ROW_HEIGHT = JBTable().rowHeight * 1.5
   }
 
-  var modules: CompilationChartsViewModel.ViewModules = CompilationChartsViewModel.ViewModules()
+  val modules: CompilationChartsViewModel.ViewModules = CompilationChartsViewModel.ViewModules()
+  val stats: Map<CpuMemoryStatisticsType, MutableSet<CompilationChartsViewModel.StatisticData>> = mapOf(MEMORY to ConcurrentSkipListSet(), CPU to ConcurrentSkipListSet())
   var cpu: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
   var memory: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
-  var statistic: Statistic = Statistic()
-  var cpuMemory: CpuMemoryStatisticsType = CpuMemoryStatisticsType.MEMORY
+  val statistic: Statistic = Statistic()
+  var cpuMemory = MEMORY
   private val mouseAdapter: CompilationChartsMouseAdapter
+
+  private val charts: Charts
+  private val usages: Map<CpuMemoryStatisticsType, ChartUsage> = mapOf(
+    MEMORY to ChartUsage(zoom, "memory", UsageModel()).apply {
+      unit = "MB"
+      color {
+        background = COLOR_MEMORY
+        border = COLOR_MEMORY_BORDER
+      }
+    },
+    CPU to ChartUsage(zoom, "cpu", UsageModel()).apply {
+      unit = "%"
+      color {
+        background = COLOR_CPU
+        border = COLOR_CPU_BORDER
+      }
+    })
 
   init {
     addMouseWheelListener { e ->
       if (e.isControlDown) {
-        zoom.adjustUser(getViewport(), e.x, exp(e.preciseWheelRotation * -0.05))
+        zoom.adjustUser(viewport, e.x, exp(e.preciseWheelRotation * -0.05))
         this@CompilationChartsDiagramsComponent.repaint()
       }
       else {
@@ -41,16 +62,10 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
 
     mouseAdapter = CompilationChartsMouseAdapter(vm, this)
     addMouseListener(mouseAdapter)
-  }
 
-  override fun paintComponent(g2d: Graphics) {
-    if (g2d !is Graphics2D) return
-
-    charts(vm, zoom, getViewport()) {
+    charts = charts(vm, zoom, viewport) {
       progress {
-        model = modules.data()
         height = ROW_HEIGHT
-        threads = statistic.threadCount
 
         block {
           border = MODULE_BLOCK_BORDER
@@ -63,28 +78,7 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
           color = { row -> if (row % 2 == 0) COLOR_BACKGROUND_EVEN else COLOR_BACKGROUND_ODD }
         }
       }
-      usage {
-        when (cpuMemory) {
-          CpuMemoryStatisticsType.MEMORY -> {
-            model = memory
-            maximum = statistic.maxMemory
-            unit = "MB"
-            color {
-              background = COLOR_MEMORY
-              border = COLOR_MEMORY_BORDER
-            }
-          }
-          CpuMemoryStatisticsType.CPU -> {
-            model = cpu
-            maximum = statistic.maxCpu
-            unit = "%"
-            color {
-              background = COLOR_CPU
-              border = COLOR_CPU_BORDER
-            }
-          }
-        }
-      }
+      usage = usages[MEMORY]!!
       axis {
         stroke = floatArrayOf(5f, 5f)
         distance = AXIS_DISTANCE_PX
@@ -97,17 +91,26 @@ class CompilationChartsDiagramsComponent(private val vm: CompilationChartsViewMo
           size = FONT_SIZE
           color = COLOR_TEXT
         }
-        duration {
-          from = statistic.start
-          to = statistic.end
-        }
         background = COLOR_BACKGROUND
         line {
           color = COLOR_LINE
         }
         mouse = mouseAdapter
       }
-    }.draw(g2d) {
+    }
+  }
+
+  override fun paintComponent(g2d: Graphics) {
+    if (g2d !is Graphics2D) return
+    charts.model {
+      progress {
+        data(modules.data.getAndClean())
+        filter = modules.filter
+      }
+      usage(usages[cpuMemory]!!) {
+        data(stats[cpuMemory]!!.getAndClean())
+      }
+    }.draw(g2d, FULL) {
       setupAntialiasing(g2d) // ??
       val size = Dimension(width().toInt(), height().toInt())
       if (size != this@CompilationChartsDiagramsComponent.preferredSize) {

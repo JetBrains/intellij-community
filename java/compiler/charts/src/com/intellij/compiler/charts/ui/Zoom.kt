@@ -15,11 +15,11 @@ class Zoom {
   private var lastCorrectionTime: Long = System.currentTimeMillis()
 
   constructor() {
-    this.dynamicScale = 5.5e7 / NANOS
+    this.dynamicScale = 24.0 //5.5e7 / NANOS
   }
 
   constructor(seconds: Double) {
-    this.userScale = 5.5e7 / (seconds * NANOS)
+    this.userScale = 24.0 //5.5e7 / (seconds * NANOS)
   }
 
   fun toPixels(duration: Long): Double = toPixels(duration.toDouble(), scale())
@@ -64,7 +64,7 @@ class Zoom {
     }
   }
 
-  private fun scale(): Double = if (userScale == -1.0) dynamicScale else userScale
+  private fun scale(): Double = max(MIN_ZOOM_SECONDS, min(MAX_ZOOM_SECONDS, if (userScale == -1.0) dynamicScale else userScale))
 
   fun adjustDynamic(totalDuration: Int, window: Int) = adjustDynamic(totalDuration.toDouble(), window.toDouble())
 

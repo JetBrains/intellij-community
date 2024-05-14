@@ -2,23 +2,20 @@
 package com.intellij.compiler.charts.ui
 
 import com.intellij.compiler.charts.CompilationChartsViewModel
+import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
+import com.intellij.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.rd.util.reactive.IViewableList
-import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JViewport
 import javax.swing.ScrollPaneConstants
 
 class CompilationChartsView(private val vm: CompilationChartsViewModel) : BorderLayoutPanel() {
   init {
-    val init = Initialization()
     val zoom = Zoom()
 
-    val diagrams = CompilationChartsDiagramsComponent(vm, zoom, init.init()).apply {
-      name = "compilation-charts-diagrams-component"
-    }
-    val scroll = object : JBScrollPane(diagrams) {
+    val scroll = object : JBScrollPane() {
       override fun createViewport(): JViewport = CompilationChartsViewport(zoom)
     }.apply {
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
@@ -26,17 +23,19 @@ class CompilationChartsView(private val vm: CompilationChartsViewModel) : Border
       border = JBUI.Borders.empty()
       viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE
       name = "compilation-charts-scroll-pane"
-      init.set(this)
     }
+    val diagrams = CompilationChartsDiagramsComponent(vm, zoom, scroll.viewport).apply {
+      name = "compilation-charts-diagrams-component"
+    }
+    scroll.setViewportView(diagrams)
 
     val actionPanel = ActionPanel(vm)
     addToTop(actionPanel)
     addToCenter(scroll)
 
     vm.modules.get().advise(vm.lifetime) { module ->
-      module.newValueOpt?.let { data ->
-        diagrams.modules.data[module.key] = data
-      } ?: diagrams.modules.data.remove(module.key)
+      module.newValueOpt?.let { diagrams.modules.data[module.key] = it }
+      ?: diagrams.modules.data.remove(module.key)
 
       diagrams.statistic.time(vm.modules.start)
       diagrams.statistic.time(vm.modules.end)
@@ -45,11 +44,12 @@ class CompilationChartsView(private val vm: CompilationChartsViewModel) : Border
 
     vm.statistics.cpu.advise(vm.lifetime) { statistics ->
       if (statistics !is IViewableList.Event.Add) return@advise
-      diagrams.cpu.add(statistics.newValue)
+      diagrams.stats[CPU]!!.add(statistics.newValue)
+
       diagrams.statistic.time(statistics.newValueOpt?.time)
       diagrams.statistic.cpu(statistics.newValueOpt?.data)
 
-      if (vm.cpuMemory.value == CompilationChartsViewModel.CpuMemoryStatisticsType.CPU) {
+      if (vm.cpuMemory.value == CPU) {
         scroll.revalidate()
         scroll.repaint()
       }
@@ -57,11 +57,12 @@ class CompilationChartsView(private val vm: CompilationChartsViewModel) : Border
 
     vm.statistics.memoryUsed.advise(vm.lifetime) { statistics ->
       if (statistics !is IViewableList.Event.Add) return@advise
-      diagrams.memory.add(statistics.newValue)
+      diagrams.stats[MEMORY]!!.add(statistics.newValue)
+
       diagrams.statistic.memory(statistics.newValueOpt?.data)
       diagrams.statistic.time(statistics.newValueOpt?.time)
 
-      if (vm.cpuMemory.value == CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY) {
+      if (vm.cpuMemory.value == MEMORY) {
         scroll.revalidate()
         scroll.repaint()
       }
@@ -80,12 +81,6 @@ class CompilationChartsView(private val vm: CompilationChartsViewModel) : Border
       scroll.revalidate()
       scroll.repaint()
     }
-  }
-
-  private class Initialization {
-    val scroll: AtomicReference<JBScrollPane> = AtomicReference<JBScrollPane>()
-    fun init(): () -> JViewport = { scroll.get().viewport }
-    fun set(scroll: JBScrollPane) = this.scroll.set(scroll)
   }
 }
 

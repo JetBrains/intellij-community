@@ -36,3 +36,15 @@ fun Graphics2D.withStroke(stroke: Stroke, block: Graphics2D.() -> Unit): Graphic
   this.stroke = oldStroke
   return this
 }
+
+ fun <E> MutableSet<E>.getAndClean(): MutableSet<E> {
+  val result = HashSet(this)
+  removeAll(result)
+  return result
+}
+
+ fun <K, V> MutableMap<K, V>.getAndClean(): MutableMap<K, V> {
+  val result = HashMap(this)
+  result.entries.forEach { this.remove(it.key, it.value) }
+  return result
+}
