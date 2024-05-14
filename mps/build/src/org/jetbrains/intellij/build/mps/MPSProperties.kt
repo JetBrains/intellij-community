@@ -52,7 +52,7 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.bundledPluginModules.add("intellij.properties.resource.bundle.editor")
         productLayout.bundledPluginModules.add("intellij.terminal")
         productLayout.bundledPluginModules.add("intellij.emojipicker")
-        productLayout.bundledPluginModules.add("intellij.settingsRepository")
+        productLayout.bundledPluginModules.add("intellij.settingsSync")
         productLayout.bundledPluginModules.add("intellij.tasks.core")
         productLayout.bundledPluginModules.add("intellij.vcs.git")
         productLayout.bundledPluginModules.add("intellij.vcs.svn")
