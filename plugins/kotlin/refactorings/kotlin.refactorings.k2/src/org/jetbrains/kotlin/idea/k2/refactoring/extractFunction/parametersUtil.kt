@@ -87,6 +87,26 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 
+/**
+ * Represents a parameter candidate as it's original declaration and a reference in code.
+ *
+ * Parameters might be created for class properties, which should be distinguished by their receiver expressions.
+ * Otherwise, the same property referenced by different instances would be glued together in one parameter:
+ * for <selection>a.foo + b.foo</selection>, two parameters foo1 and foo2 should be created
+ */
+private class ParameterWithReference(val parameterOrigin: PsiNamedElement, val ref: KtReferenceExpression?) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is ParameterWithReference) return false
+        if (other.parameterOrigin != parameterOrigin) return false
+        if (ref == null) return other.ref == null
+        return other.ref != null && analyze(ref) { ref.isSemanticMatch(other.ref) }
+    }
+
+    override fun hashCode(): Int {
+        return parameterOrigin.hashCode()
+    }
+}
+
 context(KtAnalysisSession)
 internal fun ExtractionData.inferParametersInfo(
     virtualBlock: KtBlockExpression,
@@ -95,7 +115,7 @@ internal fun ExtractionData.inferParametersInfo(
 ): ParametersInfo<KtType, MutableParameter> {
     val info = ParametersInfo<KtType, MutableParameter>()
 
-    val extractedDescriptorToParameter = LinkedHashMap<PsiNamedElement, MutableParameter>()
+    val extractedDescriptorToParameter = LinkedHashMap<ParameterWithReference, MutableParameter>()
 
     for (refInfo in getBrokenReferencesInfo(virtualBlock)) {
         val ref = refInfo.refExpr
@@ -162,7 +182,7 @@ internal fun ExtractionData.inferParametersInfo(
                 currentName = "receiver"
             }
 
-            mirrorVarName = if (namedElement.name in modifiedVariables) suggestNameByName(
+            mirrorVarName = if (namedElement.parameterOrigin.name in modifiedVariables) suggestNameByName(
                 name
             ) { varNameValidator.validate(it) } else null
             info.parameters.add(this)
@@ -186,7 +206,7 @@ context(KtAnalysisSession)
 private fun ExtractionData.registerParameter(
     info: ParametersInfo<KtType, MutableParameter>,
     refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KtType>,
-    extractedDescriptorToParameter: HashMap<PsiNamedElement, MutableParameter>,
+    extractedDescriptorToParameter: HashMap<ParameterWithReference, MutableParameter>,
     isMemberExtension: Boolean
 ) {
     val (originalRef, _, originalDeclaration, resolvedCall) = refInfo.resolveResult
@@ -236,7 +256,7 @@ private fun ExtractionData.registerParameter(
 
         if (extractThis || extractOrdinaryParameter || extractFunctionRef) {
             val parameterExpression = getParameterArgumentExpression(originalRef, receiverToExtract, refInfo.smartCast)
-            val parameter = extractedDescriptorToParameter.getOrPut(elementToExtract) {
+            val parameter = extractedDescriptorToParameter.getOrPut(ParameterWithReference(elementToExtract, originalRef.takeUnless { extractThis })) {
                 var argumentText =
                     calculateArgumentText(
                         hasThisReceiver,

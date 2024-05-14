@@ -2534,6 +2534,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/classObject.kt");
                 }
 
+                @TestMetadata("differentReceivers.kt")
+                public void testDifferentReceivers() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/differentReceivers.kt");
+                }
+
                 @TestMetadata("extensionLambda.kt")
                 public void testExtensionLambda() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/extensionLambda.kt");
