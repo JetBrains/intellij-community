@@ -16,7 +16,7 @@ fun setWorkspace(project: Project) {
 }
 
 @Service(Service.Level.PROJECT)
-@State(name = "WorkspaceSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "WorkspaceSettings", storages = [Storage("jb-workspace.xml")])
 private class WorkspaceSettings : BaseState(), PersistentStateComponent<WorkspaceSettings> {
   override fun getState(): WorkspaceSettings = this
   override fun loadState(state: WorkspaceSettings) {
