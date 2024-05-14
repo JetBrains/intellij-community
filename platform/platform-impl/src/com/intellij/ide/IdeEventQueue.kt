@@ -346,42 +346,44 @@ class IdeEventQueue private constructor() : EventQueue() {
       val runnable = InvocationUtil.extractRunnable(event)
       val runnableClass = runnable?.javaClass ?: Runnable::class.java
       val processEventRunnable = Runnable {
-        val progressManager = ProgressManager.getInstanceOrNull()
-        try {
-          runCustomProcessors(finalEvent, preProcessors)
-          performActivity(finalEvent) {
-            if (progressManager == null) {
-              _dispatchEvent(finalEvent)
-            }
-            else {
-              progressManager.computePrioritized(ThrowableComputable {
+        withAttachedClientId(event).use {
+          val progressManager = ProgressManager.getInstanceOrNull()
+          try {
+            runCustomProcessors(finalEvent, preProcessors)
+            performActivity(finalEvent) {
+              if (progressManager == null) {
                 _dispatchEvent(finalEvent)
-                null
-              })
+              }
+              else {
+                progressManager.computePrioritized(ThrowableComputable {
+                  _dispatchEvent(finalEvent)
+                  null
+                })
+              }
             }
           }
-        }
-        catch (t: Throwable) {
-          processException(t)
-        }
-        finally {
-          isInInputEvent = wasInputEvent
-          trueCurrentEvent = oldEvent
-          if (currentSequencedEvent === finalEvent) {
-            currentSequencedEvent = null
+          catch (t: Throwable) {
+            processException(t)
           }
-          runCustomProcessors(finalEvent, postProcessors)
-          if (finalEvent is KeyEvent) {
-            maybeReady()
+          finally {
+            isInInputEvent = wasInputEvent
+            trueCurrentEvent = oldEvent
+            if (currentSequencedEvent === finalEvent) {
+              currentSequencedEvent = null
+            }
+            runCustomProcessors(finalEvent, postProcessors)
+            if (finalEvent is KeyEvent) {
+              maybeReady()
+            }
+            if (eventWatcher != null && runnable != null && !InvocationUtil.isFlushNow(runnable)) {
+              eventWatcher.logTimeMillis(if (runnableClass == Runnable::class.java) finalEvent.toString() else runnableClass.name,
+                                         startedAt,
+                                         runnableClass)
+            }
           }
-          if (eventWatcher != null && runnable != null && !InvocationUtil.isFlushNow(runnable)) {
-            eventWatcher.logTimeMillis(if (runnableClass == Runnable::class.java) finalEvent.toString() else runnableClass.name,
-                                       startedAt,
-                                       runnableClass)
+          if (isFocusEvent(finalEvent)) {
+            onFocusEvent(finalEvent)
           }
-        }
-        if (isFocusEvent(finalEvent)) {
-          onFocusEvent(finalEvent)
         }
       }
 
@@ -390,13 +392,11 @@ class IdeEventQueue private constructor() : EventQueue() {
         return
       }
 
-      withAttachedClientId(event).use {
-        if (defaultEventWithWrite) {
-          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable)
-        }
-        else {
-          processEventRunnable.run()
-        }
+      if (defaultEventWithWrite) {
+        ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable)
+      }
+      else {
+        processEventRunnable.run()
       }
     }
     finally {
