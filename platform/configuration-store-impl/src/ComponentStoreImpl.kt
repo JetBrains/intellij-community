@@ -467,8 +467,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo? {
-    if (!ClientId.isCurrentlyUnderLocalId) {
-      // Don't register components under remote clientId
+    if (info.stateSpec?.perClient == true && !ClientId.isCurrentlyUnderLocalId) {
+      // Register per-client components only for `ClientId.localId`
       return null
     }
 

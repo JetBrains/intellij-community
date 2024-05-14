@@ -83,6 +83,18 @@ public @interface State {
   @ApiStatus.Experimental
   boolean getStateRequiresEdt() default false;
 
+  /**
+   * <p>Allows each remote client to have a separate instance of the settings component.</p>
+   * <p>Only local settings (for <code>ClientId.localId</code>) will be saved on disk.</p>
+   * <br/>
+   * <p><b>Important:</b> if <code>perClient</code> is true, then the component
+   * must be registered as a per-client service.</p>
+   * @see com.intellij.codeWithMe.ClientId
+   * @see ServiceDescriptor#client
+   */
+  @ApiStatus.Experimental
+  boolean perClient() default false;
+
   abstract class NameGetter implements Supplier<@Nls String> {
     @Override
     public abstract @Nls String get();

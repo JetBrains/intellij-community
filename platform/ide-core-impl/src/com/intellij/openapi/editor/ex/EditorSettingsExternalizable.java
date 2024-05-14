@@ -27,7 +27,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.*;
 
-@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
+@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE, perClient = true)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   /**
    * @deprecated Use {@link PropNames#PROP_IS_VIRTUAL_SPACE} instead

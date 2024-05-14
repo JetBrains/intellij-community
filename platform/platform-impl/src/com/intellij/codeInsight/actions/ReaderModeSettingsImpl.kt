@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import kotlinx.coroutines.CoroutineScope
 
-@State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
+@State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], perClient = true)
 class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : PersistentStateComponentWithModificationTracker<ReaderModeSettingsImpl.State>,
                                                                             ReaderModeSettings {
   private var state = State()
