@@ -9,7 +9,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.debugger.DebugException;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ExternalLanguageAnnotators;
@@ -28,7 +27,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -47,7 +45,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -890,6 +887,40 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
       assertSame(document, getEditor().getDocument());
       HighlightInfo info2 = assertOneElement(highlightErrors());
       assertEquals(MyTextAnnotator.SWEARING, info2.getDescription());
+    });
+  }
+
+  public static class MyFileLevelAnnotator extends MyRecordingAnnotator {
+    private static final String MSG = "xxx";
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiFile) {
+        holder.newAnnotation(HighlightSeverity.ERROR, MSG).fileLevel().create();
+        iDidIt();
+      }
+      LOG.debug(getClass()+".annotate("+element+") = "+didIDoIt());
+    }
+  }
+  public void testFileLevelAnnotationDoesNotDuplicateOnTyping() {
+    configureByText(PlainTextFileType.INSTANCE, "text<caret>");
+
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new MyFileLevelAnnotator()}, () -> {
+      for (int i=0; i<100; i++) {
+        assertEquals(MyFileLevelAnnotator.MSG, assertOneElement(highlightErrors()).getDescription());
+        HighlightInfo info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+        assertEquals(MyFileLevelAnnotator.MSG, info.getDescription());
+
+        type('2');
+        assertEquals(MyFileLevelAnnotator.MSG, assertOneElement(highlightErrors()).getDescription());
+        info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+        assertEquals(MyFileLevelAnnotator.MSG, info.getDescription());
+
+        backspace();
+        assertEquals(MyFileLevelAnnotator.MSG, assertOneElement(highlightErrors()).getDescription());
+        info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+        assertEquals(MyFileLevelAnnotator.MSG, info.getDescription());
+      }
     });
   }
 }

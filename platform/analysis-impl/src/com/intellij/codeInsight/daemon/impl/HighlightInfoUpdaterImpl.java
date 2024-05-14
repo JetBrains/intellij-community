@@ -328,8 +328,12 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       if (oldInfos != null) {
         for (HighlightInfo oldInfo : oldInfos) {
           RangeHighlighterEx oldHighlighter = oldInfo.getHighlighter();
+          boolean recycled = false;
           if (oldHighlighter != null) {
-            toReuse.recycleHighlighter(oldHighlighter);
+            recycled = toReuse.recycleHighlighter(oldHighlighter);
+          }
+          if (oldInfo.isFileLevelAnnotation() && !recycled) {
+            ((HighlightingSessionImpl)session).removeFileLevelHighlight(oldInfo);
           }
         }
       }
@@ -338,11 +342,13 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         if (info.isFileLevelAnnotation()) {
           RangeHighlighterEx salvagedHighlighter = toReuse.pickupHighlighterFromGarbageBin(0, psiFile.getTextLength(), -409423948);
           HighlightInfo oldFileInfo = salvagedHighlighter == null ? null : HighlightInfo.fromRangeHighlighter(salvagedHighlighter);
+
           if (oldFileInfo != null) {
-            UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(salvagedHighlighter, oldFileInfo, session);
-            salvagedHighlighter = null;
+            ((HighlightingSessionImpl)session).replaceFileLevelHighlight(oldFileInfo, info, salvagedHighlighter);
           }
-          ((HighlightingSessionImpl)session).addFileLevelHighlight(info, salvagedHighlighter);
+          else {
+            ((HighlightingSessionImpl)session).addFileLevelHighlight(info, salvagedHighlighter);
+          }
         }
         else {
           BackgroundUpdateHighlightersUtil.createOrReuseHighlighterFor(info, session.getColorsScheme(), document, -1,

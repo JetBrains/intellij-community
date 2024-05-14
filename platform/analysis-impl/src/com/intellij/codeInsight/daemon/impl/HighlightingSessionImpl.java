@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -299,6 +298,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return myDaemonCancelEventCount.intValue() != myDaemonInitialCancelEventCount;
   }
 
+  @Deprecated
   void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights, int group, boolean cleanOldHighlights) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
@@ -318,11 +318,26 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
   }
 
+  // removes the old HighlightInfo and adds the new one atomically, to avoid flicker
+  void replaceFileLevelHighlight(@NotNull HighlightInfo oldFileLevelInfo, @NotNull HighlightInfo newFileLevelInfo, @Nullable RangeHighlighterEx toReuse) {
+    Project project = getProject();
+    DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
+    Future<?> future = EdtExecutorService.getInstance().submit(() -> {
+      if (!project.isDisposed()) {
+        if (!isCanceled()) {
+          codeAnalyzer.removeFileLevelHighlight(getPsiFile(), oldFileLevelInfo);
+          codeAnalyzer.addFileLevelHighlight(oldFileLevelInfo.getGroup(), newFileLevelInfo, getPsiFile(), toReuse);
+        }
+      }
+    });
+    pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
+  }
+
   void removeFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {
-      if (!project.isDisposed() && !isCanceled()) {
+      if (!project.isDisposed()) {
         codeAnalyzer.removeFileLevelHighlight(getPsiFile(), fileLevelHighlightInfo);
       }
     });
@@ -333,7 +348,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {
       if (!project.isDisposed() && !isCanceled()) {
-        codeAnalyzer.addFileLevelHighlight(Pass.LOCAL_INSPECTIONS, fileLevelHighlightInfo, getPsiFile(), toReuse);
+        codeAnalyzer.addFileLevelHighlight(fileLevelHighlightInfo.getGroup(), fileLevelHighlightInfo, getPsiFile(), toReuse);
       }
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
