@@ -91,7 +91,11 @@
       implementation="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryFileManagerListener"/>
     <advancedSetting id="localHistory.daysToKeep" default="5" groupKey="group.advanced.settings.ide"/>
 
+    <notificationGroup displayType="BALLOON" id="LocalHistory.General" bundle="messages.LocalHistoryBundle"
+                       key="notification.group.general"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter"/>
+    <statistics.notificationIdsHolder implementation="com.intellij.history.core.LocalHistoryNotificationIdsHolder"/>
   </extensions>
 
   <applicationListeners>
