@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicReference
 class GradleModelFetchActionResultHandlerBridge(
   private val resolverContext: DefaultProjectResolverContext,
   modelFetchAction: GradleModelFetchAction,
-  listener: GradleModelFetchActionListener
+  modelFetchActionListener: GradleModelFetchActionListener
 ) {
 
-  private val listener = GradleModelFetchActionListenerAdapter(resolverContext, modelFetchAction, listener)
+  private val modelFetchActionListener = GradleModelFetchActionListenerAdapter(resolverContext, modelFetchAction, modelFetchActionListener)
 
   private val buildFinishWaiter = CountDownLatch(1)
 
@@ -51,7 +51,7 @@ class GradleModelFetchActionResultHandlerBridge(
     return StreamedValueListener { state ->
       runCancellable {
         if (state is GradleModelHolderState) {
-          listener.onPhaseCompleted(state.phase!!, state)
+          modelFetchActionListener.onPhaseCompleted(state.phase!!, state)
         }
       }
     }
@@ -60,7 +60,7 @@ class GradleModelFetchActionResultHandlerBridge(
   fun asProjectLoadedResultHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
       runCancellable {
-        listener.onProjectLoaded(state)
+        modelFetchActionListener.onProjectLoaded(state)
       }
     }
   }
@@ -69,7 +69,7 @@ class GradleModelFetchActionResultHandlerBridge(
     return IntermediateResultHandler { state ->
       runCancellable {
         isBuildActionInterrupted.set(false)
-        listener.onBuildCompleted(state)
+        modelFetchActionListener.onBuildCompleted(state)
       }
     }
   }
@@ -87,7 +87,7 @@ class GradleModelFetchActionResultHandlerBridge(
           try {
             if (result is GradleModelHolderState) {
               isBuildActionInterrupted.set(false)
-              listener.onBuildCompleted(result)
+              modelFetchActionListener.onBuildCompleted(result)
             }
           }
           finally {
@@ -100,7 +100,7 @@ class GradleModelFetchActionResultHandlerBridge(
         runCancellable {
           try {
             buildFailure.set(failure)
-            listener.onBuildFailed(failure)
+            modelFetchActionListener.onBuildFailed(failure)
           }
           finally {
             buildFinishWaiter.countDown()
