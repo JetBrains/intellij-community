@@ -929,11 +929,11 @@
         <action id="ProjectView.FlattenPackages"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenPackages"
                 icon="AllIcons.ObjectBrowser.FlattenPackages"/>
-        <action id="ProjectView.HideEmptyMiddlePackages"
-                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
         <action id="ProjectView.AbbreviatePackageNames"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AbbreviatePackageNames"
                 icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
+        <action id="ProjectView.HideEmptyMiddlePackages"
+                class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
         <action id="ProjectView.CompactDirectories"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
         <separator/>
