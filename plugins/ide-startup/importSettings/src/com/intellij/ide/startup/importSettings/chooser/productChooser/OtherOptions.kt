@@ -18,13 +18,11 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-class OtherOptions(private val controller: ImportSettingsController) : ProductChooserAction() {
+class OtherOptions(private val controller: ImportSettingsController, private val syncDataProvider: SyncActionsDataProvider) : ProductChooserAction() {
 
   private val jbDataProvider = JBrActionsDataProvider.getInstance()
-  private val syncDataProvider = SyncActionsDataProvider.getInstance()
 
   private var jb: List<AnAction>? = null
-  private var sync: List<AnAction>? = null
   private val config = ConfigAction(controller)
 
   init {
@@ -44,12 +42,11 @@ class OtherOptions(private val controller: ImportSettingsController) : ProductCh
     }
 
     if(syncDataProvider.settingsService.isSyncEnabled.value) {
-      syncDataProvider.other?.let {
-        sync = addActionList(it, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync"))
-      }
-      sync?.let {
-        if (it.isNotEmpty()) {
-          arr.addAll(it)
+      syncDataProvider.other?.let { products ->
+        addActionList(products, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync")).let {
+          if (it.isNotEmpty()) {
+            arr.addAll(it)
+          }
         }
       }
     }

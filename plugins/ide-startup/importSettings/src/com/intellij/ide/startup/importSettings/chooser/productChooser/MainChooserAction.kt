@@ -10,23 +10,19 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import javax.swing.Icon
 
 open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<T>, private val controller: ImportSettingsController) : ProductChooserAction() {
-  private var array: Array<AnAction> = emptyArray()
 
   override fun displayTextInToolbar(): Boolean {
     return true
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    if(array.isEmpty()) {
-      val products = provider.main ?: emptyList()
-      array = productsToActions(products, provider, controller).toTypedArray()
-    }
-    return array
+    val products = provider.main ?: emptyList()
+    return productsToActions(products, provider, controller).toTypedArray()
   }
 
   override fun actionPerformed(event: AnActionEvent) {
     val children = getChildren(event)
-    if(children.size == 1) {
+    if (children.size == 1) {
       children.firstOrNull()?.actionPerformed(event)
       return
     }
@@ -38,9 +34,9 @@ open class MainChooserAction<T : BaseService>(val provider: ActionsDataProvider<
     e.presentation.isVisible = false
 
     val products = provider.main ?: return
-    if(products.isEmpty()) return
+    if (products.isEmpty()) return
 
-    if(products.size == 1) {
+    if (products.size == 1) {
       products.firstOrNull()?.let {
         e.presentation.icon = provider.getProductIcon(it.id)
         e.presentation.text = provider.getText(it)

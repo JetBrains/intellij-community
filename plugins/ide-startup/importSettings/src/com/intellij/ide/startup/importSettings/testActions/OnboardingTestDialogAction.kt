@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.startup.importSettings.data.NotificationData
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.startup.importSettings.data.SyncService
+import com.intellij.ide.startup.importSettings.data.TestSyncService
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
@@ -15,7 +16,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
 import javax.swing.JComponent
 
-class ErrorTestDialogAction : DumbAwareAction() {
+class OnboardingTestDialogAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val settService = SettingsService.getInstance()
     val error = settService.notification
@@ -63,38 +64,64 @@ class ErrorTestDialogAction : DumbAwareAction() {
               settService.doClose.fire(Unit)
             }
           }
-          row {
-            val state = SettingsService.getInstance().getSyncService().syncState
+          val syncService = SettingsService.getInstance().getSyncService()
+          if(syncService is TestSyncService) {
+            row {
+              val state = syncService.syncState
+                comboBox(SyncService.SYNC_STATE.entries).onChanged {
+                  if (it.selectedItem is SyncService.SYNC_STATE) {
+                    state.value = it.selectedItem as SyncService.SYNC_STATE
+                  }
+                }.applyToComponent {
+                  selectedItem = state.value
+                }
+                val component = textField().component
+                state.advise(Lifetime.Eternal) {
+                  component.text = it.toString()
+                }
+            }
+
+            row {
+              button("Waiting for login") {
+                settService.notification.set(object : NotificationData {
+                  override val status: NotificationData.NotificationStatus  = NotificationData.NotificationStatus.WAITING
+                  override val message: String = IdeBundle.message("login.dialog.waiting.for.login")
+                  override val customActionList = listOf(NotificationData.Action("Log in with token..."){},
+                                                         NotificationData.Action("Log in with token..."){})
+                })
 
 
-            if(state is Property<SyncService.SYNC_STATE>) {
-              comboBox(SyncService.SYNC_STATE.entries).onChanged {
-                if (it.selectedItem is SyncService.SYNC_STATE) {
-                  state.value = it.selectedItem as SyncService.SYNC_STATE
+              }
+              button("clear") {
+                settService.notification.set(null)
+              }
+            }
+            row ("mainProductState") {
+              comboBox(TestSyncService.TestState.entries).onChanged {
+                if (it.selectedItem is TestSyncService.TestState) {
+                  syncService.mainProductState = it.selectedItem as TestSyncService.TestState
                 }
               }.applyToComponent {
-                selectedItem = state.value
-              }
-              val component = textField().component
-              state.advise(Lifetime.Eternal) {
-                component.text = it.toString()
+                selectedItem = syncService.mainProductState
               }
             }
-          }
-
-          row {
-            button("Waiting for login") {
-              settService.notification.set(object : NotificationData {
-                override val status: NotificationData.NotificationStatus  = NotificationData.NotificationStatus.WAITING
-                override val message: String = IdeBundle.message("login.dialog.waiting.for.login")
-                override val customActionList = listOf(NotificationData.Action("Log in with token..."){},
-                                                       NotificationData.Action("Log in with token..."){})
-              })
-
-
+            row ("freshProductState") {
+              comboBox(TestSyncService.TestState.entries).onChanged {
+                if (it.selectedItem is TestSyncService.TestState) {
+                  syncService.freshProductState = it.selectedItem as TestSyncService.TestState
+                }
+              }.applyToComponent {
+                selectedItem = syncService.freshProductState
+              }
             }
-            button("clear") {
-              settService.notification.set(null)
+            row ("oldProductState") {
+              comboBox(TestSyncService.TestState.entries).onChanged {
+                if (it.selectedItem is TestSyncService.TestState) {
+                  syncService.oldProductState = it.selectedItem as TestSyncService.TestState
+                }
+              }.applyToComponent {
+                selectedItem = syncService.oldProductState
+              }
             }
           }
         }
