@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
@@ -202,6 +203,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           while (iterator.hasNext()) {
             Map.Entry<PsiElement, List<? extends HighlightInfo>> entry = iterator.next();
             PsiElement element = entry.getKey();
+            ProgressManager.checkCanceled();
             if (element == PsiUtilCore.NULL_PSI_ELEMENT/*evicted*/ || element != FAKE_ELEMENT && !element.isValid()) {
               List<? extends HighlightInfo> infos = entry.getValue();
               for (HighlightInfo info : infos) {

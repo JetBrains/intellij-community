@@ -1247,13 +1247,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       stopProcess(true, "more documents to commit: " + ReadAction.compute(() -> Arrays.toString(getPsiDocumentManager().getUncommittedDocuments())));
       return;
     }
-    // remove obsolete infos for invalid psi elements as soon as possible, before highlighting passes start
-    ReadAction.run(() -> HighlightInfoUpdaterImpl.removeInvalidPsiElements(psiFile, this, session));
     if (backgroundEditorHighlighter == null) {
       return;
     }
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
+        // remove obsolete infos for invalid psi elements as soon as possible, before highlighting passes start
+        ReadAction.run(() -> HighlightInfoUpdaterImpl.removeInvalidPsiElements(psiFile, this, session));
         // wait for heavy processing to stop, re-schedule daemon but not too soon
         boolean heavyProcessIsRunning = heavyProcessIsRunning();
         HighlightingPass[] passes = ReadAction.compute(() -> {
