@@ -358,20 +358,20 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V>, Unma
 
   // ============================= infrastructure: ============================================================================ //
 
+  //logRecordId (long): id of record in AppendOnlyLog
+  //storedId    (int):  id stored (as value) in the keyHashToIdMap
+  
   static int convertLogIdToStoredId(long logRecordId) {
-    if ((logRecordId & 0b11) != 1) {
-      throw new AssertionError("logRecordId(=" + logRecordId + ") expected to be int32-aligned");
+    int intStoredId = (int)logRecordId;
+    if (intStoredId != logRecordId) {
+      throw new AssertionError("Overflow: logRecordId(=" + logRecordId + ") > MAX_INT(" + Integer.MAX_VALUE + ")");
     }
-    long storeId = ((logRecordId - 1) >> 2) + 1;
-    int intStoreId = (int)storeId;
-    if (intStoreId != storeId) {
-      throw new IllegalStateException("logRecordId(=" + logRecordId + ", " + storeId + ") doesn't fit into int32");
-    }
-    return intStoreId;
+    return intStoredId;
   }
 
   static long convertStoredIdToLogId(int storedRecordId) {
-    return (((long)storedRecordId - 1) << 2) + 1;
+    //noinspection RedundantCast
+    return (long)storedRecordId;
   }
 
   /** valueDescriptor is expected to NOT process null values, so we compare null values separately */

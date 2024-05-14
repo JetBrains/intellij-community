@@ -61,7 +61,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   /** First header int32, used to recognize this storage's file type */
   public static final int MAGIC_WORD = IOUtil.asciiToMagicWord("AOLM");
 
-  public static final int CURRENT_IMPLEMENTATION_VERSION = 1;
+  // version bump (1->2): recordId assignment changed
+  public static final int CURRENT_IMPLEMENTATION_VERSION = 2;
 
   public static final int MAX_PAYLOAD_SIZE = RecordLayout.RECORD_LENGTH_MASK;
 
@@ -577,7 +578,10 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
       throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "] is not commited: " +
                             "(header=" + Integer.toHexString(recordHeader) + ") either not yet written or corrupted. " +
                             moreDiagnosticInfo(recordOffsetInFile) +
-                            (APPEND_LOG_DUMP_ON_ERROR ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH, MAX_RECORD_SIZE_TO_DUMP) : "")
+                            (APPEND_LOG_DUMP_ON_ERROR
+                             ? "\n" +
+                               dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH, MAX_RECORD_SIZE_TO_DUMP)
+                             : "")
       );
     }
     int payloadLength = RecordLayout.extractPayloadLength(recordHeader);
@@ -586,7 +590,10 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
                             "is incorrect: page[0.." + pageBuffer.limit() + "], " +
                             "committedUpTo: " + firstUnCommittedOffset() + ", allocatedUpTo: " + firstUnAllocatedOffset() + ". " +
                             moreDiagnosticInfo(recordOffsetInFile) +
-                            (APPEND_LOG_DUMP_ON_ERROR ? "\n" + dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH, MAX_RECORD_SIZE_TO_DUMP) : "")
+                            (APPEND_LOG_DUMP_ON_ERROR
+                             ? "\n" +
+                               dumpContentAroundId(recordId, DEBUG_DUMP_REGION_WIDTH, MAX_RECORD_SIZE_TO_DUMP)
+                             : "")
       );
     }
     ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength)
@@ -1000,7 +1007,6 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
    * one record per line.
    * Record content formatted as hex-string.
    * If fecord is larger than maxRecordSizeToDump -- first maxRecordSizeToDump bytes dumped, with '...' at the end
-   *
    */
   private String dumpContentAroundId(long aroundRecordId,
                                      int regionWidth,
@@ -1021,7 +1027,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
       if (insideQuestionableRecord || insideNeighbourRegion) {
         String bufferAsHex = recordSize > maxRecordSizeToDump ?
-                             IOUtil.toHexString(buffer.limit(buffer.position()+maxRecordSizeToDump)) + " ... " :
+                             IOUtil.toHexString(buffer.limit(buffer.position() + maxRecordSizeToDump)) + " ... " :
                              IOUtil.toHexString(buffer);
         sb.append(insideQuestionableRecord ? "*" : "")
           .append("[id: ").append(recordId).append(']')
@@ -1041,8 +1047,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   @VisibleForTesting
   static long recordOffsetToId(long recordOffset) {
     AlignmentUtils.assert32bAligned(recordOffset, "recordOffsetInFile");
+    //recordOffset is int32-aligned, 2 lowest bits are 0, we could drop them, and make recordId smaller
     //0 is considered invalid id (NULL_ID) everywhere in our code, so '+1' for first id to be 1
-    return recordOffset - HeaderLayout.HEADER_SIZE + 1;
+    return ((recordOffset - HeaderLayout.HEADER_SIZE) >> 2) + 1;
   }
 
   @VisibleForTesting
@@ -1055,7 +1062,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
   private static long recordIdToOffsetUnchecked(long recordId) {
-    return recordId - 1 + HeaderLayout.HEADER_SIZE;
+    return ((recordId - 1) << 2) + HeaderLayout.HEADER_SIZE;
   }
 
 
