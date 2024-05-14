@@ -2,7 +2,7 @@
 package com.intellij.collaboration.ui.codereview.comment
 
 import com.intellij.collaboration.ui.util.VolatileImageBufferingPainter
-import com.intellij.util.ui.GraphicsUtil
+import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -60,12 +60,15 @@ class RoundedPanel @Obsolete constructor(layout: LayoutManager?, private val arc
   private fun paintBackground(g2: Graphics2D, area: Shape) {
     if (fillBackground && isBackgroundSet) {
       g2.color = background
-      g2.fill(area)
+      val rect = area.bounds
+      val arc = arcRadius * 2
+      RectanglePainter.FILL.paint(g2, rect.x, rect.y, rect.width, rect.height, arc)
     }
   }
 
   private fun clearArea(g2: Graphics2D, area: Shape) {
-    GraphicsUtil.setupAAPainting(g2)
+    // AA disabled for now because it tremendously slows down the painting
+    //GraphicsUtil.setupAAPainting(g2)
     val composite = g2.composite
     g2.composite = AlphaComposite.Clear
     g2.fill(area)
