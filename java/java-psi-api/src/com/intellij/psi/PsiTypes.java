@@ -4,6 +4,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.psi.PsiType.*;
@@ -11,7 +12,7 @@ import static com.intellij.psi.PsiType.*;
 @SuppressWarnings("deprecation")
 public final class PsiTypes {
 
-  private static final List<PsiPrimitiveType> PRIMITIVE_TYPES = Arrays.asList(
+  private static final List<PsiPrimitiveType> PRIMITIVE_TYPES = Collections.unmodifiableList(Arrays.asList(
     booleanType(),
     byteType(),
     charType(),
@@ -20,7 +21,7 @@ public final class PsiTypes {
     longType(),
     floatType(),
     doubleType()
-  );
+  ));
 
   /**
    * Returns instance corresponding to {@code byte} type. 
