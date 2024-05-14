@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.toml
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
@@ -12,6 +11,7 @@ import com.intellij.psi.util.parents
 import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.toml.findOriginInTomlFile
 import org.jetbrains.plugins.gradle.toml.findTomlFile
+import org.jetbrains.plugins.gradle.util.isInVersionCatalogAccessor
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyBase
 
@@ -31,7 +31,7 @@ class GradleVersionCatalogTomlAwareGotoDeclarationHandler : GotoDeclarationHandl
         return arrayOf(toml)
       }
     }
-    if (resolved is PsiMethod && resolved.isInAccessor()) {
+    if (resolved is PsiMethod && isInVersionCatalogAccessor(resolved)) {
       val actualMethod = findFinishingNode(sourceElement) ?: resolved
       return findOriginInTomlFile(actualMethod, sourceElement)?.let { arrayOf(it) }
     }
@@ -46,17 +46,9 @@ private fun findFinishingNode(element: PsiElement): PsiMethod? {
       continue
     }
     val resolved = ancestor.resolve()
-    if (resolved is PsiMethod && resolved.isInAccessor()) {
+    if (resolved is PsiMethod && isInVersionCatalogAccessor(resolved)) {
       topElement = resolved
     }
   }
   return topElement
-}
-
-private fun PsiMethod.isInAccessor(): Boolean {
-  return this.containingClass?.getTopContainingClass()?.name?.startsWith("LibrariesFor") == true
-}
-
-private fun PsiClass.getTopContainingClass(): PsiClass {
-  return containingClass?.getTopContainingClass() ?: this
 }
