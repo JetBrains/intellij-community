@@ -30,6 +30,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
   /** Access to this field is synchronized using `lock` */
   private val scheduledGenerators: Queue<Generator> = LinkedList()
+  private val scheduledKeyBindings: Queue<KeyBinding> = LinkedList()
 
   /** Access to this field is synchronized using `lock` */
   private var runningGenerator: Generator? = null
@@ -128,6 +129,19 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 
   /**
+   * Adds the KeyBinding to the queue to be executed when the terminal becomes free.
+   * Guaranteed to execute only if the terminal is free.
+   * If the terminal is executing user command, then queued Key Bindings could be lost.
+   * If a new command starts after the Key Binding execution is queued, then queued Key Binding could be lost and not applied.
+   */
+  internal fun sendKeyBinding(keyBinding: KeyBinding) {
+    lock.withLock {
+      scheduledKeyBindings.offer(keyBinding)
+    }
+    processQueueIfReady()
+  }
+
+  /**
    * This is similar to sendCommandToExecute with the difference in termination signal.
    * This sends "GENERATOR_FINISHED" instead of "Command finished" event.
    *
@@ -148,7 +162,12 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     TerminalUtil.addItem(commandSentListeners, listener, disposable)
   }
 
-  // should be called without `lock`
+  /**
+   * Should be called without [lock].
+   *
+   * Tries to progress the queue of terminal actions (e.g. commands, generators).
+   * Any command cancels all the generators.
+   */
   private fun processQueueIfReady() {
     lock.withLock { registrar ->
       if (!isInitialized) {
@@ -162,6 +181,13 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
       if (runningGenerator != null) {
         return@withLock // `generatorFinished` event will resume queue processing
       }
+
+      scheduledKeyBindings.drainToList().forEach { scheduledInput ->
+        session.terminalStarterFuture.thenAccept { terminalStarter ->
+          terminalStarter?.sendBytes(scheduledInput.bytes, false)
+        }
+      }
+
       scheduledCommands.poll()?.let { command ->
         cancelGenerators(registrar, "user command is ready to execute")
         isCommandRunning = true
@@ -235,6 +261,8 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
     override fun toString(): String = "Generator($name, parameters=$parameters, requestId=$requestId)"
   }
+
+  internal class KeyBinding(val bytes: ByteArray)
 
   /**
    * A wrapper for invoking code in synchronized section.

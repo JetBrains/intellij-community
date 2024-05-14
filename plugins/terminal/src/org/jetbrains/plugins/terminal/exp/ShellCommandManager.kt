@@ -32,6 +32,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
           "command_finished" -> processCommandFinishedEvent(it)
           "prompt_state_updated" -> processPromptStateUpdatedEvent(it)
           "command_history" -> processCommandHistoryEvent(it)
+          "shell_editor_buffer_reported" -> fireShellEditorBufferReported(it)
           "generator_finished" -> processGeneratorFinishedEvent(it)
           "clear_invoked" -> fireClearInvoked()
           else -> LOG.warn("Unknown custom command: $it")
@@ -180,6 +181,14 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     }
   }
 
+  private fun fireShellEditorBufferReported(event: List<String>) {
+    val buffer = Param.SHELL_EDITOR_BUFFER.getDecodedValue(event.getOrNull(1))
+    debug { "Shell event: shell_editor_buffer_reported of ${buffer.length} size" }
+    for (listener in listeners) {
+      listener.commandBufferReceived(buffer)
+    }
+  }
+
   private fun fireGeneratorFinished(requestId: Int, result: String) {
     debug { "Shell event: generator_finished with requestId $requestId and result of ${result.length} size" }
     for (listener in listeners) {
@@ -230,6 +239,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     GIT_BRANCH,
     VIRTUAL_ENV,
     CONDA_ENV,
+    SHELL_EDITOR_BUFFER,
     ORIGINAL_PROMPT,
     ORIGINAL_RIGHT_PROMPT,
 
@@ -277,6 +287,8 @@ internal interface ShellCommandListener {
   fun promptStateUpdated(newState: TerminalPromptState) {}
 
   fun commandHistoryReceived(history: String) {}
+
+  fun commandBufferReceived(buffer: String) {}
 
   fun shellInfoReceived(rawShellInfo: String) {}
 

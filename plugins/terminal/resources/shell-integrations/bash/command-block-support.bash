@@ -33,6 +33,7 @@ __jetbrains_intellij_encode_slow() {
   builtin printf "%s" "$out"
 }
 
+# Util method. Serializes string so that it could be safely passed to the escape sequence payload.
 __jetbrains_intellij_encode() {
   builtin local value="$1"
   if builtin command -v od > /dev/null && builtin command -v tr > /dev/null; then
@@ -43,7 +44,7 @@ __jetbrains_intellij_encode() {
 }
 
 __jetbrains_intellij_is_generator_command() {
-  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* || "$1" == *"__jetbrains_intellij_get_environment"* ]]
+  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* || "$1" == *"__jetbrains_intellij_get_environment"*  || "$1" == *"__jetbrains_intellij_report_shell_editor_buffer"* ]]
 }
 
 __jetbrains_intellij_get_directory_files() {
@@ -82,6 +83,7 @@ __jetbrains_intellij_configure_prompt() {
     # Remember the original prompt to use it in '__jetbrains_intellij_report_prompt_state'
     __JETBRAINS_INTELLIJ_ORIGINAL_PS1=$PS1
   fi
+  # Trick: We put escape sequence to the PS1 so that every time prompt is shown, the event is triggered for IJ, but it stays invisible for end-user.
   PS1=$__JETBRAINS_INTELLIJ_PS1
 }
 
@@ -262,6 +264,24 @@ clear() {
   builtin printf '\e]1341;clear_invoked\a'
 }
 
+# This function will be triggered by a key bindings.
+function __jetbrains_intellij_report_shell_editor_buffer () {
+  # The commands executed by `bind -x` also trigger `PREEXEC` and `PRECMD` (unlike ZSH' `bindkey`).
+  # Mark as generator to avoid triggering `command_started` and `command_finished` events.
+  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
+  builtin printf '\e]1341;shell_editor_buffer_reported;shell_editor_buffer=%s\a' "$(__jetbrains_intellij_encode "${READLINE_LINE:-}")"
+}
+
+# Binding works in Bash >= 4.0.
+if [[ -n "${BASH_VERSINFO-}" ]] && (( BASH_VERSINFO[0] >= 4)); then
+  # Remove binding if exists.
+  builtin bind -r '"\e[24~"'
+  # Bind F12 key to report prompt buffer.
+  # Note: We are allowed to bind only shortcuts which could not be typed by user via IJ UI.
+  builtin bind -x '"\e[24~":"__jetbrains_intellij_report_shell_editor_buffer"'
+fi
+
 preexec_functions+=(__jetbrains_intellij_command_started)
 precmd_functions+=(__jetbrains_intellij_command_terminated)
 HISTIGNORE="${HISTIGNORE-}:__jetbrains_intellij_get_directory_files*:__jetbrains_intellij_get_environment*"
+HISTIGNORE="${HISTIGNORE-}:__jetbrains_intellij_report_shell_editor_buffer*"

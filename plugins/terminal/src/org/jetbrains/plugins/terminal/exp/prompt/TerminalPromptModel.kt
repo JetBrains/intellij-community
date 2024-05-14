@@ -162,10 +162,12 @@ internal class TerminalPromptModel(private val editor: EditorEx, private val ses
   }
 }
 
-internal data class PromptRenderingInfo(val text: @NlsSafe String,
-                                        val highlightings: List<HighlightingInfo>,
-                                        val rightText: @NlsSafe String = "",
-                                        val rightHighlightings: List<HighlightingInfo> = emptyList())
+internal data class PromptRenderingInfo(
+  val text: @NlsSafe String,
+  val highlightings: List<HighlightingInfo>,
+  val rightText: @NlsSafe String = "",
+  val rightHighlightings: List<HighlightingInfo> = emptyList()
+)
 
 /** The information about the terminal session required for [TerminalPromptModel] */
 internal interface TerminalSessionInfo {

@@ -168,6 +168,18 @@ clear() {
   builtin printf '\e]1341;clear_invoked\a'
 }
 
+# This function will be triggered by a key bindings as ZLE widget.
+function __jetbrains_intellij_report_shell_editor_buffer () {
+  builtin printf '\e]1341;shell_editor_buffer_reported;shell_editor_buffer=%s\a' "$(__jetbrains_intellij_encode "${BUFFER:-}")"
+}
+# `bindkey` is a part of ZLE, therefore all ZLE widgets need to be registered with `zle -N`
+# See https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Zle-Widgets
+zle -N __jetbrains_intellij_report_shell_editor_buffer
+# Remove binding if exists.
+builtin bindkey -r '\e[24~'
+# Bind F12 key to report prompt buffer.
+builtin bindkey '\e[24~' __jetbrains_intellij_report_shell_editor_buffer
+
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory

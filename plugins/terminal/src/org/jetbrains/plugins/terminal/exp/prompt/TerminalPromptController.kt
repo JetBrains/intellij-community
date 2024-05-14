@@ -60,6 +60,8 @@ internal class TerminalPromptController(
         model.updatePrompt(newState)
       }
     })
+
+    session.addCommandListener(ShellEditorBufferReportShellCommandListener(session, model, editor), session)
   }
 
   fun addListener(listener: PromptStateListener) {
