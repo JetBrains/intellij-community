@@ -3,42 +3,47 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiNavigator;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.psi.KtExpression;
+import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.KtFinallySection;
 import org.jetbrains.kotlin.psi.KtTryExpression;
 
-public class KotlinTryFinallySurrounder extends KotlinTrySurrounderBase {
+public class KotlinTryFinallySurrounder extends KotlinTrySurrounderBase<KtFinallySection> {
 
     @Override
     protected String getCodeTemplate() {
-        return "try { \n} finally {\nb\n}";
+        return "try { \n} finally {\n\n}";
     }
 
-    @Nullable
     @Override
-    protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container,  PsiElement @NotNull[] statements) {
-        TextRange textRange = super.surroundStatements(project, editor, container, statements);
-        if (textRange == null) {
-            return null;
-        }
-        // Delete dummy "b" element for caret
-        editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-        return new TextRange(textRange.getStartOffset(), textRange.getStartOffset());
+    protected void applyNavigation(@NotNull ActionContext context, @NotNull ModPsiNavigator navigator, KtFinallySection element) {
+        moveCaretToBlockCenter(context, navigator, element.getFinalExpression());
     }
 
-    @NotNull
+    public static void moveCaretToBlockCenter(@NotNull ActionContext context, @NotNull ModPsiNavigator navigator, KtElement expression) {
+        Project project = context.project();
+        Document document = expression.getContainingFile().getFileDocument();
+        PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+        psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
+        TextRange finallyBlockRange = expression.getTextRange();
+        int newLineOffset = finallyBlockRange.getStartOffset() + 2;
+        int offset = CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
+        navigator.moveCaretTo(offset);
+        psiDocumentManager.commitDocument(document);
+    }
+
     @Override
-    protected TextRange getTextRangeForCaret(@NotNull KtTryExpression expression) {
-        KtFinallySection block = expression.getFinallyBlock();
-        assert block != null : "Finally block should exists for " + expression.getText();
-        KtExpression blockExpression = block.getFinalExpression().getStatements().get(0);
-        return blockExpression.getTextRange();
+    protected KtFinallySection getSelectionElement(@NotNull KtTryExpression tryExpression) {
+        CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(tryExpression.getProject());
+        tryExpression = (KtTryExpression) codeStyleManager.reformat(tryExpression);
+        return tryExpression.getFinallyBlock();
     }
 
     @SuppressWarnings("DialogTitleCapitalization")

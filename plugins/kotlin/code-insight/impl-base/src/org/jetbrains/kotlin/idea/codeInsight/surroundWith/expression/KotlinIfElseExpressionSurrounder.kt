@@ -2,7 +2,8 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinIfSurrounderBase
@@ -16,12 +17,15 @@ class KotlinIfElseExpressionSurrounder(private val withBraces: Boolean) : Kotlin
     @NlsSafe
     override fun getTemplateDescription() = if (withBraces) "if () { expr } else {}" else "if () expr else"
 
-    override fun getRange(editor: Editor, replaced: KtExpression): TextRange? {
+    override fun getRange(context: ActionContext, replaced: KtExpression, updater: ModPsiUpdater): TextRange? {
         val expression = when (replaced) {
             is KtParenthesizedExpression -> replaced.expression
             else -> replaced
         } as? KtIfExpression
 
-        return expression?.let { KotlinIfSurrounderBase.getRange(editor, it) }
+        expression?.let {
+            KotlinIfSurrounderBase.applyNavigationAndDropCondition(updater, it)
+        }
+        return null
     }
 }

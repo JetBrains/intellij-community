@@ -6,6 +6,7 @@ import com.intellij.debugger.DebuggerInvocationUtil
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -13,22 +14,32 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinRuntimeTypeEvaluator
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
-class KotlinRuntimeTypeCastSurrounder : KotlinExpressionSurrounder() {
 
-    override fun isApplicable(expression: KtExpression): Boolean {
-        if (!super.isApplicable(expression)) return false
+class KotlinRuntimeTypeCastSurrounder : Surrounder {
+
+    override fun isApplicable(elements: Array<PsiElement>): Boolean {
+        if (elements.size != 1 || elements[0] !is KtExpression) {
+            return false
+        }
+        val expression = elements[0] as KtExpression
+        if (expression is KtCallExpression && expression.getParent() is KtQualifiedExpression) {
+            return false
+        }
 
         if (!expression.isPhysical) return false
         val file = expression.containingFile
@@ -39,7 +50,8 @@ class KotlinRuntimeTypeCastSurrounder : KotlinExpressionSurrounder() {
         return TypeUtils.canHaveSubtypes(KotlinTypeChecker.DEFAULT, type)
     }
 
-    override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange? {
+    override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement?>): TextRange? {
+        val expression = elements.singleOrNull() as? KtExpression ?: return null
         val debuggerContext = DebuggerManagerEx.getInstanceEx(project).context
         val debuggerSession = debuggerContext.debuggerSession
         if (debuggerSession != null) {

@@ -3,13 +3,11 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
 import org.jetbrains.kotlin.psi.KtBlockExpression;
 import org.jetbrains.kotlin.psi.KtExpression;
@@ -25,16 +23,18 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
         return false;
     }
 
-    @Nullable
     @Override
-    protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container, PsiElement @NotNull [] statements) {
+    protected void surroundStatements(
+            @NotNull ActionContext context,
+            @NotNull PsiElement container,
+            @NotNull PsiElement @NotNull [] statements,
+            @NotNull ModPsiUpdater updater
+    ) {
         statements = MoveDeclarationsOutHelperKt.move(container, statements, isGenerateDefaultInitializers());
 
-        if (statements.length == 0) {
-            return null;
-        }
+        if (statements.length == 0) return;
 
-        KtIfExpression ifExpression = (KtIfExpression) new KtPsiFactory(project).createExpression(getCodeTemplate());
+        KtIfExpression ifExpression = (KtIfExpression) new KtPsiFactory(context.project()).createExpression(getCodeTemplate());
         ifExpression = (KtIfExpression) container.addAfter(ifExpression, statements[statements.length - 1]);
 
         // TODO move a comment for first statement
@@ -47,23 +47,18 @@ public abstract class KotlinIfSurrounderBase extends KotlinStatementsSurrounder 
         // Delete statements from original code
         container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-        ifExpression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(ifExpression);
-        if (ifExpression == null) {
-            return null;
-        }
+        ifExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(ifExpression);
+        if (ifExpression == null) return;
 
-        return getRange(editor, ifExpression);
+        applyNavigationAndDropCondition(updater, ifExpression);
     }
 
-    @NotNull
-    public static TextRange getRange(Editor editor, @NotNull KtIfExpression ifExpression) {
+    public static void applyNavigationAndDropCondition(@NotNull ModPsiUpdater updater, KtIfExpression ifExpression) {
         KtExpression condition = ifExpression.getCondition();
         assert condition != null : "Condition should exists for created if expression: " + ifExpression.getText();
         // Delete condition from created if
-        TextRange range = condition.getTextRange();
-        TextRange textRange = new TextRange(range.getStartOffset(), range.getStartOffset());
-        editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-        return textRange;
+        updater.moveCaretTo(condition.getTextOffset());
+        condition.delete();
     }
 
     @NotNull
