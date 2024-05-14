@@ -15,7 +15,7 @@ import kotlin.time.Duration.Companion.seconds
  * Only for use in build scripts, not for dev mode / integrations tests.
  * Use [createProductRunner] instead of calling this function directly.
  */
-internal suspend fun createDevIdeBuild(context: BuildContext): IntellijProductRunner {
+internal suspend fun createDevModeProductRunner(context: BuildContext): IntellijProductRunner {
   var newClassPath: Collection<Path>? = null
   val homeDir = context.paths.projectHome
   val runDir = buildProduct(
@@ -34,10 +34,10 @@ internal suspend fun createDevIdeBuild(context: BuildContext): IntellijProductRu
     ),
     createProductProperties = { context.productProperties }
   )
-  return DevBuildProductRunner(context = context, homePath = runDir, classPath = newClassPath!!)
+  return DevModeProductRunner(context = context, homePath = runDir, classPath = newClassPath!!)
 }
 
-private class DevBuildProductRunner(
+private class DevModeProductRunner(
   private val context: BuildContext,
   private val homePath: Path,
   private val classPath: Collection<Path>,

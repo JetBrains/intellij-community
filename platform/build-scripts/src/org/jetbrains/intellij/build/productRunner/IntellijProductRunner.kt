@@ -16,6 +16,6 @@ internal suspend fun createProductRunner(context: BuildContext): IntellijProduct
     return ModuleBasedProductRunner(context.productProperties.rootModuleForModularLoader!!, context)
   }
   else {
-    return createDevIdeBuild(context)
+    return createDevModeProductRunner(context)
   }
 }
