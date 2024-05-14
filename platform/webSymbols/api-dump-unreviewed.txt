@@ -284,17 +284,12 @@
 - toString():java.lang.String
 *:com.intellij.webSymbols.WebSymbolTypeSupport
 - a:resolve(java.util.List):java.lang.Object
-*f:com.intellij.webSymbols.WebSymbolTypeSupport$TypeReference
-- <init>(java.lang.String,java.lang.String):V
-- f:component1():java.lang.String
-- f:component2():java.lang.String
-- f:copy(java.lang.String,java.lang.String):com.intellij.webSymbols.WebSymbolTypeSupport$TypeReference
-- bs:copy$default(com.intellij.webSymbols.WebSymbolTypeSupport$TypeReference,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.webSymbols.WebSymbolTypeSupport$TypeReference
-- equals(java.lang.Object):Z
-- f:getModule():java.lang.String
-- f:getName():java.lang.String
-- hashCode():I
-- toString():java.lang.String
+*:com.intellij.webSymbols.WebSymbolTypeSupport$TypeReference
+- *sf:Companion:com.intellij.webSymbols.WebSymbolTypeSupport$TypeReference$Companion
+- a:getModule():java.lang.String
+- a:getName():java.lang.String
+*f:com.intellij.webSymbols.WebSymbolTypeSupport$TypeReference$Companion
+- f:create(java.lang.String,java.lang.String):com.intellij.webSymbols.WebSymbolTypeSupport$TypeReference
 *f:com.intellij.webSymbols.WebSymbolsBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
