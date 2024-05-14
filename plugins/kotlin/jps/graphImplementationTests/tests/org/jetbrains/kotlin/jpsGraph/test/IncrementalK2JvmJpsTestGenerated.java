@@ -3016,6 +3016,36 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         }
     }
 
+    @TestMetadata("sealed")
+    @TestDataPath(".")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class SealedTypeTests extends AbstractIncrementalK2JvmJpsTest {
+        @Override
+        protected void setUp() {
+            super.setUp();
+            setUpTests();
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+        }
+
+        @TestMetadata("addedEntry")
+        public void testAddedEntry() throws Exception {
+            runTest("sealed/addedEntry");
+        }
+
+        @TestMetadata("removedEntry")
+        public void testRemovedEntry() throws Exception {
+            runTest("sealed/removedEntry");
+        }
+
+        @TestMetadata("unrelatedDiff")
+        public void testUnrelatedDiff() throws Exception {
+            runTest("sealed/unrelatedDiff");
+        }
+    }
+
     @TestMetadata("multiModule/withJavaUsedInKotlin")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
