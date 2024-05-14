@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.platform.lvcs.impl.diff.getDiff
 import com.intellij.platform.lvcs.impl.diff.getEntryPath
-import com.intellij.platform.lvcs.impl.diff.getEntryPaths
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
@@ -33,9 +32,7 @@ internal fun LocalHistoryFacade.createReverter(project: Project, gateway: IdeaGa
                              commandNameSupplier)
   }
 
-  val rootEntry = selection.data.getRootEntry(gateway)
-  val entryPath = getEntryPaths(gateway, scope)
-  val diff = getDiff(rootEntry, selection, entryPath, isOldContentUsed)
+  val diff = getDiff(gateway, scope, selection, isOldContentUsed)
   return DifferenceReverter(project, this, gateway, diff, commandNameSupplier)
 }
 

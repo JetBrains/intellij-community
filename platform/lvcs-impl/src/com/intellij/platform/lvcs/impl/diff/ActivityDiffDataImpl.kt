@@ -15,9 +15,7 @@ internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
                                                scope: ActivityScope,
                                                selection: ChangeSetSelection,
                                                isOldContentUsed: Boolean): ActivityDiffData {
-  val rootEntry = selection.data.getRootEntry(gateway)
-  val entryPaths = getEntryPaths(gateway, scope)
-  val differences = getDiff(rootEntry, selection, entryPaths, isOldContentUsed)
+  val differences = getDiff(gateway, scope, selection, isOldContentUsed)
   val differenceObjects = JBIterable.from(differences).filter { it.isFile }
     .mapNotNull { it.toDiffObject(gateway, scope, selection, isOldContentUsed) }
   return ActivityDiffDataImpl(differenceObjects)
