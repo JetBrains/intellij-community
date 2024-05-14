@@ -385,6 +385,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               checkBox(message("checkbox.compact.mode"))
                 .bindSelected(UISettings.getInstance()::compactMode)
                 .comment(message("checkbox.compact.mode.description"))
+                .onApply {
+                  LafManager.getInstance().applyDensity()
+                }
             }
           }
           yield { checkBox(cdFullPathsInTitleBar) }
