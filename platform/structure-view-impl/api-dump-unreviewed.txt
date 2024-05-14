@@ -19,15 +19,8 @@ com.intellij.ide.structureView.StructureViewWrapper
 - a:selectCurrentElement(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.vfs.VirtualFile,Z):Z
 c:com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 - com.intellij.ide.structureView.StructureViewTreeElement
-- <init>(com.intellij.psi.PsiElement,com.intellij.lang.folding.CustomFoldingProvider):V
-- <init>(com.intellij.psi.PsiElement,com.intellij.lang.folding.CustomFoldingProvider,com.intellij.ide.structureView.customRegions.CustomRegionTreeElement):V
-- addChild(com.intellij.ide.structureView.StructureViewTreeElement):V
 - canNavigate():Z
 - canNavigateToSource():Z
-- containsElement(com.intellij.ide.structureView.StructureViewTreeElement):Z
-- containsOffset(I):Z
-- createNestedRegion(com.intellij.psi.PsiElement):com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
-- endRegion(com.intellij.psi.PsiElement):com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 - getChildren():com.intellij.ide.util.treeView.smartTree.TreeElement[]
 - getPresentation():com.intellij.navigation.ItemPresentation
 - getValue():java.lang.Object
