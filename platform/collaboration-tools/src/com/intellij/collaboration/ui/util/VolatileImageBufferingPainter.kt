@@ -5,10 +5,7 @@ import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ui.GraphicsUtil
 import org.intellij.lang.annotations.MagicConstant
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Transparency
+import java.awt.*
 import java.awt.image.VolatileImage
 
 /**
@@ -59,12 +56,22 @@ internal class VolatileImageBufferingPainter(@MagicConstant(valuesFromClass = Tr
     val dc = g2.deviceConfiguration
     return buffer?.takeIf {
       it.width == widthAligned && it.height == heightAligned && it.validate(dc) != VolatileImage.IMAGE_INCOMPATIBLE
-    } ?: dc.createCompatibleVolatileImage(widthAligned, heightAligned, bufferTransparency)?.takeIf {
-      it.validate(dc) != VolatileImage.IMAGE_INCOMPATIBLE
-    }.also {
+    } ?: createVolatileImage(dc, widthAligned, heightAligned).also {
       buffer = it
     }
   }
+
+  private fun createVolatileImage(dc: GraphicsConfiguration, width: Int, height: Int): VolatileImage? =
+    try {
+      // acceleration does not work for BITMASK so we defer to full transparency
+      val transparency = if (bufferTransparency != Transparency.OPAQUE) Transparency.TRANSLUCENT else bufferTransparency
+      dc.createCompatibleVolatileImage(width, height, ImageCapabilities(true), transparency)
+    }
+    catch (_: AWTException) {
+      dc.createCompatibleVolatileImage(width, height, bufferTransparency)
+    }?.takeIf {
+      it.validate(dc) != VolatileImage.IMAGE_INCOMPATIBLE
+    }
 }
 
 private fun paintToVolatileImage(image: VolatileImage, painter: (g2: Graphics2D) -> Unit): Boolean {
