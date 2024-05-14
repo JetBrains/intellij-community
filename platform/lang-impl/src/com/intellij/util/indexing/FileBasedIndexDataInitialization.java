@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -86,7 +87,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
           // FileBasedIndexImpl.registerIndexer may throw, then the line below will not be executed
           myRegisteredIndexes.registerIndexExtension(extension);
         }
-        catch (IOException | AlreadyDisposedException e) {
+        catch (IOException | AlreadyDisposedException | ProcessCanceledException e) {
           LOG.warnWithDebug("Could not register indexing extension: " + extension + ". reason: " + e, e);
           ID.unloadId(extension.getName());
           throw e;
