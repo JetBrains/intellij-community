@@ -3,11 +3,14 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.lang.UrlClassLoader
@@ -21,7 +24,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
-import kotlin.system.exitProcess
 
 private class BundledPluginsLister : ModernApplicationStarter() {
   // not premain because FileTypeManager is used to report extensions
@@ -117,10 +119,18 @@ private class BundledPluginsLister : ModernApplicationStarter() {
       }
       catch (ignored: Throwable) { }
       e.printStackTrace(System.err)
-      exitProcess(1)
+      closeApplication(1)
     }
 
-    exitProcess(0)
+    closeApplication(0)
+  }
+}
+
+private suspend fun closeApplication(exitCode: Int) {
+  withContext(Dispatchers.EDT) {
+    blockingContext {
+      ApplicationManager.getApplication().exit(false, true, false, exitCode)
+    }
   }
 }
 
