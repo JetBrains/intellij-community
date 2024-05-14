@@ -221,7 +221,8 @@ public class GradleExecutionHelper {
     }
     if (settings.getDistributionType() == DistributionType.DEFAULT_WRAPPED &&
         GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
-      return;
+      // Fleet cannot resolve Gradle wrappers from places other than the project root
+      if (!PlatformUtils.isFleetBackend()) return;
     }
     withGradleConnection(projectPath, id, settings, listener, cancellationToken, connection -> {
       ensureInstalledWrapper(id, projectPath, settings, gradleVersion, listener, connection, cancellationToken);
