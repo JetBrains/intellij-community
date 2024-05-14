@@ -70,6 +70,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -1071,6 +1073,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
+  @RequiresEdt
   private void runUpdate() {
     ThreadingAssertions.assertEventDispatchThread();
     if (myDisposed) {
@@ -1227,6 +1230,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return psiFile;
   }
 
+  @RequiresBackgroundThread
   private void submitInBackground(@NotNull FileEditor fileEditor,
                                   @NotNull Document document,
                                   @NotNull VirtualFile virtualFile,
