@@ -192,7 +192,10 @@ private fun resetLafSettingsToDefault() {
   if (editorSchemeId == null && !isNewUI() && DarculaLaf.NAME == laf.name) {
     editorSchemeId = DarculaLaf.NAME
   }
-  editorColorsManager.setGlobalScheme(if (editorSchemeId == null) null else editorColorsManager.getScheme(editorSchemeId), true)
+  val scheme = if (editorSchemeId == null) null else editorColorsManager.getScheme(editorSchemeId)
+  editorColorsManager.setGlobalScheme(scheme, true)
+
+  LOG.info("=== UI: reset laf ($laf | $editorSchemeId | $scheme) ===")
 
   if (lafManager.autodetect) {
     lafManager.setPreferredLightLaf(defaultLightLaf)
