@@ -14,7 +14,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -28,10 +27,10 @@ internal abstract class BaseWorkspaceAction(private val workspaceOnly: Boolean):
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible = Registry.`is`("ide.enable.project.workspaces", false) &&
+    e.presentation.isEnabledAndVisible = isWorkspaceSupportEnabled &&
                                          project != null &&
                                          (workspaceOnly && project.isWorkspace
-                                         || SubprojectHandler.getAllSubprojects(project).isNotEmpty())
+                                         || !workspaceOnly && SubprojectHandler.getAllSubprojects(project).isNotEmpty())
   }
 }
 

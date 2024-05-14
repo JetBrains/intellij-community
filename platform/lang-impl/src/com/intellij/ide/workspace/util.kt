@@ -4,8 +4,11 @@ package com.intellij.ide.workspace
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+internal val isWorkspaceSupportEnabled get() = Registry.`is`("ide.enable.project.workspaces", false)
 
 @Service(Service.Level.PROJECT)
 internal class MyCoroutineScopeService(val scope: CoroutineScope)

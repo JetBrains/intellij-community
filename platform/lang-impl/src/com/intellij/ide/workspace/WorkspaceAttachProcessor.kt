@@ -3,7 +3,6 @@ package com.intellij.ide.workspace
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import kotlinx.coroutines.launch
@@ -23,7 +22,7 @@ internal class WorkspaceAttachProcessor : ProjectAttachProcessor() {
     }
   }
 
-  override fun isEnabled(project: Project?): Boolean = Registry.`is`("ide.enable.project.workspaces") && project?.isWorkspace == true
+  override fun isEnabled(project: Project?): Boolean = isWorkspaceSupportEnabled && project?.isWorkspace == true
 
   override fun getActionText(project: Project): String {
     if (project.isWorkspace) {
