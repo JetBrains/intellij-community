@@ -376,7 +376,6 @@ com.intellij.vcs.log.data.index.VcsLogIndex
 com.intellij.vcs.log.data.index.VcsLogIndex$IndexingFinishedListener
 - a:indexingFinished(com.intellij.openapi.vfs.VirtualFile):V
 f:com.intellij.vcs.log.data.index.VcsLogIndexUtils
-- sf:enableAndResumeIndexing(com.intellij.openapi.project.Project,com.intellij.vcs.log.data.VcsLogData,java.util.Collection):V
 - sf:isIndexingEnabled(com.intellij.openapi.project.Project):Z
 - sf:isIndexingPaused(com.intellij.vcs.log.data.index.VcsLogIndex):Z
 - sf:isIndexingPausedFor(com.intellij.openapi.vfs.VirtualFile):Z
