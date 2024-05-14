@@ -5257,7 +5257,12 @@ c:com.intellij.codeInsight.editorActions.enter.EnterInStringLiteralHandler
 - com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 - <init>():V
 - p:getJavaLikeQuoteHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler
+- p:isInStringLiteral(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler,I):Z
+- p:isInsideLiteral(com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler,com.intellij.openapi.editor.highlighter.HighlighterIterator):Z
 - preprocessEnter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.util.Ref,com.intellij.openapi.util.Ref,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.actionSystem.EditorActionHandler):com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
+- ps:skipStringLiteralEscapes(I,com.intellij.lexer.StringLiteralLexer):I
+- p:splitString(com.intellij.psi.PsiFile,com.intellij.openapi.util.Ref,com.intellij.openapi.util.Ref,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,I,com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler):com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate$Result
+- ps:wrapWithParensIfNeeded(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,I,com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler):I
 f:com.intellij.codeInsight.editorActions.fillParagraph.FillParagraphAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
 - com.intellij.openapi.project.DumbAware
