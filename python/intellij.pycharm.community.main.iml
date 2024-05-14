@@ -4,6 +4,7 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.hg" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.svn" scope="RUNTIME" />
@@ -45,6 +46,5 @@
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.python" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.github.community" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
   </component>
 </module>
