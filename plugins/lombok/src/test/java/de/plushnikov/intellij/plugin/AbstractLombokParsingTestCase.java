@@ -11,6 +11,7 @@ import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -190,16 +191,15 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   }
 
   private void compareAnnotations(PsiModifierList beforeModifierList, PsiModifierList afterModifierList) {
-    DumbService dumbService = DumbService.getInstance(beforeModifierList.getProject());
     if (shouldCompareAnnotations()) {
       Collection<String> beforeAnnotations = Arrays.stream(beforeModifierList.getAnnotations())
-        .map(an-> dumbService.computeWithAlternativeResolveEnabled(()->an.getQualifiedName()))
+        .map(an-> getAnnotationQualifiedName(an))
         .filter(Pattern.compile("lombok.*").asPredicate().negate().or(LombokClassNames.NON_NULL::equals))
         .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
         .filter(Predicate.not(annotationsToIgnoreList()::contains))
         .toList();
       Collection<String> afterAnnotations = Arrays.stream(afterModifierList.getAnnotations())
-        .map(an-> dumbService.computeWithAlternativeResolveEnabled(()->an.getQualifiedName()))
+        .map(an-> getAnnotationQualifiedName(an))
         .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
         .filter(Predicate.not(annotationsToIgnoreList()::contains))
         .toList();
@@ -211,10 +211,8 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
       // compare annotations parameter list
       for (PsiAnnotation beforeAnnotation : beforeModifierList.getAnnotations()) {
-        String qualifiedName =
-          dumbService.computeWithAlternativeResolveEnabled(() -> beforeAnnotation.getQualifiedName());
-        PsiAnnotation afterAnnotation =
-          dumbService.computeWithAlternativeResolveEnabled(() -> afterModifierList.findAnnotation(qualifiedName));
+        String qualifiedName = getAnnotationQualifiedName(beforeAnnotation);
+        PsiAnnotation afterAnnotation = findAnnotation(afterModifierList, qualifiedName);
         if (null != afterAnnotation) {
           Map<String, String> beforeParameter = Stream.of(beforeAnnotation.getParameterList().getAttributes())
             .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p -> p.getValue().getText()));
@@ -224,6 +222,16 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         }
       }
     }
+  }
+
+  private static @Nullable PsiAnnotation findAnnotation(PsiModifierList modifierList, String qualifiedName) {
+    return DumbService.getInstance(modifierList.getProject())
+      .computeWithAlternativeResolveEnabled(() -> modifierList.findAnnotation(qualifiedName));
+  }
+
+  private static @Nullable String getAnnotationQualifiedName(PsiAnnotation annotation) {
+    return DumbService.getInstance(annotation.getProject())
+      .computeWithAlternativeResolveEnabled(() -> annotation.getQualifiedName());
   }
 
   private void compareMethods(PsiClass beforeClass, PsiClass afterClass) {
