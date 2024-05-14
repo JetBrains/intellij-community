@@ -14,18 +14,21 @@ import com.intellij.openapi.application.impl.processApplicationQueue
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.ExtendWith
 import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
  * @see WithModalProgressTest
  */
+@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
@@ -242,7 +245,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         val modality = requireNotNull(currentCoroutineContext().contextModality())
         assertNotEquals(modality, ModalityState.nonModal())
-        assertSame(ModalityState.nonModal(), ModalityState.defaultModalityState())
+        assertSame(modality, ModalityState.defaultModalityState())
         action()
       }
     }
@@ -254,7 +257,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
         val modality = ModalityState.defaultModalityState()
         assertNotEquals(modality, ModalityState.nonModal())
         runBlockingCancellable {
-          assertSame(ModalityState.nonModal(), ModalityState.defaultModalityState())
+          assertSame(currentCoroutineContext().contextModality(), ModalityState.defaultModalityState())
           assertSame(modality, currentCoroutineContext().contextModality())
           action()
         }

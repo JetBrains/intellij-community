@@ -25,6 +25,7 @@ public final class Cancellation {
   }
 
   public static void checkCancelled() {
+    ThreadContext.warnAccidentalCancellation();
     Job currentJob = currentJob();
     if (currentJob != null) {
       try {

@@ -7,34 +7,34 @@ import com.intellij.openapi.application.impl.ModalityStateEx
 import com.intellij.platform.util.progress.ExpectedState
 import com.intellij.platform.util.progress.progressReporterTest
 import com.intellij.testFramework.common.timeoutRunBlocking
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.CancellationException
 
 class CoroutineToIndicatorTest : CancellationTest() {
 
   @Test
   fun context(): Unit = timeoutRunBlocking {
-    assertNull(Cancellation.currentJob())
+    assertEquals(coroutineContext.job, Cancellation.currentJob())
     assertNull(ProgressManager.getGlobalProgressIndicator())
 
     val modality = ModalityStateEx()
 
     withContext(modality.asContextElement()) {
-      assertSame(ModalityState.nonModal(), ModalityState.defaultModalityState())
+      assertSame(modality, ModalityState.defaultModalityState())
       coroutineToIndicator {
-        assertNull(Cancellation.currentJob())
+        assertNotNull(Cancellation.currentJob())
         assertNotNull(ProgressManager.getGlobalProgressIndicator())
         assertSame(modality, ModalityState.defaultModalityState())
       }
-      assertSame(ModalityState.nonModal(), ModalityState.defaultModalityState())
+      assertSame(modality, ModalityState.defaultModalityState())
     }
 
-    assertNull(Cancellation.currentJob())
+    assertEquals(coroutineContext.job, Cancellation.currentJob())
     assertNull(ProgressManager.getGlobalProgressIndicator())
   }
 

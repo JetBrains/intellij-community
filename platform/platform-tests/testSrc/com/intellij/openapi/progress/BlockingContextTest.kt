@@ -3,26 +3,26 @@ package com.intellij.openapi.progress
 
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.testFramework.common.timeoutRunBlocking
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.CancellationException
+import kotlin.test.assertEquals
 
 class BlockingContextTest : CancellationTest() {
 
   @Test
   fun context(): Unit = timeoutRunBlocking {
-    assertNull(Cancellation.currentJob())
     val job = coroutineContext.job
+    assertEquals(job, Cancellation.currentJob())
     blockingContext {
       assertCurrentJobIsChildOf(job)
     }
-    assertNull(Cancellation.currentJob())
+    assertEquals(job, Cancellation.currentJob())
   }
 
   @Test

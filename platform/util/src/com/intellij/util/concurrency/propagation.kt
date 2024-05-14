@@ -33,8 +33,12 @@ import com.intellij.openapi.util.Pair as JBPair
 private object Holder {
   // we need context propagation to be configurable
   // in order to disable it in RT modules
+  @Volatile
   var propagateThreadContext: Boolean = SystemProperties.getBooleanProperty("ide.propagate.context", true)
-  var checkIdeAssertion: Boolean = SystemProperties.getBooleanProperty("ide.check.context.assertion", false)
+  val checkIdeAssertion: Boolean = SystemProperties.getBooleanProperty("ide.check.context.assertion", false)
+
+  @Volatile
+  var useImplicitBlockingContext: Boolean = SystemProperties.getBooleanProperty("ide.enable.implicit.blocking.context", false)
 }
 
 @TestOnly
@@ -49,11 +53,26 @@ fun runWithContextPropagationEnabled(runnable: Runnable) {
   }
 }
 
+@TestOnly
+fun runWithImplicitBlockingContextEnabled(runnable: Runnable) {
+  val propagateThreadContext = Holder.useImplicitBlockingContext
+  Holder.useImplicitBlockingContext = true
+  try {
+    runnable.run()
+  }
+  finally {
+    Holder.useImplicitBlockingContext = propagateThreadContext
+  }
+}
+
 internal val isPropagateThreadContext: Boolean
   get() = Holder.propagateThreadContext
 
 internal val isCheckContextAssertions: Boolean
   get() = Holder.checkIdeAssertion
+
+internal val useImplicitBlockingContext: Boolean
+  get() = Holder.useImplicitBlockingContext
 
 @Internal
 class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob) {

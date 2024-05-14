@@ -10,6 +10,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -79,7 +80,7 @@ class ContextSwitchTest : CancellationTest() {
 
   private fun testRunBlockingCancellable(coroutineTest: suspend () -> Unit) {
     runBlockingCancellable {
-      assertNull(Cancellation.currentJob())
+      assertEquals(coroutineContext.job, Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
       coroutineTest()
     }
@@ -102,7 +103,7 @@ class ContextSwitchTest : CancellationTest() {
 
   private suspend fun testRunUnderIndicator(blockingTest: () -> Unit) {
     coroutineToIndicator {
-      assertNull(Cancellation.currentJob())
+      assertNotNull(Cancellation.currentJob())
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
       blockingTest()
     }
