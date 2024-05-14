@@ -11302,6 +11302,7 @@ f:com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEven
 - sf:DUMB_START:com.intellij.internal.statistic.eventLog.events.BooleanEventField
 - sf:ERROR:com.intellij.internal.statistic.eventLog.events.ClassEventField
 - sf:GROUP:com.intellij.internal.statistic.eventLog.EventLogGroup
+- sf:INCOMPLETE_DEPENDENCIES_MODE:com.intellij.internal.statistic.eventLog.events.EnumEventField
 - sf:INSTANCE:com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 - sf:IS_SUBMENU:com.intellij.internal.statistic.eventLog.events.BooleanEventField
 - sf:LOOKUP_ACTIVE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
