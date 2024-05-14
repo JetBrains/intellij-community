@@ -487,19 +487,15 @@
 - s:mergeProximity(java.lang.Double,D):D
 *f:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Companion
 - f:mergeProximity(java.lang.Double,D):D
-*f:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result
-- <init>():V
-- <init>(java.util.Map,java.util.Collection):V
-- b:<init>(java.util.Map,java.util.Collection,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.util.Map
-- f:component2():java.util.Collection
-- f:copy(java.util.Map,java.util.Collection):com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result
-- bs:copy$default(com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result,java.util.Map,java.util.Collection,I,java.lang.Object):com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result
-- equals(java.lang.Object):Z
-- f:getDependency2proximity():java.util.Map
-- f:getModificationTrackers():java.util.Collection
-- hashCode():I
-- toString():java.lang.String
+*:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result
+- *sf:Companion:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result$Companion
+- s:create(java.util.Map,java.util.Collection):com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result
+- a:getDependency2proximity():java.util.Map
+- s:getEmpty():com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result
+- a:getModificationTrackers():java.util.Collection
+*f:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result$Companion
+- f:create(java.util.Map,java.util.Collection):com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result
+- f:getEmpty():com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$Result
 *:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind
 *f:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$IdeLibrary
 - com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind

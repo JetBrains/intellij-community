@@ -10,8 +10,19 @@ interface WebSymbolsContextSourceProximityProvider {
 
   fun calculateProximity(project: Project, dir: VirtualFile, sourceNames: Set<String>, sourceKind: SourceKind): Result
 
-  data class Result(val dependency2proximity: Map<String, Double> = emptyMap(),
-                    val modificationTrackers: Collection<ModificationTracker> = emptyList())
+  sealed interface Result {
+    val dependency2proximity: Map<String, Double>
+    val modificationTrackers: Collection<ModificationTracker>
+
+    companion object {
+      @JvmStatic
+      val empty: Result = WebSymbolsContextSourceProximityProviderResultData(emptyMap(), emptySet())
+
+      @JvmStatic
+      fun create(dependency2proximity: Map<String, Double>, modificationTrackers: Collection<ModificationTracker>): Result =
+        WebSymbolsContextSourceProximityProviderResultData(dependency2proximity, modificationTrackers)
+    }
+  }
 
   sealed interface SourceKind {
 
@@ -44,9 +55,14 @@ interface WebSymbolsContextSourceProximityProvider {
           }
           trackers.addAll(it.modificationTrackers)
         }
-      return Result(dependency2proximity, trackers)
+      return Result.create(dependency2proximity, trackers)
     }
 
   }
 
 }
+
+private data class WebSymbolsContextSourceProximityProviderResultData(
+  override val dependency2proximity: Map<String, Double>,
+  override val modificationTrackers: Collection<ModificationTracker>
+) : WebSymbolsContextSourceProximityProvider.Result
