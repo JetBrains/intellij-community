@@ -4,6 +4,7 @@ package com.intellij.platform.ide.newUiOnboarding
 import com.intellij.ide.plugins.MultiPanel
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -68,7 +69,7 @@ class NewUiOnboardingDialog(private val project: Project)
           val maxWidth = videoSize.width - JBUI.scale(contentGaps.width)
           val charWidth = window.getFontMetrics(JBFont.label()).charWidth('0')
           val maxLineLength = maxWidth / charWidth
-          text(NewUiOnboardingBundle.message("dialog.text"), maxLineLength) { event ->
+          text(NewUiOnboardingBundle.message("dialog.text", ApplicationNamesInfo.getInstance().fullProductName), maxLineLength) { event ->
             if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
               ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) { c ->
                 c.openMarketplaceTab(NewUiOnboardingBundle.message("classic.ui.plugin.name"))
