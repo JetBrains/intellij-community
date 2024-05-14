@@ -1,7 +1,3 @@
-c:com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider
-- com.intellij.ide.structureView.StructureViewBuilderProvider
-- <init>():V
-- getStructureViewBuilder(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewBuilder
 f:com.intellij.ide.structureView.StructureViewBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
