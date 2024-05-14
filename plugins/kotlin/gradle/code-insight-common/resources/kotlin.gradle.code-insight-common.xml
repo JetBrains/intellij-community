@@ -2,6 +2,7 @@
   <dependencies>
     <plugin id="com.intellij.gradle"/>
     <plugin id="org.jetbrains.plugins.gradle"/>
+    <plugin id="org.toml.lang"/>
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.project-wizard.idea"/>
@@ -20,6 +21,11 @@
     <psi.implicitReferenceProvider implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinGradlePluginReferenceProvider"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeABICompatibilityChecker"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeRunConfigurationProducer"/>
+
+    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog.KotlinGradleVersionCatalogGotoDeclarationHandler"/>
+    <referencesSearch implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog.KotlinGradleVersionCatalogReferencesSearcher"/>
+    <lang.elementManipulator forClass="org.jetbrains.kotlin.psi.KtDotQualifiedExpression"
+                             implementationClass="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.versionCatalog.KotlinDotQualifiedExpressionManipulator"/>
 
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinConfiguratorExternalSystemSyncListener"/>
 
