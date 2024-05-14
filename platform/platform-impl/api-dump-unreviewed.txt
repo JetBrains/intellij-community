@@ -17921,12 +17921,6 @@ f:com.intellij.openapi.project.DumbServiceScanningListener
 f:com.intellij.openapi.project.DumbServiceScanningListener$TestCompanion
 - <init>(com.intellij.openapi.project.DumbServiceScanningListener):V
 - f:subscribe(kotlinx.coroutines.flow.StateFlow):V
-f:com.intellij.openapi.project.DumbServiceSyncTaskQueue
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.project.DumbServiceMergingTaskQueue):V
-- cancelAllTasks():V
-- disposePendingTasks():V
-- isRunning():kotlinx.coroutines.flow.StateFlow
-- runTaskSynchronously(com.intellij.openapi.project.DumbModeTask):V
 f:com.intellij.openapi.project.DumbServiceTracker
 - com.intellij.platform.backend.observation.ActivityTracker
 - <init>():V

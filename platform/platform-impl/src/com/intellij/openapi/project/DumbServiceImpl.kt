@@ -123,7 +123,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   private var scheduledTasksScope: CoroutineScope = scope.childScope()
   private val myTaskQueue: DumbServiceMergingTaskQueue = DumbServiceMergingTaskQueue()
   private val myGuiDumbTaskRunner: DumbServiceGuiExecutor
-  private val mySyncDumbTaskRunner: DumbServiceSyncTaskQueue
   private val myAlternativeResolveTracker: DumbServiceAlternativeResolveTracker
 
   //used from EDT
@@ -157,7 +156,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   init {
     myGuiDumbTaskRunner = DumbServiceGuiExecutor(myProject, myTaskQueue, DumbTaskListener())
-    mySyncDumbTaskRunner = DumbServiceSyncTaskQueue(myProject, myTaskQueue)
     if (Registry.`is`("scanning.should.pause.dumb.queue", false)) {
       myProject.service<DumbServiceScanningListener>().subscribe()
     }
@@ -179,17 +177,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     blockingContext {
       queueTask(task)
     }
-    if (useSynchronousTaskQueue) {
-      // This is the same side effects as produced by enterSmartModeIfDumb (except updating icons). We apply them synchronously because
-      // invokeLaterWithDumbStartModality(this::enterSmartModeIfDumb) does not work well in synchronous environments (e.g., in unit tests):
-      // code continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
-      blockingContext {
-        ApplicationManager.getApplication().invokeAndWait {
-          myState.update { it.incrementDumbCounter().decrementDumbCounter() }
-          publishDumbModeChangedEvent()
-        }
-      }
-    }
   }
 
   override fun cancelTask(task: DumbModeTask) {
@@ -203,7 +190,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myBalloon.dispose()
     scheduledTasksScope.cancel("On dispose of DumbService", ProcessCanceledException())
     myTaskQueue.disposePendingTasks()
-    mySyncDumbTaskRunner.disposePendingTasks()
   }
 
   override fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable) {
@@ -362,12 +348,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   internal val runWhenSmartCondition: BooleanSupplier
-    get() = if (useSynchronousTaskQueue) {
-      BooleanSupplier { !isDumb }
-    }
-    else {
-      myProject.getService(SmartModeScheduler::class.java).runWhenSmartCondition
-    }
+    get() = myProject.getService(SmartModeScheduler::class.java).runWhenSmartCondition
 
   override fun unsafeRunWhenSmart(@Async.Schedule runnable: Runnable) {
     // we probably don't need unsafeRunWhenSmart anymore
@@ -383,10 +364,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     LOG.debug { "Scheduling task $task" }
     if (myProject.isDefault) {
       LOG.error("No indexing tasks should be created for default project: $task")
-    }
-    if (useSynchronousTaskQueue) {
-      mySyncDumbTaskRunner.runTaskSynchronously(task)
-      return
     }
     val trace = Throwable()
     val modality = ModalityState.defaultModalityState()
@@ -501,8 +478,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       // isRunning will be false eventually, because we are on EDT, and no new task can be queued outside the EDT
       // (we only wait for currently running task to terminate).
       myGuiDumbTaskRunner.cancelAllTasks()
-      mySyncDumbTaskRunner.cancelAllTasks()
-      while ((myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value) && !myProject.isDisposed) {
+      while (myGuiDumbTaskRunner.isRunning.value && !myProject.isDisposed) {
         PingProgress.interactWithEdtProgress()
         LockSupport.parkNanos(50000000)
       }
@@ -706,7 +682,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   @TestOnly
   fun isRunning(): Boolean {
-    return myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value
+    return myGuiDumbTaskRunner.isRunning.value
   }
 
   @TestOnly
@@ -741,10 +717,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         LOG.error(t)
       }
     }
-
-    val useSynchronousTaskQueue: Boolean
-      @VisibleForTesting
-      get() = SystemProperties.getBooleanProperty("unittest.synchronous.dumb.queue", false)
 
     @JvmStatic
     val isSynchronousTaskExecution: Boolean
