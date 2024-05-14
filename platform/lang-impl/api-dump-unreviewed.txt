@@ -16989,6 +16989,7 @@ f:com.intellij.ide.projectView.impl.ProjectViewSharedSettings
 - f:getFoldersAlwaysOnTop():Z
 - f:getHideEmptyPackages():Z
 - f:getManualOrder():Z
+- f:getOpenDirectoriesWithSingleClick():Z
 - f:getShowExcludedFiles():Z
 - f:getShowLibraryContents():Z
 - f:getShowMembers():Z
@@ -17007,6 +17008,7 @@ f:com.intellij.ide.projectView.impl.ProjectViewSharedSettings
 - f:setFoldersAlwaysOnTop(Z):V
 - f:setHideEmptyPackages(Z):V
 - f:setManualOrder(Z):V
+- f:setOpenDirectoriesWithSingleClick(Z):V
 - f:setShowExcludedFiles(Z):V
 - f:setShowLibraryContents(Z):V
 - f:setShowMembers(Z):V
@@ -17031,6 +17033,7 @@ f:com.intellij.ide.projectView.impl.ProjectViewState
 - f:getHideEmptyMiddlePackages():Z
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.projectView.impl.ProjectViewState
 - f:getManualOrder():Z
+- f:getOpenDirectoriesWithSingleClick():Z
 - f:getShowExcludedFiles():Z
 - f:getShowLibraryContents():Z
 - f:getShowMembers():Z
@@ -17053,6 +17056,7 @@ f:com.intellij.ide.projectView.impl.ProjectViewState
 - f:setFoldersAlwaysOnTop(Z):V
 - f:setHideEmptyMiddlePackages(Z):V
 - f:setManualOrder(Z):V
+- f:setOpenDirectoriesWithSingleClick(Z):V
 - f:setShowExcludedFiles(Z):V
 - f:setShowLibraryContents(Z):V
 - f:setShowMembers(Z):V

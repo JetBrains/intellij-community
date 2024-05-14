@@ -192,14 +192,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Option myOpenDirectoriesWithSingleClick = new Option() {
     @Override
     public boolean isSelected() {
-      return UISettings.getInstance().getExpandNodesWithSingleClick();
+      return currentState.getOpenDirectoriesWithSingleClick();
     }
 
     @Override
     public void setSelected(boolean selected) {
       if (project.isDisposed()) return;
-      UISettings.getInstance().setExpandNodesWithSingleClick(selected);
-      UISettings.getInstance().fireUISettingsChanged();
+      currentState.setOpenDirectoriesWithSingleClick(selected);
+      getDefaultState().setOpenDirectoriesWithSingleClick(selected);
+      getGlobalOptions().setOpenDirectoriesWithSingleClick(selected);
+      var pane = getCurrentProjectViewPane();
+      if (pane != null) {
+        var tree = pane.getTree();
+        if (tree != null) {
+          tree.setToggleClickCount(selected ? 1 : 2);
+        }
+      }
     }
   };
 
@@ -906,6 +914,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane.myTree != null) {
       myAutoScrollToSourceHandler.install(newPane.myTree);
       myAutoScrollToSourceHandler.onMouseClicked(newPane.myTree);
+      newPane.myTree.setToggleClickCount(myOpenDirectoriesWithSingleClick.isSelected() ? 1 : 2);
     }
 
     newPane.restoreExpandedPaths();
