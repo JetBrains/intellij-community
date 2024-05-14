@@ -10,9 +10,6 @@ object OpenSourceCommunityInstallersBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val options = BuildOptions().apply {
-      // we cannot provide a consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
-      buildNumber = null
-
       // do not bother external users about clean/incremental
       // just remove out/ directory for clean build
       incrementalCompilation = true

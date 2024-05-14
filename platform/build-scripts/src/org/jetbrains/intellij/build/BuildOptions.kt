@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
@@ -363,8 +364,16 @@ data class BuildOptions(
 
   /**
    * Use [BuildContext.buildNumber] to get the actual build number in build scripts.
+   * @see BuildContext.checkDistributionBuildNumber
    */
-  var buildNumber: String? = System.getProperty("build.number")
+  var buildNumber: String? = run {
+    val buildNumber = System.getProperty("build.number")
+    if (buildNumber?.toIntOrNull() != null && TeamCityHelper.isUnderTeamCity) {
+      // a build counter supplied by default in TeamCity cannot be used as a build number, skipping
+      null
+    }
+    else buildNumber
+  }
 
   /**
    * Use [BuildContext.pluginBuildNumber] to get the actual build number in build scripts.

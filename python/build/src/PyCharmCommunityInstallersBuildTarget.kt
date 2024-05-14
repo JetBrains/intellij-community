@@ -16,10 +16,6 @@ object PyCharmCommunityInstallersBuildTarget {
   fun main(args: Array<String>) {
     runBlocking(Dispatchers.Default) {
       val options = BuildOptions().apply {
-        // we cannot provide a consistent build number for PyCharm Community
-        // if it's built separately so use *.SNAPSHOT number to avoid confusion
-        buildNumber = null
-
         // do not bother external users about clean/incremental
         // just remove out/ directory for clean build
         incrementalCompilation = true
