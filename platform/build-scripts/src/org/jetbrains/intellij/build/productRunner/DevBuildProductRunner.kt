@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
-package org.jetbrains.intellij.build.impl.productRunner
+package org.jetbrains.intellij.build.productRunner
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.dev.BuildRequest

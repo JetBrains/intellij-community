@@ -12,8 +12,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.getLocalizationDir
-import org.jetbrains.intellij.build.impl.productRunner.IntellijProductRunner
-import org.jetbrains.intellij.build.impl.productRunner.createProductRunner
+import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.productRunner.createProductRunner
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
