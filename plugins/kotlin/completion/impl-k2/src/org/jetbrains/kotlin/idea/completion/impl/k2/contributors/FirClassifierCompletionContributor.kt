@@ -118,9 +118,7 @@ internal class FirAnnotationCompletionContributor(
             KaClassKind.ENUM_CLASS -> false
             KaClassKind.ANONYMOUS_OBJECT -> false
             KaClassKind.CLASS, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.INTERFACE -> {
-                // TODO show class if nested classifier is annotation class
-                // classifierSymbol.getDeclaredMemberScope().getClassifierSymbols().any { filterClassifiers(it) }
-                false
+                classifierSymbol.getStaticDeclaredMemberScope().getClassifierSymbols().any { filterClassifiers(it) }
             }
         }
 

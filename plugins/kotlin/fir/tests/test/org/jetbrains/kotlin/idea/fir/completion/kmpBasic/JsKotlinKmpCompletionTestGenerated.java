@@ -94,6 +94,16 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/annotations/FunctionAnnotation2.kt");
         }
 
+        @TestMetadata("NestedAnnotation.kt")
+        public void testNestedAnnotation() throws Exception {
+            runTest("../../completion/testData/basic/common/annotations/NestedAnnotation.kt");
+        }
+
+        @TestMetadata("NestedAnnotation2.kt")
+        public void testNestedAnnotation2() throws Exception {
+            runTest("../../completion/testData/basic/common/annotations/NestedAnnotation2.kt");
+        }
+
         @TestMetadata("NoCatchParameterAutopopup.kt")
         public void testNoCatchParameterAutopopup() throws Exception {
             runTest("../../completion/testData/basic/common/annotations/NoCatchParameterAutopopup.kt");

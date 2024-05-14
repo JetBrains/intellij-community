@@ -90,6 +90,16 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/annotations/FunctionAnnotation2.kt");
             }
 
+            @TestMetadata("NestedAnnotation.kt")
+            public void testNestedAnnotation() throws Exception {
+                runTest("../testData/basic/common/annotations/NestedAnnotation.kt");
+            }
+
+            @TestMetadata("NestedAnnotation2.kt")
+            public void testNestedAnnotation2() throws Exception {
+                runTest("../testData/basic/common/annotations/NestedAnnotation2.kt");
+            }
+
             @TestMetadata("NoCatchParameterAutopopup.kt")
             public void testNoCatchParameterAutopopup() throws Exception {
                 runTest("../testData/basic/common/annotations/NoCatchParameterAutopopup.kt");
