@@ -644,6 +644,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateCondition" bundle="messages.InspectionGadgetsBundle" key="duplicate.condition.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.DuplicateConditionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ExpressionComparedToItself" bundle="messages.JavaAnalysisBundle" key="inspection.message.expression.compared.to.itself.description"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.ExpressionComparedToItselfInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.controlflow.DuplicateConditionInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumSwitchStatementWhichMissesCases" bundle="messages.InspectionGadgetsBundle"
                      key="enum.switch.statement.which.misses.cases.display.name" groupBundle="messages.InspectionsBundle"
