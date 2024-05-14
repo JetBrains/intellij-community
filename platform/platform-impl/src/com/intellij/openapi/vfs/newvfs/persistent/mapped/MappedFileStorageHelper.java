@@ -27,6 +27,7 @@ import java.util.function.IntSupplier;
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;
 
+import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.CLEAN;
 import static com.intellij.util.io.IOUtil.MiB;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
@@ -88,6 +89,7 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
 
       return MMappedFileStorageFactory.withDefaults()
         .pageSize(DEFAULT_PAGE_SIZE)
+        .ifFileIsNotPageAligned(CLEAN)
         .wrapStorageSafely(
           absoluteStoragePath,
           mappedFileStorage -> {

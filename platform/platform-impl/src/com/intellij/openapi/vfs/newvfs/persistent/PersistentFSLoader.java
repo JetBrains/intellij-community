@@ -51,6 +51,7 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
+import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.EXPAND_FILE;
 import static com.intellij.util.io.storage.CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
@@ -638,7 +639,7 @@ public final class PersistentFSLoader {
           .pageSize(pageSize)
           //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
           // data from non-mmapped -- the only 'migration' needed is to page-align the file:
-          .expandFileIfNotPageAligned(true)
+          .ifFileIsNotPageAligned(EXPAND_FILE)
           .wrapStorageSafely(
             attributesFile,
             storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
