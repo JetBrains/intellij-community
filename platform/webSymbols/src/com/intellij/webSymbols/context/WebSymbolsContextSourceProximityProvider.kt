@@ -30,7 +30,7 @@ interface WebSymbolsContextSourceProximityProvider {
 
     data object ProjectToolExecutable : SourceKind
 
-    data class PackageManagerDependency(val name: String) : SourceKind
+    data class PackageManagerDependency internal constructor(val name: String) : SourceKind
   }
 
   companion object {

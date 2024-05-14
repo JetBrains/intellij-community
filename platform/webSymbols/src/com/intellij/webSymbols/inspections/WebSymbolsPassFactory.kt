@@ -5,9 +5,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class WebSymbolsPassFactory(registrar: TextEditorHighlightingPassRegistrar) : DirtyScopeTrackingHighlightingPassFactory {
 
+  @Internal
   class Registrar : TextEditorHighlightingPassFactoryRegistrar {
     override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
       WebSymbolsPassFactory(registrar)

@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory
 import com.intellij.webSymbols.WebSymbol
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class WebSymbolRenameTargetFactory : SymbolRenameTargetFactory {
   override fun renameTarget(project: Project, symbol: Symbol): RenameTarget? =
     if (symbol is WebSymbol && symbol !is RenameTarget)

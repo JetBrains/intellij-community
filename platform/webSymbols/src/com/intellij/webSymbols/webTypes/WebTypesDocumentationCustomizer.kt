@@ -7,8 +7,10 @@ import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer
 import com.intellij.webSymbols.patterns.impl.RegExpPattern
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
+@ApiStatus.Internal
 class WebTypesDocumentationCustomizer : WebSymbolDocumentationCustomizer {
   override fun customize(symbol: WebSymbol, location: PsiElement?, documentation: WebSymbolDocumentation): WebSymbolDocumentation {
     val pattern = symbol.pattern as? RegExpPattern

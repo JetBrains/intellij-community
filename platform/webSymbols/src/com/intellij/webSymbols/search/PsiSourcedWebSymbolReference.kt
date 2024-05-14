@@ -9,7 +9,9 @@ import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.psi.util.startOffset
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PsiSourcedWebSymbolReference(private val symbol: WebSymbol,
                                    private val sourceElement: PsiElement,
                                    private val host: PsiExternalReferenceHost,

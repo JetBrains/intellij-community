@@ -5,7 +5,9 @@ import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class WebSymbolsMatchPrefixFilter : WebSymbolsFilter {
 
   override fun filterCodeCompletions(codeCompletions: List<WebSymbolCodeCompletionItem>,

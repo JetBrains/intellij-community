@@ -5,7 +5,9 @@ import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class WebSymbolPsiUsage(override val file: PsiFile,
                         override val range: TextRange,
                         override val declaration: Boolean) : PsiUsage {

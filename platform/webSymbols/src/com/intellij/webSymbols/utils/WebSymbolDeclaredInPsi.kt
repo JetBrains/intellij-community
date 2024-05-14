@@ -48,7 +48,7 @@ interface WebSymbolDeclaredInPsi : WebSymbol, SearchTarget, RenameTarget {
     return presentation
   }
 
-  class PsiNavigatableWebSymbolNavigationTarget(private val symbol: WebSymbolDeclaredInPsi) : NavigationTarget {
+  class PsiNavigatableWebSymbolNavigationTarget internal constructor(private val symbol: WebSymbolDeclaredInPsi) : NavigationTarget {
 
     override fun createPointer(): Pointer<out NavigationTarget> {
       val symbolPtr = symbol.createPointer()

@@ -501,7 +501,6 @@
 - toString():java.lang.String
 *f:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$PackageManagerDependency
 - com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind
-- <init>(java.lang.String):V
 - f:component1():java.lang.String
 - f:copy(java.lang.String):com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$PackageManagerDependency
 - bs:copy$default(com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$PackageManagerDependency,java.lang.String,I,java.lang.Object):com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$PackageManagerDependency
@@ -580,10 +579,6 @@ f:com.intellij.webSymbols.customElements.CustomElementsSymbol$Companion
 - computePresentation():com.intellij.platform.backend.presentation.TargetPresentation
 - a:getLocation():com.intellij.psi.PsiElement
 - a:getSymbol():com.intellij.webSymbols.WebSymbol
-*f:com.intellij.webSymbols.documentation.WebSymbolDocumentationTargetProvider
-- com.intellij.platform.backend.documentation.DocumentationTargetProvider
-- <init>():V
-- documentationTargets(com.intellij.psi.PsiFile,I):java.util.List
 *a:com.intellij.webSymbols.framework.WebSymbolsFramework
 - *sf:Companion:com.intellij.webSymbols.framework.WebSymbolsFramework$Companion
 - <init>():V
@@ -637,19 +632,6 @@ f:com.intellij.webSymbols.customElements.CustomElementsSymbol$Companion
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue$Type
 - s:values():com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue$Type[]
-*f:com.intellij.webSymbols.inspections.WebSymbolsPassFactory
-- com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory
-- <init>(com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar):V
-- createHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeHighlighting.TextEditorHighlightingPass
-- getPassId():I
-*f:com.intellij.webSymbols.inspections.WebSymbolsPassFactory$Registrar
-- com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
-- <init>():V
-- registerHighlightingPassFactory(com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar,com.intellij.openapi.project.Project):V
-*a:com.intellij.webSymbols.inspections.WebSymbolsStubInspection
-- com.intellij.codeInspection.LocalInspectionTool
-- <init>():V
-- buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z):com.intellij.psi.PsiElementVisitor
 e:com.intellij.webSymbols.js.WebSymbolJsKind
 - java.lang.Enum
 - sf:Alias:com.intellij.webSymbols.js.WebSymbolJsKind
@@ -668,7 +650,6 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - s:valueOf(java.lang.String):com.intellij.webSymbols.js.WebSymbolJsKind
 - s:values():com.intellij.webSymbols.js.WebSymbolJsKind[]
 *a:com.intellij.webSymbols.patterns.WebSymbolsPattern
-- <init>():V
 *:com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 - *sf:Companion:com.intellij.webSymbols.query.WebSymbolDefaultIconProvider$Companion
 - a:getDefaultIcon(java.lang.String,java.lang.String):javax.swing.Icon
@@ -846,17 +827,6 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - s:getQueryResultsCustomizer(com.intellij.psi.PsiElement,com.intellij.webSymbols.context.WebSymbolsContext):com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
 *f:com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizerFactory$Companion
 - f:getQueryResultsCustomizer(com.intellij.psi.PsiElement,com.intellij.webSymbols.context.WebSymbolsContext):com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
-*f:com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRefactoringHelper
-- com.intellij.refactoring.RefactoringHelper
-- <init>():V
-- performOperation(com.intellij.openapi.project.Project,java.util.List):V
-- prepareOperation(com.intellij.usageView.UsageInfo[],java.util.List):java.util.List
-*f:com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRenameHandler
-- com.intellij.refactoring.rename.RenameHandler
-- <init>():V
-- invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.actionSystem.DataContext):V
-- invoke(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement[],com.intellij.openapi.actionSystem.DataContext):V
-- isAvailableOnDataContext(com.intellij.openapi.actionSystem.DataContext):Z
 *:com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 - com.intellij.refactoring.rename.api.RenameTarget
 - *sf:Companion:com.intellij.webSymbols.refactoring.WebSymbolRenameTarget$Companion
@@ -864,10 +834,6 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - a:getSymbol():com.intellij.webSymbols.WebSymbol
 *f:com.intellij.webSymbols.refactoring.WebSymbolRenameTarget$Companion
 - f:create(com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
-*f:com.intellij.webSymbols.refactoring.WebSymbolRenameTargetFactory
-- com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory
-- <init>():V
-- renameTarget(com.intellij.openapi.project.Project,com.intellij.model.Symbol):com.intellij.refactoring.rename.api.RenameTarget
 *:com.intellij.webSymbols.references.WebSymbolReference
 - com.intellij.model.psi.PsiSymbolReference
 - getProblems():java.util.Collection
@@ -910,32 +876,6 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - pf:unresolvedSymbol(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String):com.intellij.webSymbols.query.WebSymbolMatch
 *f:com.intellij.webSymbols.references.WebSymbolReferenceProvider$Companion
 - f:startOffsetIn(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
-*f:com.intellij.webSymbols.search.PsiSourcedWebSymbolReference
-- com.intellij.psi.PsiReference
-- <init>(com.intellij.webSymbols.WebSymbol,com.intellij.psi.PsiElement,com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.openapi.util.TextRange):V
-- bindToElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- f:createRenameHandler():com.intellij.webSymbols.search.PsiSourcedWebSymbolReference$RenameHandler
-- getCanonicalText():java.lang.String
-- getElement():com.intellij.psi.PsiElement
-- getRangeInElement():com.intellij.openapi.util.TextRange
-- handleElementRename(java.lang.String):com.intellij.psi.PsiElement
-- isReferenceTo(com.intellij.psi.PsiElement):Z
-- isSoft():Z
-- resolve():com.intellij.psi.PsiElement
-*f:com.intellij.webSymbols.search.PsiSourcedWebSymbolReference$RenameHandler
-- <init>(com.intellij.webSymbols.search.PsiSourcedWebSymbolReference):V
-- f:handleRename():com.intellij.refactoring.util.NonCodeUsageInfo
-*f:com.intellij.webSymbols.search.PsiSourcedWebSymbolRequestResultProcessor
-- com.intellij.psi.search.RequestResultProcessor
-- <init>(com.intellij.psi.PsiElement,java.util.List,Z):V
-- processTextOccurrence(com.intellij.psi.PsiElement,I,com.intellij.util.Processor):Z
-*f:com.intellij.webSymbols.search.WebSymbolPsiUsage
-- com.intellij.find.usages.api.PsiUsage
-- <init>(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z):V
-- createPointer():com.intellij.model.Pointer
-- getDeclaration():Z
-- getFile():com.intellij.psi.PsiFile
-- getRange():com.intellij.openapi.util.TextRange
 *:com.intellij.webSymbols.search.WebSymbolSearchTarget
 - com.intellij.find.usages.api.SearchTarget
 - *sf:Companion:com.intellij.webSymbols.search.WebSymbolSearchTarget$Companion
@@ -943,10 +883,6 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - a:getSymbol():com.intellij.webSymbols.WebSymbol
 *f:com.intellij.webSymbols.search.WebSymbolSearchTarget$Companion
 - f:create(com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.search.WebSymbolSearchTarget
-*f:com.intellij.webSymbols.search.WebSymbolSearchTargetFactory
-- com.intellij.find.usages.symbol.SymbolSearchTargetFactory
-- <init>():V
-- searchTarget(com.intellij.openapi.project.Project,com.intellij.webSymbols.WebSymbol):com.intellij.find.usages.api.SearchTarget
 *f:com.intellij.webSymbols.search.WebSymbolUsageQueries
 - sf:INSTANCE:com.intellij.webSymbols.search.WebSymbolUsageQueries
 - f:buildWebSymbolUsagesQueries(com.intellij.webSymbols.WebSymbol,com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope):java.util.List
@@ -1013,7 +949,6 @@ com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi
 - presentation():com.intellij.platform.backend.presentation.TargetPresentation
 f:com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi$PsiNavigatableWebSymbolNavigationTarget
 - com.intellij.platform.backend.navigation.NavigationTarget
-- <init>(com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi):V
 - computePresentation():com.intellij.platform.backend.presentation.TargetPresentation
 - createPointer():com.intellij.model.Pointer
 - f:getNavigationItem():com.intellij.navigation.NavigationItem
@@ -1044,16 +979,11 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - sf:withMatchedName(com.intellij.webSymbols.WebSymbol,java.lang.String):com.intellij.webSymbols.WebSymbol
 - sf:withNavigationTarget(com.intellij.webSymbols.WebSymbol,com.intellij.psi.PsiElement):com.intellij.webSymbols.WebSymbol
 - sf:withOffset(java.util.List,I):java.util.List
-*f:com.intellij.webSymbols.webTypes.WebTypesDocumentationCustomizer
-- com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer
-- <init>():V
-- customize(com.intellij.webSymbols.WebSymbol,com.intellij.psi.PsiElement,com.intellij.webSymbols.documentation.WebSymbolDocumentation):com.intellij.webSymbols.documentation.WebSymbolDocumentation
 *:com.intellij.webSymbols.webTypes.WebTypesSymbol
 - com.intellij.webSymbols.PsiSourcedWebSymbol
 - *sf:Companion:com.intellij.webSymbols.webTypes.WebTypesSymbol$Companion
 - a:getLocation():com.intellij.webSymbols.webTypes.WebTypesSymbol$Location
 *f:com.intellij.webSymbols.webTypes.WebTypesSymbol$Companion
-- f:getWEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS():java.util.Set
 *f:com.intellij.webSymbols.webTypes.WebTypesSymbol$FileExport
 - com.intellij.webSymbols.webTypes.WebTypesSymbol$FileLocation
 - com.intellij.webSymbols.webTypes.WebTypesSymbol$Location
@@ -1149,8 +1079,3 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - s:get(java.lang.String):com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 *f:com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter$Companion
 - f:get(java.lang.String):com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
-*f:com.intellij.webSymbols.webTypes.filters.WebSymbolsMatchPrefixFilter
-- com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
-- <init>():V
-- filterCodeCompletions(java.util.List,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,java.util.List,java.util.Map):java.util.List
-- filterNameMatches(java.util.List,com.intellij.webSymbols.query.WebSymbolsQueryExecutor,java.util.List,java.util.Map):java.util.List
