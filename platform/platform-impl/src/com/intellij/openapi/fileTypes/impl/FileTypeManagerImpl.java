@@ -1551,22 +1551,22 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   // check that method "getter" returns unique strings across all file types
-  private static void checkUnique(@NotNull FileTypeWithDescriptor newFtd,
+  private static void checkUnique(@NotNull FileTypeWithDescriptor newFileTypeWithDescriptor,
                                   @NotNull Map<? super String, FileTypeWithDescriptor> names,
                                   @NotNull String getterName,
                                   @NotNull Function<? super FileType, String> nameExtractor) {
-    FileType newFileType = newFtd.fileType;
+    FileType newFileType = newFileTypeWithDescriptor.fileType;
     String name = nameExtractor.apply(newFileType);
-    FileTypeWithDescriptor prevFtd = names.put(name, newFtd);
-    if (prevFtd != null && (prevFtd.fileType instanceof AbstractFileType) == (newFileType instanceof AbstractFileType)) {
+    FileTypeWithDescriptor prevFileTypeWithDescriptor = names.put(name, newFileTypeWithDescriptor);
+    if (prevFileTypeWithDescriptor != null && (prevFileTypeWithDescriptor.fileType instanceof AbstractFileType) == (newFileType instanceof AbstractFileType)) {
       // should be able to override AbstractFileType silently
-      String error = "\n" + prevFtd + " (" + prevFtd.fileType.getClass() + ") and" +
-                     "\n" + newFtd + " (" + newFileType.getClass() + ")\n" +
+      String error = "\n" + prevFileTypeWithDescriptor + " (" + prevFileTypeWithDescriptor.fileType.getClass() + ") and" +
+                     "\n" + newFileTypeWithDescriptor + " (" + newFileType.getClass() + ")\n" +
                      " both have the same ." + getterName + "(): '" + name + "'. " +
                      "Please override either one's " + getterName + "() to something unique.";
-      PluginDescriptor pluginToBlame = prevFtd.pluginDescriptor.isBundled() ? newFtd.pluginDescriptor : prevFtd.pluginDescriptor;
-      if (prevFtd.pluginDescriptor.isBundled() || newFtd.pluginDescriptor.isBundled()) {
-        // file type from the plugin conflicts with bundled file type
+      PluginDescriptor pluginToBlame = prevFileTypeWithDescriptor.pluginDescriptor.isBundled() ? newFileTypeWithDescriptor.pluginDescriptor : prevFileTypeWithDescriptor.pluginDescriptor;
+      if (prevFileTypeWithDescriptor.pluginDescriptor.isBundled() || newFileTypeWithDescriptor.pluginDescriptor.isBundled()) {
+        // file type from the plugin conflicts with a bundled file type
         LOG.error(new PluginException(error, pluginToBlame.getPluginId()));
       }
       else {
