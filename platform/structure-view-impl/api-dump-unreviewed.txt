@@ -45,7 +45,6 @@ a:com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 - hashCode():I
 - isSearchInLocationString():Z
 - isValid():Z
-- s:mergeWithExtensions(com.intellij.psi.PsiElement,java.util.Collection,Z):java.util.List
 - navigate(Z):V
 - toString():java.lang.String
 a:com.intellij.ide.util.InheritedMembersNodeProvider
