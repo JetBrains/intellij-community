@@ -10,7 +10,7 @@ import kotlin.io.path.pathString
  * Runs the product using the module-based loader which will take class-files from module output directories. 
  */
 internal class ModuleBasedProductRunner(private val rootModuleForModularLoader: String, private val context: BuildContext) : IntellijProductRunner {
-  override suspend fun runProduct(arguments: List<String>, additionalSystemProperties: Map<String, String>, isLongRunning: Boolean) {
+  override suspend fun runProduct(args: List<String>, additionalSystemProperties: Map<String, String>, isLongRunning: Boolean) {
     val systemProperties = mutableMapOf(
       "intellij.platform.runtime.repository.path" to context.originalModuleRepository.repositoryPath.pathString,
       "intellij.platform.root.module" to rootModuleForModularLoader,
@@ -23,9 +23,9 @@ internal class ModuleBasedProductRunner(private val rootModuleForModularLoader: 
     val ideClasspath = loaderModule.moduleClasspath.map { it.pathString }
     systemProperties.putAll(additionalSystemProperties)
     runApplicationStarter(
-      context, 
-      ideClasspath = ideClasspath, 
-      arguments = arguments,
+      context,
+      ideClasspath = ideClasspath,
+      arguments = args,
       systemProperties = systemProperties,
       vmOptions =  VmOptionsGenerator.computeVmOptions(context) 
                    + context.productProperties.additionalIdeJvmArguments

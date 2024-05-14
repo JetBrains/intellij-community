@@ -43,7 +43,6 @@ import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
-import org.jetbrains.intellij.build.productRunner.createProductRunner
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -674,9 +673,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
         Files.deleteIfExists(providedModuleFile)
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-        createProductRunner(context = context).runProduct(
-          listOf("listBundledPlugins", providedModuleFile.toString()),
-        )
+        context.createProductRunner().runProduct(args = listOf("listBundledPlugins", providedModuleFile.toString()))
 
         context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
         try {
@@ -1408,7 +1405,7 @@ internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijPr
     for (command in commands) {
       launch {
         val targetPath = temporaryBuildDirectory.resolve(command.first).resolve(command.second)
-        productRunner.runProduct(arguments = listOf(command.first, targetPath.toString()), isLongRunning = true)
+        productRunner.runProduct(args = listOf(command.first, targetPath.toString()), isLongRunning = true)
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(

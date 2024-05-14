@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
+import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
@@ -141,6 +142,8 @@ interface BuildContext : CompilationContext {
   fun checkDistributionBuildNumber()
 
   suspend fun cleanupJarCache()
+
+  suspend fun createProductRunner(): IntellijProductRunner
 }
 
 suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,

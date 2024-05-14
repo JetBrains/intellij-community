@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtilRt
+import org.jetbrains.intellij.build.impl.BuildUtils.addVmProperty
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
@@ -15,11 +16,7 @@ object BuildUtils {
     return result
   }
 
-  fun copyAndPatchFile(sourcePath: Path,
-                       targetPath: Path,
-                       replacements: Map<String, String>,
-                       marker: String = "__",
-                       lineSeparator: String = "") {
+  fun copyAndPatchFile(sourcePath: Path, targetPath: Path, replacements: Map<String, String>, marker: String = "__", lineSeparator: String = "") {
     Files.createDirectories(targetPath.parent)
     var content = replaceAll(Files.readString(sourcePath), replacements, marker)
     if (!lineSeparator.isEmpty()) {
@@ -28,22 +25,21 @@ object BuildUtils {
     Files.writeString(targetPath, content)
   }
 
-  fun propertiesToJvmArgs(properties: List<Pair<String, String>>): List<String> {
-    val result = ArrayList<String>(properties.size)
-    for ((key, value) in properties) {
-      addVmProperty(result, key, value)
-    }
-    return result
-  }
-
   internal fun addVmProperty(args: MutableList<String>, key: String, value: String?) {
     if (value != null) {
       args.add("-D$key=$value")
     }
   }
 
-  @JvmStatic
   fun getPluginJars(pluginPath: Path): List<Path> {
     return Files.newDirectoryStream(pluginPath.resolve("lib"), "*.jar").use { it.toList() }
   }
+}
+
+fun propertiesToJvmArgs(properties: Map<String, String>): List<String> {
+  val result = ArrayList<String>(properties.size)
+  for ((key, value) in properties) {
+    addVmProperty(result, key, value)
+  }
+  return result
 }

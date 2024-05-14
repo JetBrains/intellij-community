@@ -10,11 +10,15 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
 import org.jetbrains.intellij.build.jarCache.SourceBuilder
+import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.productRunner.ModuleBasedProductRunner
+import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
@@ -365,6 +369,20 @@ class BuildContextImpl internal constructor(
 
   override val appInfoXml by lazy {
     return@lazy computeAppInfoXml(context = this, appInfo = applicationInfo)
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private val devModeProductRunner = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+    createDevModeProductRunner(this@BuildContextImpl)
+  }
+
+  override suspend fun createProductRunner(): IntellijProductRunner {
+    if (useModularLoader) {
+      return ModuleBasedProductRunner(productProperties.rootModuleForModularLoader!!, this)
+    }
+    else {
+      return devModeProductRunner.await()
+    }
   }
 }
 

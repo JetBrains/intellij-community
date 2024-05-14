@@ -27,7 +27,7 @@ val DEFAULT_TIMEOUT: Duration = 10.minutes
 suspend fun runJava(mainClass: String,
                     args: List<String>,
                     jvmArgs: List<String> = emptyList(),
-                    classPath: List<String>,
+                    classPath: Collection<String>,
                     javaExe: Path,
                     timeout: Duration = DEFAULT_TIMEOUT,
                     workingDir: Path? = null,
@@ -171,7 +171,7 @@ private fun createProcessArgs(javaExe: Path,
   return processArgs
 }
 
-private fun createClassPathFile(classPath: List<String>, classpathFile: Path): StringBuilder {
+private fun createClassPathFile(classPath: Collection<String>, classpathFile: Path): StringBuilder {
   val classPathStringBuilder = StringBuilder()
   classPathStringBuilder.append("-classpath").append('\n')
   for (s in classPath) {

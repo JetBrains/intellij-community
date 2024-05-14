@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Only for use in build scripts, not for dev mode / integrations tests.
- * Use [createProductRunner] instead of calling this function directly.
+ * Use [BuildContext.createProductRunner] instead of calling this function directly.
  */
 internal suspend fun createDevModeProductRunner(context: BuildContext): IntellijProductRunner {
   var newClassPath: Collection<Path>? = null
@@ -42,11 +42,11 @@ private class DevModeProductRunner(
   private val homePath: Path,
   private val classPath: Collection<String>,
 ) : IntellijProductRunner {
-  override suspend fun runProduct(arguments: List<String>, additionalSystemProperties: Map<String, String>, isLongRunning: Boolean) {
+  override suspend fun runProduct(args: List<String>, additionalSystemProperties: Map<String, String>, isLongRunning: Boolean) {
     runApplicationStarter(
       context = context,
       ideClasspath = classPath,
-      arguments = arguments,
+      arguments = args,
       timeout = if (isLongRunning) DEFAULT_TIMEOUT else 30.seconds,
       homePath = homePath,
       systemProperties = additionalSystemProperties + getIdeSystemProperties(homePath),

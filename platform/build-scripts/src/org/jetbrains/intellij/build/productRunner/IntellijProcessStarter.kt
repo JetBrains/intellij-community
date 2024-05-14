@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.getCommandLineArgumentsForOpenPackages
+import org.jetbrains.intellij.build.impl.propertiesToJvmArgs
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.io.runJava
 import java.nio.file.Files
@@ -45,7 +46,7 @@ suspend fun runApplicationStarter(
   BuildUtils.addVmProperty(jvmArgs, "idea.builtin.server.disabled", "true")
   BuildUtils.addVmProperty(jvmArgs, "java.system.class.loader", "com.intellij.util.lang.PathClassLoader")
   BuildUtils.addVmProperty(jvmArgs, "idea.platform.prefix", context.productProperties.platformPrefix)
-  jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties.toList()))
+  jvmArgs.addAll(propertiesToJvmArgs(systemProperties))
   jvmArgs.addAll(vmOptions.takeIf { it.isNotEmpty() } ?: listOf("-Xmx2g"))
   System.getProperty("intellij.build.${arguments.first()}.debug.port")?.let {
     jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it")
@@ -136,8 +137,8 @@ suspend fun runJavaForIntellijModule(
   context: CompilationContext,
   mainClass: String,
   args: List<String>,
-  jvmArgs: List<String>,
-  classPath: List<String>,
+  jvmArgs: Collection<String>,
+  classPath: Collection<String>,
   timeout: Duration = DEFAULT_TIMEOUT,
   workingDir: Path? = null,
   onError: (() -> Unit)? = null,

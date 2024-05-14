@@ -13,7 +13,6 @@ import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.getLocalizationDir
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
-import org.jetbrains.intellij.build.productRunner.createProductRunner
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -55,7 +54,7 @@ internal fun readSearchableOptionIndex(baseDir: Path): SearchableOptionSetDescri
 }
 
 suspend fun buildSearchableOptions(context: BuildContext, systemProperties: Map<String, String> = emptyMap()): SearchableOptionSetDescriptor? {
-  return buildSearchableOptions(productRunner = createProductRunner(context), context = context, systemProperties = systemProperties)
+  return buildSearchableOptions(productRunner = context.createProductRunner(), context = context, systemProperties = systemProperties)
 }
 
 /**
@@ -104,7 +103,7 @@ internal suspend fun buildSearchableOptions(
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in the `Settings` dialog and build an index for them.
     productRunner.runProduct(
-      arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
+      args = listOf("traverseUI", targetDirectory.toString(), "true"),
       additionalSystemProperties = systemProperties + getSystemPropertiesForSearchableOptions(langTag),
       isLongRunning = true,
     )
