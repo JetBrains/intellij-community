@@ -34,18 +34,18 @@ internal suspend fun createDevModeProductRunner(context: BuildContext): Intellij
     ),
     createProductProperties = { context.productProperties }
   )
-  return DevModeProductRunner(context = context, homePath = runDir, classPath = newClassPath!!)
+  return DevModeProductRunner(context = context, homePath = runDir, classPath = newClassPath!!.map { it.toString() })
 }
 
 private class DevModeProductRunner(
   private val context: BuildContext,
   private val homePath: Path,
-  private val classPath: Collection<Path>,
+  private val classPath: Collection<String>,
 ) : IntellijProductRunner {
   override suspend fun runProduct(arguments: List<String>, additionalSystemProperties: Map<String, String>, isLongRunning: Boolean) {
     runApplicationStarter(
       context = context,
-      ideClasspath = classPath.map { it.toString() },
+      ideClasspath = classPath,
       arguments = arguments,
       timeout = if (isLongRunning) DEFAULT_TIMEOUT else 30.seconds,
       homePath = homePath,

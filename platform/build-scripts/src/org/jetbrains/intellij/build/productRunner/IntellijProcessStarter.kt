@@ -132,14 +132,16 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext, configDir: Pa
  * 
  * Use [IntellijProductRunner.runProduct] to run an actual IntelliJ product with special command line arguments.
  */
-suspend fun runJavaForIntellijModule(context: CompilationContext,
-                                     mainClass: String,
-                                     args: List<String>,
-                                     jvmArgs: List<String>,
-                                     classPath: List<String>,
-                                     timeout: Duration = DEFAULT_TIMEOUT,
-                                     workingDir: Path? = null,
-                                     onError: (() -> Unit)? = null) {
+suspend fun runJavaForIntellijModule(
+  context: CompilationContext,
+  mainClass: String,
+  args: List<String>,
+  jvmArgs: List<String>,
+  classPath: List<String>,
+  timeout: Duration = DEFAULT_TIMEOUT,
+  workingDir: Path? = null,
+  onError: (() -> Unit)? = null,
+) {
   runJava(
     mainClass = mainClass,
     args = args,
