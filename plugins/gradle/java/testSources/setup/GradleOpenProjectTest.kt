@@ -13,9 +13,11 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.testFramework.withProjectAsync
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -293,18 +295,19 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
 
   @Test
   fun `test attach to non-gradle project`() {
-    val foo = createTempDirectory("foo")
+    val workspaceRoot = createTempDirectory("workspace")
     val projectManager = ProjectManagerEx.getInstanceEx()
-    val project = projectManager.newProject(foo, OpenProjectTask(isNewProject = true)) as ProjectEx
-    project.setProjectName("foo")
-    setWorkspace(project) // todo: remove, this should work for any project
     runBlocking {
-      project.useProjectAsync {
+      closeOpenedProjectsIfFailAsync {
+        projectManager.openProjectAsync(workspaceRoot, OpenProjectTask(isNewProject = true))!!
+      }.withProjectAsync { project ->
+        (project as ProjectEx).setProjectName("workspace")
+        setWorkspace(project) // todo: remove, this should work for any project
+      }.useProjectAsync { project ->
         val projectInfo = getSimpleProjectInfo("linked_project")
         initProject(projectInfo)
-        invokeAttach(project, "linked_project")
-        Assertions.assertEquals("foo", project.name)
+        attachProject(project, "linked_project")
+        Assertions.assertEquals("workspace", project.name)
       }
     }
-  }
-}
+  }}

@@ -31,17 +31,13 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
 
   suspend fun attachProject(project: Project, relativePath: String) {
     awaitAnyGradleProjectReload {
-      invokeAttach(project, relativePath)
+      performAction(
+        action = AttachExternalProjectAction(),
+        project = project,
+        systemId = GradleConstants.SYSTEM_ID,
+        selectedFile = testRoot.getDirectory(relativePath)
+      )
     }
-  }
-
-  suspend fun invokeAttach(project: Project, relativePath: String) {
-    performAction(
-      action = AttachExternalProjectAction(),
-      project = project,
-      systemId = GradleConstants.SYSTEM_ID,
-      selectedFile = testRoot.getDirectory(relativePath)
-    )
   }
 
   suspend fun attachProjectFromScript(project: Project, relativePath: String) {
