@@ -137,7 +137,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
       return mapLanguageBreadcrumbs;
     }
 
-    @SuppressWarnings("unused")
     public Map<String, Boolean> getLanguageStickyLines() {
       return mapLanguageStickyLines;
     }
