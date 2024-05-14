@@ -839,19 +839,13 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - getProblems():java.util.Collection
 - a:resolveReference():java.util.Collection
 - resolvesTo(com.intellij.model.Symbol):Z
-*f:com.intellij.webSymbols.references.WebSymbolReferenceProblem
-- <init>(java.util.Set,com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind,com.intellij.codeInspection.ProblemDescriptor):V
-- f:component1():java.util.Set
-- f:component2():com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind
-- f:component3():com.intellij.codeInspection.ProblemDescriptor
-- f:copy(java.util.Set,com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind,com.intellij.codeInspection.ProblemDescriptor):com.intellij.webSymbols.references.WebSymbolReferenceProblem
-- bs:copy$default(com.intellij.webSymbols.references.WebSymbolReferenceProblem,java.util.Set,com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind,com.intellij.codeInspection.ProblemDescriptor,I,java.lang.Object):com.intellij.webSymbols.references.WebSymbolReferenceProblem
-- equals(java.lang.Object):Z
-- f:getDescriptor():com.intellij.codeInspection.ProblemDescriptor
-- f:getKind():com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind
-- f:getSymbolKinds():java.util.Set
-- hashCode():I
-- toString():java.lang.String
+*:com.intellij.webSymbols.references.WebSymbolReferenceProblem
+- *sf:Companion:com.intellij.webSymbols.references.WebSymbolReferenceProblem$Companion
+- a:getDescriptor():com.intellij.codeInspection.ProblemDescriptor
+- a:getKind():com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind
+- a:getSymbolKinds():java.util.Set
+*f:com.intellij.webSymbols.references.WebSymbolReferenceProblem$Companion
+- f:create(java.util.Set,com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind,com.intellij.codeInspection.ProblemDescriptor):com.intellij.webSymbols.references.WebSymbolReferenceProblem
 *e:com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind
 - java.lang.Enum
 - sf:DeprecatedSymbol:com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind

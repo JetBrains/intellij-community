@@ -190,7 +190,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
           val toolMapping = segment.symbolKinds.map {
             WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
           }.firstOrNull()
-          WebSymbolReferenceProblem(
+          WebSymbolReferenceProblem.create(
             segment.symbolKinds,
             problemKind,
             inspectionManager.createProblemDescriptor(
@@ -230,7 +230,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
                      ?: WebSymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.message"
                                                  else "web.inspection.message.obsolete.symbol.message")
 
-        WebSymbolReferenceProblem(
+        WebSymbolReferenceProblem.create(
           symbolTypes,
           if (isDeprecated) ProblemKind.DeprecatedSymbol else ProblemKind.ObsoleteSymbol,
           inspectionManager.createProblemDescriptor(
