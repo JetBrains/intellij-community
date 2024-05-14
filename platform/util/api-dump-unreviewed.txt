@@ -4859,17 +4859,6 @@ a:com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor
 - pa:convertToMap(I,java.lang.Object):java.util.Map
 - pf:createDiffBuilder(I,java.lang.Object):com.intellij.util.indexing.impl.InputDataDiffBuilder
 - createDiffBuilderByMap(I,java.util.Map):com.intellij.util.indexing.impl.InputDataDiffBuilder
-f:com.intellij.util.indexing.impl.forward.EmptyForwardIndex
-- com.intellij.util.indexing.impl.forward.ForwardIndex
-- <init>():V
-- clear():V
-- close():V
-- force():V
-- get(java.lang.Integer):com.intellij.openapi.util.io.ByteArraySequence
-- isClosed():Z
-- isDirty():Z
-- keysCountApproximately():I
-- put(java.lang.Integer,com.intellij.openapi.util.io.ByteArraySequence):V
 com.intellij.util.indexing.impl.forward.ForwardIndex
 - com.intellij.util.io.KeyValueStore
 - a:clear():V

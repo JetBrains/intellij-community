@@ -3,10 +3,17 @@ package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.MeasurableIndexStore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class EmptyForwardIndex implements ForwardIndex, MeasurableIndexStore {
+  public static final EmptyForwardIndex INSTANCE = new EmptyForwardIndex();
+
+  private EmptyForwardIndex() {
+  }
+
   @Override
   public @Nullable ByteArraySequence get(@NotNull Integer key) {
     return null;

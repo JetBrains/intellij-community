@@ -14,6 +14,7 @@ import com.intellij.util.io.PagedFileStorage
 import com.intellij.util.io.StorageLockContext
 import java.io.IOException
 
+private val LOG = logger<DefaultIndexStorageLayoutProvider>()
 
 /**
  * Provides a default index storage implementation: [DefaultStorageLayout]/[SingleEntryStorageLayout]
@@ -35,25 +36,48 @@ internal class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider 
   internal class DefaultStorageLayout<K, V>(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
     private val storageLockContext = newStorageLockContext()
 
+    private val forwardIndexAccessor = MapForwardIndexAccessor(InputMapExternalizer(extension))
+
+    private val forwardIndexRef: StorageRef<ForwardIndex, IOException> = StorageRef(
+      "ForwardIndex[${extension.name}",
+      {
+        val indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.name)
+        PersistentMapBasedForwardIndex(indexStorageFile, false, false, storageLockContext)
+      },
+      ForwardIndex::isClosed,
+      /* failIfNotClosed: */ !VfsAwareIndexStorageLayout.WARN_IF_CLEANING_UNCLOSED_STORAGE
+    )
+    private val indexStorageRef: StorageRef<IndexStorage<K, V>, IOException> = StorageRef(
+      "IndexStorage[${extension.name}]",
+      {
+        createIndexStorage(extension, storageLockContext)
+      },
+      IndexStorage<K, V>::isClosed,
+      /* failIfNotClosed: */ !VfsAwareIndexStorageLayout.WARN_IF_CLEANING_UNCLOSED_STORAGE
+    )
+
+
     @Throws(IOException::class)
+    @Synchronized
     override fun openIndexStorage(): IndexStorage<K, V> {
-      return createIndexStorage(extension, storageLockContext)
+      return indexStorageRef.reopen()
     }
 
     @Throws(IOException::class)
+    @Synchronized
     override fun openForwardIndex(): ForwardIndex {
-      val indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.name)
-      return PersistentMapBasedForwardIndex(indexStorageFile,
-                                            false,
-                                            false,
-                                            storageLockContext)
+      return forwardIndexRef.reopen()
     }
 
     override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
-      return MapForwardIndexAccessor(InputMapExternalizer(extension))
+      return forwardIndexAccessor
     }
 
+    @Synchronized
     override fun clearIndexData() {
+      indexStorageRef.ensureClosed()
+      forwardIndexRef.ensureClosed()
+
       LOG.info("Clearing storage data for: $extension")
       deleteIndexDirectory(extension)
     }
@@ -62,27 +86,41 @@ internal class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider 
   internal class SingleEntryStorageLayout<V> internal constructor(private val extension: SingleEntryFileBasedIndexExtension<V>) : VfsAwareIndexStorageLayout<Int, V> {
     private val storageLockContext = newStorageLockContext()
 
+    private val forwardIndexAccessor = SingleEntryIndexForwardIndexAccessor(extension)
+
+    private val indexStorageRef: StorageRef<IndexStorage<Int, V>, IOException> = StorageRef(
+      "IndexStorage[${extension.name}]",
+      {
+        createIndexStorage(extension, storageLockContext)
+      },
+      IndexStorage<Int, V>::isClosed,
+      /* failIfNotClosed: */ !VfsAwareIndexStorageLayout.WARN_IF_CLEANING_UNCLOSED_STORAGE
+    )
+
     @Throws(IOException::class)
+    @Synchronized
     override fun openIndexStorage(): IndexStorage<Int, V> {
-      return createIndexStorage(extension, storageLockContext)
+      return indexStorageRef.reopen()
     }
 
     override fun openForwardIndex(): ForwardIndex {
-      return EmptyForwardIndex()
+      return EmptyForwardIndex.INSTANCE
     }
 
     override fun getForwardIndexAccessor(): ForwardIndexAccessor<Int, V> {
-      return SingleEntryIndexForwardIndexAccessor(extension)
+      return forwardIndexAccessor
     }
 
+    @Throws(IOException::class)
+    @Synchronized
     override fun clearIndexData() {
+      indexStorageRef.ensureClosed()
+
       LOG.info("Clearing storage data for: $extension")
       deleteIndexDirectory(extension)
     }
   }
 }
-
-private val LOG = logger<DefaultIndexStorageLayoutProvider>()
 
 private fun deleteIndexDirectory(extension: FileBasedIndexExtension<*, *>) {
   FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(extension.name).toFile())
@@ -95,15 +133,7 @@ private fun newStorageLockContext(): StorageLockContext {
 @Throws(IOException::class)
 private fun <K, V> createIndexStorage(extension: FileBasedIndexExtension<K, V>, storageLockContext: StorageLockContext): VfsAwareIndexStorage<K, V> {
   val storageFile = IndexInfrastructure.getStorageFile(extension.name)
-  return object : VfsAwareMapIndexStorage<K, V>(
-    storageFile,
-    extension.keyDescriptor,
-    extension.valueExternalizer,
-    extension.cacheSize,
-    extension.keyIsUniqueForIndexedFile(),
-    extension.traceKeyHashToVirtualFileMapping(),
-    extension.enableWal()
-  ) {
+  return object : VfsAwareMapIndexStorage<K, V>(storageFile, extension.keyDescriptor, extension.valueExternalizer, extension.cacheSize, extension.keyIsUniqueForIndexedFile(), extension.traceKeyHashToVirtualFileMapping(), extension.enableWal()) {
     override fun initMapAndCache() {
       assert(PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null)
       PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext)
@@ -117,12 +147,4 @@ private fun <K, V> createIndexStorage(extension: FileBasedIndexExtension<K, V>, 
   }
 
 }
-
-//@ApiStatus.Internal
-//private fun <Key, Value> getForwardIndexAccessor(indexExtension: IndexExtension<Key, Value, *>): AbstractMapForwardIndexAccessor<Key, Value, *> {
-//  return if (indexExtension !is SingleEntryFileBasedIndexExtension<*> || FileBasedIndex.USE_IN_MEMORY_INDEX) {
-//    MapForwardIndexAccessor(InputMapExternalizer(indexExtension))
-//  }
-//  else SingleEntryIndexForwardIndexAccessor(indexExtension as IndexExtension<Int, Any, *>) as AbstractMapForwardIndexAccessor<Key, Value, *>
-//}
 

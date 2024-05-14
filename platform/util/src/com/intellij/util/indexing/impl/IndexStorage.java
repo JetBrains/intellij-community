@@ -18,6 +18,7 @@ public interface IndexStorage<Key, Value> extends Flushable, Closeable {
 
   void addValue(Key key, int inputId, Value value) throws StorageException;
 
+  //RC: why remove_All_Values? Shouldn't it be <=1 value for a (inputId, key)
   void removeAllValues(@NotNull Key key, int inputId) throws StorageException;
 
   default void updateValue(Key key, int inputId, Value newValue) throws StorageException {
