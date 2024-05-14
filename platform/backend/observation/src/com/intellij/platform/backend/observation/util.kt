@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -58,7 +59,16 @@ fun Project.trackActivity(key: ActivityKey, action: Runnable): Unit {
 @RequiresBlockingContext
 fun CoroutineScope.launchTracked(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit) {
   val blockingJob = currentThreadContext()[BlockingJob] ?: EmptyCoroutineContext
-  launch(context + blockingJob, CoroutineStart.DEFAULT, block)
+  // since the `launch` is executed with the Job of `this`, we need to mimic the awaiting for the execution of `block` for `BlockingJob`
+  val childJob = Job(currentThreadContext()[BlockingJob]?.blockingJob)
+  launch(context + blockingJob, CoroutineStart.DEFAULT) {
+    try {
+      block()
+    }
+    finally {
+      childJob.complete()
+    }
+  }
 }
 
 internal val EP_NAME: ExtensionPointName<ActivityTracker> = ExtensionPointName("com.intellij.activityTracker")
