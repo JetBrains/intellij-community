@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer
@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
 import com.intellij.vcsUtil.VcsUtil
 
-class VcsSilentChangeVetoer : SilentChangeVetoer {
+internal class VcsSilentChangeVetoer : SilentChangeVetoer {
   override fun canChangeFileSilently(project: Project, virtualFile: VirtualFile): ThreeState {
     if (ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile) == null) return ThreeState.UNSURE
 

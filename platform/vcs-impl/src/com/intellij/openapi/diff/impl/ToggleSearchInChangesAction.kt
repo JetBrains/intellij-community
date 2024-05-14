@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 
-class ToggleSearchInChangesAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+internal class ToggleSearchInChangesAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 

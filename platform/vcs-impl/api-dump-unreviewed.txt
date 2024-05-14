@@ -45,9 +45,6 @@ f:com.intellij.codeInsight.actions.VcsFacadeImpl
 - isFileUnderVcs(com.intellij.psi.PsiFile):java.lang.Boolean
 - markFilesDirty(com.intellij.openapi.project.Project,java.util.List):V
 - runHeavyModificationTask(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,java.lang.Runnable):V
-f:com.intellij.codeInsight.daemon.VcsSilentChangeVetoer
-- <init>():V
-- canChangeFileSilently(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.util.ThreeState
 *f:com.intellij.codeInsight.hints.VcsCodeVisionProvider
 - com.intellij.codeInsight.codeVision.CodeVisionProvider
 - *sf:Companion:com.intellij.codeInsight.hints.VcsCodeVisionProvider$Companion
@@ -157,19 +154,6 @@ f:com.intellij.impl.RunConfigurationVcsSupportImpl
 - isDirectoryVcsIgnored(com.intellij.openapi.project.Project,java.lang.String):Z
 com.intellij.openapi.VcsInternalDataKeys
 - sf:FILE_HISTORY_REFRESHER:com.intellij.openapi.actionSystem.DataKey
-f:com.intellij.openapi.diff.impl.SearchInDiffChangesProvider
-- com.intellij.find.impl.livePreview.EditorSearchAreaProvider
-- <init>():V
-- getSearchArea(com.intellij.openapi.editor.Editor,com.intellij.find.FindModel):com.intellij.find.impl.livePreview.SearchResults$SearchArea
-- isEnabled(com.intellij.openapi.editor.Editor,com.intellij.find.FindModel):Z
-f:com.intellij.openapi.diff.impl.ToggleSearchInChangesAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.diff.impl.combined.search.CombinedEditorSearchSessionListener
 - java.util.EventListener
 - a:onSearch(Z,com.intellij.openapi.editor.Editor):V
