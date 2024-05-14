@@ -24,12 +24,12 @@ import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.Writer
 import java.net.URL
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -68,7 +68,7 @@ class PluginClassLoader(
   private val coreLoader: ClassLoader,
   resolveScopeManager: ResolveScopeManager?,
   packagePrefix: String?,
-  private val libDirectories: MutableList<String>,
+  private val libDirectories: List<Path>,
 ) : UrlClassLoader(classPath), PluginAwareClassLoader {
   // cache of a computed list of all parents (not only direct)
   @Volatile
@@ -95,7 +95,7 @@ class PluginClassLoader(
 
     init {
       var logStreamCandidate: Writer? = null
-      var debugFilePath =   System.getProperty("plugin.classloader.debug", "")
+      var debugFilePath = System.getProperty("plugin.classloader.debug", "")
       if (!debugFilePath.isEmpty()) {
         try {
           if (debugFilePath.startsWith("~/") || debugFilePath.startsWith("~\\")) {
@@ -119,9 +119,7 @@ class PluginClassLoader(
     }
   }
 
-  fun getLibDirectories(): MutableList<String> {
-    return libDirectories
-  }
+  fun getLibDirectories(): List<Path> = libDirectories
 
   override fun getPackagePrefix(): String? = packagePrefix
 
@@ -178,7 +176,7 @@ class PluginClassLoader(
         _resolveScopeManager.isDefinitelyAlienClass(name = name, packagePrefix = it, force = forceLoadFromSubPluginClassloader)
       }
       if (consistencyError == null) {
-        c = loadClassInsideSelf(name, fileName, packageNameHash, forceLoadFromSubPluginClassloader)
+        c = loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash, forceLoadFromSubPluginClassloader = forceLoadFromSubPluginClassloader)
       }
       else {
         if (!consistencyError.isEmpty()) {
@@ -459,9 +457,9 @@ ${if (exception == null) "" else exception.message}""")
       val libFileName = System.mapLibraryName(libName)
       val iterator = libDirectories.listIterator(libDirectories.size)
       while (iterator.hasPrevious()) {
-        val libFile = File(iterator.previous(), libFileName)
-        if (libFile.exists()) {
-          return libFile.absolutePath
+        val libFile = iterator.previous().resolve(libFileName)
+        if (Files.exists(libFile)) {
+          return libFile.toString()
         }
       }
     }

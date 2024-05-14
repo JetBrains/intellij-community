@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.cl.ResolveScopeManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.SmartList
 import com.intellij.util.lang.ClassPath
 import com.intellij.util.lang.ResourceFile
 import com.intellij.util.lang.UrlClassLoader
@@ -104,10 +103,10 @@ class ClassLoaderConfigurator(
         files = emptyList()
       }
 
-      val libDirectories = SmartList<String>()
+      var libDirectories = Collections.emptyList<Path>()
       val libDir = module.path.resolve("lib")
       if (Files.exists(libDir)) {
-        libDirectories.add(libDir.toAbsolutePath().toString())
+        libDirectories = Collections.singletonList(libDir)
       }
 
       val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
@@ -481,11 +480,7 @@ fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
 private class MainInfo(
   @JvmField val classPath: ClassPath,
   @JvmField val files: List<Path>,
-  @JvmField val libDirectories: MutableList<String>,
+  @JvmField val libDirectories: List<Path>,
 ) {
-  constructor(classLoader: PluginClassLoader) : this(
-    classPath = classLoader.classPath,
-    files = classLoader.files,
-    libDirectories = classLoader.getLibDirectories(),
-  )
+  constructor(classLoader: PluginClassLoader) : this(classPath = classLoader.classPath, files = classLoader.files, libDirectories = classLoader.getLibDirectories())
 }
