@@ -58,6 +58,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack =
     ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
+  /**
+   * Prevents caching of the inner computations that happened inside ignoreDumbMode (in case if access to indexes was in fact requested)
+   * But it doesn't prevent caching of the result returned from ignoreDumbMode (for example, if ignoreDumbMode is
+   * wrapped in CachedValuesManager.getCachedValue)
+   * <p>
+   * It doesn't work as a recursion guard and computePreventingRecursion is not called recursively.
+   */
   private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
 
   @ApiStatus.Internal
@@ -602,6 +609,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     }
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    // after prohibitResultCaching all new attempts to cache something will be unsuccessful until ignoreDumbMode call stack finishes,
+    // e.g., if resolve triggers another resolve that will try to cache CachedValuesManager.getCachedValue it won't be cached
     ourIgnoranceGuard.prohibitResultCaching(dumbModeAccessTypeStack.get(0));
     return dumbModeAccessTypeStack.peek();
   }
