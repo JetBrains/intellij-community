@@ -11,11 +11,13 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class StructureViewComposite implements StructureView {
   
   private final StructureViewDescriptor[] myStructureViews;
