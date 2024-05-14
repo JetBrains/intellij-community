@@ -359,7 +359,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       config = injectRepo(config);
     }
-    if (isGradleAtLeast("7.0")) {
+    if (isGradleAtLeast("7.0") && !isWarningsAllowed()) {
       String failOnWarning = "-Dorg.gradle.warning.mode=fail";
       String originalVmOptions = GradleSystemSettings.getInstance().getGradleVmOptions();
       if (StringUtil.isEmpty(originalVmOptions)) {
@@ -537,6 +537,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   protected void enableGradleDebugWithSuspend() {
     GradleSystemSettings.getInstance().setGradleVmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
+  }
+
+  protected Boolean isWarningsAllowed() {
+    return false;
   }
 
   protected void overrideGradleUserHome(@NotNull String relativeUserHomePath) throws IOException {
