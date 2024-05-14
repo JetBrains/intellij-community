@@ -68,6 +68,13 @@ public final class Cancellation {
     }
   }
 
+  public static void executeInNonCancelableSection(@NotNull Runnable runnable) {
+    computeInNonCancelableSection(() -> {
+      runnable.run();
+      return null;
+    });
+  }
+
   public static @NotNull AccessToken withNonCancelableSection() {
     if (isInNonCancelableSection()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
