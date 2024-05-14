@@ -9,7 +9,7 @@ import com.intellij.spellchecker.DictionaryLayer
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-abstract class SpellCheckerQuickFixFactory {
+interface SpellCheckerQuickFixFactory {
   companion object {
     private val EP_NAME = ExtensionPointName.create<SpellCheckerQuickFixFactory>("com.intellij.spellchecker.quickFixFactory")
 
@@ -34,7 +34,7 @@ abstract class SpellCheckerQuickFixFactory {
     }
   }
 
-  open fun createRename(element: PsiElement): LocalQuickFix? = null
-  open fun createChangeToVariantsFixes(element: PsiElement, rangeInElement: TextRange, word: String): List<LocalQuickFix>? = null
-  open fun createSaveToFix(element: PsiElement, rangeInElement: TextRange, word: String, layer: DictionaryLayer?): LocalQuickFix? = null
+  fun createRename(element: PsiElement): LocalQuickFix? = null
+  fun createChangeToVariantsFixes(element: PsiElement, rangeInElement: TextRange, word: String): List<LocalQuickFix>? = null
+  fun createSaveToFix(element: PsiElement, rangeInElement: TextRange, word: String, layer: DictionaryLayer?): LocalQuickFix? = null
 }
