@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplacePutWithAssignment", "ReplaceGetOrSet", "LoggingSimilarMessage")
 
 package com.intellij.ide.plugins
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.HtmlChunk
@@ -330,7 +331,7 @@ object PluginManagerCore {
         .map { Supplier { HtmlChunk.text(it!!.get()) } }
         .toList()
     }
-    else if (PlatformUtils.isFleetBackend() && !SystemInfo.isMac) {
+    else if (PlatformUtils.isFleetBackend() && !SystemInfoRt.isMac) {
       logger.warn(logMessage) // some Mercury backend plugins cannot be loaded on Windows and Linux
     }
     else {
