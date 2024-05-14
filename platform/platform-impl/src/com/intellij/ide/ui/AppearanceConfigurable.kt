@@ -508,11 +508,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       groupRowsRange(message("group.window.options")) {
         twoColumnsRow(
           { checkBox(cdShowToolWindowBars) },
-          {
-            checkBox(cdWidescreenToolWindowLayout)
-              .gap(RightGap.SMALL)
-            contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
-          }
+          { checkBox(cdLeftToolWindowLayout) },
         )
         if (ExperimentalUI.isNewUI()) {
           if (ResizeStripeManager.enabled()) {
@@ -523,31 +519,43 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 }
                 icon(AllIcons.General.Beta)
               },
-              { checkBox(cdLeftToolWindowLayout) }
+              { checkBox(cdRightToolWindowLayout) },
             )
             twoColumnsRow(
+              {
+                checkBox(cdWidescreenToolWindowLayout)
+                  .gap(RightGap.SMALL)
+                contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+              },
               { checkBox(cdRememberSizeForEachToolWindowNewUI) },
-              { checkBox(cdRightToolWindowLayout) }
             )
           }
           else {
             twoColumnsRow(
-              { checkBox(cdLeftToolWindowLayout) },
-              { checkBox(cdRememberSizeForEachToolWindowNewUI) }
+              {
+                checkBox(cdWidescreenToolWindowLayout)
+                  .gap(RightGap.SMALL)
+                contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+              },
+              { checkBox(cdRightToolWindowLayout) },
             )
             twoColumnsRow(
-              { checkBox(cdRightToolWindowLayout) }
+              { checkBox(cdRememberSizeForEachToolWindowNewUI) },
             )
           }
         }
         else {
           twoColumnsRow(
-            { checkBox(cdLeftToolWindowLayout) },
-            { checkBox(cdRememberSizeForEachToolWindowOldUI) }
+            {
+              checkBox(cdWidescreenToolWindowLayout)
+                .gap(RightGap.SMALL)
+              contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+            },
+            { checkBox(cdRightToolWindowLayout) },
           )
           twoColumnsRow(
-            { checkBox(cdRightToolWindowLayout) },
-            { checkBox(cdShowToolWindowNumbers) }
+            { checkBox(cdShowToolWindowNumbers) },
+            { checkBox(cdRememberSizeForEachToolWindowOldUI) },
           )
         }
       }
