@@ -112,6 +112,5 @@ c:com.intellij.ide.util.treeView.smartTree.TreeElementWrapper
 - p:performTreeActions():V
 - update(com.intellij.ide.projectView.PresentationData):V
 f:com.intellij.ide.util.treeView.smartTree.TreeStructureUtil
-- sf:PLACE:java.lang.String
 - s:getPropertyName(java.lang.String):java.lang.String
 - s:isInStructureViewPopup(com.intellij.ui.PlaceHolder):Z
