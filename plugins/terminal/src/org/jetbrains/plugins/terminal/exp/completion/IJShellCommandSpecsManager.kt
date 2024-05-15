@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellMergedCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.json.ShellJsonBasedCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.json.ShellJsonCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.json.ShellJsonCommandSpecsUtil.loadAndParseJson
@@ -43,6 +44,11 @@ import java.time.Duration
  * And there are no subcommands, options and arguments.
  * Let's call such specs **Light** specs.
  * To get the full version of the spec, [getFullCommandSpec] method should be used.
+ *
+ * ##### Merged specs ([ShellMergedCommandSpec])
+ *
+ * Merged specs consist of several json-based and code-based specs.
+ * So, to get the full version of this spec, [getFullCommandSpec] method should be used.
  */
 @Service
 internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
@@ -92,8 +98,14 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
    * If the spec is json-based, then it can be a **Light** spec sometimes.
    * This method is loading and returning a full spec for such specs.
    * If the spec is code-based, then the same spec is returned, because the lazy loading is implemented inside it.
+   * If the spec is merged, the full specs are loaded for all its consisting specs.
    */
   override suspend fun getFullCommandSpec(spec: ShellCommandSpec): ShellCommandSpec {
+    if (spec is ShellMergedCommandSpec) {
+      val fullBaseSpec = spec.baseSpec?.let { getFullCommandSpec(it) }
+      val fullOverrideSpecs = spec.overridingSpecs.map { getFullCommandSpec(it) }
+      return ShellMergedCommandSpec(fullBaseSpec, fullOverrideSpecs, spec.parentNames)
+    }
     if (spec !is ShellJsonBasedCommandSpec || spec.fullSpecRef == null) {
       return spec
     }
@@ -168,11 +180,24 @@ internal class IJShellCommandSpecsManager : ShellCommandSpecsManager {
       }
       return replaceSpecs.first()
     }
-    if (specs.size > 1) {
+
+    val baseSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.DEFAULT }
+    if (baseSpecs.size > 1) {
       // TODO: raise the level to warning once all conflicts of existing json-based specs will be resolved.
-      LOG.debug { conflictMessage(ShellCommandSpecConflictStrategy.DEFAULT, specs) }
+      LOG.debug { conflictMessage(ShellCommandSpecConflictStrategy.DEFAULT, baseSpecs) }
     }
-    return specs.first()
+    val baseSpecData = baseSpecs.firstOrNull()
+
+    val overrideSpecs = specs.filter { it.conflictStrategy == ShellCommandSpecConflictStrategy.OVERRIDE }
+    return if (overrideSpecs.size == 1 && baseSpecData == null) {
+      overrideSpecs.single()  // Single overriding spec overrides nothing, so return it.
+    }
+    else if (overrideSpecs.isNotEmpty()) {
+      val mergedSpec = ShellMergedCommandSpec(baseSpecData?.spec, overrideSpecs.map { it.spec })
+      val provider = baseSpecData?.provider ?: overrideSpecs.first().provider
+      ShellCommandSpecData(mergedSpec, ShellCommandSpecConflictStrategy.OVERRIDE, provider)
+    }
+    else baseSpecData!!  // If there are no overriding specs, then base spec should be present.
   }
 
   private fun conflictMessage(strategy: ShellCommandSpecConflictStrategy, specs: Collection<ShellCommandSpecData>): String {
