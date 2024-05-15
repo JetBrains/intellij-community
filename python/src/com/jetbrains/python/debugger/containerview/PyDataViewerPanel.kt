@@ -30,6 +30,7 @@ import java.awt.BorderLayout
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.util.concurrent.CopyOnWriteArrayList
+import javax.swing.BorderFactory
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 
@@ -159,6 +160,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   protected open fun getOrCreateMainTable(): AbstractDataViewTable {
     val mainTable = JBTableWithRowHeaders(PyDataView.isAutoResizeEnabled(project))
+    mainTable.scrollPane.border = BorderFactory.createEmptyBorder()
     tablePanel.add(mainTable.scrollPane, BorderLayout.CENTER)
     table = mainTable
     return mainTable
@@ -229,6 +231,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     val realName = if (debugValue == null || debugValue.name == originalDebugValue.tempName) originalDebugValue.name else chunk.slicePresentation
     var shownName = realName
     if (modifier && originalVarName != shownName) {
+      @Suppress("HardCodedStringLiteral") // This is just format like %s and cannot be i18.
       shownName = String.format(MODIFIED_VARIABLE_FORMAT, originalVarName)
     }
     else {
