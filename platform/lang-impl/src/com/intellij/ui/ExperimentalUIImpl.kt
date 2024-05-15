@@ -128,9 +128,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     if (isNewUI()) {
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
       PropertiesComponent.getInstance().setValue(NEW_UI_USED_VERSION, version)
-      if (forcedSwitchedUi) {
-        PropertiesComponent.getInstance().setValue(NEW_UI_SWITCH, true)
-      }
     }
   }
 
