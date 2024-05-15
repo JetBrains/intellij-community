@@ -40,7 +40,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   }
 
   private fun doPut(key: String, value: String): Boolean {
-    if (keyToString.put(key, value) === value) {
+    if (keyToString.put(key, value) == value) {
       return false
     }
     else {
