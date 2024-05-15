@@ -33,7 +33,17 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     var visibleMetricsAboveDeclarationCount: Int = 5
     var visibleMetricsNextToDeclarationCount: Int = 5
 
+    /**
+     * Only providers that are not disabled by default are included in this set. Consumers should
+     * refer to [CodeVisionSettings.isProviderEnabled] instead of this set directly.
+     */
     var disabledCodeVisionProviderIds: TreeSet<String> = sortedSetOf()
+    /**
+     * Only providers that are not enabled by default are included in this set. Consumers should
+     * refer to [CodeVisionSettings.isProviderEnabled] instead of this set directly.
+     */
+    var enabledCodeVisionProviderIds: TreeSet<String> = sortedSetOf()
+
     var codeVisionGroupToPosition: MutableMap<String, String> = mutableMapOf()
   }
 
@@ -79,18 +89,46 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
    * Ignores [State.isEnabled].
    */
   fun isProviderEnabled(id: String): Boolean {
-    return state.disabledCodeVisionProviderIds.contains(id).not()
+    return when {
+      state.disabledCodeVisionProviderIds.contains(id) -> false
+      state.enabledCodeVisionProviderIds.contains(id) -> true
+      else ->
+        // Use the specified default if it exists, and assume enabled otherwise.
+        CodeVisionSettingsDefaults.getInstance().defaultEnablementForProviderId[id] ?: true
+    }
   }
 
   fun setProviderEnabled(id: String, isEnabled: Boolean) {
-    if (isEnabled) {
+    val isEnabledByDefault = CodeVisionSettingsDefaults.getInstance().defaultEnablementForProviderId[id] ?: true
+    if (isEnabled == isEnabledByDefault) {
+      // The setting matches the default, so nothing needs to be stored.
       state.disabledCodeVisionProviderIds.remove(id)
-    }
-    else {
+      state.enabledCodeVisionProviderIds.remove(id)
+    } else if (isEnabled) {
+      state.disabledCodeVisionProviderIds.remove(id)
+      state.enabledCodeVisionProviderIds.add(id)
+    } else {
       state.disabledCodeVisionProviderIds.add(id)
+      state.enabledCodeVisionProviderIds.remove(id)
     }
+
     listener.providerAvailabilityChanged(id, isEnabled)
   }
+
+  val disabledCodeVisionProviderIds: Set<String>
+    get() {
+      return buildSet {
+        // All explicitly specified providers that are disabled should be included.
+        addAll(state.disabledCodeVisionProviderIds)
+
+        // All providers that default to disabled should be added if they haven't been explicit enabled.
+        addAll(
+          CodeVisionSettingsDefaults.getInstance().defaultEnablementForProviderId
+            .filterValues { enabled -> !enabled }
+            .keys
+            .filter { id -> id !in state.enabledCodeVisionProviderIds })
+      }
+    }
 
   // used externally
   @Suppress("MemberVisibilityCanBePrivate")
