@@ -163,15 +163,8 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
  * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val entries = generateProjectStructureMapping(
-    context = context,
-    platformLayout = createPlatformLayout(pluginsToPublish = emptySet(), context = context),
-  )
-  writeProjectStructureReport(
-    entries = entries.first + entries.second,
-    file = targetFile,
-    buildPaths = context.paths
-  )
+  val entries = generateProjectStructureMapping(context = context, platformLayout = createPlatformLayout(pluginsToPublish = emptySet(), context = context))
+  writeProjectStructureReport(entries = entries.first + entries.second, file = targetFile, buildPaths = context.paths)
 }
 
 private suspend fun localizeModules(moduleNames: Collection<String>, context: BuildContext) {

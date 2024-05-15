@@ -24,10 +24,7 @@ internal val Collection<DistributionFileEntry>.includedModules: Sequence<String>
  * Provides mapping between files in the product distribution and modules and libraries in the project configuration. The generated JSON file
  * contains an array of [DistributionFileEntry].
  */
-internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>,
-                                   out: OutputStream?,
-                                   buildPaths: BuildPaths,
-                                   context: BuildContext) {
+internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>, out: OutputStream?, buildPaths: BuildPaths, context: BuildContext) {
   val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
   val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
   val fileToPresentablePath = HashMap<Path, String>()
@@ -58,7 +55,7 @@ internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>,
   writer.close()
 }
 
-fun writeProjectStructureReport(entries: Collection<DistributionFileEntry>, file: Path, buildPaths: BuildPaths, extraRoot: Path? = null) {
+internal fun writeProjectStructureReport(entries: Collection<DistributionFileEntry>, file: Path, buildPaths: BuildPaths, extraRoot: Path? = null) {
   Files.createDirectories(file.parent)
   Files.newOutputStream(file).use { out ->
     val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
