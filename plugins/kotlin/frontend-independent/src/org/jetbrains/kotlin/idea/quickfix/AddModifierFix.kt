@@ -35,6 +35,10 @@ open class AddModifierFix(
 
     override fun getFamilyName() = KotlinBundle.message("fix.add.modifier.family")
 
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? {
+        return element?.containingFile
+    }
+
     protected fun invokeOnElement(element: KtModifierListOwner?) {
         if (element == null) return
 
