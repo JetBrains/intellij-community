@@ -64,9 +64,7 @@ data class TextRange(val start: Int, val end: Int)
 class ActionsBuilder {
   private val actions: MutableList<Action> = mutableListOf()
 
-  fun build(): List<Action> {
-    return actions.toList()
-  }
+  fun build(): List<Action> = actions.toList()
 
   fun session(init: SessionBuilder.() -> Unit) {
     actions.addAll(SessionBuilder().apply(init).build())

@@ -15,12 +15,15 @@ class CompletionGenerateActionsProcessor(private val strategy: CompletionStrateg
   override fun process(code: CodeFragment) {
     actions {
       if (strategy.context == CompletionContext.ALL) {
-          for (token in code.getChildren()) {
-            session {
-              processToken(token as CodeToken)
-            }
+        for (token in code.getChildren()) {
+          session {
+            processToken(token as CodeToken)
           }
-      } else {
+        }
+      }
+      else {
+        // consider all completion invocations in this scenario as a single session
+        // because they can't be called independently due to context preparation
         session {
           deleteRange(code.offset, code.offset + code.length)
           previousTextStart = code.offset
