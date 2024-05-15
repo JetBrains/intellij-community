@@ -9,7 +9,9 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -50,11 +52,23 @@ final class JavaTelescope {
     Project project = file.getProject();
     ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), /*todo remove*/new EmptyProgressIndicator());
     AtomicInteger totalUsageCount = new AtomicInteger();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(members, progress, member -> {
-      int count = usagesCount(project, file, member, scope);
-      int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
-      return newCount != TOO_MANY_USAGES;
-    });
+
+    if (Registry.is("java.telescope.usages.single.threaded", true)) {
+      ProgressManager.getInstance().runProcess(() -> {
+        for (PsiMember member : members) {
+          int count = usagesCount(project, file, member, scope);
+          int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
+          if (newCount == TOO_MANY_USAGES) break;
+        }
+      }, progress);
+    } else {
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(members, progress, member -> {
+        int count = usagesCount(project, file, member, scope);
+        int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
+        return newCount != TOO_MANY_USAGES;
+      });
+    }
+
     return totalUsageCount.get();
   }
 
