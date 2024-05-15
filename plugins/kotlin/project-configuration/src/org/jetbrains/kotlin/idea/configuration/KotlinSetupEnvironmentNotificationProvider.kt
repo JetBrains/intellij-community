@@ -54,14 +54,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             return null
         }
 
-        val kotlinProjectConfigurationService = KotlinProjectConfigurationService.getInstance(project)
-
-        if (kotlinProjectConfigurationService.isSyncPending()) {
-            return null
-        }
-
-        // No notification while auto-configuration is checking/running
-        if (!kotlinProjectConfigurationService.shouldShowNotConfiguredDialog()) {
+        if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog()) {
             return null
         }
 

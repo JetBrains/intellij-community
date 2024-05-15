@@ -37,6 +37,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
     private var notificationCooldownEnd: Long? = null
 
     fun shouldShowNotConfiguredDialog(): Boolean {
+        if (isSyncPending()) return false
         if (checkingAndPerformingAutoConfig) return false
         // If notificationCooldownEnd wasn't set, then the autoconfiguration didn't take place
         val cooldownEnd = notificationCooldownEnd ?: return true
@@ -48,15 +49,15 @@ class KotlinProjectConfigurationService(private val project: Project, private va
     }
 
     fun isGradleSyncPending(): Boolean {
-        val notificationVisibleProperty =
+        val isNotificationVisible =
             ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("GRADLE", "Gradle"))
-        return notificationVisibleProperty.get()
+        return isNotificationVisible.get()
     }
 
     fun isMavenSyncPending(): Boolean {
-        val notificationVisibleProperty =
+        val isNotificationVisible =
             ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("MAVEN")).get()
-        return notificationVisibleProperty
+        return isNotificationVisible
     }
 
     fun refreshEditorNotifications() {
