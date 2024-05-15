@@ -117,6 +117,14 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
         ensure_env_vars_set()?;
     }
 
+    #[cfg(target_os = "linux")]
+    {
+        // on Linux, glibc allocates arenas too aggressively 
+        if unsafe { libc::mallopt(libc::M_ARENA_MAX, 1) } == 0 {
+            bail!(std::io::Error::last_os_error());
+        }
+    }
+
     debug!("** Preparing launch configuration");
     let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?).context("Cannot detect a launch configuration")?;
 
