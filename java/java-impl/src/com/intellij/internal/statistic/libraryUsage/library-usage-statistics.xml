@@ -7,6 +7,8 @@
   <technology name="akka-java" root="akka.actor"/>
   <technology name="akka-stream" root="akka.stream"/>
   <technology name="algebird" root="com.twitter.algebird"/>
+  <technology name="alibaba-cola" root="com.alibaba.cola"/>
+  <technology name="alibaba-sentinel" root="com.alibaba.csp.sentinel"/>
   <technology name="allure1" root="ru.yandex.qatools.allure"/>
   <technology name="allure2" root="io.qameta.allure"/>
   <technology name="androidx-compose" root="androidx.compose"/>
@@ -85,6 +87,7 @@
   <technology name="eclipselink-jpa" root="org.eclipse.persistence.jpa"/>
   <technology name="ehcache" root="org.ehcache"/>
   <technology name="elastic4s" root="elastic4s"/>
+  <technology name="elasticjob" root="org.apache.shardingsphere.elasticjob"/>
   <technology name="elasticmq" root="elasticmq"/>
   <technology name="eureka" root="com.netflix.discovery"/>
   <technology name="exposed" root="org.jetbrains.exposed"/>
@@ -161,6 +164,7 @@
   <technology name="jbpm" root="org.kie.api"/>
   <technology name="jdbi" root="org.jdbi.v3"/>
   <technology name="jdi-light" root="com.epam.jdi.light"/>
+  <technology name="jeecg-boot" root="org.jeecg"/>
   <technology name="jedis" root="redis.clients.jedis"/>
   <technology name="jetbrains-annotations" root="org.jetbrains.annotations"/>
   <technology name="jetbrains-compose" root="org.jetbrains.compose"/>
@@ -177,6 +181,7 @@
   <technology name="jsoup" root="org.jsoup"/>
   <technology name="junit" root="org.junit"/>
   <technology name="junit5" root="org.junit.jupiter"/>
+  <technology name="justauth" root="me.zhyd.oauth"/>
   <technology name="kafka" root="org.apache.kafka"/>
   <technology name="karate" root="com.intuit.karate"/>
   <technology name="klaxon" root="com.beust.klaxon"/>
@@ -269,6 +274,11 @@
   <technology name="robotframework" root="org.robotframework"/>
   <technology name="rsocket-java" root="io.rsocket"/>
   <technology name="rsocket-kotlin" root="io.rsocket.kotlin"/>
+  <technology name="ruoyi" root="com.ruoyi"/>
+  <technology name="ruoyi-vue-pro" root="cn.iocoder.yudao"/>
+  <technology name="guns" root="cn.stylefeng.guns"/>
+  <technology name="roses" root="cn.stylefeng.roses.kernel"/>
+  <technology name="jfinal" root="com.jfinal"/>
   <technology name="rxdownload" root="zlc.season.rxdownload2"/>
   <technology name="rxjava" root="io.reactivex"/>
   <technology name="rxjava3" root="io.reactivex.rxjava3"/>
@@ -294,6 +304,7 @@
   <technology name="slf4j" root="org.slf4j"/>
   <technology name="slick" root="slick.sql"/>
   <technology name="smallrye-mutiny" root="io.smallrye.mutiny"/>
+  <technology name="sofa-boot" root="com.alipay.sofa"/>
   <technology name="spark" root="spark"/>
   <technology name="specs2" root="org.specs2"/>
   <technology name="spek" root="org.jetbrains.spek"/>
