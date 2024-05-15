@@ -99,7 +99,6 @@ c:com.intellij.usages.impl.UsageViewImpl
 - sf:SHOW_RECENT_FIND_USAGES_ACTION_ID:java.lang.String
 - sf:USAGE_COMPARATOR_BY_FILE_AND_OFFSET:java.util.Comparator
 - pf:treeExpander:com.intellij.ide.TreeExpander
-- <init>(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageTarget[],com.intellij.openapi.util.Factory):V
 - addButtonToLowerPane(java.lang.Runnable,java.lang.String):V
 - addButtonToLowerPane(javax.swing.Action):V
 - addExcludeListener(com.intellij.openapi.Disposable,com.intellij.usages.UsageView$ExcludeListener):V
@@ -111,7 +110,6 @@ c:com.intellij.usages.impl.UsageViewImpl
 - appendUsage(com.intellij.usages.Usage):V
 - appendUsagesInBulk(java.util.Collection):java.util.concurrent.CompletableFuture
 - associateProgress(com.intellij.openapi.progress.ProgressIndicator):V
-- canPerformReRun():Z
 - p:canShowSettings():Z
 - cancelCurrentSearch():V
 - close():V
@@ -131,8 +129,6 @@ c:com.intellij.usages.impl.UsageViewImpl
 - ps:getActiveGroupingRules(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewSettings,com.intellij.usages.UsageViewPresentation):com.intellij.usages.rules.UsageGroupingRule[]
 - getComponent():javax.swing.JComponent
 - getExcludedUsages():java.util.Set
-- getNextToSelect(com.intellij.usages.Usage):com.intellij.usages.Usage
-- getNextToSelect(java.util.Collection):com.intellij.usages.Usage
 - getNodeText(javax.swing.tree.TreeNode):java.lang.String
 - getPreferredFocusableComponent():javax.swing.JComponent
 - getPresentation():com.intellij.usages.UsageViewPresentation
@@ -142,12 +138,9 @@ c:com.intellij.usages.impl.UsageViewImpl
 - s:getShowUsagesWithSettingsShortcut():com.intellij.openapi.actionSystem.KeyboardShortcut
 - getSortedUsages():java.util.List
 - getTargets():com.intellij.usages.UsageTarget[]
-- getTree():javax.swing.JTree
-- getUsageViewSettings():com.intellij.usages.UsageViewSettings
 - getUsages():java.util.Set
 - getUsagesCount():I
 - includeUsages(com.intellij.usages.Usage[]):V
-- isDisposed():Z
 - p:isPreviewUsageActionEnabled():Z
 - isSearchInProgress():Z
 - isVisible(com.intellij.usages.Usage):Z
