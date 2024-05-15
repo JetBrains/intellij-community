@@ -12,7 +12,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
-import com.jetbrains.plugin.structure.base.utils.toList
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -23,7 +22,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jdom.CDATA
 import org.jdom.Document
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
@@ -70,7 +68,7 @@ import kotlin.io.path.*
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
-class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
+internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
   override suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean) {
     zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = includeLibraries, context = context)
   }
@@ -183,38 +181,41 @@ private suspend fun localizeModules(moduleNames: Collection<String>, context: Bu
 
   val localizationDir = getLocalizationDir(context) ?: return
 
-  val modules = if (moduleNames.isEmpty()) {
-    context.project.modules
-  }
-  else {
-    moduleNames.asSequence().mapNotNull { context.findModule(it) }
-      .flatMap { m ->
-        (context as BuildContextImpl).jarPackagerDependencyHelper.readPluginIncompleteContentFromDescriptor(m).mapNotNull { context.findModule(it) } + sequenceOf(m)
-      }.flatMap { m ->
-        m.dependenciesList.dependencies.asSequence().filterIsInstance<JpsModuleDependency>().mapNotNull { it.module } + sequenceOf(m)
-      }.distinctBy { m -> m.name }.toList()
-  }
+  val jarPackagerDependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
+  val modules = moduleNames.asSequence()
+    .mapNotNull { context.findModule(it) }
+    .flatMap { m ->
+      jarPackagerDependencyHelper.readPluginIncompleteContentFromDescriptor(m).mapNotNull { context.findModule(it) } + sequenceOf(m)
+    }
+    .flatMap { m ->
+      m.dependenciesList.dependencies.asSequence().filterIsInstance<JpsModuleDependency>().mapNotNull { it.module } + sequenceOf(m)
+    }
+    .distinctBy { m -> m.name }
+    .toList()
+
   spanBuilder("bundle localizations").setAttribute("moduleCount", modules.size.toLong()).useWithScope {
     for (module in modules) {
-      launch(Dispatchers.IO) {
-        val resourceRoots = module.getSourceRoots(JavaResourceRootType.RESOURCE).iterator().toList()
+      launch {
+        val resourceRoots = module.getSourceRoots(JavaResourceRootType.RESOURCE).toList()
         if (resourceRoots.isEmpty()) {
           return@launch
         }
 
-        spanBuilder("bundle localization").setAttribute("module", module.name).use {
-          buildInBundlePropertiesLocalization(
-            module = module,
-            context = context,
-            bundlePropertiesLocalization = localizationDir.resolve("properties"),
-            resourceRoots = resourceRoots,
-          )
-          buildInInspectionsIntentionsLocalization(
-            module = module,
-            context = context,
-            inspectionsIntentionsLocalization = localizationDir.resolve("inspections_intentions"),
-            resourceRoots = resourceRoots,
-          )
+        withContext(Dispatchers.IO) {
+          spanBuilder("bundle localization").setAttribute("module", module.name).use {
+            buildInBundlePropertiesLocalization(
+              module = module,
+              bundlePropertiesLocalization = localizationDir.resolve("properties"),
+              resourceRoots = resourceRoots,
+              context = context,
+            )
+            buildInInspectionsIntentionsLocalization(
+              module = module,
+              context = context,
+              inspectionsIntentionsLocalization = localizationDir.resolve("inspections_intentions"),
+              resourceRoots = resourceRoots,
+            )
+          }
         }
       }
     }
@@ -614,17 +615,15 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
   return sourceFiles
 }
 
-@Internal
-fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
-  val productProperties = context.productProperties
-  val productLayout = productProperties.productLayout
-
+internal fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
   val result = LinkedHashSet<String>()
-  collectModulesToCompile(context = context, result = result)
+  collectModulesToCompile(result = result, context = context)
   context.proprietaryBuildTools.scrambleTool?.let {
     result.addAll(it.additionalModulesToCompile)
   }
-  result.addAll(productLayout.mainModules)
+
+  val productProperties = context.productProperties
+  result.addAll(productProperties.productLayout.mainModules)
 
   val mavenArtifacts = productProperties.mavenArtifacts
   result.addAll(mavenArtifacts.additionalModules)
@@ -637,16 +636,16 @@ fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<St
 }
 
 private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
-  val productLayout = context.productProperties.productLayout
-
   val compilationTasks = CompilationTasks.create(context)
+  val toLocalize = LinkedHashSet<String>()
   collectModulesToCompileForDistribution(context).let {
     compilationTasks.compileModules(moduleNames = it)
-    localizeModules(moduleNames = it, context)
+    toLocalize.addAll(it)
   }
 
+  val productLayout = context.productProperties.productLayout
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)
-  filterPluginsToPublish(pluginsToPublish, context)
+  filterPluginsToPublish(plugins = pluginsToPublish, context = context)
 
   var enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
   // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
@@ -655,15 +654,15 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
                             hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context)
 
   if (context.shouldBuildDistributions()) {
-    if (context.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-      Span.current().addEvent("skip collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
+    if (context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+      Span.current().addEvent("skip collecting compatible plugins because ${BuildOptions.PROVIDED_MODULES_LIST_STEP} was skipped")
     }
     else {
       val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
       val platform = createPlatformLayout(pluginsToPublish = pluginsToPublish, context = context)
-      getModulesForPluginsToPublish(platform, pluginsToPublish).let {
+      getModulesForPluginsToPublish(platform = platform, pluginsToPublish = pluginsToPublish).let {
         compilationTasks.compileModules(moduleNames = it)
-        localizeModules(moduleNames = it, context = context)
+        toLocalize.addAll(it)
       }
 
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
@@ -701,8 +700,13 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
   distState.getModulesForPluginsToPublish().let {
     compilationTasks.compileModules(moduleNames = it)
-    localizeModules(moduleNames = it, context)
+    toLocalize.addAll(it)
   }
+
+  if (toLocalize.isNotEmpty()) {
+    localizeModules(moduleNames = toLocalize, context)
+  }
+
   buildProjectArtifacts(platform = distState.platform, enabledPluginModules = enabledPluginModules, compilationTasks = compilationTasks, context = context)
   return distState
 }
@@ -732,9 +736,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
     createMavenArtifactJob(context, distributionState)
 
     if (!context.shouldBuildDistributions()) {
-      Span.current().addEvent(
-        "skip building product distributions because 'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'"
-      )
+      Span.current().addEvent("skip building product distributions because 'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'")
       buildNonBundledPlugins(
         pluginsToPublish = pluginsToPublish,
         compressPluginArchive = context.options.compressZipFiles,
@@ -1353,7 +1355,7 @@ private fun crossPlatformZip(
   }
 }
 
-fun collectModulesToCompile(context: BuildContext, result: MutableSet<String>) {
+fun collectModulesToCompile(result: MutableSet<String>, context: BuildContext) {
   val productLayout = context.productProperties.productLayout
   collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = result, context = context)
   collectPlatformModules(result)
@@ -1478,7 +1480,7 @@ internal fun copyInspectScript(context: BuildContext, distBinDir: Path) {
 
 internal fun getLocalizationDir(context: BuildContext): Path? {
   val localizationDir = context.paths.communityHomeDir.parent.resolve("localization")
-  if (!Files.exists(localizationDir)) {
+  if (Files.notExists(localizationDir)) {
     Span.current().addEvent("unable to find 'localization' directory, skip localization bundling")
     return null
   }
@@ -1526,9 +1528,9 @@ private fun buildInInspectionsIntentionsLocalization(
 
 private fun buildInBundlePropertiesLocalization(
   module: JpsModule,
-  context: BuildContext,
   bundlePropertiesLocalization: Path,
   resourceRoots: List<JpsTypedModuleSourceRoot<JavaResourceRootProperties>>,
+  context: BuildContext,
 ) {
   val knownBundlePropertiesList = HashMap<Path, Path>()
   for (resourceRoot in resourceRoots) {
