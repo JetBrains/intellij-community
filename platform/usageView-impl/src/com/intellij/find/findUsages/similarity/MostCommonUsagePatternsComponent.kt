@@ -47,7 +47,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
-class MostCommonUsagePatternsComponent(
+internal class MostCommonUsagePatternsComponent(
   private val usageView: UsageViewImpl,
   private val session: ClusteringSearchSession,
 ) : SimpleToolWindowPanel(true), Disposable {
