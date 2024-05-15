@@ -7,7 +7,10 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.ex.P3PathsEx
-import com.intellij.openapi.project.impl.*
+import com.intellij.openapi.project.impl.P3Support
+import com.intellij.openapi.project.impl.P3SupportInstaller
+import com.intellij.openapi.project.impl.PER_PROJECT_INSTANCE_TEST_SCRIPT
+import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.Restarter
@@ -21,7 +24,6 @@ import java.util.concurrent.CancellationException
 import kotlin.io.path.div
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 class P3PathCustomizer : PathCustomizer {
   companion object {
     const val optionName = "p3.project.location"
