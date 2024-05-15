@@ -65,31 +65,12 @@ class Interpreter(private val invokersFactory: InvokersFactory,
   }
 
   private fun List<Action>.reorder(order: InterpretationOrder): List<Action> {
-    val groups = groupActions(this)
+    val groups = groupBy { it.sessionId }.values
     return when (order) {
       InterpretationOrder.LINEAR -> groups.flatten()
       InterpretationOrder.REVERSED -> groups.reversed().flatten()
       InterpretationOrder.RANDOM -> groups.shuffled(ORDER_RANDOM).flatten()
     }
-  }
-
-  private fun groupActions(actions: List<Action>): List<List<Action>> {
-    if (actions.any { it is PrintText || it is DeleteRange || it is Rename }) {
-      if (order != InterpretationOrder.LINEAR) {
-        throw UnsupportedOperationException("Not all actions can be interpreted not-linearly")
-      }
-      return listOf(actions)
-    }
-    val groups = mutableListOf<List<Action>>()
-    var currentGroup = mutableListOf<Action>()
-    for (action in actions) {
-      currentGroup.add(action)
-      if (action is CallFeature) {
-        groups.add(currentGroup)
-        currentGroup = mutableListOf()
-      }
-    }
-    return groups
   }
 }
 
