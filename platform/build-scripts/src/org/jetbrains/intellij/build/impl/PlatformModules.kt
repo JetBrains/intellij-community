@@ -106,8 +106,6 @@ internal fun collectPlatformModules(to: MutableCollection<String>) {
 internal fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
   val modules = HashSet<String>()
   collectIncludedPluginModules(enabledPluginModules = enabledPluginModules, product = productLayout, result = modules, context = context)
-  modules.addAll(PLATFORM_API_MODULES)
-  modules.addAll(PLATFORM_IMPLEMENTATION_MODULES)
   modules.addAll(productLayout.productApiModules)
   modules.addAll(productLayout.productImplementationModules)
 
@@ -141,12 +139,11 @@ private fun addModule(relativeJarPath: String, moduleNames: Collection<String>, 
 }
 
 suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: BuildContext): PlatformLayout {
-  val enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
   val productLayout = context.productProperties.productLayout
   return createPlatformLayout(
     addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
-                          hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context),
-    projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context),
+                          hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context), context = context),
+    projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = context.bundledPluginModules.toHashSet(), context = context),
     context = context,
   )
 }
@@ -340,10 +337,7 @@ fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = name == "flexmark" 
 
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
-  val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(
-    modules = enabledPluginModules,
-    productLayout = context.productProperties.productLayout,
-  )
+  val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
 
   val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
   for (plugin in pluginLayoutsByJpsModuleNames) {
