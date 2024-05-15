@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo() {
     try {
         for (i in 1..100) {

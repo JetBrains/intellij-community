@@ -1,7 +1,8 @@
 fun foo() {
     try {
-        val x = 1
+        for (i in 1..100) {
+        }
     } catch (e: Exception) {
-        TODO("Not yet implemented")
+        throw e
     }
 }
