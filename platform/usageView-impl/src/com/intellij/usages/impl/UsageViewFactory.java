@@ -7,6 +7,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageSearcher;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * Allows to create custom usage view instances for representing specific types of usages.
  */
 public interface UsageViewFactory {
+  @ApiStatus.Internal
   ExtensionPointName<UsageViewFactory> EP_NAME = ExtensionPointName.create("com.intellij.usageViewFactory");
 
   /**

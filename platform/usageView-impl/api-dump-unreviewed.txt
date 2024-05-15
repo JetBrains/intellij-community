@@ -1,5 +1,4 @@
 com.intellij.usages.impl.FileStructureGroupRuleProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getUsageGroupingRule(com.intellij.openapi.project.Project):com.intellij.usages.rules.UsageGroupingRule
 - getUsageGroupingRule(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewSettings):com.intellij.usages.rules.UsageGroupingRule
 c:com.intellij.usages.impl.GroupNode
@@ -114,12 +113,10 @@ f:com.intellij.usages.impl.UsagePreviewToolbarWithSimilarUsagesLink
 - <init>(com.intellij.usages.impl.UsagePreviewPanel,com.intellij.usages.UsageView,java.util.List,com.intellij.usages.similarity.clustering.UsageCluster,com.intellij.usages.similarity.clustering.ClusteringSearchSession):V
 - dispose():V
 com.intellij.usages.impl.UsageViewElementsListener
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - beforeUsageAdded(com.intellij.usages.UsageView,com.intellij.usages.Usage):V
 - isExcludedByDefault(com.intellij.usages.UsageView,com.intellij.usages.Usage):Z
 - skipUsage(com.intellij.usages.UsageView,com.intellij.usages.Usage):Z
 com.intellij.usages.impl.UsageViewFactory
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createUsageView(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation,com.intellij.openapi.util.Factory):com.intellij.usages.impl.UsageViewEx
 c:com.intellij.usages.impl.UsageViewImpl
 - com.intellij.usages.impl.UsageViewEx
