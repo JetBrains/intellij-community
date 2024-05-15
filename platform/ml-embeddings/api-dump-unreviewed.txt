@@ -54,6 +54,7 @@ f:com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSe
 - getSize(kotlin.coroutines.Continuation):java.lang.Object
 - loadFromDisk(kotlin.coroutines.Continuation):java.lang.Object
 - lookup(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- offload(kotlin.coroutines.Continuation):java.lang.Object
 - onIndexingFinish(kotlin.coroutines.Continuation):java.lang.Object
 - onIndexingStart(kotlin.coroutines.Continuation):java.lang.Object
 - saveToDisk(kotlin.coroutines.Continuation):java.lang.Object
@@ -76,6 +77,7 @@ com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
 - a:getSize(kotlin.coroutines.Continuation):java.lang.Object
 - a:loadFromDisk(kotlin.coroutines.Continuation):java.lang.Object
 - a:lookup(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- a:offload(kotlin.coroutines.Continuation):java.lang.Object
 - a:onIndexingFinish(kotlin.coroutines.Continuation):java.lang.Object
 - a:onIndexingStart(kotlin.coroutines.Continuation):java.lang.Object
 - a:saveToDisk(kotlin.coroutines.Continuation):java.lang.Object
@@ -106,6 +108,7 @@ f:com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchInde
 - getSize(kotlin.coroutines.Continuation):java.lang.Object
 - loadFromDisk(kotlin.coroutines.Continuation):java.lang.Object
 - lookup(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- offload(kotlin.coroutines.Continuation):java.lang.Object
 - onIndexingFinish(kotlin.coroutines.Continuation):java.lang.Object
 - onIndexingStart(kotlin.coroutines.Continuation):java.lang.Object
 - saveToDisk(kotlin.coroutines.Continuation):java.lang.Object
@@ -156,12 +159,19 @@ f:com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage$Com
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage
 a:com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage
 - com.intellij.platform.ml.embeddings.search.services.EmbeddingsStorage
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- f:finishIndexingSession():V
 - a:getIndex():com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 - f:getProject():com.intellij.openapi.project.Project
+- f:loadIndex(kotlin.coroutines.Continuation):java.lang.Object
+- f:registerInMemoryManager():V
+- f:scheduleCleanup():V
 - searchNeighbours(java.lang.String,I,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- f:startIndexingSession(kotlin.coroutines.Continuation):java.lang.Object
 - f:streamSearchNeighbours(java.lang.String,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
 - bs:streamSearchNeighbours$default(com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage,java.lang.String,java.lang.Double,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage$Companion
 f:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexMemoryManager
 - sf:Companion:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexMemoryManager$Companion
 - <init>():V
@@ -315,14 +325,14 @@ f:com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 - sf:Companion:com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider$Companion
 - <init>(kotlinx.coroutines.CoroutineScope):V
 - f:cleanup():V
-- f:getService(Z,kotlin.coroutines.Continuation):java.lang.Object
-- bs:getService$default(com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- f:getServiceBlocking(Z):com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
-- bs:getServiceBlocking$default(com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider,Z,I,java.lang.Object):com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
+- f:getService(Z,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:getService$default(com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider,Z,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:getServiceBlocking(Z,Z):com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
+- bs:getServiceBlocking$default(com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider,Z,Z,I,java.lang.Object):com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
+- f:indexingSession(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - f:scheduleCleanup():V
 f:com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider$Companion
 - f:getInstance():com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
-- f:getServiceCleanupTimeout-UwyO8pc():J
 - f:getTestDataPath():java.nio.file.Path
 f:com.intellij.platform.ml.embeddings.utils.IndexingUtilsKt
 - sf:convertNameToNaturalLanguage(java.lang.String):java.lang.String
