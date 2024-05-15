@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 /**
  * @author gregsh
  */
-class RerunSearchAction : DumbAwareAction() {
+internal class RerunSearchAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val usageView = e.getData(UsageView.USAGE_VIEW_KEY)

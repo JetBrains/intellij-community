@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.usages.UsageView
 import com.intellij.usages.actions.RerunSearchAction
 import com.intellij.usages.impl.actions.RuleAction
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class UsageViewActionPromoter : ActionPromoter {
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     // if there's an editor present (i.e. usage preview), de-prioritize grouping actions

@@ -1,15 +1,3 @@
-c:com.intellij.usages.actions.RemoveUsageAction
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.usages.actions.RerunSearchAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.usages.impl.ExporterToTextFile
 - com.intellij.ide.ExporterToTextFile
 - <init>(com.intellij.usages.impl.UsageViewImpl,com.intellij.usages.UsageViewSettings):V
@@ -133,10 +121,6 @@ f:com.intellij.usages.impl.UsagePreviewToolbarWithSimilarUsagesLink
 - com.intellij.openapi.Disposable
 - <init>(com.intellij.usages.impl.UsagePreviewPanel,com.intellij.usages.UsageView,java.util.List,com.intellij.usages.similarity.clustering.UsageCluster,com.intellij.usages.similarity.clustering.ClusteringSearchSession):V
 - dispose():V
-f:com.intellij.usages.impl.UsageViewActionPromoter
-- com.intellij.openapi.actionSystem.ActionPromoter
-- <init>():V
-- promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
 com.intellij.usages.impl.UsageViewElementsListener
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - beforeUsageAdded(com.intellij.usages.UsageView,com.intellij.usages.Usage):V
@@ -241,10 +225,6 @@ f:com.intellij.usages.impl.UsageViewTreeModelBuilder
 - nodesChanged(javax.swing.tree.TreeNode,I[]):V
 - nodesWereInserted(javax.swing.tree.TreeNode,I[]):V
 - nodesWereRemoved(javax.swing.tree.TreeNode,I[],java.lang.Object[]):V
-f:com.intellij.usages.impl.actions.MergeSameLineUsagesAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
 c:com.intellij.usages.impl.rules.DirectoryGroupingRule
 - com.intellij.usages.rules.SingleParentUsageGroupingRule
 - com.intellij.openapi.project.DumbAware
