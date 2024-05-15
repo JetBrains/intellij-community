@@ -73,6 +73,16 @@ public class FindUsagesMultiModuleTestGenerated extends AbstractFindUsagesMultiM
         runTest("testData/multiModuleFindUsages/findCompanionObjectUsages/");
     }
 
+    @TestMetadata("findComponentsByConventionInCommon")
+    public void testFindComponentsByConventionInCommon() throws Exception {
+        runTest("testData/multiModuleFindUsages/findComponentsByConventionInCommon/");
+    }
+
+    @TestMetadata("findComponentsByConventionInPlatform")
+    public void testFindComponentsByConventionInPlatform() throws Exception {
+        runTest("testData/multiModuleFindUsages/findComponentsByConventionInPlatform/");
+    }
+
     @TestMetadata("findDataComponentInJs")
     public void testFindDataComponentInJs() throws Exception {
         runTest("testData/multiModuleFindUsages/findDataComponentInJs/");

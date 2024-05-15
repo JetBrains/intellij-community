@@ -67,9 +67,10 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
             return consumer.process(reference)
         }
 
-        val currentTarget = reference.resolve() as? KtDeclaration ?: return true
+        val currentTargets = (reference as? PsiPolyVariantReference)?.multiResolve(false)?.mapNotNull { it.element as? KtDeclaration } ?: return true
         if (targetDeclaration !is KtDeclaration) return true
-        return if ((targetDeclaration.expectedDeclarationIfAny() ?: targetDeclaration) == (currentTarget.expectedDeclarationIfAny() ?: currentTarget)
+        val expectedTarget = targetDeclaration.expectedDeclarationIfAny() ?: targetDeclaration
+        return if (expectedTarget in currentTargets.map { it.expectedDeclarationIfAny() ?: it }
         ) {
             consumer.process(reference)
         } else {
