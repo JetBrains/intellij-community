@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction>(
-    listOf(ActionManager.getInstance().getAction(RestoreFactoryDefaultLayoutAction.ID)), 1
+    listOf(RestoreNamedLayoutAction(ToolWindowDefaultLayoutManager.FACTORY_DEFAULT_LAYOUT_NAME)), 1
   ) {
     RestoreNamedLayoutAction(it)
   }
@@ -40,8 +40,15 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
     override fun update(e: AnActionEvent) {
       super.update(e)
       e.presentation.isEnabled = e.project != null
-      e.presentation.setText({ layoutName }, false)
-      e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
+      if (layoutName == ToolWindowDefaultLayoutManager.FACTORY_DEFAULT_LAYOUT_NAME) {
+        val restoreFactoryDefaultLayoutAction = ActionManager.getInstance().getAction(RestoreFactoryDefaultLayoutAction.ID)
+        e.presentation.text = restoreFactoryDefaultLayoutAction.templatePresentation.textWithMnemonic
+        e.presentation.description = restoreFactoryDefaultLayoutAction.templatePresentation.description
+      }
+      else {
+        e.presentation.setText({ layoutName }, false)
+        e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
+      }
       e.presentation.icon = if (ToolWindowDefaultLayoutManager.getInstance().activeLayoutName == layoutName) {
         currentIcon
       }
