@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.zip
+import java.io.File
 import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -278,7 +279,7 @@ class ArchivedCompilationOutputsStorage(
   private fun archive(path: Path): Path {
     val name = classesOutputDirectory.relativize(path).toString()
 
-    val archive = Files.createTempFile(paths.tempDir, name.replace("/", "_"), ".jar")
+    val archive = Files.createTempFile(paths.tempDir, name.replace(File.separator, "_"), ".jar")
     Files.deleteIfExists(archive)
     val hash: String = packAndComputeHash(Context.current(), AddDirEntriesMode.ALL, name, archive, path)
 
