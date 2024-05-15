@@ -111,7 +111,7 @@ private class ComponentFactory(private val project: Project, parentCs: Coroutine
             swingAction(GitLabBundle.message("merge.request.reload")) {
               projectVm.reloadMergeRequestDetails(mergeRequestId)
             })
-          val errorPanel = ErrorStatusPanelFactory.create(this, flowOf(error), errorPresenter).let {
+          val errorPanel = ErrorStatusPanelFactory.create(error, errorPresenter).let {
             CollaborationToolsUIUtil.moveToCenter(it)
           }
           wrapper.setContent(errorPanel)

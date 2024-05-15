@@ -171,7 +171,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
                 }
               }
             )
-            val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(exception), errorPresenter)
+            val errorPanel = ErrorStatusPanelFactory.create(exception, errorPresenter)
 
             timelineOrErrorPanel.setContent(CollaborationToolsUIUtil.moveToCenter(errorPanel))
             PopupHandler.installPopupMenu(timelinePanel, errorActionGroup, ActionPlaces.POPUP)

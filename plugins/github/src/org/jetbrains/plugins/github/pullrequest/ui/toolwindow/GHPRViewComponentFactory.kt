@@ -20,7 +20,6 @@ import com.intellij.ui.Side
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
@@ -75,12 +74,12 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
     }
   }
 
-  private fun CoroutineScope.createInfoErrorComponent(error: Throwable): JComponent {
+  private fun createInfoErrorComponent(error: Throwable): JComponent {
     val errorPresenter = ErrorStatusPresenter.simple(
       GithubBundle.message("cannot.load.details"),
       actionProvider = vm.detailsLoadingErrorHandler::getActionForError
     )
-    val errorPanel = ErrorStatusPanelFactory.create(this, flowOf(error), errorPresenter)
+    val errorPanel = ErrorStatusPanelFactory.create(error, errorPresenter)
     return CollaborationToolsUIUtil.moveToCenter(errorPanel)
   }
 
@@ -124,12 +123,12 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
     return stripe
   }
 
-  private fun CoroutineScope.createChangesErrorComponent(changesVm: GHPRChangesViewModel, error: Throwable): JComponent {
+  private fun createChangesErrorComponent(changesVm: GHPRChangesViewModel, error: Throwable): JComponent {
     val errorPresenter = ErrorStatusPresenter.simple(
       GithubBundle.message("cannot.load.changes"),
       actionProvider = changesVm.changesLoadingErrorHandler::getActionForError
     )
-    val errorPanel = ErrorStatusPanelFactory.create(this, flowOf(error), errorPresenter)
+    val errorPanel = ErrorStatusPanelFactory.create(error, errorPresenter)
     return CollaborationToolsUIUtil.moveToCenter(errorPanel)
   }
 }
