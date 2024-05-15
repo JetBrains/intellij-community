@@ -69,14 +69,12 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.platform.langInjection", "intellij.java.langInjection", "intellij.xml.langInjection")) { spec ->
       spec.withModule("intellij.java.langInjection.jps")
     },
-    plugin("intellij.tasks.core") { spec ->
+    pluginAutoWithDeprecatedCustomDirName("intellij.tasks.core") { spec ->
       spec.directoryName = "tasks"
       spec.withModule("intellij.tasks")
       spec.withModule("intellij.tasks.compatibility")
       spec.withModule("intellij.tasks.jira")
       spec.withModule("intellij.tasks.java")
-      spec.withProjectLibrary("XmlRPC")
-      spec.withProjectLibrary("jsonpath")
     },
     pluginAuto(listOf("intellij.xslt.debugger")) { spec ->
       spec.withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
