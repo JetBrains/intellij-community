@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
+import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
-import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
@@ -27,7 +27,10 @@ import org.gradle.jvm.toolchain.internal.JavaToolchain;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet;
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet;
+import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
+import org.jetbrains.plugins.gradle.model.GradleSourceSetModel;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
@@ -131,7 +134,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       public void visit(Jar element) {
         File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
         if (archiveFile != null) {
-          if (isJarDescendant(element) || containsPotentialClasspathElements(element, project)) {
+          if (isShadowJar(element) || containsPotentialClasspathElements(element, project)) {
             additionalArtifacts.add(archiveFile);
           }
         }
@@ -285,9 +288,9 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
   }
 
-  private static boolean isJarDescendant(Jar task) {
+  private static boolean isShadowJar(Jar task) {
     Class<?> type = GradleTaskUtil.getTaskIdentityType(task);
-    return type != null && !type.equals(Jar.class);
+    return type != null && type.getName().equals("com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar");
   }
 
   /**
