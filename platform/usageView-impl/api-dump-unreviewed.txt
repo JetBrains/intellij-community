@@ -86,11 +86,6 @@ c:com.intellij.usages.impl.UsagePreviewPanel
 - f:setShowTooltipBalloon(Z):V
 - p:updateLayoutLater(java.util.List):V
 - updateLayoutLater(java.util.List,com.intellij.usages.UsageView):V
-f:com.intellij.usages.impl.UsagePreviewToolbarWithSimilarUsagesLink
-- javax.swing.JPanel
-- com.intellij.openapi.Disposable
-- <init>(com.intellij.usages.impl.UsagePreviewPanel,com.intellij.usages.UsageView,java.util.List,com.intellij.usages.similarity.clustering.UsageCluster,com.intellij.usages.similarity.clustering.ClusteringSearchSession):V
-- dispose():V
 com.intellij.usages.impl.UsageViewElementsListener
 - beforeUsageAdded(com.intellij.usages.UsageView,com.intellij.usages.Usage):V
 - isExcludedByDefault(com.intellij.usages.UsageView,com.intellij.usages.Usage):Z
