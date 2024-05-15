@@ -118,6 +118,11 @@ public class K2MoveFileTestGenerated extends AbstractK2MoveFileTest {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/moveObject/moveObject.test");
     }
 
+    @TestMetadata("kotlin/moveUnaryOperator/moveUnaryOperator.test")
+    public void testKotlin_moveUnaryOperator_MoveUnaryOperator() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/moveUnaryOperator/moveUnaryOperator.test");
+    }
+
     @TestMetadata("kotlin/packageWithQuotation/packageWithQuotation.test")
     public void testKotlin_packageWithQuotation_PackageWithQuotation() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/packageWithQuotation/packageWithQuotation.test");

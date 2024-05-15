@@ -180,19 +180,6 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../idea/tests/testData/refactoring/bindToFqn/functionCall")
-        public static class FunctionCall extends AbstractK2BindToElementTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("Operator.kt")
-            public void testOperator() throws Exception {
-                runTest("../../idea/tests/testData/refactoring/bindToFqn/functionCall/Operator.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/bindToFqn/importReference")
         public static class ImportReference extends AbstractK2BindToElementTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -623,6 +610,19 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
             @TestMetadata("UnQualifiedWithoutExplicitType.kt")
             public void testUnQualifiedWithoutExplicitType() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/bindToElement/extensionVariableAccessCall/UnQualifiedWithoutExplicitType.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/instanceFunctionCall")
+        public static class InstanceFunctionCall extends AbstractK2BindToElementTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("Operator.kt")
+            public void testOperator() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/instanceFunctionCall/Operator.kt");
             }
         }
 

@@ -27,11 +27,13 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 /**
  * At the moment, this implementation of [org.jetbrains.kotlin.idea.references.KtReferenceMutateService] is not able to do some of the
@@ -80,6 +82,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         targetElement: PsiElement?
     ): PsiElement = allowAnalysisOnEdt {
         allowAnalysisFromWriteAction {
+            simpleNameReference.expression
             val expression = simpleNameReference.expression
             if (targetElement != null) { // if we are already referencing the target, there is no need to call bindToElement
                 if (simpleNameReference.isReferenceTo(targetElement)) return expression
@@ -202,12 +205,19 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return ReplaceResult(newNameExpr.replaceWithQualified(fqName, newNameExpr), false)
     }
 
-    private fun KtSimpleNameExpression.replaceShortName(fqName: FqName, targetElement: PsiElement? ): ReplaceResult {
+    private fun KtSimpleNameExpression.replaceShortName(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
         val psiFactory = KtPsiFactory(project)
         val shortName = fqName.shortName().asString()
         val isOperator = targetElement is KtNamedFunction && targetElement.hasModifier(KtTokens.OPERATOR_KEYWORD)
-        val isInfixFun = targetElement is KtNamedFunction && targetElement.hasModifier(KtTokens.INFIX_KEYWORD) == true
-        val newNameExpression = if (isInfixFun || isOperator) psiFactory.createOperationName(shortName) else psiFactory.createSimpleName(shortName)
+        val isInfixFun = targetElement is KtNamedFunction && targetElement.hasModifier(KtTokens.INFIX_KEYWORD)
+        val newNameExpression = when {
+            isOperator -> {
+                psiFactory.createOperationName(OperatorNameConventions.TOKENS_BY_OPERATOR_NAME[Name.identifier(shortName)] ?: shortName)
+            }
+
+            isInfixFun -> psiFactory.createOperationName(shortName)
+            else -> psiFactory.createSimpleName(shortName)
+        }
         val newSimpleName = replaced(newNameExpression)
         val isUnQualifiable = targetElement?.isCallableAsExtensionFunction() == true || isOperator || isInfixFun
         return if (isUnQualifiable || fqName.parent() == FqName.ROOT) {
