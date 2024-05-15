@@ -150,8 +150,7 @@ object CommunityRepositoryModules {
       it.excludeProjectLibrary("Ant")
       it.excludeProjectLibrary("Gradle")
     },
-    plugin("intellij.junit") { spec ->
-      spec.mainJarName = "idea-junit.jar"
+    pluginAuto("intellij.junit") { spec ->
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
       spec.withModule("intellij.junit.v5.rt", "junit5-rt.jar")
     },
