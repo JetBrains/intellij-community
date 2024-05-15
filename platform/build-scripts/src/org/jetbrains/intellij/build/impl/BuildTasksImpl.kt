@@ -633,11 +633,7 @@ private fun checkProductProperties(context: BuildContextImpl) {
   checkModules(properties.mavenArtifacts.squashedModules, "productProperties.mavenArtifacts.squashedModules", context)
   if (context.productProperties.scrambleMainJar) {
     context.proprietaryBuildTools.scrambleTool?.let {
-      checkModules(
-        modules = it.namesOfModulesRequiredToBeScrambled,
-        fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled",
-        context = context
-      )
+      checkModules(modules = it.namesOfModulesRequiredToBeScrambled, fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled", context = context)
     }
   }
 }
@@ -692,11 +688,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
   checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", context)
   checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", context)
 
-  checkProjectLibraries(
-    names = layout.includedProjectLibraries.map { it.libraryName },
-    fieldName = "includedProjectLibraries in $description",
-    context = context,
-  )
+  checkProjectLibraries(names = layout.includedProjectLibraries.map { it.libraryName }, fieldName = "includedProjectLibraries in $description", context = context)
 
   for ((moduleName, libraryName) in layout.includedModuleLibraries) {
     checkModules(listOf(moduleName), "includedModuleLibraries in $description", context)
@@ -705,11 +697,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
     }
   }
 
-  checkModules(
-    modules = layout.excludedLibraries.keys,
-    fieldName = "excludedModuleLibraries in $description",
-    context = context,
-  )
+  checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", context = context)
   for ((key, value) in layout.excludedLibraries.entries) {
     val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
     for (libraryName in value) {
@@ -913,12 +901,7 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
   }
 
   if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
-    checkClassFiles(
-      versionCheckConfig = versionCheckerConfig,
-      forbiddenSubPaths = forbiddenSubPaths,
-      forbiddenSubPathExceptions = forbiddenSubPathExceptions,
-      root = root
-    )
+    checkClassFiles(versionCheckConfig = versionCheckerConfig, forbiddenSubPaths = forbiddenSubPaths, forbiddenSubPathExceptions = forbiddenSubPathExceptions, root = root)
   }
 
   if (forbiddenSubPaths.isNotEmpty()) {
@@ -1062,7 +1045,7 @@ private fun crossPlatformZip(
 
       val zipFileUniqueGuard = HashMap<String, DistFileContent>()
 
-      out.dir(distAllDir, "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer = entryCustomizer)
+      out.dir(startDir = distAllDir, prefix = "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer = entryCustomizer)
       if (runtimeModuleRepositoryPath != null) {
         out.entry(MODULE_DESCRIPTORS_JAR_PATH, runtimeModuleRepositoryPath)
       }
@@ -1180,7 +1163,7 @@ internal fun collectIncludedPluginModules(enabledPluginModules: Collection<Strin
   }
 }
 
-fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
+internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
   for (item in context.getDistFiles(os, arch)) {
     val targetFile = newDir.resolve(item.relativePath)
     Files.createDirectories(targetFile.parent)
