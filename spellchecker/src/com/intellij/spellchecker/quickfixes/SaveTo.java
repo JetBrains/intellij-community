@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -23,14 +24,17 @@ import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import icons.SpellcheckerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   @Nullable private DictionaryLayer myLayer = null;
@@ -78,22 +82,27 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
       .getDataContextFromFocusAsync()
       .onSuccess(context -> {
         if (layer == null) {
-          final JBList<String> dictList = new JBList<>(
+          final List<String> dictList = new ArrayList<>(
             ContainerUtil.map(DictionaryLayersProvider.getAllLayers(project), it -> it.getName())
           );
 
           JBPopupFactory.getInstance()
-            .createListPopupBuilder(dictList)
+            .createPopupChooserBuilder(dictList)
             .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
             .setItemChosenCallback(
-              () ->
+              (item) ->
                 CommandProcessor.getInstance().executeCommand(
                   project,
-                  () -> acceptWord(wordToSave, DictionaryLayersProvider.getLayer(project, dictList.getSelectedValue()), psiFile, wordRange),
+                  () -> acceptWord(wordToSave, DictionaryLayersProvider.getLayer(project, item), psiFile, wordRange),
                   SpellCheckerBundle.message("save.0.to.dictionary.action", wordToSave),
                   null
                 )
             )
+            .setRenderer(SimpleListCellRenderer.create(
+              (var label, @NlsContexts.Label var value, var index) -> {
+                label.setText(value);
+                label.setBorder(JBUI.Borders.empty(0, 15));
+              }))
             .createPopup()
             .showInBestPositionFor(context);
         }
