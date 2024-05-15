@@ -16,6 +16,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.kotlin.container.topologicalSort
 import org.jetbrains.kotlin.idea.artifacts.KmpAwareLibraryDependency
 import org.jetbrains.kotlin.idea.artifacts.KmpLightFixtureDependencyDownloader
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
@@ -90,13 +91,18 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
         super.setUpProject(project, handler)
 
         runWriteAction {
-            val common = makeModule(project, PlatformDescriptor.COMMON)
+            val descriptorsFromCommonToPlatform =
+                topologicalSort(PlatformDescriptor.entries, reverseOrder = true, PlatformDescriptor::refinementDependencies)
 
-            val jvm = makeModule(project, PlatformDescriptor.JVM)
-            ModuleRootModificationUtil.addDependency(jvm, common)
+            val modulesByDescriptors = mutableMapOf<PlatformDescriptor, Module>()
+            for (descriptor in descriptorsFromCommonToPlatform) {
+                val newModule = makeModule(project, descriptor)
+                descriptor.refinementDependencies.forEach { refinementDependencyDescriptor ->
+                    ModuleRootModificationUtil.addDependency(newModule, modulesByDescriptors.getValue(refinementDependencyDescriptor))
+                }
 
-            val js = makeModule(project, PlatformDescriptor.JS)
-            ModuleRootModificationUtil.addDependency(js, common)
+                modulesByDescriptors[descriptor] = newModule
+            }
         }
         IndexingTestUtil.waitUntilIndexesAreReady(project)
     }
