@@ -18,4 +18,8 @@
     <module name="intellij.javaFX"/>
     <module name="intellij.javaFX.properties"/>
   </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <dependencySupport coordinate="org.openjfx:javafx-base" kind="java" displayName="JavaFX"/>
+  </extensions>
 </idea-plugin>

@@ -137,9 +137,21 @@ internal class LocalDiskJarCacheManager(
   }
 
   override fun validateHash(source: Source) {
-    if (source.hash == 0L && (source !is DirSource || Files.exists(source.dir))) {
-      Span.current().addEvent("zero hash for $source")
+    if (source.hash != 0L) {
+      return
     }
+
+    if (source is InMemoryContentSource && source.relativePath == "META-INF/plugin.xml") {
+      // plugin.xml is not being packed - it is a part of dist meta-descriptor
+      return
+    }
+
+    if (source is DirSource && Files.notExists(source.dir)) {
+      // not existent dir are not packed
+      return
+    }
+
+    Span.current().addEvent("zero hash for $source")
   }
 }
 

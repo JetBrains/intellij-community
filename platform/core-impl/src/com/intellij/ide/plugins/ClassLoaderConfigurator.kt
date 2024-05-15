@@ -55,9 +55,9 @@ class ClassLoaderConfigurator(
     val pluginId = mainDescriptor.pluginId
     assert(pluginId == moduleDescriptor.pluginId) { "pluginId '$pluginId' != moduleDescriptor.pluginId '${moduleDescriptor.pluginId}'"}
 
-    if (mainDescriptor.pluginClassLoader is PluginClassLoader) { // TODO: class cast fails in case IU is running from sources, IDEA-318252
-      val mainClassLoader = mainDescriptor.pluginClassLoader as PluginClassLoader
-      mainToClassPath.put(pluginId, MainInfo(mainClassLoader))
+    // class cast fails in case IU is running from sources, IDEA-318252
+    (mainDescriptor.pluginClassLoader as? PluginClassLoader)?.let {
+      mainToClassPath.put(pluginId, MainInfo(classLoader = it))
     }
 
     if (mainDescriptor.pluginDependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
