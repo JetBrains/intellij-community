@@ -35,8 +35,8 @@ internal fun generateProductInfoJson(
   context: BuildContext,
 ): String {
   val appInfo = context.applicationInfo
-  val jbrFlavors = if (launch.any { it.javaExecutablePath != null } && context.bundledRuntime.build.startsWith("21.")) {
-    listOf(ProductFlavorData("jbr21"))
+  val jbrFlavors = if (launch.any { it.javaExecutablePath != null } && context.bundledRuntime.build.startsWith("17.")) {
+    listOf(ProductFlavorData("jbr17"))
   }
   else {
     emptyList()
