@@ -13,6 +13,10 @@ class RestoreFactoryDefaultLayoutAction : DumbAwareToggleAction() {
     const val ID = "RestoreFactoryDefaultLayout"
   }
 
+  init {
+    templatePresentation.isMultiChoice = false
+  }
+
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun isSelected(e: AnActionEvent): Boolean =
