@@ -36,6 +36,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -539,7 +540,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     fireOnNewPrintable(failedState);
   }
 
-  public void updateFailedState(TestFailedState failedState) {
+  private void updateFailedState(TestFailedState failedState) {
     if (myState instanceof CompoundTestFailedState) {
       ((CompoundTestFailedState)myState).addFailure(failedState);
     }
@@ -579,6 +580,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     comparisonFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
 
+  @ApiStatus.Internal
   public TestComparisonFailedState setTestComparisonFailed(
     @Nullable final String localizedMessage,
     @Nullable final String stackTrace,
@@ -869,6 +871,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
    *
    * @return New state
    */
+  @ApiStatus.Internal
   protected AbstractState determineSuiteStateOnFinished() {
     final AbstractState state;
     if (isLeaf()) {
@@ -1088,6 +1091,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
       myHandler = handler;
     }
 
+    @ApiStatus.Internal
     @Override
     protected AbstractState determineSuiteStateOnFinished() {
       if (isLeaf() && !isTestsReporterAttached()) {

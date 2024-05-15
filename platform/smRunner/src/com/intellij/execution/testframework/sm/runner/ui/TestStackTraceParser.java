@@ -6,6 +6,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,6 +48,7 @@ public class TestStackTraceParser {
     myTopLocationLine = topLocationLine;
   }
 
+  @ApiStatus.Internal
   public TestStackTraceParser(String url,
                               String stacktrace,
                               String errorMessage,

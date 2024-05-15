@@ -29,16 +29,16 @@ import kotlin.math.min
  *
  * If [cutNewLineBeforeServiceMessage] is set, each service message must have "\n" prefix which is cut.
  */
+data class OutputType<T>(val data: T, val streamType: OutputStreamType)
+
+enum class OutputStreamType {
+  STDOUT, STDERR, SYSTEM
+}
+
 @Internal
 abstract class OutputEventSplitterBase<T>(private val serviceMessagePrefix: String,
                                           private val bufferTextUntilNewLine: Boolean,
                                           private val cutNewLineBeforeServiceMessage: Boolean) {
-
-  data class OutputType<T>(val data: T, val streamType: OutputStreamType)
-
-  enum class OutputStreamType {
-    STDOUT, STDERR, SYSTEM
-  }
 
   private data class Output<T>(val text: String, val outputType: OutputType<T>)
 

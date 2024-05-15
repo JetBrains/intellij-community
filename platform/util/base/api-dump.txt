@@ -193,6 +193,25 @@ c:com.intellij.reference.SoftReference
 - <init>(java.lang.Object,java.lang.ref.ReferenceQueue):V
 - s:deref(java.util.function.Supplier):java.lang.Object
 - s:dereference(java.lang.ref.Reference):java.lang.Object
+e:com.intellij.smRunner.OutputStreamType
+- java.lang.Enum
+- sf:STDERR:com.intellij.smRunner.OutputStreamType
+- sf:STDOUT:com.intellij.smRunner.OutputStreamType
+- sf:SYSTEM:com.intellij.smRunner.OutputStreamType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.smRunner.OutputStreamType
+- s:values():com.intellij.smRunner.OutputStreamType[]
+f:com.intellij.smRunner.OutputType
+- <init>(java.lang.Object,com.intellij.smRunner.OutputStreamType):V
+- f:component1():java.lang.Object
+- f:component2():com.intellij.smRunner.OutputStreamType
+- f:copy(java.lang.Object,com.intellij.smRunner.OutputStreamType):com.intellij.smRunner.OutputType
+- bs:copy$default(com.intellij.smRunner.OutputType,java.lang.Object,com.intellij.smRunner.OutputStreamType,I,java.lang.Object):com.intellij.smRunner.OutputType
+- equals(java.lang.Object):Z
+- f:getData():java.lang.Object
+- f:getStreamType():com.intellij.smRunner.OutputStreamType
+- hashCode():I
+- toString():java.lang.String
 com.intellij.util.ArrayFactory
 - a:create(I):java.lang.Object[]
 f:com.intellij.util.ArrayUtil

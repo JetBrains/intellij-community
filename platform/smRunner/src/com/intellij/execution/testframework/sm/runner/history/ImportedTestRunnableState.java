@@ -19,6 +19,7 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.OutputStream;
 
+@ApiStatus.Internal
 public class ImportedTestRunnableState implements RunProfileState, HistoryTestRunnableState {
   private final AbstractImportTestsAction.ImportRunProfile myRunProfile;
   private final File myFile;

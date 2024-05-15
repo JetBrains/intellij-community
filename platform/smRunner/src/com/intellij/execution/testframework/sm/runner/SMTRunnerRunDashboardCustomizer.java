@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 
-public class SMTRunnerRunDashboardCustomizer extends RunDashboardCustomizer {
+class SMTRunnerRunDashboardCustomizer extends RunDashboardCustomizer {
   private static final SimpleTextAttributes IGNORE_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.YELLOW);
   private static final SimpleTextAttributes ERROR_ATTRIBUTES =

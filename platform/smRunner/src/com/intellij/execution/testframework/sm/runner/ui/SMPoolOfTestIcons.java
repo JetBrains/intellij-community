@@ -5,6 +5,7 @@ import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.LayeredIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,6 +13,7 @@ import javax.swing.*;
 /**
  * @author Roman.Chernyatchik
  */
+@ApiStatus.Internal
 public final class SMPoolOfTestIcons implements PoolOfTestIcons {
   // Error flag icon
 

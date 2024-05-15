@@ -9,5 +9,4 @@ jetbrains/buildServer/messages/serviceMessages/TestStarted
 jetbrains/buildServer/messages/serviceMessages/TestSuiteFinished
 jetbrains/buildServer/messages/serviceMessages/TestSuiteStarted
 kotlin/jvm/internal/DefaultConstructorMarker
-org/xml/sax/Attributes
 org/xml/sax/helpers/DefaultHandler

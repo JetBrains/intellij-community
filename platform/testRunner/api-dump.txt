@@ -449,7 +449,6 @@ a:com.intellij.execution.testframework.ui.TestResultsPanel
 - ps:createSplitter(java.lang.String,F,Z):com.intellij.ui.JBSplitter
 - p:createStatusLine():com.intellij.execution.testframework.ui.TestStatusLine
 - pa:createTestTreeView():javax.swing.JComponent
-- p:createToolbarPanel():com.intellij.execution.testframework.ToolbarPanel
 - dispose():V
 - getData(java.lang.String):java.lang.Object
 - getStatusLine():com.intellij.execution.testframework.ui.TestStatusLine
