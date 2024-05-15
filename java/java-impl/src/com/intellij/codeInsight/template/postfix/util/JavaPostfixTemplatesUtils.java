@@ -118,44 +118,46 @@ public final class JavaPostfixTemplatesUtils {
     }
   };
 
-  private static @Nullable PsiType getType(PsiExpression expression) {
-    return DumbService.getInstance(expression.getProject()).computeWithAlternativeResolveEnabled(expression::getType);
+  private static Condition<PsiElement> wrap(Condition<PsiElement> cond) {
+    return e -> DumbService.getInstance(e.getProject()).computeWithAlternativeResolveEnabled(() -> cond.value(e));
   }
 
   public static final Condition<PsiElement> IS_BOOLEAN =
-    element -> element instanceof PsiExpression expression && isBoolean(getType(expression));
+    wrap(element -> element instanceof PsiExpression expression && isBoolean(expression.getType()));
 
   /**
    * @deprecated use {@link #isThrowable(PsiType)}
    */
   @Deprecated(forRemoval = true)
   public static final Condition<PsiElement> IS_THROWABLE =
-    element -> element instanceof PsiExpression expression && isThrowable(getType(expression));
+    wrap(element -> element instanceof PsiExpression expression && isThrowable(expression.getType()));
 
   public static final Condition<PsiElement> IS_NON_VOID =
-    element -> element instanceof PsiExpression expression && isNonVoid(getType(expression));
+    wrap(element -> element instanceof PsiExpression expression && isNonVoid(expression.getType()));
 
   public static final Condition<PsiElement> IS_NOT_PRIMITIVE =
-    element -> element instanceof PsiExpression expression && isNotPrimitiveTypeExpression(expression);
+    wrap(element -> element instanceof PsiExpression expression && isNotPrimitiveTypeExpression(expression));
 
   /**
    * @deprecated use {@link #isIterable(PsiType)} / {@link #isArray(PsiType)}
    */
   @Deprecated(forRemoval = true)
-  public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {
-    if (!(element instanceof PsiExpression)) return false;
+  public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = wrap(element -> {
+    if (!(element instanceof PsiExpression expr)) return false;
 
-    PsiType type = getType(((PsiExpression)element));
+    PsiType type = expr.getType();
     return isArray(type) || isIterable(type);
-  };
+  });
 
   @Contract("null -> false")
   public static boolean isNotPrimitiveTypeExpression(@Nullable PsiExpression expression) {
     if (expression == null) {
       return false;
     }
-    PsiType type = getType(expression);
-    return type != null && !(type instanceof PsiPrimitiveType);
+    return DumbService.getInstance(expression.getProject()).computeWithAlternativeResolveEnabled(() -> {
+      PsiType type = expression.getType();
+      return type != null && !(type instanceof PsiPrimitiveType);
+    });
   }
 
   @Contract("null -> false")

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -38,11 +39,13 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
     template.addVariable("index", index, index, true);
 
     PsiExpression expr = (PsiExpression)element;
-    String bound = getExpressionBound(expr);
-    if (bound != null) {
-      template.addVariable("bound", new TextExpression(bound), false);
-      template.addVariable("type", new TextExpression(suggestIndexType(expr)), false);
-    }
+    DumbService.getInstance(element.getProject()).withAlternativeResolveEnabled(() -> {
+      String bound = getExpressionBound(expr);
+      if (bound != null) {
+        template.addVariable("bound", new TextExpression(bound), false);
+        template.addVariable("type", new TextExpression(suggestIndexType(expr)), false);
+      }
+    });
   }
 
   protected @Nullable String getExpressionBound(@NotNull PsiExpression expr) {
