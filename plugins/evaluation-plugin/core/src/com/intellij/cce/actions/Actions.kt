@@ -4,8 +4,12 @@ package com.intellij.cce.actions
 import com.google.gson.*
 import com.intellij.cce.core.TokenProperties
 import java.lang.reflect.Type
+import java.util.*
 
-sealed class Action(val type: ActionType) {
+sealed interface Action {
+  val type: ActionType
+  val sessionId: UUID
+
   enum class ActionType {
     MOVE_CARET, CALL_FEATURE, PRINT_TEXT, DELETE_RANGE, SELECT_RANGE, RENAME
   }
@@ -30,17 +34,55 @@ sealed class Action(val type: ActionType) {
 
 data class FileActions(val path: String, val checksum: String, val sessionsCount: Int, val actions: List<Action>)
 
-data class MoveCaret(val offset: Int) : Action(ActionType.MOVE_CARET)
+data class MoveCaret internal constructor(override val sessionId: UUID, val offset: Int) : Action {
+  override val type = Action.ActionType.MOVE_CARET
+}
 
-data class Rename(val offset: Int, val newName: String) : Action(ActionType.RENAME)
+data class Rename internal constructor(override val sessionId: UUID, val offset: Int, val newName: String) : Action {
+  override val type = Action.ActionType.RENAME
+}
 
-data class CallFeature(val expectedText: String, val offset: Int, val nodeProperties: TokenProperties) : Action(
-  ActionType.CALL_FEATURE)
+data class CallFeature internal constructor(override val sessionId: UUID, val expectedText: String, val offset: Int, val nodeProperties: TokenProperties) : Action {
+  override val type: Action.ActionType = Action.ActionType.CALL_FEATURE
+}
 
-data class PrintText(val text: String) : Action(ActionType.PRINT_TEXT)
+data class PrintText internal constructor(override val sessionId: UUID, val text: String) : Action {
+  override val type: Action.ActionType = Action.ActionType.PRINT_TEXT
+}
 
-data class DeleteRange(val begin: Int, val end: Int) : Action(ActionType.DELETE_RANGE)
+data class DeleteRange internal constructor(override val sessionId: UUID, val begin: Int, val end: Int) : Action {
+  override val type: Action.ActionType = Action.ActionType.DELETE_RANGE
+}
 
-data class SelectRange(val begin: Int, val end: Int) : Action(ActionType.SELECT_RANGE)
+data class SelectRange internal constructor(override val sessionId: UUID, val begin: Int, val end: Int) : Action {
+  override val type: Action.ActionType = Action.ActionType.SELECT_RANGE
+}
 
 data class TextRange(val start: Int, val end: Int)
+
+
+class ActionsBuilder {
+  private val actions: MutableList<Action> = mutableListOf()
+
+  fun build(): List<Action> {
+    return actions.toList()
+  }
+
+  fun session(init: SessionBuilder.() -> Unit) {
+    actions.addAll(SessionBuilder().apply(init).build())
+  }
+
+  class SessionBuilder {
+    private val sessionId = UUID.randomUUID()
+    private val actions: MutableList<Action> = mutableListOf()
+
+    fun build(): List<Action> = actions.toList()
+
+    fun moveCaret(offset: Int) = actions.add(MoveCaret(sessionId, offset))
+    fun rename(offset: Int, newName: String) = actions.add(Rename(sessionId, offset, newName))
+    fun callFeature(expectedText: String, offset: Int, nodeProperties: TokenProperties) = actions.add(CallFeature(sessionId, expectedText, offset, nodeProperties))
+    fun printText(text: String) = actions.add(PrintText(sessionId, text))
+    fun deleteRange(begin: Int, end: Int) = actions.add(DeleteRange(sessionId, begin, end))
+    fun selectRange(begin: Int, end: Int) = actions.add(SelectRange(sessionId, begin, end))
+  }
+}

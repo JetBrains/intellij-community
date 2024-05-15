@@ -1,10 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable.docGeneration
 
-import com.intellij.cce.actions.CallFeature
-import com.intellij.cce.actions.DeleteRange
-import com.intellij.cce.actions.MoveCaret
-import com.intellij.cce.actions.PrintText
+import com.intellij.cce.actions.ActionsBuilder
 import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.core.CodeToken
 import com.intellij.cce.core.DocumentationProperties
@@ -13,12 +10,16 @@ import com.intellij.cce.processor.GenerateActionsProcessor
 class DocGenerationActionsProcessor : GenerateActionsProcessor() {
 
   override fun process(code: CodeFragment) {
-    for (token in code.getChildren()) {
-      processToken(token as CodeToken)
+    actions {
+      for (token in code.getChildren()) {
+        session {
+          processToken(token as CodeToken)
+        }
+      }
     }
   }
 
-  private fun processToken(token: CodeToken) {
+  private fun ActionsBuilder.SessionBuilder.processToken(token: CodeToken) {
     val properties = token.properties as DocumentationProperties
     val docLen = properties.docComment.length
 
@@ -28,10 +29,10 @@ class DocGenerationActionsProcessor : GenerateActionsProcessor() {
       else -> properties.nameIdentifierOffset
     }
 
-    addAction(DeleteRange(properties.docStartOffset, properties.docEndOffset))
-    addAction(MoveCaret(correctNameIdentifierOffset))
-    addAction(CallFeature(token.text, correctNameIdentifierOffset, properties))
-    addAction(MoveCaret(properties.docStartOffset))
-    addAction(PrintText(properties.docComment))
+    deleteRange(properties.docStartOffset, properties.docEndOffset)
+    moveCaret(correctNameIdentifierOffset)
+    callFeature(token.text, correctNameIdentifierOffset, properties)
+    moveCaret(properties.docStartOffset)
+    printText(properties.docComment)
   }
 }
