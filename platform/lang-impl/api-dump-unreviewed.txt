@@ -2159,14 +2159,16 @@ c:com.intellij.build.events.impl.FailureResultImpl
 c:com.intellij.build.events.impl.FileDownloadEventImpl
 - com.intellij.build.events.impl.AbstractBuildEvent
 - com.intellij.build.events.ProgressBuildEvent
-- <init>(java.lang.Object,java.lang.Object,J,java.lang.String,J,J,java.lang.String,Z):V
+- <init>(java.lang.Object,java.lang.Object,J,java.lang.String,J,J,java.lang.String,Z,java.lang.String):V
+- getDownloadPath():java.lang.String
 - getProgress():J
 - getTotal():J
 - getUnit():java.lang.String
 - isFirstInGroup():Z
 c:com.intellij.build.events.impl.FileDownloadedEventImpl
 - com.intellij.build.events.impl.AbstractBuildEvent
-- <init>(java.lang.Object,java.lang.Object,J,java.lang.String,J):V
+- <init>(java.lang.Object,java.lang.Object,J,java.lang.String,J,java.lang.String):V
+- getDownloadPath():java.lang.String
 - getDuration():J
 c:com.intellij.build.events.impl.FileMessageEventImpl
 - com.intellij.build.events.impl.MessageEventImpl

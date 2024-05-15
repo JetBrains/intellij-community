@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.ProgressBuildEvent
 import com.intellij.build.events.impl.FileDownloadEventImpl
 import com.intellij.build.events.impl.FileDownloadedEventImpl
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -49,7 +50,10 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
   override fun updateIndicator(event: ExternalSystemTaskNotificationEvent,
                                indicator: ProgressIndicator,
                                textWrapper: Function<String, @NlsContexts.ProgressText String>) {
-    if (event !is ExternalSystemBuildEvent || event.buildEvent.message.contains("ownloading ")) {
+    if (event !is ExternalSystemBuildEvent) {
+      return
+    }
+    if (event.buildEvent is ProgressBuildEvent && (event.buildEvent as ProgressBuildEvent).isInvalid()) {
       return
     }
     when (event.buildEvent) {
@@ -69,10 +73,10 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
                               textWrapper: Function<String, @NlsContexts.ProgressText String>) {
     if (event.isFirstInGroup) {
       val candidates = taskCandidates.computeIfAbsent(taskId) { ConcurrentHashMap() }
-      candidates[event.message] = event
+      candidates[event.downloadPath] = event
       return
     }
-    val mayBeIndicator = taskIndicators[taskId]?.get(event.message)
+    val mayBeIndicator = taskIndicators[taskId]?.get(event.downloadPath)
     if (mayBeIndicator != null) {
       mayBeIndicator.handle(event)
     }
@@ -85,11 +89,11 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
                                     event: FileDownloadEventImpl,
                                     textWrapper: Function<String, @NlsContexts.ProgressText String>) {
     val candidates = taskCandidates[taskId] ?: return
-    val mayBeCandidate = candidates[event.message] ?: return
+    val mayBeCandidate = candidates[event.downloadPath] ?: return
     if (!mayBeCandidate.shouldBeVisible(event)) {
       return
     }
-    candidates.remove(event.message)
+    candidates.remove(event.downloadPath)
     val project = taskId.findProject()
     if (project == null || project.isDisposed) {
       return
@@ -98,12 +102,16 @@ class GradleExternalSystemTaskProgressIndicatorUpdater : ExternalSystemTaskProgr
     val csp = GradleCoroutineScopeProvider.getInstance(project)
     val indicator = DownloadProgressIndicator(event.message, csp.cs, project, textWrapper)
       .also { it.start() }
-    indicators[event.message] = indicator
+    indicators[event.downloadPath] = indicator
   }
 
   private fun onDownloadEndEvent(taskId: ExternalSystemTaskId, event: FileDownloadedEventImpl) {
-    taskIndicators[taskId]?.remove(event.message)?.handle(event)
-    taskCandidates[taskId]?.remove(event.message)
+    taskIndicators[taskId]?.remove(event.downloadPath)?.handle(event)
+    taskCandidates[taskId]?.remove(event.downloadPath)
+  }
+
+  private fun ProgressBuildEvent.isInvalid(): Boolean {
+    return total < 0 || progress < 0 || unit.isNullOrEmpty()
   }
 
   private fun FileDownloadEventImpl.shouldBeVisible(currentEvent: FileDownloadEventImpl): Boolean {
