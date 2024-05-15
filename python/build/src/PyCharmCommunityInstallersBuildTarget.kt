@@ -5,8 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.pycharm.PyCharmBuildUtils
 import org.jetbrains.intellij.build.pycharm.PyCharmCommunityProperties
 
@@ -30,7 +30,7 @@ object PyCharmCommunityInstallersBuildTarget {
         productProperties = PyCharmCommunityProperties(COMMUNITY_ROOT.communityRoot),
         options = options,
       )
-      createBuildTasks(context).buildDistributions()
+      buildDistributions(context)
     }
   }
 }
