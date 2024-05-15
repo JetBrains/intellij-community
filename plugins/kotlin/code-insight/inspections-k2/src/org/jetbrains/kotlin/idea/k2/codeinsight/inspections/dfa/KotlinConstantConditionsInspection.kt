@@ -311,8 +311,20 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     ): Boolean {
         if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
         if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
+        if (cv == ConstantValue.FALSE && isFailingBranchInExhaustiveWhen(condition)) return true
         if (condition.textLength == 0) return true
         return isCompilationWarning(condition)
+    }
+    
+    private fun isFailingBranchInExhaustiveWhen(condition: KtWhenCondition): Boolean {
+        val entry = condition.parent as? KtWhenEntry ?: return false
+        val whenExpr = entry.parent as? KtWhenExpression ?: return false
+        if (!entry.isElse && whenExpr.entries.any { it.isElse }) return false
+        val expression = entry.expression ?: return false
+        return analyze(expression) {
+            val missingCases = whenExpr.getMissingCases()
+            return@analyze missingCases.isEmpty() && expression.getKtType()?.isNothing == true
+        }
     }
 
     private fun isLastCondition(condition: KtWhenCondition): Boolean {
