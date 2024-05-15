@@ -6,7 +6,6 @@ import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.ClassUtil
@@ -21,6 +20,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunConfiguration>() {
+    override fun isDumbAware(): Boolean = true
+
     override fun setupConfigurationFromContext(
         configuration: KotlinRunConfiguration,
         context: ConfigurationContext,
@@ -40,8 +41,7 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
 
     private fun getEntryPointContainer(location: Location<*>?): KtDeclarationContainer? {
         val element = location?.psiElement ?: return null
-        if (DumbService.getInstance(location.project).isDumb) return null
-        return KotlinMainFunctionDetector.getInstance().findMainOwner(element)
+        return KotlinMainFunctionDetector.getInstanceDumbAware(location.project).findMainOwner(element)
     }
 
     override fun isConfigurationFromContext(configuration: KotlinRunConfiguration, context: ConfigurationContext): Boolean {

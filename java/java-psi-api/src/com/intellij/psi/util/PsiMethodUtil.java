@@ -115,9 +115,10 @@ public final class PsiMethodUtil {
   }
 
   private static boolean isJavaLangStringArray(@NotNull PsiParameter parameter) {
-    final PsiType type = parameter.getType();
-    if (!(type instanceof PsiArrayType)) return false;
     try {
+      final PsiType type = parameter.getType();
+      if (!(type instanceof PsiArrayType)) return false;
+
       return DumbService.getInstance(parameter.getProject()).computeWithAlternativeResolveEnabled(
         (ThrowableComputable<Boolean, Throwable>)() -> {
           final PsiType componentType = ((PsiArrayType)type).getComponentType();

@@ -22,7 +22,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
 
     override fun hasMainMethod(clazz: PsiClass): Boolean {
         val lightClassBase = clazz as? KtLightClassBase
-        val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
+        val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
         if (lightClassBase is KtLightClassForFacadeBase) {
             return runReadAction { lightClassBase.files.any { mainFunctionDetector.hasMain(it) } }
         }
@@ -33,7 +33,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
     override fun findMainInClass(clazz: PsiClass): PsiMethod? =
         runReadAction {
             val lightClassBase = clazz as? KtLightClassBase
-            val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
+            val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
             if (lightClassBase is KtLightClassForFacadeBase) {
                 return@runReadAction lightClassBase.files
                     .asSequence()
@@ -50,6 +50,6 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
             }
 
             val classOrObject = lightClassBase?.kotlinOrigin ?: return@runReadAction null
-            mainFunctionDetector.findMain(classOrObject)?.toLightMethods()?.firstOrNull()
+            mainFunctionDetector.findMain(classOrObject)?.toLightMethods()?.firstOrNull() // если разрешить в dumb mode стреляет тут
         }
 }

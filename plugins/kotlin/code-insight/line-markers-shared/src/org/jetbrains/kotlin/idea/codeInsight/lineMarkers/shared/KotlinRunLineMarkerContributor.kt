@@ -15,12 +15,16 @@ import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
+    override fun isDumbAware(): Boolean = true
+
     override fun getInfo(element: PsiElement): Info? = null
 
     override fun getSlowInfo(element: PsiElement): Info? {
         val function = element.parent as? KtNamedFunction ?: return null
         if (function.nameIdentifier != element) return null
-        if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return null
+
+        val detector = KotlinMainFunctionDetector.getInstanceDumbAware(element.project)
+        if (!detector.isMain(function)) return null
 
         val module = function.containingKtFile.module ?: return null
         if (module.isTestModule) return null
