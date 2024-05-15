@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
@@ -31,11 +30,6 @@ abstract class JetBrainsProductProperties : ProductProperties() {
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
-    copyAdditionalFilesBlocking(context, targetDir)
-  }
-
-  @Obsolete
-  protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path) {
   }
 
   override fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {

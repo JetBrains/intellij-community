@@ -3,8 +3,6 @@
 
 package org.jetbrains.intellij.build
 
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import java.nio.file.Path
@@ -12,24 +10,11 @@ import java.nio.file.Path
 fun createBuildTasks(context: BuildContext): BuildTasks = BuildTasksImpl(context as BuildContextImpl)
 
 interface BuildTasks {
-  companion object {
-    @JvmStatic
-    @Obsolete
-    fun create(context: BuildContext): BuildTasks = createBuildTasks(context)
-  }
-
   /**
    * Builds archive containing production source roots of the project modules. If `includeLibraries` is `true`, the produced
    * archive also includes sources of project-level libraries on which platform API modules from `modules` list depend on.
    */
   suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean)
-
-  @Obsolete
-  fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path) {
-    runBlocking {
-      zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = false)
-    }
-  }
 
   /**
    * Produces distributions for all operating systems from sources. This includes compiling required modules, packing their output into JAR
