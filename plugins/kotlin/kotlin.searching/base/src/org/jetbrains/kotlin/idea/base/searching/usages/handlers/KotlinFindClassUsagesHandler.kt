@@ -16,6 +16,7 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindClassUsagesDialog
@@ -127,7 +128,7 @@ class KotlinFindClassUsagesHandler(
                 scope = options.searchScope,
                 kotlinOptions = KotlinReferencesSearchOptions(
                     acceptCompanionObjectMembers = true,
-                    searchForExpectedUsages = kotlinOptions.searchExpected
+                    searchForExpectedUsages = kotlinOptions.searchExpected || classOrObject.isExpectDeclaration()
                 )
             )
             var usagesQuery = ReferencesSearch.search(searchParameters)

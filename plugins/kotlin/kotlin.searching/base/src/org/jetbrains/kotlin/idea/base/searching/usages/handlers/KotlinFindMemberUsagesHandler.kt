@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinCallableFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
@@ -287,10 +288,13 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
             if (options.isUsages) {
                 val baseKotlinSearchOptions = createKotlinReferencesSearchOptions(options, forHighlight)
-                val kotlinSearchOptions = if (element is KtNamedFunction && KotlinPsiHeuristics.isPossibleOperator(element)) {
+                var kotlinSearchOptions = if (element is KtNamedFunction && KotlinPsiHeuristics.isPossibleOperator(element)) {
                     baseKotlinSearchOptions
                 } else {
                     baseKotlinSearchOptions.copy(searchForOperatorConventions = false)
+                }
+                if (element is KtDeclaration && element.isExpectDeclaration() && !kotlinOptions.searchExpected) {
+                    kotlinSearchOptions = kotlinSearchOptions.copy(searchForExpectedUsages = true)
                 }
 
                 val searchParameters = KotlinReferencesSearchParameters(element, options.searchScope, kotlinOptions = kotlinSearchOptions)
