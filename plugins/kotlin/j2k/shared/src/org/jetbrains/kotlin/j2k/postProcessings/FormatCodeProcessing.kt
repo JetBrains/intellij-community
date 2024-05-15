@@ -17,11 +17,11 @@ class FormatCodeProcessing : FileBasedPostProcessing() {
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
         val codeStyleManager = CodeStyleManager.getInstance(file.project)
         runUndoTransparentActionInEdt(inWriteAction = true) {
-            when {
-                rangeMarker == null -> codeStyleManager.reformat(file)
-                rangeMarker.isValid -> codeStyleManager.reformatRange(file, rangeMarker.startOffset, rangeMarker.endOffset)
-                else -> {
-                    // Do nothing (`else` branch is required here for a `when` expression)
+            // TODO investigate why one formatting pass is not enough in some cases (KTIJ-29962)
+            repeat(2) {
+                when {
+                    rangeMarker == null -> codeStyleManager.reformat(file)
+                    rangeMarker.isValid -> codeStyleManager.reformatRange(file, rangeMarker.startOffset, rangeMarker.endOffset)
                 }
             }
         }
@@ -40,11 +40,15 @@ class FormatCodeProcessing : FileBasedPostProcessing() {
         private val rangeMarker: RangeMarker?
     ) : PostProcessingApplier {
         override fun apply() {
-            val file = filePointer.element ?: return
-            val codeStyleManager = CodeStyleManager.getInstance(file.project)
-            when {
-                rangeMarker == null -> codeStyleManager.reformat(file)
-                rangeMarker.isValid -> codeStyleManager.reformatRange(file, rangeMarker.startOffset, rangeMarker.endOffset)
+            // TODO investigate why one formatting pass is not enough in some cases (KTIJ-29962)
+            repeat(2) {
+                val file = filePointer.element ?: return
+                val codeStyleManager = CodeStyleManager.getInstance(file.project)
+
+                when {
+                    rangeMarker == null -> codeStyleManager.reformat(file)
+                    rangeMarker.isValid -> codeStyleManager.reformatRange(file, rangeMarker.startOffset, rangeMarker.endOffset)
+                }
             }
         }
     }

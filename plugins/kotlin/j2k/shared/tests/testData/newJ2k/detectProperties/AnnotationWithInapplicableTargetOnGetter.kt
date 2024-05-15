@@ -1,5 +1,6 @@
 class J {
     private var x: String? = null
+
     @Inapplicable
     fun getX(): String? {
         return x
