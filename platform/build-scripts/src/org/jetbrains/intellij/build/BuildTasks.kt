@@ -11,12 +11,6 @@ fun createBuildTasks(context: BuildContext): BuildTasks = BuildTasksImpl(context
 
 interface BuildTasks {
   /**
-   * Builds archive containing production source roots of the project modules. If `includeLibraries` is `true`, the produced
-   * archive also includes sources of project-level libraries on which platform API modules from `modules` list depend on.
-   */
-  suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean)
-
-  /**
    * Produces distributions for all operating systems from sources. This includes compiling required modules, packing their output into JAR
    * files accordingly to [ProductProperties.productLayout], and creating distributions and installers for all OS.
    */

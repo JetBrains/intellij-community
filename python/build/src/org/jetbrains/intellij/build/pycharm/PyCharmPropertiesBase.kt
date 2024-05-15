@@ -4,8 +4,8 @@ package org.jetbrains.intellij.build.pycharm
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JetBrainsProductProperties
 import org.jetbrains.intellij.build.TEST_FRAMEWORK_WITH_JAVA_RT
-import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.impl.copyDirWithFileFilter
+import org.jetbrains.intellij.build.impl.zipSourcesOfModules
 import java.nio.file.Path
 import java.util.function.Predicate
 
@@ -29,11 +29,11 @@ abstract class PyCharmPropertiesBase : JetBrainsProductProperties() {
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
-    val tasks = createBuildTasks(context)
-    tasks.zipSourcesOfModules(
+    zipSourcesOfModules(
       modules = listOf("intellij.python.community", "intellij.python.psi"),
       targetFile = Path.of("$targetDir/lib/src/pycharm-openapi-src.zip"),
       includeLibraries = false,
+      context = context,
     )
 
     copyDirWithFileFilter(
