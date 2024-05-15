@@ -166,9 +166,9 @@ public final class UpdateHighlightersUtil {
     }
     if (psiFile != null) {
       DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(group, psiFile);
-      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session -> {
-        setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
-      });
+      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session ->
+        setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session)
+      );
     }
   }
 
@@ -481,9 +481,10 @@ public final class UpdateHighlightersUtil {
     try {
       highlighter.dispose();
     }
-    catch (Exception ignored) {
-      // in theory, rogue plugin might register a listener on range marker dispose, which can do nasty things, including throwing exceptions
-      // but in highlighting range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
+    catch (Exception e) {
+      // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,
+      // but in highlighting, range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
+      LOG.warn(e);
     }
   }
   // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
@@ -496,14 +497,15 @@ public final class UpdateHighlightersUtil {
     try {
       highlighter.dispose();
     }
-    catch (Exception ignored) {
-      // in theory, rogue plugin might register a listener on range marker dispose, which can do nasty things, including throwing exceptions
-      // but in highlighting range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
+    catch (Exception e) {
+      // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,
+      // but in highlighting, range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
+      LOG.warn(e);
     }
   }
 
   /**
-   * Do not use, this method might break highlighting, left for binary compatibility only
+   * Do not use. This method might break highlighting, left for binary compatibility only
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal
