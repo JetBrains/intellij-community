@@ -1,146 +1,128 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.searching.usages.dialogs
 
-package org.jetbrains.kotlin.idea.base.searching.usages.dialogs;
+import com.intellij.find.FindSettings
+import com.intellij.find.findUsages.FindMethodUsagesDialog
+import com.intellij.find.findUsages.FindUsagesHandler
+import com.intellij.find.findUsages.JavaMethodFindUsagesOptions
+import com.intellij.java.JavaBundle
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.StateRestoringCheckBox
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import javax.swing.JPanel
 
-import com.intellij.find.FindSettings;
-import com.intellij.find.findUsages.FindMethodUsagesDialog;
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
-import com.intellij.java.JavaBundle;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.StateRestoringCheckBox;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
-import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions;
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport;
-import org.jetbrains.kotlin.psi.KtDeclaration;
-import org.jetbrains.kotlin.psi.KtNamedDeclaration;
-import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
+class KotlinFindFunctionUsagesDialog(
+    method: KtFunction,
+    project: Project,
+    findUsagesOptions: KotlinFunctionFindUsagesOptions,
+    toShowInNewTab: Boolean,
+    mustOpenInNewTab: Boolean,
+    isSingleFile: Boolean,
+    handler: FindUsagesHandler
+) : FindMethodUsagesDialog(method, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler) {
+    private var expectedUsages: StateRestoringCheckBox? = null
+    private var overrideUsages: StateRestoringCheckBox? = null
 
-import javax.swing.*;
-
-import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isAbstract;
-import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isOpen;
-
-public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
-    private StateRestoringCheckBox expectedUsages;
-    private StateRestoringCheckBox overrideUsages;
-
-    public KotlinFindFunctionUsagesDialog(
-            PsiMethod method,
-            Project project,
-            KotlinFunctionFindUsagesOptions findUsagesOptions,
-            boolean toShowInNewTab,
-            boolean mustOpenInNewTab,
-            boolean isSingleFile,
-            FindUsagesHandler handler
-    ) {
-        super(method, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
+    override fun noSpecificOptions(element: PsiElement): Boolean {
+        return false
     }
 
-    @Override
-    public boolean isIncludeOverloadedMethodsAvailable() {
-        return true;
+    override fun canSearchForOverridingMethods(element: PsiElement): Boolean {
+        return false
     }
 
-    @NotNull
-    @Override
-    protected KotlinFunctionFindUsagesOptions getFindUsagesOptions() {
-        return (KotlinFunctionFindUsagesOptions) myFindUsagesOptions;
+    override fun canSearchForImplementingMethods(element: PsiElement): Boolean {
+        return false
     }
 
-    @Override
-    public void configureLabelComponent(@NotNull SimpleColoredComponent coloredComponent) {
-        coloredComponent.append(KotlinFindUsagesSupport.Companion.formatJavaOrLightMethod((PsiMethod) myPsiElement));
+    override fun canSearchForBaseMethod(element: PsiElement): Boolean {
+        return element is KtFunction && element.hasModifier(KtTokens.OVERRIDE_KEYWORD)
     }
 
-    @Override
-    protected JPanel createFindWhatPanel() {
-        JPanel findWhatPanel = super.createFindWhatPanel();
-
-        if (findWhatPanel != null) {
-            Utils.removeCheckbox(
-                    findWhatPanel,
-                    JavaBundle.message("find.what.implementing.methods.checkbox")
-            );
-            Utils.removeCheckbox(
-                    findWhatPanel,
-                    JavaBundle.message("find.what.overriding.methods.checkbox")
-            );
-        }
-
-        return findWhatPanel;
+    override fun isIncludeOverloadedMethodsAvailable(): Boolean {
+        return true
     }
 
-    @Override
-    protected void addUsagesOptions(JPanel optionsPanel) {
-        super.addUsagesOptions(optionsPanel);
+    override fun getFindUsagesOptions(): KotlinFunctionFindUsagesOptions {
+        return myFindUsagesOptions as KotlinFunctionFindUsagesOptions
+    }
 
-        KtNamedDeclaration method = (KtNamedDeclaration) myUsagesHandler.getPsiElement();
-        if (isOpen(method)) {
+    override fun addUsagesOptions(optionsPanel: JPanel) {
+        super.addUsagesOptions(optionsPanel)
+
+        val method: KtNamedDeclaration = myUsagesHandler.psiElement as KtNamedDeclaration
+        if (Utils.isOpen(method)) {
             overrideUsages = addCheckboxToPanel(
-              isAbstract(method)
-              ? KotlinBundle.message("find.declaration.implementing.methods.checkbox")
-              : KotlinBundle.message("find.declaration.overriding.methods.checkbox"),
-              getFindUsagesOptions().getSearchOverrides(),
-              optionsPanel,
-              true
-            );
+                if (Utils.isAbstract(method)
+                ) message("find.declaration.implementing.methods.checkbox")
+                else message("find.declaration.overriding.methods.checkbox"),
+                getFindUsagesOptions().searchOverrides,
+                optionsPanel,
+                true
+            )
         }
 
         if (!Utils.renameCheckbox(
                 optionsPanel,
                 JavaBundle.message("find.options.include.overloaded.methods.checkbox"),
-                KotlinBundle.message("find.declaration.include.overloaded.methods.checkbox")
-        )) {
+                message("find.declaration.include.overloaded.methods.checkbox")
+            )
+        ) {
             addCheckboxToPanel(
-                    KotlinBundle.message("find.declaration.include.overloaded.methods.checkbox"),
-                    FindSettings.getInstance().isSearchOverloadedMethods(),
-                    optionsPanel,
-                    false
-            );
+                message("find.declaration.include.overloaded.methods.checkbox"),
+                FindSettings.getInstance().isSearchOverloadedMethods(),
+                optionsPanel,
+                false
+            )
         }
-        PsiElement element = LightClassUtilsKt.getUnwrapped(getPsiElement());
-        //noinspection ConstantConditions
-        KtDeclaration function = element instanceof KtNamedDeclaration
-                                 ? (KtNamedDeclaration) element
-                                 : ((KtLightMethod) element).getKotlinOrigin();
+        val element = psiElement.unwrapped
+        val function = if (element is KtNamedDeclaration
+        ) element as KtNamedDeclaration?
+        else (element as KtLightMethod).kotlinOrigin
 
-        boolean isActual = function != null && PsiUtilsKt.hasActualModifier(function);
-        KotlinFunctionFindUsagesOptions options = getFindUsagesOptions();
+        val isActual = function != null && function.hasActualModifier()
+        val options = findUsagesOptions
         if (isActual) {
             expectedUsages = addCheckboxToPanel(
-                    KotlinBundle.message("find.usages.checkbox.name.expected.functions"),
-                    options.getSearchExpected(),
-                    optionsPanel,
-                    false
-            );
+                message("find.usages.checkbox.name.expected.functions"),
+                options.searchExpected,
+                optionsPanel,
+                false
+            )
         }
     }
 
-    @Override
-    public void calcFindUsagesOptions(JavaMethodFindUsagesOptions options) {
-        super.calcFindUsagesOptions(options);
+    override fun calcFindUsagesOptions(options: JavaMethodFindUsagesOptions) {
+        super.calcFindUsagesOptions(options)
 
-        options.isOverridingMethods = isSelected(overrideUsages);
+        options.isOverridingMethods = isSelected(overrideUsages)
 
-        KotlinFunctionFindUsagesOptions kotlinOptions = (KotlinFunctionFindUsagesOptions) options;
+        val kotlinOptions: KotlinFunctionFindUsagesOptions = options as KotlinFunctionFindUsagesOptions
         if (expectedUsages != null) {
-            kotlinOptions.setSearchExpected(expectedUsages.isSelected());
+            kotlinOptions.searchExpected = expectedUsages!!.isSelected
         }
     }
 
-    @Override
-    protected void update() {
-        super.update();
-        if (!isOKActionEnabled() && (isSelected(overrideUsages))) {
-            setOKActionEnabled(true);
+    override fun update() {
+        super.update()
+        if (!isOKActionEnabled && isSelected(overrideUsages)) {
+            isOKActionEnabled = true
         }
+    }
+
+
+    override fun configureLabelComponent(coloredComponent: SimpleColoredComponent) {
+        coloredComponent.append(KotlinFindUsagesSupport.renderDeclaration(psiElement as KtFunction));
     }
 
 }

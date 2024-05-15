@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
@@ -84,10 +83,9 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
     }
 
-    override fun formatJavaOrLightMethod(method: PsiMethod): String {
-        val unwrapped = method.unwrapped as KtDeclaration
-        return KotlinPsiDeclarationRenderer.render(unwrapped) ?: analyzeInModalWindow(unwrapped, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            unwrapped.getSymbol().render(noAnnotationsShortNameRenderer())
+    override fun renderDeclaration(method: KtDeclaration): String {
+        return KotlinPsiDeclarationRenderer.render(method) ?: analyzeInModalWindow(method, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            method.getSymbol().render(noAnnotationsShortNameRenderer())
         }
     }
 

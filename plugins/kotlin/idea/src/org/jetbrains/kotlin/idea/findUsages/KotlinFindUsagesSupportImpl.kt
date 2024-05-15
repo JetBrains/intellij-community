@@ -3,18 +3,30 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.idea.search.usagesSearch.isKotlinConstructorUsage
+import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
+
+private val FUNCTION_RENDERER = DescriptorRenderer.withOptions {
+    withDefinedIn = false
+    modifiers = emptySet()
+    classifierNamePolicy = ClassifierNamePolicy.SHORT
+    withoutTypeParameters = true
+    parameterNameRenderingPolicy = ParameterNameRenderingPolicy.NONE
+}
 
 class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun processCompanionObjectInternalReferences(
@@ -34,8 +46,8 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
         org.jetbrains.kotlin.idea.search.usagesSearch.tryRenderDeclarationCompactStyle(declaration)
 
-    override fun formatJavaOrLightMethod(method: PsiMethod): String =
-        org.jetbrains.kotlin.idea.refactoring.formatJavaOrLightMethod(method)
+    override fun renderDeclaration(method: KtDeclaration): String =
+        KotlinPsiDeclarationRenderer.render(method) ?: FUNCTION_RENDERER.render(method.unsafeResolveToDescriptor())
 
     override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean =
         psiReference.isKotlinConstructorUsage(ktClassOrObject)

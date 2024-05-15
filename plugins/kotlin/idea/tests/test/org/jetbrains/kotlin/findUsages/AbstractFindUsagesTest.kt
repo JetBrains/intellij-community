@@ -235,12 +235,14 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
                 val psiElementAsTitle = when(caretElement) {
                     is KtClass, is KtProperty, is KtParameter, is KtFunction ->
                         KotlinFindUsagesSupport.tryRenderDeclarationCompactStyle(caretElement as KtDeclaration)
-                    is PsiMethod ->
-                        if (caretElement.unwrapped is KtDeclaration) {
-                            KotlinFindUsagesSupport.formatJavaOrLightMethod(caretElement)
+                    is PsiMethod -> {
+                        val unwrapped = caretElement.unwrapped
+                        if (unwrapped is KtDeclaration) {
+                            KotlinFindUsagesSupport.renderDeclaration(unwrapped)
                         } else {
                             null
                         }
+                    }
                     else -> null
                 }
 

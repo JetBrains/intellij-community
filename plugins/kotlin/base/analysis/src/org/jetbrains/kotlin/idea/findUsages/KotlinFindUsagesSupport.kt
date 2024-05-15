@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
@@ -42,8 +41,8 @@ interface KotlinFindUsagesSupport {
             getInstance(declaration.project).tryRenderDeclarationCompactStyle(declaration)
 
         @NlsSafe
-        fun formatJavaOrLightMethod(method: PsiMethod): String =
-            getInstance(method.project).formatJavaOrLightMethod(method)
+        fun renderDeclaration(method: KtDeclaration): String =
+            getInstance(method.project).renderDeclaration(method)
 
         fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean {
             fun isJavaConstructorUsage(): Boolean {
@@ -62,7 +61,7 @@ interface KotlinFindUsagesSupport {
 
     fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String?
 
-    fun formatJavaOrLightMethod(method: PsiMethod): String
+    fun renderDeclaration(method: KtDeclaration): String
 
     fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean
 
