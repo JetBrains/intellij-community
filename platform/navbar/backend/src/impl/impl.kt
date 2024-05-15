@@ -3,6 +3,7 @@ package com.intellij.platform.navbar.backend.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.platform.navbar.backend.NavBarItemProvider
 
@@ -32,5 +33,7 @@ private fun NavBarItem.iterateAllChildren(): Iterable<NavBarItem> =
     .flatMap { ext -> ext.iterateChildren(this) }
 
 private val weightComparator = compareBy<NavBarItem> { -it.weight() }
-private val nameComparator = compareBy<NavBarItem, String>(NaturalComparator.INSTANCE) { it.presentation().text }
+private val nameComparator = compareBy<NavBarItem, String>(NaturalComparator.INSTANCE) {
+  (it.presentation() as NavBarItemPresentationData).text
+}
 private val siblingsComparator = weightComparator.then(nameComparator)

@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend.vm
 
-import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarItemPresentationData
 import kotlinx.coroutines.flow.StateFlow
 
 interface NavBarItemVm {
 
-  val presentation: NavBarItemPresentation
+  val presentation: NavBarItemPresentationData
 
   val isModuleContentRoot: Boolean
 

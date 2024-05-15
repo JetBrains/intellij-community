@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationRequests
 import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.pom.Navigatable
 import com.intellij.problems.WolfTheProblemSolver
@@ -57,8 +58,7 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
     val textAttributes = getTextAttributes()
 
     val hasContainingFile = (data as? PsiElement)?.containingFile != null
-
-    return NavBarItemPresentation(
+    return NavBarItemPresentationData(
       icon,
       text,
       popupText,

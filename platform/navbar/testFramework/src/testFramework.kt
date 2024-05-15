@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.platform.navbar.backend.compatibility.DefaultNavBarItem
 import com.intellij.platform.navbar.backend.compatibility.compatibilityNavBarItem
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.TestOnly
 @TestOnly
 @Internal
 suspend fun dumpContextModel(ctx: DataContext, project: Project): List<String> {
-  return contextModel(ctx, project).map { it.presentation.text }
+  return contextModel(ctx, project).map { (it.presentation as NavBarItemPresentationData).text }
 }
 
 @TestOnly
@@ -36,7 +37,7 @@ fun contextNavBarPathStrings(ctx: DataContext): List<String> {
                       ?.dereference()
                     ?: return emptyList()
   return contextItem.pathToItem().map {
-    it.presentation().text
+    (it.presentation() as NavBarItemPresentationData).text
   }
 }
 

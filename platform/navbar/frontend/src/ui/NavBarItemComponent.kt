@@ -10,7 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.frontend.actions.navBarContextMenuActionGroup
 import com.intellij.platform.navbar.frontend.ui.AbstractNavBarUI.getDecorationOffset
 import com.intellij.platform.navbar.frontend.ui.AbstractNavBarUI.getFirstElementLeftOffset
@@ -197,9 +197,9 @@ internal class NavBarItemComponent(
     val focused = isFocused
 
     val presentation = vm.presentation
-    val attributes = presentation.textAttributes
+    val attributes = presentation.textAttributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES
     val fg: Color? = when {
-      !ExperimentalUI.isNewUI() -> navBarItemForeground(selected, focused, vm.isInactive()) ?: attributes.fgColor
+      !ExperimentalUI.isNewUI() -> navBarItemForeground(selected, focused, vm.isInactive()) ?: attributes?.fgColor
       isHovered -> Breadcrumbs.HOVER_FOREGROUND
       selected -> if (focused) Breadcrumbs.SELECTION_FOREGROUND else Breadcrumbs.SELECTION_INACTIVE_FOREGROUND
       else -> if (isFloating) Breadcrumbs.FLOATING_FOREGROUND else Breadcrumbs.FOREGROUND
@@ -213,7 +213,7 @@ internal class NavBarItemComponent(
     append(presentation.text, SimpleTextAttributes(bg, fg, waveColor, style))
   }
 
-  private fun effectiveIcon(presentation: NavBarItemPresentation): Icon? {
+  private fun effectiveIcon(presentation: NavBarItemPresentationData): Icon? {
     return when {
       ExperimentalUI.isNewUI() && vm.isModuleContentRoot -> ExpUiIcons.Nodes.Module8x8
       Registry.`is`("navBar.show.icons") || vm.isLast || presentation.hasContainingFile -> presentation.icon
