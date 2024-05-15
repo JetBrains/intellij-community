@@ -1178,7 +1178,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     TextEditor textEditor = fileEditor instanceof TextEditor t ? t : null;
     Editor editor = textEditor == null ? null : textEditor.getEditor();
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && highlighter == null) {
+    if (highlighter == null) {
       if (PassExecutorService.LOG.isDebugEnabled()) {
         PassExecutorService.log(
           null,
@@ -1230,7 +1230,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                   @NotNull Document document,
                                   @NotNull VirtualFile virtualFile,
                                   @NotNull PsiFile psiFile,
-                                  @Nullable BackgroundEditorHighlighter backgroundEditorHighlighter,
+                                  @NotNull BackgroundEditorHighlighter backgroundEditorHighlighter,
                                   int @NotNull [] passesToIgnore,
                                   @NotNull DaemonProgressIndicator progress,
                                   @NotNull HighlightingSessionImpl session) {
@@ -1245,9 +1245,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     if (getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments()) {
       stopProcess(true, "more documents to commit: " + ReadAction.compute(() -> Arrays.toString(getPsiDocumentManager().getUncommittedDocuments())));
-      return;
-    }
-    if (backgroundEditorHighlighter == null) {
       return;
     }
     try {
