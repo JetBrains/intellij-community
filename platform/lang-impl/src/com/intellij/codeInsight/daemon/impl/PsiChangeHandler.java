@@ -84,7 +84,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       @Override
       public void transactionCompleted(@NotNull Document document, @NotNull PsiFile file) {
         updateChangesForDocument(document);
-        document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null); // ensure we don't call updateChangesForDocument() twice which can lead to whole file re-highlight
+        document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null); // ensure we don't call updateChangesForDocument() twice which can lead to the whole file re-highlight
       }
     });
   }
@@ -178,11 +178,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
       Object oldValue = event.getOldValue();
-      if (oldValue instanceof VirtualFile vf && shouldBeIgnored(vf)) {
-        // ignore workspace.xml
-        return;
+      // ignore workspace.xml
+      if (!(oldValue instanceof VirtualFile vf) || shouldHandle(vf)) {
+        myFileStatusMap.markAllFilesDirty(event);
       }
-      myFileStatusMap.markAllFilesDirty(event);
     }
   }
 
@@ -206,11 +205,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
         return;
       }
 
-      List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
-      if (toUpdate == null) {
-        toUpdate = new SmartList<>();
-        changedElements.put(document, toUpdate);
-      }
+      List<Pair<PsiElement, Boolean>> toUpdate = changedElements.computeIfAbsent(document, __->new SmartList<>());
       toUpdate.add(Pair.create(child, whitespaceOptimizationAllowed));
     }
   }
@@ -230,7 +225,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
       return;
     }
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null && shouldBeIgnored(virtualFile)) {
+    if (virtualFile != null && !shouldHandle(virtualFile)) {
       // ignore workspace.xml
       return;
     }
@@ -267,10 +262,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     }
   }
 
-  private boolean shouldBeIgnored(@NotNull VirtualFile virtualFile) {
+  private boolean shouldHandle(@NotNull VirtualFile virtualFile) {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307614, EA-698479")) {
-      return ProjectUtil.isProjectOrWorkspaceFile(virtualFile) ||
-             ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(virtualFile);
+      return !ProjectUtil.isProjectOrWorkspaceFile(virtualFile) &&
+             !ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(virtualFile);
     }
   }
 

@@ -487,7 +487,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
         visitor2.myState().THINK.set(false);
         boolean b = ContainerUtil.exists(infos, info -> visitor1.isMy(info)) && ContainerUtil.exists(infos, info -> visitor2.isMy(info));
         if (!b) {
-          System.err.println(infos+"\n---\n"+ThreadDumper.dumpThreadsToString()+"\n====");
+          System.out.println(infos+"\n---\n"+ThreadDumper.dumpThreadsToString()+"\n====");
         }
         assertTrue(infos.toString(), b);
       }
