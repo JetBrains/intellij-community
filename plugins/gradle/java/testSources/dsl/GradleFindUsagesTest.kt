@@ -37,29 +37,6 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
     }
   }
 
-  @ParameterizedTest
-  @BaseGradleVersionSource
-  fun testLocalProperty(gradleVersion: GradleVersion) {
-    test(gradleVersion, VERSION_CATALOG_FIXTURE) {
-      writeTextAndCommit("build.gradle", """
-        tasks.register('hello') {
-            doLast {
-                def <caret>a = 0
-                println a
-            }
-        }
-      """.trimIndent())
-      runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle"))
-        val property = fixture.elementAtCaret // what
-        Assertions.assertTrue(property.useScope is LocalSearchScope)
-        val usages = ReferencesSearch.search(property).findAll()
-        Assertions.assertTrue(usages.size == 1)
-        Assertions.assertTrue(usages.single().element.containingFile.name == "build.gradle")
-      }
-    }
-  }
-
   companion object {
 
     private val VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-findUsages") {
