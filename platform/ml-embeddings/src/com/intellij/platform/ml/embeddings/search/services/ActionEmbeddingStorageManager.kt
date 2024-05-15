@@ -55,34 +55,34 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
   }
 
   private suspend fun indexActions(project: Project?) {
-    try {
-      if (isFirstIndexing) onFirstIndexingStart()
+    LocalEmbeddingServiceProvider.getInstance().indexingSession {
+      try {
+        if (isFirstIndexing) onFirstIndexingStart()
 
-      val embeddingService: LocalEmbeddingService = serviceAsync<LocalEmbeddingServiceProvider>().getService() ?: return
+        val actionsIndexingStartTime = System.nanoTime()
+        val indexableActions = getIndexableActions()
 
-      val actionsIndexingStartTime = System.nanoTime()
-      val indexableActions = getIndexableActions()
-
-      // todo we are going to get rid of progresses here
-      /*project?.let {
-        withBackgroundProgress(it, EmbeddingsBundle.getMessage("ml.embeddings.indices.actions.generation.label")) {
-          reportProgress(indexableActions.size) {
-            indexAllActions(embeddingService, indexableActions)
+        // todo we are going to get rid of progresses here
+        /*project?.let {
+          withBackgroundProgress(it, EmbeddingsBundle.getMessage("ml.embeddings.indices.actions.generation.label")) {
+            reportProgress(indexableActions.size) {
+              indexAllActions(embeddingService, indexableActions)
+            }
           }
-        }
-      } ?:*/ indexAllActions(embeddingService, indexableActions)
+        } ?:*/ indexAllActions(this, indexableActions)
 
-      val durationMs = TimeoutUtil.getDurationMillis(actionsIndexingStartTime)
-      EmbeddingSearchLogger.indexingFinished(project, forActions = true, durationMs)
-    }
-    catch (e: CancellationException) {
-      LOG.debug("Actions embedding indexing was cancelled")
-      throw e
-    }
-    finally {
-      if (isFirstIndexing) {
-        onFirstIndexingFinish()
-        isFirstIndexing = false
+        val durationMs = TimeoutUtil.getDurationMillis(actionsIndexingStartTime)
+        EmbeddingSearchLogger.indexingFinished(project, forActions = true, durationMs)
+      }
+      catch (e: CancellationException) {
+        LOG.debug("Actions embedding indexing was cancelled")
+        throw e
+      }
+      finally {
+        if (isFirstIndexing) {
+          onFirstIndexingFinish()
+          isFirstIndexing = false
+        }
       }
     }
   }
