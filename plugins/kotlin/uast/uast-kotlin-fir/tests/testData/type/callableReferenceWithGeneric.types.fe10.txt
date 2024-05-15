@@ -4,12 +4,11 @@ UFile (package = ) [public final class CallableReferenceWithGenericKt {...]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallableReferenceExpression (name = equals) [NonGenericClass::equals] : kotlin.reflect.KFunction<? extends java.lang.Boolean>
                 USimpleNameReferenceExpression (identifier = NonGenericClass) [NonGenericClass]
-        UField (name = reference2) [@org.jetbrains.annotations.NotNull private static final var reference2: kotlin.reflect.KFunction<java.lang.Boolean> = <anonymous class>()::equals]
+        UField (name = reference2) [@org.jetbrains.annotations.NotNull private static final var reference2: kotlin.reflect.KFunction<java.lang.Boolean> = UIdentifier (Identifier (GenericClass))()::equals]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UCallableReferenceExpression (name = equals) [<anonymous class>()::equals] : kotlin.reflect.KFunction<? extends java.lang.Boolean>
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()]
+            UCallableReferenceExpression (name = equals) [UIdentifier (Identifier (GenericClass))()::equals] : kotlin.reflect.KFunction<? extends java.lang.Boolean>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (GenericClass))()]
                     UIdentifier (Identifier (GenericClass)) [UIdentifier (Identifier (GenericClass))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
         UMethod (name = getReference1) [public static final fun getReference1() : kotlin.reflect.KFunction<java.lang.Boolean> = UastEmptyExpression]
         UMethod (name = getReference2) [public static final fun getReference2() : kotlin.reflect.KFunction<java.lang.Boolean> = UastEmptyExpression]
     UClass (name = NonGenericClass) [public final class NonGenericClass {...}]
