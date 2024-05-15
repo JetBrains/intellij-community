@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.notification.NotificationGroup;
+import com.intellij.ide.IdeBundle;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -72,21 +74,44 @@ public final class JBCefApp {
   private static final JBCefSourceSchemeHandlerFactory ourSourceSchemeHandlerFactory = new JBCefSourceSchemeHandlerFactory();
 
   private JBCefApp(@NotNull JCefAppConfig config) throws IllegalStateException {
-    boolean started = false;
-    try {
-      started = CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
+    CefSettings settings = SettingsHelper.loadSettings(config);
+
+    if (SystemInfoRt.isLinux && !settings.no_sandbox) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        if (JBCefAppArmorUtils.areUnprivilegedUserNameSpacesAllowed()) {
+          CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
+        }
+        else {
+          Notification notification =
+            getNotificationGroup()
+              .createNotification(
+                IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.title"),
+                IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.message"),
+                NotificationType.WARNING);
+
+          AnAction installProfileAction = JBCefAppArmorUtils.getInstallInstallAppArmorProfileAction(() -> notification.expire());
+          if (installProfileAction != null) {
+            notification.addAction(installProfileAction);
+          }
+
+          notification.addAction(
+            NotificationAction.createSimple(
+              IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.disable.sandbox"),
+              () -> {
+                RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
+                notification.expire();
+                ApplicationManager.getApplication().restart();
+              })
+          );
+
+          Notifications.Bus.notify(notification);
+        }
+      });
     }
-    catch (UnsatisfiedLinkError e) {
-      LOG.error(e.getMessage());
-    }
-    if (!started) {
-      if (SystemInfoRt.isLinux) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> SettingsHelper.showNotificationMissingLibraries());
-      }
-      throw new IllegalStateException("CefApp failed to start");
+    else {
+      CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
     }
 
-    CefSettings settings = SettingsHelper.loadSettings(config);
     BoolRef trackGPUCrashes = new BoolRef(false);
     String[] args = SettingsHelper.loadArgs(config, settings, trackGPUCrashes);
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
