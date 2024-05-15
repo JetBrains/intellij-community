@@ -382,7 +382,7 @@ suspend fun copyAdditionalPlugins(context: BuildContext, pluginDir: Path): List<
   }
 }
 
-suspend fun buildNonBundledPlugins(
+internal suspend fun buildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
   buildPlatformLibJob: Job?,

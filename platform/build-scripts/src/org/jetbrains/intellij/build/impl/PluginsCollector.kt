@@ -13,7 +13,7 @@ import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import java.nio.file.Path
 
-internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, context: BuildContext, result: MutableSet<PluginLayout>) {
+internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, result: MutableSet<PluginLayout>, context: BuildContext) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
   builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
@@ -67,11 +67,7 @@ internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModules
   }
 }
 
-private fun isPluginCompatible(
-  plugin: PluginDescriptor,
-  availableModulesAndPlugins: MutableSet<String>,
-  nonCheckedModules: MutableMap<String, PluginDescriptor>
-): Boolean {
+private fun isPluginCompatible(plugin: PluginDescriptor, availableModulesAndPlugins: MutableSet<String>, nonCheckedModules: MutableMap<String, PluginDescriptor>): Boolean {
   nonCheckedModules.remove(plugin.id)
   for (declaredModule in plugin.declaredModules) {
     nonCheckedModules.remove(declaredModule)

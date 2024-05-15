@@ -92,7 +92,7 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
       "intellij.tools.launcherGenerator"
     ).let {
       compilationTasks.compileModules(moduleNames = it)
-      localizeModules(context = context, moduleNames = it)
+      localizeModules(moduleNames = it, context = context)
     }
 
     buildProjectArtifacts(
@@ -176,7 +176,7 @@ suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildCont
   )
 }
 
-private suspend fun localizeModules(context: BuildContext, moduleNames: Collection<String>) {
+private suspend fun localizeModules(moduleNames: Collection<String>, context: BuildContext) {
   if (context.isStepSkipped(BuildOptions.LOCALIZE_STEP)) {
     return
   }
@@ -642,7 +642,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   val compilationTasks = CompilationTasks.create(context)
   collectModulesToCompileForDistribution(context).let {
     compilationTasks.compileModules(moduleNames = it)
-    localizeModules(context, moduleNames = it)
+    localizeModules(moduleNames = it, context)
   }
 
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)
@@ -652,11 +652,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context)
   val addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
-                            hasPlatformCoverage(
-                              productLayout = productLayout,
-                              enabledPluginModules = enabledPluginModules,
-                              context = context,
-                            )
+                            hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context)
 
   if (context.shouldBuildDistributions()) {
     if (context.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
@@ -664,10 +660,10 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     }
     else {
       val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
-      val platform = createPlatformLayout(pluginsToPublish, context)
+      val platform = createPlatformLayout(pluginsToPublish = pluginsToPublish, context = context)
       getModulesForPluginsToPublish(platform, pluginsToPublish).let {
         compilationTasks.compileModules(moduleNames = it)
-        localizeModules(context, moduleNames = it)
+        localizeModules(moduleNames = it, context = context)
       }
 
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
@@ -689,48 +685,29 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       context.notifyArtifactBuilt(artifactPath = providedModuleFile)
       if (!productLayout.buildAllCompatiblePlugins) {
         val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
-        buildProjectArtifacts(
-          platform = distState.platform,
-          enabledPluginModules = enabledPluginModules,
-          compilationTasks = compilationTasks,
-          context = context
-        )
+        buildProjectArtifacts(platform = distState.platform, enabledPluginModules = enabledPluginModules, compilationTasks = compilationTasks, context = context)
         return distState
       }
 
-      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, context = context, result = pluginsToPublish)
-      filterPluginsToPublish(pluginsToPublish, context)
+      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, result = pluginsToPublish, context = context)
+      filterPluginsToPublish(plugins = pluginsToPublish, context = context)
 
       // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
       enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
     }
   }
 
-  val platform = createPlatformLayout(
-    addPlatformCoverage = addPlatformCoverage,
-    projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
-    context = context,
-  )
+  val platform = createPlatformLayout(addPlatformCoverage = addPlatformCoverage, projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
   distState.getModulesForPluginsToPublish().let {
     compilationTasks.compileModules(moduleNames = it)
-    localizeModules(context, moduleNames = it)
+    localizeModules(moduleNames = it, context)
   }
-  buildProjectArtifacts(
-    platform = distState.platform,
-    enabledPluginModules = enabledPluginModules,
-    compilationTasks = compilationTasks,
-    context = context
-  )
+  buildProjectArtifacts(platform = distState.platform, enabledPluginModules = enabledPluginModules, compilationTasks = compilationTasks, context = context)
   return distState
 }
 
-private suspend fun buildProjectArtifacts(
-  platform: PlatformLayout,
-  enabledPluginModules: Set<String>,
-  compilationTasks: CompilationTasks,
-  context: BuildContext
-) {
+private suspend fun buildProjectArtifacts(platform: PlatformLayout, enabledPluginModules: Set<String>, compilationTasks: CompilationTasks, context: BuildContext) {
   val artifactNames = LinkedHashSet<String>()
   artifactNames.addAll(platform.includedArtifacts.keys)
   getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
@@ -746,7 +723,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
   logFreeDiskSpace("before compilation", context)
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(
     modules = context.productProperties.productLayout.pluginModulesToPublish,
-    productLayout = context.productProperties.productLayout
+    productLayout = context.productProperties.productLayout,
   )
   val distributionState = compileModulesForDistribution(context)
   logFreeDiskSpace("after compilation", context)

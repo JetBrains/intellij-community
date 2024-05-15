@@ -17,7 +17,7 @@ suspend fun createDistributionBuilderState(context: BuildContext): DistributionB
   return DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context)
 }
 
-class DistributionBuilderState(@JvmField val platform: PlatformLayout, @JvmField val pluginsToPublish: Set<PluginLayout>, context: BuildContext) {
+class DistributionBuilderState internal constructor(@JvmField val platform: PlatformLayout, @JvmField val pluginsToPublish: Set<PluginLayout>, context: BuildContext) {
   init {
     val releaseDate = context.applicationInfo.majorReleaseDate
     require(!releaseDate.startsWith("__")) {
@@ -25,8 +25,8 @@ class DistributionBuilderState(@JvmField val platform: PlatformLayout, @JvmField
     }
   }
 
-  val platformModules: Collection<String>
-    get() = (platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()).toList()
+  val platformModules: Sequence<String>
+    get() = platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()
 
   fun getModulesForPluginsToPublish(): Set<String> {
     return getModulesForPluginsToPublish(platform, pluginsToPublish)
