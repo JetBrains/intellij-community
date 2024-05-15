@@ -12,7 +12,7 @@ import java.awt.EventQueue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
-internal abstract class LegacyInvokerImpl(private val useReadAction: ThreeState) : InvokerImpl {
+internal abstract class LegacyInvokerDelegate(private val useReadAction: ThreeState) : InvokerDelegate {
   private val indicators = ConcurrentHashMap<AsyncPromise<*>, ProgressIndicatorBase>()
 
   override fun dispose() {
@@ -46,7 +46,7 @@ internal abstract class LegacyInvokerImpl(private val useReadAction: ThreeState)
   }
 }
 
-internal class EdtLegacyInvokerImpl(override val description: String) : LegacyInvokerImpl(ThreeState.UNSURE) {
+internal class EdtLegacyInvokerDelegate(override val description: String) : LegacyInvokerDelegate(ThreeState.UNSURE) {
   override fun offer(runnable: Runnable, delay: Int, promise: Promise<*>) {
     if (delay > 0) {
       EdtExecutorService.getScheduledExecutorInstance().schedule(runnable, delay.toLong(), TimeUnit.MILLISECONDS)
@@ -57,11 +57,11 @@ internal class EdtLegacyInvokerImpl(override val description: String) : LegacyIn
   }
 }
 
-internal class BgtLegacyInvokerImpl(
+internal class BgtLegacyInvokerDelegate(
   override val description: String,
-  useReadAction: ThreeState,
+  useReadAction: Boolean,
   maxThreads: Int,
-) : LegacyInvokerImpl(useReadAction) {
+) : LegacyInvokerDelegate(if (useReadAction) ThreeState.YES else ThreeState.NO) {
   private val executor = AppExecutorUtil.createBoundedScheduledExecutorService(description, maxThreads)
 
   override fun dispose() {

@@ -6,12 +6,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.ThreeState
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 
-internal interface InvokerImpl : Disposable {
+internal interface InvokerDelegate : Disposable {
   val description: String
   fun offer(runnable: Runnable, delay: Int, promise: Promise<*>)
   fun run(task: Runnable, promise: AsyncPromise<*>): Boolean
@@ -23,20 +22,25 @@ internal class InvokerService(private val scope: CoroutineScope) {
     @JvmStatic fun getInstance(): InvokerService = service()
   }
 
-  fun forEdt(description: String): InvokerImpl =
+  fun forEdt(description: String): InvokerDelegate =
     if (useCoroutineInvoker) {
-      EdtCoroutineInvokerImpl(description, scope.childScope(description))
+      EdtCoroutineInvokerDelegate(description, scope.childScope(description))
     }
     else {
-      EdtLegacyInvokerImpl(description)
+      EdtLegacyInvokerDelegate(description)
     }
 
-  fun forBgt(description: String, useReadAction: ThreeState, maxThreads: Int): InvokerImpl =
+  fun forBgt(description: String, useReadAction: Boolean, maxThreads: Int): InvokerDelegate =
     if (useCoroutineInvoker) {
-      BgtCoroutineInvokerImpl(description, scope.childScope(description), useReadAction, maxThreads)
+      if (maxThreads == 1) {
+        SequentialBgtCoroutineInvokerDelegate(description, scope.childScope(description), useReadAction)
+      }
+      else {
+        ConcurrentBgtCoroutineInvokerDelegate(description, scope.childScope(description), useReadAction, maxThreads)
+      }
     }
     else {
-      BgtLegacyInvokerImpl(description, useReadAction, maxThreads)
+      BgtLegacyInvokerDelegate(description, useReadAction, maxThreads)
     }
 
   private val useCoroutineInvoker: Boolean

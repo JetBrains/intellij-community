@@ -33,14 +33,14 @@ public abstract class Invoker implements Disposable {
   private static final int THRESHOLD = Integer.MAX_VALUE;
   static final Logger LOG = Logger.getInstance(Invoker.class);
   private static final AtomicInteger UID = new AtomicInteger();
-  final InvokerImpl impl;
+  final InvokerDelegate delegate;
   private final AtomicInteger count = new AtomicInteger();
   private final ThreeState useReadAction;
   private volatile boolean disposed;
 
-  private Invoker(@NotNull InvokerImpl impl, @NotNull ThreeState useReadAction) {
-    this.impl = impl;
-    Disposer.register(this, this.impl);
+  private Invoker(@NotNull InvokerDelegate delegate, @NotNull ThreeState useReadAction) {
+    this.delegate = delegate;
+    Disposer.register(this, this.delegate);
     this.useReadAction = useReadAction;
   }
 
@@ -53,7 +53,7 @@ public abstract class Invoker implements Disposable {
 
   @Override
   public String toString() {
-    return impl.getDescription();
+    return delegate.getDescription();
   }
 
   @Override
@@ -191,7 +191,7 @@ public abstract class Invoker implements Disposable {
     try (AccessToken ignored = ClientId.withClientId(task.clientId)) {
       try {
         if (task.canInvoke(disposed)) {
-          if (!impl.run(task, task.promise)) {
+          if (!delegate.run(task, task.promise)) {
             offerRestart(task, attempt);
             return;
           }
@@ -429,7 +429,7 @@ public abstract class Invoker implements Disposable {
 
     @Override
     void offer(@NotNull Runnable runnable, int delay, Promise<?> promise) {
-      impl.offer(runnable, delay, promise);
+      delegate.offer(runnable, delay, promise);
     }
   }
 
@@ -447,17 +447,18 @@ public abstract class Invoker implements Disposable {
      */
     @Deprecated(forRemoval = true)
     public Background(@NotNull Disposable parent, int maxThreads) {
-      this(parent, ThreeState.YES, maxThreads);
+      this(parent, true, maxThreads);
     }
 
-    private Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
+    private Background(@NotNull Disposable parent, boolean useReadAction, int maxThreads) {
       super(
         InvokerService.getInstance().forBgt(
-          newDescription(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", String.valueOf(parent.toString()), useReadAction),
+          newDescription(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", String.valueOf(parent.toString()),
+                         useReadAction ? ThreeState.YES : ThreeState.NO),
           useReadAction,
           maxThreads
         ),
-        useReadAction
+        useReadAction ? ThreeState.YES : ThreeState.NO
       );
       Disposer.register(parent, this);
     }
@@ -469,7 +470,7 @@ public abstract class Invoker implements Disposable {
 
     @Override
     void offer(@NotNull Runnable runnable, int delay, Promise<?> promise) {
-      impl.offer(() -> {
+      delegate.offer(() -> {
         Thread thread = Thread.currentThread();
         if (!threads.add(thread)) {
           LOG.error("current thread is already used");
@@ -494,18 +495,18 @@ public abstract class Invoker implements Disposable {
   }
 
   public static @NotNull Invoker forBackgroundPoolWithReadAction(@NotNull Disposable parent) {
-    return new Background(parent, ThreeState.YES, 8);
+    return new Background(parent, true, 8);
   }
 
   public static @NotNull Invoker forBackgroundPoolWithoutReadAction(@NotNull Disposable parent) {
-    return new Background(parent, ThreeState.NO, 8);
+    return new Background(parent, false, 8);
   }
 
   public static @NotNull Invoker forBackgroundThreadWithReadAction(@NotNull Disposable parent) {
-    return new Background(parent, ThreeState.YES, 1);
+    return new Background(parent, true, 1);
   }
 
   public static @NotNull Invoker forBackgroundThreadWithoutReadAction(@NotNull Disposable parent) {
-    return new Background(parent, ThreeState.NO, 1);
+    return new Background(parent, false, 1);
   }
 }
