@@ -8,12 +8,12 @@ import org.jetbrains.intellij.build.BuildContext
 suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
   val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
   filterPluginsToPublish(pluginsToPublishEffective, context)
-  val platform = createPlatformLayout(pluginsToPublishEffective, context)
+  val platform = createPlatformLayout(context)
   return DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublishEffective, context = context)
 }
 
 suspend fun createDistributionBuilderState(context: BuildContext): DistributionBuilderState {
-  val platform = createPlatformLayout(pluginsToPublish = emptySet(), context = context)
+  val platform = createPlatformLayout(context = context)
   return DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context)
 }
 

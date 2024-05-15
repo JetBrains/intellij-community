@@ -126,7 +126,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
  * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val entries = generateProjectStructureMapping(context = context, platformLayout = createPlatformLayout(pluginsToPublish = emptySet(), context = context))
+  val entries = generateProjectStructureMapping(context = context, platformLayout = createPlatformLayout(context = context))
   writeProjectStructureReport(entries = entries.first + entries.second, file = targetFile, buildPaths = context.paths)
 }
 
@@ -408,7 +408,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     }
     else {
       val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
-      val platform = createPlatformLayout(pluginsToPublish = pluginsToPublish, context = context)
+      val platform = createPlatformLayout(context = context)
       getModulesForPluginsToPublish(platform = platform, pluginsToPublish = pluginsToPublish).let {
         compilationTasks.compileModules(moduleNames = it)
         toLocalize.addAll(it)

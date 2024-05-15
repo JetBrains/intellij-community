@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.Dispatchers
@@ -16,8 +16,8 @@ class PluginDistributionJARsBuilderTest {
     val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
     runBlocking(Dispatchers.Default) {
       val context = BuildContextImpl.createContext(COMMUNITY_ROOT.communityRoot, productProperties)
-      val ideClasspath1 = createIdeClassPath(createPlatformLayout(pluginsToPublish = emptySet(), context = context), context)
-      val ideClasspath2 = createIdeClassPath(createPlatformLayout(pluginsToPublish = emptySet(), context = context), context)
+      val ideClasspath1 = createIdeClassPath(createPlatformLayout(context = context), context)
+      val ideClasspath2 = createIdeClassPath(createPlatformLayout(context = context), context)
       assertThat(ideClasspath1).isEqualTo(ideClasspath2)
     }
   }

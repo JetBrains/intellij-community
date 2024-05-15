@@ -138,12 +138,13 @@ private fun addModule(relativeJarPath: String, moduleNames: Collection<String>, 
                        .toList())
 }
 
-suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: BuildContext): PlatformLayout {
+suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
   val productLayout = context.productProperties.productLayout
+  val enabledPluginModules = context.bundledPluginModules.toHashSet()
   return createPlatformLayout(
     addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
-                          hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context), context = context),
-    projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = context.bundledPluginModules.toHashSet(), context = context),
+                          hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context),
+    projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context),
     context = context,
   )
 }

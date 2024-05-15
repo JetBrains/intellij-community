@@ -120,7 +120,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     val moduleOutputPatcher = ModuleOutputPatcher()
 
     val platformLayout = async {
-      createPlatformLayout(pluginsToPublish = emptySet(), context = context)
+      createPlatformLayout(context = context)
     }
 
     val searchableOptionSet = getSearchableOptionSet(context)
