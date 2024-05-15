@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.EntityChange
@@ -27,9 +28,11 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.MultiMap
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
+import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
@@ -39,6 +42,22 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     private const val LIBRARY_NAME_DELIMITER = ":"
     @JvmStatic
     private val LOG = logger<ModuleDependencyIndexImpl>()
+
+    private val changedListenerTimeMs = MillisecondsMeasurer()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val changedListenerTimeCounter = meter.counterBuilder("module.dependency.index.workspace.model.listener.on.changed.ms").buildObserver()
+
+      meter.batchCallback(
+        {
+          changedListenerTimeCounter.record(changedListenerTimeMs.asMilliseconds())
+        }, changedListenerTimeCounter
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 
   private val eventDispatcher = EventDispatcher.create(ModuleDependencyListener::class.java)
@@ -98,7 +117,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     return jdkChangeListener.hasDependencyOn(sdk)
   }
 
-  fun workspaceModelChanged(event: VersionedStorageChange) {
+  fun workspaceModelChanged(event: VersionedStorageChange) = changedListenerTimeMs.addMeasuredTime {
     if (project.isDisposed) return
 
     // Roots changed event should be fired for the global libraries linked with module
