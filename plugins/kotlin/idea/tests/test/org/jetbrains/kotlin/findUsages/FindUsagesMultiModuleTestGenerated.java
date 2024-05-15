@@ -123,6 +123,16 @@ public class FindUsagesMultiModuleTestGenerated extends AbstractFindUsagesMultiM
         runTest("testData/multiModuleFindUsages/findJvmFromActualJs/");
     }
 
+    @TestMetadata("findOverridingFromCommon")
+    public void testFindOverridingFromCommon() throws Exception {
+        runTest("testData/multiModuleFindUsages/findOverridingFromCommon/");
+    }
+
+    @TestMetadata("findOverridingFromPlatform")
+    public void testFindOverridingFromPlatform() throws Exception {
+        runTest("testData/multiModuleFindUsages/findOverridingFromPlatform/");
+    }
+
     @TestMetadata("findParameterInOverride")
     public void testFindParameterInOverride() throws Exception {
         runTest("testData/multiModuleFindUsages/findParameterInOverride/");

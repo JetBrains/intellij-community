@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
@@ -100,23 +101,29 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             }
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
+        val originalDeclaration = declaration.originalElement as? KtDeclaration ?: return false
         fun KtDeclaration.isTopLevelCallable() = when (this) {
             is KtNamedFunction -> isTopLevel
             is KtProperty -> isTopLevel
             else -> false
         }
 
-        if (declaration.isTopLevelCallable()) return false
+        if (originalDeclaration.isTopLevelCallable()) return false
 
         return reference.unwrappedTargets.any { target ->
             when (target) {
                 is KtDestructuringDeclarationEntry -> false
                 is KtCallableDeclaration -> {
                     if (target.isTopLevelCallable()) return@any false
-                    if (target === declaration) return@any false
+                    if (target === declaration || target == originalDeclaration) return@any false
                     analyze(target) {
                         val targetSymbol = target.getSymbol() as? KtCallableSymbol ?: return@any false
-                        declaration.originalElement in targetSymbol.getAllOverriddenSymbols().mapNotNull { it.psi?.originalElement }
+                        val overriddenDeclarationsInCommon = targetSymbol.getAllOverriddenSymbols().mapNotNull {
+                            val originalElement = it.psi?.originalElement as? KtDeclaration
+                            originalElement?.expectedDeclarationIfAny() ?: originalElement
+                        }
+                        //this ignores disabled option `Extracted functions`
+                        (originalDeclaration.expectedDeclarationIfAny() ?: originalDeclaration) in overriddenDeclarationsInCommon
                     }
                 }
                 is PsiMethod -> {
