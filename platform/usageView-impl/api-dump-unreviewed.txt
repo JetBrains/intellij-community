@@ -67,7 +67,6 @@ c:com.intellij.usages.impl.UsageNode
 c:com.intellij.usages.impl.UsagePreviewPanel
 - com.intellij.usages.impl.UsageContextPanelBase
 - com.intellij.openapi.actionSystem.DataProvider
-- sf:Companion:com.intellij.usages.impl.UsagePreviewPanel$Companion
 - sf:LINE_HEIGHT_PROPERTY:java.lang.String
 - <init>(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewPresentation):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewPresentation,Z):V
@@ -87,19 +86,6 @@ c:com.intellij.usages.impl.UsagePreviewPanel
 - f:setShowTooltipBalloon(Z):V
 - p:updateLayoutLater(java.util.List):V
 - updateLayoutLater(java.util.List,com.intellij.usages.UsageView):V
-f:com.intellij.usages.impl.UsagePreviewPanel$Companion
-- f:createPreviewBalloon(java.lang.String):com.intellij.openapi.ui.popup.Balloon
-- f:createPreviewHtml(java.lang.String):java.lang.String
-- f:getNameElementTextRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
-- f:getPREVIEW_EDITOR_FLAG():com.intellij.openapi.util.Key
-- f:highlight(java.util.List,com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,Z,I):V
-- f:isOneAndOnlyOnePsiFileInUsages(java.util.List):Z
-f:com.intellij.usages.impl.UsagePreviewPanel$Provider
-- com.intellij.usages.UsageContextPanel$Provider
-- <init>():V
-- create(com.intellij.usages.UsageView):com.intellij.usages.UsageContextPanel
-- getTabTitle():java.lang.String
-- isAvailableFor(com.intellij.usages.UsageView):Z
 f:com.intellij.usages.impl.UsagePreviewToolbarWithSimilarUsagesLink
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
