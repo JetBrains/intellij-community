@@ -781,16 +781,21 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     schemeManager.addScheme(userScheme, true);
     schemeManager.save();
 
-    final AtomicBoolean handlerProcessed = new AtomicBoolean();
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, scheme -> {
-      assertEquals("Should have received actual scheme", fontName, scheme.getEditorFontName());
-      handlerProcessed.set(true);
-    });
-    EditorColorsScheme bundledDefault = EditorColorsManager.getInstance().getScheme("Default");
-    assertNotSame("Should have have default font name in bundled scheme", fontName, bundledDefault.getEditorFontName());
-    EditorColorsManager.getInstance().setGlobalScheme(bundledDefault);
-    UIUtil.dispatchAllInvocationEvents();
-    assertTrue("Should have processed EditorColorsManager.TOPIC in 50ms", handlerProcessed.get());
+    try {
+      final AtomicBoolean handlerProcessed = new AtomicBoolean();
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, scheme -> {
+        assertEquals("Should have received actual scheme", fontName, scheme.getEditorFontName());
+        handlerProcessed.set(true);
+      });
+      EditorColorsScheme bundledDefault = EditorColorsManager.getInstance().getScheme("Default");
+      assertNotSame("Should have have default font name in bundled scheme", fontName, bundledDefault.getEditorFontName());
+      EditorColorsManager.getInstance().setGlobalScheme(bundledDefault);
+      UIUtil.dispatchAllInvocationEvents();
+      assertTrue("Should have processed EditorColorsManager.TOPIC in 50ms", handlerProcessed.get());
+    }
+    finally {
+      schemeManager.removeScheme(userScheme);
+    }
   }
 
 
