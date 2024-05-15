@@ -118,6 +118,8 @@
                     interface="org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptCustomEnterHandler"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandHistoryProvider" dynamic="true"
                     interface="org.jetbrains.plugins.terminal.exp.history.TerminalCommandHistoryProvider"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.exp.commandBlockHighlighterProvider"
+                    interface="org.jetbrains.plugins.terminal.exp.TerminalCommandBlockHighlighterProvider" dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>
