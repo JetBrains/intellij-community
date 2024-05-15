@@ -509,9 +509,9 @@
       <module fileurl="file://$PROJECT_DIR$/java/unscramble/intellij.java.unscramble.iml" filepath="$PROJECT_DIR$/java/unscramble/intellij.java.unscramble.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/vcs/intellij.java.vcs.iml" filepath="$PROJECT_DIR$/java/vcs/intellij.java.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/intellij.javaFX.iml" filepath="$PROJECT_DIR$/plugins/javaFX/intellij.javaFX.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/common-javaFX-plugin/intellij.javaFX.common.iml" filepath="$PROJECT_DIR$/plugins/javaFX/common-javaFX-plugin/intellij.javaFX.common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX-CE/intellij.javaFX.community.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX-CE/intellij.javaFX.community.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/intellij.javaFX.jps.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/intellij.javaFX.jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/common/intellij.javaFX.common.iml" filepath="$PROJECT_DIR$/plugins/javaFX/common/intellij.javaFX.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/community/intellij.javaFX.community.iml" filepath="$PROJECT_DIR$/plugins/javaFX/community/intellij.javaFX.community.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/jps/intellij.javaFX.jps.iml" filepath="$PROJECT_DIR$/plugins/javaFX/jps/intellij.javaFX.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/intellij.javaFX.properties.iml" filepath="$PROJECT_DIR$/plugins/javaFX/intellij.javaFX.properties.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/sceneBuilder/intellij.javaFX.sceneBuilder.iml" filepath="$PROJECT_DIR$/plugins/javaFX/sceneBuilder/intellij.javaFX.sceneBuilder.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/protocol/protocol-model-generator/intellij.javascript.protocolModelGenerator.iml" filepath="$PROJECT_DIR$/platform/script-debugger/protocol/protocol-model-generator/intellij.javascript.protocolModelGenerator.iml" />

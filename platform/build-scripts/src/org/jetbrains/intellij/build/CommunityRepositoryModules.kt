@@ -726,10 +726,8 @@ object CommunityRepositoryModules {
     return pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "javaFX"
       spec.mainJarName = "javaFX.jar"
-      spec.withModule("intellij.javaFX")
       spec.withModule("intellij.javaFX.jps")
       spec.withModule("intellij.javaFX.common", "javaFX-common.jar")
-      spec.withModule("intellij.javaFX.properties")
       spec.withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
     }
   }
