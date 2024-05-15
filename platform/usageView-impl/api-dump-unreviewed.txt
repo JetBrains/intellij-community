@@ -1,11 +1,3 @@
-c:com.intellij.usages.impl.ExporterToTextFile
-- com.intellij.ide.ExporterToTextFile
-- <init>(com.intellij.usages.impl.UsageViewImpl,com.intellij.usages.UsageViewSettings):V
-- p:appendUsageNodeText(java.lang.StringBuilder,com.intellij.usages.impl.UsageNode):V
-- canExport():Z
-- exportedTo(java.lang.String):V
-- getDefaultFilePath():java.lang.String
-- getReportText():java.lang.String
 com.intellij.usages.impl.FileStructureGroupRuleProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getUsageGroupingRule(com.intellij.openapi.project.Project):com.intellij.usages.rules.UsageGroupingRule
