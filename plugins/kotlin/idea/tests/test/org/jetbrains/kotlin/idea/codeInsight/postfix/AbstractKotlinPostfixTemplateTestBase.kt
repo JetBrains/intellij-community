@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
@@ -59,6 +60,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
                 } else {
                     myFixture.type("\t")
                 }
+                NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
                 val allowMultipleExpressions = InTextDirectivesUtils.isDirectiveDefined(fileText, ALLOW_MULTIPLE_EXPRESSIONS)
                 val suggestedExpressions = with(KotlinPostfixTemplateInfo) { file.suggestedExpressions }
