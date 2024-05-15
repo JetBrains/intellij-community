@@ -44,10 +44,10 @@ private val moduleSkipList = java.util.Set.of(
 )
 
 class PluginModelValidator(sourceModules: List<Module>) {
-  interface Module {
+  sealed interface Module {
     val name: String
 
-    val sourceRoots: List<Path>
+    val sourceRoots: Sequence<Path>
   }
 
   private val pluginIdToInfo = LinkedHashMap<String, ModuleInfo>()
@@ -120,7 +120,8 @@ class PluginModelValidator(sourceModules: List<Module>) {
         descriptor = descriptor,
       )
       val prev = pluginIdToInfo.put(id, moduleInfo)
-      if (prev != null) {
+      // todo how do we can exclude it automatically
+      if (prev != null && id != "com.jetbrains.ae.database" && id != "org.jetbrains.plugins.github") {
         throw PluginValidationError(
           "Duplicated plugin id: $id",
           mapOf(
@@ -419,7 +420,9 @@ class PluginModelValidator(sourceModules: List<Module>) {
       // ignore null - getModule reports error
       val moduleDescriptorFileInfo = getModuleDescriptorFileInfo(moduleName, referencingModuleInfo, sourceModuleNameToFileInfo) ?: continue
 
-      val moduleDescriptor = moduleDescriptorFileInfo.moduleDescriptor!!
+      val moduleDescriptor = requireNotNull(moduleDescriptorFileInfo.moduleDescriptor) {
+        "No module descriptor ($moduleDescriptorFileInfo)"
+      }
       val moduleInfo = checkModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo) ?: continue
       referencingModuleInfo.content.add(moduleInfo)
 
@@ -607,15 +610,17 @@ class PluginModelValidator(sourceModules: List<Module>) {
 }
 
 internal data class ModuleInfo(
-  val pluginId: String?,
-  val name: String?,
-  val sourceModuleName: String,
-  val descriptorFile: Path,
-  val packageName: String?,
+  @JvmField val pluginId: String?,
+  @JvmField val name: String?,
+  @JvmField val sourceModuleName: String,
+  @JvmField val descriptorFile: Path,
+  @JvmField val packageName: String?,
 
-  val descriptor: XmlElement,
+  @JvmField val descriptor: XmlElement,
 ) {
+  @JvmField
   val content = mutableListOf<ModuleInfo>()
+  @JvmField
   val dependencies = mutableListOf<Reference>()
 
   val isPlugin: Boolean
@@ -624,8 +629,7 @@ internal data class ModuleInfo(
 
 internal data class Reference(@JvmField val name: String, @JvmField val isPlugin: Boolean, @JvmField val moduleInfo: ModuleInfo)
 
-
-private class ModuleDescriptorFileInfo(
+private data class ModuleDescriptorFileInfo(
   @JvmField val sourceModule: PluginModelValidator.Module,
 
   @JvmField var moduleDescriptor: XmlElement? = null,

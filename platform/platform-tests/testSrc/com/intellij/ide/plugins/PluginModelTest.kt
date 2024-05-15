@@ -5,7 +5,6 @@ import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.util.JpsPathUtil.urlToPath
 import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Path
@@ -28,7 +27,7 @@ class PluginModelTest {
 fun validatePluginModel(homePath: Path): PluginModelValidator {
   val modules = IntelliJProjectConfiguration.loadIntelliJProject(homePath.toString())
     .modules
-    .map { wrap(it) }
+    .map { ModuleWrap(it) }
 
   val validator = PluginModelValidator(modules)
   val errors = validator.errorsAsString
@@ -39,20 +38,15 @@ fun validatePluginModel(homePath: Path): PluginModelValidator {
   return validator
 }
 
-private fun wrap(module: JpsModule): PluginModelValidator.Module {
-  return object : PluginModelValidator.Module {
-    override val name: String
-      get() = module.name
+private data class ModuleWrap(private val module: JpsModule) : PluginModelValidator.Module {
+  override val name: String
+    get() = module.name
 
-    override val sourceRoots: List<Path>
-      get() {
-        return module.sourceRoots
-          .asSequence()
-          .filter { !it.rootType.isForTests }
-          .map { it.url }
-          .map(::urlToPath)
-          .map(Path::of)
-          .toList()
-      }
-  }
+  override val sourceRoots: Sequence<Path>
+    get() {
+      return module.sourceRoots
+        .asSequence()
+        .filter { !it.rootType.isForTests }
+        .map { it.path }
+    }
 }
