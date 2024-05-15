@@ -218,7 +218,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
     if (!myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(() -> initInEDT());
+      UIUtil.invokeLaterIfNeeded(() -> ReadAction.run(this::initInEDT));
     }
     myExclusionHandler = new ExclusionHandlerEx<>() {
       @Override
@@ -395,7 +395,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     myTree.getSelectionModel().addTreeSelectionListener(__ -> {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         if (!isDisposed()) {
           updateOnSelectionChanged(myProject);
           myNeedUpdateButtons = true;
