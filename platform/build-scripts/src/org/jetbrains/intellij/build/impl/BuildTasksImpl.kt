@@ -85,18 +85,6 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     )
   }
 
-  override fun compileProjectAndTests(includingTestsInModules: List<String>) {
-    compileModules(moduleNames = null, includingTestsInModules = includingTestsInModules)
-  }
-
-  override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>) {
-    CompilationTasks.create(context).compileModules(moduleNames, includingTestsInModules)
-  }
-
-  override fun compileModules(moduleNames: Collection<String>?) {
-    CompilationTasks.create(context).compileModules(moduleNames)
-  }
-
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
     val currentOs = OsFamily.currentOs
     context.paths.distAllDir = targetDirectory

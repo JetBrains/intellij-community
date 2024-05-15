@@ -173,9 +173,7 @@ class BuildContextImpl internal constructor(
   }
 
   override val bundledPluginModules: List<String>
-    get() {
-      return bundledPluginModulesForModularLoader ?: productProperties.productLayout.bundledPluginModules
-    }
+    get() = bundledPluginModulesForModularLoader ?: productProperties.productLayout.bundledPluginModules
   
   private val bundledPluginModulesForModularLoader by lazy {
     productProperties.rootModuleForModularLoader?.let { rootModule ->

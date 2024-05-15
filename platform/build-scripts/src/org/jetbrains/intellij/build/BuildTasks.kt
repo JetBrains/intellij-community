@@ -22,13 +22,5 @@ interface BuildTasks {
    */
   suspend fun buildNonBundledPlugins(mainPluginModules: List<String>)
 
-  fun compileProjectAndTests(includingTestsInModules: List<String>)
-
-  fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>)
-
-  fun compileModules(moduleNames: Collection<String>?) {
-    compileModules(moduleNames = moduleNames, includingTestsInModules = java.util.List.of())
-  }
-
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 }

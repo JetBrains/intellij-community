@@ -2,11 +2,14 @@
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.buildCommunityStandaloneJpsBuilder
+import org.jetbrains.intellij.build.createCommunityBuildContext
 import org.jetbrains.intellij.build.impl.buildDistributions
 
-object OpenSourceCommunityInstallersBuildTarget {
+internal object OpenSourceCommunityInstallersBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val options = BuildOptions().apply {
@@ -19,7 +22,7 @@ object OpenSourceCommunityInstallersBuildTarget {
 
     runBlocking(Dispatchers.Default) {
       val context = createCommunityBuildContext(options)
-      createBuildTasks(context).compileProjectAndTests(listOf("intellij.platform.jps.build.tests"))
+      CompilationTasks.create(context).compileModules(moduleNames = null, includingTestsInModules = listOf("intellij.platform.jps.build.tests"))
       buildDistributions(context)
       spanBuilder("build standalone JPS").useWithScope {
         buildCommunityStandaloneJpsBuilder(targetDir = context.paths.artifactDir.resolve("jps"), context = context)

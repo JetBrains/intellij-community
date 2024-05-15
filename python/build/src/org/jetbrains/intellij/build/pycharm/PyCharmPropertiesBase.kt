@@ -5,7 +5,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JetBrainsProductProperties
 import org.jetbrains.intellij.build.TEST_FRAMEWORK_WITH_JAVA_RT
 import org.jetbrains.intellij.build.impl.copyDirWithFileFilter
-import org.jetbrains.intellij.build.impl.zipSourcesOfModules
+import org.jetbrains.intellij.build.zipSourcesOfModules
 import java.nio.file.Path
 import java.util.function.Predicate
 
