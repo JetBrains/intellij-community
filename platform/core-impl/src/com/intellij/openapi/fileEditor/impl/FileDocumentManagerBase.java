@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -78,7 +79,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       }
 
       if (file instanceof LightVirtualFile) {
-        registerDocument(document, file);
+        registerDocument(document, file, false);
       }
       else {
         document.putUserData(FILE_KEY, file);
@@ -86,9 +87,15 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       }
     }
 
+    fireFileBindingChanged(document, null, file);
     fileContentLoaded(file, document);
 
     return document;
+  }
+
+  private static void fireFileBindingChanged(Document document, @Nullable VirtualFile oldFile, @Nullable VirtualFile newFile) {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentBindingListener.TOPIC)
+      .fileDocumentBindingChanged(document, oldFile, newFile);
   }
 
   protected static void setDocumentTooLarge(@NotNull Document document, boolean tooLarge) {
@@ -121,15 +128,25 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
    */
   @ApiStatus.Internal
   public static void registerDocument(@NotNull Document document, @NotNull VirtualFile virtualFile) {
+    registerDocument(document, virtualFile, true);
+  }
+
+  private static void registerDocument(@NotNull Document document, @NotNull VirtualFile virtualFile, boolean fireBindingChangedEvent) {
     if (!(virtualFile instanceof LightVirtualFile) &&
         !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem)) {
       throw new IllegalArgumentException(
         "Hard-coding file<->document association is permitted for non-physical files only (see FileViewProvider.isPhysical())" +
         " to avoid memory leaks. virtualFile=" + virtualFile);
     }
+    VirtualFile oldFile;
     synchronized (lock) {
+      oldFile = document.getUserData(FILE_KEY);
       document.putUserData(FILE_KEY, virtualFile);
       virtualFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
+    }
+
+    if (fireBindingChangedEvent) {
+      fireFileBindingChanged(document, oldFile, virtualFile);
     }
   }
 
@@ -144,6 +161,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       document.putUserData(FILE_KEY, newFile);
       newFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
     }
+    fireFileBindingChanged(document, oldFile, newFile);
   }
 
   @Override
@@ -166,6 +184,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     myDocumentCache.remove(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
+    fireFileBindingChanged(document, file, null);
   }
 
   protected static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
