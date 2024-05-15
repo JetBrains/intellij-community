@@ -773,18 +773,18 @@ public class AllIcons {
       }
 
       public static final class Kde {
-        /** 20x20 */ public static final @NotNull Icon Close = load("linux/theme/kde/close.svg", -1454902927, 2);
-        /** 20x20 */ public static final @NotNull Icon CloseHover = load("linux/theme/kde/closeHover.svg", 103691623, 2);
-        /** 20x20 */ public static final @NotNull Icon CloseInactive = load("linux/theme/kde/closeInactive.svg", 934140163, 2);
-        /** 20x20 */ public static final @NotNull Icon ClosePressed = load("linux/theme/kde/closePressed.svg", 501237012, 2);
-        /** 20x20 */ public static final @NotNull Icon Maximize = load("linux/theme/kde/maximize.svg", 1962245631, 2);
-        /** 20x20 */ public static final @NotNull Icon MaximizeHover = load("linux/theme/kde/maximizeHover.svg", 1076759262, 2);
-        /** 20x20 */ public static final @NotNull Icon MaximizeInactive = load("linux/theme/kde/maximizeInactive.svg", 1013592938, 2);
-        /** 20x20 */ public static final @NotNull Icon MaximizePressed = load("linux/theme/kde/maximizePressed.svg", 642278749, 2);
-        /** 20x20 */ public static final @NotNull Icon Minimize = load("linux/theme/kde/minimize.svg", 1724377234, 2);
-        /** 20x20 */ public static final @NotNull Icon MinimizeHover = load("linux/theme/kde/minimizeHover.svg", 60045670, 2);
-        /** 20x20 */ public static final @NotNull Icon MinimizeInactive = load("linux/theme/kde/minimizeInactive.svg", -412323257, 2);
-        /** 20x20 */ public static final @NotNull Icon MinimizePressed = load("linux/theme/kde/minimizePressed.svg", 1412328493, 2);
+        /** 20x20 */ public static final @NotNull Icon Close = load("linux/theme/kde/close.svg", -446927126, 2);
+        /** 20x20 */ public static final @NotNull Icon CloseHover = load("linux/theme/kde/closeHover.svg", -206211498, 2);
+        /** 20x20 */ public static final @NotNull Icon CloseInactive = load("linux/theme/kde/closeInactive.svg", 1668092313, 2);
+        /** 20x20 */ public static final @NotNull Icon ClosePressed = load("linux/theme/kde/closePressed.svg", 1743614163, 2);
+        /** 20x20 */ public static final @NotNull Icon Maximize = load("linux/theme/kde/maximize.svg", -553937177, 2);
+        /** 20x20 */ public static final @NotNull Icon MaximizeHover = load("linux/theme/kde/maximizeHover.svg", 1967476149, 2);
+        /** 20x20 */ public static final @NotNull Icon MaximizeInactive = load("linux/theme/kde/maximizeInactive.svg", 2057692852, 2);
+        /** 20x20 */ public static final @NotNull Icon MaximizePressed = load("linux/theme/kde/maximizePressed.svg", -903581244, 2);
+        /** 20x20 */ public static final @NotNull Icon Minimize = load("linux/theme/kde/minimize.svg", 1785825068, 2);
+        /** 20x20 */ public static final @NotNull Icon MinimizeHover = load("linux/theme/kde/minimizeHover.svg", 174163678, 2);
+        /** 20x20 */ public static final @NotNull Icon MinimizeInactive = load("linux/theme/kde/minimizeInactive.svg", -2124271439, 2);
+        /** 20x20 */ public static final @NotNull Icon MinimizePressed = load("linux/theme/kde/minimizePressed.svg", -1544125646, 2);
         /** 24x24 */ public static final @NotNull Icon Restore = load("linux/theme/kde/restore.svg", 1668500755, 2);
         /** 24x24 */ public static final @NotNull Icon RestoreHover = load("linux/theme/kde/restoreHover.svg", 801105303, 2);
         /** 24x24 */ public static final @NotNull Icon RestoreInactive = load("linux/theme/kde/restoreInactive.svg", -1904649367, 2);
