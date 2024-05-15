@@ -35,15 +35,15 @@ private val LOG: Logger
 private class ExperimentalUIImpl : ExperimentalUI() {
   private var shouldUnsetNewUiSwitchKey: Boolean = true
   private val isIconPatcherSet = AtomicBoolean()
-  private var isFirstCheck = true
-  private var isResetLaf = false
+  private val isFirstCheck = AtomicBoolean(true)
+  private val isResetLaf = AtomicBoolean()
 
   override fun earlyInitValue(): Boolean {
+    val prevNewUI = super.earlyInitValue() && !forcedSwitchedUi
     val newUi = !IconMapperBean.EP_NAME_REVERSE.hasAnyExtensions()
 
-    if (isFirstCheck) {
-      isFirstCheck = false
-      changeValue(super.earlyInitValue() && !forcedSwitchedUi, newUi)
+    if (isFirstCheck.compareAndSet(true, false)) {
+      changeValue(prevNewUI, newUi)
     }
 
     return newUi
@@ -58,12 +58,16 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     val enabled: Boolean
 
     if (prevNewUi && !newUi) {
+      isResetLaf.set(true)
+
       enabled = false
       NewUIInfoService.getInstance().updateDisableNewUIDate()
 
       LOG.info("=== UI: new -> old ===")
     }
     else if (!prevNewUi && newUi) {
+      isResetLaf.set(true)
+
       enabled = true
       setNewUiUsed()
       NewUIInfoService.getInstance().updateEnableNewUIDate()
@@ -77,8 +81,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     else {
       return
     }
-
-    isResetLaf = true
 
     EP_LISTENER.forEachExtensionSafe {
       it.changeUI(enabled)
@@ -97,8 +99,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     if (isNewUI()) {
       patchUiDefaultsForNewUi()
     }
-    if (isResetLaf) {
-      isResetLaf = false
+    if (isResetLaf.compareAndSet(true, false)) {
       resetLafSettingsToDefault()
     }
   }
