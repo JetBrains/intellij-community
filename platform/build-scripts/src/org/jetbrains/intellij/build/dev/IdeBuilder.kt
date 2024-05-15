@@ -41,7 +41,6 @@ import java.time.DayOfWeek
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
-import kotlin.String
 import kotlin.time.Duration.Companion.seconds
 
 data class BuildRequest(
@@ -571,8 +570,6 @@ private suspend fun layoutPlatform(
 private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
   return LinkedHashSet(context.bundledPluginModules) + additionalModules
 }
-
-fun getAdditionalModules(): Sequence<String>? = System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
 
 private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
   if (additionalModules.isEmpty()) {

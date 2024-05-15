@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.ConsoleSpanExporter
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
-import org.jetbrains.intellij.build.dev.getAdditionalModules
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.traceManagerInitializer
 import java.io.File
@@ -54,7 +53,7 @@ fun buildDevMain(): Collection<Path> {
       buildProductInProcess(
         BuildRequest(
           platformPrefix = System.getProperty("idea.platform.prefix", "idea"),
-          additionalModules = getAdditionalModules()?.toList() ?: emptyList(),
+          additionalModules = System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }?.toList() ?: emptyList(),
           projectDir = ideaProjectRoot,
           keepHttpClient = false,
           platformClassPathConsumer = { classPath, runDir ->
