@@ -47,13 +47,6 @@ c:com.intellij.usages.impl.UsageGroupingRuleProviderImpl
 - p:supportsModuleRule():Z
 - p:supportsNonCodeRule():Z
 - p:supportsScopesRule():Z
-c:com.intellij.usages.impl.UsageModelTracker
-- com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project):V
-- addListener(com.intellij.usages.impl.UsageModelTracker$UsageModelTrackerListener,com.intellij.openapi.Disposable):V
-- dispose():V
-com.intellij.usages.impl.UsageModelTracker$UsageModelTrackerListener
-- a:modelChanged(Z):V
 c:com.intellij.usages.impl.UsageNode
 - com.intellij.pom.Navigatable
 - java.lang.Comparable
