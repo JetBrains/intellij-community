@@ -54,23 +54,20 @@ object K2CreateFunctionFromUsageBuilder {
     private fun KtSimpleNameExpression.referenceNameOfElement(): Boolean = getReferencedNameElementType() == KtTokens.IDENTIFIER
 
     internal fun buildRequestsAndActions(callExpression: KtCallExpression): List<IntentionAction> {
-        analyze(callExpression) {
-            val methodRequests = buildRequests(callExpression)
-            val extensions = EP_NAME.extensions
-            return methodRequests.flatMap { (targetClass, request) ->
-                extensions.flatMap { ext ->
-                    ext.createAddMethodActions(targetClass, request)
-                }
-            }.groupActionsByType(KotlinLanguage.INSTANCE)
-        }
+        val methodRequests = buildRequests(callExpression)
+        val extensions = EP_NAME.extensions
+        return methodRequests.flatMap { (targetClass, request) ->
+            extensions.flatMap { ext ->
+                ext.createAddMethodActions(targetClass, request)
+            }
+        }.groupActionsByType(KotlinLanguage.INSTANCE)
     }
 
-    context(KtAnalysisSession)
     private fun buildRequests(callExpression: KtCallExpression): List<Pair<JvmClass, CreateMethodRequest>> {
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return emptyList()
         val requests = mutableListOf<Pair<JvmClass, CreateMethodRequest>>()
         val receiverExpression = calleeExpression.getReceiverExpression()
-
+        analyze(callExpression) {
         // Register default create-from-usage request.
         // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
         val defaultContainerPsi = calleeExpression.getReceiverOrContainerPsiElement()
@@ -127,6 +124,7 @@ object K2CreateFunctionFromUsageBuilder {
                 isAbstractClassOrInterface = false,
                 isForCompanion = shouldCreateCompanionClass,
             ))
+        }
         }
         return requests
     }
