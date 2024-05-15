@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxResizableCustomFrameButtons
-import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxThemeConfiguration
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.HEADER_HEIGHT_DFM
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
@@ -100,11 +100,11 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
       }
     }
 
-    updateTheme(LinuxThemeConfiguration.getInstance()?.state?.theme)
-    LinuxThemeConfiguration.getInstance()?.let {
+    updateIconTheme(LinuxIconThemeConfiguration.getInstance()?.state?.iconTheme)
+    LinuxIconThemeConfiguration.getInstance()?.let {
       coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         it.stateFlow.collect { value ->
-          updateTheme(value?.theme)
+          updateIconTheme(value?.iconTheme)
         }
       }
     }
@@ -201,8 +201,8 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     }
   }
 
-  private fun updateTheme(theme: String?) {
-    (buttonPanes as? LinuxResizableCustomFrameButtons)?.updateTheme(theme)
+  private fun updateIconTheme(iconTheme: String?) {
+    (buttonPanes as? LinuxResizableCustomFrameButtons)?.updateIconTheme(iconTheme)
   }
 
   private fun createToolbarPlaceholder(): JPanel {

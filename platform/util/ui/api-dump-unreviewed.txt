@@ -722,6 +722,24 @@ f:com.intellij.icons.AllIcons$Linux$Theme$Gnome
 - sf:RestoreInactive:javax.swing.Icon
 - sf:RestorePressed:javax.swing.Icon
 - <init>():V
+f:com.intellij.icons.AllIcons$Linux$Theme$Kde
+- sf:Close:javax.swing.Icon
+- sf:CloseHover:javax.swing.Icon
+- sf:CloseInactive:javax.swing.Icon
+- sf:ClosePressed:javax.swing.Icon
+- sf:Maximize:javax.swing.Icon
+- sf:MaximizeHover:javax.swing.Icon
+- sf:MaximizeInactive:javax.swing.Icon
+- sf:MaximizePressed:javax.swing.Icon
+- sf:Minimize:javax.swing.Icon
+- sf:MinimizeHover:javax.swing.Icon
+- sf:MinimizeInactive:javax.swing.Icon
+- sf:MinimizePressed:javax.swing.Icon
+- sf:Restore:javax.swing.Icon
+- sf:RestoreHover:javax.swing.Icon
+- sf:RestoreInactive:javax.swing.Icon
+- sf:RestorePressed:javax.swing.Icon
+- <init>():V
 f:com.intellij.icons.AllIcons$Mac
 - sf:AppIconOk512:javax.swing.Icon
 - <init>():V

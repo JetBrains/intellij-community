@@ -153,6 +153,15 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
             }
           }
         }
+        row("Icon theme:") {
+          val label = label("").component
+          scope.launch {
+            val theme = X11UiUtil.getIconTheme()
+            withContext(Dispatchers.EDT) {
+              label.text = theme
+            }
+          }
+        }
         row("Window buttons layout:") {
           val state = WindowButtonsConfiguration.getInstance()?.state
           val text = if (state == null) "Cannot parse" else "rightPosition = ${state.rightPosition}, buttons = ${state.buttons}"

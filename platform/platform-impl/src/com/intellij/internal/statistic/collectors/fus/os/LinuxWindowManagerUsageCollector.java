@@ -20,7 +20,7 @@ import java.util.function.Predicate;
  * @author Konstantin Bulenkov
  */
 public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 5);
+  private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 6);
 
   private static final Map<String, String> GNOME_WINDOW_MANAGERS = new LinkedHashMap<>();
   private static final Map<String, String> WINDOW_MANAGERS = new LinkedHashMap<>();
@@ -117,6 +117,9 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
   private static final EventId1<String> THEME =
     GROUP.registerEvent("theme", EventFields.String("value", ALL_THEME_NAMES));
 
+  private static final EventId1<String> ICON_THEME =
+    GROUP.registerEvent("iconTheme", EventFields.String("value", ALL_THEME_NAMES));
+
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
@@ -129,6 +132,7 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
       result.add(CURRENT_DESKTOP.metric(toReportedName(System.getenv("XDG_CURRENT_DESKTOP"))));
       result.add(SESSION_TYPE.metric(toReportedSessionName(System.getenv("XDG_SESSION_TYPE"))));
       result.add(THEME.metric(toReportedTheme(X11UiUtil.getTheme())));
+      result.add(ICON_THEME.metric(toReportedTheme(X11UiUtil.getIconTheme())));
       return result;
     }
     return Collections.emptySet();

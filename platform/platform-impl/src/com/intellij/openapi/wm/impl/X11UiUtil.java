@@ -437,6 +437,14 @@ public final class X11UiUtil {
     return null;
   }
 
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public static @Nullable String getIconTheme() {
+    ThreadingAssertions.assertBackgroundThread();
+    String result = exec("Cannot get icon theme", "gsettings", "get", "org.gnome.desktop.interface", "icon-theme");
+    return trimQuotes(result);
+  }
+
   /**
    * Format like `icon:minimize,maximize,close` or `close:icon`
    */

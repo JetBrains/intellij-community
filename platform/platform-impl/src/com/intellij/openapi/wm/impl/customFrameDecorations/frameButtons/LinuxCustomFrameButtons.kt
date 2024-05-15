@@ -20,7 +20,7 @@ internal open class LinuxCustomFrameButtons(myCloseAction: Action) : CustomFrame
 
   private val panel = TitleButtonsPanel()
 
-  protected val closeButton: FrameButton = FrameButton(myCloseAction, FrameButton.Type.CLOSE)
+  protected val closeButton: LinuxFrameButton = LinuxFrameButton(myCloseAction, LinuxFrameButton.Type.CLOSE)
 
   override var isCompactMode: Boolean
     set(value) {

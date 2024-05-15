@@ -12,11 +12,11 @@ import kotlinx.coroutines.launch
 /**
  * Cache state for quick application start-up
  */
-@State(name = "LinuxThemeConfiguration", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-internal class LinuxThemeConfiguration(private val scope: CoroutineScope) : PersistentStateComponent<LinuxThemeConfiguration.State?> {
+@State(name = "LinuxIconThemeConfiguration", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+internal class LinuxIconThemeConfiguration(private val scope: CoroutineScope) : PersistentStateComponent<LinuxIconThemeConfiguration.State?> {
 
   companion object {
-    fun getInstance(): LinuxThemeConfiguration? = if (isSupported()) service<LinuxThemeConfiguration>() else null
+    fun getInstance(): LinuxIconThemeConfiguration? = if (isSupported()) service<LinuxIconThemeConfiguration>() else null
 
     private fun isSupported(): Boolean {
       return SystemInfoRt.isLinux && X11UiUtil.isInitialized()
@@ -44,15 +44,15 @@ internal class LinuxThemeConfiguration(private val scope: CoroutineScope) : Pers
   }
 
   private fun loadStateFromOs() {
-    val theme = if (isSupported()) X11UiUtil.getTheme() else null
+    val iconTheme = if (isSupported()) X11UiUtil.getIconTheme() else null
 
     mutableStateFlow.value = State().apply {
-      this.theme = theme
+      this.iconTheme = iconTheme
     }
   }
 
   class State {
     @JvmField
-    var theme: String? = null
+    var iconTheme: String? = null
   }
 }

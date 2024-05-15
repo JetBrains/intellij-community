@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
@@ -16,7 +17,7 @@ import javax.swing.JButton
 import javax.swing.SwingUtilities
 import javax.swing.plaf.basic.BasicButtonUI
 
-internal class FrameButton(action: Action, private val type: Type) : JButton(action) {
+internal class LinuxFrameButton(action: Action, private val type: Type) : JButton(action) {
 
   enum class Type(val accessibleName: @Nls String) {
     MINIMIZE(IdeBundle.message("window.titleButton.iconify")),
@@ -33,7 +34,25 @@ internal class FrameButton(action: Action, private val type: Type) : JButton(act
         Type.RESTORE to IconSet(AllIcons.Linux.Theme.Gnome.Restore, AllIcons.Linux.Theme.Gnome.RestoreHover, AllIcons.Linux.Theme.Gnome.RestorePressed, AllIcons.Linux.Theme.Gnome.RestoreInactive),
         Type.CLOSE to IconSet(AllIcons.Linux.Theme.Gnome.Close, AllIcons.Linux.Theme.Gnome.CloseHover, AllIcons.Linux.Theme.Gnome.ClosePressed, AllIcons.Linux.Theme.Gnome.CloseInactive)
       )
+    ),
+    KDE(
+      mapOf(
+        Type.MINIMIZE to IconSet(AllIcons.Linux.Theme.Kde.Minimize, AllIcons.Linux.Theme.Kde.MinimizeHover, AllIcons.Linux.Theme.Kde.MinimizePressed, AllIcons.Linux.Theme.Kde.MinimizeInactive),
+        Type.MAXIMIZE to IconSet(AllIcons.Linux.Theme.Kde.Maximize, AllIcons.Linux.Theme.Kde.MaximizeHover, AllIcons.Linux.Theme.Kde.MaximizePressed, AllIcons.Linux.Theme.Kde.MaximizeInactive),
+        Type.RESTORE to IconSet(AllIcons.Linux.Theme.Kde.Restore, AllIcons.Linux.Theme.Kde.RestoreHover, AllIcons.Linux.Theme.Kde.RestorePressed, AllIcons.Linux.Theme.Kde.RestoreInactive),
+        Type.CLOSE to IconSet(AllIcons.Linux.Theme.Kde.Close, AllIcons.Linux.Theme.Kde.CloseHover, AllIcons.Linux.Theme.Kde.ClosePressed, AllIcons.Linux.Theme.Kde.CloseInactive)
+      )
     )
+  }
+
+  companion object {
+
+    private val gnomeSimilarIconThemes = listOf("adwaita", "yaru")
+    private val kdeSimilarIconThemes = listOf("breeze")
+
+    private fun getDefaultIconPack(): IconPack {
+      return if (SystemInfo.isKDE) IconPack.KDE else IconPack.GNOME
+    }
   }
 
   private val listener = object : MouseAdapter() {
@@ -58,7 +77,7 @@ internal class FrameButton(action: Action, private val type: Type) : JButton(act
     }
   }
 
-  private var iconPack = IconPack.GNOME
+  private var iconPack = getDefaultIconPack()
   private var darkHeader = false
   private var hovered = false
   private var pressed = false
@@ -100,8 +119,31 @@ internal class FrameButton(action: Action, private val type: Type) : JButton(act
     }
   }
 
-  fun updateTheme(theme: String?) {
-    // todo recalculate iconPack if needed
+  fun updateIconTheme(iconTheme: String?) {
+    var suggestedIconTheme: IconPack? = null
+    if (iconTheme != null) {
+      if (isSimilarIconTheme(iconTheme, gnomeSimilarIconThemes)) {
+        suggestedIconTheme = IconPack.GNOME
+      }
+      else if (isSimilarIconTheme(iconTheme, kdeSimilarIconThemes)) {
+        suggestedIconTheme = IconPack.KDE
+      }
+    }
+
+    val newIconPack = suggestedIconTheme ?: getDefaultIconPack()
+    if (iconPack != newIconPack) {
+      iconPack = newIconPack
+      initIconPack()
+    }
+  }
+
+  private fun isSimilarIconTheme(iconTheme: String, similarIconThemes: List<String>): Boolean {
+    for (theme in similarIconThemes) {
+      if (iconTheme.startsWith(theme, ignoreCase = true)) {
+        return true
+      }
+    }
+    return false
   }
 
   private fun initIconPack() {

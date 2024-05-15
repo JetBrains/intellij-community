@@ -20,9 +20,9 @@ internal class LinuxResizableCustomFrameButtons(closeAction: Action,
     }
   }
 
-  private val restoreButton = FrameButton(myRestoreAction, FrameButton.Type.RESTORE)
-  private val maximizeButton = FrameButton(myMaximizeAction, FrameButton.Type.MAXIMIZE)
-  private val minimizeButton = FrameButton(myIconifyAction, FrameButton.Type.MINIMIZE)
+  private val restoreButton = LinuxFrameButton(myRestoreAction, LinuxFrameButton.Type.RESTORE)
+  private val maximizeButton = LinuxFrameButton(myMaximizeAction, LinuxFrameButton.Type.MAXIMIZE)
+  private val minimizeButton = LinuxFrameButton(myIconifyAction, LinuxFrameButton.Type.MINIMIZE)
 
   override fun createChildren() {
     fillContent(WindowButtonsConfiguration.getInstance()?.state)
@@ -63,10 +63,10 @@ internal class LinuxResizableCustomFrameButtons(closeAction: Action,
     }
   }
 
-  fun updateTheme(theme: String?) {
-    closeButton.updateTheme(theme)
-    minimizeButton.updateTheme(theme)
-    restoreButton.updateTheme(theme)
-    maximizeButton.updateTheme(theme)
+  fun updateIconTheme(iconTheme: String?) {
+    closeButton.updateIconTheme(iconTheme)
+    minimizeButton.updateIconTheme(iconTheme)
+    restoreButton.updateIconTheme(iconTheme)
+    maximizeButton.updateIconTheme(iconTheme)
   }
 }
