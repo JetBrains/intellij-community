@@ -3,130 +3,144 @@ package org.jetbrains.plugins.gradle.service.modelAction
 
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.IntermediateResultHandler
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.StreamedValueListener
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionResultHandlerBridge.ModelFetchActionEvent.*
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
 class GradleModelFetchActionResultHandlerBridge(
-  private val resolverContext: DefaultProjectResolverContext,
+  resolverContext: DefaultProjectResolverContext,
   modelFetchAction: GradleModelFetchAction,
   modelFetchActionListener: GradleModelFetchActionListener
 ) {
 
   private val modelFetchActionListener = GradleModelFetchActionListenerAdapter(resolverContext, modelFetchAction, modelFetchActionListener)
 
-  private val buildFinishWaiter = CountDownLatch(1)
+  private val modelFetchActionEventChannel = Channel<ModelFetchActionEvent>(Channel.UNLIMITED)
 
   private val isBuildActionInterrupted = AtomicBoolean(true)
-  private val buildFailure = AtomicReference<Throwable>(null)
-
-  fun waitForBuildFinish() {
-    // Wait for the last event during the Gradle build action execution
-    ProgressIndicatorUtils.awaitWithCheckCanceled(buildFinishWaiter)
-
-    /**
-     * If we have an exception, pass the failure up to be dealt with by the ExternalSystem
-     *
-     * But ignore all failures that don't interrupt build action.
-     * These failures will be present in the Gradle build output.
-     */
-    val buildFailure = buildFailure.get()
-    if (buildFailure != null && isBuildActionInterrupted.get()) {
-      throw buildFailure
-    }
-  }
 
   fun asStreamValueListener(): StreamedValueListener {
     return StreamedValueListener { state ->
-      runCancellable {
-        if (state is GradleModelHolderState) {
-          modelFetchActionListener.onPhaseCompleted(state.phase!!, state)
-        }
-      }
+      modelFetchActionEventChannel.trySend(StreamedValueReceived(state))
     }
   }
 
   fun asProjectLoadedResultHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
-      runCancellable {
-        modelFetchActionListener.onProjectLoaded(state)
-      }
+      modelFetchActionEventChannel.trySend(ProjectLoaded(state))
     }
   }
 
   fun asBuildFinishedResultHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
-      runCancellable {
-        isBuildActionInterrupted.set(false)
-        modelFetchActionListener.onBuildCompleted(state)
-      }
+      modelFetchActionEventChannel.trySend(BuildFinished(state))
     }
   }
 
   fun asResultHandler(): ResultHandler<Any> {
     return object : ResultHandler<Any> {
-
-      /**
-       * The parameter [result] will be null if running from the Phased executer as to obtain the models via [asBuildFinishedResultHandler].
-       * However, if it is not null then we must be running from the normal build action excuter and thus the [result] must be
-       * added to the queue to unblock the main thread.
-       */
       override fun onComplete(result: Any?) {
-        runCancellable {
-          try {
-            if (result is GradleModelHolderState) {
-              isBuildActionInterrupted.set(false)
-              modelFetchActionListener.onBuildCompleted(result)
-            }
-          }
-          finally {
-            buildFinishWaiter.countDown()
-          }
-        }
+        modelFetchActionEventChannel.trySend(ExecutionCompleted(result))
       }
 
       override fun onFailure(failure: GradleConnectionException) {
-        runCancellable {
-          try {
-            buildFailure.set(failure)
-            modelFetchActionListener.onBuildFailed(failure)
-          }
-          finally {
-            buildFinishWaiter.countDown()
-          }
-        }
+        modelFetchActionEventChannel.trySend(ExecutionFailed(failure))
       }
     }
   }
 
-  private fun runCancellable(action: suspend () -> Unit) {
+  @RequiresBlockingContext
+  fun collectAllEvents() {
+    require(!application.isWriteAccessAllowed) {
+      "Must not execute inside write action"
+    }
+    runBlockingCancellable {
+      // The collector waits for the last event during the Gradle build action execution
+      try {
+        modelFetchActionEventChannel.receiveAsFlow()
+          .collect { event ->
+            when (event) {
+              is StreamedValueReceived -> onStreamedValueReceived(event)
+              is ProjectLoaded -> onProjectLoaded(event)
+              is BuildFinished -> onBuildFinished(event)
+              is ExecutionCompleted -> onExecutionCompleted(event)
+              is ExecutionFailed -> onExecutionFailed(event)
+            }
+          }
+      }
+      finally {
+        modelFetchActionEventChannel.close()
+      }
+    }
+  }
+
+  private suspend fun onStreamedValueReceived(event: StreamedValueReceived) {
+    if (event.value is GradleModelHolderState) {
+      modelFetchActionListener.onPhaseCompleted(event.value.phase!!, event.value)
+    }
+  }
+
+  private suspend fun onProjectLoaded(event: ProjectLoaded) {
+    modelFetchActionListener.onProjectLoaded(event.state)
+  }
+
+  private suspend fun onBuildFinished(event: BuildFinished) {
+    isBuildActionInterrupted.set(false)
+    modelFetchActionListener.onBuildCompleted(event.state)
+  }
+
+  /**
+   * The parameter [ExecutionCompleted.result] will be null
+   * if running from the Phased executor as to obtain the models via [asBuildFinishedResultHandler].
+   */
+  private suspend fun onExecutionCompleted(event: ExecutionCompleted) {
     try {
-      resolverContext.runCancellable {
-        runBlockingCancellable {
-          action()
-        }
+      if (event.result is GradleModelHolderState) {
+        isBuildActionInterrupted.set(false)
+        modelFetchActionListener.onBuildCompleted(event.result)
       }
     }
-    catch (ignored: ProcessCanceledException) {
-      // Gradle TAPI cannot handle ProcessCanceledException
-    }
-    catch (throwable: Throwable) {
-      LOG.error(throwable)
+    finally {
+      modelFetchActionEventChannel.close()
     }
   }
 
-  companion object {
-    private val LOG = logger<GradleModelFetchActionResultHandlerBridge>()
+  private suspend fun onExecutionFailed(event: ExecutionFailed) {
+    try {
+      modelFetchActionListener.onBuildFailed(event.failure)
+    }
+    finally {
+      /**
+       * If we have an exception, pass the failure up to be dealt with by the ExternalSystem
+       *
+       * But ignore all failures that don't interrupt build action.
+       * These failures will be present in the Gradle build output.
+       */
+      if (isBuildActionInterrupted.get()) {
+        modelFetchActionEventChannel.close(event.failure)
+      }
+      else {
+        modelFetchActionEventChannel.close()
+      }
+    }
+  }
+
+  private sealed interface ModelFetchActionEvent {
+    class StreamedValueReceived(val value: Any?) : ModelFetchActionEvent
+    class ProjectLoaded(val state: GradleModelHolderState) : ModelFetchActionEvent
+    class BuildFinished(val state: GradleModelHolderState) : ModelFetchActionEvent
+    class ExecutionCompleted(val result: Any?) : ModelFetchActionEvent
+    class ExecutionFailed(val failure: GradleConnectionException) : ModelFetchActionEvent
   }
 }

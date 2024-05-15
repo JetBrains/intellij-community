@@ -57,7 +57,7 @@ class GradleModelFetchActionRunner private constructor(
       else -> runPhasedBuildAction(resultHandler)
     }
 
-    resultHandler.waitForBuildFinish()
+    resultHandler.collectAllEvents()
   }
 
   private fun notifyConnectionAboutChangedPaths() {
