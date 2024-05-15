@@ -1696,8 +1696,10 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - hashCode():I
 *f:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+- f:create(java.lang.Object,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment):javax.swing.JComponent
 - f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter):javax.swing.JComponent
 - f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment):javax.swing.JComponent
+- bs:create$default(com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory,java.lang.Object,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment,I,java.lang.Object):javax.swing.JComponent
 - bs:create$default(com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment,I,java.lang.Object):javax.swing.JComponent
 *e:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment
 - java.lang.Enum

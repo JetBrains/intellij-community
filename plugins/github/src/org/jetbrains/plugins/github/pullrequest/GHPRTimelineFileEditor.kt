@@ -4,6 +4,8 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.LoadingTextLabel
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.ide.DataManager
@@ -14,7 +16,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager.TOPIC
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.SingleComponentCenteringLayout
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -70,14 +71,17 @@ internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
       timelineVm.detailsVm.details.collectLatest {
         when (val result = it.result) {
           null -> panel.setLayoutAndComponent(SingleComponentCenteringLayout(), LoadingTextLabel())
-          else -> result.fold({ details ->
-                                //further updates will be handled by the timeline itself
-                                panel.showTimeline(details)
-                                cancel()
-                              }, { error ->
-                                panel.setLayoutAndComponent(SingleComponentCenteringLayout(),
-                                                            GHHtmlErrorPanel.create(GithubBundle.message("cannot.load.details"), error))
-                              })
+          else -> result
+            .fold({ details ->
+                    //further updates will be handled by the timeline itself
+                    panel.showTimeline(details)
+                    cancel()
+                  }, { error ->
+                    val errorStatusPresenter = ErrorStatusPresenter.simple(GithubBundle.message("cannot.load.details"),
+                                                                           descriptionProvider = GHHtmlErrorPanel::getLoadingErrorText)
+                    val errorPanel = ErrorStatusPanelFactory.create(error, errorStatusPresenter)
+                    panel.setLayoutAndComponent(SingleComponentCenteringLayout(), errorPanel)
+                  })
         }
       }
     }

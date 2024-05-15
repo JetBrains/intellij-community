@@ -109,7 +109,7 @@ internal class GHPRToolWindowTabComponentFactory(
                                                            tabVm: GHPRToolWindowTabViewModel.NewPullRequest): JComponent {
     val repositoriesManager = project.service<GHHostedRepositoriesManager>()
     val settings = GithubPullRequestsProjectUISettings.getInstance(project)
-    return GHPRCreateComponentHolder(ActionManager.getInstance(), project, settings, repositoriesManager, projectVm.dataContext,
+    return GHPRCreateComponentHolder(this, ActionManager.getInstance(), project, settings, repositoriesManager, projectVm.dataContext,
                                      projectVm,
                                      nestedDisposable()).component.also { comp ->
       launchNow {

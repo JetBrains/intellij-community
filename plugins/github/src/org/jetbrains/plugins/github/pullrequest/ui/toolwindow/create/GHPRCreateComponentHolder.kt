@@ -37,6 +37,7 @@ import git4idea.history.GitLogUtil
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -59,7 +60,8 @@ import javax.swing.text.Document
 import javax.swing.text.PlainDocument
 
 
-internal class GHPRCreateComponentHolder(private val actionManager: ActionManager,
+internal class GHPRCreateComponentHolder(private val cs: CoroutineScope,
+                                         private val actionManager: ActionManager,
                                          private val project: Project,
                                          private val settings: GithubPullRequestsProjectUISettings,
                                          private val repositoriesManager: GHHostedRepositoriesManager,

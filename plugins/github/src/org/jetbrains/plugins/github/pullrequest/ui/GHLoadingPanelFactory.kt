@@ -4,6 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.ui.AnimatedIcon
@@ -11,6 +13,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.ui.ProgressStripe
+import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
@@ -84,7 +87,7 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
   companion object {
     private abstract class ContentController<T>(private val model: GHSimpleLoadingModel<T>, private val panel: JPanel,
                                                 private val notLoadingText: String?,
-                                                private val errorPrefix: String,
+                                                private val errorPrefix: @Nls(capitalization = Nls.Capitalization.Sentence) String,
                                                 private val errorHandler: GHLoadingErrorHandler?,
                                                 private val contentListeners: List<(JComponent) -> Unit>) {
 
@@ -157,7 +160,11 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
           isOpaque = false
           border = JBUI.Borders.empty(8)
 
-          add(GHHtmlErrorPanel.create(errorPrefix, error, errorHandler?.getActionForError(error)))
+          val errorStatusPresenter = ErrorStatusPresenter.simple(
+            errorPrefix,
+            descriptionProvider = GHHtmlErrorPanel::getLoadingErrorText,
+            actionProvider = { errorHandler?.getActionForError(it) })
+          add(ErrorStatusPanelFactory.create(error, errorStatusPresenter))
         }
       }
 
