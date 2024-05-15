@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.IncompleteDependenciesService;
 
+import static com.intellij.openapi.project.IncompleteDependenciesServiceKt.asAutoCloseable;
+
 public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTestCase {
   static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/incompleteHighlighting";
 
@@ -13,12 +15,12 @@ public final class IncompleteModelHighlightingTest extends LightDaemonAnalyzerTe
   }
 
   private void doTest(String fileName) {
-    var ignored = WriteAction.compute(() -> getProject().getService(IncompleteDependenciesService.class).enterIncompleteState());
-    try {
+    IncompleteDependenciesService service = getProject().getService(IncompleteDependenciesService.class);
+    try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState()))) {
       doTest(BASE_PATH + "/" + fileName, true, true);
     }
-    finally {
-      WriteAction.run(ignored::close);
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
   

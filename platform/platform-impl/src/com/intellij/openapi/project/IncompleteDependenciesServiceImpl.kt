@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState
 import com.intellij.openapi.project.IncompleteDependenciesService.IncompleteDependenciesAccessToken
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class IncompleteDependenciesServiceImpl : IncompleteDependenciesService {
   override val stateFlow = MutableStateFlow(DependenciesState.COMPLETE)
-  private val tokens = HashSet<AccessToken>()
+  private val tokens = HashSet<IncompleteDependenciesAccessToken>()
 
   @RequiresReadLock
   override fun getState(): DependenciesState {
@@ -35,7 +34,7 @@ class IncompleteDependenciesServiceImpl : IncompleteDependenciesService {
   }
 
   @RequiresWriteLock
-  private fun registerToken(token: AccessToken) {
+  private fun registerToken(token: IncompleteDependenciesAccessToken) {
     ThreadingAssertions.assertWriteAccess() // @RequiresWriteLock does nothing in Kotlin
     synchronized(tokens) {
       val wasEmpty = tokens.isEmpty()
@@ -47,7 +46,7 @@ class IncompleteDependenciesServiceImpl : IncompleteDependenciesService {
   }
 
   @RequiresWriteLock
-  private fun deregisterToken(token: AccessToken) {
+  private fun deregisterToken(token: IncompleteDependenciesAccessToken) {
     ThreadingAssertions.assertWriteAccess() // @RequiresWriteLock does nothing in Kotlin
     synchronized(tokens) {
       tokens.remove(token)

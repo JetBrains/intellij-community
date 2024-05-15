@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.IncompleteDependenciesService.IncompleteDependenciesAccessToken
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.flow.Flow
@@ -30,8 +32,20 @@ interface IncompleteDependenciesService {
     INCOMPLETE(false)
   }
 
-  abstract class IncompleteDependenciesAccessToken : AccessToken() {
+  abstract class IncompleteDependenciesAccessToken {
     @RequiresWriteLock
-    abstract override fun finish()
+    abstract fun finish()
+  }
+}
+
+@ApiStatus.Internal
+fun IncompleteDependenciesAccessToken.asAutoCloseable(): AutoCloseable = WriteActionAutoCloseable(this::finish)
+
+private class WriteActionAutoCloseable(private val finish: () -> Unit) : AutoCloseable {
+  @RequiresBlockingContext
+  override fun close() {
+    ApplicationManager.getApplication().runWriteAction {
+      finish()
+    }
   }
 }

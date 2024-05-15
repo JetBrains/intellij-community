@@ -7,6 +7,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.openapi.project.IncompleteDependenciesServiceKt.asAutoCloseable;
+
 public class LombokIncompleteModeHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testLombokBasics() { doTest(); }
@@ -18,12 +20,12 @@ public class LombokIncompleteModeHighlightingTest extends LightDaemonAnalyzerTes
   }
 
   private void doTest(String fileName) {
-    var ignored = WriteAction.compute(() -> getProject().getService(IncompleteDependenciesService.class).enterIncompleteState());
-    try {
+    IncompleteDependenciesService service = getProject().getService(IncompleteDependenciesService.class);
+    try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState()))) {
       doTest("/plugins/lombok/testData/highlightingIncompleteMode/" + fileName, true, true);
     }
-    finally {
-      WriteAction.run(ignored::close);
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
