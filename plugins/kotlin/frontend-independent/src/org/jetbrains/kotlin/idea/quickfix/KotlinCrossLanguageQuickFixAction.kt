@@ -9,6 +9,23 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 
+/**
+ * Abstract class representing a Kotlin quick fix that might be invoked from non-Kotlin sources.
+ *
+ * Example:
+ * ```kotlin
+ * // FILE: KotlinParent.kt
+ * class KotlinParent
+ * ```
+ *
+ * ```java
+ * // FILE: JavaChild.java
+ * // ERROR: Cannot inherit from final 'KotlinParent'
+ * class JavaChild extends KotlinParent<caret> { }
+ * ```
+ * In the above example, the `Make 'KotlinParent' 'open'` quick fix must extend the
+ * `KotlinCrossLanguageQuickFixAction` class to be available in `JavaChild.java`.
+ */
 abstract class KotlinCrossLanguageQuickFixAction<out T : PsiElement>(element: T) : QuickFixActionBase<T>(element) {
     override val isCrossLanguageFix: Boolean
         get() = true
