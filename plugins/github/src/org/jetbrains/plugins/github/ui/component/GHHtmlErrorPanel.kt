@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import java.net.UnknownHostException
 
 object GHHtmlErrorPanel {
   @Nls
@@ -26,6 +27,12 @@ object GHHtmlErrorPanel {
       }
       if (!errors.isNullOrEmpty()) builder.append(": ").append(HtmlChunk.br()).appendWithSeparators(HtmlChunk.br(), errors)
       return builder.toString()
+    }
+
+    // Is encountered sometimes after regaining connection,
+    // but without this case only 'api.github.com' is shown as a description.
+    if (error is UnknownHostException) {
+      return GithubBundle.message("unknown.host.error", error.message)
     }
 
     return error.message ?: GithubBundle.message("unknown.loading.error")
