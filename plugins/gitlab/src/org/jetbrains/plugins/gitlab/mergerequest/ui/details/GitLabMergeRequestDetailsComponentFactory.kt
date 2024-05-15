@@ -36,7 +36,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabCommitViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestErrorUtil
 import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
@@ -58,7 +58,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
         when (loadingState) {
           GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Loading -> LoadingLabel()
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> {
-            val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
+            val errorPresenter = GitLabMergeRequestErrorUtil.createErrorStatusPresenter(
               accountVm,
               swingAction(GitLabBundle.message("merge.request.reload")) {
                 detailsLoadingVm.reloadData()

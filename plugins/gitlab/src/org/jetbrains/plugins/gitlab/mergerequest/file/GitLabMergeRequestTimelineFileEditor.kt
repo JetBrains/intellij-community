@@ -28,11 +28,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestErrorUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
@@ -106,7 +106,7 @@ private class ComponentFactory(private val project: Project, parentCs: Coroutine
           wrapper.repaint()
         },
         onFailure = { error ->
-          val errorPresenter = GitLabMergeRequestErrorStatusPresenter(
+          val errorPresenter = GitLabMergeRequestErrorUtil.createErrorStatusPresenter(
             projectVm.accountVm,
             swingAction(GitLabBundle.message("merge.request.reload")) {
               projectVm.reloadMergeRequestDetails(mergeRequestId)
