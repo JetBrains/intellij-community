@@ -28,6 +28,7 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.*
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.util.VcsLogUiUtil
 import net.miginfocom.layout.CC
+import net.miginfocom.layout.HideMode
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.*
@@ -67,11 +68,11 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   private val containingBranchesPanel = ContainingBranchesPanel()
 
   init {
-    layout = MigLayout(LC().gridGap("0", "0").insets("0").fill())
+    layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().hideMode(HideMode.DISREGARD))
     isOpaque = false
 
     val mainPanel = JPanel(null).apply {
-      layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().flowY())
+      layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().flowY().hideMode(3))
       isOpaque = false
 
       val metadataPanel = BorderLayoutPanel().apply {
@@ -92,7 +93,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     add(mainPanel, CC().grow().push())
     //show at most 4 icons
     val maxHeight = 22 * 4
-    add(statusesToolbar.component, CC().hideMode(3).alignY("top").maxHeight("$maxHeight").minHeight("$TOOLBAR_MIN_HEIGHT"))
+    add(statusesToolbar.component, CC().alignY("top").maxHeight("$maxHeight").minHeight("$TOOLBAR_MIN_HEIGHT"))
 
     updateStatusToolbar(false)
   }
