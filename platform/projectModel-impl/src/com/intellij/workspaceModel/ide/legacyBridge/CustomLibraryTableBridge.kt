@@ -2,12 +2,7 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface CustomLibraryTableBridge: GlobalEntityBridgeAndEventHandler, LibraryTable {
-  companion object {
-    fun isEnabled(): Boolean = Registry.`is`("workspace.model.custom.library.bridge", true)
-  }
-}
+interface CustomLibraryTableBridge: GlobalEntityBridgeAndEventHandler, LibraryTable

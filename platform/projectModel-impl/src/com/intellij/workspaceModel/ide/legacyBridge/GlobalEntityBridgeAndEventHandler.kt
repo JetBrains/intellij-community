@@ -19,11 +19,9 @@ interface GlobalEntityBridgeAndEventHandler {
       val result = mutableListOf<GlobalEntityBridgeAndEventHandler>()
       result.add(GlobalLibraryTableBridge.getInstance())
       result.add(GlobalSdkTableBridge.getInstance())
-      if (CustomLibraryTableBridge.isEnabled()) {
-        LibraryTablesRegistrar.getInstance().customLibraryTables.forEach { customLibraryTable ->
-          customLibraryTable as CustomLibraryTableImpl
-          result.add(customLibraryTable.getDelegate() as CustomLibraryTableBridge)
-        }
+      LibraryTablesRegistrar.getInstance().customLibraryTables.forEach { customLibraryTable ->
+        customLibraryTable as CustomLibraryTableImpl
+        result.add(customLibraryTable.getDelegate() as CustomLibraryTableBridge)
       }
       return result
     }
