@@ -1,3 +1,6 @@
+com.intellij.platform.navbar.NavBarItemExpandResult
+f:com.intellij.platform.navbar.NavBarItemExpandResultKt
+- sf:NavBarItemExpandResult(java.util.List,Z):com.intellij.platform.navbar.NavBarItemExpandResult
 com.intellij.platform.navbar.NavBarItemPresentation
 f:com.intellij.platform.navbar.NavBarItemPresentationKt
 - sf:NavBarItemPresentation(javax.swing.Icon,java.lang.String,java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.platform.navbar.NavBarItemPresentation
@@ -10,14 +13,3 @@ com.intellij.platform.navbar.NavBarVmItem
 - a:getPresentation():com.intellij.platform.navbar.NavBarItemPresentation
 - a:hashCode():I
 - isModuleContentRoot():Z
-f:com.intellij.platform.navbar.NavBarVmItem$ItemExpandResult
-- <init>(java.util.List,Z):V
-- f:component1():java.util.List
-- f:component2():Z
-- f:copy(java.util.List,Z):com.intellij.platform.navbar.NavBarVmItem$ItemExpandResult
-- bs:copy$default(com.intellij.platform.navbar.NavBarVmItem$ItemExpandResult,java.util.List,Z,I,java.lang.Object):com.intellij.platform.navbar.NavBarVmItem$ItemExpandResult
-- equals(java.lang.Object):Z
-- f:getChildren():java.util.List
-- f:getNavigateOnClick():Z
-- hashCode():I
-- toString():java.lang.String

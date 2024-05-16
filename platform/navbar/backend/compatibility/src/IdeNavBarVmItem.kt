@@ -3,9 +3,9 @@ package com.intellij.platform.navbar.backend.compatibility
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
+import com.intellij.platform.navbar.NavBarItemExpandResult
 import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.NavBarVmItem
-import com.intellij.platform.navbar.NavBarVmItem.ItemExpandResult
 import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -31,9 +31,9 @@ class IdeNavBarVmItem @RequiresReadLock constructor(
     }
   }
 
-  override suspend fun expand(): ItemExpandResult? {
+  override suspend fun expand(): NavBarItemExpandResult? {
     return fetch {
-      ItemExpandResult(childItems(), navigateOnClick())
+      NavBarItemExpandResult(childItems(), navigateOnClick())
     }
   }
 

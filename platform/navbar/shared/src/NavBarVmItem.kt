@@ -23,11 +23,9 @@ interface NavBarVmItem {
 
   suspend fun children(): List<NavBarVmItem>?
 
-  suspend fun expand(): ItemExpandResult? {
+  suspend fun expand(): NavBarItemExpandResult? {
     return children()?.let {
-      ItemExpandResult(children = it, navigateOnClick = false)
+      NavBarItemExpandResult(children = it, navigateOnClick = false)
     }
   }
-
-  data class ItemExpandResult(val children: List<NavBarVmItem>, val navigateOnClick: Boolean)
 }
