@@ -3,8 +3,10 @@ package com.intellij.ide.gdpr;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -105,7 +107,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     final boolean dataSharingDisabledExternally = ConsentOptions.getInstance().isUsageStatsConsent(consent)
                                                   && StatisticsUploadAssistant.isCollectionForceDisabled();
     final boolean dataSharingEnabledByFreeLicense = ConsentOptions.getInstance().isUsageStatsConsent(consent)
-                                                  && StatisticsUploadAssistant.isAllowedByFreeLicense();
+                                                  && isAllowedByFreeLicense();
     if (addCheckBox) {
       String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
       if (ConsentOptions.getInstance().isEAP()) {
@@ -168,6 +170,13 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
 
   private static JPanel wrapPanelWithWarning(JPanel panel, @NlsContexts.DetailedDescription String warningText) {
     return UI.PanelFactory.panel(panel).withCommentIcon(AllIcons.General.Warning).withComment(warningText).createPanel();
+  }
+
+  private static boolean isAllowedByFreeLicense() {
+    return Optional.ofNullable(ApplicationManager.getApplication())
+      .map(application -> application.getService(ConsentOptionsProvider.class))
+      .map(provider -> provider.isActivatedWithFreeLicense())
+      .orElse(false);
   }
 
   @Contract(pure = true)
