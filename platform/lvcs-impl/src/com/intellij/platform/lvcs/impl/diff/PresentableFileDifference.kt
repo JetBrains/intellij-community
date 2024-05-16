@@ -7,30 +7,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
-import com.intellij.platform.lvcs.impl.ActivityDiffObject
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
+import com.intellij.platform.lvcs.impl.ActivityFileChange
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import java.util.*
 
-internal class DifferenceObject(private val gateway: IdeaGateway,
-                                private val scope: ActivityScope,
-                                private val selection: ChangeSetSelection,
-                                internal val difference: Difference,
-                                private val targetFilePath: FilePath,
-                                private val isOldContentUsed: Boolean) : ActivityDiffObject {
+internal open class PresentableDifference(private val scope: ActivityScope,
+                                          private val selection: ChangeSetSelection,
+                                          internal val difference: Difference,
+                                          private val targetFilePath: FilePath) : PresentableChange {
 
   override fun getFilePath() = targetFilePath
   override fun getFileStatus(): FileStatus {
     return fileStatus(difference.left != null, difference.right != null)
   }
 
-  override fun createProducer(project: Project?): ChangeDiffRequestChain.Producer {
-    return DifferenceDiffRequestProducer.WithDifferenceObject(project, gateway, scope, selection, this, isOldContentUsed)
-  }
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is DifferenceObject) return false
+    if (other !is PresentableDifference) return false
     if (!super.equals(other)) return false
 
     if (scope != other.scope) return false
@@ -41,6 +36,18 @@ internal class DifferenceObject(private val gateway: IdeaGateway,
   }
 
   override fun hashCode() = Objects.hash(scope, selection, difference)
+}
+
+internal class PresentableFileDifference(private val gateway: IdeaGateway,
+                                         private val scope: ActivityScope,
+                                         private val selection: ChangeSetSelection,
+                                         difference: Difference,
+                                         targetFilePath: FilePath,
+                                         private val isOldContentUsed: Boolean) :
+  PresentableDifference(scope, selection, difference, targetFilePath), ActivityFileChange {
+  override fun createProducer(project: Project?): ChangeDiffRequestChain.Producer {
+    return DifferenceDiffRequestProducer.WithDifferenceObject(project, gateway, scope, selection, this, isOldContentUsed)
+  }
 }
 
 internal fun fileStatus(leftContentAvailable: Boolean, rightContentAvailable: Boolean): FileStatus {

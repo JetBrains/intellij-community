@@ -8,10 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesTreeModel.Companion.create
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.PATH_COMPARATOR
 import com.intellij.platform.lvcs.impl.ActivityDiffData
-import com.intellij.platform.lvcs.impl.ActivityDiffObject
+import com.intellij.platform.lvcs.impl.ActivityFileChange
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
+import java.util.Comparator.comparing
 
 class ActivityChangesBrowser(project: Project) : AsyncChangesBrowserBase(project, false, false), Disposable {
   var diffData: ActivityDiffData? = null
@@ -31,23 +33,24 @@ class ActivityChangesBrowser(project: Project) : AsyncChangesBrowserBase(project
     get() {
       return create { grouping ->
         val builder = TreeModelBuilder(myProject, grouping)
-        val differenceObjectList = diffData?.presentableChanges ?: emptyList()
-        for (diffObject in differenceObjectList) {
-          val filePathNode = ActivityDiffObjectNode(diffObject)
-          builder.insertChangeNode(diffObject.filePath, builder.myRoot, filePathNode)
+        val changesList = diffData?.presentableChanges ?: emptyList()
+        for (presentableChange in changesList.sortedWith(comparing(PresentableChange::getFilePath, PATH_COMPARATOR))) {
+          val filePath = presentableChange.filePath
+          val filePathNode = if (filePath.isDirectory) PresentableDirectoryChangeNode(presentableChange) else PresentableChangeNode(presentableChange)
+          builder.insertChangeNode(filePath, builder.myRoot, filePathNode)
         }
         return@create builder.build()
       }
     }
 
   override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
-    val diffObject = userObject as? ActivityDiffObject ?: return null
-    return diffObject.createProducer(myProject)
+    val activityFileChange = userObject as? ActivityFileChange ?: return null
+    return activityFileChange.createProducer(myProject)
   }
 
   override fun getData(dataId: String): Any? {
     if (ActivityViewDataKeys.SELECTED_DIFFERENCES.`is`(dataId)) {
-      return VcsTreeModelData.selected(myViewer).iterateUserObjects(ActivityDiffObject::class.java)
+      return VcsTreeModelData.selected(myViewer).iterateUserObjects(PresentableChange::class.java)
     }
     return super.getData(dataId)
   }
@@ -63,7 +66,12 @@ class ActivityChangesBrowser(project: Project) : AsyncChangesBrowserBase(project
   override fun dispose() = shutdown()
 }
 
-private class ActivityDiffObjectNode(diffObject: ActivityDiffObject)
-  : AbstractChangesBrowserFilePathNode<ActivityDiffObject>(diffObject, diffObject.fileStatus) {
-  override fun filePath(userObject: ActivityDiffObject): FilePath = userObject.filePath
+private open class PresentableChangeNode(presentableChange: PresentableChange)
+  : AbstractChangesBrowserFilePathNode<PresentableChange>(presentableChange, presentableChange.fileStatus) {
+  override fun filePath(userObject: PresentableChange): FilePath = userObject.filePath
+}
+
+private class PresentableDirectoryChangeNode(presentableChange: PresentableChange) : ChangesBrowserNode.NodeWithFilePath,
+                                                                                     PresentableChangeNode(presentableChange) {
+  override fun getNodeFilePath(): FilePath = filePath(getUserObject())
 }

@@ -8,9 +8,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface ActivityDiffData {
-  val presentableChanges: Iterable<ActivityDiffObject>
+  val presentableChanges: Iterable<PresentableChange>
 }
 
-interface ActivityDiffObject : PresentableChange {
+@ApiStatus.Experimental
+interface ActivityFileChange : PresentableChange {
   fun createProducer(project: Project?): ChangeDiffRequestChain.Producer
 }

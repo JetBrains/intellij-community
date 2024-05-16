@@ -179,6 +179,33 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
                                  "External change" /* file created */), activityList.getNamesList())
   }
 
+  fun `test diff data`() {
+    val file = createFile("file.txt")
+    val directory = createDirectory("directory")
+    val innerDirectory = createChildDirectory(directory, "innerDirectory")
+
+    setContent(file, "initial")
+    setContent(file, "content")
+
+    val provider = LocalHistoryActivityProvider(project, gateway)
+    val scope = ActivityScope.fromFiles(listOf(myRoot))
+
+    val activityList = provider.loadActivityList(scope, null)
+
+    TestCase.assertEquals(listOf("MODIFIED:${file.name}"), getDiffDataForSelection(provider, scope, activityList, 0, 1))
+    TestCase.assertEquals(listOf("ADDED:${innerDirectory.name}"), getDiffDataForSelection(provider, scope, activityList, 1, 2))
+    TestCase.assertEquals(listOf("ADDED:${directory.name}"), getDiffDataForSelection(provider, scope, activityList, 2, 3))
+    TestCase.assertEquals(listOf("ADDED:${file.name}"), getDiffDataForSelection(provider, scope, activityList, 3, 4))
+    TestCase.assertEquals(listOf("ADDED:${file.name}", "ADDED:${directory.name}", "ADDED:${innerDirectory.name}").sorted(),
+                          getDiffDataForSelection(provider, scope, activityList, 0, 4))
+  }
+
+  private fun getDiffDataForSelection(provider: LocalHistoryActivityProvider, scope: ActivityScope, activityList: ActivityData,
+                                      from: Int, to: Int): List<String> {
+    val selection = ActivitySelection(listOf(activityList.items[from], activityList.items[to]), activityList)
+    return provider.loadDiffData(scope, selection)!!.presentableChanges.map { "${it.fileStatus}:${it.filePath.name}" }.sorted()
+  }
+
   private fun ActivityData.getLabelNameSet(): Set<String> {
     return items.mapNotNull { (it as? LabelActivityItem)?.name }.toSet()
   }

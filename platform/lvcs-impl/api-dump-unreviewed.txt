@@ -808,7 +808,7 @@ f:com.intellij.openapi.command.impl.FileUndoProvider
 - f:getEMPTY():com.intellij.platform.lvcs.impl.ActivityData
 *:com.intellij.platform.lvcs.impl.ActivityDiffData
 - a:getPresentableChanges():java.lang.Iterable
-com.intellij.platform.lvcs.impl.ActivityDiffObject
+*:com.intellij.platform.lvcs.impl.ActivityFileChange
 - com.intellij.openapi.vcs.changes.ui.PresentableChange
 - a:createProducer(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 *:com.intellij.platform.lvcs.impl.ActivityItem

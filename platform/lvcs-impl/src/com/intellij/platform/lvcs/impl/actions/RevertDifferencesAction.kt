@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.lvcs.impl.USE_OLD_CONTENT
-import com.intellij.platform.lvcs.impl.diff.DifferenceObject
+import com.intellij.platform.lvcs.impl.diff.PresentableFileDifference
 import com.intellij.platform.lvcs.impl.hasMultipleFiles
 import com.intellij.platform.lvcs.impl.operations.createDifferenceReverter
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
@@ -35,7 +35,7 @@ internal class RevertDifferencesAction : DumbAwareAction() {
     val activityScope = e.getData(ActivityViewDataKeys.SCOPE) ?: return
     val selection = e.getData(ActivityViewDataKeys.SELECTION)?.toChangeSetSelection() ?: return
     val differences = e.getData(ActivityViewDataKeys.SELECTED_DIFFERENCES)
-      ?.filterIsInstance<DifferenceObject>()?.map { it.difference } ?: return
+      ?.filterIsInstance<PresentableFileDifference>()?.map { it.difference } ?: return
 
     val localHistoryImpl = LocalHistoryImpl.getInstanceImpl()
     val facade = localHistoryImpl.facade ?: return

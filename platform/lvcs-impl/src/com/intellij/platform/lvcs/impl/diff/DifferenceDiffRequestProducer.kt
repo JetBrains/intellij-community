@@ -76,11 +76,11 @@ internal abstract class DifferenceDiffRequestProducer(protected val project: Pro
   override fun hashCode(): Int = Objects.hash(scope, leftItem, rightItem, isOldContentUsed)
 
   internal class WithDifferenceObject(project: Project?, gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection,
-                                      private val diffObject: DifferenceObject, isOldContentUsed: Boolean)
+                                      private val fileDifference: PresentableFileDifference, isOldContentUsed: Boolean)
     : DifferenceDiffRequestProducer(project, gateway, scope, selection, isOldContentUsed), ChangeDiffRequestChain.Producer,
-      PresentableChange by diffObject {
+      PresentableChange by fileDifference {
 
-    override val difference: Difference get() = diffObject.difference
+    override val difference: Difference get() = fileDifference.difference
 
     override fun getName(): String {
       val entry = difference.left ?: difference.right

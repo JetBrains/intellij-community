@@ -6,25 +6,27 @@ import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.revisions.Difference
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.containers.JBIterable
 
-private class ActivityDiffDataImpl(override val presentableChanges: Iterable<ActivityDiffObject>) : ActivityDiffData
+private class ActivityDiffDataImpl(override val presentableChanges: Iterable<PresentableChange>) : ActivityDiffData
 
 internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
                                                scope: ActivityScope,
                                                selection: ChangeSetSelection,
                                                isOldContentUsed: Boolean): ActivityDiffData {
   val differences = getDiff(gateway, scope, selection, isOldContentUsed)
-  val differenceObjects = JBIterable.from(differences).filter { it.isFile }
-    .mapNotNull { it.toDiffObject(gateway, scope, selection, isOldContentUsed) }
-  return ActivityDiffDataImpl(differenceObjects)
+  val presentableChanges = JBIterable.from(differences)
+    .mapNotNull { it.toPresentableChange(gateway, scope, selection, isOldContentUsed) }
+  return ActivityDiffDataImpl(presentableChanges)
 }
 
-private fun Difference.toDiffObject(gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection, isOldContentUsed: Boolean): DifferenceObject? {
+private fun Difference.toPresentableChange(gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection, isOldContentUsed: Boolean): PresentableChange? {
   val targetFilePath = filePath ?: (scope as? ActivityScope.File)?.filePath
   if (targetFilePath == null) return null
-  return DifferenceObject(gateway, scope, selection, this, targetFilePath, isOldContentUsed)
+  if (isFile) return PresentableFileDifference(gateway, scope, selection, this, targetFilePath, isOldContentUsed)
+  return PresentableDifference(scope, selection, this, targetFilePath)
 }
 
 internal fun LocalHistoryFacade.createSingleFileDiffRequestProducer(project: Project,
