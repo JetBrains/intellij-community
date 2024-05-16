@@ -230,7 +230,7 @@ internal object CallableMetadataProvider {
     }
 
     context(KtAnalysisSession)
-    private fun buildClassType(symbol: KtClassLikeSymbol): KtClassType = buildClassType(symbol) {
+    private fun buildClassType(symbol: KtClassLikeSymbol): KtType = buildClassType(symbol) {
         repeat(symbol.typeParameters.size) {
             argument(KtStarTypeProjection(token))
         }

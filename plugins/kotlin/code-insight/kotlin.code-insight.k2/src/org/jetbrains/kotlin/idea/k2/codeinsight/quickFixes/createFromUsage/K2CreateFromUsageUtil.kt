@@ -276,8 +276,11 @@ object K2CreateFromUsageUtil {
         if (type == null || !visited.add(type)) return true
         if (!predicate.invoke(type)) return false
         return when (type) {
-            is KtClassType -> type.qualifiers.flatMap { it.typeArguments }.map { it.type}.all { accept(it, visited, predicate)}
-                    && (type !is KtFunctionalType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
+            is KtNonErrorClassType -> {
+                acceptTypeQualifiers(type.qualifiers, visited, predicate)
+                        && (type !is KtFunctionalType || (accept(type.returnType, visited,predicate) && accept(type.receiverType, visited, predicate)))
+            }
+            is KtClassErrorType -> acceptTypeQualifiers(type.qualifiers, visited, predicate)
             is KtFlexibleType -> accept(type.lowerBound, visited, predicate) && accept(type.upperBound, visited, predicate)
             is KtCapturedType -> accept(type.projection.type, visited, predicate)
             is KtDefinitelyNotNullType -> accept(type.original, visited, predicate)
@@ -285,6 +288,10 @@ object K2CreateFromUsageUtil {
             else -> true
         }
     }
+
+    context (KtAnalysisSession)
+    private fun acceptTypeQualifiers(qualifiers: List<KtClassTypeQualifier>, visited: MutableSet<KtType>, predicate: (KtType) -> Boolean) =
+        qualifiers.flatMap { it.typeArguments }.map { it.type }.all { accept(it, visited, predicate) }
 
     /**
      * return [ktType] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null if can't figure out which type to use

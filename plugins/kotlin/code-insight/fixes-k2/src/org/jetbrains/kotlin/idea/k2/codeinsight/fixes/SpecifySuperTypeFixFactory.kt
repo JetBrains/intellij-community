@@ -99,7 +99,7 @@ object SpecifySuperTypeFixFactory {
                 is KtNonErrorClassType ->
                     TypeStringWithoutArgs(superType.classId.asSingleFqName().render(), superType.classId.shortClassName.render())
 
-                else -> error("Expected KtClassType but ${superType::class} was found")
+                else -> error("Expected a class or an error type, but ${superType::class} was found")
             }
         }
 
