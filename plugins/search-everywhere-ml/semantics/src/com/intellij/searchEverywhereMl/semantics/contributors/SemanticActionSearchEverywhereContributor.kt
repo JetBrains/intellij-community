@@ -141,7 +141,11 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
                 val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
                 mutex.withLock { prepareDescriptor() }?.let {
                   blockingContext { consumer.process(it) }
-                  foundItemsCount++
+                  val descriptorValue = it.item.value
+                  // Only count available actions
+                  if (descriptorValue is ActionWrapper && descriptorValue.isAvailable) {
+                    foundItemsCount++
+                  }
                 }
                 if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) return@launch
               }
