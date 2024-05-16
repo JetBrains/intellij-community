@@ -4,7 +4,6 @@ package com.intellij.platform.ijent.fs
 import java.time.ZonedDateTime
 
 sealed interface IjentFileInfo {
-  val path: IjentPath.Absolute
   val type: Type
   val permissions: Permissions
 

@@ -7,7 +7,6 @@ import com.intellij.platform.ijent.fs.IjentPosixFileInfo
 import java.time.ZonedDateTime
 
 data class IjentPosixFileInfoImpl(
-  override val path: IjentPath.Absolute,
   override val type: IjentPosixFileInfo.Type,
   override val permissions: IjentPosixFileInfo.Permissions,
   override val creationTime: ZonedDateTime?,
