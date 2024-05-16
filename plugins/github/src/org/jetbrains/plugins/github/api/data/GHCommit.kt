@@ -12,14 +12,13 @@ class GHCommit(id: String,
                oid: String,
                abbreviatedOid: String,
                url: String,
-               @NlsSafe val messageHeadline: String,
-               @NlsSafe messageHeadlineHTML: String,
-               @NlsSafe val messageBodyHTML: String,
+               @NlsSafe messageHeadline: String,
+               @NlsSafe val messageBody: String,
                author: GHGitActor?,
                val committer: GHGitActor?,
                val committedDate: Date,
                @JsonProperty("parents") parents: GraphQLNodesDTO<GHCommitHash>)
-  : GHCommitShort(id, oid, abbreviatedOid, url, messageHeadlineHTML, author) {
+  : GHCommitShort(id, oid, abbreviatedOid, url, messageHeadline, author) {
 
   val parents = parents.nodes
 }

@@ -45,7 +45,7 @@ internal object GHPRDetailsComponentFactory {
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
       add(CodeReviewDetailsCommitsComponentFactory.create(scope, detailsVm.changesVm) { commit: GHCommit ->
-        createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser)
+        createCommitsPopupPresenter(project, commit, detailsVm.securityService.ghostUser)
       })
       add(CodeReviewDetailsBranchComponentFactory.create(scope, detailsVm.branchesVm))
     }
@@ -71,9 +71,7 @@ internal object GHPRDetailsComponentFactory {
       add(CodeReviewDetailsCommitInfoComponentFactory.create(
         scope, detailsVm.changesVm.selectedCommit,
         commitPresentation = { commit ->
-          createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser) {
-            it.convertToHtml(project)
-          }
+          createCommitsPopupPresenter(project, commit, detailsVm.securityService.ghostUser)
         },
         htmlPaneFactory = {
           SimpleHtmlPane(addBrowserListener = false).apply {
@@ -95,12 +93,12 @@ internal object GHPRDetailsComponentFactory {
   }
 
   private fun createCommitsPopupPresenter(
+    project: Project,
     commit: GHCommit,
-    ghostUser: GHUser,
-    issueProcessor: ((String) -> String)? = null
+    ghostUser: GHUser
   ) = CommitPresentation(
-    titleHtml = if (issueProcessor != null) issueProcessor(commit.messageHeadlineHTML) else commit.messageHeadlineHTML,
-    descriptionHtml = if (issueProcessor != null) issueProcessor(commit.messageBodyHTML) else commit.messageBodyHTML,
+    titleHtml = commit.messageHeadline.convertToHtml(project),
+    descriptionHtml = commit.messageBody.convertToHtml(project),
     author = (commit.author?.user ?: ghostUser).getPresentableName(),
     committedDate = commit.committedDate
   )
