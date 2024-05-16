@@ -412,13 +412,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {
-        val classNameProvider = ClassNameProvider(
-            ClassNameProvider.Configuration.DEFAULT.copy(alwaysReturnLambdaParentClass = false)
-        )
-
-        return classNameProvider.getCandidatesForElement(this)
-          .run { if (isLambda) filter(::isNestedClassName) else this }
-          .any { it == currentLocationClassName }
+        return ClassNameProvider(ClassNameProvider.Configuration.STOP_AT_LAMBDA)
+            .getCandidatesForElement(this)
+            .run { if (isLambda) filter(::isNestedClassName) else this }
+            .any { it == currentLocationClassName }
     }
 
     private fun isNestedClassName(name: String): Boolean = "\$" in name

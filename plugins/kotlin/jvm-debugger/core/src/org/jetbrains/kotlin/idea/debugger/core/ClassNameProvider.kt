@@ -23,9 +23,11 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import java.util.concurrent.ConcurrentHashMap
 
 class ClassNameProvider(private val configuration: Configuration = Configuration.DEFAULT) {
-    data class Configuration(val alwaysReturnLambdaParentClass: Boolean) {
+    // findInlineUseSites property preserved for API compatibility, actually not used
+    data class Configuration internal constructor(val findInlineUseSites: Boolean = false, val alwaysReturnLambdaParentClass: Boolean) {
         companion object {
             val DEFAULT = Configuration(alwaysReturnLambdaParentClass = true)
+            val STOP_AT_LAMBDA = Configuration(alwaysReturnLambdaParentClass = false)
         }
     }
 
