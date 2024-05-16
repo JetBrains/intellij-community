@@ -15,9 +15,9 @@ fun String.foo() {
 // ABSENT: hiddenProperty
 // ABSENT: hiddenFunFromSameFile
 // ABSENT: hiddenExtension
-// EXIST: notHiddenFun
-// EXIST: notHiddenProperty
-// EXIST: errorNotHiddenFunFromSameFile
-// EXIST: errorNotHiddenFun
-// EXIST: errorNotHiddenProperty
-// EXIST: errorNotHiddenExtension
+// EXIST: {lookupString:"notHiddenFun",attributes:""}
+// EXIST: {lookupString:"notHiddenProperty",attributes:""}
+// EXIST: {lookupString:"errorNotHiddenFunFromSameFile",attributes:"strikeout"}
+// EXIST: {lookupString:"errorNotHiddenFun",attributes:"strikeout"}
+// EXIST: {lookupString:"errorNotHiddenProperty",attributes:"strikeout"}
+// EXIST: {lookupString:"errorNotHiddenExtension",attributes:"bold strikeout"}

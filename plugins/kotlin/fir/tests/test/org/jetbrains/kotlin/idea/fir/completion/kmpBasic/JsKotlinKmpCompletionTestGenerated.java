@@ -436,6 +436,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/boldOrGrayed/AfterNullableAutoCast2.kt");
         }
 
+        @TestMetadata("Deprecated.kt")
+        public void testDeprecated() throws Exception {
+            runTest("../../completion/testData/basic/common/boldOrGrayed/Deprecated.kt");
+        }
+
         @TestMetadata("ImmediateExtensionMembers1.kt")
         public void testImmediateExtensionMembers1() throws Exception {
             runTest("../../completion/testData/basic/common/boldOrGrayed/ImmediateExtensionMembers1.kt");

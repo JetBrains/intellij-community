@@ -35,6 +35,7 @@ internal fun withClassifierSymbolInfo(
     .withPsiElement(symbol.psi) // TODO check if it is a heavy operation and should be postponed
     .withIcon(getIconFor(symbol))
     .withTypeText(getTypeTextForClassifier(symbol))
+    .withStrikeoutness(symbol.deprecationStatus != null)
 
 context(KaSession)
 internal fun withCallableSignatureInfo(
@@ -44,6 +45,7 @@ internal fun withCallableSignatureInfo(
     .withPsiElement(signature.symbol.psi)
     .withIcon(getIconFor(signature.symbol))
     .withTypeText(getTypeTextForCallable(signature, treatAsFunctionCall = elementBuilder.`object` is FunctionCallLookupObject))
+    .withStrikeoutness(signature.symbol.deprecationStatus != null)
 
 
 // FIXME: This is a hack, we should think how we can get rid of it
