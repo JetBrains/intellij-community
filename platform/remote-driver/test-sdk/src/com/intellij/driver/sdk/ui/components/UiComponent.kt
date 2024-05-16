@@ -29,7 +29,7 @@ data class ComponentData(val xpath: String,
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   private var cachedComponent: Component? = null
   val component: Component
-    get() = data.foundComponent ?: cachedComponent?.takeIf { it.isShowing() } ?: findThisComponent().apply { cachedComponent = this }
+    get() = data.foundComponent ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull() ?: findThisComponent().apply { cachedComponent = this }
 
   fun setFocus() {
     robotService.robot.focus(this.component)
