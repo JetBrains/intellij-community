@@ -3646,6 +3646,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/resultedType.kt");
             }
 
+            @TestMetadata("resultedTypeWithJava.kt")
+            public void testResultedTypeWithJava() throws Exception {
+                runTest("testData/refactoring/introduceParameter/resultedTypeWithJava.kt");
+            }
+
             @TestMetadata("return.kt")
             public void testReturn() throws Exception {
                 runTest("testData/refactoring/introduceParameter/return.kt");
