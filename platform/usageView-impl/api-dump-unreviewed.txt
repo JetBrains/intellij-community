@@ -189,7 +189,6 @@ c:com.intellij.usages.impl.rules.FileGroupingRule$FileUsageGroup
 - getIcon():javax.swing.Icon
 - getPresentableGroupText():java.lang.String
 - getPresentableName():java.lang.String
-- getPsiFile():com.intellij.psi.PsiFile
 - hashCode():I
 - isValid():Z
 - navigate(Z):V

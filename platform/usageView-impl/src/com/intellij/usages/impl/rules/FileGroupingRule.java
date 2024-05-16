@@ -23,6 +23,7 @@ import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,6 +162,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       return null;
     }
 
+    @ApiStatus.Internal
     @Nullable
     public PsiFile getPsiFile() {
       return myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
