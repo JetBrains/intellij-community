@@ -311,7 +311,7 @@ internal class KotlinIdeDeclarationRenderer(
                     " ".separated(
                         { typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) },
                         {
-                            typeRenderer.classIdRenderer.renderClassTypeQualifier(analysisSession, type, typeRenderer, printer)
+                            typeRenderer.classIdRenderer.renderClassTypeQualifier(analysisSession, type, type.qualifiers, typeRenderer, printer)
                             if (type.nullability == KtTypeNullability.NULLABLE) {
                                 append(highlight("?") { asNullityMarker })
                             }
@@ -387,7 +387,7 @@ internal class KotlinIdeDeclarationRenderer(
                 " ".separated(
                     { typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) },
                     {
-                        typeRenderer.classIdRenderer.renderClassTypeQualifier(analysisSession, type, typeRenderer, printer)
+                        typeRenderer.classIdRenderer.renderClassTypeQualifier(analysisSession, type, type.qualifiers, typeRenderer, printer)
                         if (type.nullability == KtTypeNullability.NULLABLE) {
                             append(highlight("?") { asNullityMarker })
                         }
@@ -401,11 +401,12 @@ internal class KotlinIdeDeclarationRenderer(
         return object : KtClassTypeQualifierRenderer {
             override fun renderClassTypeQualifier(
                 analysisSession: KtAnalysisSession,
-                type: KtClassType,
+                type: KtType,
+                qualifiers: List<KtClassTypeQualifier>,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
-                printCollection(type.qualifiers, separator = highlight(".") { asDot }) { qualifier ->
+                printCollection(qualifiers, separator = highlight(".") { asDot }) { qualifier ->
                     typeRenderer.typeNameRenderer.renderName(analysisSession, qualifier.name, type, typeRenderer, printer)
                     printCollectionIfNotEmpty(qualifier.typeArguments,
                                               prefix = highlight("<".escape()) { asOperationSign },
@@ -427,7 +428,7 @@ internal class KotlinIdeDeclarationRenderer(
                 printer: PrettyPrinter
             ): Unit = with(analysisSession) {
                 if (owner is KtNonErrorClassType) {
-                    val superTypes = (owner.expandedClassSymbol as? KtAnonymousObjectSymbol)?.superTypes
+                    val superTypes = (owner.expandedSymbol as? KtAnonymousObjectSymbol)?.superTypes
                     if (superTypes != null) {
                         printer.append("<".escape())
                         printer.append("anonymous object : ")

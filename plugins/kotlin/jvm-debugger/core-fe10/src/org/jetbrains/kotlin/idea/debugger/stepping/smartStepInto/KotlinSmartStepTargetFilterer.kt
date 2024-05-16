@@ -139,7 +139,7 @@ context(KtAnalysisSession)
 private fun KtType.jvmName(element: PsiElement): String? {
     if (this !is KtNonErrorClassType) return null
     val psiType = asPsiType(element, allowErrorTypes = false) ?: return null
-    if (classSymbol.isInlineClass()) {
+    if (symbol.isInlineClass()) {
         // handle wrapped types
         if (psiType.canonicalText == "java.lang.Object") return "Ljava/lang/Object;"
         if (psiType is PsiPrimitiveType) {

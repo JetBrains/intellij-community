@@ -185,7 +185,7 @@ fun getJvmName(symbol: KtAnnotatedSymbol): String? {
 
 context(KtAnalysisSession)
 fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolveToSymbol()) {
-    is KtTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
+    is KtTypeAliasSymbol -> symbol.expandedType.expandedSymbol
     else -> symbol
 }
 

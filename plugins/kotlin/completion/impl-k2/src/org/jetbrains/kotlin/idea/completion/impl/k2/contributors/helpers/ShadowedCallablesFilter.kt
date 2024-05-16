@@ -197,7 +197,7 @@ internal class ShadowedCallablesFilter {
             companion object {
                 context(KtAnalysisSession)
                 fun create(type: KtType): ReceiverId? {
-                    val expandedClassSymbol = type.expandedClassSymbol ?: return null
+                    val expandedClassSymbol = type.expandedSymbol ?: return null
                     val name = expandedClassSymbol.name ?: return null
 
                     return when (val classId = expandedClassSymbol.classId) {

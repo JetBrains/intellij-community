@@ -322,7 +322,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
                     val targetSymbol = expression.mainReference.resolveToSymbol() as? KtAnnotatedSymbol ?: return
                     processSymbolAnnotations(targetSymbol)
 
-                    val typeSymbol = (targetSymbol as? KtCallableSymbol)?.returnType?.expandedClassSymbol ?: return
+                    val typeSymbol = (targetSymbol as? KtCallableSymbol)?.returnType?.expandedSymbol ?: return
                     processSymbolAnnotations(typeSymbol)
                 }
             })

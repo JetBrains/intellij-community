@@ -307,7 +307,7 @@ internal fun receiverType(
 context(KtAnalysisSession)
 internal val KtType.typeForValueClass: Boolean
     get() {
-        val symbol = expandedClassSymbol as? KtNamedClassOrObjectSymbol ?: return false
+        val symbol = expandedSymbol as? KtNamedClassOrObjectSymbol ?: return false
         return symbol.isInline
     }
 

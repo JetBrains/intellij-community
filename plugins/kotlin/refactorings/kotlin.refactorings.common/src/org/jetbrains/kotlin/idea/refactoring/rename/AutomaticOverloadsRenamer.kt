@@ -52,7 +52,7 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
             listOfNotNull(
                 getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.getPackageScope(),
                 (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.getDeclaredMemberScope(),
-                symbol.receiverParameter?.type?.expandedClassSymbol?.getDeclaredMemberScope()
+                symbol.receiverParameter?.type?.expandedSymbol?.getDeclaredMemberScope()
             ).flatMapTo(result) { scope ->
                 scope.getCallableSymbols(name).mapNotNull {
                     it.psi as? KtNamedFunction

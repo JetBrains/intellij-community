@@ -111,7 +111,7 @@ object ReplaceCallFixFactories {
 
     context(KtAnalysisSession)
     private fun KtType.isMap(): Boolean {
-        val symbol = this.expandedClassSymbol ?: return false
+        val symbol = this.expandedSymbol ?: return false
         if (symbol.name?.asString()?.endsWith("Map") != true) return false
         val mapSymbol = getClassOrObjectSymbolByClassId(StandardClassIds.Map) ?: return false
         return symbol.isSubClassOf(mapSymbol)

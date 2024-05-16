@@ -354,7 +354,7 @@ private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
     }
 
     val receiverType = function.receiverTypeReference
-    val receiverTypeSymbol = receiverType?.getKtType()?.expandedClassSymbol
+    val receiverTypeSymbol = receiverType?.getKtType()?.expandedSymbol
     return receiverTypeSymbol != null && restrictsSuspension(receiverTypeSymbol)
   }
 }
@@ -362,7 +362,7 @@ private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
 private fun KtAnalysisSession.isSuspensionRestricted(lambdaType: KtType): Boolean {
   assert(lambdaType.isSuspendFunctionType)
 
-  val receiverTypeSymbol = (lambdaType as? KtFunctionalType)?.receiverType?.expandedClassSymbol
+  val receiverTypeSymbol = (lambdaType as? KtFunctionalType)?.receiverType?.expandedSymbol
   return receiverTypeSymbol != null && restrictsSuspension(receiverTypeSymbol)
 }
 

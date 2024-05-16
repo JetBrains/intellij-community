@@ -363,7 +363,7 @@ class ImportQuickFix(
             if (this@getImportName !is KtNamedSymbol) error("Unexpected anonymous declaration")
 
             if (this@getImportName is KtCallableSymbol) {
-                val classSymbol = if (receiverType != null) receiverType?.expandedClassSymbol else originalContainingClassForOverride
+                val classSymbol = if (receiverType != null) receiverType?.expandedSymbol else originalContainingClassForOverride
                 classSymbol?.name?.let { append(it.asString()) }
             }
 

@@ -96,7 +96,7 @@ internal class JoinDeclarationAndAssignmentInspection :
             }
         }
 
-        val hasTypeParameters = !initializerType?.expandedClassSymbol?.typeParameters.isNullOrEmpty()
+        val hasTypeParameters = !initializerType?.expandedSymbol?.typeParameters.isNullOrEmpty()
         val canOmitDeclaredType =
             if (hasTypeParameters) false
             else equalTypes || !element.isVar && isSubtype

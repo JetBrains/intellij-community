@@ -37,7 +37,7 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
     if (parent is KtReturnExpression) {
         analyze(parent) {
             val expectedReturnType = parent.expectedReturnType() ?: return false
-            val expandedClassSymbol = expectedReturnType.expandedClassSymbol
+            val expandedClassSymbol = expectedReturnType.expandedSymbol
             return expandedClassSymbol != null &&
                     !expectedReturnType.isMarkedNullable &&
                     expandedClassSymbol.classId != StandardClassIds.Any

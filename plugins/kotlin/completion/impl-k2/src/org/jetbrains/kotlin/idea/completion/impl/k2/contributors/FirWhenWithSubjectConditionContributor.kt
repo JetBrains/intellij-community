@@ -89,7 +89,7 @@ internal class FirWhenWithSubjectConditionContributor(
     context(KtAnalysisSession)
     private fun getClassSymbol(subjectType: KtType): KtNamedClassOrObjectSymbol? {
         val classType = subjectType as? KtNonErrorClassType
-        return classType?.classSymbol as? KtNamedClassOrObjectSymbol
+        return classType?.symbol as? KtNamedClassOrObjectSymbol
     }
 
 
@@ -148,7 +148,7 @@ internal class FirWhenWithSubjectConditionContributor(
             is KtAnonymousObjectSymbol -> return false
             is KtNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
             is KtTypeAliasSymbol -> {
-                (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KtNamedSymbol && isPrefixNeeded(it) } == true
+                (symbol.expandedType as? KtNonErrorClassType)?.symbol?.let { it is KtNamedSymbol && isPrefixNeeded(it) } == true
             }
 
             is KtTypeParameterSymbol -> true

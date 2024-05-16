@@ -23,7 +23,7 @@ fun KtType.isNonNullableBooleanType() = isBoolean && !isMarkedNullable
 context(KtAnalysisSession)
 fun KtType.isEnum(): Boolean {
     if (this !is KtNonErrorClassType) return false
-    val classSymbol = classSymbol
+    val classSymbol = symbol
     return classSymbol is KtClassOrObjectSymbol && classSymbol.classKind == KtClassKind.ENUM_CLASS
 }
 

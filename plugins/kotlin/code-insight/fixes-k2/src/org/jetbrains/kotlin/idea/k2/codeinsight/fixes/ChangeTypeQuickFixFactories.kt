@@ -222,7 +222,7 @@ object ChangeTypeQuickFixFactories {
             buildList {
                 add(UpdateTypeQuickFix(entryWithWrongType, TargetType.VARIABLE, createTypeInfo(diagnostic.destructingType)))
 
-                val classSymbol = (diagnostic.psi.getKtType() as? KtNonErrorClassType)?.classSymbol as? KtSymbolWithMembers ?: return@buildList
+                val classSymbol = (diagnostic.psi.getKtType() as? KtNonErrorClassType)?.symbol as? KtSymbolWithMembers ?: return@buildList
                 val componentFunction = classSymbol.getMemberScope()
                     .getCallableSymbols(diagnostic.componentFunctionName)
                     .firstOrNull()?.psi as? KtCallableDeclaration

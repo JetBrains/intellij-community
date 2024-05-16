@@ -124,7 +124,7 @@ private fun KtCallableDeclaration.isCollectionLikeOf(classPsiElement: PsiNamedEl
         fun KtType.isCollectionLikeOf(classPsiElement: PsiNamedElement): Boolean {
             if (isArrayOrPrimitiveArray() || isClassTypeWithClassId(StandardClassIds.Collection) || getAllSuperTypes().any { it.isClassTypeWithClassId(StandardClassIds.Collection) }) {
                 val typeArgument = (this as? KtNonErrorClassType)?.ownTypeArguments?.singleOrNull()?.type ?: return false
-                if (typeArgument.expandedClassSymbol?.psi == classPsiElement) {
+                if (typeArgument.expandedSymbol?.psi == classPsiElement) {
                     return true
                 }
                 return typeArgument.isCollectionLikeOf(classPsiElement)

@@ -103,9 +103,9 @@ object ToExtensionFunctionWithNullableReceiverForMutableCollection : Transformat
 
     context(KtAnalysisSession)
     private fun KtType?.isMutableList(): Boolean =
-        this?.expandedClassSymbol?.classId?.asSingleFqName() == StandardNames.FqNames.mutableList
+        this?.expandedSymbol?.classId?.asSingleFqName() == StandardNames.FqNames.mutableList
 
     context(KtAnalysisSession)
     private fun KtType?.isMutableListOrSubtype(): Boolean =
-        isMutableList() || this?.expandedClassSymbol?.superTypes?.reversed()?.any { it.isMutableList() } == true
+        isMutableList() || this?.expandedSymbol?.superTypes?.reversed()?.any { it.isMutableList() } == true
 }

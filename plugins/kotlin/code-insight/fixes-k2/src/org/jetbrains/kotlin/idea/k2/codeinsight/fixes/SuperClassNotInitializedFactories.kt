@@ -25,7 +25,7 @@ internal object SuperClassNotInitializedFactories {
         val typeReference = diagnostic.psi
         val superTypeEntry = typeReference.parent as? KtSuperTypeEntry
             ?: return@ModCommandBased emptyList()
-        val superClassSymbol = typeReference.getKtType().expandedClassSymbol as? KtNamedClassOrObjectSymbol
+        val superClassSymbol = typeReference.getKtType().expandedSymbol as? KtNamedClassOrObjectSymbol
             ?: return@ModCommandBased emptyList()
 
         if (!superClassSymbol.isInheritableWithSuperConstructorCall(superTypeEntry)) {

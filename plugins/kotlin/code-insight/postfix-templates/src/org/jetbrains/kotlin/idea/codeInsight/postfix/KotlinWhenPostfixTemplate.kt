@@ -76,7 +76,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
                 analyze(element) {
                     val type = element.getKtType()
                     if (type is KtNonErrorClassType) {
-                        val klass = type.classSymbol
+                        val klass = type.symbol
                         if (klass is KtNamedClassOrObjectSymbol) {
                             return when (klass.classKind) {
                                 KtClassKind.ENUM_CLASS -> collectEnumBranches(klass)
@@ -146,7 +146,7 @@ private sealed class CaseBranch {
 
 private fun isSealedType(type: KtType): Boolean {
     if (type is KtNonErrorClassType) {
-        val symbol = type.classSymbol
+        val symbol = type.symbol
         if (symbol is KtNamedClassOrObjectSymbol) {
             return symbol.classKind == KtClassKind.ENUM_CLASS || symbol.modality == Modality.SEALED
         }

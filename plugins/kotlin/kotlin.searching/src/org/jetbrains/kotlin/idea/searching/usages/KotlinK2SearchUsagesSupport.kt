@@ -60,7 +60,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     }
 
                     return searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.getContainingSymbol() as? KtClassOrObjectSymbol) ||
-                            searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.type?.expandedClassSymbol)
+                            searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.type?.expandedSymbol)
                 }
             }
         }
@@ -179,7 +179,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 val containerSymbol = container.getSymbol() as? KtClassOrObjectSymbol ?: return@any false
 
                 val receiverType = (candidateDeclaration.getSymbol() as? KtCallableSymbol)?.receiverType ?: return@any false
-                val expandedClassSymbol = receiverType.expandedClassSymbol ?: return@any false
+                val expandedClassSymbol = receiverType.expandedSymbol ?: return@any false
 
                 expandedClassSymbol == containerSymbol || containerSymbol.isSubClassOf(expandedClassSymbol)
             }
@@ -191,7 +191,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             is KtCallableDeclaration -> {
                 analyze(psiElement) {
                     fun resolveKtClassOrObject(ktType: KtType): KtClassOrObject? {
-                        return (ktType as? KtNonErrorClassType)?.classSymbol?.psiSafe<KtClassOrObject>()
+                        return (ktType as? KtNonErrorClassType)?.symbol?.psiSafe<KtClassOrObject>()
                     }
 
                     when (val elementSymbol = psiElement.getSymbol()) {
@@ -206,7 +206,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                                     analyze(declaration) {
                                         fun KtType.containsClassType(clazz: KtClassOrObject?): Boolean {
                                             if (clazz == null) return false
-                                            return this is KtNonErrorClassType && (clazz.isEquivalentTo(classSymbol.psi) ||
+                                            return this is KtNonErrorClassType && (clazz.isEquivalentTo(symbol.psi) ||
                                                     ownTypeArguments.any { arg ->
                                                         when (arg) {
                                                             is KtStarTypeProjection -> false

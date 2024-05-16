@@ -76,7 +76,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         enumEntriesPropertySymbol: KtCallableSymbol,
         moduleApiVersion: ApiVersion,
     ): Boolean? {
-        val enumEntriesClass = enumEntriesPropertySymbol.returnType.expandedClassSymbol
+        val enumEntriesClass = enumEntriesPropertySymbol.returnType.expandedSymbol
             ?: return null
         if (enumEntriesClass.hasAnnotation(EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
             return true

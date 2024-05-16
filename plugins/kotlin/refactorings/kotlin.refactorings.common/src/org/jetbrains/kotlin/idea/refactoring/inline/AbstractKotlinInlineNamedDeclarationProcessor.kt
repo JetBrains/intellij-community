@@ -189,7 +189,7 @@ fun findCallableConflictForUsage(usage: PsiElement): @NlsContexts.DialogMessage 
     if (usageParent.callableReference != usage) return null
     allowAnalysisOnEdt { //todo j2k calls writeAction so it's impossible to wrap in simple progress yet
         analyze(usageParent) {
-            val classSymbol = usageParent.getExpectedType()?.expandedClassSymbol ?: return null
+            val classSymbol = usageParent.getExpectedType()?.expandedSymbol ?: return null
             val fqName = classSymbol.getFqNameIfPackageOrNonLocal() ?: return null
             if (fqName.isRoot || fqName.parent() != StandardNames.KOTLIN_REFLECT_FQ_NAME) return null
         }

@@ -373,7 +373,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
 
 context(KtAnalysisSession)
 private fun KtExpression.isObject(): Boolean {
-    return getKtType()?.expandedClassSymbol?.classKind?.isObject == true
+    return getKtType()?.expandedSymbol?.classKind?.isObject == true
 }
 
 private fun isExtensionFunctionType(type: KtType): Boolean {

@@ -1299,7 +1299,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (receiver is KtSimpleNameExpression && receiver.mainReference.resolve() is KtClass) {
                 val arguments = kotlinType.ownTypeArguments
                 if (arguments.size == 1) {
-                    val kType = arguments[0].type?.expandedClassSymbol?.classDef()
+                    val kType = arguments[0].type?.expandedSymbol?.classDef()
                     val kClassPsiType = TypeConstraint.fromDfType(kotlinType.toDfType())
                     if (kType != null && kClassPsiType != TypeConstraints.TOP) {
                         val kClassConstant: DfType = DfTypes.referenceConstant(kType, kClassPsiType)
@@ -1867,7 +1867,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KtAnalysisSession)
     private fun KtType?.isInlineClass() =
-        ((this as? KtNonErrorClassType)?.expandedClassSymbol as? KtNamedClassOrObjectSymbol)?.isInline == true
+        ((this as? KtNonErrorClassType)?.expandedSymbol as? KtNamedClassOrObjectSymbol)?.isInline == true
 
     context(KtAnalysisSession)
     private fun balanceType(leftType: KtType?, rightType: KtType?, forceEqualityByContent: Boolean): KtType? = when {

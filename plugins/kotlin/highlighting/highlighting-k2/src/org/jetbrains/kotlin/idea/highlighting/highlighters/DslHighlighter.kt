@@ -70,10 +70,10 @@ context(KtAnalysisSession)
 private fun getDslAnnotation(type: KtType): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
         yieldAll(type.annotationClassIds)
-        val symbol = type.expandedClassSymbol ?: return@sequence
+        val symbol = type.expandedSymbol ?: return@sequence
         yieldAll(symbol.annotationClassIds)
         for (superType in type.getAllSuperTypes()) {
-            superType.expandedClassSymbol?.let { yieldAll(it.annotationClassIds) }
+            superType.expandedSymbol?.let { yieldAll(it.annotationClassIds) }
         }
     }
     val dslAnnotation = allAnnotationsWithSuperTypes.find { annotationClassId ->

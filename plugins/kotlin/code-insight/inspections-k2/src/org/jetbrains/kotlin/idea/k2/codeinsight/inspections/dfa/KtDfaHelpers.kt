@@ -36,7 +36,7 @@ internal fun KtType?.toDfType(): DfType {
     if (canBeNull()) {
         var notNullableType = this.withNullability(KtTypeNullability.NON_NULLABLE).toDfTypeNotNullable()
         if (notNullableType is DfPrimitiveType) {
-            val cls = (this as? KtNonErrorClassType)?.expandedClassSymbol
+            val cls = (this as? KtNonErrorClassType)?.expandedSymbol
             val boxedType = if (cls != null) {
                 TypeConstraints.exactClass(cls.classDef()).asDfType()
             } else {
@@ -89,7 +89,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
                         DefaultTypeClassIds.CHAR -> TypeConstraints.exact(PsiTypes.charType().createArrayType()).asDfType()
                         DefaultTypeClassIds.BOOLEAN -> TypeConstraints.exact(PsiTypes.booleanType().createArrayType()).asDfType()
                         else -> {
-                            val symbol = expandedClassSymbol ?: return DfType.TOP
+                            val symbol = expandedSymbol ?: return DfType.TOP
                             val classDef = symbol.classDef()
                             val constraint = if (symbol.classKind == KtClassKind.OBJECT) {
                                 TypeConstraints.singleton(classDef)

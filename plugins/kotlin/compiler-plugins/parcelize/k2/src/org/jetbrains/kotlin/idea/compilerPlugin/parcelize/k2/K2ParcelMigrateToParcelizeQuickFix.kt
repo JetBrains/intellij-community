@@ -44,7 +44,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
     private object Resolver : ParcelMigrateToParcelizeResolver<KtAnalysisSession> {
         context(KtAnalysisSession)
         private val KtType.classId: ClassId?
-            get() = expandedClassSymbol?.classId
+            get() = expandedSymbol?.classId
 
         context(KtAnalysisSession)
         override val KtCallableDeclaration.returnTypeClassId: ClassId?

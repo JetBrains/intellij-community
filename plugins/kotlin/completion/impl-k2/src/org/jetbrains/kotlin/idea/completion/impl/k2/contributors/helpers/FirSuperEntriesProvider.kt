@@ -25,7 +25,7 @@ internal object FirSuperEntriesProvider {
         val containingClassSymbol = containingClass.getClassOrObjectSymbol() ?: return emptyList()
         return containingClassSymbol.superTypes.mapNotNull { superType ->
             val classType = superType as? KtNonErrorClassType ?: return@mapNotNull null
-            classType.classSymbol as? KtNamedClassOrObjectSymbol
+            classType.symbol as? KtNamedClassOrObjectSymbol
         }
     }
 }

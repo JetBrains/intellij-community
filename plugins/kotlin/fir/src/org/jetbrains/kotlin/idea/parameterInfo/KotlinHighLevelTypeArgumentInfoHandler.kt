@@ -31,12 +31,12 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KtSymbolWithTypeParameters>? {
         val typeReference = argumentList.parentOfType<KtTypeReference>() ?: return null
         return when (val ktType = typeReference.getKtType()) {
-            is KtNonErrorClassType -> listOfNotNull(ktType.expandedClassSymbol as? KtNamedClassOrObjectSymbol)
+            is KtNonErrorClassType -> listOfNotNull(ktType.expandedSymbol as? KtNamedClassOrObjectSymbol)
             is KtClassErrorType -> {
-                ktType.candidateClassSymbols.mapNotNull { candidateSymbol ->
+                ktType.candidateSymbols.mapNotNull { candidateSymbol ->
                     when (candidateSymbol) {
                         is KtClassOrObjectSymbol -> candidateSymbol
-                        is KtTypeAliasSymbol -> candidateSymbol.expandedType.expandedClassSymbol
+                        is KtTypeAliasSymbol -> candidateSymbol.expandedType.expandedSymbol
                         else -> null
                     } as? KtNamedClassOrObjectSymbol
                 }

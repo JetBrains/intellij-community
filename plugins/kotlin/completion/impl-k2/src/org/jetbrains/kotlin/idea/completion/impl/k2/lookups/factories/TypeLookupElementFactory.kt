@@ -37,7 +37,7 @@ class TypeLookupElementFactory {
             is KtTypeParameterType -> element
 
             is KtUsualClassType -> {
-                val tailText = getTailText(type.classSymbol, usePackageFqName = true, addTypeParameters = false)
+                val tailText = getTailText(type.symbol, usePackageFqName = true, addTypeParameters = false)
                 element.withTailText(tailText)
             }
 
@@ -68,7 +68,7 @@ class TypeLookupElementFactory {
 
     private fun KtType.getSymbolIfTypeParameterOrUsualClass(): KtClassifierSymbol? = when (this) {
         is KtTypeParameterType -> symbol
-        is KtUsualClassType -> classSymbol
+        is KtUsualClassType -> symbol
         else -> null
     }
 

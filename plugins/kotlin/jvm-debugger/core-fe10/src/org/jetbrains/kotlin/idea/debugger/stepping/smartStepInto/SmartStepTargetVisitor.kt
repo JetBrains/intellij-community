@@ -234,7 +234,7 @@ class SmartStepTargetVisitor(
     ): KotlinLambdaInfo? {
         val callerMethodOrdinal = countExistingMethodCalls(declaration)
         return if (argumentSymbol.returnType.isFunctionalInterfaceType) {
-            val samClassSymbol = argumentSymbol.returnType.expandedClassSymbol ?: return null
+            val samClassSymbol = argumentSymbol.returnType.expandedSymbol ?: return null
             val scope = samClassSymbol.getMemberScope()
             val funMethodSymbol = scope.getCallableSymbols()
                 .filterIsInstance<KtFunctionSymbol>()
@@ -247,7 +247,7 @@ class SmartStepTargetVisitor(
             )
         } else {
             val isNameMangledInBytecode = (argumentSymbol.returnType as? KtFunctionalType)?.parameterTypes
-                ?.any { it.expandedClassSymbol?.isInlineClass() == true } == true
+                ?.any { it.expandedSymbol?.isInlineClass() == true } == true
             KotlinLambdaInfo(
                 methodSymbol, argumentSymbol, callerMethodOrdinal,
                 isNameMangledInBytecode = isNameMangledInBytecode

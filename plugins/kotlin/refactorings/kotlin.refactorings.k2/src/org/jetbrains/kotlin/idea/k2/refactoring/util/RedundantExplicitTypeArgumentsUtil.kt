@@ -106,7 +106,7 @@ private fun buildType(type: KtType, typeArgumentsMapping: Map<KtTypeParameterSym
     return when (type) {
         is KtTypeParameterType -> typeArgumentsMapping[type.symbol]
 
-        is KtNonErrorClassType -> buildClassType(type.classSymbol) {
+        is KtNonErrorClassType -> buildClassType(type.symbol) {
             type.ownTypeArguments.mapNotNull { it.type }.forEach {
                 val builtType = buildType(it, typeArgumentsMapping)
                 if (builtType != null) argument(builtType)

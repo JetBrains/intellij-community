@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.abbreviatedTypeOrSelf
-import org.jetbrains.kotlin.analysis.api.types.classSymbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.psi.*
 
 internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
@@ -59,7 +59,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
     private fun getTypeAliasDeclaration(symbol: KtTypeAlias): Array<PsiElement> {
         analyze(symbol) {
             val typeAliasSymbol = symbol.getSymbol() as? KtTypeAliasSymbol
-            (typeAliasSymbol?.expandedType?.expandedClassSymbol as? KtNamedClassOrObjectSymbol)?.psi?.let {
+            (typeAliasSymbol?.expandedType?.expandedSymbol as? KtNamedClassOrObjectSymbol)?.psi?.let {
                 return arrayOf(it)
             }
         }
@@ -70,7 +70,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
         analyze(this) {
             val symbol = getSymbol() as? KtCallableSymbol ?: return PsiElement.EMPTY_ARRAY
             val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
-            val targetSymbol = type.upperBoundIfFlexible().abbreviatedTypeOrSelf.classSymbol ?: return PsiElement.EMPTY_ARRAY
+            val targetSymbol = type.upperBoundIfFlexible().abbreviatedTypeOrSelf.symbol ?: return PsiElement.EMPTY_ARRAY
             targetSymbol.psi?.let { return arrayOf(it) }
         }
         return PsiElement.EMPTY_ARRAY

@@ -49,7 +49,7 @@ internal fun CallableMemberInfo(
 
 context(KtAnalysisSession)
 internal fun KtFunctionLikeSymbol.containsInlineClassInValueArguments(): Boolean =
-    valueParameters.any { it.returnType.expandedClassSymbol?.isInlineClass() == true }
+    valueParameters.any { it.returnType.expandedSymbol?.isInlineClass() == true }
 
 private fun KtFunctionLikeSymbol.methodName() = when (this) {
     is KtFunctionSymbol -> getByteCodeMethodName()

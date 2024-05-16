@@ -23,7 +23,7 @@ infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
 
     if (superType is KtTypeParameterType) return superType.symbol.upperBounds.all { this isPossiblySubTypeOf it }
 
-    val superTypeWithReplacedTypeArguments = superType.expandedClassSymbol?.let { symbol ->
+    val superTypeWithReplacedTypeArguments = superType.expandedSymbol?.let { symbol ->
         buildClassTypeWithStarProjections(symbol, superType.nullability)
     }
     return superTypeWithReplacedTypeArguments != null && isSubTypeOf(superTypeWithReplacedTypeArguments)

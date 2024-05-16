@@ -238,7 +238,7 @@ internal object CallableMetadataProvider {
 
     context(KtAnalysisSession)
     private fun KtType.replaceTypeArgumentsWithStarProjections(): KtType? =
-        expandedClassSymbol?.let { buildClassType(it) }?.withNullability(nullability)
+        expandedSymbol?.let { buildClassType(it) }?.withNullability(nullability)
 
     context(KtAnalysisSession)
     private fun callableWeightByReceiver(

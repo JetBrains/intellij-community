@@ -202,9 +202,9 @@ private class Fe10BindingLexicalScopeForClassLikeElement(
             
             superTypeLoop@ for (superType in current.superTypes) {
                 if (superType !is KtNonErrorClassType) continue@superTypeLoop
-                val classOrObjectSymbol: KtClassOrObjectSymbol = when (val typeSymbol = superType.classSymbol) {
+                val classOrObjectSymbol: KtClassOrObjectSymbol = when (val typeSymbol = superType.symbol) {
                     is KtClassOrObjectSymbol -> typeSymbol
-                    is KtTypeAliasSymbol -> typeSymbol.expandedType.safeAs<KtNonErrorClassType>()?.classSymbol.safeAs<KtClassOrObjectSymbol>()
+                    is KtTypeAliasSymbol -> typeSymbol.expandedType.safeAs<KtNonErrorClassType>()?.symbol.safeAs<KtClassOrObjectSymbol>()
                         ?: continue@superTypeLoop
                 }
                 if (classOrObjectSymbol.classKind == KtClassKind.CLASS) {

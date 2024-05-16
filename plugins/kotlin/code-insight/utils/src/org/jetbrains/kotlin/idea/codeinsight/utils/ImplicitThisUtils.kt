@@ -38,10 +38,10 @@ private fun getAssociatedClass(symbol: KtSymbol): KtClassOrObjectSymbol? {
     if (symbol !is KtCallableSymbol) return null
     return when (symbol) {
         is KtFunctionSymbol, is KtPropertySymbol ->
-            if (symbol.isExtension) symbol.receiverType?.expandedClassSymbol else symbol.getContainingSymbol() as? KtClassOrObjectSymbol
+            if (symbol.isExtension) symbol.receiverType?.expandedSymbol else symbol.getContainingSymbol() as? KtClassOrObjectSymbol
         is KtVariableLikeSymbol -> {
             val variableType = symbol.returnType as? KtFunctionalType
-            variableType?.receiverType?.expandedClassSymbol
+            variableType?.receiverType?.expandedSymbol
         }
         else -> null
     }
@@ -74,7 +74,7 @@ private fun getImplicitReceiverInfoOfClass(
 
 context(KtAnalysisSession)
 private fun getImplicitReceiverClassAndTag(receiver: KtImplicitReceiver): Pair<KtClassOrObjectSymbol, Name?>? {
-    val associatedClass = receiver.type.expandedClassSymbol ?: return null
+    val associatedClass = receiver.type.expandedSymbol ?: return null
     val associatedTag: Name? = when (val receiverSymbol = receiver.ownerSymbol) {
         is KtClassOrObjectSymbol -> receiverSymbol.name
         is KtAnonymousFunctionSymbol -> {

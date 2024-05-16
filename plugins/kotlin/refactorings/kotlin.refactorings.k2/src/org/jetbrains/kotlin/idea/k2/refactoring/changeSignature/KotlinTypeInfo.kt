@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.TypeConversionUtil
+import org.jetbrains.kotlin.analysis.api.KaAnalysisNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
@@ -29,15 +30,16 @@ data class KotlinTypeInfo(var text: String?, val context: KtElement) {
     constructor(ktType: KtType, context: KtElement): this(analyze(context) { ktType.render(errorIgnoringRenderer, Variance.INVARIANT) }, context)
 }
 
+@OptIn(KaAnalysisNonPublicApi::class)
 private val errorIgnoringRenderer: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-    typeErrorTypeRenderer = object : KtTypeErrorTypeRenderer {
+    errorTypeRenderer = object : KtTypeErrorTypeRenderer {
         override fun renderType(
             analysisSession: KtAnalysisSession,
             type: KtTypeErrorType,
             typeRenderer: KtTypeRenderer,
             printer: PrettyPrinter
         ) {
-            type.tryRenderAsNonErrorType()?.let {
+            type.presentableText?.let {
                 printer.append(it)
             }
         }

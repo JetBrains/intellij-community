@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtClassTypeQualifierRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtClassType
+import org.jetbrains.kotlin.analysis.api.types.KtClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -92,7 +92,7 @@ object CreateKotlinCallableActionTextBuilder {
 
     context (KtAnalysisSession)
     private fun KtType.selfOrSuperTypeWithAbstractMatch(isAbstract: Boolean): KtType? {
-        if (this.hasAbstractDeclaration() == isAbstract || this is KtNonErrorClassType && (classSymbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.INTERFACE) return this
+        if (this.hasAbstractDeclaration() == isAbstract || this is KtNonErrorClassType && (symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.INTERFACE) return this
         return getDirectSuperTypes().firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
     }
 
@@ -101,11 +101,12 @@ object CreateKotlinCallableActionTextBuilder {
         classIdRenderer = object : KtClassTypeQualifierRenderer {
             override fun renderClassTypeQualifier(
                 analysisSession: KtAnalysisSession,
-                type: KtClassType,
+                type: KtType,
+                qualifiers: List<KtClassTypeQualifier>,
                 typeRenderer: KtTypeRenderer,
                 printer: PrettyPrinter
             ) {
-                printer.append(type.qualifiers.joinToString(separator = ".") { it.name.asString() })
+                printer.append(qualifiers.joinToString(separator = ".") { it.name.asString() })
             }
         }
     }

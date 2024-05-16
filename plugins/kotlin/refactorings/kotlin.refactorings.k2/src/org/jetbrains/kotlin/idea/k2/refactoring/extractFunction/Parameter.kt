@@ -96,7 +96,7 @@ internal class MutableParameter(
     override fun getParameterTypeCandidates(): List<KtType> {
         analyze(scope) {
             return allParameterTypeCandidates().filter {
-                !(it is KtNonErrorClassType && it.classSymbol is KtAnonymousObjectSymbol) &&
+                !(it is KtNonErrorClassType && it.symbol is KtAnonymousObjectSymbol) &&
                         isResolvableInScope(it, scope, mutableSetOf())
             }
         }

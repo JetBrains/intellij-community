@@ -429,7 +429,7 @@ object KotlinUnusedSymbolUtil {
           useScope,
           kotlinOptions = searchOptions
       )
-      val originalDeclaration = (symbol as? KtTypeAliasSymbol)?.expandedType?.expandedClassSymbol?.psi as? KtNamedDeclaration
+      val originalDeclaration = (symbol as? KtTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
       if (symbol !is KtFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
           if (declaration is KtSecondaryConstructor &&
               declarationContainingClass != null &&
@@ -643,9 +643,9 @@ object KotlinUnusedSymbolUtil {
 
   context(KtAnalysisSession)
   private fun KtFunctionSymbol.hasInlineClassParameters(): Boolean {
-      val receiverParameterClassSymbol = receiverType?.expandedClassSymbol as? KtNamedClassOrObjectSymbol
+      val receiverParameterClassSymbol = receiverType?.expandedSymbol as? KtNamedClassOrObjectSymbol
       return receiverParameterClassSymbol?.isInline == true || valueParameters.any {
-          val namedClassOrObjectSymbol = it.returnType.expandedClassSymbol as? KtNamedClassOrObjectSymbol ?: return@any false
+          val namedClassOrObjectSymbol = it.returnType.expandedSymbol as? KtNamedClassOrObjectSymbol ?: return@any false
           namedClassOrObjectSymbol.isInline
       }
   }

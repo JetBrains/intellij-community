@@ -31,7 +31,7 @@ internal object AddDataModifierFixFactory {
         val type = (callableSymbol?.returnType as? KtNonErrorClassType)?.ownTypeArguments?.firstOrNull()?.type
             ?: callableSymbol?.returnType
 
-        val classSymbol = (type as? KtNonErrorClassType)?.classSymbol as? KtNamedClassOrObjectSymbol
+        val classSymbol = (type as? KtNonErrorClassType)?.symbol as? KtNamedClassOrObjectSymbol
             ?: return@ModCommandBased emptyList()
 
         val modality = classSymbol.modality

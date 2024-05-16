@@ -57,14 +57,14 @@ object K2CreateFromUsageUtil {
 
     context (KtAnalysisSession)
     internal fun KtType.hasAbstractDeclaration(): Boolean {
-        val classSymbol = expandedClassSymbol ?: return false
+        val classSymbol = expandedSymbol ?: return false
         if (classSymbol.classKind == KtClassKind.INTERFACE) return true
         val declaration = classSymbol.psi as? KtDeclaration ?: return false
         return declaration.modifierList.hasAbstractModifier()
     }
 
     context (KtAnalysisSession)
-    internal fun KtType.canRefactor(): Boolean = expandedClassSymbol?.psi?.canRefactorElement() == true
+    internal fun KtType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
 
     context (KtAnalysisSession)
     internal fun KtExpression.resolveExpression(): KtSymbol? {
@@ -74,7 +74,7 @@ object K2CreateFromUsageUtil {
     }
 
     context (KtAnalysisSession)
-    internal fun KtType.convertToClass(): KtClass? = expandedClassSymbol?.psi as? KtClass
+    internal fun KtType.convertToClass(): KtClass? = expandedSymbol?.psi as? KtClass
 
     context (KtAnalysisSession)
     internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
@@ -151,7 +151,7 @@ object K2CreateFromUsageUtil {
     private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
         //is KtCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
         is KtClassLikeSymbol -> symbol // When the receiver is an object
-        else -> getKtType()?.expandedClassSymbol
+        else -> getKtType()?.expandedSymbol
     }?.psi
 
     context (KtAnalysisSession)
@@ -301,7 +301,7 @@ object K2CreateFromUsageUtil {
         var type = ktType
         do {
             if (allTypesInsideAreAccessible(type, call)) return ktType
-            type = type.expandedClassSymbol?.superTypes?.firstOrNull() ?: return null
+            type = type.expandedSymbol?.superTypes?.firstOrNull() ?: return null
         }
         while(true)
     }

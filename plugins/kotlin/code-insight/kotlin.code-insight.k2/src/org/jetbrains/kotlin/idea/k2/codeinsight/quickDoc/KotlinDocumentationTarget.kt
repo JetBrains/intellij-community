@@ -200,7 +200,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
             val name = symbol?.name?.asString()
             if (name != null && symbol is KtDeclarationSymbol) {
                 val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
-                val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedClassSymbol }
+                val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
                     val navigationElement = superClass.psi?.navigationElement
                     if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled) {

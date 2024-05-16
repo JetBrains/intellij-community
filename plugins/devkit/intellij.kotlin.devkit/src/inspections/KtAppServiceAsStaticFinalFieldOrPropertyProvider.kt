@@ -57,7 +57,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
             if (isConstructorCall) return
 
             // can be KtClass or PsiClass
-            property.getReturnKtType().withNullability(KtTypeNullability.UNKNOWN).expandedClassSymbol?.psi ?: return
+            property.getReturnKtType().withNullability(KtTypeNullability.UNKNOWN).expandedSymbol?.psi ?: return
           }
         }
 

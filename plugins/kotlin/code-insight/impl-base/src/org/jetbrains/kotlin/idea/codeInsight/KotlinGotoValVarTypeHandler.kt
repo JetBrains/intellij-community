@@ -22,7 +22,7 @@ class KotlinGotoValVarTypeHandler: GotoDeclarationHandlerBase() {
                 val ktType = property.getReturnKtType()
                 when (ktType) {
                     is KtTypeParameterType -> ktType.symbol.psi
-                    else -> ktType.upperBoundIfFlexible().expandedClassSymbol?.psi
+                    else -> ktType.upperBoundIfFlexible().expandedSymbol?.psi
                 }
             }
         }

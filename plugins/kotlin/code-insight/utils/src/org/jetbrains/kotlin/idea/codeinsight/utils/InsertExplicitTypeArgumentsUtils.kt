@@ -45,8 +45,7 @@ fun addTypeArguments(element: KtCallElement, context: String, project: Project) 
 
 context(KtAnalysisSession)
 private fun KtType.containsErrorType(): Boolean = when (this) {
-    is KtClassErrorType -> true
-    is KtTypeErrorType -> true
+    is KtErrorType -> true
     is KtFunctionalType -> {
         (receiverType?.containsErrorType() == true)
                 || returnType.containsErrorType()
@@ -58,5 +57,5 @@ private fun KtType.containsErrorType(): Boolean = when (this) {
     is KtDefinitelyNotNullType -> original.containsErrorType()
     is KtFlexibleType -> lowerBound.containsErrorType() || upperBound.containsErrorType()
     is KtIntersectionType -> conjuncts.any { it.containsErrorType() }
-    is KtTypeParameterType, is KtCapturedType, is KtIntegerLiteralType, is KtDynamicType -> false
+    is KtTypeParameterType, is KtCapturedType, is KtDynamicType -> false
 }

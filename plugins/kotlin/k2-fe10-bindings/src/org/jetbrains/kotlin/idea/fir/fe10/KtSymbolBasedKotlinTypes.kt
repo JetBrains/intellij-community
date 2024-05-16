@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.fir.fe10
 
+import org.jetbrains.kotlin.analysis.api.KaAnalysisNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.KtTypeProjection
@@ -105,10 +106,11 @@ fun KtTypeProjection.toTypeProjection(context: Fe10WrapperContext): TypeProjecti
         is KtTypeArgumentWithVariance -> TypeProjectionImpl(variance, type.toKotlinType(context))
     }
 
+@OptIn(KaAnalysisNonPublicApi::class)
 fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = getDescriptorsAnnotations(context)): UnwrappedType {
     val typeConstructor: TypeConstructor = when (this) {
         is KtTypeParameterType -> KtSymbolBasedTypeParameterDescriptor(this.symbol, context).typeConstructor
-        is KtNonErrorClassType -> when (val classLikeSymbol = classSymbol) {
+        is KtNonErrorClassType -> when (val classLikeSymbol = symbol) {
             is KtTypeAliasSymbol -> return classLikeSymbol.toExpandedKotlinType(context, ownTypeArguments, annotations)
             is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(classLikeSymbol, context).typeConstructor
             is KtAnonymousObjectSymbol -> context.implementationPostponed()

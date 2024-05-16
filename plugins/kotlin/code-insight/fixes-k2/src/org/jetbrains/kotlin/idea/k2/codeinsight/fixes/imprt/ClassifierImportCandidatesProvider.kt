@@ -28,7 +28,7 @@ internal open class ClassifierImportCandidatesProvider(
 
     context(KtAnalysisSession)
     protected fun KtClassLikeSymbol.getExpandedClassSymbol(): KtClassOrObjectSymbol? = when (this) {
-        is KtTypeAliasSymbol -> expandedType.expandedClassSymbol
+        is KtTypeAliasSymbol -> expandedType.expandedSymbol
         is KtClassOrObjectSymbol -> this
     }
 

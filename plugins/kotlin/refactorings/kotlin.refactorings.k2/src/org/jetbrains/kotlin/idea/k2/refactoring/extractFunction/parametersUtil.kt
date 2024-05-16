@@ -189,7 +189,7 @@ internal fun ExtractionData.inferParametersInfo(
         }
     }
 
-    for (typeToCheck in info.typeParameters.flatMap { it.collectReferencedTypes() }.map { it.getKtType() } ) {
+    for (typeToCheck in info.typeParameters.flatMap { it.collectReferencedTypes() }.map { it.getKtType() }) {
         typeToCheck.processTypeIfExtractable(
             info.typeParameters,
             info.nonDenotableTypes,
@@ -229,7 +229,7 @@ private fun ExtractionData.registerParameter(
         return
     }
 
-    val thisSymbol = (receiverSymbol as? KtReceiverParameterSymbol)?.type?.expandedClassSymbol ?: receiverSymbol
+    val thisSymbol = (receiverSymbol as? KtReceiverParameterSymbol)?.type?.expandedSymbol ?: receiverSymbol
     val hasThisReceiver = thisSymbol != null
     val thisExpr = refInfo.refExpr.parent as? KtThisExpression
 
