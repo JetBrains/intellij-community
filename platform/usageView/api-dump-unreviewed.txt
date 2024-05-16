@@ -229,7 +229,6 @@ c:com.intellij.usages.UsageInfo2UsageAdapter
 - p:computeText():com.intellij.usages.TextChunk[]
 - s:convert(com.intellij.usageView.UsageInfo[]):com.intellij.usages.UsageInfo2UsageAdapter[]
 - getBackgroundColor():java.awt.Color
-- f:getCachedPresentation():com.intellij.usages.UsageNodePresentation
 - getData(java.lang.String):java.lang.Object
 - getDocument():com.intellij.openapi.editor.Document
 - f:getElement():com.intellij.psi.PsiElement
@@ -265,7 +264,6 @@ c:com.intellij.usages.UsageInfo2UsageAdapter
 - pf:resetCachedPresentation():V
 - selectInEditor():V
 - toString():java.lang.String
-- f:updateCachedPresentation():V
 com.intellij.usages.UsageInfoAdapter
 - com.intellij.usages.Usage
 - com.intellij.usages.rules.MergeableUsage
@@ -305,12 +303,10 @@ e:com.intellij.usages.UsageLimitUtil$Result
 - s:values():com.intellij.usages.UsageLimitUtil$Result[]
 com.intellij.usages.UsagePresentation
 - getBackgroundColor():java.awt.Color
-- getCachedPresentation():com.intellij.usages.UsageNodePresentation
 - a:getIcon():javax.swing.Icon
 - a:getPlainText():java.lang.String
 - a:getText():com.intellij.usages.TextChunk[]
 - a:getTooltipText():java.lang.String
-- updateCachedPresentation():V
 *:com.intellij.usages.UsageSearchPresentation
 - a:getOptionsString():java.lang.String
 - a:getSearchTargetString():java.lang.String
@@ -558,35 +554,6 @@ com.intellij.usages.impl.UsageViewEx
 - a:searchHasBeenCancelled():Z
 - a:setSearchInProgress(Z):V
 - a:waitForUpdateRequestsCompletion():V
-f:com.intellij.usages.impl.UsageViewStatisticsCollector
-- sf:INSTANCE:com.intellij.usages.impl.UsageViewStatisticsCollector
-- sf:IS_IN_INJECTED_FILE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:IS_IN_TEST_SOURCES:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:IS_SELECTED_ELEMENT_AMONG_RECENT_FILES:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:IS_THE_SAME_FILE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:NUMBER_OF_TARGETS:com.intellij.internal.statistic.eventLog.events.IntEventField
-- sf:REFERENCE_CLASS:com.intellij.internal.statistic.eventLog.events.ClassEventField
-- sf:SCOPE_RULE_ID:java.lang.String
-- sf:SELECTED_ELEMENT_DATA:com.intellij.internal.statistic.eventLog.events.ObjectEventField
-- sf:TARGET_ELEMENT_DATA:com.intellij.internal.statistic.eventLog.events.ObjectEventField
-- sf:calculateElementData(com.intellij.psi.PsiElement):com.intellij.internal.statistic.eventLog.events.ObjectEventData
-- f:getGROUP():com.intellij.internal.statistic.eventLog.EventLogGroup
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- f:getUSAGE_VIEW():com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
-- sf:logItemChosen(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.CodeNavigateSource,com.intellij.lang.Language,Z):V
-- sf:logItemChosen(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.CodeNavigateSource,java.lang.Integer,java.lang.Integer,java.lang.Integer,com.intellij.lang.Language,Z):V
-- sf:logItemChosenInPopupFeatures(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.psi.PsiElement,java.util.List):V
-- sf:logOpenInFindToolWindow(com.intellij.openapi.project.Project,com.intellij.usages.UsageView):V
-- sf:logPopupClosed(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,Z,I,java.lang.Integer,I,java.lang.Long,java.util.List):V
-- sf:logScopeChanged(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.psi.search.SearchScope,com.intellij.psi.search.SearchScope,java.lang.Class):V
-- sf:logSearchFinished(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,java.lang.Class,com.intellij.psi.search.SearchScope,com.intellij.lang.Language,I,J,J,Z,Z,com.intellij.usages.impl.CodeNavigateSource):V
-- sf:logSearchStarted(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.CodeNavigateSource,com.intellij.psi.PsiElement,I):V
-- sf:logSearchStarted(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.CodeNavigateSource,java.util.List):V
-- sf:logTabSwitched(com.intellij.openapi.project.Project,com.intellij.usages.UsageView):V
-- sf:logTooManyDialog(com.intellij.openapi.project.Project,com.intellij.usages.UsageView,com.intellij.usages.impl.TooManyUsagesUserAction,java.lang.Class,java.lang.String,com.intellij.lang.Language):V
-- sf:logUsageNavigate(com.intellij.openapi.project.Project,com.intellij.usageView.UsageInfo):V
-- sf:logUsageNavigate(com.intellij.openapi.project.Project,com.intellij.usages.Usage):V
-- sf:logUsageShown(com.intellij.openapi.project.Project,java.lang.Class,com.intellij.lang.Language,com.intellij.usages.UsageView):V
 f:com.intellij.usages.impl.rules.DefaultGeneratedSourceUsageFilter
 - com.intellij.usages.rules.GeneratedSourceUsageFilter
 - <init>():V

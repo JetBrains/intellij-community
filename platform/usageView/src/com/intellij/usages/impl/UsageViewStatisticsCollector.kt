@@ -21,6 +21,7 @@ import com.intellij.usages.Usage
 import com.intellij.usages.UsageView
 import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 enum class CodeNavigateSource {
@@ -34,6 +35,7 @@ enum class TooManyUsagesUserAction {
   Continued
 }
 
+@Internal
 object UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
