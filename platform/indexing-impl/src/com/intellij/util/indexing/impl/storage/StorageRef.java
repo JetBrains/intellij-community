@@ -11,6 +11,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.function.Predicate;
 
+import static com.intellij.util.SystemProperties.*;
+
 /**
  * Wraps a storage (name, opening-method, check-is-closed-method), and ensuring only 1 opened instance of the storage
  * exists at each moment. I.e. if {@link #reopen()} is called, current storage instance must be either null (not opened
@@ -19,18 +21,21 @@ import java.util.function.Predicate;
  * What happens if current instance is still opened, is controlled by {@link #failIfNotClosed} param:
  * <ul>
  * <li>if true -- {@link IllegalStateException} is thrown</li>
- * <li>if false -- warning is logged, and storage is re-opened regardless of previous one
- * TODO in second case previous instance must be closed before new instance is opened, but I postponed that</li>
+ * <li>if false -- warning is logged, current storage is closed forcibly, and re-opened/cleaned</li>
  * </ul>
  */
 @ApiStatus.Internal
 public class StorageRef<C extends Closeable, E extends Exception> {
   private static final Logger LOG = Logger.getInstance(StorageRef.class);
 
-  //TODO RC: if we don't throw exception -- we should close storage here, otherwise this is not logically-consistent
-  //         behavior. This is temporary false: my idea is to first see how many WARNs we get, and then enable closing,
-  //         which will lead to 'already closed' exceptions in a random places across the codebase
-  private static final boolean CLOSE_BEFORE_REOPEN = false;
+  /**
+   * If we don't throw exception, we must close the storage -- otherwise the invariant [<=1 storage instance exists at any given moment]
+   * is broken -- and keeping this invariant is the only reason this class was created.
+   * Hence, this property must be true, and inlined.
+   * It is temporary made configurable, because I suspect it could cause too many tests failures, so I want to provide a
+   * way out :)
+   */
+  private static final boolean CLOSE_BEFORE_REOPEN = getBooleanProperty("indexes.force-close-before-reopen", true);
 
   private @Nullable C storage = null;
 
@@ -49,7 +54,20 @@ public class StorageRef<C extends Closeable, E extends Exception> {
     this.failIfNotClosed = failIfNotClosed;
   }
 
-  public synchronized C reopen() throws E, IOException {
+  /**
+   * Opens/re-opens storage, by using .storageOpener factory supplied into the ctor.
+   * <p>
+   * Ensures the current storage instance, if exists, is closed before the new instance opened -- i.e. ensures <= 1 instance
+   * of a storage is opened at any given moment.
+   * <p>
+   * If the current instance is not closed, behavior depends on .failIfNotClosed ctor param:
+   * <ul>
+   * <li>if .failIfNotClosed=true  => throw {@link IllegalStateException}.</li>
+   * <li>if .failIfNotClosed=false => log warning, close the current storage forcibly, and reopen it again</li>
+   * </ul>
+   * </p>
+   */
+  public synchronized C reopen() throws E, IOException, IllegalStateException {
     if (storage == null || isClosedPredicate.test(storage)) {
       storage = storageOpener.compute();
       return storage;
@@ -72,7 +90,15 @@ public class StorageRef<C extends Closeable, E extends Exception> {
     return storage;
   }
 
-  public synchronized void ensureClosed() throws IOException {
+  /**
+   * Ensures current storage (if exists) is closed.
+   * If the current instance is not closed, behavior depends on .failIfNotClosed ctor param:
+   * <ul>
+   * <li>if .failIfNotClosed=true  => throw {@link IllegalStateException}.</li>
+   * <li>if .failIfNotClosed=false => log warning, and close the current storage forcibly</li>
+   * </ul>
+   */
+  public synchronized void ensureClosed() throws IOException, IllegalStateException {
     if (storage == null || isClosedPredicate.test(storage)) {
       return;
     }
