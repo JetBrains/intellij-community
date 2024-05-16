@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -111,6 +112,7 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
+    FileDocumentManager.getInstance().saveAllDocuments()
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this)
 
     return offsets
