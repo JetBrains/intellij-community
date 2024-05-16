@@ -25,6 +25,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.containers.FList
 import git4idea.GitBranch
+import git4idea.GitReference
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
@@ -162,13 +163,13 @@ class GitBranchesTreePopupStep(internal val project: Project,
       return GitBranchesTreePopupStep(project, selectedValue, listOf(selectedValue), false)
     }
 
-    val branchUnderRepository = selectedValue as? GitBranchesTreeModel.BranchUnderRepository
-    val branch = selectedValue as? GitBranch ?: branchUnderRepository?.branch
+    val refUnderRepository = selectedValue as? GitBranchesTreeModel.RefUnderRepository
+    val reference = selectedValue as? GitReference ?: refUnderRepository?.ref
 
-    if (branch != null) {
+    if (reference != null) {
       val actionGroup = ActionManager.getInstance().getAction(BRANCH_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
       return createActionStep(actionGroup, project, selectedRepository,
-                              branchUnderRepository?.repository?.let(::listOf) ?: affectedRepositories, branch)
+                              refUnderRepository?.repository?.let(::listOf) ?: affectedRepositories, reference)
     }
 
     if (selectedValue is PopupFactoryImpl.ActionItem) {
@@ -246,8 +247,8 @@ class GitBranchesTreePopupStep(internal val project: Project,
                                  project: Project,
                                  selectedRepository: GitRepository?,
                                  repositories: List<GitRepository>,
-                                 branch: GitBranch? = null): ListPopupStep<*> {
-      val dataContext = createDataContext(project, null, selectedRepository, repositories, branch)
+                                 reference: GitReference? = null): ListPopupStep<*> {
+      val dataContext = createDataContext(project, null, selectedRepository, repositories, reference)
       return JBPopupFactory.getInstance()
         .createActionsStep(actionGroup, dataContext, SINGLE_REPOSITORY_ACTION_PLACE, false, true, null, null, false, 0, false)
     }
@@ -256,13 +257,13 @@ class GitBranchesTreePopupStep(internal val project: Project,
                                    component: JComponent?,
                                    selectedRepository: GitRepository?,
                                    repositories: List<GitRepository>,
-                                   branch: GitBranch? = null): DataContext =
+                                   reference: GitReference? = null): DataContext =
       CustomizedDataContext.withSnapshot(
         DataManager.getInstance().getDataContext(component)) { sink ->
         sink[CommonDataKeys.PROJECT] = project
         sink[GitBranchActionsUtil.REPOSITORIES_KEY] = repositories
         sink[GitBranchActionsUtil.SELECTED_REPO_KEY] = selectedRepository
-        sink[GitBranchActionsUtil.BRANCHES_KEY] = branch?.let(::listOf)
+        sink[GitBranchActionsUtil.BRANCHES_KEY] = (reference as? GitBranch)?.let(::listOf)
       }
 
     /**

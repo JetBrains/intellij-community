@@ -26,8 +26,8 @@ class GitBranchesTreeMultiRepoModel(
 
   private val branchManager = project.service<GitBranchManager>()
 
-  private lateinit var commonLocalBranchesTree: LazyBranchesSubtreeHolder
-  private lateinit var commonRemoteBranchesTree: LazyBranchesSubtreeHolder
+  private lateinit var commonLocalBranchesTree: LazyRefsSubtreeHolder
+  private lateinit var commonRemoteBranchesTree: LazyRefsSubtreeHolder
 
   private val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
@@ -46,8 +46,8 @@ class GitBranchesTreeMultiRepoModel(
     val remoteBranches = GitBranchUtil.getCommonRemoteBranches(repositories)
     val localFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL)
     val remoteFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE)
-    commonLocalBranchesTree = LazyBranchesSubtreeHolder(repositories, localBranches, localFavorites, null, ::isPrefixGrouping)
-    commonRemoteBranchesTree = LazyBranchesSubtreeHolder(repositories, remoteBranches, remoteFavorites, null, ::isPrefixGrouping)
+    commonLocalBranchesTree = LazyRefsSubtreeHolder(repositories, localBranches, localFavorites, null, ::isPrefixGrouping)
+    commonRemoteBranchesTree = LazyRefsSubtreeHolder(repositories, remoteBranches, remoteFavorites, null, ::isPrefixGrouping)
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
 
@@ -59,7 +59,7 @@ class GitBranchesTreeMultiRepoModel(
 
   override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
-  override fun isLeaf(node: Any?): Boolean = node is GitBranch || node is BranchUnderRepository
+  override fun isLeaf(node: Any?): Boolean = node is GitBranch || node is RefUnderRepository
                                              || (node === GitBranchType.LOCAL && commonLocalBranchesTree.isEmpty())
                                              || (node === GitBranchType.REMOTE && commonRemoteBranchesTree.isEmpty())
 

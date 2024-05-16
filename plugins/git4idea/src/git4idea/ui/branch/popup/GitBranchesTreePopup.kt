@@ -39,9 +39,11 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
+import git4idea.GitReference
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitRefType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -239,7 +241,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     var haveBranches = false
 
     TreeUtil.treeTraverser(tree)
-      .filter(BranchType::class or BranchTypeUnderRepository::class or GitBranch::class or BranchUnderRepository::class)
+      .filter(BranchType::class or RefTypeUnderRepository::class or GitBranch::class or RefUnderRepository::class)
       .forEach { node ->
         if (!haveBranches && !model.isLeaf(node)) {
           haveBranches = true
@@ -249,8 +251,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
           node is GitBranch && isChild() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
           node is GitBranch && !isChild() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
           node is GitBranch && treeStep.affectedRepositories.any { node in it.recentCheckoutBranches } -> node
-          node is BranchUnderRepository && node.repository.currentBranch == node.branch -> node
-          node is BranchTypeUnderRepository -> node
+          node is RefUnderRepository && node.repository.currentBranch == node.ref -> node
+          node is RefTypeUnderRepository -> node
           else -> null
         }
 
@@ -315,14 +317,14 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   private fun toggleFavorite(userObject: Any?) {
-    val branchUnderRepository = userObject as? BranchUnderRepository
-    val branch = userObject as? GitBranch ?: branchUnderRepository?.branch ?: return
+    val branchUnderRepository = userObject as? RefUnderRepository
+    val reference = userObject as? GitReference ?: branchUnderRepository?.ref ?: return
     val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositories
-    val branchType = GitBranchType.of(branch)
+    val branchType = GitRefType.of(reference as GitBranch)//TODO
     val branchManager = project.service<GitBranchManager>()
-    val anyNotFavorite = repositories.any { repository -> !branchManager.isFavorite(branchType, repository, branch.name) }
+    val anyNotFavorite = repositories.any { repository -> !branchManager.isFavorite(branchType, repository, reference.name) }
     repositories.forEach { repository ->
-      branchManager.setFavorite(branchType, repository, branch.name, anyNotFavorite)
+      branchManager.setFavorite(branchType, repository, reference.name, anyNotFavorite)
     }
   }
 
@@ -622,9 +624,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     if (selected != null) {
       val userObject = TreeUtil.getUserObject(selected)
       val point = e?.point
-      val branchUnderRepository = userObject as? BranchUnderRepository
-      val branch = userObject as? GitBranch ?: branchUnderRepository?.branch
-      if (point != null && branch != null && isMainIconAt(point, branch)) {
+      val branchUnderRepository = userObject as? RefUnderRepository
+      val reference = userObject as? GitReference ?: branchUnderRepository?.ref
+      if (point != null && reference != null && isMainIconAt(point, reference)) {
         toggleFavorite(userObject)
         return
       }
