@@ -507,10 +507,17 @@ private suspend fun processAndGetProductPluginContentModules(
   }
 }
 
+// todo implement correct processing
+private val excludedPaths = java.util.Set.of(
+  "/META-INF/ultimate.xml",
+  "/META-INF/RdServer.xml",
+  "/META-INF/unattendedHost.xml"
+)
+
 fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>, context: BuildContext): XIncludePathResolver {
   return object : XIncludePathResolver {
     override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path? {
-      if (isOptional || isDynamic || relativePath == "/META-INF/ultimate.xml") {
+      if (isOptional || isDynamic || excludedPaths.contains(relativePath)) {
         // It isn't safe to resolve includes at build time if they're optional.
         // This could lead to issues when running another product using this distribution.
         // E.g., if the corresponding module is somehow being excluded on runtime.
