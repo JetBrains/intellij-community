@@ -26,7 +26,6 @@ import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.psi.PsiManager
-import com.intellij.platform.ml.embeddings.utils.normalized
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
@@ -131,6 +130,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
   private suspend fun indexProject() {
     logger.debug { "Started full project embedding indexing" }
     SEMANTIC_SEARCH_TRACER.spanBuilder(INDEXING_SPAN_NAME).useWithScope {
+      startIndexingSession()
       try {
         if (isFirstIndexing) onFirstIndexingStart()
         logger.debug { "Is first indexing: ${isFirstIndexing}" }
@@ -151,6 +151,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           onFirstIndexingFinish()
           isFirstIndexing = false
         }
+        finishIndexingSession()
       }
     }
     logger.debug { "Finished full project embedding indexing" }
@@ -341,21 +342,21 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
       val index = FileEmbeddingsStorage.getInstance(project).index
       index.onIndexingFinish()
       if (index.changed) {
-        savingJobs.add(launch(Dispatchers.IO) { index.saveToDisk() })
+        savingJobs.add(launch(Dispatchers.IO) { FileEmbeddingsStorage.getInstance(project).saveIndex() })
       }
     }
     if (settings.shouldIndexClasses) {
       val index = ClassEmbeddingsStorage.getInstance(project).index
       index.onIndexingFinish()
       if (index.changed) {
-        savingJobs.add(launch(Dispatchers.IO) { index.saveToDisk() })
+        savingJobs.add(launch(Dispatchers.IO) { ClassEmbeddingsStorage.getInstance(project).saveIndex() })
       }
     }
     if (settings.shouldIndexSymbols) {
       val index = SymbolEmbeddingStorage.getInstance(project).index
       index.onIndexingFinish()
       if (index.changed) {
-        savingJobs.add(launch(Dispatchers.IO) { index.saveToDisk() })
+        savingJobs.add(launch(Dispatchers.IO) { SymbolEmbeddingStorage.getInstance(project).saveIndex() })
       }
     }
     savingJobs.joinAll()

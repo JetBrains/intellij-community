@@ -4,6 +4,8 @@ package com.intellij.platform.ml.embeddings.search.indices
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.platform.ml.embeddings.search.utils.SuspendingReadWriteLock
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.ensureActive
@@ -47,7 +49,6 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
   override suspend fun getSize() = lock.read { idToEntry.size }
 
   override suspend fun contains(id: String): Boolean = lock.read {
-    uncheckedIds.remove(id)
     id in idToEntry
   }
 
@@ -61,12 +62,15 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
   }
 
   override suspend fun onIndexingStart() {
-    uncheckedIds.clear()
-    uncheckedIds.addAll(idToEntry.keys)
+    lock.write {
+      uncheckedIds.clear()
+      uncheckedIds.addAll(idToEntry.keys)
+    }
   }
 
   override suspend fun onIndexingFinish() = lock.write {
     if (uncheckedIds.size > 0) changed = true
+    logger.debug { "Deleted ${uncheckedIds.size} unchecked ids" }
     uncheckedIds.forEach {
       delete(it, all = true, shouldSaveIds = false)
     }
@@ -77,6 +81,7 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
                                   shouldCount: Boolean) = lock.write {
     for ((id, embedding) in values) {
       ensureActive()
+      uncheckedIds.remove(id)
       val entry = idToEntry.getOrPut(id) {
         changed = true
         if (limit != null && idToEntry.size >= limit!!) return@write
@@ -92,16 +97,14 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
 
   override suspend fun saveToDisk() = lock.read { save() }
 
-  override suspend fun loadFromDisk() {
-    val (ids, embeddings) = fileManager.loadIndex() ?: return
+  override suspend fun loadFromDisk() = lock.write {
+    val (ids, embeddings) = fileManager.loadIndex() ?: return@write
     val idToIndex = ids.withIndex().associate { it.value to it.index }
     val idToEmbedding = (ids zip embeddings).toMap()
-    lock.write {
-      indexToId = CollectionFactory.createSmallMemoryFootprintMap(ids.withIndex().associate { it.index to it.value })
-      idToEntry = CollectionFactory.createSmallMemoryFootprintMap(
-        ids.associateWith { IndexEntry(idToIndex[it]!!, 0, idToEmbedding[it]!!) }
-      )
-    }
+    indexToId = CollectionFactory.createSmallMemoryFootprintMap(ids.withIndex().associate { it.index to it.value })
+    idToEntry = CollectionFactory.createSmallMemoryFootprintMap(
+      ids.associateWith { IndexEntry(idToIndex[it]!!, 0, idToEmbedding[it]!!) }
+    )
   }
 
   override suspend fun offload() = lock.write {
@@ -146,6 +149,7 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
   }
 
   suspend fun addEntry(id: String, embedding: FloatTextEmbedding) = lock.write {
+    uncheckedIds.remove(id)
     add(id, embedding)
   }
 
@@ -208,5 +212,9 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
 
   private suspend fun saveIds() {
     fileManager.saveIds(idToEntry.toList().sortedBy { it.second.index }.map { it.first })
+  }
+
+  companion object {
+    private val logger = Logger.getInstance(DiskSynchronizedEmbeddingSearchIndex::class.java)
   }
 }

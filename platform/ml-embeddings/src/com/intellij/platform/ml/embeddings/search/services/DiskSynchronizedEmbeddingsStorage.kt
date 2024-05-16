@@ -17,7 +17,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
@@ -29,15 +28,17 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   internal abstract val reportableIndex: EmbeddingSearchLogger.Index
 
   private val offloadRequest = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val indexingSessionCount = AtomicInteger(0)
-  private val isIndexLoading = AtomicBoolean(false)
+  private val usageSessionCount = AtomicInteger(0)
   private var isIndexLoaded = false
 
   private val indexLoadingMutex = Mutex()
 
   init {
     cs.launch {
-      offloadRequest.debounce(OFFLOAD_TIMEOUT).collectLatest { if (indexingSessionCount.get() == 0) offloadIndex() }
+      offloadRequest.debounce(OFFLOAD_TIMEOUT).collectLatest {
+        // Make sure offloading does not happen during the indexing or search
+        if (usageSessionCount.get() == 0) offloadIndex() else scheduleOffload()
+      }
     }
   }
 
@@ -47,7 +48,12 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
       isIndexLoaded = true
       logger.debug { "Loaded index: ${reportableIndex.name}" }
     }
+    else {
+      logger.debug { "Canceled index loading, already loaded: ${reportableIndex.name}" }
+    }
   }
+
+  suspend fun saveIndex() = indexLoadingMutex.withLock { index.saveToDisk() }
 
   private suspend fun offloadIndex() = indexLoadingMutex.withLock {
     if (isIndexLoaded) {
@@ -56,43 +62,42 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
       isIndexLoaded = false
       logger.debug { "Offloaded index: ${reportableIndex.name}" }
     }
+    else {
+      logger.debug { "Canceled index offloading, not loaded yet: ${reportableIndex.name}" }
+    }
   }
 
   suspend fun startIndexingSession() {
-    if (index.getSize() == 0) loadIndex()
-    indexingSessionCount.incrementAndGet()
+    usageSessionCount.incrementAndGet()
+    loadIndex()
   }
 
   fun finishIndexingSession() {
-    indexingSessionCount.decrementAndGet()
-    scheduleCleanup()
+    scheduleOffload()
+    usageSessionCount.decrementAndGet()
   }
 
-  fun scheduleCleanup() {
-    // Make sure offloading does not happen during the indexing
-    if (indexingSessionCount.get() == 0) {
-      check(offloadRequest.tryEmit(Unit))
-    }
-  }
-
-  private suspend fun loadIndexIfNecessary() {
-    if (index.getSize() == 0 && isIndexLoading.compareAndSet(false, true)) {
-      cs.launch(Dispatchers.IO) {
-        loadIndex()
-        isIndexLoading.set(false)
-      }
-    }
+  private fun scheduleOffload() {
+    check(offloadRequest.tryEmit(Unit))
   }
 
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
-    loadIndexIfNecessary()
     val searchStartTime = System.nanoTime()
+    val neighbours: List<ScoredText>
+    val loadJob = cs.launch(Dispatchers.IO) { loadIndex() }
     val embedding = generateEmbedding(text) ?: return emptyList()
     LocalEmbeddingServiceProvider.getInstance().scheduleCleanup()
-    val neighbours = index.findClosest(embedding, topK, similarityThreshold)
-    scheduleCleanup()
+    usageSessionCount.incrementAndGet()
+    try {
+      loadJob.join()
+      neighbours = index.findClosest(embedding, topK, similarityThreshold)
+      scheduleOffload()
+    }
+    finally {
+      usageSessionCount.decrementAndGet()
+    }
     EmbeddingSearchLogger.searchFinished(project, reportableIndex, TimeoutUtil.getDurationMillis(searchStartTime))
     return neighbours
   }
@@ -100,11 +105,20 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   @RequiresBackgroundThread
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Flow<ScoredText> {
     FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
-    loadIndexIfNecessary()
+    val loadJob = cs.launch(Dispatchers.IO) { loadIndex() }
     val embedding = generateEmbedding(text) ?: return emptyFlow()
     LocalEmbeddingServiceProvider.getInstance().scheduleCleanup()
-    scheduleCleanup()
-    return index.streamFindClose(embedding, similarityThreshold)
+    return flow {
+      usageSessionCount.incrementAndGet()
+      try {
+        loadJob.join()
+        emitAll(index.streamFindClose(embedding, similarityThreshold))
+        scheduleOffload()
+      }
+      finally {
+        usageSessionCount.decrementAndGet()
+      }
+    }
   }
 
   fun registerInMemoryManager() {
