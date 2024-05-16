@@ -192,6 +192,8 @@
       "changedFile.svg": "scope/changedFiles.svg",
       "changedFiles.svg": "scope/changedFilesAll.svg",
       "config.svg": "fileTypes/config.svg",
+      "contexts.svg": "fileTypes/contexts.svg",
+      "contextsModifier.svg": "fileTypes/contextsModifier.svg",
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
       "eclipse.svg": "providers/eclipse.svg",

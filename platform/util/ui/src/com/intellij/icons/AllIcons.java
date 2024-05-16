@@ -409,6 +409,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon AS = load("fileTypes/as.svg", -1805543846, 0);
     /** 16x16 */ public static final @NotNull Icon Aspectj = load("fileTypes/aspectj.svg", 469536666, 0);
     /** 16x16 */ public static final @NotNull Icon Config = load("fileTypes/config.svg", 416412449, 0);
+    /** 16x16 */ public static final @NotNull Icon Contexts = load("fileTypes/contexts.svg", 589986144, 0);
+    /** 16x16 */ public static final @NotNull Icon ContextsModifier = load("fileTypes/contextsModifier.svg", 11227132, 0);
     /** 16x16 */ public static final @NotNull Icon Css = load("fileTypes/css.svg", -1827987051, 0);
     /** 16x16 */ public static final @NotNull Icon Custom = load("fileTypes/custom.svg", 1692794144, 0);
     /** 16x16 */ public static final @NotNull Icon Diagram = load("fileTypes/diagram.svg", 692669001, 0);
