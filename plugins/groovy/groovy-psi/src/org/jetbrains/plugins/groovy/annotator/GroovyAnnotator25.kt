@@ -3,11 +3,12 @@ package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.elementType
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.annotator.inspections.GroovyComplexArgumentLabelQuickFix
+import org.jetbrains.plugins.groovy.annotator.inspections.WrapWithParensQuickFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
@@ -64,9 +65,8 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
   override fun visitArgumentLabel(argument: GrArgumentLabel) {
     val element = argument.nameElement
     if (element !is GrExpression) return
-    val elementType = element.elementType ?: return
 
-    if (elementType == STRING_SQ || elementType == STRING_DQ || elementType == STRING_TSQ || elementType == STRING_TDQ) return
+    if (isGroovyStringLiteral(element)) return
 
     if (element is GrLiteral || element is GrListOrMap || element is GrLambdaExpression || element is GrClosableBlock) return
 
@@ -74,7 +74,7 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
 
 
     holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("groovy.complex.argument.label.annotator.message")).range(argument)
-      .withFix(GroovyComplexArgumentLabelQuickFix(element)).create()
+      .withFix(WrapWithParensQuickFix(element)).create()
   }
 
   private fun checkRequiredNamedArguments(callExpression: GrCallExpression) {
@@ -96,5 +96,9 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
         holder.newAnnotation(HighlightSeverity.ERROR, message).create()
       }
     }
+  }
+
+  private fun isGroovyStringLiteral(element: PsiElement): Boolean = element.elementType.let {
+    it == STRING_SQ || it == STRING_DQ || it == STRING_TSQ || it == STRING_TDQ
   }
 }

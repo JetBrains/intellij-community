@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize
 
-class GroovyComplexArgumentLabelQuickFix(element: GrExpression) : PsiUpdateModCommandAction<GrExpression>(element) {
+class WrapWithParensQuickFix(element: GrExpression) : PsiUpdateModCommandAction<GrExpression>(element) {
   override fun getFamilyName(): String = GroovyBundle.message("groovy.complex.argument.label.quick.fix.message")
 
   override fun invoke(context: ActionContext, element: GrExpression, updater: ModPsiUpdater) {
