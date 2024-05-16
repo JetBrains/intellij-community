@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.module.Module
@@ -15,11 +15,9 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.asJava.toLightElements
@@ -77,7 +75,6 @@ internal fun findAllMoveConflicts(
  * @param declarationsToCheck the set of declarations to move, they must all be moved from the same containing file.
  * @param allDeclarationsToMove all declarations that will be moved.
  */
-@OptIn(KtAllowAnalysisOnEdt::class)
 internal fun findAllMoveConflicts(
     declarationsToCheck: Set<KtNamedDeclaration>,
     allDeclarationsToMove: Set<KtNamedDeclaration>,
@@ -85,9 +82,9 @@ internal fun findAllMoveConflicts(
     targetPkg: FqName,
     targetFileName: String,
     usages: List<MoveRenameUsageInfo>
-): MultiMap<PsiElement, String> = allowAnalysisOnEdt {
+): MultiMap<PsiElement, String> {
     val (fakeTarget, oldToNewMap) = createCopyTarget(declarationsToCheck, targetDir, targetPkg, targetFileName)
-    MultiMap<PsiElement, String>().apply {
+    return MultiMap<PsiElement, String>().apply {
         putAllValues(checkVisibilityConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))
         putAllValues(checkVisibilityConflictForNonMovedUsages(allDeclarationsToMove, oldToNewMap, usages))
         putAllValues(checkModuleDependencyConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))

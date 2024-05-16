@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
@@ -28,14 +30,19 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
 
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()
-        val conflicts = findAllMoveConflicts(
-            declarationsToCheck = descriptor.source.elements,
-            allDeclarationsToMove = descriptor.source.elements,
-            targetDir = descriptor.target.baseDirectory,
-            targetPkg = descriptor.target.pkgName,
-            targetFileName = descriptor.target.fileName,
-            usages = usages.filterIsInstance<MoveRenameUsageInfo>()
-        )
+        val conflicts = ActionUtil.underModalProgress(
+            descriptor.project,
+            RefactoringBundle.message("detecting.possible.conflicts")
+        ) {
+            findAllMoveConflicts(
+                declarationsToCheck = descriptor.source.elements,
+                allDeclarationsToMove = descriptor.source.elements,
+                targetDir = descriptor.target.baseDirectory,
+                targetPkg = descriptor.target.pkgName,
+                targetFileName = descriptor.target.fileName,
+                usages = usages.filterIsInstance<MoveRenameUsageInfo>()
+            )
+        }
         return showConflicts(conflicts, usages)
     }
 
