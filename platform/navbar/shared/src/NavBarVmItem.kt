@@ -2,10 +2,13 @@
 package com.intellij.platform.navbar
 
 import com.intellij.openapi.actionSystem.DataKey
+import org.jetbrains.annotations.ApiStatus.Internal
 
 interface NavBarVmItem {
 
+  @Internal
   companion object {
+    @Internal // IJPL-149893
     @JvmField
     val SELECTED_ITEMS: DataKey<List<NavBarVmItem>> = DataKey.create("nav.bar.selection")
   }
