@@ -7,10 +7,13 @@ import com.intellij.ide.workspace.SubprojectHandler
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.vfs.VirtualFile
 import icons.MavenIcons
+import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import javax.swing.Icon
@@ -50,7 +53,11 @@ private class MavenImportedProjectSettings(project: Project) : ImportedProjectSe
   override suspend fun applyTo(workspace: Project) {
     val openProjectProvider = MavenOpenProjectProvider()
     if (openProjectProvider.canOpenProject(projectDir!!)) {
-      openProjectProvider.forceLinkToExistingProjectAsync(projectDir, workspace)
+      StartupManager.getInstance(workspace).runAfterOpened {
+        MavenCoroutineScopeProvider.getCoroutineScope(workspace).launch {
+          openProjectProvider.forceLinkToExistingProjectAsync(projectDir, workspace)
+        }
+      }
     }
   }
 }
