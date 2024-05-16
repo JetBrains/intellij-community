@@ -52,8 +52,10 @@ final class CommandProcessorImpl extends CoreCommandProcessor {
           undoManager.undo(editor);
         }
       }
-      Messages.showErrorDialog(project, IdeBundle.message("dialog.message.cannot.perform.operation.too.complex.sorry"),
-                               IdeBundle.message("dialog.title.failed.to.perform.operation"));
+      if (!(throwable instanceof ProcessCanceledException)) {
+        Messages.showErrorDialog(project, IdeBundle.message("dialog.message.cannot.perform.operation.too.complex.sorry"),
+                                 IdeBundle.message("dialog.title.failed.to.perform.operation"));
+      }
     }
   }
 
