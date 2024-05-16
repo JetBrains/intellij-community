@@ -30,7 +30,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel.Companion.prepareCombinedDiffModelRequestsFromProducers
+import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromProducers
 import com.intellij.openapi.vcs.changes.patch.PatchFileType
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
@@ -93,7 +93,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
 
 private fun buildCombinedDiffModel(document: Document): List<CombinedBlockProducer> {
   val producers = createDiffRequestProducers(document)
-  val diffModel = prepareCombinedDiffModelRequestsFromProducers(producers)
+  val diffModel = prepareCombinedBlocksFromProducers(producers)
   return diffModel
 }
 

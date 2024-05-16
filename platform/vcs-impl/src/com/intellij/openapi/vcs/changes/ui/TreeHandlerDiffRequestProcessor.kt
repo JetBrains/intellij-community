@@ -11,8 +11,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
-import com.intellij.openapi.vcs.changes.actions.diff.COMBINED_DIFF_PREVIEW_MODEL
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel.Companion.prepareCombinedDiffModelRequests
+import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromWrappers
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -297,7 +296,7 @@ private fun refreshCombinedDiffProcessor(tree: ChangesTree,
 
     val changes = handler.iterateAllChanges(tree).toList()
     if (changes.isNotEmpty()) {
-      processor.setBlocks(prepareCombinedDiffModelRequests(tree.project, changes))
+      processor.setBlocks(prepareCombinedBlocksFromWrappers(tree.project, changes))
     }
   }
 }
@@ -306,10 +305,6 @@ private fun getCurrentSelectionInCombinedDiffProcessor(tree: ChangesTree,
                                                        processor: CombinedDiffComponentProcessor,
                                                        handler: ChangesTreeDiffPreviewHandler): Wrapper? {
   val combinedDiffViewer = processor.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-  val diffPreviewModel = processor.context.getUserData(COMBINED_DIFF_PREVIEW_MODEL)
-
-  val previewModelSelection = diffPreviewModel?.selected
-  if (previewModelSelection != null) return previewModelSelection
 
   val prevSelectedBlockId = combinedDiffViewer?.getCurrentBlockId() as? CombinedPathBlockId
   if (prevSelectedBlockId != null) {
