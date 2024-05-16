@@ -8,10 +8,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
+import icons.MavenIcons
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
+import javax.swing.Icon
 
 internal class MavenSubprojectHandler : SubprojectHandler {
   override fun getSubprojects(project: Project): List<Subproject> {
@@ -37,6 +39,9 @@ internal class MavenSubprojectHandler : SubprojectHandler {
   override fun suppressGenericImportFor(module: Module): Boolean {
     return MavenProjectsManager.getInstance(module.project).findProject(module) != null
   }
+
+  override val subprojectIcon: Icon
+    get() = MavenIcons.MavenModule
 }
 
 private class MavenImportedProjectSettings(project: Project) : ImportedProjectSettings {

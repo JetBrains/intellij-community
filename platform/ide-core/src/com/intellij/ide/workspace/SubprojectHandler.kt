@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus.Experimental
+import javax.swing.Icon
 
 @Experimental
 interface SubprojectHandler {
@@ -20,6 +21,8 @@ interface SubprojectHandler {
   fun importFromProject(project: Project, newWorkspace: Boolean): ImportedProjectSettings?
 
   fun suppressGenericImportFor(module: Module): Boolean = false
+
+  val subprojectIcon: Icon?
 }
 
 interface WorkspaceSettingsImporter {

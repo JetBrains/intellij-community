@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.workspace.projectView
 
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
@@ -89,16 +90,25 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
       val subprojects = SubprojectHandler.getAllSubprojects(project).associateBy { it.projectPath }
       subprojectMap.clear()
       val children = projectNode.children.filter { it !is ExternalLibrariesNode }
+      val newChildren = ArrayList<AbstractTreeNode<*>>(children.size)
       for (child in children) {
-        val directoryNode = child as? PsiDirectoryNode ?: continue
+        val directoryNode = child as? PsiDirectoryNode
+        if (directoryNode == null) {
+          newChildren.add(child)
+          continue
+        }
         val path = directoryNode.value.virtualFile.path
-        subprojectMap[directoryNode.value] = subprojects[path]
+        val subproject = subprojects[path]
+        subprojectMap[directoryNode.value] = subproject
+        val node = if (subproject != null) SubprojectNode(directoryNode, subproject) else directoryNode
+        newChildren.add(node)
       }
-      return children
+      return newChildren
     }
 
     override fun update(data: PresentationData) {
       projectNode.update(data)
+      data.setIcon(ExpUiIcons.Nodes.Workspace)
     }
 
     override fun contains(file: VirtualFile): Boolean {
@@ -106,5 +116,15 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
     }
 
     fun getSubproject(directory: PsiDirectory) = subprojectMap[directory]
+  }
+
+  private class SubprojectNode(original: PsiDirectoryNode,
+                               private val subproject: Subproject):
+    PsiDirectoryNode(original) {
+
+    override fun update(data: PresentationData) {
+      super.update(data)
+      data.setIcon(subproject.handler.subprojectIcon)
+    }
   }
 }

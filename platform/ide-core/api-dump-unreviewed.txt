@@ -686,6 +686,7 @@ com.intellij.ide.workspace.ImportedProjectSettings
 *:com.intellij.ide.workspace.SubprojectHandler
 - *sf:Companion:com.intellij.ide.workspace.SubprojectHandler$Companion
 - a:canImportFromFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+- a:getSubprojectIcon():javax.swing.Icon
 - a:getSubprojects(com.intellij.openapi.project.Project):java.util.List
 - a:importFromProject(com.intellij.openapi.project.Project,Z):com.intellij.ide.workspace.ImportedProjectSettings
 - a:removeSubprojects(java.util.List):V

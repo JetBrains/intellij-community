@@ -12,11 +12,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.externalSystem.impl.workspace.ExternalSubprojectHandler
+import icons.GradleIcons
 import org.jetbrains.plugins.gradle.service.project.open.canOpenGradleProject
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import javax.swing.Icon
 
 internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstants.SYSTEM_ID) {
 
@@ -29,6 +31,9 @@ internal class GradleSubprojectHandler : ExternalSubprojectHandler(GradleConstan
   override fun suppressGenericImportFor(module: Module): Boolean {
     return ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId() == GradleConstants.SYSTEM_ID.id
   }
+
+  override val subprojectIcon: Icon
+    get() = GradleIcons.GradleSubproject
 }
 
 private class GradleImportedProjectSettings(private val project: Project) : ImportedProjectSettings {
