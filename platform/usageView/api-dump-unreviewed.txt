@@ -144,29 +144,6 @@ c:com.intellij.usages.ReadWriteAccessUsageInfo2UsageAdapter
 com.intellij.usages.RenameableUsage
 - com.intellij.usages.Usage
 - a:rename(java.lang.String):V
-f:com.intellij.usages.ShowUsageViewSettings
-- com.intellij.usages.UsageViewSettings
-- <init>():V
-- isGroupByDirectoryStructure():Z
-- isGroupByModule():Z
-- isGroupByPackage():Z
-- isGroupByScope():Z
-- isGroupByUsageType():Z
-- setGroupByDirectoryStructure(Z):V
-- setGroupByModule(Z):V
-- setGroupByPackage(Z):V
-- setGroupByScope(Z):V
-- setGroupByUsageType(Z):V
-f:com.intellij.usages.ShowUsagesSettings
-- com.intellij.openapi.components.PersistentStateComponent
-- sf:Companion:com.intellij.usages.ShowUsagesSettings$Companion
-- <init>():V
-- f:applyUsageViewSettings(com.intellij.usages.UsageViewSettings):V
-- sf:getInstance():com.intellij.usages.ShowUsagesSettings
-- getState():com.intellij.usages.ShowUsageViewSettings
-- loadState(com.intellij.usages.ShowUsageViewSettings):V
-f:com.intellij.usages.ShowUsagesSettings$Companion
-- f:getInstance():com.intellij.usages.ShowUsagesSettings
 f:com.intellij.usages.TextChunk
 - sf:EMPTY_ARRAY:com.intellij.usages.TextChunk[]
 - <init>(com.intellij.openapi.editor.markup.TextAttributes,java.lang.String):V
