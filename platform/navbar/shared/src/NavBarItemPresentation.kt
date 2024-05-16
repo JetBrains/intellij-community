@@ -19,11 +19,12 @@ fun NavBarItemPresentation(
   popupText: @Nls String? = text,
   textAttributes: SimpleTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES,
 ): NavBarItemPresentation {
-  return NavBarItemPresentationData(icon, text, popupText, textAttributes, hasContainingFile = false)
+  return NavBarItemPresentationData(icon, text, popupText, textAttributes, hasContainingFile = false, isModuleContentRoot = false)
 }
 
 /**
  * @param hasContainingFile if `true`, [icon] will be displayed, otherwise `false` the icon will be displayed if the item is the last item.
+ * @param isModuleContentRoot if `true`, a special icon will be displayed regardless of [icon] and [hasContainingFile].
  */
 @Internal // plugins are not supposed to read the presentation, they are only supposed to provide it
 data class NavBarItemPresentationData(
@@ -32,6 +33,7 @@ data class NavBarItemPresentationData(
   val popupText: @Nls String?,
   val textAttributes: SimpleTextAttributes?,
   val hasContainingFile: Boolean,
+  val isModuleContentRoot: Boolean,
 ) : NavBarItemPresentation {
 
   /**

@@ -23,8 +23,6 @@ class IdeNavBarVmItem @RequiresReadLock constructor(
 
   override val presentation: NavBarItemPresentationData = item.presentation() as NavBarItemPresentationData
 
-  override val isModuleContentRoot: Boolean = item.isModuleContentRoot()
-
   override suspend fun children(): List<NavBarVmItem>? {
     return fetch {
       childItems()

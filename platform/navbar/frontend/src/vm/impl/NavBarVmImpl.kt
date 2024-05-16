@@ -177,8 +177,6 @@ class NavBarVmImpl(
 
     override val presentation: NavBarItemPresentationData get() = item.presentation as NavBarItemPresentationData
 
-    override val isModuleContentRoot: Boolean get() = item.isModuleContentRoot
-
     override val isFirst: Boolean get() = index == 0
 
     override val isLast: Boolean get() = index == items.value.lastIndex
