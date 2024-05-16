@@ -142,7 +142,7 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
 
     return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
         annotations.toDefaultAttributes(), typeConstructor, ktTypeArguments.map { it.toTypeProjection(context) }, markedAsNullable,
-        MemberScopeForKtSymbolBasedDescriptors { this.asStringForDebugging() }
+        MemberScopeForKtSymbolBasedDescriptors { this.toString() }
     )
 }
 

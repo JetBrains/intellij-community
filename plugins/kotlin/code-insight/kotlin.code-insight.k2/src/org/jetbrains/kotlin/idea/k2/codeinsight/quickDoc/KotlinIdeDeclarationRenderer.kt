@@ -792,7 +792,7 @@ internal class KotlinIdeDeclarationRenderer(
                 append("UNRESOLVED_CLASS")
             }
             else -> {
-                append(type.asStringForDebugging())
+                append(type.toString())
             }
         }
     }
