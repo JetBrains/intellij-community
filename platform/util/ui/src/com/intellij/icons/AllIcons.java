@@ -1082,6 +1082,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Couchbase = load("providers/couchbase.svg", 125110449, 0);
     /** 16x16 */ public static final @NotNull Icon Databricks = load("providers/databricks.svg", 1206450250, 2);
     /** 16x16 */ public static final @NotNull Icon DB2 = load("providers/DB2.svg", -700958296, 2);
+    /** 16x16 */ public static final @NotNull Icon Denodo = load("providers/denodo.svg", -1481188209, 2);
     /** 16x16 */ public static final @NotNull Icon DocumentDB = load("providers/documentDB.svg", -1286984491, 2);
     /** 16x16 */ public static final @NotNull Icon DuckDB = load("providers/duckDB.svg", -590062592, 2);
     /** 16x16 */ public static final @NotNull Icon DynamoDB = load("providers/dynamoDB.svg", 820880886, 0);
