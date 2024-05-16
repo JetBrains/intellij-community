@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.toolwindow
 import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
@@ -68,7 +69,7 @@ private class ReviewToolwindowTabsManager<
               content.component = tabComponentFactory.createEmptyTabContent(contentCs)
               content.isCloseable = false
             }
-            withContext(NonCancellable) {
+            withContext(Dispatchers.EDT + NonCancellable) {
               contentManager.addContent(loginContent)
               contentManager.setSelectedContent(loginContent)
             }
