@@ -320,6 +320,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             runTest("../../idea/tests/testData/refactoring/introduceParameter/functionWithDefaultValue.kt");
         }
 
+        @TestMetadata("functionalType.kt")
+        public void testFunctionalType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/functionalType.kt");
+        }
+
         @TestMetadata("inDefaultValue.kt")
         public void testInDefaultValue() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/inDefaultValue.kt");

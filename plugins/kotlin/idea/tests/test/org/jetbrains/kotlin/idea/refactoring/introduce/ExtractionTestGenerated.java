@@ -3576,6 +3576,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/functionWithDefaultValue.kt");
             }
 
+            @TestMetadata("functionalType.kt")
+            public void testFunctionalType() throws Exception {
+                runTest("testData/refactoring/introduceParameter/functionalType.kt");
+            }
+
             @TestMetadata("inDefaultValue.kt")
             public void testInDefaultValue() throws Exception {
                 runTest("testData/refactoring/introduceParameter/inDefaultValue.kt");
