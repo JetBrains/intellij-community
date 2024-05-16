@@ -40,7 +40,7 @@ public class IgnoreTokenType extends IElementType {
   private final String debugName;
 
   /**
-   * Builds a new instance of @{link IgnoreTokenType}.
+   * Builds a new instance of {@link IgnoreTokenType}.
    */
   public IgnoreTokenType(@NotNull @NonNls String debugName) {
     super(debugName, IgnoreLanguage.INSTANCE);

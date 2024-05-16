@@ -60,7 +60,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   protected abstract ListCellRenderer<Object> createCellRenderer();
 
   /**
-   * todo make the method abstract after {@link #createTopLeftPanel()} and {link {@link #createSettingsPanel()}} are removed
+   * todo make the method abstract after {@link #createTopLeftPanel()} and {@link #createSettingsPanel()} are removed
    */
   @NotNull
   protected JComponent createHeader() {

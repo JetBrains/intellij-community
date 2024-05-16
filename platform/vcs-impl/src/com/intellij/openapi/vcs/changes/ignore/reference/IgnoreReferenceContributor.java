@@ -57,7 +57,7 @@ public class IgnoreReferenceContributor extends PsiReferenceContributor {
     }
 
     /**
-     * Returns references for given @{link PsiElement}.
+     * Returns references for given {@link PsiElement}.
      *
      * @param psiElement        current element
      * @param processingContext context
