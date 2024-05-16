@@ -24,11 +24,13 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
+@Internal
 enum class CodeNavigateSource {
   ShowUsagesPopup,
   FindToolWindow
 }
 
+@Internal
 enum class TooManyUsagesUserAction {
   Shown,
   Aborted,
