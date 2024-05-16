@@ -2,11 +2,9 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
-import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSessionRegistry
-import com.intellij.platform.ijent.IjentWindowsApi
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
-import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem.*
+import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem.FsAndUserApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
@@ -51,13 +49,13 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     val ijentId = IjentId(uri.host)
 
-    val fs = IjentNioFileSystem(
-      this,
-      when (val ijentApi = IjentSessionRegistry.instance().ijents[ijentId]) {
-        is IjentPosixApi -> FsAndUserApi.Posix(ijentApi.fs, ijentApi.info.user)
-        is IjentWindowsApi -> FsAndUserApi.Windows(ijentApi.fs, ijentApi.info.user)
-        null -> throw IllegalArgumentException("$ijentApi is not registered in ${IjentSessionRegistry::class.java.simpleName}")
-      })
+    val ijentApi = IjentSessionRegistry.instance().ijents[ijentId]
+    require(ijentApi != null) {
+      "$ijentApi is not registered in ${IjentSessionRegistry::class.java.simpleName}"
+    }
+    val ijentFsAndUser = FsAndUserApi.create(ijentApi)
+
+    val fs = IjentNioFileSystem(this, ijentFsAndUser)
 
     if (registeredFileSystems.putIfAbsent(ijentId, fs) != null) {
       throw FileSystemAlreadyExistsException("A filesystem for $ijentId is already registered")

@@ -2,9 +2,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.ijent.IjentInfo
-import com.intellij.platform.ijent.IjentPosixInfo
-import com.intellij.platform.ijent.IjentWindowsInfo
+import com.intellij.platform.ijent.*
 import com.intellij.platform.ijent.fs.*
 import kotlinx.coroutines.isActive
 import java.nio.file.FileStore
@@ -26,6 +24,13 @@ class IjentNioFileSystem internal constructor(
 
     data class Posix(override val fs: IjentFileSystemPosixApi, override val userInfo: IjentPosixInfo.User) : FsAndUserApi
     data class Windows(override val fs: IjentFileSystemWindowsApi, override val userInfo: IjentWindowsInfo.User) : FsAndUserApi
+
+    companion object {
+      fun create(ijentApi: IjentApi): FsAndUserApi = when (ijentApi) {
+        is IjentPosixApi -> Posix(ijentApi.fs, ijentApi.info.user)
+        is IjentWindowsApi -> Windows(ijentApi.fs, ijentApi.info.user)
+      }
+    }
   }
 
   override fun close() {
