@@ -3441,6 +3441,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/avoidFunDuplicatingParameters.kt");
             }
 
+            @TestMetadata("callableReferenceToShorten.kt")
+            public void testCallableReferenceToShorten() throws Exception {
+                runTest("testData/refactoring/introduceParameter/callableReferenceToShorten.kt");
+            }
+
             @TestMetadata("classInAnonymousInitializer.kt")
             public void testClassInAnonymousInitializer() throws Exception {
                 runTest("testData/refactoring/introduceParameter/classInAnonymousInitializer.kt");
