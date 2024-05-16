@@ -234,7 +234,7 @@ public final class ExceptionUtil {
   }
 
   public static @NotNull Collection<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element, @Nullable PsiElement topElement, @NotNull PsiCallExpression skippedCall) {
-    return ContainerUtil.notNullize(collectUnhandledExceptions(element, topElement, null, c -> c == skippedCall));
+    return UnhandledExceptions.collect(element, topElement, c -> c == skippedCall).exceptions();
   }
 
   public static @NotNull Collection<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element, @Nullable PsiElement topElement) {
@@ -244,104 +244,7 @@ public final class ExceptionUtil {
   public static @NotNull Collection<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
                                                                              @Nullable PsiElement topElement,
                                                                              boolean includeSelfCalls) {
-    return ContainerUtil.notNullize(collectUnhandledExceptions(element, topElement, null,
-                                                               includeSelfCalls
-                                                               ? c -> false
-                                                               : expression -> {
-      PsiMethod method = expression.resolveMethod();
-      if (method == null) return false;
-      return method == PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-    }));
-  }
-
-  private static @Nullable Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
-                                                                        @Nullable PsiElement topElement,
-                                                                        @Nullable Set<PsiClassType> foundExceptions,
-                                                                        @NotNull Predicate<? super PsiCall> callFilter) {
-    Collection<PsiClassType> unhandledExceptions = null;
-    if (element instanceof PsiCallExpression) {
-      PsiCallExpression expression = (PsiCallExpression)element;
-      unhandledExceptions = getUnhandledExceptions(expression, topElement, callFilter);
-    }
-    else if (element instanceof PsiTemplateExpression) {
-      unhandledExceptions = getUnhandledProcessorExceptions((PsiTemplateExpression)element, topElement);
-    }
-    else if (element instanceof PsiMethodReferenceExpression) {
-      PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
-      return qualifierExpression != null ? collectUnhandledExceptions(qualifierExpression, topElement, null, callFilter)
-                                         : null;
-    }
-    else if (element instanceof PsiLambdaExpression) {
-      return null;
-    }
-    else if (element instanceof PsiThrowStatement) {
-      PsiThrowStatement statement = (PsiThrowStatement)element;
-      unhandledExceptions = getUnhandledExceptions(statement, topElement);
-    }
-    else if (element instanceof PsiCodeBlock &&
-             element.getParent() instanceof PsiMethod &&
-             ((PsiMethod)element.getParent()).isConstructor() &&
-             !firstStatementIsConstructorCall((PsiCodeBlock)element)) {
-      // there is implicit parent constructor call
-      final PsiMethod constructor = (PsiMethod)element.getParent();
-      final PsiClass aClass = constructor.getContainingClass();
-      final PsiClass superClass = aClass == null ? null : aClass.getSuperClass();
-      final PsiMethod[] superConstructors = superClass == null ? PsiMethod.EMPTY_ARRAY : superClass.getConstructors();
-      Set<PsiClassType> unhandled = new HashSet<>();
-      for (PsiMethod superConstructor : superConstructors) {
-        if (!superConstructor.hasModifierProperty(PsiModifier.PRIVATE) && superConstructor.getParameterList().isEmpty()) {
-          final PsiClassType[] exceptionTypes = superConstructor.getThrowsList().getReferencedTypes();
-          for (PsiClassType exceptionType : exceptionTypes) {
-            if (!isUncheckedException(exceptionType) && getHandlePlace(element, exceptionType, topElement) == HandlePlace.UNHANDLED) {
-              unhandled.add(exceptionType);
-            }
-          }
-          break;
-        }
-      }
-
-      // plus all exceptions thrown in instance class initializers
-      if (aClass != null) {
-        final PsiClassInitializer[] initializers = aClass.getInitializers();
-        final Set<PsiClassType> thrownByInitializer = new HashSet<>();
-        for (PsiClassInitializer initializer : initializers) {
-          if (initializer.hasModifierProperty(PsiModifier.STATIC)) continue;
-          thrownByInitializer.clear();
-          collectUnhandledExceptions(initializer.getBody(), initializer, thrownByInitializer, callFilter);
-          for (PsiClassType thrown : thrownByInitializer) {
-            if (getHandlePlace(constructor.getBody(), thrown, topElement) == HandlePlace.UNHANDLED) {
-              unhandled.add(thrown);
-            }
-          }
-        }
-      }
-      unhandledExceptions = unhandled;
-    }
-    else if (element instanceof PsiResourceListElement) {
-      final List<PsiClassType> unhandled = getUnhandledCloserExceptions((PsiResourceListElement)element, topElement);
-      if (!unhandled.isEmpty()) {
-        unhandledExceptions = new ArrayList<>(unhandled);
-      }
-    }
-
-    if (unhandledExceptions != null) {
-      if (foundExceptions == null) {
-        foundExceptions = new HashSet<>();
-      }
-      foundExceptions.addAll(unhandledExceptions);
-    }
-
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      Set<PsiClassType> foundInChild = collectUnhandledExceptions(child, topElement, foundExceptions, callFilter);
-      if (foundExceptions == null) {
-        foundExceptions = foundInChild;
-      }
-      else if (foundInChild != null) {
-        foundExceptions.addAll(foundInChild);
-      }
-    }
-
-    return foundExceptions;
+    return UnhandledExceptions.collect(element, topElement, includeSelfCalls).exceptions();
   }
 
   private static @NotNull List<PsiClassType> getUnhandledExceptions(@NotNull PsiMethodReferenceExpression methodReferenceExpression,
@@ -353,17 +256,6 @@ public final class ExceptionUtil {
       return getUnhandledExceptions((PsiMethod)resolve, referenceNameElement, topElement, resolveResult::getSubstitutor);
     }
     return Collections.emptyList();
-  }
-
-  private static boolean firstStatementIsConstructorCall(@NotNull PsiCodeBlock constructorBody) {
-    final PsiStatement[] statements = constructorBody.getStatements();
-    if (statements.length == 0) return false;
-    if (!(statements[0] instanceof PsiExpressionStatement)) return false;
-
-    final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-    if (!(expression instanceof PsiMethodCallExpression)) return false;
-    final PsiMethod method = (PsiMethod)((PsiMethodCallExpression)expression).getMethodExpression().resolve();
-    return method != null && method.isConstructor();
   }
 
   public static @NotNull List<PsiClassType> getUnhandledExceptions(final PsiElement @NotNull [] elements) {
@@ -435,9 +327,9 @@ public final class ExceptionUtil {
     return getUnhandledExceptions(methodCall, topElement, c -> false);
   }
 
-  private static @NotNull List<PsiClassType> getUnhandledExceptions(final @NotNull PsiCall methodCall,
-                                                                    final @Nullable PsiElement topElement,
-                                                                    @NotNull Predicate<? super PsiCall> skipCondition) {
+  static @NotNull List<PsiClassType> getUnhandledExceptions(final @NotNull PsiCall methodCall,
+                                                            final @Nullable PsiElement topElement,
+                                                            @NotNull Predicate<? super PsiCall> skipCondition) {
     //exceptions only influence the invocation type after overload resolution is complete
     if (MethodCandidateInfo.isOverloadCheck()) {
       return Collections.emptyList();
@@ -638,7 +530,7 @@ public final class ExceptionUtil {
    * and not handled inside the specified {@code topElement}.
    *
    * @param templateExpression  the template expression to check
-   * @param topElement ancestor element which may handle exceptions in e.g. try-catch statements.
+   * @param topElement ancestor element which may handle exceptions in e.g., try-catch statements.
    */
   public static @NotNull List<PsiClassType> getUnhandledProcessorExceptions(@NotNull PsiTemplateExpression templateExpression,
                                                                    @Nullable PsiElement topElement) {
@@ -650,7 +542,7 @@ public final class ExceptionUtil {
     PsiType type = processor.getType();
     List<PsiClassType> result = new ArrayList<>();
     for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
-      // Currently, generic parameter type is considered as unhandled exception; not actual exceptions declared by 'process' method
+      // Currently, a generic parameter type is considered as unhandled exception; not actual exceptions declared by 'process' method
       PsiType substituted = PsiUtil.substituteTypeParameter(classType, CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, 1, false);
       if (substituted instanceof PsiCapturedWildcardType) {
         PsiCapturedWildcardType wildcardType = (PsiCapturedWildcardType)substituted;
@@ -981,7 +873,7 @@ public final class ExceptionUtil {
 
   /**
    * @param method method
-   * @return true if given method can declare thrown exceptions, according to the specification; false otherwise
+   * @return true if a given method can declare thrown exceptions, according to the specification; false otherwise
    */
   public static boolean canDeclareThrownExceptions(@NotNull PsiMethod method) {
     return JavaPsiRecordUtil.getRecordComponentForAccessor(method) == null &&
