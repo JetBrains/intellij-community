@@ -954,6 +954,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.WindowsDefenderStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.IncompleteDependenciesModeStatisticsCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector"/>
     <statistics.applicationUsagesCollector
