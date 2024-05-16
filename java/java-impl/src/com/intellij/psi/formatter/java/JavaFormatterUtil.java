@@ -573,7 +573,7 @@ public final class JavaFormatterUtil {
    * @param indent               the number of spaces used for indentation
    * @return a list of {@code TextRange} objects representing the extracted text ranges
    */
-  public static @NotNull List<TextRange> extractTextRangesFromLiteralText(@NotNull String text, int indent) {
+  static @NotNull List<TextRange> extractTextRangesFromLiteralText(@NotNull String text, int indent) {
     List<TextRange> linesRanges = new ArrayList<>();
     boolean isLastLine = false;
     int start = StringUtil.indexOf(text, '\n', 3);
@@ -588,11 +588,10 @@ public final class JavaFormatterUtil {
       }
       if (start + indent <= end) {
         int quoteStartIndex = end - 3;
-        if (!isLastLine && allEmpty(start + indent, end, text)) {
-          // todo here we can delete and the last \s\s\s"""
+        if (!isLastLine && containsOnlyWhitespaces(start + indent, end, text)) {
           start = end;
         }
-        else if (isLastLine && allEmpty(start + indent, quoteStartIndex, text) && isEndsWithTripleQuote(quoteStartIndex, end, text)) {
+        else if (isLastLine && containsOnlyWhitespaces(start + indent, quoteStartIndex, text) && text.endsWith("\"\"\"")) {
           start = quoteStartIndex;
         }
         else {
@@ -609,15 +608,9 @@ public final class JavaFormatterUtil {
     return linesRanges;
   }
 
-  private static boolean isEndsWithTripleQuote(int start, int end, @NotNull String text) {
-    if (end - start != 3 || start < 0) return false;
-    String tripleQuote = text.substring(start, end);
-    return tripleQuote.equals("\"\"\"");
-  }
-
-  private static boolean allEmpty(int i, int end, @NotNull String text) {
-    for (int j = i; j < end; j++) {
-      if(!Character.isWhitespace(text.charAt(j))) return false;
+  private static boolean containsOnlyWhitespaces(int start, int end, @NotNull String text) {
+    for (int i = start; i < end; i++) {
+      if (!Character.isWhitespace(text.charAt(i))) return false;
     }
     return true;
   }
