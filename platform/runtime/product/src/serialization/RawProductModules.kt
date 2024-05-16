@@ -5,13 +5,13 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
 import java.io.IOException
 import java.io.InputStream
 
-class RawProductModules(
+class RawProductModules internal constructor(
   val mainGroupModules: List<RawIncludedRuntimeModule>,
   val bundledPluginMainModules: List<RuntimeModuleId>,
   val includedFrom: List<RawIncludedFromData>,
 )
 
-class RawIncludedFromData(
+class RawIncludedFromData internal constructor(
   val fromModule: RuntimeModuleId,
   val withoutModules: Set<RuntimeModuleId>,
 )

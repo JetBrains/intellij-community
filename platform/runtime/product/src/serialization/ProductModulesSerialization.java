@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 public final class ProductModulesSerialization {
+  private ProductModulesSerialization() { }
+
   public static @NotNull ProductModules loadProductModules(@NotNull Path xmlFile, @NotNull ProductMode currentMode,
                                                            @NotNull RuntimeModuleRepository repository) {
     try {

@@ -28,22 +28,18 @@
 *:com.intellij.platform.runtime.product.serialization.IncludedProductModulesResolver
 - a:readProductModules(com.intellij.platform.runtime.repository.RuntimeModuleId):java.io.InputStream
 *f:com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
-- <init>():V
 - s:loadProductModules(java.io.InputStream,java.lang.String,com.intellij.platform.runtime.product.ProductMode,com.intellij.platform.runtime.repository.RuntimeModuleRepository):com.intellij.platform.runtime.product.ProductModules
 - s:loadProductModules(java.nio.file.Path,com.intellij.platform.runtime.product.ProductMode,com.intellij.platform.runtime.repository.RuntimeModuleRepository):com.intellij.platform.runtime.product.ProductModules
 - s:readProductModulesAndMergeIncluded(java.io.InputStream,java.lang.String,com.intellij.platform.runtime.product.serialization.IncludedProductModulesResolver):com.intellij.platform.runtime.product.serialization.RawProductModules
 *f:com.intellij.platform.runtime.product.serialization.RawIncludedFromData
-- <init>(com.intellij.platform.runtime.repository.RuntimeModuleId,java.util.Set):V
 - f:getFromModule():com.intellij.platform.runtime.repository.RuntimeModuleId
 - f:getWithoutModules():java.util.Set
 *f:com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule
-- <init>(com.intellij.platform.runtime.repository.RuntimeModuleId,com.intellij.platform.runtime.product.ModuleImportance):V
 - getImportance():com.intellij.platform.runtime.product.ModuleImportance
 - getModuleId():com.intellij.platform.runtime.repository.RuntimeModuleId
 - resolve(com.intellij.platform.runtime.repository.RuntimeModuleRepository):com.intellij.platform.runtime.product.IncludedRuntimeModule
 - toString():java.lang.String
 *f:com.intellij.platform.runtime.product.serialization.RawProductModules
-- <init>(java.util.List,java.util.List,java.util.List):V
 - f:getBundledPluginMainModules():java.util.List
 - f:getIncludedFrom():java.util.List
 - f:getMainGroupModules():java.util.List
