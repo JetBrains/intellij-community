@@ -22,9 +22,6 @@ fun waitCoroutinesBlocking(cs: CoroutineScope) {
 
       val jobs = job.children.toList()
       if (jobs.isEmpty()) break
-
-      UIUtil.dispatchAllInvocationEvents()
-      yield()
     }
   }
 }
