@@ -6,6 +6,8 @@ import kotlinx.coroutines.delay
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.Timeout
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -16,6 +18,7 @@ class WaitingForSubscribersTest : SharedEventsTest() {
   class CustomSignal : SharedEvent()
 
   @RepeatedTest(value = 10)
+  @Timeout(1, unit = TimeUnit.MINUTES)
   fun `waiting till subscribers finish their work`() {
     val firstSubscriberProcessedEvent = AtomicBoolean(false)
     val secondSubscriberProcessedEvent = AtomicBoolean(false)

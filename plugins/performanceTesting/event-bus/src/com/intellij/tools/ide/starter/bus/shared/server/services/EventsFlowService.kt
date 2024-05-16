@@ -37,6 +37,7 @@ class EventsFlowService {
 
   fun newSubscriber(subscriber: SubscriberDto) {
     synchronized(subscriber.eventName) {
+      println("EventsFlowService: new subscriber $subscriber")
       eventsPerProcessLock.writeLock().withLock {
         eventsPerProcess
           .computeIfAbsent(subscriber.processId) { HashMap() }
@@ -46,6 +47,7 @@ class EventsFlowService {
   }
 
   fun getEvents(processId: String): HashMap<String, MutableList<SharedEventDto>> {
+    println("EventsFlowService: getEvents for process $processId")
     return eventsPerProcessLock.readLock().withLock { eventsPerProcess.getOrDefault(processId, HashMap()) }
   }
 

@@ -41,6 +41,7 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
         }
       }
 
+      println("LocalEventBusServerClient: send new request.\nUrl: $url\nMethod: $method\nBody: $requestBody")
       connection.responseCode.also {
         if (it != HttpURLConnection.HTTP_OK) {
           throw ServerException("Code: $it. ${connection.responseMessage}")
@@ -68,6 +69,7 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
     eventClassesLock.writeLock().withLock {
       eventClasses[simpleName] = eventClass.name
     }
+    println("LocalEventBusServerClient: new subscriber $simpleName")
     post("newSubscriber", objectMapper.writeValueAsString(SubscriberDto(simpleName, PROCESS_ID))).toBoolean()
   }
 
