@@ -68,4 +68,9 @@ public final class JsonBreadcrumbsProvider implements BreadcrumbsProvider {
     }
     return actions;
   }
+
+  @Override
+  public boolean isShownByDefault() {
+    return false;
+  }
 }
