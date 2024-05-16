@@ -625,6 +625,11 @@ com.intellij.diff.editor.DiffVirtualFileWithProducers
 - a:collectDiffProducers(Z):com.intellij.openapi.ListSelection
 com.intellij.diff.editor.DiffVirtualFileWithTabName
 - a:getEditorTabName(com.intellij.openapi.project.Project,java.util.List):java.lang.String
+f:com.intellij.diff.editor.SimpleDiffEditorEscapeAction
+- com.intellij.openapi.project.DumbAwareAction
+- com.intellij.diff.editor.DiffEditorEscapeAction
+- <init>(java.lang.Runnable):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.diff.editor.SimpleDiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFile
 - <init>(com.intellij.diff.requests.DiffRequest):V
@@ -1279,18 +1284,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener
 - com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 - <init>():V
 - advancedSettingChanged(java.lang.String,java.lang.Object,java.lang.Object):V
-a:com.intellij.diff.tools.combined.CombinedDiffBaseEditorForEachCaretHandler
-- com.intellij.openapi.editor.actionSystem.EditorActionHandler$ForEachCaret
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- a:doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-- pf:doExecute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-- pf:isEnabledForCaret(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z
-a:com.intellij.diff.tools.combined.CombinedDiffBaseEditorWithSelectionHandler
-- com.intellij.openapi.editor.actionSystem.EditorActionHandler
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- a:doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-- pf:doExecute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-- pf:isEnabledForCaret(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z
 com.intellij.diff.tools.combined.CombinedDiffBlock
 - com.intellij.openapi.Disposable
 - a:getBody():javax.swing.JComponent
@@ -1314,55 +1307,11 @@ com.intellij.diff.tools.combined.CombinedDiffCaretNavigation
 - a:moveCaretPageUp():V
 - a:moveCaretToNextBlock():V
 - a:moveCaretToPrevBlock():V
-com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
+*:com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - com.intellij.diff.impl.DiffEditorViewer
 - a:cleanBlocks():V
 - a:getBlocks():java.util.List
 - a:setBlocks(java.util.List):V
-f:com.intellij.diff.tools.combined.CombinedDiffComponentProcessorImpl
-- com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-- sf:Companion:com.intellij.diff.tools.combined.CombinedDiffComponentProcessorImpl$Companion
-- <init>(com.intellij.diff.tools.combined.CombinedDiffModel,com.intellij.openapi.actionSystem.AnAction):V
-- addListener(com.intellij.diff.impl.DiffEditorViewerListener,com.intellij.openapi.Disposable):V
-- cleanBlocks():V
-- fireProcessorActivated():V
-- getBlocks():java.util.List
-- getComponent():javax.swing.JComponent
-- getContext():com.intellij.diff.DiffContext
-- getDisposable():com.intellij.openapi.util.CheckedDisposable
-- getEmbeddedEditors():java.util.List
-- getFilesToRefresh():java.util.List
-- f:getModel():com.intellij.diff.tools.combined.CombinedDiffModel
-- getPreferredFocusedComponent():javax.swing.JComponent
-- getState(com.intellij.openapi.fileEditor.FileEditorStateLevel):com.intellij.openapi.fileEditor.FileEditorState
-- setBlocks(java.util.List):V
-- setState(com.intellij.openapi.fileEditor.FileEditorState):V
-- setToolbarVerticalSizeReferent(javax.swing.JComponent):V
-f:com.intellij.diff.tools.combined.CombinedDiffComponentProcessorImpl$Companion
-f:com.intellij.diff.tools.combined.CombinedDiffEditorDownHandler
-- com.intellij.diff.tools.combined.CombinedDiffBaseEditorForEachCaretHandler
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-f:com.intellij.diff.tools.combined.CombinedDiffEditorDownWithSelectionHandler
-- com.intellij.diff.tools.combined.CombinedDiffBaseEditorWithSelectionHandler
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-f:com.intellij.diff.tools.combined.CombinedDiffEditorLeftHandler
-- com.intellij.diff.tools.combined.CombinedDiffBaseEditorForEachCaretHandler
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-f:com.intellij.diff.tools.combined.CombinedDiffEditorPageDownHandler
-- com.intellij.diff.tools.combined.CombinedDiffBaseEditorForEachCaretHandler
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-f:com.intellij.diff.tools.combined.CombinedDiffEditorPageUpHandler
-- com.intellij.diff.tools.combined.CombinedDiffBaseEditorForEachCaretHandler
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-f:com.intellij.diff.tools.combined.CombinedDiffEditorRightHandler
-- com.intellij.diff.tools.combined.CombinedDiffBaseEditorForEachCaretHandler
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
 f:com.intellij.diff.tools.combined.CombinedDiffEditorState
 - com.intellij.openapi.fileEditor.impl.FileEditorStateWithPreferredOpenMode
 - <init>(java.util.Set,com.intellij.diff.tools.combined.CombinedBlockId,java.util.List):V
@@ -1379,14 +1328,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffEditorState
 - getOpenMode():com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl$OpenMode
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.diff.tools.combined.CombinedDiffEditorUpHandler
-- com.intellij.diff.tools.combined.CombinedDiffBaseEditorForEachCaretHandler
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
-f:com.intellij.diff.tools.combined.CombinedDiffEditorUpWithSelectionHandler
-- com.intellij.diff.tools.combined.CombinedDiffBaseEditorWithSelectionHandler
-- <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
-- doExecute(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
 f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - sf:getCOMBINED_DIFF_MAIN_UI():com.intellij.openapi.util.Key
 - sf:getCOMBINED_DIFF_SCROLL_TO_BLOCK():com.intellij.openapi.util.Key
@@ -1394,43 +1335,13 @@ f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - sf:getCOMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST():com.intellij.openapi.util.Key
 - sf:getCOMBINED_DIFF_VIEWER_KEY():com.intellij.openapi.util.Key
 - sf:getDISABLE_LOADING_BLOCKS():com.intellij.openapi.util.Key
-f:com.intellij.diff.tools.combined.CombinedDiffMainUI
-- com.intellij.openapi.Disposable
-- <init>(com.intellij.diff.tools.combined.CombinedDiffModel,com.intellij.openapi.actionSystem.AnAction):V
-- f:closeSearch():V
-- dispose():V
-- f:getComponent():javax.swing.JComponent
-- f:getCurrentRequest():com.intellij.diff.requests.DiffRequest
-- f:getPreferredFocusedComponent():javax.swing.JComponent
-- f:getUiState():com.intellij.diff.tools.combined.CombinedDiffUIState
-- f:isFocusedInWindow():Z
-- f:isUnified():Z
-- f:isWindowFocused():Z
-- f:requestFocusInWindow():V
-- f:setSearchController(com.intellij.diff.tools.combined.search.CombinedDiffSearchController):V
-- f:setToolbarVerticalSizeReferent(javax.swing.JComponent):V
-- f:updateSearch(com.intellij.diff.tools.combined.search.CombinedDiffSearchContext):V
-com.intellij.diff.tools.combined.CombinedDiffManager
-- sf:Companion:com.intellij.diff.tools.combined.CombinedDiffManager$Companion
+*:com.intellij.diff.tools.combined.CombinedDiffManager
+- *sf:Companion:com.intellij.diff.tools.combined.CombinedDiffManager$Companion
 - a:createProcessor(java.lang.String):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - bs:createProcessor$default(com.intellij.diff.tools.combined.CombinedDiffManager,java.lang.String,I,java.lang.Object):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.diff.tools.combined.CombinedDiffManager
-f:com.intellij.diff.tools.combined.CombinedDiffManager$Companion
+*f:com.intellij.diff.tools.combined.CombinedDiffManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.diff.tools.combined.CombinedDiffManager
-f:com.intellij.diff.tools.combined.CombinedDiffModel
-- <init>(com.intellij.openapi.project.Project):V
-- f:addListener(com.intellij.diff.tools.combined.CombinedDiffModelListener,com.intellij.openapi.Disposable):V
-- f:cleanBlocks():V
-- f:getContext():com.intellij.diff.DiffContext
-- f:getLoadedRequest(com.intellij.diff.tools.combined.CombinedBlockId):com.intellij.diff.requests.DiffRequest
-- f:getLoadedRequests():java.util.List
-- f:getOurDisposable():com.intellij.openapi.util.CheckedDisposable
-- f:getProject():com.intellij.openapi.project.Project
-- f:getRequests():java.util.List
-- f:loadRequestContents(java.util.Collection):V
-- f:reload():V
-- f:setBlocks(java.util.List):V
-- f:unloadRequestContents(java.util.Collection):V
 com.intellij.diff.tools.combined.CombinedDiffModelListener
 - java.util.EventListener
 - a:onModelReset():V
@@ -1445,7 +1356,7 @@ com.intellij.diff.tools.combined.CombinedDiffNavigation
 - a:goNextDiff():V
 - a:goPrevBlock():V
 - a:goPrevDiff():V
-f:com.intellij.diff.tools.combined.CombinedDiffRegistry
+*f:com.intellij.diff.tools.combined.CombinedDiffRegistry
 - sf:INSTANCE:com.intellij.diff.tools.combined.CombinedDiffRegistry
 - f:getFilesLimit():I
 - f:getMaxBlockCountInMemory():I
@@ -1491,57 +1402,15 @@ f:com.intellij.diff.tools.combined.CombinedDiffUIState$DiffInfoState$TwoTitles
 - f:getRightTitle():java.lang.String
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.diff.tools.combined.CombinedDiffViewer
-- com.intellij.diff.tools.combined.CombinedDiffCaretNavigation
-- com.intellij.diff.tools.combined.CombinedDiffNavigation
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
-- <init>(com.intellij.diff.DiffContext,com.intellij.diff.tools.combined.BlockListener,com.intellij.diff.tools.combined.BlockState,com.intellij.diff.tools.combined.CombinedDiffUIState):V
-- canGoNextBlock():Z
-- canGoNextDiff():Z
-- canGoPrevBlock():Z
-- canGoPrevDiff():Z
-- f:createSearchContext():com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
-- dispose():V
-- f:getComponent():javax.swing.JComponent
-- f:getCurrentBlockId():com.intellij.diff.tools.combined.CombinedBlockId
-- f:getCurrentDiffViewer():com.intellij.diff.FrameDiffTool$DiffViewer
-- getData(java.lang.String):java.lang.Object
-- f:getDiffBlocksCount():I
-- f:getMainUI():com.intellij.diff.tools.combined.CombinedDiffMainUI
-- f:getPreferredFocusedComponent():javax.swing.JComponent
-- goNextBlock():V
-- goNextDiff():V
-- goPrevBlock():V
-- goPrevDiff():V
-- f:init():com.intellij.diff.FrameDiffTool$ToolbarComponents
-- moveCaretPageDown():V
-- moveCaretPageUp():V
-- moveCaretToNextBlock():V
-- moveCaretToPrevBlock():V
-- f:rediff():V
-- f:scrollToCaret():V
-- f:scrollToEditor(com.intellij.openapi.editor.Editor,Z):V
-- f:scrollToFirstChange(com.intellij.diff.tools.combined.CombinedBlockId,Z,com.intellij.diff.tools.combined.CombinedDiffViewer$ScrollPolicy):V
-- bs:scrollToFirstChange$default(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.diff.tools.combined.CombinedBlockId,Z,com.intellij.diff.tools.combined.CombinedDiffViewer$ScrollPolicy,I,java.lang.Object):V
-- f:selectDiffBlock(com.intellij.diff.tools.combined.CombinedBlockId,Z,com.intellij.diff.tools.combined.CombinedDiffViewer$ScrollPolicy):V
-- bs:selectDiffBlock$default(com.intellij.diff.tools.combined.CombinedDiffViewer,com.intellij.diff.tools.combined.CombinedBlockId,Z,com.intellij.diff.tools.combined.CombinedDiffViewer$ScrollPolicy,I,java.lang.Object):V
-e:com.intellij.diff.tools.combined.CombinedDiffViewer$ScrollPolicy
-- java.lang.Enum
-- sf:SCROLL_TO_BLOCK:com.intellij.diff.tools.combined.CombinedDiffViewer$ScrollPolicy
-- sf:SCROLL_TO_CARET:com.intellij.diff.tools.combined.CombinedDiffViewer$ScrollPolicy
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.diff.tools.combined.CombinedDiffViewer$ScrollPolicy
-- s:values():com.intellij.diff.tools.combined.CombinedDiffViewer$ScrollPolicy[]
 f:com.intellij.diff.tools.combined.CombinedDiffViewerKt
 - sf:getCurrentEditor(com.intellij.diff.FrameDiffTool$DiffViewer):com.intellij.openapi.editor.Editor
-a:com.intellij.diff.tools.combined.CombinedDiffVirtualFile
+*a:com.intellij.diff.tools.combined.CombinedDiffVirtualFile
 - com.intellij.diff.editor.DiffViewerVirtualFile
 - <init>(java.lang.String,java.lang.String):V
 - b:<init>(java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - a:createViewer(com.intellij.openapi.project.Project):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - getPath():java.lang.String
-f:com.intellij.diff.tools.combined.CombinedDiffVirtualFileImpl
+*f:com.intellij.diff.tools.combined.CombinedDiffVirtualFileImpl
 - com.intellij.diff.tools.combined.CombinedDiffVirtualFile
 - <init>(com.intellij.openapi.project.Project,java.util.List,java.lang.String,java.lang.String):V
 - b:<init>(com.intellij.openapi.project.Project,java.util.List,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -1582,17 +1451,6 @@ f:com.intellij.diff.tools.combined.CombinedToggleBlockCollapseAllAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
-- <init>(java.util.List):V
-- f:getHolders():java.util.List
-f:com.intellij.diff.tools.combined.search.CombinedDiffSearchContext$EditorHolder
-- <init>(java.util.List):V
-- f:getEditors():java.util.List
-com.intellij.diff.tools.combined.search.CombinedDiffSearchController
-- a:getSearchComponent():javax.swing.JComponent
-- a:update(com.intellij.diff.tools.combined.search.CombinedDiffSearchContext):V
-com.intellij.diff.tools.combined.search.CombinedDiffSearchProvider
-- a:installSearch(com.intellij.diff.tools.combined.CombinedDiffViewer):V
 c:com.intellij.diff.tools.dir.DirDiffTool
 - com.intellij.diff.FrameDiffTool
 - com.intellij.diff.SuppressiveDiffTool

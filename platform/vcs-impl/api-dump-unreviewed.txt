@@ -171,10 +171,6 @@ f:com.intellij.openapi.diff.impl.ToggleSearchInChangesAction
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.diff.impl.combined.search.CombinedDiffSearchProviderImpl
-- com.intellij.diff.tools.combined.search.CombinedDiffSearchProvider
-- <init>(com.intellij.openapi.project.Project):V
-- installSearch(com.intellij.diff.tools.combined.CombinedDiffViewer):V
 com.intellij.openapi.diff.impl.combined.search.CombinedEditorSearchSessionListener
 - java.util.EventListener
 - a:onSearch(Z,com.intellij.openapi.editor.Editor):V
@@ -1888,13 +1884,6 @@ com.intellij.openapi.vcs.changes.DiffPreview
 f:com.intellij.openapi.vcs.changes.DiffPreview$Companion
 - f:closePreviewFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 - f:setPreviewVisible(com.intellij.openapi.vcs.changes.DiffPreview,Z):V
-com.intellij.openapi.vcs.changes.DiffPreviewController
-- a:getActivePreview():com.intellij.openapi.vcs.changes.DiffPreview
-f:com.intellij.openapi.vcs.changes.DiffPreviewControllerImpl
-- com.intellij.openapi.vcs.changes.DiffPreviewController
-- <init>(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0):V
-- b:<init>(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- getActivePreview():com.intellij.openapi.vcs.changes.DiffPreview
 com.intellij.openapi.vcs.changes.DiffPreviewProvider
 - a:createDiffRequestProcessor():com.intellij.diff.impl.DiffRequestProcessor
 - a:getEditorTabName(com.intellij.diff.impl.DiffRequestProcessor):java.lang.String
@@ -1932,6 +1921,8 @@ a:com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 - openPreview(Z):Z
 - performDiffAction():Z
 - updateDiffAction(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewKt
+- sf:showExternalToolIfNeeded(com.intellij.openapi.project.Project,com.intellij.openapi.ListSelection):Z
 f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 - com.intellij.diff.editor.DiffEditorTabFilesManager
 - sf:Companion:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager$Companion
@@ -2776,51 +2767,17 @@ f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImpl
 - <init>(com.intellij.openapi.project.Project):V
 - createProcessor(java.lang.String):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - f:getProject():com.intellij.openapi.project.Project
-a:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
-- com.intellij.openapi.vcs.changes.EditorTabPreviewBase
-- <init>(com.intellij.openapi.project.Project,javax.swing.JComponent,Z,com.intellij.openapi.Disposable):V
-- pa:createPreviewModel():com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
-- pa:getCombinedDiffTabTitle():java.lang.String
-- p:getCurrentName():java.lang.String
-- p:getPreviewFile():com.intellij.openapi.vfs.VirtualFile
-- f:getPreviewModel():com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
-- p:getUpdatePreviewProcessor():com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
-- p:hasContent():Z
-- p:isPreviewOnDoubleClickAllowed():Z
-- p:isPreviewOnEnterAllowed():Z
-- returnFocusToSourceComponent():V
-- updateDiffAction(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:updatePreview():V
-- updatePreview(Z):V
-a:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
-- com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
-- com.intellij.openapi.vcs.changes.DiffRequestProcessorWithProducers
+f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImplKt
+- sf:prepareCombinedBlocksFromProducers(java.util.List):java.util.List
+- sf:prepareCombinedBlocksFromWrappers(com.intellij.openapi.project.Project,java.util.List):java.util.List
+f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 - sf:Companion:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel$Companion
-- <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.Disposable):V
-- clear():V
-- collectDiffProducers(Z):com.intellij.openapi.ListSelection
-- getComponent():javax.swing.JComponent
-- f:getProcessor():com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-- f:getProject():com.intellij.openapi.project.Project
-- f:getRequests():java.util.List
-- f:getSelected():com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper
-- a:iterateAllChanges():java.lang.Iterable
-- pa:iterateSelectedChanges():java.lang.Iterable
+- <init>():V
 - sf:prepareCombinedDiffModelRequests(com.intellij.openapi.project.Project,java.util.List):java.util.List
 - sf:prepareCombinedDiffModelRequestsFromProducers(java.util.List):java.util.List
-- refresh(Z):V
-- a:selectChangeInSourceComponent(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
-- f:setSelected(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
-- p:showAllChangesForEmptySelection():Z
-- f:updateBlocks():V
 f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel$Companion
 - f:prepareCombinedDiffModelRequests(com.intellij.openapi.project.Project,java.util.List):java.util.List
 - f:prepareCombinedDiffModelRequestsFromProducers(java.util.List):java.util.List
-a:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewVirtualFile
-- com.intellij.diff.tools.combined.CombinedDiffVirtualFile
-- com.intellij.diff.editor.DiffVirtualFileWithTabName
-- <init>():V
-- getEditorTabName(com.intellij.openapi.project.Project,java.util.List):java.lang.String
 c:com.intellij.openapi.vcs.changes.actions.diff.DiffViewerCreatePatchActionProvider
 - com.intellij.openapi.actionSystem.AnActionExtensionProvider
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
