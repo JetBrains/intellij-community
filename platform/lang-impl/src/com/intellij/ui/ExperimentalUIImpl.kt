@@ -232,7 +232,7 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
       get() = System.getProperty("ide.experimental.ui.use.reflective.path", "true").toBoolean()
 
     override fun patchPath(path: String, classLoader: ClassLoader?): String? {
-      val mappings = paths.get(classLoader) ?: return null
+      val mappings = classLoader?.let { paths.get(classLoader) } ?: return null
       val patchedPath = mappings.get(path.trimStart('/'))
       if (patchedPath == null && dumpNotPatchedIcons) {
         NotPatchedIconRegistry.registerNotPatchedIcon(path, classLoader)
