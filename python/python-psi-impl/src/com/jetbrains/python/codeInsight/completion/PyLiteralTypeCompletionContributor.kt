@@ -1,6 +1,7 @@
 package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
@@ -73,11 +74,13 @@ private class PyLiteralTypeCompletionProvider : CompletionProvider<CompletionPar
       .filterIsInstance<PyStringLiteralExpression>()
       .forEach {
         result.addElement(
-          PrioritizedLookupElement.withPriority(
-            LookupElementBuilder
-              .create(lookupString(it))
-              .withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Parameter)),
-            PythonCompletionWeigher.PRIORITY_WEIGHT.toDouble()
+          MLRankingIgnorable.wrap(
+            PrioritizedLookupElement.withPriority(
+              LookupElementBuilder
+                .create(lookupString(it))
+                .withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Parameter)),
+              PythonCompletionWeigher.PRIORITY_WEIGHT.toDouble()
+            )
           )
         )
       }
