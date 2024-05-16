@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicBoolean
 
 @JvmField
+@Internal
 val ProjectViewInit: Scope = Scope("projectViewInit")
 
 @Service(Service.Level.PROJECT)
@@ -23,30 +24,48 @@ internal class ProjectViewInitNotifier(private val project: Project) {
   private val cachedNodesLoadedOccurred = AtomicBoolean()
   private val completedOccurred = AtomicBoolean()
 
-  private val projectViewInitTracer : Tracer = TelemetryManager.getInstance().getTracer(ProjectViewInit);
-  private val mainSpan = Ref<Span>()
-  private val cachedNodesSpan = Ref<Span>()
+  private val tracingHelper = TracingHelper()
 
   fun initStarted() {
     if (!startedOccurred.compareAndSet(false, true)) return
     MY_LOG.info("Project View initialization started")
-    mainSpan.set(projectViewInitTracer.spanBuilder("projectViewInit").startSpan())
-    cachedNodesSpan.set(projectViewInitTracer.spanBuilder("projectViewInit#cachedNodesLoaded").setParent(Context.current().with(mainSpan.get())).startSpan())
+    tracingHelper.initStarted()
     project.messageBus.syncPublisher(ProjectViewListener.TOPIC).initStarted()
   }
 
   fun initCachedNodesLoaded() {
     if (!cachedNodesLoadedOccurred.compareAndSet(false, true)) return
-    cachedNodesSpan.get()?.end()
+    tracingHelper.initCachedNodesLoaded()
     MY_LOG.info("Project View cached nodes loaded")
     project.messageBus.syncPublisher(ProjectViewListener.TOPIC).initCachedNodesLoaded()
   }
 
   fun initCompleted() {
     if (!completedOccurred.compareAndSet(false, true)) return
-    mainSpan.get()?.end()
+    tracingHelper.initCompleted()
     MY_LOG.info("Project View initialization completed")
     project.messageBus.syncPublisher(ProjectViewListener.TOPIC).initCompleted()
+  }
+
+  private inner class TracingHelper {
+    private val mainSpan = Ref<Span>()
+    private val cachedNodesSpan = Ref<Span>()
+    private val projectViewInitTracer: Tracer = TelemetryManager.getInstance().getTracer(ProjectViewInit);
+
+    fun initStarted() {
+      val span = projectViewInitTracer.spanBuilder("projectViewInit").startSpan().also { mainSpan.set(it) }
+      cachedNodesSpan.set(
+        projectViewInitTracer.spanBuilder("projectViewInit#cachedNodesLoaded").setParent(Context.current().with(span)).startSpan()
+      )
+    }
+
+    fun initCachedNodesLoaded() {
+      cachedNodesSpan.get()?.end()
+    }
+
+    fun initCompleted() {
+      mainSpan.get()?.end()
+    }
   }
 }
 
