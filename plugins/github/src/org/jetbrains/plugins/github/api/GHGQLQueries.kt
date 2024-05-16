@@ -12,6 +12,7 @@ object GHGQLQueries {
   const val issueSearch = "graphql/query/issueSearch.graphql"
   const val createPullRequest = "graphql/query/createPullRequest.graphql"
   const val findPullRequest = "graphql/query/findPullRequest.graphql"
+  const val findPullRequestId = "graphql/query/findPullRequestId.graphql"
   const val findOpenPullRequestsByBranches = "graphql/query/findOpenPullRequestsByBranches.graphql"
   const val updatePullRequest = "graphql/query/updatePullRequest.graphql"
   const val markPullRequestReadyForReview = "graphql/query/markPullRequestReadyForReview.graphql"

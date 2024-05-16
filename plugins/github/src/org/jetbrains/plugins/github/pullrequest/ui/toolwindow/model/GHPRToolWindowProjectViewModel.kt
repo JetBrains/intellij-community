@@ -130,6 +130,15 @@ class GHPRToolWindowProjectViewModel internal constructor(
     }
   }
 
+  fun openPullRequestInfoAndTimeline(number: Long) {
+    cs.launch {
+      val prId = dataContext.detailsService.findPRId(number) ?: return@launch // It's an issue ID or doesn't exist
+
+      viewPullRequest(prId, true)
+      openPullRequestTimeline(prId, true)
+    }
+  }
+
   fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {
     cs.launch(Dispatchers.Main) {
       dataContext.filesManager.createAndOpenTimelineFile(id, requestFocus)

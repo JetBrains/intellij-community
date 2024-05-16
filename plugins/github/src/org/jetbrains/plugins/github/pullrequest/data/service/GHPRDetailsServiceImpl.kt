@@ -28,6 +28,11 @@ class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
   private val serverPath = repository.serverPath
   private val repoPath = repository.repositoryPath
 
+  override suspend fun findPRId(number: Long): GHPRIdentifier? =
+    runCatching {
+      requestExecutor.executeSuspend(GHGQLRequests.PullRequest.findOneId(repository, number))
+    }.getOrElse { null }
+
   override suspend fun loadDetails(pullRequestId: GHPRIdentifier): GHPullRequest =
     runCatching {
       requestExecutor.executeSuspend(GHGQLRequests.PullRequest.findOne(repository, pullRequestId.number))
