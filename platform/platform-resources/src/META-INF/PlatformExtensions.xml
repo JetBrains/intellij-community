@@ -175,6 +175,10 @@
                  restartRequired="false"
                  description="New inspection widget with pencils functionality"
                  defaultValue="false"/>
+    <registryKey key="ide.welcom.screen.branch.name"
+                 restartRequired="true"
+                 description="New inspection widget with pencils functionality"
+                 defaultValue="false"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
