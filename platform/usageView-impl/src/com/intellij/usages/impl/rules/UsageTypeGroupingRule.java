@@ -10,9 +10,11 @@ import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule implements UsageGroupingRuleEx {
   @Nullable
   @Override

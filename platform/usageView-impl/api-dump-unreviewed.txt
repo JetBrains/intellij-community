@@ -221,13 +221,6 @@ a:com.intellij.usages.impl.rules.UsageGroupBase
 - sf:USAGE_TYPE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
 - s:valueOf(java.lang.String):com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
 - s:values():com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks[]
-c:com.intellij.usages.impl.rules.UsageTypeGroupingRule
-- com.intellij.usages.rules.SingleParentUsageGroupingRule
-- com.intellij.usages.rules.UsageGroupingRuleEx
-- <init>():V
-- getGroupingActionId():java.lang.String
-- p:getParentGroupFor(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):com.intellij.usages.UsageGroup
-- getRank():I
 com.intellij.usages.impl.rules.UsageTypeProvider
 - a:getUsageType(com.intellij.psi.PsiElement):com.intellij.usages.impl.rules.UsageType
 com.intellij.usages.impl.rules.UsageTypeProviderEx
