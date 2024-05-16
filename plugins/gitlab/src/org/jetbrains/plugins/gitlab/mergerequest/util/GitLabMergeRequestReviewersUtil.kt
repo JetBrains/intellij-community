@@ -9,6 +9,8 @@ import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
 import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 
 internal object GitLabMergeRequestReviewersUtil {
@@ -41,9 +43,13 @@ internal object GitLabMergeRequestReviewersUtil {
     potentialReviewers: Flow<Result<List<GitLabUserDTO>>>,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): List<GitLabUserDTO> {
+    val potentialReviewersBatch = flow {
+      val batch = potentialReviewers.first()
+      emit(batch)
+    }
     return ChooserPopupUtil.showAsyncMultipleChooserPopup(
       point,
-      potentialReviewers,
+      potentialReviewersBatch,
       presenter = { reviewer ->
         PopupItemPresentation.Simple(
           reviewer.username,
