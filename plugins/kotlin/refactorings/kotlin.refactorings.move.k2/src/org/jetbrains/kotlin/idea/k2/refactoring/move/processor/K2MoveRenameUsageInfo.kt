@@ -246,7 +246,7 @@ sealed class K2MoveRenameUsageInfo(
          * Finds usages to [declaration] excluding the usages inside [declaration].
          */
         private fun findExternalUsages(declaration: KtNamedDeclaration): List<MoveRenameUsageInfo> {
-            return ReferencesSearch.search(declaration, declaration.resolveScope).findAll()
+            return ReferencesSearch.search(declaration, declaration.useScope).findAll()
                 .filter { !declaration.isAncestor(it.element) } // exclude internal usages
                 .mapNotNull { ref ->
                     if (ref is KtSimpleNameReference) {
