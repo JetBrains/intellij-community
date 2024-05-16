@@ -172,9 +172,6 @@ com.intellij.usages.UsageContextPanel$Provider
 - a:create(com.intellij.usages.UsageView):com.intellij.usages.UsageContextPanel
 - a:getTabTitle():java.lang.String
 - a:isAvailableFor(com.intellij.usages.UsageView):Z
-f:com.intellij.usages.UsageDataUtil
-- <init>():V
-- s:provideVirtualFileArray(com.intellij.usages.Usage[],com.intellij.usages.UsageTarget[]):com.intellij.openapi.vfs.VirtualFile[]
 com.intellij.usages.UsageGroup
 - com.intellij.pom.Navigatable
 - java.lang.Comparable
