@@ -54,6 +54,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * tests {@link HighlightVisitor} behaviour during highlighting
+ */
 @SkipSlowTestLocally
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTestCase {
