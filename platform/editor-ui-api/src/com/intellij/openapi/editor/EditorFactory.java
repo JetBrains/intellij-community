@@ -45,6 +45,7 @@ public abstract class EditorFactory {
    * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
    * </p>
    */
+  @RequiresEdt
   public abstract Editor createEditor(@NotNull Document document);
 
   /**
@@ -53,6 +54,7 @@ public abstract class EditorFactory {
    * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
    * </p>
    */
+  @RequiresEdt
   public abstract Editor createViewer(@NotNull Document document);
 
   /**
@@ -62,11 +64,13 @@ public abstract class EditorFactory {
    * </p>
    * @see Editor#getProject()
    */
+  @RequiresEdt
   public abstract Editor createEditor(@NotNull Document document, @Nullable Project project);
 
   /**
    * Does the same as {@link #createEditor(Document, Project)} and also sets the special kind for the created editor
    */
+  @RequiresEdt
   public abstract Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
 
   /**
@@ -81,6 +85,7 @@ public abstract class EditorFactory {
    * @param isViewer true if read-only editor should be created
    * @see Editor#getProject()
    */
+  @RequiresEdt
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull FileType fileType, boolean isViewer);
 
   /**
@@ -95,11 +100,13 @@ public abstract class EditorFactory {
    * @return the editor instance.
    * @see Editor#getProject()
    */
+  @RequiresEdt
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer);
 
   /**
    * Does the same as {@link #createEditor(Document, Project, VirtualFile, boolean)} and also sets the special kind for the created editor
    */
+  @RequiresEdt
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer,
                                       @NotNull EditorKind kind);
 
@@ -109,11 +116,13 @@ public abstract class EditorFactory {
    * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}
    * </p>
    */
+  @RequiresEdt
   public abstract Editor createViewer(@NotNull Document document, @Nullable Project project);
 
   /**
    * Does the same as {@link #createViewer(Document, Project)} and also sets the special kind for the created viewer
    */
+  @RequiresEdt
   public abstract Editor createViewer(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
 
   /**
@@ -187,5 +196,6 @@ public abstract class EditorFactory {
   /**
    * Reloads the editor settings and refreshes all currently open editors.
    */
+  @RequiresEdt
   public abstract void refreshAllEditors();
 }
