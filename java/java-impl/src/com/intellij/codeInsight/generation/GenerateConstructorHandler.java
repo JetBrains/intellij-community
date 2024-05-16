@@ -115,8 +115,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
             }
           }
         }
-        return null;
+        return PsiMethod.EMPTY_ARRAY;
       });
+    if (baseConstructors == null) return null;
     ClassMember[] allMembers = getAllOriginalMembers(aClass);
     ClassMember[] members;
     if (allMembers.length == 0) {
@@ -127,14 +128,12 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       if (members == null) return null;
     }
 
-    if (baseConstructors != null) {
-      List<ClassMember> array = new ArrayList<>();
-      for (PsiMethod baseConstructor : baseConstructors) {
-        array.add(new PsiMethodMember(baseConstructor));
-      }
-      ContainerUtil.addAll(array, members);
-      members = array.toArray(ClassMember.EMPTY_ARRAY);
+    List<ClassMember> array = new ArrayList<>();
+    for (PsiMethod baseConstructor : baseConstructors) {
+      array.add(new PsiMethodMember(baseConstructor));
     }
+    ContainerUtil.addAll(array, members);
+    members = array.toArray(ClassMember.EMPTY_ARRAY);
 
     return members;
   }
