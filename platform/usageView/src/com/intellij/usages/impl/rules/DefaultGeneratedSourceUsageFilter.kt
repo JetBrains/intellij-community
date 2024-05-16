@@ -6,7 +6,9 @@ import com.intellij.openapi.roots.GeneratedSourcesFilter
 import com.intellij.usages.Usage
 import com.intellij.usages.rules.GeneratedSourceUsageFilter
 import com.intellij.usages.rules.UsageInFile
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class DefaultGeneratedSourceUsageFilter: GeneratedSourceUsageFilter {
   
   override fun isAvailable(): Boolean = GeneratedSourcesFilter.EP_NAME.hasAnyExtensions()

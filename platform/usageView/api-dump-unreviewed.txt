@@ -168,7 +168,6 @@ com.intellij.usages.UsageContextPanel
 - a:updateLayout(java.util.List):V
 - updateLayout(java.util.List,com.intellij.usages.UsageView):V
 com.intellij.usages.UsageContextPanel$Provider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:create(com.intellij.usages.UsageView):com.intellij.usages.UsageContextPanel
 - a:getTabTitle():java.lang.String
 - a:isAvailableFor(com.intellij.usages.UsageView):Z
@@ -473,10 +472,6 @@ e:com.intellij.usages.impl.CodeNavigateSource
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.usages.impl.CodeNavigateSource
 - s:values():com.intellij.usages.impl.CodeNavigateSource[]
-f:com.intellij.usages.impl.PsiElementUsageReferenceClassProvider
-- com.intellij.usages.impl.UsageReferenceClassProvider
-- <init>():V
-- getReferenceClass(com.intellij.usages.Usage):java.lang.Class
 c:com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter
 - com.intellij.openapi.fileTypes.SyntaxHighlighter
 - <init>(com.intellij.openapi.fileTypes.SyntaxHighlighter,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):V
@@ -509,7 +504,6 @@ c:com.intellij.usages.impl.UsageAdapter
 - selectInEditor():V
 com.intellij.usages.impl.UsageReferenceClassProvider
 - sf:Companion:com.intellij.usages.impl.UsageReferenceClassProvider$Companion
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getReferenceClass(com.intellij.usages.Usage):java.lang.Class
 f:com.intellij.usages.impl.UsageReferenceClassProvider$Companion
 - f:getReferenceClass(com.intellij.usages.Usage):java.lang.Class
@@ -522,11 +516,6 @@ com.intellij.usages.impl.UsageViewEx
 - a:searchHasBeenCancelled():Z
 - a:setSearchInProgress(Z):V
 - a:waitForUpdateRequestsCompletion():V
-f:com.intellij.usages.impl.rules.DefaultGeneratedSourceUsageFilter
-- com.intellij.usages.rules.GeneratedSourceUsageFilter
-- <init>():V
-- isAvailable():Z
-- isGeneratedSource(com.intellij.usages.Usage,com.intellij.openapi.project.Project):Z
 f:com.intellij.usages.impl.rules.UsageType
 - sf:ANNOTATION:com.intellij.usages.impl.rules.UsageType
 - sf:CLASS_ANONYMOUS_NEW_OPERATOR:com.intellij.usages.impl.rules.UsageType
@@ -566,9 +555,7 @@ com.intellij.usages.rules.GeneratedSourceUsageFilter
 - a:isAvailable():Z
 - a:isGeneratedSource(com.intellij.usages.Usage,com.intellij.openapi.project.Project):Z
 f:com.intellij.usages.rules.GeneratedSourceUsageFilter$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 a:com.intellij.usages.rules.ImportFilteringRule
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - isVisible(com.intellij.usages.Usage):Z
 - isVisible(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
@@ -611,7 +598,6 @@ com.intellij.usages.rules.UsageGroupingRuleEx
 - isGroupingActionInverted():Z
 - isGroupingToggleable():Z
 com.intellij.usages.rules.UsageGroupingRuleProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - createGroupingActions(com.intellij.usages.UsageView):com.intellij.openapi.actionSystem.AnAction[]
 - getActiveRules(com.intellij.openapi.project.Project):com.intellij.usages.rules.UsageGroupingRule[]
 - getActiveRules(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewSettings):com.intellij.usages.rules.UsageGroupingRule[]
@@ -668,7 +654,6 @@ c:com.intellij.usages.similarity.clustering.UsageCluster
 - getUsages():java.util.Set
 - toString():java.lang.String
 *:com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider
-- *sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getFeatures(com.intellij.psi.PsiElement):com.intellij.usages.similarity.bag.Bag
 c:com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder
 - <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
