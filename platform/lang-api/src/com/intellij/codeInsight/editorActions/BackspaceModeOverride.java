@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -9,5 +11,14 @@ import org.jetbrains.annotations.NotNull;
  * @see SmartBackspaceDisabler
  */
 public abstract class BackspaceModeOverride {
-  public abstract @NotNull SmartBackspaceMode getBackspaceMode(@NotNull SmartBackspaceMode modeFromSettings);
+
+  /** Use {@link BackspaceModeOverride#getBackspaceMode(PsiFile, SmartBackspaceMode)} instead */
+  @ApiStatus.Obsolete
+  public @NotNull SmartBackspaceMode getBackspaceMode(@NotNull SmartBackspaceMode modeFromSettings) {
+    return modeFromSettings;
+  }
+
+  public @NotNull SmartBackspaceMode getBackspaceMode(@NotNull PsiFile file, SmartBackspaceMode mode) {
+    return getBackspaceMode(mode);
+  }
 }
