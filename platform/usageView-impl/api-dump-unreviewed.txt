@@ -229,8 +229,3 @@ com.intellij.usages.impl.rules.UsageTypeProviderEx
 com.intellij.usages.impl.rules.UsageWithType
 - com.intellij.usages.Usage
 - a:getUsageType():com.intellij.usages.impl.rules.UsageType
-f:com.intellij.usages.impl.rules.WriteAccessFilteringRule
-- com.intellij.usages.rules.UsageFilteringRule
-- sf:INSTANCE:com.intellij.usages.impl.rules.WriteAccessFilteringRule
-- getActionId():java.lang.String
-- isVisible(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
