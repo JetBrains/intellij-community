@@ -3656,6 +3656,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/return.kt");
             }
 
+            @TestMetadata("sameNameFunctionNoConflict.kt")
+            public void testSameNameFunctionNoConflict() throws Exception {
+                runTest("testData/refactoring/introduceParameter/sameNameFunctionNoConflict.kt");
+            }
+
             @TestMetadata("secondaryConstructorWithDefaultValue.kt")
             public void testSecondaryConstructorWithDefaultValue() throws Exception {
                 runTest("testData/refactoring/introduceParameter/secondaryConstructorWithDefaultValue.kt");

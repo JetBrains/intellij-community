@@ -400,6 +400,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             runTest("../../idea/tests/testData/refactoring/introduceParameter/return.kt");
         }
 
+        @TestMetadata("sameNameFunctionNoConflict.kt")
+        public void testSameNameFunctionNoConflict() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/sameNameFunctionNoConflict.kt");
+        }
+
         @TestMetadata("secondaryConstructorWithDefaultValue.kt")
         public void testSecondaryConstructorWithDefaultValue() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/secondaryConstructorWithDefaultValue.kt");
