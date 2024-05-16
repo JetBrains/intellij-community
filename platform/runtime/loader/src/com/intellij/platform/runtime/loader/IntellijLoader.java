@@ -22,6 +22,9 @@ public final class IntellijLoader {
   @ApiStatus.Internal
   public static final String RUNTIME_REPOSITORY_PATH_PROPERTY = "intellij.platform.runtime.repository.path";
 
+  private IntellijLoader() {
+  }
+
   public static void main(String[] args) throws Throwable {
     long startTimeNano = System.nanoTime();
     long startTimeUnixNano = System.currentTimeMillis() * 1_000_000;
