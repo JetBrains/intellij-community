@@ -72,7 +72,12 @@ class ReportGenerationStep<T : EvaluationStrategy>(
             workspace.reportsDirectory(),
             filter.name,
             comparisonStorage.reportName,
-          )
+          ),
+          IntellijPerfJsonReportGenerator(
+            workspace.reportsDirectory(),
+            filter.name,
+            comparisonStorage.reportName,
+          ),
         )
         if (ApplicationManager.getApplication().isUnitTestMode) reportGenerators.add(
           PlainTextReportGenerator(workspace.reportsDirectory(), filter.name))

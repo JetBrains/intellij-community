@@ -6,6 +6,7 @@ import com.intellij.cce.evaluation.HeadlessEvaluationAbortHandler
 import com.intellij.cce.util.CommandLineProgress
 import com.intellij.cce.util.Progress
 import com.intellij.cce.util.TeamcityProgress
+import com.intellij.cce.util.isUnderTeamCity
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -48,7 +49,7 @@ abstract class BackgroundEvaluationStep(protected val project: Project) : Evalua
   private val evaluationAbortedHandler = HeadlessEvaluationAbortHandler()
 
   private fun createProgress(title: String) = when {
-    System.getenv("TEAMCITY_VERSION") != null -> TeamcityProgress(title)
+    isUnderTeamCity -> TeamcityProgress(title)
     else -> CommandLineProgress(title)
   }
 }

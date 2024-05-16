@@ -15,5 +15,6 @@
     <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="commons-text" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.collector" />
   </component>
 </module>
