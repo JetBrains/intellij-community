@@ -70,6 +70,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     return fs
   }
 
+  override fun newFileSystem(path: Path, env: MutableMap<String, *>?): IjentNioFileSystem =
+    newFileSystem(path.toUri(), env)
+
   override fun getFileSystem(uri: URI): IjentNioFileSystem {
     typicalUriChecks(uri)
     return registeredFileSystems[IjentId(uri.host)] ?: throw FileSystemNotFoundException()
