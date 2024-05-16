@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.searching.usages
 
@@ -129,7 +129,7 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
                     KotlinBundle.message("find.usages.getter")
                 else
                     KotlinBundle.message("find.usages.setter"))
-            ) + " "
+            )
             is KtFunctionLiteral -> KotlinBundle.message("find.usages.lambda")
             is KtPrimaryConstructor, is KtSecondaryConstructor -> KotlinBundle.message("find.usages.constructor")
             is KtProperty -> if (targetElement.isLocal)
