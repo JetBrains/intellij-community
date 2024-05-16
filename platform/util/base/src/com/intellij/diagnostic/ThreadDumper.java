@@ -107,13 +107,31 @@ public final class ThreadDumper {
     StackTraceElement[] edtStack = null;
     for (ThreadInfo info : threadInfo) {
       if (info != null) {
-        if (isEDT(info)) {
-          edtStack = info.getStackTrace();
+        String name = info.getThreadName();
+        StackTraceElement[] stackTrace = info.getStackTrace();
+        if (edtStack == null && isEDT(name)) {
+          edtStack = stackTrace;
         }
-        dumpThreadInfo(info, f);
+        if (isIdleDefaultCoroutineDispatch(name, stackTrace)) {
+          // avoid 64 coroutine dispatch idle threads littering thread dump
+          continue;
+        }
+        dumpCallStack(info, f, stackTrace);
       }
     }
     return edtStack;
+  }
+
+  private static boolean isIdleDefaultCoroutineDispatch(String name, StackTraceElement @NotNull [] stackTrace) {
+    return name != null && name.startsWith("DefaultDispatcher-worker-")
+      && stackTrace.length == 6
+      && stackTrace[0].isNativeMethod() && stackTrace[0].getMethodName().equals("park") && stackTrace[0].getClassName().equals("jdk.internal.misc.Unsafe")
+      && stackTrace[1].getMethodName().equals("parkNanos") && stackTrace[1].getClassName().equals("java.util.concurrent.locks.LockSupport")
+      && stackTrace[2].getMethodName().equals("park") && stackTrace[2].getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker")
+      && stackTrace[3].getMethodName().equals("tryPark") && stackTrace[3].getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker")
+      && stackTrace[4].getMethodName().equals("runWorker") && stackTrace[4].getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker")
+      && stackTrace[5].getMethodName().equals("run") && stackTrace[5].getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker")
+      ;
   }
 
   @Internal
