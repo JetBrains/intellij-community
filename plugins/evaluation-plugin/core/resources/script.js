@@ -181,6 +181,8 @@ function addContexts(sessionDiv, popup, lookup) {
   sessionDiv.classList.remove("features", "suggestions")
 
   if (!("cc_context" in lookup["additionalInfo"])) return
+  maybeAddButtonToCopyCompletionContext(sessionDiv, popup, lookup)
+
   let addInfo = lookup["additionalInfo"]
   let contextBlock = document.createElement("DIV")
   contextBlock.style.whiteSpace = "inherit"
@@ -189,6 +191,20 @@ function addContexts(sessionDiv, popup, lookup) {
   contextBlock.appendChild(code)
   code.style.whiteSpace = "inherit"
   popup.appendChild(contextBlock)
+}
+
+function maybeAddButtonToCopyCompletionContext(sessionDiv, popup, lookup) {
+  if (!("cc_request_json" in lookup["additionalInfo"])) return
+  let contextAsJson = lookup["additionalInfo"]["cc_request_json"]
+  let buttonDiv = document.createElement("DIV")
+  let button = document.createElement("BUTTON")
+  button.textContent = "Copy Context"
+  buttonDiv.appendChild(button)
+  popup.appendChild(buttonDiv)
+
+  button.addEventListener("click", async function () {
+    await navigator.clipboard.writeText(contextAsJson)
+  })
 }
 
 function addSuggestions(sessionDiv, popup, lookup) {
