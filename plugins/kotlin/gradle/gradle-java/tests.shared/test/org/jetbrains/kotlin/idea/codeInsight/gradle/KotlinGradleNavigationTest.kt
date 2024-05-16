@@ -34,6 +34,11 @@ class KotlinGradleNavigationTest : AbstractGradleCodeInsightTest() {
     fun testPluginPrecompiledInKotlinWithPackage() {
         verifyNavigationFromCaretToExpected()
     }
+    
+    @TestMetadata("pluginPrecompiled/inKotlinLocatedInJavaDir.test")
+    fun testPluginPrecompiledInKotlinLocatedInJavaDir() {
+        verifyNavigationFromCaretToExpected()
+    }
 
     private fun verifyNavigationFromCaretToExpected() {
         fixture.performEditorAction(actionName)

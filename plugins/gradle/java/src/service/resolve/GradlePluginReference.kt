@@ -78,20 +78,15 @@ class GradlePluginReference(
 
   /**
    * Checks if the found file matches to conditions of Precompiled script plugins:
-   * - if it is a plugin on Groovy, it should have a path like `*\src\main\groovy\*`.
-   * - if it is a plugin on Kotlin, it should have a path like `*\src\main\kotlin\*`.
-   * - if plugin has a package declaration (e.g., `com.example`), its path should contain packages:
+   * - a plugin path should start with `*\src\main\(java|kotlin|groovy)`.
+   * - if plugin has a package declaration (e.g., `com.example`), its path should contain packages
    * (e.g., `*\src\main\kotlin\com.example.my-plugin.gradle.kts*`).
    *
    * There are more strict conditions for Precompiled plugins, not considered here because they require more complicated implementation.
    * @see <a href="https://docs.gradle.org/current/userguide/custom_plugins.html#sec:precompile_script_plugin">Gradle Precompiled plugins</a>
    */
   private fun isPrecompiledPlugin(file: VirtualFile, packageParts: List<String> = emptyList()): Boolean {
-    val language = when (file.extension) {
-      "kts" -> "kotlin"
-      "gradle" -> "groovy"
-      else -> return false
-    }
+    val language = "(java|kotlin|groovy)"
     val packagePath = if (packageParts.isEmpty()) {
       "(?:|.+/)" // empty string or any non-zero number of characters ending with a slash
     }
