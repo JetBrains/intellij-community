@@ -159,17 +159,11 @@ c:com.intellij.usages.impl.UsageViewImpl
 - waitForUpdateRequestsCompletion():V
 c:com.intellij.usages.impl.UsageViewManagerImpl
 - com.intellij.usages.UsageViewManager
-- <init>(com.intellij.openapi.project.Project):V
 - createUsageView(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation,com.intellij.openapi.util.Factory):com.intellij.usages.impl.UsageViewEx
-- s:getFileLength(com.intellij.openapi.vfs.VirtualFile):J
 - s:getProgressTitle(com.intellij.usages.UsageViewPresentation):java.lang.String
 - getSelectedUsageView():com.intellij.usages.UsageView
-- s:isInScope(com.intellij.usages.Usage,com.intellij.psi.search.SearchScope,com.intellij.psi.search.SearchScope):Z
-- s:outOfScopeMessage(I,com.intellij.psi.search.SearchScope):java.lang.String
-- s:presentableSize(J):java.lang.String
 - searchAndShowUsages(com.intellij.usages.UsageTarget[],com.intellij.openapi.util.Factory,com.intellij.usages.FindUsagesProcessPresentation,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):V
 - searchAndShowUsages(com.intellij.usages.UsageTarget[],com.intellij.openapi.util.Factory,Z,Z,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):com.intellij.usages.UsageView
-- s:showTooManyUsagesWarningLater(com.intellij.openapi.project.Project,com.intellij.openapi.progress.util.TooManyUsagesStatus,com.intellij.openapi.progress.ProgressIndicator,com.intellij.usages.impl.UsageViewEx,java.util.function.Supplier,java.util.function.Consumer):V
 - showUsages(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation):com.intellij.usages.UsageView
 - showUsages(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation,com.intellij.openapi.util.Factory):com.intellij.usages.UsageView
 f:com.intellij.usages.impl.UsageViewTreeModelBuilder
