@@ -13,7 +13,10 @@ import com.intellij.platform.ijent.fs.IjentFileSystemApi.SameFile
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.Stat
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import kotlinx.coroutines.job
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.URI
+import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
@@ -21,6 +24,7 @@ import java.nio.file.StandardOpenOption.*
 import java.nio.file.attribute.*
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -358,6 +362,39 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun setAttribute(path: Path, attribute: String?, value: Any?, vararg options: LinkOption?) {
+    TODO("Not yet implemented")
+  }
+
+  override fun newInputStream(path: Path?, vararg options: OpenOption?): InputStream {
+    TODO("Not yet implemented")
+  }
+
+  override fun newOutputStream(path: Path?, vararg options: OpenOption?): OutputStream {
+    TODO("Not yet implemented")
+  }
+
+  override fun newAsynchronousFileChannel(
+    path: Path?,
+    options: MutableSet<out OpenOption>?,
+    executor: ExecutorService?,
+    vararg attrs: FileAttribute<*>?,
+  ): AsynchronousFileChannel {
+    TODO("Not yet implemented")
+  }
+
+  override fun createSymbolicLink(link: Path?, target: Path?, vararg attrs: FileAttribute<*>?) {
+    TODO("Not yet implemented")
+  }
+
+  override fun createLink(link: Path?, existing: Path?) {
+    TODO("Not yet implemented")
+  }
+
+  override fun deleteIfExists(path: Path?): Boolean {
+    TODO("Not yet implemented")
+  }
+
+  override fun readSymbolicLink(link: Path?): Path {
     TODO("Not yet implemented")
   }
 
