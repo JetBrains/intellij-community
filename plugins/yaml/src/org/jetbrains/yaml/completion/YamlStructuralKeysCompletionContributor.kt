@@ -39,7 +39,7 @@ class YamlStructuralKeysCompletionContributor : CompletionContributor() {
             else -> emptySequence()
           }
         }
-    }.filter { !alreadyDeclared.contains(it.keyText) }
+    }.filter { !alreadyDeclared.contains(it.keyText) && position != it.key }
 
     result.addAllElements(
       keysToSuggest
