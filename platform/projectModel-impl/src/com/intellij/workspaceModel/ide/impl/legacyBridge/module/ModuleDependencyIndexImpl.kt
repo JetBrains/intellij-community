@@ -209,11 +209,13 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     private val libToModuleMap = MultiMap.createSet<String, ModuleId>()
 
     fun addTrackedLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
-      val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      if (!libToModuleMap.containsKey(libraryIdentifier) && library != null) {
-        library.rootProvider.addRootSetChangedListener(rootSetChangeListener)
-        eventDispatcher.multicaster.addedDependencyOn(library)
+      if (!libToModuleMap.containsKey(libraryIdentifier)) {
+        val library = libraryTable.getLibraryByName(libraryName)
+        if (library != null) {
+          library.rootProvider.addRootSetChangedListener(rootSetChangeListener)
+          eventDispatcher.multicaster.addedDependencyOn(library)
+        }
       }
       libToModuleMap.putValue(libraryIdentifier, moduleEntity.symbolicId)
     }
