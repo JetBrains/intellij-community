@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarge
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addIfNotNull
-import org.jetbrains.kotlin.idea.caches.resolve.ModuleTestSourceInfo as OldModuleTestSourceInfo
+import org.jetbrains.kotlin.utils.closure
 
 //TODO: (module refactoring) do not create ModuleTestSourceInfo when there are no test roots for module
 data class ModuleTestSourceInfo internal constructor(
