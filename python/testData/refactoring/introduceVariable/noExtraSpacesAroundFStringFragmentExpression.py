@@ -1,1 +1,0 @@
-s = f'foo{<selection>42</selection>}bar'

@@ -1,7 +1,0 @@
-<idea-plugin package="com.intellij.idea.customization.base">
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
-                        serviceImplementation="com.intellij.idea.customization.base.IntelliJIdeaExternalResourceUrls"
-                        overrides="true"/>
-  </extensions>
-</idea-plugin>

@@ -1,6 +1,0 @@
-<option>DOWHILE_BRACE_FORCE=FORCE_BRACES_ALWAYS</option>
-do 1 while ()
------
-do {
-  1
-} while ()

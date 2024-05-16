@@ -1,8 +1,0 @@
-// WITH_STDLIB
-object X {
-    var string = "foo"
-}
-
-fun main() {
-    "bar".also { X.string = it }
-}

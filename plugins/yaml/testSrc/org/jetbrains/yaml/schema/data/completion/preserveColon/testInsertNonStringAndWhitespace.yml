@@ -1,7 +1,0 @@
-after_deploy: false
-addons:
-  artifacts: true
-after_failure: true
-after_success: true
-after_scr<caret>before_cache: skip
-

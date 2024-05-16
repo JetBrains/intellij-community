@@ -1,7 +1,0 @@
-<problems>
-  <problem>
-    <file>Lambda.java</file>
-    <line>2</line>
-    <description>Method &lt;code&gt;foo()&lt;/code&gt; and all its derivables always return constants</description>
-  </problem>
-</problems>

@@ -1,9 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd">
-    <polygon fill="#AFB1B3" points="1.868 2 1 2.868 3.818 5.692 1 8.517 1.868 9.385 5.56 5.692"/>
-    <polygon fill="#AFB1B3" points="4.945 2 4.077 2.868 6.895 5.692 4.077 8.517 4.945 9.385 8.637 5.692"/>
-    <polygon fill="#AFB1B3" points="11.308 6.62 10.44 7.488 13.258 10.312 10.44 13.137 11.308 14.005 15 10.312" transform="matrix(-1 0 0 1 25.44 0)"/>
-    <polygon fill="#AFB1B3" points="8.231 6.62 7.363 7.488 10.182 10.312 7.363 13.137 8.231 14.005 11.923 10.312" transform="matrix(-1 0 0 1 19.286 0)"/>
-  </g>
-</svg>

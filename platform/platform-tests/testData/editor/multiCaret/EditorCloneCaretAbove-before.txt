@@ -1,3 +1,0 @@
-some te<caret>xt
-s<caret>ome other text
-a<caret>nother <selection><caret>line</selection> of text

@@ -1,8 +1,0 @@
-<root>
-  <item
-    name='com.intellij.util.ui.UIUtilities java.lang.String clipString(javax.swing.JComponent, java.awt.FontMetrics, java.lang.String, int)'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="pure" val="true"/>
-    </annotation>
-  </item>
-</root>

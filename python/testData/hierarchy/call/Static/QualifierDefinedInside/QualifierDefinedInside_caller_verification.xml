@@ -1,3 +1,0 @@
-<node text="D.foo(self, x) (D in hierarchy.call.Static.QualifierDefinedInside.main)" base="true">
-  <node text="C.foo(self, x) (C in hierarchy.call.Static.QualifierDefinedInside.main)"/>
-</node>

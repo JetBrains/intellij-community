@@ -1,9 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import java.io.File?>
-<?import javafx.scene.control.Label?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-  <fx:define>
-    <<error descr="Unable to instantiate">File</error>/>
-    <Label/>
-  </fx:define>
-</GridPane>

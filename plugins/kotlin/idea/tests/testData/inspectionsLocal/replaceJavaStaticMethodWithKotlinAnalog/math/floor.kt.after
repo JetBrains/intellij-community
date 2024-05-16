@@ -1,6 +1,0 @@
-import kotlin.math.floor
-
-// WITH_STDLIB
-fun test(x: Double) {
-    floor(x)
-}

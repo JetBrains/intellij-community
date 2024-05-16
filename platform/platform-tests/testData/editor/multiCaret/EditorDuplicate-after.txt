@@ -1,4 +1,0 @@
-some<selection>me<caret></selection> text<selection>xt<caret></selection>
-some other text
-some other t<caret>ext
-another line<selection>line<caret></selection>

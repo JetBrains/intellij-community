@@ -1,5 +1,0 @@
-@file:Suppress("REDUNDANT_LABEL_WARNING")
-
-fun foo(): Int {
-    return (ann@ 1)
-}

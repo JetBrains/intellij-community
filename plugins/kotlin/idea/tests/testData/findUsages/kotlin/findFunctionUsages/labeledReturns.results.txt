@@ -1,2 +1,0 @@
-Function call 12 foo(fun(): Boolean { return@foo false })
-Function call 8 foo {

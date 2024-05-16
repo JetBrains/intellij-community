@@ -1,4 +1,0 @@
-rootProject.name = 'project'
-include 'app'
-include 'app1'
-include 'app2'

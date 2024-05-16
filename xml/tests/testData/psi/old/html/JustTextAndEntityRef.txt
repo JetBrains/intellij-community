@@ -1,9 +1,0 @@
-HtmlFile:test.html
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      <empty list>
-    XmlToken:XML_CHAR_ENTITY_REF('&nbsp;')
-    PsiWhiteSpace(' ')
-    XmlToken:XML_DATA_CHARACTERS('some')
-    PsiWhiteSpace(' ')
-    XmlToken:XML_DATA_CHARACTERS('text')

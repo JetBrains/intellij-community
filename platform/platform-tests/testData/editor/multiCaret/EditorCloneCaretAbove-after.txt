@@ -1,3 +1,0 @@
-s<caret>ome te<caret>xt
-s<caret>ome oth<selection><caret>er t</selection>ext
-a<caret>nother <selection><caret>line</selection> of text

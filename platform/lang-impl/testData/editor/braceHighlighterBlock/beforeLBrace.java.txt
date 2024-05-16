@@ -1,3 +1,0 @@
-class Foo <caret><brace>{</brace>
-  int field;
-<brace>}</brace>

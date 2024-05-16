@@ -1,6 +1,0 @@
-<all>{x->x}<end>
-foo {x->x} {x->x} {x->x} (3) {x->x}
-
------
-def preved = { x->x}<caret>
-foo(preved, preved, preved)(3, preved)

@@ -1,8 +1,0 @@
-// BIND_TO barFoo
-fun foo() {
-  0.<caret>barFoo()
-}
-
-fun Any.fooBar() { }
-
-fun Any.barFoo() { }

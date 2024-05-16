@@ -1,4 +1,0 @@
-/*
- <caret>covfefe
- */
-class X {}

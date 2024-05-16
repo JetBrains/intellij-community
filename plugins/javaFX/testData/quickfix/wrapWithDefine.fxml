@@ -1,6 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.layout.*?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-    <Label fx:id="lb"/>
-    <fx:reference source="l<caret>b"/>
-</GridPane>

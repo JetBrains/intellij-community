@@ -1,6 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <{>
-    RegExpBranchImpl: <{>
-      PsiErrorElement:Unexpected start of quantifier '{'
-        <empty list>
-      PsiElement(LBRACE)('{')

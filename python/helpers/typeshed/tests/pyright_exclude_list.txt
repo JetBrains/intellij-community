@@ -1,3 +1,0 @@
-Pyright is configured using a "pyrightconfig.json" file. You will find
-it at the root of the repo. It contains an "exclude" section that accepts
-globs for specifying which files and/or directories to exclude from analysis.

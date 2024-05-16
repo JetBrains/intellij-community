@@ -1,3 +1,0 @@
-som<caret>e te<caret>xt
-an<selection><caret>ot</selection>her text
-some longer line <selection>h<caret>ere</selection>

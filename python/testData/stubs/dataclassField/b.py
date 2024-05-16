@@ -1,1 +1,0 @@
-INIT_3 = False

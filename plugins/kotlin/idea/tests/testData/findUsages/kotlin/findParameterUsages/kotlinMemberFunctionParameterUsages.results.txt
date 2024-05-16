@@ -1,2 +1,0 @@
-Value read 8 println(t)
-Value read 9 return t

@@ -1,6 +1,0 @@
-rest file
-  PsiElement(EXPLISIT_MARKUP_START)('.. ')
-  RestDirective:DIRECTIVE_BLOCK
-    PsiElement(CUSTOM_DIRECTIVE)('code-block::')
-    PsiElement(WHITESPACE)('\n')
-    PsiElement(LINE)('  import datetime')

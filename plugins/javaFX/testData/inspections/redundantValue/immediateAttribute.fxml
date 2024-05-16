@@ -1,8 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<GridPane xmlns:fx="http://javafx.com/fxml"
-          maxHeight="-1"
-          minHeight="-Infinity"
-          alignm<caret>ent="TOP_LEFT"
-          prefHeight="400.0"
-          prefWidth="600.0">
-</GridPane>

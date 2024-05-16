@@ -1,9 +1,0 @@
-def a = 4
-print <selection>a</selection>
-a = a+2+a
-print a
------
-def a
-print 4
-a = 4 +2+ 4
-print a

@@ -1,8 +1,0 @@
-class Foo {
-    private lateinit var _bar: Any
-    private var bar: Any
-        get() = _bar
-        set(value) {
-            _bar = value
-        }
-}

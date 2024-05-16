@@ -1,4 +1,0 @@
-<?import p.CustomVBox?>
-<p.CustomVBox xmlns:fx="http://javafx.com/fxml" >
-  <Custom<caret>VBox.foo>1</CustomVBox.foo>
-</p.CustomVBox>

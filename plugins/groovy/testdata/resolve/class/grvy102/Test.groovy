@@ -1,1 +1,0 @@
-import static java.awt.<ref>Frame.*

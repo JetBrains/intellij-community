@@ -1,3 +1,0 @@
-// FIX: Convert to run { ... }
-// WITH_STDLIB
-val test: Nothing get() = run { error("") }

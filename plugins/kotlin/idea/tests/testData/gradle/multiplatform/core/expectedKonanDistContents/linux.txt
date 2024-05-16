@@ -1,5 +1,0 @@
-Kotlin/Native: builtin
-Kotlin/Native: iconv
-Kotlin/Native: linux
-Kotlin/Native: posix
-Kotlin/Native: zlib

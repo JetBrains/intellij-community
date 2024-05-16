@@ -1,7 +1,0 @@
-<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <rect id="Rectangle-4" fill="#AFB1B3" x="4" y="7" width="8" height="6"/>
-        <path d="M4,3.5 C3.17157288,3.5 2.5,4.12360338 2.5,4.89285714 L2.5,7 L5.5,7.00064087 L5.5,4.89285714 C5.5,4.12360338 4.82842712,3.5 4,3.5 Z M7,7 L1,7 L1,5 C1,3.34314575 2.34314575,2 4,2 C5.65685425,2 7,3.34314575 7,5 L7,7 Z" id="Combined-Shape" fill="#AFB1B3" fill-rule="nonzero"/>
-    </g>
-</svg>

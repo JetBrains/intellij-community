@@ -1,5 +1,0 @@
-class A(val bool: Boolean) {
-    fun m(b: Boolean = false) {
-        val p = b
-    }
-}

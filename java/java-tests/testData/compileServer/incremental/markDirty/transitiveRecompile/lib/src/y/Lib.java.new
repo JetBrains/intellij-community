@@ -1,8 +1,0 @@
-package y;
-
-public class Lib {
-  public static final int CONST = 241;
-
-  public static void libMethod() {
-  }
-}

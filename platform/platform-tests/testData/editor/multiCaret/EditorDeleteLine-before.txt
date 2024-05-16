@@ -1,6 +1,0 @@
-<selection>some <caret></selection>text
-blah
-another text<caret>
-anot<caret>he<caret>r line
-yet another line
-blah

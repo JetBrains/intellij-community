@@ -1,6 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="idea/community/platform/icons/src/general/inspectionsEye_dark">
-<path id="Shape Copy 2" fill-rule="evenodd" clip-rule="evenodd" d="M8 4C5.27273 4 2.94364 5.77714 2 8.28571C2.94364 10.7943 5.27273 12.5714 8 12.5714C10.7273 12.5714 13.0564 10.7943 14 8.28571C13.0564 5.77714 10.7273 4 8 4ZM8 11.2857C6.344 11.2857 5 9.94171 5 8.28571C5 6.62971 6.344 5.28571 8 5.28571C9.656 5.28571 11 6.62971 11 8.28571C11 9.94171 9.656 11.2857 8 11.2857ZM8 6.57143C7.05143 6.57143 6.28571 7.33714 6.28571 8.28571C6.28571 9.23429 7.05143 10 8 10C8.94857 10 9.71429 9.23429 9.71429 8.28571C9.71429 7.33714 8.94857 6.57143 8 6.57143Z" fill="#AFB1B3"/>
-</g>
-</svg>

@@ -1,8 +1,0 @@
-<problems>
-  <problem>
-    <file>Test.java</file>
-    <line>7</line>
-    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessarily qualified statically imported element</problem_class>
-    <description>Statically imported element 'foo' is unnecessarily qualified with &lt;code&gt;A&lt;/code&gt; #loc</description>
-  </problem>
-</problems>

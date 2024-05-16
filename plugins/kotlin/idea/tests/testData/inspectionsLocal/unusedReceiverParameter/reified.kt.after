@@ -1,5 +1,0 @@
-inline fun <reified T> testFun(t: T): String = t.toString()
-
-fun main() {
-    testFun(5)
-}

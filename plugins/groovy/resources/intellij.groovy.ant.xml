@@ -1,8 +1,0 @@
-<idea-plugin package="org.jetbrains.plugins.groovy.gant.ant">
-  <dependencies>
-    <plugin id="AntSupport"/>
-  </dependencies>
-  <extensions defaultExtensionNs="org.intellij.groovy">
-    <membersContributor implementation="org.jetbrains.plugins.groovy.gant.ant.GantMemberContributor"/>
-  </extensions>
-</idea-plugin>

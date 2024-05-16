@@ -1,1 +1,0 @@
-public final [ResolvedTo(BODY_RESOLVE)] fun foo(): R|library/WithInner.Inner|

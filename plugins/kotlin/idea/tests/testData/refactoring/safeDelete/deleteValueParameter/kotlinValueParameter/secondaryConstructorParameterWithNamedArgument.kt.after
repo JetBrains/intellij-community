@@ -1,5 +1,0 @@
-open class MyClass {
-    constructor()
-}
-
-class Child : MyClass()

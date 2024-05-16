@@ -1,7 +1,0 @@
-// NEW_NAME: T
-// RENAME: member
-fun <<caret>T> p() {
-    fun T() {}
-    T()
-    val t : T? = null
-}

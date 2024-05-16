@@ -1,8 +1,0 @@
-<module>
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <exclude-output />
-    <content url="file://$MODULE_DIR$" />
-    <orderEntry type="sourceFolder" forTests="false" />
-  </component>
-  <component name="TestModuleProperties" production-module="foo" />
-</module>

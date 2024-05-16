@@ -1,7 +1,0 @@
-open class Baz
-
-fun test5(foo: Any) {
-    class Bar: Baz() /* comment */
-
-    (foo as? String)?.length
-}

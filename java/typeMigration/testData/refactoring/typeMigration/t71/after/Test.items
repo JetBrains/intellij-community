@@ -1,8 +1,0 @@
-Types:
-PsiField:f : java.lang.Class<? extends java.lang.Number>
-
-Conversions:
-byte.class -> $
-
-New expression type changes:
-Fails:

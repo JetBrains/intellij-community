@@ -1,3 +1,0 @@
-fun <T> (T & Any).foo(): T & Any {
-    return this
-}

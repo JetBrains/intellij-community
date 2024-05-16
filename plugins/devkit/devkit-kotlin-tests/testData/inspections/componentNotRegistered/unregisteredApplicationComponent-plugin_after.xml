@@ -1,9 +1,0 @@
-<idea-plugin>
-
-    <application-components>
-        <component>
-            <implementation-class>UnregisteredBaseComponent</implementation-class>
-            <interface-class>UnregisteredApplicationComponentInterface</interface-class>
-        </component>
-    </application-components>
-</idea-plugin>

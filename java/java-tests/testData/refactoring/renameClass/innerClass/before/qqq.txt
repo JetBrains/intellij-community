@@ -1,3 +1,0 @@
-pack1.OuterClass.InnerClass
-pack1.OuterClass$InnerClass
-pack1.OuterClass$InnerClassX

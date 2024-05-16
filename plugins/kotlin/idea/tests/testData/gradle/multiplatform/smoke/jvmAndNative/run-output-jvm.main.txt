@@ -1,6 +1,0 @@
-<time>: Executing 'jvmRun -DmainClass=jvm.JvmMainKt --quiet'...
-Running: JvmMain!
-
-<time>: Execution finished 'jvmRun -DmainClass=jvm.JvmMainKt --quiet'.
-
-<exitCode: 0>

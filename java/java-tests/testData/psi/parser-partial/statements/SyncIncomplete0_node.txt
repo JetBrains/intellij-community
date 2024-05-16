@@ -1,5 +1,0 @@
-test.java.file
-  SYNCHRONIZED_STATEMENT
-    SYNCHRONIZED_KEYWORD
-    ERROR_ELEMENT
-      <empty list>

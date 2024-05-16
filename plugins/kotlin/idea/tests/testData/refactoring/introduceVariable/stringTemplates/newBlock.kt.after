@@ -1,8 +1,0 @@
-fun foo(param: Boolean) {
-    val s = if (param) {
-        val string = "bc"
-        "a${string}def"
-    } else null
-}
-
-// IGNORE_K1

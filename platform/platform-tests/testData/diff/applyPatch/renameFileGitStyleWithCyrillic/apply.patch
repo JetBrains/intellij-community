@@ -1,9 +1,0 @@
-diff --git "a/\320\272\320\270\321\200\320\270\320\273\320\273\320\270\321\206\320\260.txt" b/new_file_name.txt
-similarity index 100%
-rename from "\320\272\320\270\321\200\320\270\320\273\320\273\320\270\321\206\320\260.txt"
-rename to new_file_name.txt
-diff --git a/old_file_name.txt "b/\320\270\320\274\321\217 \321\204\320\260\320\271\320\273\320\260.txt"
-similarity index 100%
-rename from old_file_name.txt
-rename to "\320\270\320\274\321\217 \321\204\320\260\320\271\320\273\320\260.txt"
-

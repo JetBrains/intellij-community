@@ -1,4 +1,0 @@
-[javaAndKotlinImplementations.0.kt] Unclassified 12 class KotlinImpl(override var absProp: String) : KotlinInterface
-[javaAndKotlinImplementations.0.kt] Unclassified 15 override var absProp: String = ""
-[javaAndKotlinImplementations.1.java] Unclassified 3 public String getAbsProp() {
-[javaAndKotlinImplementations.1.java] Unclassified 8 public void setAbsProp(String s) {

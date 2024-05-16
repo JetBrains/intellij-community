@@ -1,9 +1,0 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UEnumConstant (name = SYSTEM)(resolves to null) -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
-UEnumConstant (name = SYSTEM)(resolves to null) -> USimpleNameReferenceExpression (identifier = Style) -> Kotlin_Light_Method: Style
-UEnumConstant (name = USER)(resolves to null) -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
-UEnumConstant (name = USER)(resolves to null) -> USimpleNameReferenceExpression (identifier = Style) -> Kotlin_Light_Method: Style
-UEnumConstant (name = INTERNAL)(resolves to null) -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
-UEnumConstant (name = INTERNAL)(resolves to null) -> USimpleNameReferenceExpression (identifier = Style) -> Kotlin_Light_Method: Style
-UEnumConstant (name = UNKNOWN)(resolves to null) -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
-UEnumConstant (name = UNKNOWN)(resolves to null) -> USimpleNameReferenceExpression (identifier = Style) -> Kotlin_Light_Method: Style

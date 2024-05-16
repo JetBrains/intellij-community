@@ -1,1 +1,0 @@
-<caret>final class Final

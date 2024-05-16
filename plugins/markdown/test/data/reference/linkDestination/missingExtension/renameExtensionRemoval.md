@@ -1,1 +1,0 @@
-[link](stub_in_root)

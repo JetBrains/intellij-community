@@ -1,2 +1,0 @@
-myPackage/SealedClassInheritor1
-myPackage/SealedClassInheritor2

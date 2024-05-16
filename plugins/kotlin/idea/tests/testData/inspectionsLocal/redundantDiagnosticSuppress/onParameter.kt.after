@@ -1,3 +1,0 @@
-fun check(i: Int) {
-    fun withUnused(d: Int) = i
-}

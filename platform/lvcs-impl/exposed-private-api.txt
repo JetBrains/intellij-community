@@ -1,3 +1,0 @@
-com/intellij/history/integration/LocalHistoryEventDispatcher
-com/intellij/history/integration/ui/views/RevisionsList$Period
-com/intellij/util/io/StorageLockContext

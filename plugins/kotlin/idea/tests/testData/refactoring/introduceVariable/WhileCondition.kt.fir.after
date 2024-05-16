@@ -1,4 +1,0 @@
-fun a() {
-    val bool = true
-    while (bool) {}
-}

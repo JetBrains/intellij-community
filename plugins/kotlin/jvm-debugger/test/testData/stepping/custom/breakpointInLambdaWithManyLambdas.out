@@ -1,8 +1,0 @@
-LineBreakpoint created at breakpointInLambdaWithManyLambdas.kt:21 lambdaOrdinal = 1
-Run Java
-Connected to the target VM
-breakpointInLambdaWithManyLambdas.kt:21
-breakpointInLambdaWithManyLambdas.kt:5
-Disconnected from the target VM
-
-Process finished with exit code 0

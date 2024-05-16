@@ -1,7 +1,0 @@
-mutation ($id: ID!) {
-    deletePullRequestReviewComment(input: {id: $id}) {
-        pullRequestReview {
-            ...pullRequestPendingReview
-        }
-    }
-}

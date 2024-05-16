@@ -1,5 +1,0 @@
-<!DOCTYPE tv [ <!ELEMENT tv (date)*> <!ELEMENT date (#PCDATA)> ]>
-
-<<error>xx</error>>
-
-</<error>xx</error>>

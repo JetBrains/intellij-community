@@ -1,1 +1,0 @@
-new A().doSmth { println "smth" }

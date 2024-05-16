@@ -1,5 +1,0 @@
-<project name="any" >
-	<target name="any"/>
-	<target name="any2" depends="<caret>"/>
-
-</project>

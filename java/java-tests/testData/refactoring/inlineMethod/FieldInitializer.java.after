@@ -1,4 +1,0 @@
-class A{
-  int field = 1;
-
-}

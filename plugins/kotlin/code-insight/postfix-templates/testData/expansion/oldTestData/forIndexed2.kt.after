@@ -1,5 +1,0 @@
-fun foo(index: Int, list: List<String>) {
-    for ((index1, <selection>s<caret></selection>) in list.withIndex()) {
-
-    }
-}

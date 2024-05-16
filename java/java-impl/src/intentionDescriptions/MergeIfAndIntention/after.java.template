@@ -1,8 +1,0 @@
-public class X {
-  boolean f(boolean a, boolean b) {
-    if (!a && b) {
-      return true;
-    }
-    return false;
-  }
-}

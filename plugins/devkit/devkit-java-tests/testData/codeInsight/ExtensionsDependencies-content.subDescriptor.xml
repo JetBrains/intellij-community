@@ -1,8 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-
-    <!-- defined in ExtensionsDependencies.xml "main" plugin -->
-    <myPlugin.mainPlugin
-        implementation="java.lang.Integer"/>
-  </extensions>
-</idea-plugin>

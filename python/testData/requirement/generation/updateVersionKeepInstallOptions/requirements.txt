@@ -1,4 +1,0 @@
-Django==2.0.0
-requests==1.11.0 --global-option="--no-user-cfg" \
-     --install-option="--prefix='/usr/local'" \
-  --install-option="--no-compile"

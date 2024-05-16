@@ -1,7 +1,0 @@
-include "included.rnc" {
-  included.start.element = element foo { empty }
-}
-start = istart.element
-div {
-  istart.element = element foo { empty }
-}

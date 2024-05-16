@@ -1,8 +1,0 @@
-[defaultSecondaryConstructor.0.kt] Constructor delegation reference 15 constructor(a: Int) : super() {
-[defaultSecondaryConstructor.0.kt] Constructor delegation reference 19 constructor() {
-[defaultSecondaryConstructor.0.kt] Constructor delegation reference 9 constructor(a: Int) : this() {
-[defaultSecondaryConstructor.0.kt] New instance creation 29 B()
-[defaultSecondaryConstructor.0.kt] Supertype 24 class C : B() {
-[defaultSecondaryConstructor.1.java] New instance creation 11 new B();
-[defaultSecondaryConstructor.1.java] Unclassified 3 super();
-[defaultSecondaryConstructor.1.java] Unclassified 6 public J() {

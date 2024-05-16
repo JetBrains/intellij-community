@@ -1,4 +1,0 @@
-[JClient.java] Unclassified 6 String s = RequestProcessor.processRequest();
-[JClient.java] Unclassified 9 return RequestProcessor.processRequest();
-[kotlinTopLevelMethodUsagesWithRenamedFile.0.java] Unclassified 12 return RequestProcessor.processRequest();
-[kotlinTopLevelMethodUsagesWithRenamedFile.0.java] Unclassified 9 String s = RequestProcessor.processRequest();

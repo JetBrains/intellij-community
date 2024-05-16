@@ -1,4 +1,0 @@
-WithCompanionObject.class
-public final class <1>WithCompanionObject public constructor() {
-    public companion <2>object {
-        public final fun <3>foo(): kotlin.Unit { /* compiled code */ }

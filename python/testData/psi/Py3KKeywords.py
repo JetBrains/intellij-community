@@ -1,3 +1,0 @@
-None
-True
-False

@@ -1,1 +1,0 @@
-from pkg.li<caret>b import foo

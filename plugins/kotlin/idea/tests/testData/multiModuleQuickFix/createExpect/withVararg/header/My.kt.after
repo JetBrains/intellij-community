@@ -1,3 +1,0 @@
-// My: to be implemented
-// DISABLE-ERRORS
-expect annotation class <selection><caret></selection>My(vararg val arg: String)

@@ -1,4 +1,0 @@
-// "Move to constructor" "true"
-class Container(protected open var index: Int) {
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorIntention

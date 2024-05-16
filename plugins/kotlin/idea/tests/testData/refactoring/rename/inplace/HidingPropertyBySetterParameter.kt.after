@@ -1,8 +1,0 @@
-// NEW_NAME: p
-// RENAME: member
-class U {
-    var named: Int = 0
-        get() = field + p
-        set(p<caret>) { field = p + this.p }
-    val p = 1
-}

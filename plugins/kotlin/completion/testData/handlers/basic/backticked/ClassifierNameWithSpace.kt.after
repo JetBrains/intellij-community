@@ -1,9 +1,0 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
-package test
-
-class `with space`
-
-fun `with space`<caret>
-
-// ELEMENT: "with space"

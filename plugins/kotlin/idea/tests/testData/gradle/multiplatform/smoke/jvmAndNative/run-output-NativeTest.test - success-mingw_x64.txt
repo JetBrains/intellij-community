@@ -1,4 +1,0 @@
-<time>: Executing ':cleanMingwX64Test :mingwX64Test --tests "NativeTest.test - success"'...
-<time>: Execution finished ':cleanMingwX64Test :mingwX64Test --tests "NativeTest.test - success"'.
-
-<exitCode: 0>

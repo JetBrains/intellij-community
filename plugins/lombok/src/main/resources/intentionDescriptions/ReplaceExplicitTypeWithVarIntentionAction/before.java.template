@@ -1,6 +1,0 @@
-public class X {
-  void a() {
-    <spot>int a = 2</spot>;
-    a++;
-  }
-}

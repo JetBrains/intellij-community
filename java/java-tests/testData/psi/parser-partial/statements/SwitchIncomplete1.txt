@@ -1,6 +1,0 @@
-PsiJavaFile:SwitchIncomplete1.java
-  PsiSwitchStatement
-    PsiKeyword:switch('switch')
-    PsiJavaToken:LPARENTH('(')
-    PsiErrorElement:Expression expected
-      <empty list>

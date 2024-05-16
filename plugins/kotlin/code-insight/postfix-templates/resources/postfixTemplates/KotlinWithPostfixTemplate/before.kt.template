@@ -1,3 +1,0 @@
-fun test(context: Context) {
-    <spot>context</spot>$key
-}

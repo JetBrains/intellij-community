@@ -1,3 +1,0 @@
-<selection><caret>s</selection>ome text<selection><caret>
-</selection>some<selection><caret> other text</selection>
-yet an<caret>other <selection><caret>line</selection>

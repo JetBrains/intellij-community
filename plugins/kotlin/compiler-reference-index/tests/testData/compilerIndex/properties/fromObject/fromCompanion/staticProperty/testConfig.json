@@ -1,9 +1,0 @@
-{
-    "mainFile": "Main.kt",
-    "usages": [
-        "Child.kt",
-        "Read.java",
-        "ReadWithInstance.java",
-        "Usage.kt"
-    ]
-}

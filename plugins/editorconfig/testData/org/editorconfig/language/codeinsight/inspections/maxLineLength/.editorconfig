@@ -1,4 +1,0 @@
-[foo]
-max_line_length = off
-max_line_length = 80
-max_line_length = <error>unknown_value_wtf</error>

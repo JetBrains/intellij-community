@@ -1,8 +1,0 @@
-{
-  "type": "KOTLIN_FUNCTION",
-  "packageFqn": "test",
-  "mainFile": "foo.kt",
-  "oldName": "foo",
-  "newName": "Bar",
-  "enabledInK2": true
-}

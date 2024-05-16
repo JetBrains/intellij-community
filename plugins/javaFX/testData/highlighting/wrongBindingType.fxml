@@ -1,7 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.Label?>
-
-<?import javafx.scene.control.TextField?>
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="WrongBindingType">
-    <TextField fx:id=<error descr="Cannot set javafx.scene.control.TextField to field 'label'">"label"</error>/>
-</GridPane>

@@ -1,9 +1,0 @@
-package test
-
-class Outer {
-    class Nested
-}
-
-fun usage() {
-    Outer.Nested()
-}

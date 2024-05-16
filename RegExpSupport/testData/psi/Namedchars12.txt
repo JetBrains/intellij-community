@@ -1,8 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\p{InArabic Extended-A}>
-    RegExpBranchImpl: <\p{InArabic Extended-A}>
-      RegExpPropertyImpl: <\p{InArabic Extended-A}>
-        PsiElement(PROPERTY)('\p')
-        PsiElement(LBRACE)('{')
-        PsiElement(NAME)('InArabic Extended-A')
-        PsiElement(RBRACE)('}')

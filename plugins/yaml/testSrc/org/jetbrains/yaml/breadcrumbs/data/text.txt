@@ -1,9 +1,0 @@
-[Document 1/3][items:][Item 2/2][descrip:][High Heeled "Ruby" S...]
-------
-[Document 1/3][specialDelivery:][Follow the Yellow Br...]
-------
-[Document 1/3][top:][hello:][world:][aaa:][bbb:]
-------
-[Document 2/3][baz:][Item 2/3][boo:][foo]
-------
-[Document 3/3][foo:][Item][avr]

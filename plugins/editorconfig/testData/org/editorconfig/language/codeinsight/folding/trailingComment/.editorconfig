@@ -1,9 +1,0 @@
-[foo]
-<fold text='...'>bar=bas</fold>
-<fold text='; this...'>; this
-; comment
-; is
-; not
-; part
-; of
-; section</fold>

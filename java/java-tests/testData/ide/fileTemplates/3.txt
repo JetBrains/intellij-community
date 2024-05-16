@@ -1,8 +1,0 @@
-package ${PACKAGE_NAME};
-
-/*
- * $Log$
- * @version $Id$
- */
-public class ${NAME} {
-}

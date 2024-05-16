@@ -1,1 +1,0 @@
-${RESOURCE_BUNDLE}.getString("${PROPERTY_KEY}")

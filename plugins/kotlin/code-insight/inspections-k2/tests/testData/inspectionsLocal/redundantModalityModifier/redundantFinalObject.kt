@@ -1,1 +1,0 @@
-<caret>final object FinalObject

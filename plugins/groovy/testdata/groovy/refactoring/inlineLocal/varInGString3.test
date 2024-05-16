@@ -1,9 +1,0 @@
-def <selection>s</selection>='''abc"cd
-e''';
-print "$s"
-print """$s"""
------
-<caret>print """abc"cd
-e"""
-print """abc"cd
-e"""

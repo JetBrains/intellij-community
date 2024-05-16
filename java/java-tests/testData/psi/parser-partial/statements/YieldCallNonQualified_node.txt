@@ -1,9 +1,0 @@
-test.java.file
-  YIELD_STATEMENT
-    YIELD
-    PARENTH_EXPRESSION
-      LPARENTH
-      ERROR_ELEMENT
-        <empty list>
-      RPARENTH
-    SEMICOLON

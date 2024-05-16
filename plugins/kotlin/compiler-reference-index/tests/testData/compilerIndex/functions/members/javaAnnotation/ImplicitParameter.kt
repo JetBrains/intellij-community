@@ -1,2 +1,0 @@
-@JAnn("abcs")
-class ImplicitParameterKt

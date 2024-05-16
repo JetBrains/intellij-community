@@ -1,9 +1,0 @@
-Types:
-PsiField:f1 : java.lang.String
-PsiField:f2 : java.lang.String
-PsiReferenceExpression:f1 : java.lang.String
-
-Conversions:
-
-New expression type changes:
-Fails:

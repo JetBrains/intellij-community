@@ -1,9 +1,0 @@
-package test
-
-class SomeType
-
-val anonymous = fun(): SomeType<caret> {}
-
-// FIR_COMPARISON
-// FIR_IDENTICAL
-// ELEMENT: SomeType

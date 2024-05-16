@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<foo:foo xmlns:foo="http://www.foo.org/test"
-         xmlns:bar="http://www.bar.org/test"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.foo.org/test 32.xsd http://www.bar.org/test 32_2.xsd"
-         bar:<caret> />

@@ -1,5 +1,0 @@
-public class Foo {
-  void m(boolean b) {
-      System.out.printf("", b);
-  }
-}

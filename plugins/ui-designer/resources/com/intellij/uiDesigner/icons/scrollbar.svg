@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd">
-    <rect width="14" height="10" x="1" y="3" fill="#9AA7B0" fill-opacity=".6"/>
-    <polygon fill="#231F20" fill-opacity=".7" points="10.8 6.2 13.8 9.8 7.8 9.8" transform="rotate(90 10.8 8)"/>
-    <polygon fill="#231F20" fill-opacity=".7" points="5.2 6.2 8.2 9.8 2.2 9.8" transform="matrix(0 1 1 0 -2.8 2.8)"/>
-  </g>
-</svg>

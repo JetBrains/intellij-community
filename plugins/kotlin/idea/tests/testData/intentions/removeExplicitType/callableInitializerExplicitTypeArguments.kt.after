@@ -1,3 +1,0 @@
-class F<T>
-
-fun test() = F<String>()

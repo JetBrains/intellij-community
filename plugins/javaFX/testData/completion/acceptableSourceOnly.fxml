@@ -1,7 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:id="foo">
-  <rowConstraints>
-    <fx:reference source="<caret>"/>
-  </rowConstraints>
-</GridPane>

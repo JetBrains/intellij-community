@@ -1,4 +1,0 @@
-UTypeReferenceExpression (name = Device<D>) -> USimpleNameReferenceExpression (identifier = Device) -> Kotlin_Light_Class:class Device<D: Device<D>>: Device
-UTypeReferenceExpression (name = D) -> USimpleNameReferenceExpression (identifier = D) -> Kotlin_Light_Type_Parameter: D
-UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as?) -> null: null
-UTypeReferenceExpression (name = Device<?>) -> USimpleNameReferenceExpression (identifier = Device) -> Kotlin_Light_Class:class Device<D: Device<D>>: Device

@@ -1,5 +1,0 @@
-<root>
-  <item name='com.google.common.cache.CacheBuilder'>
-    <annotation name='java.lang.Deprecated'/>
-  </item>
-</root>

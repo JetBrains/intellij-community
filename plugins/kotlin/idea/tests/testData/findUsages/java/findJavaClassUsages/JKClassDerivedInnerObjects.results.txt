@@ -1,3 +1,0 @@
-Unclassified 3 public interface T : A
-Unclassified 5 public object O1 : A()
-Unclassified 8 public object O2 : T

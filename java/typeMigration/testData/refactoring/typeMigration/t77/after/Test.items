@@ -1,9 +1,0 @@
-Types:
-PsiParameter:pn : java.lang.Object
-PsiReferenceExpression:pn : java.lang.Object
-
-Conversions:
-
-New expression type changes:
-Fails:
-pn->java.lang.Object

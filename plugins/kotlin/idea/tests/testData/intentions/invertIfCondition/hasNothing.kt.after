@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun main(args: Array<String>) {
-    if (!(args.isNotEmpty() || foo())) return
-}
-
-fun foo(): Nothing = throw RuntimeException()

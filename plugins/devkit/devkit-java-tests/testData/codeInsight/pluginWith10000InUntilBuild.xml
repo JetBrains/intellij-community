@@ -1,6 +1,0 @@
-<idea-plugin>
-  <id>test</id>
-  <vendor>JetBrains</vendor>
-  <version>1.0</version>
-  <idea-version since-build="145.0" until-build="<error descr="Don't use '10000' in 'until-build', use '*' instead">145.10000</error>"/>
-</idea-plugin>

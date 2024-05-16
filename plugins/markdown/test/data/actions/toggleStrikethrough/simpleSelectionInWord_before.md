@@ -1,1 +1,0 @@
-a<selection>b</selection>c

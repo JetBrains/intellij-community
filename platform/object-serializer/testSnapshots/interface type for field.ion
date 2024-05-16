@@ -1,7 +1,0 @@
-{
-  '@id':0,
-  shape:Circle::{
-    '@id':1,
-    name:null
-  }
-}

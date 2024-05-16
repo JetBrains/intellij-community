@@ -1,8 +1,0 @@
-LineBreakpoint created at typeParameterOutOfScope.kt:4
-Run Java
-Connected to the target VM
-typeParameterOutOfScope.kt:4
-Compile bytecode for run { 24 }
-Disconnected from the target VM
-
-Process finished with exit code 0

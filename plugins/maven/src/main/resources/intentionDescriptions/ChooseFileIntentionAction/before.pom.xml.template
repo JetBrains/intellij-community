@@ -1,8 +1,0 @@
-<dependencies>
-  <dependency>
-    <groupId>org.example.groupId</groupId>
-    <artifactId>example-artifact</artifactId>
-    <version>1.0</version>
-    <scope>system</scope>
-  </dependency>
-</dependencies>

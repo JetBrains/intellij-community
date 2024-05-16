@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<profiles version="21">
-  <profile kind="CodeFormatterProfile" name="profile1" version="21">
-    <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="80"/>
-  </profile>
-  <profile kind="CodeFormatterProfile" name="profile2" version="21">
-    <setting id="org.eclipse.jdt.core.formatter.lineSplit" value="120"/>
-  </profile>
-</profiles>

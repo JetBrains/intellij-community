@@ -1,7 +1,0 @@
-// AFTER-WARNING: No cast needed
-fun main() {
-    foo();
-    { foo() } as? () -> Unit
-}
-
-fun foo() {}

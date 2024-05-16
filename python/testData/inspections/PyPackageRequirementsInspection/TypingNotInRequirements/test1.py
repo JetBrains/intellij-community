@@ -1,3 +1,0 @@
-import typing
-
-print(typing)

@@ -1,1 +1,0 @@
-[What is this repository for](#what-is-this-repository-f<caret>or)

@@ -1,1 +1,0 @@
-class SharedClass: pass

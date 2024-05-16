@@ -1,7 +1,0 @@
-0(1) element: null
-1(2) element: PyAssignmentStatement
-2(3) READ ACCESS: aaa
-3(4) READ ACCESS: bbb
-4(5) READ ACCESS: ccc
-5(6) WRITE ACCESS: aaa
-6() element: null

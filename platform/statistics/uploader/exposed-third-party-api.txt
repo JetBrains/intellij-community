@@ -1,6 +1,0 @@
-com/fasterxml/jackson/core/JsonParser
-com/fasterxml/jackson/databind/DeserializationContext
-com/fasterxml/jackson/databind/JsonDeserializer
-com/fasterxml/jackson/databind/JsonNode
-com/jetbrains/fus/reporting/model/lion3/LogEvent
-com/jetbrains/fus/reporting/model/lion3/LogEventAction

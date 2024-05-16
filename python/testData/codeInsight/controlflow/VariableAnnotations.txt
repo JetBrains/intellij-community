@@ -1,8 +1,0 @@
-0(1) element: null
-1(2) element: PyTypeDeclarationStatement
-2(3) READ ACCESS: int
-3(4) WRITE ACCESS: x
-4(5) element: PyAssignmentStatement
-5(6) READ ACCESS: List
-6(7) WRITE ACCESS: xs
-7() element: null

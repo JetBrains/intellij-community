@@ -1,5 +1,0 @@
-<caret>expect sealed class E {
-    data object A : E
-    data object B : E
-    data object C : E
-}

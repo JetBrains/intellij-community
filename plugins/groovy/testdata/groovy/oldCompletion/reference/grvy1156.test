@@ -1,5 +1,0 @@
-class FooBar {
-    def foo() {new Foo<caret>}
-}
------
-FooBar

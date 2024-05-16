@@ -1,2 +1,0 @@
-r10 Multiple fetch and push
-Multiple fetchspecs or/and pushspecs for a single remote

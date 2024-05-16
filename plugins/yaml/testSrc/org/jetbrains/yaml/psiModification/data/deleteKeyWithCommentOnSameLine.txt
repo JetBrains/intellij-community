@@ -1,3 +1,0 @@
-root:
-  # Hello1
-  another_key: another_value

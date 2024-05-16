@@ -1,7 +1,0 @@
-<root>
-  <item name='com.intellij.openapi.util.io.FileUtilRt'>
-    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
-      <val name="value" val="&quot;2.0&quot;"/>
-    </annotation>
-  </item>
-</root>

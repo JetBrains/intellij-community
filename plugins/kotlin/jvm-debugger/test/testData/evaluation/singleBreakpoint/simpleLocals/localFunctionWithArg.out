@@ -1,9 +1,0 @@
-// IGNORE_BACKEND: JVM_IR_WITH_OLD_EVALUATOR
-LineBreakpoint created at localFunctionWithArg.kt:7
-Run Java
-Connected to the target VM
-localFunctionWithArg.kt:7
-Compile bytecode for localFunction(8)
-Disconnected from the target VM
-
-Process finished with exit code 0

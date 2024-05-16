@@ -1,5 +1,0 @@
-%include map-cmdline.default
-
-[templates]
-changeset = '{cset}{branches}{bookmarks}{tags}{lphase}{parents}{luser}{ldate}{summary}\n'
-changeset_verbose = '{cset}{branches}{bookmarks}{tags}{lphase}{parents}{luser}{ldate}{lfiles}{lfile_copies_switch}{description}\n'

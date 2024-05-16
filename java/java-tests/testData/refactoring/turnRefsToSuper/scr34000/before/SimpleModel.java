@@ -1,2 +1,0 @@
-class SimpleModel extends Model {
-}

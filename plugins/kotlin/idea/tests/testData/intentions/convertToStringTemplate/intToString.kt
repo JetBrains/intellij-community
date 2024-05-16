@@ -1,1 +1,0 @@
-val t3 = 100.toString() <caret>+ "text"

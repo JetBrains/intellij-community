@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema targetNamespace="http://schemas.niku.com/2002/objectTypes" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:objectTypes="http://schemas.niku.com/2002/objectTypes" elementFormDefault="qualified" attributeFormDefault="unqualified">
-  <xsd:include schemaLocation="object-types-2003-09.xsd"/>
-	<xsd:element name="object" type="objectTypes:ObjectType"/>
-</xsd:schema>
-

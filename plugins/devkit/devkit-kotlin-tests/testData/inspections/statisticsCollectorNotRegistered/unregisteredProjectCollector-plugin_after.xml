@@ -1,8 +1,0 @@
-<idea-plugin>
-  <extensionPoints>
-    <extensionPoint name="statistics.projectUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector" dynamic="true"/>
-  </extensionPoints>
-    <extensions defaultExtensionNs="com.intellij.statistics">
-        <projectUsagesCollector implementation="UnregisteredProjectCollector"/>
-    </extensions>
-</idea-plugin>

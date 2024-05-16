@@ -1,3 +1,0 @@
-record R() {
-    <caret>
-}

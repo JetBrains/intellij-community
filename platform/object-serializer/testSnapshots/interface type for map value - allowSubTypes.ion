@@ -1,9 +1,0 @@
-{
-  '@id':0,
-  shape:{
-    first:'com.intellij.serialization.Circle'::{
-      '@id':1,
-      name:null
-    }
-  }
-}

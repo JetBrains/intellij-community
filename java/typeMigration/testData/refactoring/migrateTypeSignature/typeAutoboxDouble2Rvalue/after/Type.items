@@ -1,9 +1,0 @@
-Types:
-PsiField:myField : double
-PsiReferenceExpression:myField : double
-
-Conversions:
-p -> $
-
-New expression type changes:
-Fails:

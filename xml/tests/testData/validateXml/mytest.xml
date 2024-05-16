@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<MyrootTest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xmlns="http://www.mynamespace.it/my"
-            xsi:schemaLocation="http://www.mynamespace.it/my mytests.xsd">
-    <MyTag Type="11"  Version="1.000" > Content</MyTag>
-</MyrootTest>

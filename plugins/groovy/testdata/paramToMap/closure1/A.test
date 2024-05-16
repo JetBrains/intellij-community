@@ -1,6 +1,0 @@
-def foo = { Map params, jjj ->
-  println params.iii
-}
-
-
-foo(a: 1, iii: "abc", "def")

@@ -1,1 +1,0 @@
-record Foo(int a, int<caret> b) {}

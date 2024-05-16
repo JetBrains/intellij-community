@@ -1,2 +1,0 @@
-class Clzz(object):
-    pass

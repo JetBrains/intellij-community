@@ -1,7 +1,0 @@
-fun test(direction: Direction) {
-    <spot>direction</spot>$key
-}
-
-enum class Direction {
-    NORTH, EAST, SOUTH, WEST
-}

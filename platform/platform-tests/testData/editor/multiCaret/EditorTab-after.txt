@@ -1,2 +1,0 @@
-so  <caret>me t    <caret>t
-    <caret>    <caret> text

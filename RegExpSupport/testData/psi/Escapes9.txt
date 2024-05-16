@@ -1,5 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\0>
-    RegExpBranchImpl: <\0>
-      RegExpCharImpl: <\0>
-        PsiElement(BAD_OCT_VALUE)('\0')

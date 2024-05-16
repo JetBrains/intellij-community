@@ -1,5 +1,0 @@
-// IS_APPLICABLE: true
-// WITH_STDLIB
-// SKIP_ERRORS_BEFORE
-// SKIP_ERRORS_AFTER
-val foo = '\"' + "foo"<caret>

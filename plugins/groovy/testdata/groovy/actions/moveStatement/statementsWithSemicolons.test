@@ -1,7 +1,0 @@
-println 'a';
-<caret>println 'b';
-println 'c';
------
-<caret>println 'b';
-println 'a';
-println 'c';

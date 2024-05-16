@@ -1,4 +1,0 @@
-[js.kt] Function call 7 d.component1()
-[js.kt] Value read 8 d.a
-[js1.kt] Function call 2 d.component1()
-[js1.kt] Value read 3 d.a

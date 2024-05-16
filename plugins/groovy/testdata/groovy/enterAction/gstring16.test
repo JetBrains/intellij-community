@@ -1,4 +1,0 @@
-"p\n<caret>reved $id medved"
------
-"p\n" +
-    "<caret>reved $id medved"

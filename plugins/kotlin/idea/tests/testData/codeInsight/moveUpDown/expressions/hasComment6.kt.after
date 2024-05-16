@@ -1,6 +1,0 @@
-// MOVE: down
-fun test() {
-    // comment2
-    <caret>val foo = 1
-    // comment3
-}

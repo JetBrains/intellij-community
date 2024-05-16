@@ -1,1 +1,0 @@
-<error descr="Unresolved reference 'Decimal'">Dec<caret>imal</error>

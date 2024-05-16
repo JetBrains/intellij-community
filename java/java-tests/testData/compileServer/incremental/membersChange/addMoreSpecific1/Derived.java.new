@@ -1,3 +1,0 @@
-class Derived extends Base{
-  void foo(String s) {}
-}

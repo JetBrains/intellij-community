@@ -1,4 +1,0 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
-
-sealed class Seal
-data object<caret> Foo : Seal()

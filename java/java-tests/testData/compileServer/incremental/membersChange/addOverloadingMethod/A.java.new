@@ -1,6 +1,0 @@
-public class A {
-    void f (String x) {
-    }
-    void f (Integer x) {
-    }
-}

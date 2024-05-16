@@ -1,3 +1,0 @@
-class MyClass() {
-    constructor(int: Int) : this()
-}

@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun test(map: Map<Int, String>?) {
-    if (map.isNullOrEmpty()) println(0) else println(map.size)
-}

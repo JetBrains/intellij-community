@@ -1,6 +1,0 @@
-{
-  "type": "AUTO_DETECT",
-  "mainFile": "RenameJavaClass.kt",
-  "newName": "NewName",
-  "enabledInK2": true
-}

@@ -1,7 +1,0 @@
-namespace x = "http://www.example.com"
-
-start = foo
-
-x:entity [ name="picture" systemId="picture.jpeg" notation="jpeg" ]
-
-foo = element foo { empty }

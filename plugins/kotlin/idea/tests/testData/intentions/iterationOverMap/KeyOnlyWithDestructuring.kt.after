@@ -1,7 +1,0 @@
-// WITH_STDLIB
-// AFTER-WARNING: Variable 'key' is never used
-
-fun foo(map: Map<Int, Int>) {
-    for ((key) in map) {
-    }
-}

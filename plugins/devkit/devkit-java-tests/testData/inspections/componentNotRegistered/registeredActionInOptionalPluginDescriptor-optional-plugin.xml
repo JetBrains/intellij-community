@@ -1,6 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action id="registeredAction" class="RegisteredAction"/>
-    <action id="registeredInnerAction" class="RegisteredAction.InnerAction"/>
-  </actions>
-</idea-plugin>

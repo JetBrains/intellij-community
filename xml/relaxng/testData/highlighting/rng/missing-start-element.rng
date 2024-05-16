@@ -1,6 +1,0 @@
-<<error>grammar</error> xmlns="http://relaxng.org/ns/structure/1.0" ns="urn:test:simple.rng">
-
-  <define name="foo">
-    <element name="foo"><empty /></element>
-  </define>
-</<error>grammar</error>>

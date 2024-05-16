@@ -1,3 +1,0 @@
-xs = [
-    # com<caret>ment
-]

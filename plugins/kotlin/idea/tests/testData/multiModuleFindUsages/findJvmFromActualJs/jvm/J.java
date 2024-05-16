@@ -1,1 +1,0 @@
-public class J implements OnlyInCommonInterface001 { }

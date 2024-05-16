@@ -1,3 +1,0 @@
-Function 'inner2' is already declared in function 'outer'
-Parameter 'y' is already declared in function 'inner1'
-Variable 'y' is already declared in function 'inner1'

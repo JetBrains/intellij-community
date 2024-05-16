@@ -1,1 +1,0 @@
-from smname import moduleZ

@@ -1,4 +1,0 @@
-<caret>some t<caret>ex<caret>t
-o<selection><caret>th</selection>er t<selection>ex<caret></selection>t
-<selection>an<caret>other</selection> line
-<caret>yet another line

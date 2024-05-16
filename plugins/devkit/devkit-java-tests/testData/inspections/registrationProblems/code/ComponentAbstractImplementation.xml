@@ -1,7 +1,0 @@
-<idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class>AbstractApplicationComponent</implementation-class>
-    </component>
-  </application-components>
-</idea-plugin>

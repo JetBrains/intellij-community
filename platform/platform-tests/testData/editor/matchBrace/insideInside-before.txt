@@ -1,1 +1,0 @@
-some text ( some other, ( brac<caret>ed text), another text) end text

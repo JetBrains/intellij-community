@@ -1,1 +1,0 @@
-fun foo(x: Int = foo()): Int = 0

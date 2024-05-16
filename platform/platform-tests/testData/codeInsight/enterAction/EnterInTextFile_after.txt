@@ -1,5 +1,0 @@
-text text text
-   text text text
-   <caret>
- text text
-text tetetetetet

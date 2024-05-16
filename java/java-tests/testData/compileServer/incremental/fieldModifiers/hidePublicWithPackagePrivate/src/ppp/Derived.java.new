@@ -1,5 +1,0 @@
-package ppp;
-
-public class Derived extends Base{
-  String x = "derived";
-}

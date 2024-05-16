@@ -1,1 +1,0 @@
-public interface ClassB1 {}

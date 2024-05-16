@@ -1,3 +1,0 @@
-[{*.kt, *.kts}]
-dotnet_naming_rule.my_rule.severity = warning
-dotnet_naming_rule.my_rule.<spot>symbols</spot> = <spot>value</spot>

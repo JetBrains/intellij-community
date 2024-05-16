@@ -1,4 +1,0 @@
-uno
-dos
-tres
-cuatro

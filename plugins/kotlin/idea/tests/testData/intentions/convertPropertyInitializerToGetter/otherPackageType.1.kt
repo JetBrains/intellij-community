@@ -1,7 +1,0 @@
-package foo
-
-class Foo
-
-class Bar {
-    fun foo() = Foo()
-}

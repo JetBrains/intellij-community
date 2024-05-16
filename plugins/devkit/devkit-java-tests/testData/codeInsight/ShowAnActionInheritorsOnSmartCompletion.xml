@@ -1,5 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action class="foo.<caret>"/>
-  </actions>
-</idea-plugin>

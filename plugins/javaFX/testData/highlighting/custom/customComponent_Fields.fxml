@@ -1,5 +1,0 @@
-<?import javafx.scene.layout.*?>
-<?import _CustomVBox?>
-<GridPane xmlns:fx="http://javafx.com/fxml" >
-  <_CustomVBox/>
-</GridPane>

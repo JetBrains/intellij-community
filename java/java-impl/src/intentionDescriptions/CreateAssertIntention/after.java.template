@@ -1,5 +1,0 @@
-public class X  extends TestCase{
-  void f(boolean x) {
-    assertTrue(x >3);
-  }
-}

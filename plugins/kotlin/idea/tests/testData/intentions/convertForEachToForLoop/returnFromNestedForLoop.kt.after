@@ -1,9 +1,0 @@
-// WITH_STDLIB
-fun test(itr: Iterable<String>) {
-    loop@ for (it in itr) {
-        for (c in it) {
-            if (c.code < 10) continue
-            if (c.code < 32) continue@loop
-        }
-    }
-}

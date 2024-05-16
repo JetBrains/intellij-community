@@ -1,2 +1,0 @@
-def g():
-    return None

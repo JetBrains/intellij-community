@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun test() {
-    val x = <caret>use("")
-}
-
-fun use(s: String) {}

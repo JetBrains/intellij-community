@@ -1,8 +1,0 @@
-
-public class D4 {
-  public String field;
-
-  public String method (Integer param) {
-    return param.toString();
-  }
-}

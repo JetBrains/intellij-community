@@ -1,5 +1,0 @@
-interface Service {
-  default void foo() {}
-  
-  default void bar() {}
-}

@@ -1,7 +1,0 @@
-// AFTER-WARNING: Parameter 'p' is never used
-class Owner {
-}
-
-fun Owner.<caret>f(p: () -> Unit): (Int) -> String {
-    return { it.toString() }
-}

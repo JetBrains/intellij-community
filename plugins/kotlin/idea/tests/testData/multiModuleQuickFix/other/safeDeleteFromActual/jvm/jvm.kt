@@ -1,7 +1,0 @@
-// "Safe delete 'foo'" "true"
-// TOOL: org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
-// IGNORE_K2
-
-actual class My {
-    actual fun <caret>foo() {}
-}

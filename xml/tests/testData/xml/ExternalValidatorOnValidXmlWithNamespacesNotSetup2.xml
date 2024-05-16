@@ -1,9 +1,0 @@
-<deployment xmlns:xxx="">
-    <service name="AuthService" provider="java:RPC">
-    <parameter name="className" value="com.td.atp.auth.ws.Authenticator"/>
-    <parameter name="allowedMethods" value="*"/>
-    </service>
-
-  <beanMapping qname="ns:AuthRequest" languageSpecificType="java:com.td.atp.auth.ws.AuthRequest"/>
-  <beanMapping qname="ns:AuthResponse" languageSpecificType="java:com.td.atp.auth.ws.AuthResponse"/>
-</deployment>

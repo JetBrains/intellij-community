@@ -1,7 +1,0 @@
-{
-  "properties": {
-    "smth": {
-      "$ref" : "https://myurl#/properties/base<caret>Enum"
-    }
-  }
-}

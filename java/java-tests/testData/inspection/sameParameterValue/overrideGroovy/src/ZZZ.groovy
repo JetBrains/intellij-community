@@ -1,5 +1,0 @@
-class ZZZ {
-  boolean ololo() {
-
-  }
-}

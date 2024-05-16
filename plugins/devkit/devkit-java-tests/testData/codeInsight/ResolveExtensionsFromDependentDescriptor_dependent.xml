@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <xxx.completion.contributor/>
-    <yyy.myExtension/>
-  </extensions>
-</idea-plugin>

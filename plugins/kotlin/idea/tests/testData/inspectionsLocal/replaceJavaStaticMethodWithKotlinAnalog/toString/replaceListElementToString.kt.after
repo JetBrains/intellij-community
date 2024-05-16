@@ -1,7 +1,0 @@
-// WITH_STDLIB
-
-fun foo() {
-    val list = arrayListOf<Int>()
-    list.add(5)
-    list[0].toString()
-}

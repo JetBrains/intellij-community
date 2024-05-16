@@ -1,8 +1,0 @@
-// GENERATOR: SINGLE_TEMPLATE
-object O {
-    val foo = 1
-    val bar = 2
-    override fun toString(): String {
-        return "O(foo=$foo, bar=$bar)"
-    }
-}

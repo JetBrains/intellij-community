@@ -1,3 +1,0 @@
-r7 Two remotes and empty url.insteadOf
-
-insteadOf=<nothing here> substitutes everything

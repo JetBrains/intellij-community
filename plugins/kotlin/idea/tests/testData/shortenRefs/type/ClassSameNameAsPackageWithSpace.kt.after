@@ -1,5 +1,0 @@
-import same.same
-
-//@formatter:off
-  fun f(s: same) {
-}

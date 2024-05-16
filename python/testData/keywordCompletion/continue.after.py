@@ -1,2 +1,0 @@
-for x in []:
-    continue

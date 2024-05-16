@@ -1,3 +1,0 @@
-import path
-
-path.foo()

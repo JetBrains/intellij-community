@@ -1,2 +1,0 @@
-[kotlinInterfaceNoImplThroughDelegate.0.kt] Function call 12 fun test(twdni: InterfaceWithDelegatedNoImpl) = twdni.foo()
-[kotlinInterfaceNoImplThroughDelegate.1.java] Unclassified 7 some.foo();

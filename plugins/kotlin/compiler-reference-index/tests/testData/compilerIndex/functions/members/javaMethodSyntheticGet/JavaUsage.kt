@@ -1,3 +1,0 @@
-fun javaUsage() {
-    Main().getSmth()
-}

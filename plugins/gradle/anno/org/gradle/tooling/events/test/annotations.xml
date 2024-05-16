@@ -1,5 +1,0 @@
-<root>
-    <item name='org.gradle.tooling.events.test.TestOutputDescriptor java.lang.String getMessage()'>
-      <annotation name='com.intellij.openapi.util.NlsSafe'/>
-    </item>
-</root>

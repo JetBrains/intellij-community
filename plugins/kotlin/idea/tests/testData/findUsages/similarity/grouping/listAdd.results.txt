@@ -1,9 +1,0 @@
-[{
-3|numbers.|add| (|"five"|),
-4|numbers.|add|(|"zero"|)}
-, {
-5|numbers.|add|(getStr())}
-, {
-6|numbers.|add|(getStr() + |"a"|),
-7|numbers.|add|(getStr() + |"b"|)}
-]

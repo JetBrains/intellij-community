@@ -1,9 +1,0 @@
-package test
-
-class A() {
-    constructor()
-}
-
-fun bar() {
-    println(A())
-}

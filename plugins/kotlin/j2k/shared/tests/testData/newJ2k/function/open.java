@@ -1,2 +1,0 @@
-//method
-String string() { return ""; }

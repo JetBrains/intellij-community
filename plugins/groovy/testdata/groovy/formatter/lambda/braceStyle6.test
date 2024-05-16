@@ -1,9 +1,0 @@
-<option>KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE=false</option>
-<option>LAMBDA_BRACE_STYLE=NEXT_LINE</option>
-<option>SPACE_AROUND_LAMBDA_ARROW=false</option>
-def l = ()->{print 2}
------
-def l = ()->
-{
-  print 2
-}

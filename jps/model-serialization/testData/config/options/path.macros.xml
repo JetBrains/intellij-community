@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<application>
-  <component name="PathMacrosImpl">
-    <macro name="MAVEN_REPOSITORY" value="/home/nik/.m2/repository" />
-  </component>
-</application>
-

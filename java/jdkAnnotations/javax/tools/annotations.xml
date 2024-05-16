@@ -1,5 +1,0 @@
-<root>
-  <item name='javax.tools.Diagnostic java.lang.String getMessage(java.util.Locale)'>
-    <annotation name='org.jetbrains.annotations.Nls'/>
-  </item>
-</root>

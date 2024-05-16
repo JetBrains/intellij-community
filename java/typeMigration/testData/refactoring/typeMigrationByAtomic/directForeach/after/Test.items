@@ -1,9 +1,0 @@
-Types:
-PsiField:lst : java.util.concurrent.atomic.AtomicReference<java.util.List<java.lang.String>>
-PsiReferenceExpression:lst : java.util.concurrent.atomic.AtomicReference<java.util.List<java.lang.String>>
-
-Conversions:
-lst -> $qualifier$.get() $qualifier$ lst
-
-New expression type changes:
-Fails:

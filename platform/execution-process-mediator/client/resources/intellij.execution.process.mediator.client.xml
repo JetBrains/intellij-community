@@ -1,8 +1,0 @@
-<idea-plugin package="com.intellij.execution.process.mediator.client">
-  <dependencies>
-    <module name="intellij.libraries.grpc"/>
-    <module name="intellij.libraries.grpc.netty.shaded"/>
-    <module name="intellij.execution.process.mediator.common"/>
-    <module name="intellij.execution.process.mediator.daemon"/> <!-- for launcher and in-process server -->
-  </dependencies>
-</idea-plugin>

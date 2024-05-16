@@ -1,3 +1,0 @@
-class Clazz<error descr="Python version 3.11 does not support this syntax" textAttributesKey="ERRORS_ATTRIBUTES"><warning descr="Python versions 2.7, 3.7, 3.8, 3.9, 3.10, 3.11 do not support this syntax" textAttributesKey="WARNING_ATTRIBUTES">[T]</warning></error>:
-    def foo<error descr="Python version 3.11 does not support this syntax" textAttributesKey="ERRORS_ATTRIBUTES"><warning descr="Python versions 2.7, 3.7, 3.8, 3.9, 3.10, 3.11 do not support this syntax" textAttributesKey="WARNING_ATTRIBUTES">[U]</warning></error>(self):
-        pass

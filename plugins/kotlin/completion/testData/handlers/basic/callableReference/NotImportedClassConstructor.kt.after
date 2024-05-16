@@ -1,6 +1,0 @@
-import dependency.ClassConstructor
-
-fun test() = ::ClassConstructor<caret>
-
-// IGNORE_K1
-// ELEMENT: ClassConstructor

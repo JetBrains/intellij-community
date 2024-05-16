@@ -1,8 +1,0 @@
-s = f'{ {} }'
-s1 = f'{ {1} }'
-s2 = f'{ {1: 2} }'
-s3 = f'{ {x for x in "foo"} }'
-s4 = f'{ {x: 42 for x in "foo"} }'
-s5 = f'{ {1} + {2} }'
-s6 = f'{ {1} if True else {2} }'
-s7 = f'{ {1}.intersection({2})}'

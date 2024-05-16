@@ -1,7 +1,0 @@
-<a:root xmlns:a="http://test/a"
-      xmlns:b="http://test/b"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://test/b schema-b.xsd">
-
-    <b:instance id=""/>
-</a:root>

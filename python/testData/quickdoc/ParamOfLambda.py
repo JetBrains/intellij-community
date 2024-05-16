@@ -1,1 +1,0 @@
-func = lambda pa<the_ref>ram: 42

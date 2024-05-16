@@ -1,3 +1,0 @@
-[withInvoke.1.kt] Companion object 2 Foos()
-[withInvoke.2.kt] Companion object 2 Foos.invoke()
-[withInvoke.3.java] Unclassified 3 Foos.Companion.invoke();

@@ -1,7 +1,0 @@
-test.java.file
-  TEMPLATE_EXPRESSION
-    TEMPLATE
-      STRING_TEMPLATE_BEGIN
-      EMPTY_EXPRESSION
-        <empty list>
-      STRING_TEMPLATE_END

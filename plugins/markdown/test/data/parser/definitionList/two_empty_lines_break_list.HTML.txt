@@ -1,5 +1,0 @@
-HtmlFile:two_empty_lines_break_list.md
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      <empty list>
-  PsiElement(MARKDOWN_OUTER_BLOCK)('term\n\n\n: definition')

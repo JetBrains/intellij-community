@@ -1,4 +1,0 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = s) -> Kotlin_Light_Variable: s
-    UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null

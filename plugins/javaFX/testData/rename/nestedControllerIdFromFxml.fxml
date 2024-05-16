@@ -1,5 +1,0 @@
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.control.Button?>
-<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="NestedControllerIdFromFxml">
-  <fx:include fx:id="int<caret>ernal" source="nestedControllerIdFromFxmlInternal.fxml"/>
-</VBox>

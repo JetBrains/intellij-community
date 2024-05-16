@@ -1,7 +1,0 @@
-<grammar xmlns="http://relaxng.org/ns/structure/1.0">
-  <start>
-    <ref name="<caret>start.element" />
-  </start>
-
-  <define name="start.element" />
-</grammar>

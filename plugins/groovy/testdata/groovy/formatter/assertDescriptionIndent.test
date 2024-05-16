@@ -1,5 +1,0 @@
-assert true,
-'descr'
------
-assert true,
-    'descr'

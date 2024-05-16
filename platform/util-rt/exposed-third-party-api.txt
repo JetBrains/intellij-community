@@ -1,2 +1,0 @@
-javax/naming/Context
-javax/naming/spi/InitialContextFactory

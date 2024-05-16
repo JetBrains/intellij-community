@@ -1,6 +1,0 @@
-public class TypePattern {
-    public static fun foo(x: java.lang.Number) : int {
-        if (x is java.lang.Integer y) {
-        }
-    }
-}

@@ -1,9 +1,0 @@
-// AFTER-WARNING: Parameter 'a' is never used
-fun <T> doSomething(a: T) {}
-
-fun foo() {
-    if (true)
-        //        val a = 1
-//        var b = 1
-        doSomething("test")
-}

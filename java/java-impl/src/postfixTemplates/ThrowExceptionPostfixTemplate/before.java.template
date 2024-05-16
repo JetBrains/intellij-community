@@ -1,5 +1,0 @@
-public class Foo {
-    void m() {
-        <spot>new RuntimeException("error")</spot>$key
-    }
-}

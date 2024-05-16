@@ -1,7 +1,0 @@
-// EXPECT_VARIANT_IN_ORDER "class package2.MyAnno"
-// EXPECT_VARIANT_IN_ORDER "public typealias MyAnno = package2.MyAnno defined in package1 in file TypeAlias.dependency1.kt"
-package root
-
-@MyAnno<caret>
-fun foo() {
-}

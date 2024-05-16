@@ -1,4 +1,0 @@
-fun test() {
-    val i = 1<caret>
-    i
-}

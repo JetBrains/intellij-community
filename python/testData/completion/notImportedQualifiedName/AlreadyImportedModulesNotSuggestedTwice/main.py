@@ -1,3 +1,0 @@
-import foo
-
-fo<caret>

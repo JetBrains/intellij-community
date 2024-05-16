@@ -1,9 +1,0 @@
-<root>
-    <item name='com.esotericsoftware.kryo.Kryo T readObjectOrNull(com.esotericsoftware.kryo.io.Input, java.lang.Class&lt;T&gt;)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-  <item
-    name='com.esotericsoftware.kryo.Kryo T readObjectOrNull(com.esotericsoftware.kryo.io.Input, java.lang.Class&lt;T&gt;, com.esotericsoftware.kryo.Serializer)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-</root>

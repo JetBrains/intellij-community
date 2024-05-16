@@ -1,5 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\0123>
-    RegExpBranchImpl: <\0123>
-      RegExpCharImpl: <\0123>
-        PsiElement(OCT_CHAR)('\0123')

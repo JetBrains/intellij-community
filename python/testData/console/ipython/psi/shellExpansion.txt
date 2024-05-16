@@ -1,3 +1,0 @@
-PyFile:shellExpansion.py
-  PyEmptyExpression
-    PsiElement(Py:SHELL_COMMAND)('!mv $file {file.upper()}')

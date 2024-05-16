@@ -1,9 +1,0 @@
-// WITH_STDLIB
-fun test() {
-    use("")
-    foo()
-}
-
-fun use(s: String) {}
-
-fun foo() {}

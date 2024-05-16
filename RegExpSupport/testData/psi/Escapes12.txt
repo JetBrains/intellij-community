@@ -1,5 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\x{2011F}>
-    RegExpBranchImpl: <\x{2011F}>
-      RegExpCharImpl: <\x{2011F}>
-        PsiElement(HEX_CHAR)('\x{2011F}')

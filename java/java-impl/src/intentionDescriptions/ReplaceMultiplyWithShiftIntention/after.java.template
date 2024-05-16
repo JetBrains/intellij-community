@@ -1,5 +1,0 @@
-public class X {
-  void f(int a) {
-    a = a << 5;
-  }
-}

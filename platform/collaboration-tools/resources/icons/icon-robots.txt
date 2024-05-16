@@ -1,2 +1,0 @@
-deprecated: review/branch.svg; use DvcsImplIcons.BranchLabel instead
-deprecated: fileUnread.svg; use CollaborationToolsIcons.Review.FileUnread instead

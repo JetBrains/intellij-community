@@ -1,4 +1,0 @@
-some <selection><caret>tE</selection>xt
-other <selection><caret>li</selection>ne<selection><caret>
-</selection>yet <selection><caret>another </selection>line
-some <selection><caret>othe</selection>r text

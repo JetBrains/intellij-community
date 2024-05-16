@@ -1,1 +1,0 @@
-from one.two.t<caret>hree import foo

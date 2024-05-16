@@ -1,7 +1,0 @@
-// IS_APPLICABLE: true
-
-fun <T> foo() {
-    bar<(T) -> T & Any>({ i: T -> i!! })
-}
-
-fun <T> bar(t: T) = t!!

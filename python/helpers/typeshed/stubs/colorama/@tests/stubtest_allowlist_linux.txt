@@ -1,7 +1,0 @@
-# These are only available on Windows:
-colorama.winterm.WinColor
-colorama.winterm.WinStyle
-colorama.winterm.WinTerm
-
-# A re-export that's an implementation detail:
-colorama.winterm.get_osfhandle

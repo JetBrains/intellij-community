@@ -1,1 +1,0 @@
-def x = <warning descr="Cannot resolve symbol 'abc'">abc</warning> + 2

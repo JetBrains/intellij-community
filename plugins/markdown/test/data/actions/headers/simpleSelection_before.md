@@ -1,1 +1,0 @@
-# An <selection>h1<caret></selection> header

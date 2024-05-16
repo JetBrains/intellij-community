@@ -1,2 +1,0 @@
-import pkg.second
-#          <ref>

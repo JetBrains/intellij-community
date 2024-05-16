@@ -1,2 +1,0 @@
-fun notTypeAliasUsage(m: MyAlias) {
-}

@@ -1,5 +1,0 @@
-if (a || <spot>b && c</spot>) {
-  x = 1;
-} else {
-  x = 2;
-}

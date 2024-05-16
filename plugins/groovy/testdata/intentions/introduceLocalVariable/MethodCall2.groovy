@@ -1,1 +1,0 @@
-'fuga'.length()

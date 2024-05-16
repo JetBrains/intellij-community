@@ -1,1 +1,0 @@
-assert isinstance(s, basestring), isinstance(x, int)

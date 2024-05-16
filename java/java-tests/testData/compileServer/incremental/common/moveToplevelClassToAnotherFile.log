@@ -1,9 +1,0 @@
-Cleaning output files:
-out/production/MoveToplevelClassToAnotherFile/pkg/A.class
-out/production/MoveToplevelClassToAnotherFile/pkg/B.class
-out/production/MoveToplevelClassToAnotherFile/pkg/Local.class
-End of files
-Compiling files:
-src/pkg/A.java
-src/pkg/B.java
-End of files

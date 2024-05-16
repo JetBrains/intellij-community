@@ -1,2 +1,0 @@
-class <caret>lowercase:
-    pass

@@ -1,9 +1,0 @@
-PsiJavaFile:TypeParams2.java
-  PsiTypeParameterList
-    PsiJavaToken:LT('<')
-    PsiTypeParameter:T
-      PsiIdentifier:T('T')
-      PsiReferenceList
-        <empty list>
-    PsiErrorElement:'>' expected.
-      <empty list>

@@ -1,3 +1,0 @@
-- item
-  > inner blockquote
-  > 

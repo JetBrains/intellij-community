@@ -1,3 +1,0 @@
-object Foo : java.io.Serializable {
-    private fun readResolve(): Any = Foo
-}

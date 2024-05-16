@@ -1,3 +1,0 @@
-// INSPECTION_CLASS: org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
-// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
-// WITH_STDLIB

@@ -1,3 +1,0 @@
-fun Main.test1234() {
-    this.plus("3")
-}

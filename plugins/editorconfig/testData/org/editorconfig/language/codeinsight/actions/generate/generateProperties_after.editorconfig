@@ -1,7 +1,0 @@
-[*]
-ij_editorconfig_align_group_field_declarations = false
-ij_editorconfig_space_after_colon = false
-ij_editorconfig_space_after_comma = true
-ij_editorconfig_space_before_colon = false
-ij_editorconfig_space_before_comma = false
-ij_editorconfig_spaces_around_assignment_operators = true

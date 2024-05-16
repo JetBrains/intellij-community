@@ -1,7 +1,0 @@
-fun foo(): Int? {
-    return null
-}
-
-fun test(): String {
-    return "is Int: " + (foo() is Int)
-}

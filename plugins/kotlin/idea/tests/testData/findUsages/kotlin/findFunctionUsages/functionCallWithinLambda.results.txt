@@ -1,3 +1,0 @@
-Function call (gg) 10 print45("")
-Function call (gg) 7 print45("")
-Function call (gg) 9 print45("")

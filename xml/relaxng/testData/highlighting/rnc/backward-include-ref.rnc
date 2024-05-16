@@ -1,3 +1,0 @@
-default namespace = "backward-include-def.rng"
-
-foo |= element bar { backward }

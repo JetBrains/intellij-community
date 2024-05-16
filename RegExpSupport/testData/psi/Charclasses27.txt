@@ -1,9 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <a[>
-    RegExpBranchImpl: <a[>
-      RegExpCharImpl: <a>
-        PsiElement(CHARACTER)('a')
-      RegExpClassImpl: <[>
-        PsiElement(CLASS_BEGIN)('[')
-        PsiErrorElement:Unclosed character class
-          <empty list>

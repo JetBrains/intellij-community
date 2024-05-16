@@ -1,6 +1,0 @@
-switch (k) {
-  case 1: 2
-}
-
-class <caret> A{}
------

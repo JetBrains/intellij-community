@@ -1,1 +1,0 @@
-public abstract class ImplementedAtRuntimeDomElementImpl implements com.intellij.util.xml.DomElement {}

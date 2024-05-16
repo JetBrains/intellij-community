@@ -1,8 +1,0 @@
-[target.'cfg(all(target_os = "windows", target_env = "msvc"))']
-rustflags = ["-C", "target-feature=+crt-static", "-l", "legacy_stdio_definitions"]
-
-[target.'cfg(all(target_os = "macos", target_arch = "aarch64"))']
-rustflags = ["-C", "link-arg=-mmacosx-version-min=11.0"]
-
-[target.'cfg(all(target_os = "macos", target_arch = "x86_64"))']
-rustflags = ["-C", "link-arg=-mmacosx-version-min=10.15"]

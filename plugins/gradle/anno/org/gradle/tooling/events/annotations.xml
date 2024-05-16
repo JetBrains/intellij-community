@@ -1,8 +1,0 @@
-<root>
-  <item name='org.gradle.tooling.events.OperationDescriptor java.lang.String getDisplayName()'>
-    <annotation name='com.intellij.openapi.util.NlsSafe'/>
-  </item>
-  <item name='org.gradle.tooling.events.OperationDescriptor java.lang.String getName()'>
-    <annotation name='com.intellij.openapi.util.NlsSafe'/>
-  </item>
-</root>

@@ -1,5 +1,0 @@
-<root xmlns:xi="http://www.w3.org/2001/XInclude">
-  <before/>
-  <xi:include href="include1.xml"/>
-  <after/>
-</root>

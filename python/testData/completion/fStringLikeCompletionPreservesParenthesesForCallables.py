@@ -1,1 +1,0 @@
-s = 'foo{oct<caret>'

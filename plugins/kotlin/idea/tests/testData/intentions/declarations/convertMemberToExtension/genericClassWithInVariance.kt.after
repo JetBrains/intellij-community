@@ -1,5 +1,0 @@
-// AFTER-WARNING: Parameter 'x' is never used
-class Foo<in T> {
-}
-
-fun <T> Foo<T>.bar(x: T) {}

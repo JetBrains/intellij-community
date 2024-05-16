@@ -1,1 +1,0 @@
-public class My<caret>Action extends com.intellij.openapi.actionSystem.AnAction {}

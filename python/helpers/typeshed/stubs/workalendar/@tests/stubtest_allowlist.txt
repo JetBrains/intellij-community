@@ -1,5 +1,0 @@
-workalendar.core.CoreCalendar.name
-workalendar.europe.scotland.mixins.VictoriaDayTuesdayAfterFirstMondayMay
-workalendar.skyfield_astronomy
-workalendar.tests
-workalendar.core.classproperty

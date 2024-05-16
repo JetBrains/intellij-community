@@ -1,1 +1,0 @@
-com/intellij/tools/apiDump/testData/inheritFromPackageLocal/JPackageLocalClass

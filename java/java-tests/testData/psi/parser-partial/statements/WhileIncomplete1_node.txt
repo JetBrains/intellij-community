@@ -1,7 +1,0 @@
-test.java.file
-  WHILE_STATEMENT
-    WHILE_KEYWORD
-    WHITE_SPACE
-    LPARENTH
-    ERROR_ELEMENT
-      <empty list>

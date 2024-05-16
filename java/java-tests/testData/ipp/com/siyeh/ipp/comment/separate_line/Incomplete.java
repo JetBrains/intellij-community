@@ -1,1 +1,0 @@
-class X { } /* glycemic index <caret>

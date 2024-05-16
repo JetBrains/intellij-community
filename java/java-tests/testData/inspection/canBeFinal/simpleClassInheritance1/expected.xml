@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Foo.java</file>
-    <line>1</line>
-    <description>Declaration can have final modifier</description>
-  </problem>
-</problems>
-

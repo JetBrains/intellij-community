@@ -1,5 +1,0 @@
-<node text="foo() (hierarchy.call.Static.MultipleCallsInOneMethod.main)" base="true">
-  <node text="bar() (2 usages) (hierarchy.call.Static.MultipleCallsInOneMethod.main)">
-    <node text="baz() (3 usages) (hierarchy.call.Static.MultipleCallsInOneMethod.main)"/>
-  </node>
-</node>

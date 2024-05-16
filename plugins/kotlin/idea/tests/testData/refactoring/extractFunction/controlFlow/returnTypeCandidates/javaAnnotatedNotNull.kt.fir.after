@@ -1,7 +1,0 @@
-// WITH_STDLIB
-// SUGGESTED_NAMES: s, getS
-fun test() {
-    val s = string()
-}
-
-private fun string(): String = J.notNull()

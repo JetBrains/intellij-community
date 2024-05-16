@@ -1,6 +1,0 @@
-<project name="testProject" default="test">
-  <input addproperty="p1"/>
-  <target name="test">
-    <echo message="${<ren>p1}"/>
-  </target>
-</project>

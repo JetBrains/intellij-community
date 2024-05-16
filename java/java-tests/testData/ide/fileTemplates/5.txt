@@ -1,7 +1,0 @@
-#parse("include1.inc.txt")
-package ${PACKAGE_NAME};
-public class ${Name} {
-  // What a wonderful world!
-  // $Author
-  // ${my.name}
-}

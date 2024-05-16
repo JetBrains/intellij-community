@@ -1,5 +1,0 @@
-top:
-  first: value1
-  next:
-    subKey:<caret>
-    hello: world

@@ -1,1 +1,0 @@
-fun square(arg: Int)/*<# :Int #>*/  = arg * arg

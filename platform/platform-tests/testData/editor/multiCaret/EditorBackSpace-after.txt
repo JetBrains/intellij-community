@@ -1,3 +1,0 @@
-<caret>some t<caret>e<caret>xt
-<caret>ot<caret> t<caret>
-another <caret>

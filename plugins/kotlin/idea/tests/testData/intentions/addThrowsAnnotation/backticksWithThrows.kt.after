@@ -1,8 +1,0 @@
-// WITH_STDLIB
-class `My$Exception` : Exception()
-class `My$Exception2` : Exception()
-
-@Throws(`My$Exception`::class, `My$Exception2`::class)
-fun test() {
-    throw `My$Exception2`()
-}

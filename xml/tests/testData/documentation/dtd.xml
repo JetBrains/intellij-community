@@ -1,5 +1,0 @@
-<!DOCTYPE foo [
-    <!--Foo-->
-    <!ELEMENT foo (#PCDATA)>
-    ]>
-<f<caret>oo />

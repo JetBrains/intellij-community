@@ -1,1 +1,0 @@
-New instance creation 13 open fun processRequest() = Foo()

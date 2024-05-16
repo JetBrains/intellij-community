@@ -1,7 +1,0 @@
-<status>
-  <target path=".">
-    <entry path="file1.txt">
-      <wc-status item="added" props="none" revision="UNDEFINED"/>
-    </entry>
-  </target>
-</status>

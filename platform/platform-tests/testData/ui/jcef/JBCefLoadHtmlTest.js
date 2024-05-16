@@ -1,1 +1,0 @@
-/* javascript is auto-generated */

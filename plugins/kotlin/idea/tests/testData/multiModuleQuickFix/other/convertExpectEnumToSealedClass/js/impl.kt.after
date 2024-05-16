@@ -1,5 +1,0 @@
-<caret>actual sealed class E {
-    actual data object A : E()
-    actual data object B : E()
-    actual data object C : E()
-}

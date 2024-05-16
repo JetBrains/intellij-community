@@ -1,6 +1,0 @@
-public class Foo {
-    void m(boolean x) {
-        <spot>x</spot>$key
-        return;
-    }
-}

@@ -1,5 +1,0 @@
-query {
-  metadata {
-    ...metadata
-  }
-}

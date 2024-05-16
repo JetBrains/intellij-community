@@ -1,8 +1,0 @@
-MODULE common { platform=[Native] }
-MODULE sharedLinux { platform=[Native (linux_x64), Native (linux_arm64)] }
-MODULE linuxX64 { platform=[Native (linux_x64)] }
-MODULE linuxArm64 { platform=[Native (linux_arm64)] }
-
-sharedLinux -> common { kind=DEPENDS_ON }
-linuxX64 -> sharedLinux, common { kind=DEPENDS_ON }
-linuxArm64 -> sharedLinux, common { kind=DEPENDS_ON }

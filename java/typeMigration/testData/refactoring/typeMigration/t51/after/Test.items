@@ -1,8 +1,0 @@
-Types:
-PsiField:f : java.lang.Object[]
-
-Conversions:
-"a" -> $
-
-New expression type changes:
-Fails:

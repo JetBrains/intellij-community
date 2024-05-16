@@ -1,7 +1,0 @@
-f'<error descr="A single '}' is not allowed inside f-strings">}</error>'
-f'{x}{y}<error descr="A single '}' is not allowed inside f-strings">}</error>'
-f'{x}}}<error descr="A single '}' is not allowed inside f-strings">}</error>'
-f'{x:{y}}<error descr="A single '}' is not allowed inside f-strings">}</error>'
-f'{x:{y}}}}'
-f'{"}":{"}"}}'
-f'\N{FOO BAR}'

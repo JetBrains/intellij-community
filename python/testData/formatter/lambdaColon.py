@@ -1,1 +1,0 @@
-lambda o:o.fullName()

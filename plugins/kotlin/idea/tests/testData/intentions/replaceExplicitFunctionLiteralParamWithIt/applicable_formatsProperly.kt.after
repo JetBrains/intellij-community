@@ -1,7 +1,0 @@
-// AFTER-WARNING: Parameter 'i' is never used
-fun foo(i: (Int) -> Unit) {}
-fun test() {
-    foo {
-        <caret>foo { x -> x % 2 == 0 }
-    }
-}

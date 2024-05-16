@@ -1,2 +1,0 @@
-- item
-  > inner blockquote<caret>

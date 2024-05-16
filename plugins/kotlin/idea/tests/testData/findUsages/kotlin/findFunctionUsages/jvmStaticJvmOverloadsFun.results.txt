@@ -1,2 +1,0 @@
-Unclassified 3 Foo.foo(2);
-Unclassified 4 Foo.foo();

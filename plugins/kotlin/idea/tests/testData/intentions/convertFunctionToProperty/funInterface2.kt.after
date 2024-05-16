@@ -1,6 +1,0 @@
-fun interface I {
-    fun foo(): Int
-
-    val bar: Int
-        get() = 42
-}

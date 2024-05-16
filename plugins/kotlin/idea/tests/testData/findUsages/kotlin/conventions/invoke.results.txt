@@ -1,4 +1,0 @@
-Function call 15 f().invoke(2)
-Implicit 'invoke' 16 f()(2)
-Implicit 'invoke' 19 v(1)
-Implicit 'invoke' 21 listOf(Obj)[0](1)

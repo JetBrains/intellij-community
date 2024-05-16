@@ -1,3 +1,0 @@
-<inspection_tool class="UsePropertyAccessSyntaxInspection" enabled="true" enabled_by_default="true">
-  <option name="reportNonTrivialAccessors" value="false"/>
-</inspection_tool>

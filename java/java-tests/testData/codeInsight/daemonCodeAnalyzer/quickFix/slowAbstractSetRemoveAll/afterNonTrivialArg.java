@@ -1,9 +1,0 @@
-// "Replace with '(flag ? removals1 : removals2).forEach(source::remove)'" "true-preview"
-
-import java.util.*;
-
-class Test {
-  void foo(Set<Integer> source, List<Integer> removals1, List<Integer> removals2, boolean flag) {
-    (flag ? removals1 : removals2).forEach(source::remove);
-  }
-}

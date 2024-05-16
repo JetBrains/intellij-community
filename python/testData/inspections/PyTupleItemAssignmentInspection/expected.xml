@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>test.py</file>
-    <line>2</line>
-    <description>Tuples don't support item assignment</description>
-  </problem>
-</problems>

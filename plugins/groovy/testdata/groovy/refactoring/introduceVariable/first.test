@@ -1,4 +1,0 @@
-return <begin>3<end>
------
-def preved = 3
-return preved<caret>

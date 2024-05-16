@@ -1,7 +1,0 @@
-class B {
-}
-class A extends B implements B {
-}
------
-class A extends B {
-}

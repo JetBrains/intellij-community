@@ -1,8 +1,0 @@
- <FEUAddMessages>
-      <feu:full-event-update xmlns:feu="http://www.dummy-temp-address">
-         <message-header>
-            <sender>abc</sender>
-             <sender><caret></sender>
-         </message-header>
-      </feu:full-event-update>
-   </FEUAddMessages>

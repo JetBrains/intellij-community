@@ -1,4 +1,0 @@
-top:
-  subtop:
-    someKey1: some value 1
-    <caret>someKey2: some value 1

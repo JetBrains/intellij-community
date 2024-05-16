@@ -1,2 +1,0 @@
-pattern:  /boo/{id}
-pattern:  /boo/[id]

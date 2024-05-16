@@ -1,5 +1,0 @@
-Iterator\nPsiLocalVariable:i
-OfList\nPsiLocalVariable:x
-OfList\nnew
-Set\nPsiLocalVariable:u
-Set\nPsiTypeCastExpression:(Set) i.get()

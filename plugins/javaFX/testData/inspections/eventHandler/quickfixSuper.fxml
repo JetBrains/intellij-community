@@ -1,5 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.GridPane?>
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="QuickfixSuper">
-  <Label onMouseClicked="#cl<caret>ick"/>
-</GridPane>

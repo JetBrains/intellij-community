@@ -1,7 +1,0 @@
-<profile version="1.0">
-  <option name="myName" value="Chained profile" />
-  <inspection_tool class="TodoComment" enabled="false" level="ERROR" enabled_by_default="true">
-    <scope name="file:Main.*" level="ERROR" enabled="true" />
-    <scope name="file:*.java" level="ERROR" enabled="false" />
-  </inspection_tool>
-</profile>

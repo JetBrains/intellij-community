@@ -1,4 +1,0 @@
-@Nullable
-prote<caret> String getDomainClassPackageName(PsiFile file) { if (!(file instanceof GroovyFile)) return null; return ((GroovyFile) file).getPackageName(); }
------
-protected

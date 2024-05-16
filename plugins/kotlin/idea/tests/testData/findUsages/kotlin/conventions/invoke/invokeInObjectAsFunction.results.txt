@@ -1,1 +1,0 @@
-Companion object 13 Foo()

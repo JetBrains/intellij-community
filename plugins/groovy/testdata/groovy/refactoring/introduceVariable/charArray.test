@@ -1,3 +1,0 @@
-<begin>"abc".toCharArray()<end>
------
-char[] preved = "abc".toCharArray()<caret>

@@ -1,2 +1,0 @@
-<fx:root type="GuessedRoot" fx:controller="FxIdGuessedOptionsController" fx:id="<caret>" xmlns:fx="http://javafx.com/fxml">
-</fx:root>

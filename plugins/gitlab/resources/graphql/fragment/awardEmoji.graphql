@@ -1,7 +1,0 @@
-fragment awardEmoji on AwardEmoji {
-  name
-  emoji
-  user {
-    ...user
-  }
-}

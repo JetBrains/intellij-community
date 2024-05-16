@@ -1,1 +1,0 @@
-java.util.List<java.lang.Integer>[] x = new java.util.List[]{new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1, 2)), new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(3))};

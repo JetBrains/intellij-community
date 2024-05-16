@@ -1,2 +1,0 @@
-<selection>    print "foo"
-</selection>

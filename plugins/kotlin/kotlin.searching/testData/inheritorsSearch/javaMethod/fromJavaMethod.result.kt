@@ -1,2 +1,0 @@
-SymbolLightSimpleMethod: foo
-SymbolLightSimpleMethod: foo

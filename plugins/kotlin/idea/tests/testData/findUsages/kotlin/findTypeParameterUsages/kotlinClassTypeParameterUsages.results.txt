@@ -1,8 +1,0 @@
-Class/object property type 10 val t: T = foo
-Extension receiver type 11 val T.d: Boolean get() = true
-Extension receiver type 5 fun T.bar() {}
-Function return types 12 fun bar(t: T): T = t
-Parameter type 12 fun bar(t: T): T = t
-Parameter type 3 open class A<T>(foo: T, list: List<T>) {
-Type constraint 14 fun <R: T> ff() {}
-Type parameter 3 open class A<T>(foo: T, list: List<T>) {

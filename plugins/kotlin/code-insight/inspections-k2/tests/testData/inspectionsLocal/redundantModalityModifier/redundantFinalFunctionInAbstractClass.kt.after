@@ -1,3 +1,0 @@
-abstract class Base {
-    fun foo() {}
-}

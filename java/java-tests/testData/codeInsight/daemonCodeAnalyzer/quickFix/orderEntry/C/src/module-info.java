@@ -1,3 +1,0 @@
-module c {
-  exports z;
-}

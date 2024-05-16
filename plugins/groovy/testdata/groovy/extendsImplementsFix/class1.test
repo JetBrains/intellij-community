@@ -1,8 +1,0 @@
-class A {}
-class B {}
-interface C {}
-class D extends A implements B, C {
-}
------
-class D extends A, B implements C {
-}

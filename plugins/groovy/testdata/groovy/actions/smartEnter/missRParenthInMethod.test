@@ -1,5 +1,0 @@
-def a (d<caret>
------
-def a(d) {
-    <caret>
-}

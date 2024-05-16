@@ -1,7 +1,0 @@
-Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from PsiJavaCodeReferenceElement:Runnable
-    Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from PsiJavaCodeReferenceElement:Runnable
-        variable -> USimpleNameReferenceExpression (identifier = variable) from PsiReferenceExpression:variable
-    run -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiMethodCallExpression:runnable.run()
-    run -> UQualifiedReferenceExpression from PsiReferenceExpression:runnable.run
-    runnable -> USimpleNameReferenceExpression (identifier = runnable) from PsiReferenceExpression:runnable
-    variable -> USimpleNameReferenceExpression (identifier = variable) from PsiReferenceExpression:variable

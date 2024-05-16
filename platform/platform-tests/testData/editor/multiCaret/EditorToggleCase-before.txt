@@ -1,2 +1,0 @@
-<caret>some t<caret>e<caret>xt
-<selection><caret>SOME</selection> <selection>oThEr<caret> t</selection>ext

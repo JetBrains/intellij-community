@@ -1,9 +1,0 @@
-fun checkEquals(expected: Int, actual: Int, message: String) {
-    if (expected != actual) {
-        println(message)
-    }
-}
-
-fun usage() {
-    <spot>checkEquals(24, <spot>actual = 42, message = "Consistency check failed"</spot>)
-}

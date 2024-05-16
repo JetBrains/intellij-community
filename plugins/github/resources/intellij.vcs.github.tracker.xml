@@ -1,8 +1,0 @@
-<idea-plugin package="org.jetbrains.plugins.github.tasks">
-  <dependencies>
-    <plugin id="com.intellij.tasks"/>
-  </dependencies>
-  <extensions defaultExtensionNs="com.intellij">
-    <tasks.repositoryType implementation="org.jetbrains.plugins.github.tasks.GithubRepositoryType"/>
-  </extensions>
-</idea-plugin>

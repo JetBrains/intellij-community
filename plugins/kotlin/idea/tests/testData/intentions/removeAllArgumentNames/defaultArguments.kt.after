@@ -1,5 +1,0 @@
-fun foo(a: Int, b: Int, c: Int = 3, d: Int) = a + b + c + d
-
-fun main() {
-    foo(1, 2, d = 4)
-}

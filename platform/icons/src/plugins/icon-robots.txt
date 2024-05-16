@@ -1,1 +1,0 @@
-forceSync: pluginLogo_40.png

@@ -1,5 +1,0 @@
-<selection>s<caret>oMe te</selection>xt
-other line<caret>
-yet ano<selection>ther<caret></selection> line
-Heavily<caret>HumpedWord
-Heavily<selection><caret>Hum</selection>p<selection><caret>e</selection>dWord

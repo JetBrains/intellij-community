@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun test(charArray: CharArray?, len: Int): String {
-    return buildString {
-        appendRange(charArray!!, 0, len)
-    }
-}

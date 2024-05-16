@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>X.java</file>
-    <line>5</line>
-    <package>p.pp</package>
-    <description>Undeclared test 'X'</description>
-  </problem>
-</problems>

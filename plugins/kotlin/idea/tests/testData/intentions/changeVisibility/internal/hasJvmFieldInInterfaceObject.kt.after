@@ -1,7 +1,0 @@
-// WITH_STDLIB
-interface KotlinInterface {
-    object O {
-        @JvmField
-        internal val bar = Any()
-    }
-}

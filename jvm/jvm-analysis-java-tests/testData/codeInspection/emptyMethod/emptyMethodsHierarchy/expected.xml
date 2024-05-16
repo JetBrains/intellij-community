@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
- <problem>
-   <file>Derived.java</file>
-   <line>16</line>
-   <description>Empty method overrides empty method</description>
- </problem>
-</problems>

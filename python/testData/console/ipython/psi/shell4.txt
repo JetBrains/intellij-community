@@ -1,3 +1,0 @@
-PyFile:shell4.py
-  PyEmptyExpression
-    PsiElement(Py:SHELL_COMMAND)('!!dir')

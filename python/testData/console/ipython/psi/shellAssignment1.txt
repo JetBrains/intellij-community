@@ -1,9 +1,0 @@
-PyFile:shellAssignment1.py
-  PyAssignmentStatement
-    PyTargetExpression: my_files
-      PsiElement(Py:IDENTIFIER)('my_files')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:EQ)('=')
-    PsiWhiteSpace(' ')
-    PyEmptyExpression
-      PsiElement(Py:SHELL_COMMAND)('!ls')

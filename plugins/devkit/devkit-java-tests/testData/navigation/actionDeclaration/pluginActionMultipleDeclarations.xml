@@ -1,8 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action class="MyAction" id="firstDeclaration" icon="AllIcons.Actions.AddFile"/>
-  </actions>
-  <actions>
-    <action class="MyAction" id="secondDeclaration"/>
-  </actions>
-</idea-plugin>

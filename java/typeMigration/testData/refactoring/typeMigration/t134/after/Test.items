@@ -1,9 +1,0 @@
-Types:
-PsiLocalVariable:i : java.lang.String
-PsiParameter:a : java.lang.String
-PsiReferenceExpression:a : java.lang.String
-
-Conversions:
-
-New expression type changes:
-Fails:

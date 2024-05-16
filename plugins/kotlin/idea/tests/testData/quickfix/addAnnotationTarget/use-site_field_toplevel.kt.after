@@ -1,8 +1,0 @@
-// "Add annotation target" "true"
-
-@Target(AnnotationTarget.FIELD)
-annotation class Ann
-
-@field:Ann
-var foo = ""
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix

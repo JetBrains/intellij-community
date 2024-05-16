@@ -1,1 +1,0 @@
-skip: pycharm-onboarding-gradient-background*

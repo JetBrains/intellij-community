@@ -1,5 +1,0 @@
-Resolved by Delegate()
-Searched references to Delegate
-Searched references to p in non-Java files
-Used plain search of Delegate.getValue(thisRef: Any?, property: KProperty<*>) in LocalSearchScope:
-    CLASS:Delegate

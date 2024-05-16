@@ -1,5 +1,0 @@
-HtmlFile:multiple_empty_lines_between_definitions.md
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      <empty list>
-  PsiElement(MARKDOWN_OUTER_BLOCK)('term\n: definition 1\n\n\n\n\n: definition 2\n\n\n: definition 3')

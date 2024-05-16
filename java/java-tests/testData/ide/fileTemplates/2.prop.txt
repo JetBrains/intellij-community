@@ -1,4 +1,0 @@
-NAME=MyClass
-DATE=31-Dec-2002
-USER=myakovlev
-PACKAGE_NAME=com.idea

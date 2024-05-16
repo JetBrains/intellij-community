@@ -1,3 +1,0 @@
-fragment workItemWidgetAssignees on WorkItemWidgetAssignees {
-  allowsMultipleAssignees
-}

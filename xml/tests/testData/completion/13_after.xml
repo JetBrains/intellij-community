@@ -1,7 +1,0 @@
-<!DOCTYPE a [
-<!ELEMENT a (#PCDATA)>
-<!ENTITY nbsp "!!!" >  
-]>
-<a>
-  &nbsp;<caret>
-</a>

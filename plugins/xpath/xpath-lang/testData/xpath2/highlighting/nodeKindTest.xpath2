@@ -1,6 +1,0 @@
-schema-element(x) |
-element() | element(*, xs:decimal) | element(x) |
-schema-attribute(y) |
-attribute() | attribute(x, xs:integer) | attribute(x) |
-document-node() | document-node(element(x)) | document-node(schema-element(x)) |
-processing-instruction() | processing-instruction('foo') | processing-instruction(abc)

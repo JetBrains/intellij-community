@@ -1,4 +1,0 @@
-some tE<selection>x<caret>t</selection>
-other l<caret>i<selection>ne<caret></selection>
-<caret>yet another<caret> <caret>line
-some ot<selection><caret>he</selection>r text

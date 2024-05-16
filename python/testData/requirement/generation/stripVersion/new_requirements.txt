@@ -1,5 +1,0 @@
-Django
-requests
-Jinja2
-pandas
-cookiecutter

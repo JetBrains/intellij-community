@@ -1,3 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/ActionXInclude_included.xml" xpointer="xpointer(/idea-plugin/*)"/>
-</idea-plugin>

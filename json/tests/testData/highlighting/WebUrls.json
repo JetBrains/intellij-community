@@ -1,6 +1,0 @@
-{
-  <info descr="Property key">"some"</info>: "<info>http://localhost</info>",
-  <info descr="Property key">"secure"</info>: "<info>https://localhost</info>",
-  <info descr="Property key">"not-url"</info>: "https  :// localhost",
-  <info descr="Property key">"https://key-not-checked"</info>: "value"
-}

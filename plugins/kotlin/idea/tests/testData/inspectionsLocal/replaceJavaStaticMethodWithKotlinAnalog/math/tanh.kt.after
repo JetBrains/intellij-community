@@ -1,7 +1,0 @@
-import kotlin.math.tanh
-
-// WITH_STDLIB
-// WITH_STDLIB
-fun test(x: Double) {
-    tanh(x)
-}

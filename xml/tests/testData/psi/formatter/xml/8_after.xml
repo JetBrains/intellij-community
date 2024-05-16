@@ -1,9 +1,0 @@
-<a attr1="1" attr2="2">some text
-    text
-    <b>another text
-        <c>blah-blah-blah</c>
-        yet another
-        <c></c>
-        text
-    </b>
-</a>

@@ -1,7 +1,0 @@
-package one.two.three
-
-class Test
-
-fun test() {
-    one.two.three.Test()
-}

@@ -1,8 +1,0 @@
-PsiJavaFile:TryIncomplete1.java
-  PsiTryStatement
-    PsiKeyword:try('try')
-    PsiCodeBlock
-      PsiJavaToken:LBRACE('{')
-      PsiJavaToken:RBRACE('}')
-    PsiErrorElement:'catch' or 'finally' expected
-      <empty list>

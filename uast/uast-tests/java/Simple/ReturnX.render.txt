@@ -1,6 +1,0 @@
-public class ReturnX {
-    public static fun foo() : int {
-        var x: int = 42
-        return x
-    }
-}

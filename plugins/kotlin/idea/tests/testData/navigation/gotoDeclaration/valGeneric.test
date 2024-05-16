@@ -1,9 +1,0 @@
-// FILE: before.kt
-fun <T> foo(t: T) {
-va<caret>r f = t
-}
-
-// FILE: after.kt
-fun <<caret>T> foo(t: T) {
-var f = t
-}

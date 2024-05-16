@@ -1,7 +1,0 @@
-// "Move to companion object" "true"
-class Test {
-    companion object {
-        const val foo = ""
-    }
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention

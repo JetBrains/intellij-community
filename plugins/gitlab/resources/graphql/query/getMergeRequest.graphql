@@ -1,7 +1,0 @@
-query($projectId: ID!, $mergeRequestId: String!) {
-  project(fullPath: $projectId) {
-    mergeRequest(iid: $mergeRequestId) {
-      ...mergeRequest
-    }
-  }
-}

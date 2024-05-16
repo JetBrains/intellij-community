@@ -1,1 +1,0 @@
-type MyType[T = list[T]

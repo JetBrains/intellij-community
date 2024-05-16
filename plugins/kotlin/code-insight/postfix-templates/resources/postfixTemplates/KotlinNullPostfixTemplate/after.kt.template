@@ -1,5 +1,0 @@
-fun test(value: Any?) {
-    if (value == null) {
-
-    }
-}

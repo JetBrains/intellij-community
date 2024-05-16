@@ -1,2 +1,0 @@
-# Type-checkers don't support architecture checks. So we have to Union
-paramiko.win_pageant.ULONG_PTR

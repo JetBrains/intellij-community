@@ -1,4 +1,0 @@
-<selection><layout class="org.apache.log4j.PatternLayout">
-  <!-- conversion pattern with 4 parts separated by #-#, second part is empty -->
-  <param name="ConversionPattern" value="[%t] %m#-##-#%d{dd.MM.yyyy}#-#%d{HH:mm:ss}" />
-</layout></selection>

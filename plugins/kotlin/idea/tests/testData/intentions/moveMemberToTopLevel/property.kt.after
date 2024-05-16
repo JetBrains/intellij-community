@@ -1,3 +1,0 @@
-// WITH_STDLIB
-
-val foo: Int = 1

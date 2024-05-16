@@ -1,3 +1,0 @@
-import re
-
-re.compile('[][]')

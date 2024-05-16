@@ -1,4 +1,0 @@
-java.lang.Integer\nPsiParameter:value
-java.util.ArrayList<java.lang.Integer>\nnew
-java.util.List<java.lang.Integer>\nPsiLocalVariable:l
-java.util.List<java.lang.Integer>\nparameter 0 of testForEach

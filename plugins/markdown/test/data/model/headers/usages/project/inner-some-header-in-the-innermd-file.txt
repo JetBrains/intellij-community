@@ -1,3 +1,0 @@
-11|[link to header in inner.md file](subdirectory/inner.md#|some-header-in-the-innermd-file|)
-13|* |[link to own header](#|some-header-in-the-innermd-file|)
-14|* |[link to own header](#|some-header-in-the-innermd-file|)

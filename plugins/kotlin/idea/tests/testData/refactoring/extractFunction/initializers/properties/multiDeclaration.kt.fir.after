@@ -1,8 +1,0 @@
-// SUGGESTED_NAMES: pair, intIntPair, intPair
-// WITH_STDLIB
-// SIBLING:
-fun foo() {
-    val (a, b) = pair()
-}
-
-private fun pair(): Pair<Int, Int> = 1 to 2

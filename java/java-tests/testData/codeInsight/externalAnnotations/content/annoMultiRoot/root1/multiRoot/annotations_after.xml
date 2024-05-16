@@ -1,7 +1,0 @@
-<root>
-    <item name='multiRoot.Test java.lang.String get(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'>
-            <val name="value" val="&quot;bar&quot;"/>
-        </annotation>
-    </item>
-</root>

@@ -1,5 +1,0 @@
-+
-  Template(div)
-  +
-    Template(p)
-    Template(bq)

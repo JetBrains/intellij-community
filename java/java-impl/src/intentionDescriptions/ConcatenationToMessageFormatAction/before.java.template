@@ -1,5 +1,0 @@
-public class X {
-  void f(int methods, int classes) {
-    System.out.println(<spot>"Executed " + methods + " methods in " +  classes + " classes"</spot>);
-  }
-}

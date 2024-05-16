@@ -1,5 +1,0 @@
-PsiJavaFile:ReturnIncomplete0.java
-  PsiReturnStatement
-    PsiKeyword:return('return')
-    PsiErrorElement:';' expected
-      <empty list>

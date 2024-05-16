@@ -1,5 +1,0 @@
-[foo]
-key=val<caret>ue
-hello=world
-# this is a comment
-bar=bas

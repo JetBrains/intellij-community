@@ -1,8 +1,0 @@
-// AFTER-WARNING: Parameter 't' is never used
-// AFTER-WARNING: Variable 'x' is never used
-
-fun foo() {
-    val x = bar<_>("x")
-}
-
-fun <T> bar(t: T): Int = 1

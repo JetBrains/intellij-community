@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg"
-     version="1.1" width="5cm" height="5cm" view<caret>Box="0 0 16 16">
-  <desc>Two groups, each of two rectangles</desc>
-  <g id="group1" fill="red" role="group" aria-label="label">
-    <rect x="1cm" y="1cm" width="1cm" height="1cm"/>
-    <rect x="3cm" y="1cm" width="1cm" height="1cm"/>
-  </g>
-
-</svg>

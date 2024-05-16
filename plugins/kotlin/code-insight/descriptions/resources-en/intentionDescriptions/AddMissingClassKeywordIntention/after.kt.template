@@ -1,3 +1,0 @@
-enum <spot>class</spot> Direction {
-    NORTH, EAST, SOUTH, WEST
-}

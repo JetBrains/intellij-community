@@ -1,4 +1,0 @@
-package dir;
-class a{
-
-}

@@ -1,7 +1,0 @@
-import static java.lang.Math.PI;
-
-class Computer {
-    void f() {
-        double pi = PI;
-    }
-}

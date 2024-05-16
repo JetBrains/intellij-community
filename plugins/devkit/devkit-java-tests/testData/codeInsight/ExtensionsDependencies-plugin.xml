@@ -1,9 +1,0 @@
-<idea-plugin>
-    <id>com.intellij.myPlugin.plugin.dependency</id>
-    <vendor>JetBrains</vendor>
-    <version>1.0</version>
-
-  <extensionPoints>
-    <extensionPoint name="fromPlugin"/>
-  </extensionPoints>
-</idea-plugin>

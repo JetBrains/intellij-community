@@ -1,9 +1,0 @@
-fragment workItem on WorkItem {
-  workItemType {
-    name
-  }
-  widgets {
-    __typename
-    ...workItemWidgetAssignees
-  }
-}

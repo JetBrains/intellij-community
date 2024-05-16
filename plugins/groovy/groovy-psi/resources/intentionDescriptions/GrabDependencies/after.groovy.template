@@ -1,6 +1,0 @@
-import org.apache.commons.collections.primitives.ArrayIntList
-
-@Grab(group='commons-primitives', module='commons-primitives', version='1.0')
-def createEmptyInts() { new ArrayIntList() }
-
-//<spot>Library downloaded!</spot>

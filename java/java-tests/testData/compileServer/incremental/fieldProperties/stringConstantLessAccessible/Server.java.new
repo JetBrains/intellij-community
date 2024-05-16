@@ -1,3 +1,0 @@
-class Server {
-  private static final String s = "StaticFinal";
-}

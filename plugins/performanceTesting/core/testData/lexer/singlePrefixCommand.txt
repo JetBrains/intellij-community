@@ -1,3 +1,0 @@
-PerformanceTestTokenType.COMMAND ('%openFile')
-WHITE_SPACE (' ')
-PerformanceTestTokenType.FILE_PATH ('typing_html_in_literal.php')

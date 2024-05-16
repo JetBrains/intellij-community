@@ -1,3 +1,0 @@
-class JavaD implements X {
-
-}

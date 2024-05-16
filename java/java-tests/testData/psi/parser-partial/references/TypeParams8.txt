@@ -1,8 +1,0 @@
-PsiJavaFile:TypeParams8.java
-  PsiTypeParameterList
-    PsiJavaToken:LT('<')
-    PsiErrorElement:Unexpected wildcard
-      PsiJavaToken:QUEST('?')
-      PsiReferenceList
-        <empty list>
-    PsiJavaToken:GT('>')

@@ -1,5 +1,0 @@
-+
-  Template(div{id=header})
-  +
-    Template(div{class=page})
-    Template(div{id=footer, class=class1 class2 class3})

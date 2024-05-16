@@ -1,8 +1,0 @@
-// WITH_STDLIB
-fun test(list: List<Int>?) {
-    if (list != null) {
-        for (<caret>it in list) {
-            println(it)
-        }
-    }
-}

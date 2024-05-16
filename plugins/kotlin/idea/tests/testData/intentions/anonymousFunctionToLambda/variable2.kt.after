@@ -1,7 +1,0 @@
-val test = block@{ i: Int, s: String ->
-    if (i == 42) return@block s
-
-    if (s == "test") "$s" else "$i"
-}
-
-inline fun a(block: () -> Unit) = block()

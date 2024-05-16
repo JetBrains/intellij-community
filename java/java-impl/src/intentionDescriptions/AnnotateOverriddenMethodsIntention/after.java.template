@@ -1,9 +1,0 @@
-public class X {
-  void f(@Nullable String s) {}
-}
-class Y extends X {
-  void f(@Nullable String s) {}
-}
-class Z extends Y {
-  void f(@Nullable String s) {}
-}

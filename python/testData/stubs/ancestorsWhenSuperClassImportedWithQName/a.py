@@ -1,2 +1,0 @@
-class A(object):
-  pass

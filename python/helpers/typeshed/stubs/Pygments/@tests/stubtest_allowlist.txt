@@ -1,9 +1,0 @@
-# Pygments uses mcs, pyright wants cls
-pygments.lexer.LexerMeta.__new__
-pygments.style.StyleMeta.__new__
-
-# Defined in lexer classes, intended to be used as static method, but doesn't use @staticmethod
-pygments.lexer.LexerMeta.analyse_text
-
-# Inheriting from tuple is weird
-pygments.token._TokenType.__init__

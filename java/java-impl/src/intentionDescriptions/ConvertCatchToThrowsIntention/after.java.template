@@ -1,7 +1,0 @@
-import java.io.*;
-
-public class X {
-  void f() throws IOException {
-    new FileInputStream("file.txt");
-  }
-}

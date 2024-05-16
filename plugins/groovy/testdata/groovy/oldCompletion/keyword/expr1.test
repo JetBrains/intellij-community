@@ -1,9 +1,0 @@
-return t<caret>
------
-byte
-float
-int
-short
-switch
-this
-true

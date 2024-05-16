@@ -1,4 +1,0 @@
-tuple = (
-    'value',
-    'value',
-    )

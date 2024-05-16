@@ -1,6 +1,0 @@
--Method.java
- -Method
-  Method()
-  [foo(): void]
-  num1: int
-  num2: int

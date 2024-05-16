@@ -1,3 +1,0 @@
-<project name="testProject" default="t-after">
-  <target name="t-after"/>
-</project>

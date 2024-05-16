@@ -1,4 +1,0 @@
-// AFTER-WARNING: Parameter 'y' is never used
-class Foo(val<caret> x: Int, y: Int) {
-
-}

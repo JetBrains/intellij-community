@@ -1,6 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <resource-bundle>MyBundle</resource-bundle>
-
-  <xi:include href="/META-INF/messageBundleViaIncluding.xml"/>
-
-</idea-plugin>

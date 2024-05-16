@@ -1,8 +1,0 @@
-Index: 1.txt
-===================================================================
-diff --git a/1.txt b/1.txt
---- a/1.txt	(revision before)
-+++ b/1.txt	(revision after)
-@@ -1,0 +1,2 @@
-+first
-+second

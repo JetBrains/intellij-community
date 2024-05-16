@@ -1,2 +1,0 @@
-# Not public API -- the submodule is an implementation detail due to it being a cythonized package
-editdistance.bycython

@@ -1,4 +1,0 @@
-fun baz(): Int {
-    /* baz */
-    return 42
-}

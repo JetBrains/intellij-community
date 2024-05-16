@@ -1,9 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<GridPane xmlns:fx="http://javafx.com/fxml" >
-  <HBox>
-    <Label fx:id="myLabel" text="add user" style="-fx-background-color: aquamarine"/>
-  </HBox>
-  <fx:reference source="myLabel" GridPane.rowIndex="3" />
-</GridPane>

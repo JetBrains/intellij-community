@@ -1,1 +1,0 @@
-"dfjlk$dh sdjfkl".stripInden<caret>

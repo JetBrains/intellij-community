@@ -1,5 +1,0 @@
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.VBox?>
-<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="HighlightGeneric">
-    <ListView fx:id="list" onEditStart="#onEditStart" onEditCancel="#onEditCancel" onEditCommit="#onEditCommit"/>
-</VBox>

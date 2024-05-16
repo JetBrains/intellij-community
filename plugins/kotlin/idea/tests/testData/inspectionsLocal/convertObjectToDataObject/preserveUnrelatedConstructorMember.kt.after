@@ -1,7 +1,0 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
-data object Foo {
-
-    init {
-        // some code
-    }
-}

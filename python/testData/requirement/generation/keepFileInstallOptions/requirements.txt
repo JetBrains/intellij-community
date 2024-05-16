@@ -1,4 +1,0 @@
---no-index
---find-links http://some.archives.com/archives
-requests
---no-binary

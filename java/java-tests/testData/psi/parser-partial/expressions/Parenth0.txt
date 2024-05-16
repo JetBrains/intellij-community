@@ -1,8 +1,0 @@
-PsiJavaFile:Parenth0.java
-  PsiParenthesizedExpression:(c)
-    PsiJavaToken:LPARENTH('(')
-    PsiReferenceExpression:c
-      PsiReferenceParameterList
-        <empty list>
-      PsiIdentifier:c('c')
-    PsiJavaToken:RPARENTH(')')

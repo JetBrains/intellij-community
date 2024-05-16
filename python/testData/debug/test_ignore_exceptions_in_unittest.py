@@ -1,3 +1,0 @@
-import unittest
-
-foo = 'bar'

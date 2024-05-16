@@ -1,3 +1,0 @@
-@interface Ann {
-    String foobar();
-}

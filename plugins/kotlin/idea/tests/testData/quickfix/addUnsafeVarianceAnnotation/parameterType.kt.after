@@ -1,5 +1,0 @@
-// "Add '@UnsafeVariance' annotation" "true"
-interface Foo<out E> {
-    fun bar(e: @UnsafeVariance E)
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix

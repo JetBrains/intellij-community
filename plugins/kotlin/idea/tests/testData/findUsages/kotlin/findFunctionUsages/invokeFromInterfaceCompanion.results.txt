@@ -1,2 +1,0 @@
-[invokeFromInterfaceCompanion.1.kt] Function call 2 Foo.invoke()
-[invokeFromInterfaceCompanion.2.kt] Implicit 'invoke' 2 Foo()

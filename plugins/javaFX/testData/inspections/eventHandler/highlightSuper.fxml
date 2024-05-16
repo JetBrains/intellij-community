@@ -1,9 +1,0 @@
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.HBox?>
-<HBox xmlns:fx="http://javafx.com/fxml" fx:controller="HighlightSuper">
-    <Label text=" SameArg " onMouseClicked="#onSameArg"/>
-    <Label text=" SuperArg " onMouseClicked="#onSuperArg"/>
-    <Label text=" NoArg " onMouseClicked="#onNoArg"/>
-    <Label text=" NotSuper " onMouseClicked=<warning descr="Incompatible event handler argument: javafx.scene.input.MouseDragEvent is not assignable from javafx.scene.input.MouseEvent">"#onNotSuper"</warning>/>
-    <Label text=" NotRelated " onMouseClicked=<warning descr="Incompatible event handler argument: javafx.scene.control.SortEvent is not assignable from javafx.scene.input.MouseEvent">"#onNotRelated"</warning>/>
-</HBox>

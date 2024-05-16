@@ -1,1 +1,0 @@
-from lib import foo

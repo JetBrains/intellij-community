@@ -1,1 +1,0 @@
-a = <warning descr="Format specifier character missing">"% <caret>test %"</warning> % ("x", 1)

@@ -1,9 +1,0 @@
-// WITH_STDLIB
-fun test(foo: List<Int?>): List<Int> {
-    return foo
-        .asSequence()
-        .mapNotNull { it }
-        .flatMap { listOf(it, it) }
-        .distinct()
-        .toList()
-}

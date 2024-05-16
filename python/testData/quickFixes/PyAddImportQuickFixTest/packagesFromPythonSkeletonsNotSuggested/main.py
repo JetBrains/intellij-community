@@ -1,1 +1,0 @@
-<error descr="Unresolved reference 'django'">dj<caret>ango</error>.settings

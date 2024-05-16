@@ -1,5 +1,0 @@
-public final class Record {
-    private final var x: int
-    public fun x() : int = UastEmptyExpression
-    public fun Record(x: int) = UastEmptyExpression
-}

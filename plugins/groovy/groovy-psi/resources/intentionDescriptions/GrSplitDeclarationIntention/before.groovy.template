@@ -1,3 +1,0 @@
-if (something()) {
-  <spot>def a = 5</spot>
-}

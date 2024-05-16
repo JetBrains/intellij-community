@@ -1,3 +1,0 @@
-class Foo {
-  <spot>protected</spot> def foo() {}
-}

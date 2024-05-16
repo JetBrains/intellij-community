@@ -1,8 +1,0 @@
-// AFTER-WARNING: Variable 'a' is never used
-open class A<T>
-
-class F<T> : A<T>()
-
-fun test() {
-    val a = F<String>()
-}

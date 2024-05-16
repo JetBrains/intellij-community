@@ -1,3 +1,0 @@
-fun test() {
-    assert(true)
-}

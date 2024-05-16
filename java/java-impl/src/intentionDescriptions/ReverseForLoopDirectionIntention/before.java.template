@@ -1,6 +1,0 @@
-public class X {
-  void f(String[] as) {
-    <spot>for</spot> (int i = 0; i < as.length; i++) {
-    }
-  }
-}

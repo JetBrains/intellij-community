@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun test(array: Array<String>?) {
-    if (array.isNullOrEmpty()) println(0) else println(array.size)
-}

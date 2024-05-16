@@ -1,4 +1,0 @@
-// AFTER-WARNING: Variable 'j' is never used
-fun test() {
-    val j = Java(/* a = */ 1, /* b = */ 2, /* c = */ 3)
-}

@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <advancedSetting id="advancedSettingId" default="defaultValue"/>
-    <advancedSetting id="advancedSettingId2" default="defaultValue2"/>
-  </extensions>
-</idea-plugin>

@@ -1,1 +1,0 @@
-val foo: <caret>Int.() -> String = fun Int.() = ""

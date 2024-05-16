@@ -1,1 +1,0 @@
-some text <caret>( some other, ( braced text), another text) end text

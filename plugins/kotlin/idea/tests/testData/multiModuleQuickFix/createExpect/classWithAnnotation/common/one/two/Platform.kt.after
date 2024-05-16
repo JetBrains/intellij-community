@@ -1,4 +1,0 @@
-package one.two
-
-@CommonAnnotationClass
-expect class <selection><caret></selection>Platform

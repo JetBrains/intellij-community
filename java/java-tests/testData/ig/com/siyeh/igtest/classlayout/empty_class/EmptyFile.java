@@ -1,1 +1,0 @@
-<warning descr="Java file does not declare any class">// comment</warning>

@@ -1,9 +1,0 @@
-<root>
-    <item name='org.gradle.api.artifacts.component.ComponentIdentifier java.lang.String getDisplayName()'>
-        <annotation name='org.jetbrains.annotations.NlsSafe'/>
-      <annotation name='com.intellij.openapi.util.NlsSafe'/>
-    </item>
-  <item name='org.gradle.api.artifacts.component.ComponentSelector java.lang.String getDisplayName()'>
-    <annotation name='com.intellij.openapi.util.NlsSafe'/>
-  </item>
-</root>

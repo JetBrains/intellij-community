@@ -1,9 +1,0 @@
-// IGNORE_BACKEND: JVM_IR_WITH_OLD_EVALUATOR
-LineBreakpoint created at valContextReceiver.kt:16
-Run Java
-Connected to the target VM
-valContextReceiver.kt:16
-Compile bytecode for clazz.someVal
-Disconnected from the target VM
-
-Process finished with exit code 0

@@ -1,1 +1,0 @@
-JavaClass: PsiClass:A

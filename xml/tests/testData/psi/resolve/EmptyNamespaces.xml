@@ -1,6 +1,0 @@
-<asd:project default="">
-  <<ref>property name="user.name" value="DUMMY NEVER USED"/>
-  <condition property="cvs.username" value="gthb">
-
-  </condition>
-</asd:project>

@@ -1,7 +1,0 @@
-@Retention(AnnotationRetention.SOURCE)
-@Target(AnnotationTarget.EXPRESSION)
-annotation class Foo
-
-fun test(): String {
-    return (@Foo 1).toString() + "a"
-}

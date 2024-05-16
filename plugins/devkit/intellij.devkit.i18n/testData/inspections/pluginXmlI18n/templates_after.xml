@@ -1,6 +1,0 @@
-<templateSet>
-  <template name="name"
-            value="template"
-            <caret>key="live.template.name.description" resource-bundle="messages.FooBundle">
-  </template>
-</templateSet>

@@ -1,8 +1,0 @@
-l:<all>123<end>
-
-print 123
------
-l:
-def preved = 123
-
-print preved

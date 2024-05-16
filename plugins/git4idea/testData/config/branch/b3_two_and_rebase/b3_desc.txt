@@ -1,2 +1,0 @@
-b3 Two different branches
-Two valid branches with 2 remotes. One merge, second rebase.

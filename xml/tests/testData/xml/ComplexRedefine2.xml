@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<graphml xmlns="http://graphml.graphdrawing.org/xmlns/graphml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml http://www.yworks.com/xml/schema/graphml/1.0/ygraphml.xsd">
-<key id="d0" for="node" yfiles.type="nodegraphics"/>
-<key id="d1" for="edge" yfiles.type="edgegraphics"/>
-<graph id="G" edgedefault="directed">
-</graph>
-</graphml>

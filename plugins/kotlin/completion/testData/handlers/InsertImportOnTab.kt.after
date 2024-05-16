@@ -1,7 +1,0 @@
-import java.util.ArrayList
-
-val s = ArrayList()
-
-// IGNORE_K2
-// ELEMENT: ArrayList
-// TAIL_TEXT: "<E> (java.util)"

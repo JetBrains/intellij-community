@@ -1,7 +1,0 @@
-do
------
-Groovy script
-  do-while statement
-    PsiElement(do)('do')
-    PsiErrorElement:<statement> expected
-      <empty list>

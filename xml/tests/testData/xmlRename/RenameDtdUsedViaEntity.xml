@@ -1,6 +1,0 @@
-<!DOCTYPE tag [
-   <!ENTITY our SYSTEM "RenameDtdUsedViaEntity.dtd">
-   %our;
-]>
-<tag id="1">
-</tag>

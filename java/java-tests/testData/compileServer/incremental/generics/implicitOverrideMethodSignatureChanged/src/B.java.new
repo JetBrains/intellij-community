@@ -1,4 +1,0 @@
-public class B {
-    // After the change, this method does not implicitly implement A.f() in class BA
-    public void f(C<Integer> c) {}
-}

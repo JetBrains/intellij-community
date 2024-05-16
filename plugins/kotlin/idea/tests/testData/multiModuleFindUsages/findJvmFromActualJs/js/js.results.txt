@@ -1,2 +1,0 @@
-[J.java] Usage in extends/implements clause 1 public class J implements OnlyInCommonInterface001 { }
-[jvm.kt] Supertype 3 interface ChildInterface : OnlyInCommonInterface001

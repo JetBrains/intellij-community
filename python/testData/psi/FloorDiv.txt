@@ -1,9 +1,0 @@
-PyFile:FloorDiv.py
-  PyAugAssignmentStatement
-    PyReferenceExpression: a
-      PsiElement(Py:IDENTIFIER)('a')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:FLOORDIVEQ)('//=')
-    PsiWhiteSpace(' ')
-    PyNumericLiteralExpression
-      PsiElement(Py:INTEGER_LITERAL)('2')

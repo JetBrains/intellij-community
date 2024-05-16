@@ -1,4 +1,0 @@
-def a = "s ${wsd}<caret>
------
-def a = "s ${wsd}"
-<caret>

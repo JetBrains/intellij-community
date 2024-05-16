@@ -1,2 +1,0 @@
-class Derived extends Base{
-}

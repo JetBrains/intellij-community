@@ -1,8 +1,0 @@
-{
-  "type": "KOTLIN_FUNCTION",
-  "classId": "/Foo",
-  "oldName": "get",
-  "newName": "invoke",
-  "mainFile": "main.kt",
-  "enabledInK2": true
-}

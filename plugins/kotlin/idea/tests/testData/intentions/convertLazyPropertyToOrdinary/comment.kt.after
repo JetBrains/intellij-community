@@ -1,5 +1,0 @@
-// WITH_STDLIB
-val x = run {
-    // comment
-    1
-}

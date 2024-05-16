@@ -1,6 +1,0 @@
-pluginManagement {
-    plugins {
-        id 'org.jetbrains.kotlin.jvm' version '1.7.0'
-    }
-}
-include ':app'

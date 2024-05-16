@@ -1,3 +1,0 @@
-class D implements X {
-
-}

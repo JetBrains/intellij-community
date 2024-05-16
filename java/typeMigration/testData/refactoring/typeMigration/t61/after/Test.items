@@ -1,9 +1,0 @@
-Types:
-PsiLocalVariable:p : int[]
-PsiParameter:i : int...
-PsiReferenceExpression:i : int[]
-
-Conversions:
-
-New expression type changes:
-Fails:

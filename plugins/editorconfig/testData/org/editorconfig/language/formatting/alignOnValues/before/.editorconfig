@@ -1,8 +1,0 @@
-[foo]
-hello = world
-this = that
-very_long_key = value
-
-[bar]
-th = is
-insert_final_newline = false

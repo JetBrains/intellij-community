@@ -1,3 +1,0 @@
-<spot>if a:
-  if b</spot>:
-    return

@@ -1,7 +1,0 @@
-<idea-plugin>
-  <id>com.intellij.myPlugin</id>
-
-  <depends config-file="used.xml">com.intellij</depends>
-  <depends config-file="<caret>">com.intellij</depends>
-
-</idea-plugin>

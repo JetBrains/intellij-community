@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun main() {
-    "abc".count { it == 'a' }
-}

@@ -1,5 +1,0 @@
-switch (xxx<caret>)
------
-switch (xxx) {
-    <caret>
-}

@@ -1,7 +1,0 @@
-package test
-
-import dependency.foo
-
-fun usage() {
-    foo()
-}

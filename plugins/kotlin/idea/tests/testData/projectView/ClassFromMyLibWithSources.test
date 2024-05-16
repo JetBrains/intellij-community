@@ -1,8 +1,0 @@
-// WITH_STDLIB
-// PATH: MyKotlinClass.class
-
-// FILE: usage.kt
-@Deprecated("deprecated")
-fun myDeprecatedFunction() {
-
-}

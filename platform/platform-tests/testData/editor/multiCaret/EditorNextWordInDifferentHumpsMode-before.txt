@@ -1,4 +1,0 @@
-<selection>s<caret>oMe te</selection>xt
-other line<caret>
-yet anot<caret>her<caret> line
-Heavily<caret>HumpedWord

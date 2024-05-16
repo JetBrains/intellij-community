@@ -1,5 +1,0 @@
-<simple-element xmlns="urn:test:simple.rng">
-  <b>
-    <<error>c</error> />
-  </b>
-</simple-element>

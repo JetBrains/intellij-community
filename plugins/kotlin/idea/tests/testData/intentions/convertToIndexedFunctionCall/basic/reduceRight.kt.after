@@ -1,8 +1,0 @@
-// INTENTION_TEXT: "Convert to 'reduceRightIndexed'"
-// WITH_STDLIB
-// AFTER-WARNING: Parameter 'index' is never used, could be renamed to _
-fun test(list: List<String>) {
-    list.reduceRightIndexed { index, s, acc ->
-        s + acc
-    }
-}

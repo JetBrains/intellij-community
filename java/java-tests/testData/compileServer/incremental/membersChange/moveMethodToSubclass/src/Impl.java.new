@@ -1,6 +1,0 @@
-import java.util.List;
-
-public class Impl extends Base {
-  public void method(Impl a) {
-  }
-}

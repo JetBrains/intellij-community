@@ -1,2 +1,0 @@
-[annotationConstructorCall.0.kt] Annotation 5 @Anno(foo = "bar")
-[annotationConstructorCall.1.java] Annotation 1 @Anno(foo="Foo")

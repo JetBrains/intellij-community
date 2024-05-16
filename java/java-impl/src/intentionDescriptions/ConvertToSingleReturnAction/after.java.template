@@ -1,7 +1,0 @@
-void test(String s) {
-  if(s != null) {
-    if(!s.isEmpty()) {
-      System.out.println(s);
-    }
-  }
-}

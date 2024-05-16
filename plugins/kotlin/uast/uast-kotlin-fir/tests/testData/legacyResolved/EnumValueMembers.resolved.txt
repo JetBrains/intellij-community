@@ -1,5 +1,0 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UEnumConstant (name = SHEET)(resolves to null) -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> Kotlin_Light_Method:
-UEnumConstant (name = SHEET)(resolves to null) -> USimpleNameReferenceExpression (identifier = Style) -> Kotlin_Light_Method: Style
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String

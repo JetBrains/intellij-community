@@ -1,4 +1,0 @@
-[defaultJavaAnnotationMethodUsages.0.java] Unclassified 12 @JAnn(value = "abc")
-[defaultJavaAnnotationMethodUsages.0.java] Unclassified 8 @JAnn("abc")
-[defaultJavaAnnotationMethodUsages.1.kt] Named argument 5 @JAnn(value = "abc")
-[defaultJavaAnnotationMethodUsages.1.kt] Unclassified 1 @JAnn("abc")

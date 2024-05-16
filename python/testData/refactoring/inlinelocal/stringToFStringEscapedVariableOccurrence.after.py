@@ -1,1 +1,0 @@
-print(f"foo {{variable}}")

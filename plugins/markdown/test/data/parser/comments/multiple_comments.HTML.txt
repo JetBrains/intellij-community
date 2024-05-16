@@ -1,5 +1,0 @@
-HtmlFile:multiple_comments.md
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      <empty list>
-  PsiElement(MARKDOWN_OUTER_BLOCK)('# This is some document\n\n## Some section\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit.\nPellentesque sed mi velit.\n\n[//]: # (Donec vel purus vitae nunc vestibulum vulputate.)\n[//]: # (Integer pharetra mauris sem, aliquet aliquet diam elementum id.)\n[//]: # (Ut vel est quis purus dignissim lobortis.)\n\n## Also multiple comments\n\n**Might be changed**\n\n[//]: # (\nCurabitur venenatis dignissim tincidunt.\nNulla et venenatis tellus.\n)\n\n[//]: # (Vestibulum suscipit nisl nec tempor rutrum.\nNam efficitur, mauris eu tincidunt pretium, \nturpis augue blandit sem, \nvitae luctus neque nisl non mi.)')

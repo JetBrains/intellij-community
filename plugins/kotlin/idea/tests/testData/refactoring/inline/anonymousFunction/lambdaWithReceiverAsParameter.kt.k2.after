@@ -1,9 +1,0 @@
-class Chain
-
-fun complicate(chain: Chain) {
-    val p2 = fun Chain.(): Chain {
-        return also { println(it) }
-    }
-    chain.p2()
-    val vra = chain.p2()
-}

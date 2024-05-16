@@ -1,9 +1,0 @@
-import java.util.Objects;
-
-public class X {
-  private String s;
-
-  public X(String s) {
-    this.s = Objects.requireNonNull(s);
-  }
-}

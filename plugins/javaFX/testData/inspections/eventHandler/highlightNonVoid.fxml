@@ -1,7 +1,0 @@
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.HBox?>
-<HBox xmlns:fx="http://javafx.com/fxml" fx:controller="HighlightNonVoid">
-    <Button text="SameArgNotVoid" onAction=<warning descr="Return type of event handler should be void">"#onSameArgNotVoid"</warning>/>
-    <Button text="SuperArgNotVoid" onAction=<warning descr="Return type of event handler should be void">"#onSuperArgNotVoid"</warning>/>
-    <Button text="NoArgNotVoid" onAction=<warning descr="Return type of event handler should be void">"#onNoArgNotVoid"</warning>/>
-</HBox>

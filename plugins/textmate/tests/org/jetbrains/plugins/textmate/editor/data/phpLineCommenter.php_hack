@@ -1,3 +1,0 @@
-<?
-echo "hi"<caret>;
-echo "world";

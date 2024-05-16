@@ -1,1 +1,0 @@
-a = <warning descr="Format specifier character missing">"t<caret>est %"</warning> % 1.

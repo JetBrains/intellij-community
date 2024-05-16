@@ -1,7 +1,0 @@
-package temp.04
-
-class Book {
-
-    static constraints = {
-    }
-}

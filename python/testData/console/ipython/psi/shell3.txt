@@ -1,3 +1,0 @@
-PyFile:shell3.py
-  PyEmptyExpression
-    PsiElement(Py:SHELL_COMMAND)('!mvim myfile.txt')

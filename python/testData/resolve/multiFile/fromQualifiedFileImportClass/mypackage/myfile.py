@@ -1,2 +1,0 @@
-class myclass:
-  pass

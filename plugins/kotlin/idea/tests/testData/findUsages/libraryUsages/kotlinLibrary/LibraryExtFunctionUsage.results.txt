@@ -1,2 +1,0 @@
-[LibraryExtFunctionUsage.0.kt] Function call 12 rc.extFun()
-[LibraryExtFunctionUsage.1.java] Unclassified 7 LibraryKt.extFun(rc);

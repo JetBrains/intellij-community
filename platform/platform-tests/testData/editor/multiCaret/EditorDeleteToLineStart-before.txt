@@ -1,2 +1,0 @@
-li<caret>ne1
-li<selection>ne<caret></selection>2

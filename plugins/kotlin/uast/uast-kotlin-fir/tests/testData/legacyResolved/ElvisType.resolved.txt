@@ -1,5 +1,0 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: bar
-ULocalVariable (name = var63c495f9) -> USimpleNameReferenceExpression (identifier = text) -> Kotlin_Light_Value_Parameter: text
-UExpressionList (elvis) -> USimpleNameReferenceExpression (identifier = ?:) -> null: null
-UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> Decompiled_Class: Object

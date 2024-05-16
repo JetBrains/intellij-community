@@ -1,8 +1,0 @@
-<root>
-  <item name='org.eclipse.jgit.treewalk.filter.PathFilter org.eclipse.jgit.treewalk.filter.PathFilter create(java.lang.String)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='org.eclipse.jgit.treewalk.filter.TreeFilter boolean include(org.eclipse.jgit.treewalk.TreeWalk) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

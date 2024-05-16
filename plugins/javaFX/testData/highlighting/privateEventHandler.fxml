@@ -1,6 +1,0 @@
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.control.Button?>
-<VBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8"
-      fx:controller="PrivateEventHandler">
-  <Button onAction="#onAction"/>
-</VBox>

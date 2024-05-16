@@ -1,8 +1,0 @@
-'[foo]' at LogicalPosition: (0, 0) =>
-  HEADER at LogicalPosition: (0, 0)
-'my_rule' at LogicalPosition: (1, 19) =>
-  QUALIFIED_KEY_PART at LogicalPosition: (1, 19)
-'my_style' at LogicalPosition: (1, 35) =>
-  QUALIFIED_KEY_PART at LogicalPosition: (3, 20)
-'my_style' at LogicalPosition: (3, 20) =>
-  QUALIFIED_KEY_PART at LogicalPosition: (3, 20)

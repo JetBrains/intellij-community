@@ -1,4 +1,0 @@
-package sample
-
-@kotlin.jvm.JvmInline
-value class A constructor(val a: String)

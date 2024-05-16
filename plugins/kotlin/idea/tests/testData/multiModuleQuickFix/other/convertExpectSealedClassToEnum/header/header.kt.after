@@ -1,6 +1,0 @@
-// "Convert to enum class" "true"
-// IGNORE_K2
-
-expect enum class <caret>E {
-    A, B, C
-}

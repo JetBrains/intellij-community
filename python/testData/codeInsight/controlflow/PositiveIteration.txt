@@ -1,9 +1,0 @@
-0(1) element: null
-1(2) element: PyForStatement
-2(3) element: PyTargetExpression: i
-3(4) WRITE ACCESS: i
-4(5) element: PyAssignmentStatement
-5(2,6) WRITE ACCESS: j
-6(7) element: PyPrintStatement
-7(8) READ ACCESS: j
-8() element: null

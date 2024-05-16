@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Test.java</file>
-    <line>9</line>
-    <description>Property 'with.params2' expected 3 parameters, passed 1</description>
-  </problem>
-</problems>

@@ -1,4 +1,0 @@
-include *.rst *.txt *.md LICENSE VERSION *.pyx
-recursive-include pydevd_attach_to_process *.py *.dll *.so *.dylib *.txt *.c *.h *.bat Makefile *.sh *.pyx
-recursive-include _pydevd_bundle *.pyx
-recursive-include build_tools *.py

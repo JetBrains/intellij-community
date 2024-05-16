@@ -1,6 +1,0 @@
-[secondaryConstructorByJavaNewExpression.0.java] New instance creation 11 new B("");
-[secondaryConstructorByJavaNewExpression.0.java] Unclassified 7 super("");
-[secondaryConstructorByJavaNewExpression.1.kt] Constructor delegation reference 12 constructor(a: Int) : super("") {
-[secondaryConstructorByJavaNewExpression.1.kt] Constructor delegation reference 2 constructor() : this("") {
-[secondaryConstructorByJavaNewExpression.1.kt] New instance creation 22 B("")
-[secondaryConstructorByJavaNewExpression.1.kt] Supertype 17 class C : B("") {

@@ -1,3 +1,0 @@
-yet a<selection><caret>no</selection>ther line<caret>
-some other te<caret>xt
-some<caret> text

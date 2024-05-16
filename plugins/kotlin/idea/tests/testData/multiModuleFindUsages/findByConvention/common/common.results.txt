@@ -1,6 +1,0 @@
-[common.kt] Function call 8 d.invoke()
-[common.kt] Implicit 'invoke' 7 d()
-[js.kt] Function call 4 d.invoke()
-[js.kt] Implicit 'invoke' 3 d()
-[jvm.kt] Function call 4 d.invoke()
-[jvm.kt] Implicit 'invoke' 3 d()

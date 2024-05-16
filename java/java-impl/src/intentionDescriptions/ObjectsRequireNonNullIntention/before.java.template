@@ -1,8 +1,0 @@
-public class X {
-  private String s;
-
-  public X(String s) {
-    if (s == null) throw new NullPointerException();
-    this.s = <spot>s</spot>;
-  }
-}

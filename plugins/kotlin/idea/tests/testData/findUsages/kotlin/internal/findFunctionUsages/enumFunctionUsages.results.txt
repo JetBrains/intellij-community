@@ -1,3 +1,0 @@
-Function call 15 foo(1)
-Function call 22 foo(1)
-Function call 8 foo(1)

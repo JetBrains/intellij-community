@@ -1,7 +1,0 @@
-top:
-  middle: &an
-    first:
-      - hello
-      - world
-    <caret>
-    last: value2

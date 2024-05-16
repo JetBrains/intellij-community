@@ -1,6 +1,0 @@
-JS_UNICODE_REGEXP_FILE
-  RegExpPatternImpl: <]>
-    RegExpBranchImpl: <]>
-      PsiErrorElement:Unmatched closing ']'
-        <empty list>
-      PsiElement(CLASS_END)(']')

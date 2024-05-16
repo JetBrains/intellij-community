@@ -1,1 +1,0 @@
-interface X2 : X

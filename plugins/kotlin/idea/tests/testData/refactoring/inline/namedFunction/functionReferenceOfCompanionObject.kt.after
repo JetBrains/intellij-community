@@ -1,6 +1,0 @@
-class Foo {
-}
-
-fun test() {
-    "foo".let { it.toInt() + it.toInt() }
-}

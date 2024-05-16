@@ -1,5 +1,0 @@
-class Foo {
-  <spot>String getName() {
-    return 'John'
-  }</spot>
-}

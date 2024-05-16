@@ -1,5 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M16 12.5C16 14.433 14.433 16 12.5 16C10.567 16 9 14.433 9 12.5C9 10.567 10.567 9 12.5 9C14.433 9 16 10.567 16 12.5Z" fill="#E05555"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M13 14V15H12V14H13ZM13 10V13H12V10H13Z" fill="black" fill-opacity="0.8"/>
-</svg>

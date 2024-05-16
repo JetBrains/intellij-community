@@ -1,1 +1,0 @@
-<K> void foo(K s){}

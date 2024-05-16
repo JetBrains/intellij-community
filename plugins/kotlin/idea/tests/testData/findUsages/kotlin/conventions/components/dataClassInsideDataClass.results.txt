@@ -1,2 +1,0 @@
-Value read 15 val (x, y, z) = a
-Value read 18 val (x1, y1, z1) = a1

@@ -1,6 +1,0 @@
-{
-    "inspectionClass": "org.jetbrains.kotlin.idea.intentions.UsePropertyAccessSyntaxInspection",
-    "problem": "Use of getter method instead of property access syntax",
-    "fix": "Use property access syntax",
-    "mainFile": "CallAccessMethod.kt"
-}

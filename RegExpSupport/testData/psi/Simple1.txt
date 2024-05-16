@@ -1,7 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <|>
-    RegExpBranchImpl: <>
-      <empty list>
-    PsiElement(UNION)('|')
-    RegExpBranchImpl: <>
-      <empty list>

@@ -1,2 +1,0 @@
-Value read 14 val t3: T = t2
-Value read 8 return t2

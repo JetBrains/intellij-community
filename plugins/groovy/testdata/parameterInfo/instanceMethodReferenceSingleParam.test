@@ -1,7 +1,0 @@
-class A {
-  def foo(int a) {}
-}
-def a = new A()
-a::foo(<caret>)
------
-<html><b>int a</b></html>

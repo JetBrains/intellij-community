@@ -1,1 +1,0 @@
-4 idiv <error descr="Expected type 'xs:numeric', got 'xs:dayTimeDuration'">'P0DTOH' cast as xs:dayTimeDuration</error>

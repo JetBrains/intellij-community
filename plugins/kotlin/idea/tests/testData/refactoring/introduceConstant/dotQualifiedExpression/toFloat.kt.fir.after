@@ -1,8 +1,0 @@
-// EXTRACTION_TARGET: property with initializer
-val a = 1
-
-private const val f = 1.toFloat()
-
-fun foo(): Int {
-    return f
-}

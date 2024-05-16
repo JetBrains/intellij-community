@@ -1,8 +1,0 @@
-<?import javafx.scene.layout.AnchorPane?>
-<?import java.lang.String?>
-<AnchorPane id="AnchorPane" xmlns:fx="http://javafx.com/fxml" stylesheets="<error descr="Cannot resolve file 'mystyle.css'">mystyle.css</error>" <error descr="Property 'backgroundFills' is read-only"><error descr="Attribute backgroundFills is not allowed here">backgroundFills</error>=""</error>>
-  <stylesheets>
-    <String fx:value="<error descr="Cannot resolve file 'mystyle.css'">mystyle.css</error>"/>
-  </stylesheets>
-
-</AnchorPane>

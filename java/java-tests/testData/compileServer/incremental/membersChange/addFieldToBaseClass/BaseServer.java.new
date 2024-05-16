@@ -1,3 +1,0 @@
-public class BaseServer {
-  public String field = "testString";
-}

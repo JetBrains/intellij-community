@@ -1,6 +1,0 @@
-PsiJavaFile:ContinueNormal1.java
-  PsiContinueStatement
-    PsiKeyword:continue('continue')
-    PsiWhiteSpace(' ')
-    PsiIdentifier:LABEL('LABEL')
-    PsiJavaToken:SEMICOLON(';')

@@ -1,3 +1,0 @@
-<x xmlns='<error>foo</error>' a='bar' xmlns:z='<error>foo2</error>' z:b='bar'>
-  <z2:x xmlns='<error>foo3</error>' a2='bar' xmlns:z2='<error>foo4</error>' z2:b2='bar2'/>
-</x>

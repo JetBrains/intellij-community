@@ -1,5 +1,0 @@
-<text-content xmlns="urn:test:simple.rng">
-  <boolean>true</boolean>
-  <boolean>false</boolean>
-  <<error>boolean</error>>blubb</<error>boolean</error>>
-</text-content>

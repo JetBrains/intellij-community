@@ -1,5 +1,0 @@
-Function call 14 p.invoke()
-Function call 15 p.invoke(1, 2, 3)
-Implicit 'invoke' 11 p()
-Implicit 'invoke' 12 p(1, 2)
-Implicit 'invoke' 13 p(1)

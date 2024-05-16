@@ -1,9 +1,0 @@
-Types:
-PsiMethod:toVoidMethod : void
-PsiMethodCallExpression:toVoidMethod() : void
-
-Conversions:
-"" + Integer.toString(999, 10) -> $
-
-New expression type changes:
-Fails:

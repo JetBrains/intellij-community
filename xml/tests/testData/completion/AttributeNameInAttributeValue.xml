@@ -1,4 +1,0 @@
-<root>
-    <include file="aaa" value="bbb"/>
-    <include file=<caret>""
-</root>

@@ -1,6 +1,0 @@
-<x<warning descr="Non-ASCII symbols in ASCII word">Ш</warning>>
-  блабла
-  <t<warning descr="Non-ASCII symbols in ASCII word">Ы</warning> attr="ИИИИ23" attr2="ИИИfoo">
-    <warning descr="Non-ASCII symbols in ASCII word">бла</warning>foo
-  </t<warning descr="Non-ASCII symbols in ASCII word">Ы</warning>>
-</x<warning descr="Non-ASCII symbols in ASCII word">Ш</warning>>

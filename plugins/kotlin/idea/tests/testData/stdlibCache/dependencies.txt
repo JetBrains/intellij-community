@@ -1,3 +1,0 @@
-MODULE jvm { platform=[JVM (1.8)] }
-
-jvm -> STDLIB_JVM { kind=DEPENDENCY }

@@ -1,1 +1,0 @@
-r4 Two remotes and url.insteadOf

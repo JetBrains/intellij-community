@@ -1,9 +1,0 @@
-FILE
-  CommandLineCommandImpl(COMMAND)
-    PsiElement(LITERAL_STARTS_FROM_LETTER)('command')
-  PsiWhiteSpace(' ')
-  CommandLineOptionImpl(OPTION)
-    PsiElement(LONG_OPTION_NAME_TOKEN)('--bad_value')
-    PsiErrorElement:Space between an argument and its value is unexpected
-      <empty list>
-    PsiElement(=)('=')

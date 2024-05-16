@@ -1,4 +1,0 @@
-Int -> USimpleNameReferenceExpression (identifier = Int) from KtNameReferenceExpression
-String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
-Int -> USimpleNameReferenceExpression (identifier = Int) from KtNameReferenceExpression
-JvmStatic -> UAnnotation (fqName = kotlin.jvm.JvmStatic) from KtNameReferenceExpression

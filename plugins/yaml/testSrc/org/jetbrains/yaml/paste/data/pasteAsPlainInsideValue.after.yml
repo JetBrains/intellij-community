@@ -1,6 +1,0 @@
-top:
-  someKey: some
-key1:
-  subKey: val1
-
-key2: val2<caret>value

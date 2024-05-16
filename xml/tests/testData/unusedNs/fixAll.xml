@@ -1,7 +1,0 @@
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:batch="http://www.springframework.org/schema/bat<caret>ch"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/batch spring-batch-2.1.xsd
-                           http://www.springframework.org/schema/beans spring-beans-2.5.xsd">
-
-</beans>

@@ -1,8 +1,0 @@
-Crumb:
-async foo()
-Tooltip:
-async foo()
-Crumb:
-async for i in range(10)
-Tooltip:
-async for i in range(10)

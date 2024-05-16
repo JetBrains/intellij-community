@@ -1,5 +1,0 @@
-0(1) element: null
-1(2) WRITE ACCESS: x
-2(3) element: PyReturnStatement
-3(4) READ ACCESS: x
-4() element: null

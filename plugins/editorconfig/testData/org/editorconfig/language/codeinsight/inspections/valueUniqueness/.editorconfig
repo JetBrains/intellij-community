@@ -1,3 +1,0 @@
-[foo]
-dotnet_naming_symbols.my_symbols.applicable_kinds = <error>property</error>, method, <error>property</error>
-dotnet_naming_symbols.my_symbols.required_modifiers = private

@@ -1,6 +1,0 @@
-<idea-plugin>
-  <module value="someModule"/>
-  <extensionPoints>
-    <extensionPoint qualifiedName="foo.extension2" beanClass="foo.Bar"/>
-  </extensionPoints>
-</idea-plugin>

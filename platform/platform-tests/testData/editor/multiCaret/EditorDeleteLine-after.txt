@@ -1,3 +1,0 @@
-blah<caret>
-yet <caret>an<caret>other <caret>line
-blah

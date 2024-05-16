@@ -1,5 +1,0 @@
-// AFTER-WARNING: Variable 'y' is never used
-
-fun <T> foo(x: T) {
-    val y: T & Any = x!!
-}

@@ -1,2 +1,0 @@
-foo/Module2SealedClassInheritor1
-foo/Module2SealedClassInheritor2

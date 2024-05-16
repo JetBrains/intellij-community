@@ -1,8 +1,0 @@
-<idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class>foo.Foo$Fubar</implementation-class>
-      <headless-implementation-class><error descr="Inner class must be separated with '$'">foo.Foo.Fubar</error></headless-implementation-class>
-    </component>
-  </application-components>
-</idea-plugin>

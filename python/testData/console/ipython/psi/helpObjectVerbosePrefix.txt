@@ -1,5 +1,0 @@
-PyFile:helpObjectVerbosePrefix.py
-  PyEmptyExpression
-    PsiElement(Py:QUESTION_MARK)('?')
-    PsiElement(Py:QUESTION_MARK)('?')
-    PsiElement(Py:IDENTIFIER)('object')

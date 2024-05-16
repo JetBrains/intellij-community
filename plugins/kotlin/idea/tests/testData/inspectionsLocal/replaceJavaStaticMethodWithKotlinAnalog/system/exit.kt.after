@@ -1,6 +1,0 @@
-import kotlin.system.exitProcess
-
-// WITH_STDLIB
-fun test() {
-    exitProcess(0)
-}

@@ -1,6 +1,0 @@
-Resolved SimpleInterface()
-Searched references to ClassWithInvoke
-Searched references to SimpleInterface.Companion
-Used plain search of ClassWithInvoke.invoke() in LocalSearchScope:
-    CLASS:ClassWithInvoke
-    OBJECT_DECLARATION:Companion

@@ -1,1 +1,0 @@
-{"body":"Class docstring\n\nAttributes:\n    a1: **bold** `italic1` *italic2* ``code``\n    a2: **bold** `italic1` *italic2* ``code``","fragments":[{"myName":"a1","myDescription":"**bold** `italic1` *italic2* ``code``","myFragmentType":"ATTRIBUTE"},{"myName":"a2","myDescription":"**bold** `italic1` *italic2* ``code``","myFragmentType":"ATTRIBUTE"}]}

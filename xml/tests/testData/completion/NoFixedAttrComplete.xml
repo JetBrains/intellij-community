@@ -1,6 +1,0 @@
-<!DOCTYPE zzz [
-  <!ELEMENT zzz (#PCDATA)>
-  <!ATTLIST zzz
-    id CDATA #FIXED "111">
-  ]>
-<zz<caret>

@@ -1,5 +1,0 @@
---- after/new.txt  1970-01-01 01:00:00.000000000 +0100
-+++ after/new.txt   2007-02-08 12:36:21.296875000 +0100
-@@ -0,0 +1 @@
-+new text
-\ No newline at end of file

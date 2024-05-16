@@ -1,3 +1,0 @@
-class FooBar {}
-
-FooBa<caret>

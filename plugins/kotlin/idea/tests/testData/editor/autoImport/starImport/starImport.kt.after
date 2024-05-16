@@ -1,6 +1,0 @@
-// NAME_COUNT_TO_USE_STAR_IMPORT: 2
-import pkg.*
-
-fun test(a1: A1, a2: A2) {}
-
-// IGNORE_K2

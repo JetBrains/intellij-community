@@ -1,4 +1,0 @@
-try:
-  x
-finally:
-  z

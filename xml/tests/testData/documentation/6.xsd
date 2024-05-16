@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:schemas-dig-de:test2">
-    <xs:in<caret>clude schemaLocation="XsiSchemaLocation3.xsd"/>
-</xs:schema>

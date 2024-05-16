@@ -1,5 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
-<VBox alignment="%correct.alignment">
-  <Label alignment=<warning descr="Invalid enumerated value">"%incorrect.alignment"</warning>/>
-</VBox>

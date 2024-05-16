@@ -1,1 +1,0 @@
-JavaMethod: PsiMethod:foo

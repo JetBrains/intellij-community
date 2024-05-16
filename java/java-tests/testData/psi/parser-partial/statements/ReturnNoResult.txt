@@ -1,4 +1,0 @@
-PsiJavaFile:ReturnNoResult.java
-  PsiReturnStatement
-    PsiKeyword:return('return')
-    PsiJavaToken:SEMICOLON(';')

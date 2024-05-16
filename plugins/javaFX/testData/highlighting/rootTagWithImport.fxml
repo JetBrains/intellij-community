@@ -1,8 +1,0 @@
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.BorderPane?>
-
-<fx:root type = "BorderPane" minHeight="7" xmlns:fx="http://javafx.com/fxml">
-  <TextField fx:id="textField" text=""/>
-  <Label text="Hello"/>
-</fx:root>

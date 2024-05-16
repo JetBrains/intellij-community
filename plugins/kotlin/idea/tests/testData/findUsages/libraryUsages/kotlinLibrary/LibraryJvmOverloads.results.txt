@@ -1,9 +1,0 @@
-[LibraryJvmOverloads.0.kt] Function call 12 fooWithOverloads()
-[LibraryJvmOverloads.0.kt] Function call 13 fooWithOverloads(1)
-[LibraryJvmOverloads.0.kt] Function call 14 fooWithOverloads(1, 1.0)
-[LibraryJvmOverloads.0.kt] Function call 15 fooWithOverloads(1, 1.0, "0")
-[LibraryJvmOverloads.0.kt] Usage in import 8 import library.fooWithOverloads
-[LibraryJvmOverloads.1.java] Unclassified 6 LibraryKt.fooWithOverloads();
-[LibraryJvmOverloads.1.java] Unclassified 7 LibraryKt.fooWithOverloads(1);
-[LibraryJvmOverloads.1.java] Unclassified 8 LibraryKt.fooWithOverloads(1, 1.0);
-[LibraryJvmOverloads.1.java] Unclassified 9 LibraryKt.fooWithOverloads(1, 1.0, "1");

@@ -1,5 +1,0 @@
-/**
-* {@snippet "}
-*/
-public class Main {
-}

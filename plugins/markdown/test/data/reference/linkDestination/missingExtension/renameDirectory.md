@@ -1,1 +1,0 @@
-[link](topDir/innerDir/stub_in_inner_dir)

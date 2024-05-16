@@ -1,5 +1,0 @@
-<root>
-  <item name='net.miginfocom.layout.ConstraintParser net.miginfocom.layout.BoundSize parseBoundSize(java.lang.String, boolean, boolean)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

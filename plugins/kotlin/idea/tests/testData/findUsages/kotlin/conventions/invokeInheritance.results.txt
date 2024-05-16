@@ -1,3 +1,0 @@
-Function call 17 c.invoke()
-Function call 17 c.invoke()
-Implicit 'invoke' 16 c()

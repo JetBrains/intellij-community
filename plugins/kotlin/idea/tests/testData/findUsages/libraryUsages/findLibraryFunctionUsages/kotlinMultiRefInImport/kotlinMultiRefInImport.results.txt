@@ -1,4 +1,0 @@
-[kotlinMultiRefInImport.0.kt] Function call 9 foo()
-[kotlinMultiRefInImport.0.kt] Usage in import 6 import server.foo
-[kotlinMultiRefInImportLib1.kt] Function call 9 foo()
-[kotlinMultiRefInImportLib1.kt] Usage in import 6 import server.foo

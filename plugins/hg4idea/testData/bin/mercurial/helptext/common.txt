@@ -1,8 +1,0 @@
-.. Common link and substitution definitions.
-
-.. |hg(1)| replace:: **hg**\ (1)
-.. _hg(1): hg.1.html
-.. |hgrc(5)| replace:: **hgrc**\ (5)
-.. _hgrc(5): hgrc.5.html
-.. |hgignore(5)| replace:: **hgignore**\ (5)
-.. _hgignore(5): hgignore.5.html

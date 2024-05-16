@@ -1,1 +1,0 @@
-<p>&rarr; <icon src="icon"/>&nbsp;beforeLocalVariable.java, line #19</p>

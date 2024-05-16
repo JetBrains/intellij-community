@@ -1,7 +1,0 @@
-// HIGHLIGHT: INFORMATION
-fun test() {
-    when (val foo = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1) {
-        1 -> foo
-        else -> 24
-    }
-}

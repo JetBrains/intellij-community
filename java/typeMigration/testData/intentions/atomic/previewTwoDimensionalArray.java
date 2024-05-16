@@ -1,1 +1,0 @@
-AtomicReferenceArray<String[]> field = new AtomicReferenceArray<>(...)

@@ -1,7 +1,0 @@
-{
-  "type": "MARKED_ELEMENT",
-  "mainFile": "rename/test.kt",
-  "newName": "title",
-  "enabledInK2": true,
-  "enabledInK1": false
-}

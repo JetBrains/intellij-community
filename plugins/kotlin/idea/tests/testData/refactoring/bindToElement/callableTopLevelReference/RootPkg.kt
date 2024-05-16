@@ -1,8 +1,0 @@
-// BIND_TO B
-class A { }
-
-class B { }
-
-fun foo() {
-    val x = ::<caret>A
-}

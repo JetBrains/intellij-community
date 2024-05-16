@@ -1,8 +1,0 @@
-test.java.file
-  SWITCH_LABEL_STATEMENT
-    CASE_KEYWORD
-    WHITE_SPACE
-    CASE_LABEL_ELEMENT_LIST
-      ERROR_ELEMENT
-        <empty list>
-    COLON

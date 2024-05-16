@@ -1,1 +1,0 @@
-class Foo extends Some<caret>

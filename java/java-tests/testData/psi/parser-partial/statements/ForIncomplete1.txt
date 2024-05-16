@@ -1,6 +1,0 @@
-PsiJavaFile:ForIncomplete1.java
-  PsiForStatement
-    PsiKeyword:for('for')
-    PsiJavaToken:LPARENTH('(')
-    PsiErrorElement:Statement expected
-      <empty list>

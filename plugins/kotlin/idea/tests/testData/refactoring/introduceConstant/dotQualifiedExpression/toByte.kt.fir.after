@@ -1,8 +1,0 @@
-// EXTRACTION_TARGET: property with initializer
-val a = 1
-
-private const val b = 1.toByte()
-
-fun foo(): Byte {
-    return b
-}

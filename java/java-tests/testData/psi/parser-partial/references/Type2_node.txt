@@ -1,6 +1,0 @@
-test.java.file
-  TYPE
-    TYPE
-      INT_KEYWORD
-    LBRACKET
-    RBRACKET

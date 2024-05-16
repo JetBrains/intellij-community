@@ -1,9 +1,0 @@
-package ${package}
-
-#set( $TEMPLATE_BEGIN= '${' )
-
-class AndroidPlatform : Platform {
-    override val name: String = "Android ${TEMPLATE_BEGIN}android.os.Build.VERSION.SDK_INT}"
-}
-
-actual fun getPlatform(): Platform = AndroidPlatform()

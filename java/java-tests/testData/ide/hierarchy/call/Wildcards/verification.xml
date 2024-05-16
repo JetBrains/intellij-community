@@ -1,4 +1,0 @@
-<node text="BoardImpl.getCount()  (p)" base="true">
-  <node text="King.isLast1(B)  (p)"/>
-  <node text="King.isLast2(List&lt;? extends Board&gt;)  (p)"/>
-</node>

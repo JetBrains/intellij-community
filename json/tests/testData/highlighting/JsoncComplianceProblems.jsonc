@@ -1,4 +1,0 @@
-{
-  "key1": "foo",
-  <error descr="JSON standard allows only double quoted string as property key"><error descr="JSON standard does not allow single quoted strings">'key2'</error></error>: null
-}

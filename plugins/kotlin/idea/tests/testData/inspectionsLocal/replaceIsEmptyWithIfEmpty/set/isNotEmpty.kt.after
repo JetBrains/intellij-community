@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun test(set: Set<Int>): Set<Int> {
-    return set.ifEmpty {
-        setOf(1)
-    }
-}

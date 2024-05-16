@@ -1,8 +1,0 @@
-<module version="4">
-  <component name="AdditionalModuleElements">
-    <content url="file://$MODULE_DIR$/myContentRoot" dumb="true">
-      <excludeFolder url="file://$MODULE_DIR$/myContentRoot" />
-      <excludeFolder url="file://$MODULE_DIR$/myContentRoot2" />
-    </content>
-  </component>
-</module>

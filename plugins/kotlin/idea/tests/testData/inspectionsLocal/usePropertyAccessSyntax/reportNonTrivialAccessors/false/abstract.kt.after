@@ -1,4 +1,0 @@
-// HIGHLIGHT: INFORMATION
-fun test(i: I) {
-    i.foo
-}

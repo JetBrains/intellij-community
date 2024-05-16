@@ -1,9 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <a*?>
-    RegExpBranchImpl: <a*?>
-      RegExpClosureImpl: <a*?>
-        RegExpCharImpl: <a>
-          PsiElement(CHARACTER)('a')
-        RegExpQuantifierImpl: <*?>
-          PsiElement(STAR)('*')
-          PsiElement(QUEST)('?')

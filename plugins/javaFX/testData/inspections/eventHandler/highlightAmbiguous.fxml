@@ -1,7 +1,0 @@
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.HBox?>
-<HBox xmlns:fx="http://javafx.com/fxml" fx:controller="HighlightAmbiguous">
-    <Button text="ArgType" onAction=<warning descr="Ambiguous event handler name: more than one matching method found">"#onArgType"</warning>/>
-    <Button text="NoArg" onAction=<warning descr="Ambiguous event handler name: more than one matching method found">"#onNoArg"</warning>/>
-    <Button text="NotEvent" onAction="#onNotEvent"/>
-</HBox>

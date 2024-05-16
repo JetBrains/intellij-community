@@ -1,8 +1,0 @@
-public abstract interface MyInterface {
-}
-
-public abstract interface GattClientScope {
-    public abstract fun await(@org.jetbrains.annotations.NotNull block: kotlin.jvm.functions.Function0<kotlin.Unit>, @org.jetbrains.annotations.NotNull $completion: kotlin.coroutines.Continuation<? super kotlin.Unit>) : java.lang.Object = UastEmptyExpression
-    public abstract fun readCharacteristic(@org.jetbrains.annotations.NotNull p: MyInterface, @org.jetbrains.annotations.NotNull $completion: kotlin.coroutines.Continuation<? super kotlin.Result<? extends byte[]>>) : java.lang.Object = UastEmptyExpression
-    public abstract fun writeCharacteristic(@org.jetbrains.annotations.NotNull p: MyInterface, @org.jetbrains.annotations.NotNull value: byte[], @org.jetbrains.annotations.NotNull $completion: kotlin.coroutines.Continuation<? super kotlin.Result<? extends kotlin.Unit>>) : java.lang.Object = UastEmptyExpression
-}

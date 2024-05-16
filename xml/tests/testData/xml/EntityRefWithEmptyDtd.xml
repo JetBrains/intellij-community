@@ -1,7 +1,0 @@
-<!DOCTYPE tag [
-   <!ENTITY our2 SYSTEM "EntityRefWithEmptyDtd.xml">
-   %<error>our</error>;
-]>
-<tag id="&<error>our</error>;">
-  &<error>our</error>;
-</tag>

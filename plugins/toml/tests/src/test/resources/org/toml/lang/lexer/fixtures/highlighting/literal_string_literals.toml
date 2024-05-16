@@ -1,5 +1,0 @@
-literal_string = '\tline \"1\"\n\tline \"2\"\r\nword1\u0020word2\U0000002E'
-literal_multiline_string = '''\tline \"1\"
-    line\u00202\
-    line 3\U0000002E
-'''

@@ -1,7 +1,0 @@
-PsiJavaFile:BlockIncomplete0.java
-  PsiCodeBlock
-    PsiJavaToken:LBRACE('{')
-    PsiErrorElement:'}' expected
-      <empty list>
-    PsiWhiteSpace(' ')
-    PsiComment(C_STYLE_COMMENT)('/*}')

@@ -1,6 +1,0 @@
-<addressBook xmlns="include.rnc">
-  <card>
-    <name>x</name>
-    <email>y</email>
-  </card>
-</addressBook>

@@ -1,2 +1,0 @@
-FunctionTypeComment:a.functionTypeComment
-  <empty list>

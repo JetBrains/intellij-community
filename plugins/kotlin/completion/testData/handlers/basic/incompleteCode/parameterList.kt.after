@@ -1,7 +1,0 @@
-package one
-
-import second.Foo
-
-fun test(foo: Foo<caret>parameter: Int) {}
-
-// ELEMENT: "foo: Foo"

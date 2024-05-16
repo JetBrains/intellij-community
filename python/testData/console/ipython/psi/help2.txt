@@ -1,3 +1,0 @@
-PyFile:help2.py
-  PyEmptyExpression
-    PsiElement(Py:QUESTION_MARK)('?')

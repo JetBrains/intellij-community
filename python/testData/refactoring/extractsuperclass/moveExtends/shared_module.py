@@ -1,2 +1,0 @@
-class TheParentOfItAll(object):
-  pass

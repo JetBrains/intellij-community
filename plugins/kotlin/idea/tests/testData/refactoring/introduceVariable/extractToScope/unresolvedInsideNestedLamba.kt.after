@@ -1,6 +1,0 @@
-fun foo(f: (Int) -> Int) = f(0)
-
-fun test() {
-    val unresolved = unresolved
-    foo { foo { (1 + 2) * unresolved } }
-}

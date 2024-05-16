@@ -1,6 +1,0 @@
-// NEW_NAME: y
-// RENAME: member
-fun f() {
-    val <caret>y = 5
-    println(y + y * y)
-}

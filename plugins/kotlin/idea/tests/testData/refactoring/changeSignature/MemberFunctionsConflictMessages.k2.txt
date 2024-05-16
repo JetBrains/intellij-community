@@ -1,2 +1,0 @@
-Function 'inner2' is already declared in class 'outer'
-Variable 'y' is already declared in function 'inner3'

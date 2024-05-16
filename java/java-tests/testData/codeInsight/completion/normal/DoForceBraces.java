@@ -1,5 +1,0 @@
-class Foo {
-  {
-    do<caret>
-  }
-}

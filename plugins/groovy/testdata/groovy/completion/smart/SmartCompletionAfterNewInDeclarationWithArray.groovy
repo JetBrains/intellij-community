@@ -1,1 +1,0 @@
-javax.swing.JFrame[] frames = new <caret>

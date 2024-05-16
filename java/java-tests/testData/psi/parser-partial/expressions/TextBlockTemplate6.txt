@@ -1,7 +1,0 @@
-PsiJavaFile:TextBlockTemplate6.java
-  PsiTemplateExpression
-    PsiTemplate
-      PsiFragment:TEXT_BLOCK_TEMPLATE_BEGIN('"""\n\{')
-      PsiExpression(empty)
-        <empty list>
-      PsiFragment:TEXT_BLOCK_TEMPLATE_END('}"""')

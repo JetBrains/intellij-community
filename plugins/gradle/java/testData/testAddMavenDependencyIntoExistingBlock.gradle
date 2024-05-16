@@ -1,3 +1,0 @@
-dependencies{
-  implementation 'someGroupId:someArtifactId:1.0'
-}

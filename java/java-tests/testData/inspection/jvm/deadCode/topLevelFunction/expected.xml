@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>TC.kt</file>
-    <line>1</line>
-    <entry_point TYPE="method" FQNAME="TCKt void runApplication(java.lang.String args)" />
-    <description>Method is never used.</description>
-  </problem>
-</problems>

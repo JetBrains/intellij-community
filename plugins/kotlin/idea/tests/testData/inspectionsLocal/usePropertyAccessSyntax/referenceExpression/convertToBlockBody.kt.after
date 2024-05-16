@@ -1,7 +1,0 @@
-// FIX: Use property access syntax
-class A(): Foo() {
-
-    fun call(): Unit {
-        foo = 1
-    }
-}

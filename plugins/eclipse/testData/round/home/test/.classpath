@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/home/lib-2/jar-every/lib-2.jar"/>
-	<classpathentry kind="lib" path="/ws-internals/lib-5/jar-every/lib-5.jar"/>
-	<classpathentry kind="output" path="bin"/>
-</classpath>

@@ -1,6 +1,0 @@
-/** {@snippet :
- *  Body
- * }
- */
-class A {
-}

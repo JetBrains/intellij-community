@@ -1,1 +1,0 @@
-s = f'foo{f"baz'quux"}bar'

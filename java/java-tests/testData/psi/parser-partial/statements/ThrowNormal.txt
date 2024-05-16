@@ -1,9 +1,0 @@
-PsiJavaFile:ThrowNormal.java
-  PsiThrowStatement
-    PsiKeyword:throw('throw')
-    PsiWhiteSpace(' ')
-    PsiReferenceExpression:e
-      PsiReferenceParameterList
-        <empty list>
-      PsiIdentifier:e('e')
-    PsiJavaToken:SEMICOLON(';')

@@ -1,4 +1,0 @@
-[JKMethodOverrides.1.java] Unclassified 3 public void foo() {
-[JKMethodOverrides.1.kt] Unclassified 14 public override fun foo() {
-[JKMethodOverrides.1.kt] Unclassified 2 public override fun foo() {
-[JKMethodOverrides.1.kt] Unclassified 8 public override fun foo() {

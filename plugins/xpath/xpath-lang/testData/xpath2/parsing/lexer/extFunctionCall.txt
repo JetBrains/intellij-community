@@ -1,5 +1,0 @@
-EXT_PREFIX ('if')
-COL (':')
-FUNCTION_NAME ('func')
-LPAREN ('(')
-RPAREN (')')

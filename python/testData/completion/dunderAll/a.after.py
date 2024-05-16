@@ -1,3 +1,0 @@
-import importSource
-
-importSource.xyzzy

@@ -1,7 +1,0 @@
-let ('let')
-WHITE_SPACE (' ')
-word ('a')
-+= ('+=')
-int ('1')
-\n ('\n')
-let ('let')

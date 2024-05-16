@@ -1,5 +1,0 @@
-if (a{}<caret>
------
-if (a {}) {
-    <caret>
-}

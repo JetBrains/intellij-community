@@ -1,2 +1,0 @@
-class Parent(object):
-    pass

@@ -1,3 +1,0 @@
-Value read 10 val (x1, y1) = A(1, 2)
-Value read 16 val (x, y) = list[0]
-Value read 9 val (x, y) = o

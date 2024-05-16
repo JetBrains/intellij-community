@@ -1,5 +1,0 @@
-class Test {
-  <spot>void foo(int a, int b)</spot> {
-    //do smth
-  }
-}

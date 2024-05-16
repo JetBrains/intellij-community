@@ -1,5 +1,0 @@
--SelectLeafFirst3.java
- -SelectLeafFirst3
-  [clear(): void]
-  -ClearClass
-   clear(): void

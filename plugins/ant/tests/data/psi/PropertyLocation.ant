@@ -1,4 +1,0 @@
-<project basedir="C:\Windows" default="A">
-  <property name="name1" location="system32" />
-  <target name="A"/>
-</project>

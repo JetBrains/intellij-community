@@ -1,1 +1,0 @@
-void update(T a) {}

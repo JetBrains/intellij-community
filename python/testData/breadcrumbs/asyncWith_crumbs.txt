@@ -1,8 +1,0 @@
-Crumb:
-async foo()
-Tooltip:
-async foo()
-Crumb:
-async with open("file.txt")
-Tooltip:
-async with open("file.txt")

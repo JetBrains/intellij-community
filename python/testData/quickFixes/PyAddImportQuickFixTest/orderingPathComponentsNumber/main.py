@@ -1,1 +1,0 @@
-<error descr="Unresolved reference 'foo'">fo<caret>o</error>

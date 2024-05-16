@@ -1,6 +1,0 @@
-[{
-4|val| a =|getBar|() |as| CharSequence}
-, {
-5|val| b = |getBar|() |as| String,
-6|val| c = |getBar|() |as| String}
-]

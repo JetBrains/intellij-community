@@ -1,1 +1,0 @@
-// <selection>This sentence has a "quote<caret>d part".</selection>

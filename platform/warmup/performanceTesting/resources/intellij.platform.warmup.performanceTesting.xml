@@ -1,9 +1,0 @@
-<idea-plugin package="com.intellij.warmup">
-  <dependencies>
-    <plugin id="com.jetbrains.performancePlugin"/>
-  </dependencies>
-
-  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
-    <commandProvider implementation="com.intellij.warmup.WarmupCommandProvider"/>
-  </extensions>
-</idea-plugin>

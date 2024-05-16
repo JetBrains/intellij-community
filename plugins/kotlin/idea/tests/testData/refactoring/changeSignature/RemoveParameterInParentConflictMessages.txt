@@ -1,1 +1,0 @@
-'s' is used in declaration body

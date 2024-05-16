@@ -1,4 +1,0 @@
-// WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:-RangeUntilOperator
-val N = 42
-fun test(a: Int) = a in 0 until N

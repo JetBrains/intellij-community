@@ -1,5 +1,0 @@
-fun foo(a: Int, b: Int, c: Int) {}
-
-fun main() {
-    foo(<spot>a = 1, b = 2, c = 3</spot>)
-}

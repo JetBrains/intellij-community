@@ -1,8 +1,0 @@
-grammar {
-  start = foo
-
-  foo = grammar {
-    x = element bar { parent <error>outer</error> }
-    outer = attribute outer.att { text }
-  }
-}

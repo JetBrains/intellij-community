@@ -1,1 +1,0 @@
-print '''pri<caret>nt'''

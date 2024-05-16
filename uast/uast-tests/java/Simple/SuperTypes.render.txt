@@ -1,8 +1,0 @@
-class A {
-}
-
-abstract interface B {
-}
-
-class Test : A, B {
-}

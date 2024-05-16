@@ -1,2 +1,0 @@
-b4 Branch with both merge and rebase
-Then only merge is taken into consideration.

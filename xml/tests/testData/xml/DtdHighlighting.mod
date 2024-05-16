@@ -1,1 +1,0 @@
-<!ENTITY % XHTML.profile  "" >

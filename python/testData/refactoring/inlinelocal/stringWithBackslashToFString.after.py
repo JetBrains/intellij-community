@@ -1,1 +1,0 @@
-fstr = f'\\...{'\\'<caret>.upper()}'

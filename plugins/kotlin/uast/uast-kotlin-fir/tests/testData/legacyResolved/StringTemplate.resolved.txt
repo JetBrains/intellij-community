@@ -1,6 +1,0 @@
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: getFoo
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: getFoo
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: getBar
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: getBar
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Method: getBaz
-UPolyadicExpression (operator = +) -> USimpleNameReferenceExpression (identifier = baz) -> Kotlin_Light_Method: getBaz

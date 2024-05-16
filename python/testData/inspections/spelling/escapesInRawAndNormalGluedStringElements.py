@@ -1,1 +1,0 @@
-('\ncorrect' r'\<TYPO descr="Typo: In word 'ncorrect'">ncorrect</TYPO>')

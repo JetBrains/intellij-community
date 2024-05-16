@@ -1,7 +1,0 @@
-public class CompositeAssignment {
-    public static String foo(String portalName, String itemName) {
-        String redirectPath;
-        redirectPath = "/portals/" + portalName + "/widgets/" + itemName;
-        return redirectPath.toUpperCase();
-    }
-}

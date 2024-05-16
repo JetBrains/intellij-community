@@ -1,6 +1,0 @@
-datatypes w = "http://whattf.org/datatype-draft"
-
-noscript.inner.head |= meta.http-equiv.content-language.elem
-
-script.inner.embedded |= common.inner.flow
-script.inner.imported |= common.inner.flow

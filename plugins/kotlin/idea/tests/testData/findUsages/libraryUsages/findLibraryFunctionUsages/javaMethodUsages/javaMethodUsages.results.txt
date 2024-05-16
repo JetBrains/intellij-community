@@ -1,5 +1,0 @@
-[javaMethodUsages.1.java] Unclassified 7 new Server().processRequest();
-[javaMethodUsages.1.java] Unclassified 8 new ServerEx().processRequest();
-[javaMethodUsages.1.java] Unclassified 8 new ServerEx().processRequest();
-[javaMethodUsagesLib1.java] Unclassified 5 new Server().processRequest();
-[javaMethodUsagesLib1.java] Unclassified 6 new ServerEx().processRequest();

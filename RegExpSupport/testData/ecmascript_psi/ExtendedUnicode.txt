@@ -1,5 +1,0 @@
-JS_UNICODE_REGEXP_FILE
-  RegExpPatternImpl: <\u{9}>
-    RegExpBranchImpl: <\u{9}>
-      RegExpCharImpl: <\u{9}>
-        PsiElement(UNICODE_CHAR)('\u{9}')

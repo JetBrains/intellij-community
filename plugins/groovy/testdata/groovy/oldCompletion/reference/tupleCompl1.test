@@ -1,4 +1,0 @@
-def (street, home, postCode) = []
-def s = str<caret>
------
-street

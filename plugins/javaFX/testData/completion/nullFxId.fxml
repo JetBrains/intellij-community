@@ -1,8 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import java.lang.String?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-    <fx:define>
-        <String fx:id
-    </fx:define>
-    <fx:reference source="<caret>"
-</GridPane>

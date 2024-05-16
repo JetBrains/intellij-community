@@ -1,6 +1,0 @@
-14|[Own usage of primary header](#|primary-header|)
-16|[Another own usage of primary header](#|primary-header|)
-23|* |[link to primary header](#|primary-header|)
-26|* |[Primary header](#|primary-header|)
-6|* |[link to primary header](../main.md#|primary-header|)
-8|* |[link to primary header](main.md#|primary-header|)

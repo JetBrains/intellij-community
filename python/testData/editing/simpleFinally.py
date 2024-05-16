@@ -1,3 +1,0 @@
-try:
-  pass
-  finally<caret>

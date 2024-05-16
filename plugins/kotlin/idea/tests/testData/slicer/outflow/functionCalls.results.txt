@@ -1,4 +1,0 @@
-3 <bold>fun foo(n: Int)</bold> = n + 1
-3 	JAVA: int x = FunctionCallsKt.<bold>foo</bold>(2); (in J.test())
-6 	val x = <bold>foo(1)</bold> (in test(Int))
-6 		<bold>val x</bold> = foo(1) (in test(Int))

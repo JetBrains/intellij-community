@@ -1,9 +1,0 @@
-// "Add else branch" "true"
-fun foo(x: String?) {
-    while (true) {
-        x ?: when<caret> { true -> break }
-    }
-}
-
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddWhenElseBranchFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddWhenElseBranchFix

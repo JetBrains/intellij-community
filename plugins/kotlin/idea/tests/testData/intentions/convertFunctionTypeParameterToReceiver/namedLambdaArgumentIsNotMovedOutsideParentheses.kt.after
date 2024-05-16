@@ -1,7 +1,0 @@
-fun foo(f: Boolean.(Int) -> String) {
-    false.f(1)
-}
-
-fun baz(f: (Int, Boolean) -> String) {
-    foo(f = { i -> f(i, this) })
-}

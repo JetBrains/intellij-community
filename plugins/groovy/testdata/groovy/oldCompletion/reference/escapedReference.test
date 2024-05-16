@@ -1,6 +1,0 @@
-class X{
-  def get123(){}
-}
-print new X().'1<caret>'
------
-'123'

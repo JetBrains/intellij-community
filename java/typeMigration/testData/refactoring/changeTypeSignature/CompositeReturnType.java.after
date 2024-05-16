@@ -1,9 +1,0 @@
-import java.util.List;
-class A<T> {
-  List<T> getKey(){return null;}
-}
-public class B extends A<Object> {
-   List<Object> getKey() {
-     return new List<>();
-   }
-}

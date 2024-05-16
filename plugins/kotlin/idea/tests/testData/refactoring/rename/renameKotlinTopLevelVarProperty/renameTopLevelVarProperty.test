@@ -1,6 +1,0 @@
-{
-  "type": "MARKED_ELEMENT",
-  "mainFile": "RenameTopLevelVarProperty.kt",
-  "newName": "bar",
-  "enabledInK2": true
-}

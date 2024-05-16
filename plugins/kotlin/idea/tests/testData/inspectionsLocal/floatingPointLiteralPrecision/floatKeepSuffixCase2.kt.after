@@ -1,5 +1,0 @@
-// WITH_STDLIB
-
-fun test(): Float {
-    return 0.12345679F
-}

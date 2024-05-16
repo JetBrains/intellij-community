@@ -1,6 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action id="invalid"
-            class="<error descr="'MyActionWithoutDefaultCtor' has no default constructor">MyActionWithoutDefaultCtor</error>"/>
-  </actions>
-</idea-plugin>

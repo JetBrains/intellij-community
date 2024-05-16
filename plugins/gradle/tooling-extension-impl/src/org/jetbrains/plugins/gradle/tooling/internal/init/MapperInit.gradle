@@ -1,7 +1,0 @@
-//file:noinspection GrPackage
-
-//noinspection GrUnresolvedAccess
-if (!ext.has('mapPath')) {
-  //noinspection GrUnresolvedAccess
-  ext.mapPath = { path -> path }
-}

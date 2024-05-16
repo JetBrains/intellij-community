@@ -1,6 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="16" height="16" rx="8" fill="#3592C4"/>
-  <rect x="8.80005" y="4.8" width="7.2" height="1.6" transform="rotate(90 8.80005 4.8)" fill="white"/>
-  <path fill-rule="evenodd" clip-rule="evenodd" d="M8 4L12 8L4 8L8 4Z" fill="white"/>
-</svg>

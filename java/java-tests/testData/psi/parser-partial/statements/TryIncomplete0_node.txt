@@ -1,5 +1,0 @@
-test.java.file
-  TRY_STATEMENT
-    TRY_KEYWORD
-    ERROR_ELEMENT
-      <empty list>

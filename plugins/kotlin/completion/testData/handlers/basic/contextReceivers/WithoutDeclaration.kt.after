@@ -1,7 +1,0 @@
-import java.io.File
-
-context(File<caret>)
-
-// ELEMENT: File
-// FIR_COMPARISON
-// FIR_IDENTICAL

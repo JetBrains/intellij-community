@@ -1,6 +1,0 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
-class C {
-    companion object<caret>
-}
-// AUTOCOMPLETE_SETTING: true

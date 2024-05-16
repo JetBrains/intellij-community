@@ -1,6 +1,0 @@
-{
-  "type": "AUTO_DETECT",
-  "mainFile": "test.kt",
-  "newName": "RENAMED_VALUE",
-  "enabledInK2": "true"
-}

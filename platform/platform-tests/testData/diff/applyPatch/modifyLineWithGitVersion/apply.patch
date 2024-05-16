@@ -1,8 +1,0 @@
---- before/1.txt	before
-+++ after/1.txt	after
-@@ -1,2 +1,2 @@ additional context
--old
-+new
- unchanged
---
-1.9.7.5

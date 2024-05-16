@@ -1,5 +1,0 @@
-test.java.file
-  THROW_STATEMENT
-    THROW_KEYWORD
-    ERROR_ELEMENT
-      <empty list>

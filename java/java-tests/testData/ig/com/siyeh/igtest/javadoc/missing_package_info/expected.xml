@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <entry_point TYPE="package" FQNAME="one.two.three" />
-    <problem_class>Missing 'package-info.java'</problem_class>
-    <hints />
-    <description>Package 'one.two.three' is missing a &lt;code&gt;package-info.java&lt;/code&gt; file</description>
-  </problem>
-</problems>

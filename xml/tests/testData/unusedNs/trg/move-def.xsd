@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                   targetNamespace="nsx"
-                   xmlns="nsx"
-                   elementFormDefault="qualified"
-                   attributeFormDefault="unqualified">
-
-        <xs:element name="root" type="xs:string"/>
-</xs:schema>

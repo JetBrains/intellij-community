@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<utest:type1 xmlns:utest="urn:test"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:type="utest:TestType2"
-       >
-	<utest:int1>3</utest:int1>
-    <utest:int2>3</utest:int2>
-    <utest:double><caret></utest:double>
-</utest:type1>

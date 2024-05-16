@@ -1,9 +1,0 @@
-// EXTRACTION_TARGET: property with initializer
-val a = 1
-
-private const val string = "1" + "1"
-
-fun foo(): String {
-    val x = 1 + 1
-    return string
-}

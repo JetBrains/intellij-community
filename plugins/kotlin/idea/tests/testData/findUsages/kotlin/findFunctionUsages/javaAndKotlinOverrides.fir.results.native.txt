@@ -1,5 +1,0 @@
-[javaAndKotlinOverrides.0.kt] Unclassified 30 override fun foo(t: String) {
-[javaAndKotlinOverrides.2.kt] Unclassified 2 override fun foo(t: String) {
-[javaAndKotlinOverrides.3.kt] Unclassified 2 override fun foo(t: Int) {
-[javaAndKotlinOverrides.4.kt] Unclassified 3 override fun foo(t: Int) {
-[javaAndKotlinOverrides.5.kt] Unclassified 2 override fun foo(t: String) {

@@ -1,8 +1,0 @@
-// WITH_STDLIB
-fun List<Int>.test() {
-    with(Any()) {
-        for ((index, element) in this@test.withIndex()) {
-            println("$index: $element")
-        }
-    }
-}

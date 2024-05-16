@@ -1,6 +1,0 @@
-Value read 12 val c = b.openProp
-Value read 13 val d = m.openProp
-Value read 13 val d = m.openProp
-Value write 14 b.openProp = ""
-Value write 15 m.openProp = ""
-Value write 15 m.openProp = ""

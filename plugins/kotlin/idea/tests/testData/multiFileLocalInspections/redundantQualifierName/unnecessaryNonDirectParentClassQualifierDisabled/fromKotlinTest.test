@@ -1,7 +1,0 @@
-// IGNORE_K2
-{
-    "inspectionClass": "org.jetbrains.kotlin.idea.inspections.RemoveRedundantQualifierNameInspection",
-    "k2InspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RemoveRedundantQualifierNameInspection",
-    "problem": "none",
-    "mainFile": "test.kt"
-}

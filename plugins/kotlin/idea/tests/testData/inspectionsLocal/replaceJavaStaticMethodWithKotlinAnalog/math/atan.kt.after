@@ -1,6 +1,0 @@
-import kotlin.math.atan
-
-// WITH_STDLIB
-fun test(x: Double) {
-    atan(x)
-}

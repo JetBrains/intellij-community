@@ -1,3 +1,0 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.resources.fake">
-  <module value="kotlin.base.resources" />
-</idea-plugin>

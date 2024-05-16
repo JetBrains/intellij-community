@@ -1,3 +1,0 @@
-print "first"
-
-print "second"

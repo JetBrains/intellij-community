@@ -1,5 +1,0 @@
-open class MyClass {
-    constructor(s1: String, s2: String)
-}
-
-class Child(s3: String) : MyClass(s3, "dummy")

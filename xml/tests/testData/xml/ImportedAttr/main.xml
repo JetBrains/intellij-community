@@ -1,3 +1,0 @@
-<root xmlns="foo://bar" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="foo://bar main.xsd" a=""/>
-

@@ -1,7 +1,0 @@
-{
-  "mainFile": "main.java",
-  "type": "MOVE_MEMBERS",
-  "targetClass": "B.C",
-  "enabledInK1": "true",
-  "enabledInK2": "true"
-}

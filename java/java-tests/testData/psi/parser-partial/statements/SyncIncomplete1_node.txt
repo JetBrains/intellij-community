@@ -1,6 +1,0 @@
-test.java.file
-  SYNCHRONIZED_STATEMENT
-    SYNCHRONIZED_KEYWORD
-    LPARENTH
-    ERROR_ELEMENT
-      <empty list>

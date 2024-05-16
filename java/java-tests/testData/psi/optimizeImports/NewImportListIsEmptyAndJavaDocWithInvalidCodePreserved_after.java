@@ -1,6 +1,0 @@
-/**
- * @deprecated
- */
-/
-public class Foo  {
-}

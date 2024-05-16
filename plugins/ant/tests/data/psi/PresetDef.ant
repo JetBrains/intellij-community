@@ -1,7 +1,0 @@
-<project default="main">
-  <target name="main"/>
-  <presetdef name="debug.javac">
-    <javac debug="true"/>
-  </presetdef>
-  <debug.javac/>
-</project>

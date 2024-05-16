@@ -1,8 +1,0 @@
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:template name="myTemplate">
-    <xsl:param name="optional" select="true()" />
-    <xsl:call-template name="myTemplate">
-      <spot><xsl:with-param name="optional" select="..." /></spot>
-    </xsl:call-template>
-  </xsl:template>
-</xsl:stylesheet>

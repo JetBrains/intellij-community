@@ -1,1 +1,0 @@
-<bean:message key="${PROPERTY_KEY}"/>

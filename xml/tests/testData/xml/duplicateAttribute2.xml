@@ -1,6 +1,0 @@
-<<error>root</error> xmlns:foo="http://www.foo.org/schema"
-    xmlns:foo="http://www.bar.org/foo">
-  <a>
-    <b/>
-  </a>
-</<error>root</error>>

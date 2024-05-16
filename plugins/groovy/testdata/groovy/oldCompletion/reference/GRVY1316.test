@@ -1,9 +1,0 @@
-class Fooo {
-
-    def aaaaaa = []
-    def matmexisthebestfacultyintheworld = []
-
-    def aa(char c) {mat<caret>}
-}
------
-matmexisthebestfacultyintheworld

@@ -1,7 +1,0 @@
-PsiJavaFile:New6.java
-  PsiNewExpression:new
-    PsiKeyword:new('new')
-    PsiReferenceParameterList
-      <empty list>
-    PsiErrorElement:Identifier expected
-      <empty list>

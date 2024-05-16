@@ -1,5 +1,0 @@
-<selection>s<caret>oMe te</selection>xt
-other line<caret>
-yet another<caret> line
-<selection>another li<caret></selection>ne again
-a<selection><caret>n</selection>d again

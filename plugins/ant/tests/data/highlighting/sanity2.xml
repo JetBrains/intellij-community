@@ -1,7 +1,0 @@
-<project default="<error>aaa</error>">
-  <target name="test">
-    <ant antfile="../<error>test</error>/build.xml" target="<error>all</error>" inheritall="false">
-      <property name="build.dir" value="${build.dir}/test" />
-    </ant>
-  </target>
-</project>

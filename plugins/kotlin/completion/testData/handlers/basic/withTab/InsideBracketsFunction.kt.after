@@ -1,9 +1,0 @@
-fun foo(element: Int): String = ""
-
-fun test() {
-    val element = 1
-    foo(element.dec()<caret>).length
-}
-
-// ELEMENT: dec
-// CHAR: '\t'

@@ -1,8 +1,0 @@
-LineBreakpoint created at privateMemberShadowing.kt:9
-Run Java
-Connected to the target VM
-privateMemberShadowing.kt:9
-Compile bytecode for derived.privateFun()
-Disconnected from the target VM
-
-Process finished with exit code 0

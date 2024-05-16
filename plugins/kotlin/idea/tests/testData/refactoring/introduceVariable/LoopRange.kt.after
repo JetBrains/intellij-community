@@ -1,5 +1,0 @@
-// WITH_STDLIB
-fun a() {
-    val intRange = 1..2
-    for (a in intRange) {}
-}

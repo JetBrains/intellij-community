@@ -1,7 +1,0 @@
-[kotlinOverloadAndExtensionUsages2.0.kt] Function call 12 a.foo("")
-[kotlinOverloadAndExtensionUsages2.0.kt] Function call 16 x.foo(0)
-[kotlinOverloadAndExtensionUsages2.0.kt] Function call 20 O.foo()
-[kotlinOverloadAndExtensionUsages2.0.kt] Usage in import 9 import library.foo
-[kotlinOverloadAndExtensionUsages2Lib1.kt] Function call 12 O.foo()
-[kotlinOverloadAndExtensionUsages2Lib1.kt] Function call 4 a.foo("")
-[kotlinOverloadAndExtensionUsages2Lib1.kt] Function call 8 x.foo(0)

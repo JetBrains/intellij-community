@@ -1,2 +1,0 @@
-start = s<caret>
-start.element = element foo { empty }

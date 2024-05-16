@@ -1,7 +1,0 @@
-<Company xmlns="http://www.company.org" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.company.org schema/Company.xsd">
-    <Person>Blaa</Person>
-    <Product>
-        <<ref>Type>electronics</Type>
-    </Product>
-</Company>

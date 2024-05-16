@@ -1,5 +1,0 @@
-<root xmlns="test.deprecated" <warning descr="The attribute is marked as deprecated">deprecated</warning>="">
-  <<warning descr="The tag is marked as deprecated">deprecated</warning>/>
-  <<warning descr="The tag is marked as deprecated">deprecatedByDoc</warning>/>
-  <<warning descr="The tag is marked as deprecated">deprecatedByCdata</warning>/>
-</root>

@@ -1,7 +1,0 @@
-package test
-
-import dependency.Some
-
-fun test(s1: Some) {
-    val s2 = Some()
-}

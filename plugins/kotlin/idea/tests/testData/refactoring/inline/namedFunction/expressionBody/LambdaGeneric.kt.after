@@ -1,3 +1,0 @@
-fun returnLabel() {
-    val a = Unit
-}

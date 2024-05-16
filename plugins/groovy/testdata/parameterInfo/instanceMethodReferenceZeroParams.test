@@ -1,7 +1,0 @@
-class A {
-  def foo() {}
-}
-def a = new A()
-a::foo(<caret>)
------
-<html>no parameters</html>

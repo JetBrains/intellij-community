@@ -1,8 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="selfreference">
-<path id="Fill 1" fill-rule="evenodd" clip-rule="evenodd" d="M15 8C15 11.866 11.866 15 8 15C4.134 15 1 11.866 1 8C1 4.134 4.134 1 8 1C11.866 1 15 4.134 15 8Z" fill="#F4AF3D" fill-opacity="0.6"/>
-<path id="Fill 3" fill-rule="evenodd" clip-rule="evenodd" d="M6.88181 12H8.00001V7H9.38981V6.04517H8.00001C8.00001 6.04517 8.00001 4.66254 9.70581 5.043L9.98181 4.217C9.82881 4.162 9.65581 4.112 9.46281 4.067C9.26981 4.022 9.05781 4 8.82681 4C8.52281 4 8.24881 4.034 8.00681 4.103C7.76481 4.171 7.56081 4.287 7.39481 4.451C7.22881 4.615 7.10895 4.768 7.02095 5.043C6.93295 5.319 6.88181 5.62717 6.88181 6.04517L5.74481 6.5V7H6.88181V12Z" fill="#231F20" fill-opacity="0.7"/>
-<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M8 15C11.866 15 15 11.866 15 8C15 6.32167 14.4094 4.7813 13.4246 3.57541L15 2H11V6L12.6892 4.31079C12.7014 4.32395 12.7138 4.3372 12.7262 4.35054C13.2762 4.94091 14 5.71795 14 7.5C14 11.0898 11.3137 14 8 14C4.68629 14 2 11.0898 2 7.5C2 5.11748 2.79798 3.03435 4.55913 1.90265C2.43426 3.10434 1 5.38467 1 8C1 11.866 4.13401 15 8 15Z" fill="#231F20" fill-opacity="0.7"/>
-</g>
-</svg>

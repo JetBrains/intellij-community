@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun getValue(i: Int): String = ""
-
-fun test() {
-    arrayOf(1).associateWith { getValue(it) }
-}

@@ -1,8 +1,0 @@
-<grammar xmlns="http://relaxng.org/ns/structure/1.0" ns="urn:test:simple.rng">
-  <start>
-    <ref name="foo" />
-  </start>
-
-  <define name="foo" />
-  <define name="foo" combine="choice"/>
-</grammar>

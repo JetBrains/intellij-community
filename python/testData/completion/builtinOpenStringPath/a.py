@@ -1,1 +1,0 @@
-open('foo<caret>')

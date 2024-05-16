@@ -1,1 +1,0 @@
-<warning descr="Too few arguments for format string">'{3}, {1}, {0}'</warning>.format(*'abc')

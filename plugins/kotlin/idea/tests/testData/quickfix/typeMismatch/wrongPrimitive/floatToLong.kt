@@ -1,5 +1,0 @@
-// "Change to '1L'" "true"
-val a = foo(1.0<caret>)
-fun foo(l: Long) = l
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrongPrimitiveLiteralFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrongPrimitiveLiteralFix

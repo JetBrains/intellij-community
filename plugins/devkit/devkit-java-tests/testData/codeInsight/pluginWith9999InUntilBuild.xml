@@ -1,7 +1,0 @@
-<idea-plugin>
-  <id>test</id>
-  <vendor>JetBrains</vendor>
-  <version>1.0</version>
-
-  <idea-version since-build="145.0" until-build="<error descr="Don't use '9999' in 'until-build', use '*' instead">145.9999</error>"/>
-</idea-plugin>

@@ -1,2 +1,0 @@
-distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${context.getBomProperty("maven.version")}/apache-maven-${context.getBomProperty("maven.version")}-bin.zip
-wrapperUrl=https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/${context.getBomProperty("maven.wrapper.version")}/maven-wrapper-${context.getBomProperty("maven.wrapper.version")}.jar

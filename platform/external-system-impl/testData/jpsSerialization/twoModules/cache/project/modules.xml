@@ -1,8 +1,0 @@
-<project>
-  <component name="ExternalProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/foo.iml" filepath="$PROJECT_DIR$/test.iml" />
-      <module fileurl="file://$PROJECT_DIR$/foo.test.iml" filepath="$PROJECT_DIR$/test2.iml" />
-    </modules>
-  </component>
-</project>

@@ -1,1 +1,0 @@
-[some link]() <caret>

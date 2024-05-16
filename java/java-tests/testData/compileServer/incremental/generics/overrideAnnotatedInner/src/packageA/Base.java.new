@@ -1,7 +1,0 @@
-package packageA;
-
-public class Base {
-  public void foo(java.util.List<String> params) {
-    System.out.println(params);
-  }
-}

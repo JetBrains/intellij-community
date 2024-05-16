@@ -1,7 +1,0 @@
-<section xmlns='<error>urn:com:books-r-us</error>'>
-   <title>Book-Signing Event</title>
-   <signing xmlns=''>
-     <author title="Mr" name="Vikram Seth" />
-     <book title="A Suitable Boy" price="$22.95" />
-   </signing>
-</section>

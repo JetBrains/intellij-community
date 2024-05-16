@@ -1,8 +1,0 @@
-#empty lines before and after caret
-top:
-  first: value1
-
-
-next:
-  subKey:<caret>
-

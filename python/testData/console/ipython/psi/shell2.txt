@@ -1,3 +1,0 @@
-PyFile:shell2.py
-  PyEmptyExpression
-    PsiElement(Py:SHELL_COMMAND)('!cd /var/etc')

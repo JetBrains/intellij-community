@@ -1,1 +1,0 @@
-[link](https://github.com/any_username/any_repository/wiki/topDir/stub_with_repeated_extension.md)

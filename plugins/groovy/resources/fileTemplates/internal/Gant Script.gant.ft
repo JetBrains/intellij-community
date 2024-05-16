@@ -1,5 +1,0 @@
-#parse("File Header.java")
-
-target('default': 'The default target') {
-  
-}

@@ -1,2 +1,0 @@
-(echo a &)
-(echo a)

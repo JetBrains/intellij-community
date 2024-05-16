@@ -1,8 +1,0 @@
-{
-    "mainFile": "KotlinInterface.kt",
-    "usages": [
-        "DefaultRead.java",
-        "Read.java",
-        "Read.kt"
-    ]
-}

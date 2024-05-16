@@ -1,1 +1,0 @@
-if (!gets<caret>_s(buffer, sizeof(buffer)-1))

@@ -1,3 +1,0 @@
-s<caret>ome text
-s<caret>ome other <selection>text<caret></selection>
-anot<caret>her line of text

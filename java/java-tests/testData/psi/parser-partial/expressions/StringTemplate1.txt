@@ -1,9 +1,0 @@
-PsiJavaFile:StringTemplate1.java
-  PsiTemplateExpression
-    PsiReferenceExpression:STR
-      PsiReferenceParameterList
-        <empty list>
-      PsiIdentifier:STR('STR')
-    PsiJavaToken:DOT('.')
-    PsiLiteralExpression:""
-      PsiJavaToken:STRING_LITERAL('""')

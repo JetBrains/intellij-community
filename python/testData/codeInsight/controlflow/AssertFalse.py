@@ -1,2 +1,0 @@
-assert False
-print("Unreachable")

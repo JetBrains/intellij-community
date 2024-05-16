@@ -1,5 +1,0 @@
-class Doos {
-    fun test() {
-
-    }
-}

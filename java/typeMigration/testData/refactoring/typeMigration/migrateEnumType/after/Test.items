@@ -1,8 +1,0 @@
-Types:
-PsiField:someEnum : int
-
-Conversions:
-
-New expression type changes:
-Fails:
-SomeEnum.ENUM_VALUE_1->int

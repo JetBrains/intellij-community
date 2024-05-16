@@ -1,7 +1,0 @@
-public class Test {
-    boolean check(String fruit) {
-        return <spot>"Apple".equals(fruit) ||
-                "Pear".equals(fruit) ||
-                "Banana".equals(fruit)</spot>;
-    }
-}

@@ -1,9 +1,0 @@
-// IGNORE_BACKEND: JVM_IR_WITH_OLD_EVALUATOR
-LineBreakpoint created at inlineMethodsInSignature.kt:8
-Run Java
-Connected to the target VM
-inlineMethodsInSignature.kt:8
-Compile bytecode for (i) as Any?
-Disconnected from the target VM
-
-Process finished with exit code 0

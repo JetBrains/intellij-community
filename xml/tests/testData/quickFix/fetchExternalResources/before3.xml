@@ -1,5 +1,0 @@
-<!-- "Fetch external resource" "true" -->
-
-<rap xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="myschema http://www.inversoft.com/sche<caret>mas/rap/rap-config-1.0.xsd">
-</rap>

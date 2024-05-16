@@ -1,1 +1,0 @@
-(1, 2)[<error descr="Axis step cannot be used here: the context item is an atomic value">@foo</error>]

@@ -1,6 +1,0 @@
-<<error>a</error>:b>
-  <<error>a</error>:c/>
-  <xml:a></xml:a>
-  <jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.0"/>
-  <jsp:root xmlns:jsp="<error></error>" version="2.0"/>
-</<error>a</error>:b>

@@ -1,7 +1,0 @@
-package one.two.three
-
-val testVal = 42
-
-fun test() {
-    one.two.three.testVal
-}

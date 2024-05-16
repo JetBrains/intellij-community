@@ -1,7 +1,0 @@
- class Foo {
-   def field
-
-   def Foo(<spot>def field</spot>) {
-    <spot>this.field = field</spot>
-   }
- }

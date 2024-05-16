@@ -1,8 +1,0 @@
-PsiJavaFile:EnumBody7.java
-  PsiJavaToken:LBRACE('{')
-  PsiWhiteSpace(' ')
-  PsiJavaToken:COMMA(',')
-  PsiWhiteSpace(' ')
-  PsiJavaToken:SEMICOLON(';')
-  PsiWhiteSpace(' ')
-  PsiJavaToken:RBRACE('}')

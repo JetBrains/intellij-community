@@ -1,9 +1,0 @@
-PsiJavaFile:ArrayInitializer2.java
-  PsiArrayInitializerExpression:{ 1, }
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace(' ')
-    PsiLiteralExpression:1
-      PsiJavaToken:INTEGER_LITERAL('1')
-    PsiJavaToken:COMMA(',')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:RBRACE('}')

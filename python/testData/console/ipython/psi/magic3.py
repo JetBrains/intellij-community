@@ -1,1 +1,0 @@
-%config Class.trait=value

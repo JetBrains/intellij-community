@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun add(i: Int) {
-    i.run { println(this + 1) }
-}

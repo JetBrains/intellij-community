@@ -1,1 +1,0 @@
-import <warning descr="Python version 2.7 does not have module _bz2">_bz2</warning>

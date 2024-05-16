@@ -1,4 +1,0 @@
-// AFTER-WARNING: Parameter 't' is never used
-fun <T> T.foo(t: T) {}
-
-fun test() = String::foo

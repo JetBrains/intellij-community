@@ -1,7 +1,0 @@
-// "Change parameter 'x' type of function 'foo' to '(String) -> Int'" "true"
-package bar
-fun foo(w: Int = 0, x: (String) -> Int, y: Int = 0, z: (Int) -> Int = {42}) {
-    foo(1, { a: String -> 42}<caret>, 1)
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

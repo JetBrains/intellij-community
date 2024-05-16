@@ -1,8 +1,0 @@
-pluginManagement {
-    plugins {
-        id "org.jetbrains.kotlin.jvm" version kotlinPluginVersion
-    }
-}
-plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '{{FOOJAY_VERSION}}'
-}

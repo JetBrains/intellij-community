@@ -1,5 +1,0 @@
-<all>{x->x}<end>
-if (true) ({x->x})
------
-def preved = { x->x}<caret>
-if (true) preved

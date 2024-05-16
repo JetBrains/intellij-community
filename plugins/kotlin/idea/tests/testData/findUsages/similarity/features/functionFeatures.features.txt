@@ -1,6 +1,0 @@
-FUNCTION_CLASS: class org.jetbrains.kotlin.psi.KtNamedFunction => 1,
-OVERRIDE: false => 1,
-RETURN_TYPE: Bar => 1,
-RECEIVER_TYPE_REFERENCE: true => 1,
-NAME: f => 1,
-PARAMETER_TYPE: USAGE: Foo => 1

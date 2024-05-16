@@ -1,5 +1,0 @@
-public class X {
-  int myParameter;
-  void f(int <spot>parameter</spot>) {
-  }
-}

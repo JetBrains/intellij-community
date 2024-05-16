@@ -1,4 +1,0 @@
-// "Move to constructor" "true"
-class A(vararg val strings: String) {
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorIntention

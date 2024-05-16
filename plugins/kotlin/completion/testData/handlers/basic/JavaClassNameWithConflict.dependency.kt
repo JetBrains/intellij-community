@@ -1,5 +1,0 @@
-package three
-
-class Nest {
-
-}

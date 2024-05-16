@@ -1,6 +1,0 @@
-// WITH_STDLIB
-// FIR_COMPARISON
-val list = mutableListOf(<caret>)
-
-// ELEMENT: mutableListOf
-// TAIL_TEXT: "(vararg elements: T) (kotlin.collections)"

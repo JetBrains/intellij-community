@@ -1,1 +1,0 @@
-type alias[T, U] = dict[T, U]

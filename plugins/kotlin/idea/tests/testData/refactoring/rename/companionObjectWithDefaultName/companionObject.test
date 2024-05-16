@@ -1,7 +1,0 @@
-{
-  "type": "KOTLIN_CLASS",
-  "classId": "/Foo.Companion",
-  "newName": "Baz",
-  "mainFile": "toBeRenamed.kt",
-  "enabledInK2": true
-}

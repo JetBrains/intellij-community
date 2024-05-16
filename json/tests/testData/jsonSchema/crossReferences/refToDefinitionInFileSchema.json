@@ -1,7 +1,0 @@
-{
-  "properties": {
-    "searcher": {
-      "$ref": "definitionsSchema.json#/definitions/find<caret>Me"
-    }
-  }
-}

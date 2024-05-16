@@ -1,1 +1,0 @@
-a <error descr="Elvis assignment is not supported in current version">?=</error> b

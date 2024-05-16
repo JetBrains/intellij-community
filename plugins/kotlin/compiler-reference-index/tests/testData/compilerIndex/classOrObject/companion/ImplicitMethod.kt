@@ -1,3 +1,0 @@
-fun ImplicitMethod() {
-    MainClass.f()
-}

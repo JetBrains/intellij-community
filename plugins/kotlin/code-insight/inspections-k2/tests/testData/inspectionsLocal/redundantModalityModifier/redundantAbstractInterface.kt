@@ -1,1 +1,0 @@
-<caret>abstract interface AbstractInterface

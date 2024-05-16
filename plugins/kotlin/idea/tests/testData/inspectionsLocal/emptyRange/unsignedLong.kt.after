@@ -1,2 +1,0 @@
-// WITH_STDLIB
-val range = 1UL downTo 0UL

@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun test(list: List<Int>?): Boolean {
-    return list?.any { it == 1 } == true
-}

@@ -1,1 +1,0 @@
-class Main(a<caret>: Int)

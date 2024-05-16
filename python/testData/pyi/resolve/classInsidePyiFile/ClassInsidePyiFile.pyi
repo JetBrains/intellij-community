@@ -1,6 +1,0 @@
-class C:
-    def f() -> None: ...
-
-
-def g() -> C: ...
-#          <ref>

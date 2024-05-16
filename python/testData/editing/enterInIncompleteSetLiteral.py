@@ -1,1 +1,0 @@
-xs = {'foo', 'bar',<caret>

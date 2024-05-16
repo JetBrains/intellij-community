@@ -1,8 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd">
-    <polygon fill="#F26522" points="8 11.001 11 8.502 8 6 8 8.001 3 8.001 3 9.001 8 9.001"/>
-    <polygon fill="#62B543" points="2 5.497 5 8.001 5 6 10 6 10 5 5 5 5 3.001"/>
-    <polygon fill="#9AA7B0" points="10 3.001 13.975 7.461 10.001 12 10.023 12 11.024 11.961 14.999 7.461 11 3.001"/>
-  </g>
-</svg>

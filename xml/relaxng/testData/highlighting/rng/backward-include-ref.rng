@@ -1,8 +1,0 @@
-<grammar xmlns="http://relaxng.org/ns/structure/1.0" ns="backward-include-def.rng">
-
-  <define name="foo" combine="choice">
-    <element name="bar">
-      <ref name="backward" />
-    </element>
-  </define>
-</grammar>

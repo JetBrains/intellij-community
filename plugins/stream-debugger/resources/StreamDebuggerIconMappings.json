@@ -1,7 +1,0 @@
-{
-  "icons": {
-    "expui": {
-        "traceStream.svg": "icons/stream_debugger.svg"
-    }
-  }
-}

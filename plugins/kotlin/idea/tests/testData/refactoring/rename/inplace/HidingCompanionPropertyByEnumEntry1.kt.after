@@ -1,8 +1,0 @@
-// NEW_NAME: e
-// RENAME: member
-enum class MyEnum {
-    e;
-    companion object { val <caret>e = 1 }
-    fun context() = println(e.hashCode() + Companion.e)
-}
-fun external() = println(MyEnum.e.hashCode() + MyEnum.Companion.e)

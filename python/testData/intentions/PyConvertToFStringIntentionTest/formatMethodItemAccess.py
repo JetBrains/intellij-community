@@ -1,1 +1,0 @@
-'{0[spam][foo][10]} {foo.baz[bar]]}'.format(create_dict(), foo=42)

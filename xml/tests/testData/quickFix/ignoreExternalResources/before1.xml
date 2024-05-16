@@ -1,3 +1,0 @@
-<!-- "Ignore external resource" "true" -->
-
-<foo xmlns="urn:macro<caret>media-extension" />

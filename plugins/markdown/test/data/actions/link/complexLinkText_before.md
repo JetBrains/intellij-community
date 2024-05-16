@@ -1,1 +1,0 @@
-[li<caret>nk [foo [bar]]](/uri)

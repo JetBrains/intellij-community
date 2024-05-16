@@ -1,6 +1,0 @@
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.VBox?>
-<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="QuickfixNoField">
-    <TableView onSort="#on<caret>Sort">
-    </TableView>
-</VBox>

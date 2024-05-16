@@ -1,9 +1,0 @@
-// "Remove parameter 'x'" "true"
-interface TypeHolder<T, U>
-
-fun baz(<caret>) {}
-
-fun test(holder: TypeHolder<String, Int>) {
-    baz()
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix

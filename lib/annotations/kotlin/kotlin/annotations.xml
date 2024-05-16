@@ -1,8 +1,0 @@
-<root>
-  <item name='kotlin.Deprecated java.lang.String message()'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='kotlin.Suppress java.lang.String[] names()'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-</root>

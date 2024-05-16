@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.control.*?>
-
-<GridPane xmlns:fx="http://javafx.com/fxml" alignment="cent<caret>er">
-</GridPane>

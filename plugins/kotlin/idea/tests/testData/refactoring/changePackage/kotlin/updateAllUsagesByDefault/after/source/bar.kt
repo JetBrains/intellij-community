@@ -1,3 +1,0 @@
-package source
-
-class C

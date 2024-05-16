@@ -1,7 +1,0 @@
-{}
------
-Groovy script
-  Block statement
-    Open block
-      PsiElement({)('{')
-      PsiElement(})('}')

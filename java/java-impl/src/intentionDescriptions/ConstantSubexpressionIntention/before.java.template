@@ -1,5 +1,0 @@
-public class X {
-  void f() {
-    int i = 30 * 60 <spot>*</spot> 60;
-  }
-}

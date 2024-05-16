@@ -1,3 +1,0 @@
-var = unknown()
-assert isinstance(var, object)
-<spot>var.</spot>

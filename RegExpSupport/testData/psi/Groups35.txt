@@ -1,7 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\k<adsf>>
-    RegExpBranchImpl: <\k<adsf>>
-      RegExpNamedGroupRefImpl: <\k<adsf>>
-        PsiElement(RUBY_NAMED_GROUP_REF)('\k<')
-        PsiElement(NAME)('adsf')
-        PsiElement(GT)('>')

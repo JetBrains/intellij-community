@@ -1,9 +1,0 @@
-/** Groovydoc comment   */
-def foo() {
-
-}
------
-/** Groovydoc comment   */
-def foo() {
-
-}

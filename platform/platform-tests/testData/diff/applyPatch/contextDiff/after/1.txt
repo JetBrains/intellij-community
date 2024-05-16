@@ -1,6 +1,0 @@
-one
-two
-three
-cuatro
-five
-seven

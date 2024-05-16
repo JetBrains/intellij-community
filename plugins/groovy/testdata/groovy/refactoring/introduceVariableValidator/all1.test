@@ -1,9 +1,0 @@
-class A {
-  def foo() {
-    def f = {preved -> preved}
-    for (preved in 1..3) {}
-    <begin>21<end>
-  }
-}
------
-ok

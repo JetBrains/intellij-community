@@ -1,3 +1,0 @@
-Unclassified 2 open class X : A
-Unclassified 4 val a = object : A {}
-Unclassified 7 val b = object : X() {}

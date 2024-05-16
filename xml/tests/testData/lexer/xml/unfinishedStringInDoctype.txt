@@ -1,7 +1,0 @@
-XML_DOCTYPE_START ('<!DOCTYPE')
-WHITE_SPACE (' ')
-XML_NAME ('faces-config')
-WHITE_SPACE (' ')
-XML_DOCTYPE_PUBLIC ('PUBLIC')
-WHITE_SPACE (' ')
-XML_ATTRIBUTE_VALUE_TOKEN ('"-//Sun Microsystems, Inc.//DTD JavaServer Faces Config1.0//EN')

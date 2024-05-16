@@ -1,1 +1,0 @@
-@Endorsers({"Children", "Unscrupulous dentisits"}) public class Lollilop {}

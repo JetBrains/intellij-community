@@ -1,5 +1,0 @@
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.GridPane?>
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="Controller">
-    <Button onAction="#sayHelloWorld"/>
-</GridPane>

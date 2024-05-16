@@ -1,6 +1,0 @@
-for (a in b)//comment
-{}
------
-for (a in b)//comment
-{
-}

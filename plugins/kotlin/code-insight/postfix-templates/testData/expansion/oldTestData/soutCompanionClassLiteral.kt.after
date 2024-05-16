@@ -1,9 +1,0 @@
-class Enclosing {
-    companion object {
-        const val x = 1
-    }
-}
-
-fun main() {
-    println(Enclosing.Companion::class)
-}

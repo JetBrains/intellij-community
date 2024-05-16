@@ -1,5 +1,0 @@
-mutation ($id: ID!) {
-    deleteIssueComment(input: {id: $id}) {
-        __typename
-    }
-}

@@ -1,2 +1,0 @@
-<!-- typeMismatchDueToProjectionsTxt1 -->
-Type mismatch: inferred type is MutableCollection<CharSequence> but Collection<Nothing> was expected

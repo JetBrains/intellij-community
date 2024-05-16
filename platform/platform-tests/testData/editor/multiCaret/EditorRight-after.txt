@@ -1,4 +1,0 @@
-some text
-<caret>some other<caret> text
-yet ano<caret>ther line<caret>
-<caret>

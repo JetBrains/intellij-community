@@ -1,1 +1,0 @@
-xs:date($i) + <error descr="Expected type 'xs:duration', got 'xs:date?'">xs:date($j)</error>

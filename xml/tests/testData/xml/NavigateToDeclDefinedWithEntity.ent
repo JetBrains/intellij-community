@@ -1,2 +1,0 @@
-<!ELEMENT mapping (#PCDATA)>
-<!ATTLIST mapping id ID #IMPLIED>

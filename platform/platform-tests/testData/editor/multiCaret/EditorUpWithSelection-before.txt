@@ -1,4 +1,0 @@
-some<caret> text
-some other t<caret>e<selection>x<caret></selection>t
-blah blah
-yet a<selection><caret>no</selection>ther line

@@ -1,9 +1,0 @@
-<idea-plugin>
-  <dependencies>
-    <module name="intellij.platform.vcs.impl"/>
-  </dependencies>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
-  </extensions>
-</idea-plugin>

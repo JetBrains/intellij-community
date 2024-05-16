@@ -1,3 +1,0 @@
-var sxy = Timeline {
-<caret>
-}

@@ -1,8 +1,0 @@
-<problems>
-  <problem>
-    <file>MyTest.java</file>
-    <line>5</line>
-    <description>Reassigned local variable</description>
-    <highlighted_element>j</highlighted_element>
-  </problem>
-</problems>

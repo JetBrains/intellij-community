@@ -1,7 +1,0 @@
-Requirements File(0,27)
-  OptionImpl(OPTION)(0,27)
-    PsiElement(RequirementsTokenType.LONG_OPTION)('--')(0,2)
-    UseFeatureReqImpl(USE_FEATURE_REQ)(2,27)
-      PsiElement(RequirementsTokenType.USE_FEATURE)('use-feature')(2,13)
-      PsiWhiteSpace(' ')(13,14)
-      PsiElement(RequirementsTokenType.IDENTIFIER)('2020-resolver')(14,27)

@@ -1,7 +1,0 @@
-test.java.file
-  IF_STATEMENT
-    IF_KEYWORD
-    WHITE_SPACE
-    LPARENTH
-    ERROR_ELEMENT
-      <empty list>

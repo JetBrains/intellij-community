@@ -1,6 +1,0 @@
-<idea-plugin implementation-detail="true">
-  <id>plugin.with.icon</id>
-  <name>Icon not necessary</name>
-  <vendor>Icons Inc.</vendor>
-  <version>1.0</version>
-</idea-plugin>

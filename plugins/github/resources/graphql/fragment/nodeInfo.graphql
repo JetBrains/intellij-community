@@ -1,3 +1,0 @@
-fragment nodeInfo on Node {
-  id
-}

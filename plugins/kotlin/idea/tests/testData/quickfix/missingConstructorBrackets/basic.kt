@@ -1,5 +1,0 @@
-// "Add empty brackets after primary constructor" "true"
-
-class Fruit private constructor<caret> {
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MissingConstructorBracketsFix

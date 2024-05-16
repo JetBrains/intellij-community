@@ -1,3 +1,0 @@
-a    =    /abc${basedir}    src/
------
-a = /abc${basedir}    src/

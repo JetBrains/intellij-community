@@ -1,2 +1,0 @@
-Function call 7 a.extFun()
-Usage in import 3 import server.extFun

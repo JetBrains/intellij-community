@@ -1,8 +1,0 @@
-// RUNTIME
-// FIR_COMPARISON
-// FIR_IDENTICAL
-fun foo(p: StringBuilder<caret>) {
-}
-
-// ELEMENT: StringBuilder
-// TAIL_TEXT: " (kotlin.text)"

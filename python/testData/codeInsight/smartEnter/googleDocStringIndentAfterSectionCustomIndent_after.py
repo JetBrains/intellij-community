@@ -1,5 +1,0 @@
-def f():
-    """
-    Raises:
-      <caret>
-    """

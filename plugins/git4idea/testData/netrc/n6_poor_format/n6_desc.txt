@@ -1,1 +1,0 @@
-n6 poorly formatted netrc for 1 host

@@ -1,5 +1,0 @@
-// WITH_STDLIB
-
-fun test() {
-    val x = 1.0E10f
-}

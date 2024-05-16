@@ -1,1 +1,0 @@
-baz: Union[i<caret>nt, str] = 1

@@ -1,9 +1,0 @@
-Types:
-PsiLocalVariable:set : java.util.Set<B>
-PsiParameter:s : java.util.AbstractSet<B>
-PsiReferenceExpression:s : java.util.AbstractSet<B>
-
-Conversions:
-
-New expression type changes:
-Fails:

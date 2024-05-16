@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.vcs.FilePredictionVcsFilesProvider"/>
-    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.vcs.FilePredictionVcsFeatures"/>
-  </extensions>
-</idea-plugin>

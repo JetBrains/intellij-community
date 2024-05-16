@@ -1,2 +1,0 @@
-Receiver 10 } while (message.isEmpty())
-Value read 9 println(message)

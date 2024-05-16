@@ -1,2 +1,0 @@
-foo/InheritorSameModuleSamePackage1
-foo/InheritorSameModuleSamePackage2

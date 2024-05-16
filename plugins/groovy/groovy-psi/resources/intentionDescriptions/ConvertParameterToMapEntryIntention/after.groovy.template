@@ -1,5 +1,0 @@
-def foo(args) {
-  use(args.arg1 + args.arg2 + args.arg3)
-}
-
-foo(args1: "Hello, ", arg2: "world", arg3: "!")

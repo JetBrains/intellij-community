@@ -1,9 +1,0 @@
-PyFile:shellError.py
-  PyExpressionStatement
-    PyReferenceExpression: int
-      PsiElement(Py:IDENTIFIER)('int')
-    PsiErrorElement:End of statement expected
-      <empty list>
-  PsiElement(Py:SHELL_COMMAND)('!')
-  PsiErrorElement:Statement expected, found Py:SHELL_COMMAND
-    <empty list>

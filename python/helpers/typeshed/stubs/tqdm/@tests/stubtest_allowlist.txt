@@ -1,4 +1,0 @@
-# Cannot import in stubtest
-tqdm.__main__
-# disco-py fails to install through pip and is an archived project
-tqdm.contrib.discord

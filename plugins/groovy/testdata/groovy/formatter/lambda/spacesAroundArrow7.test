@@ -1,7 +1,0 @@
-<option>SPACE_AROUND_LAMBDA_ARROW=false</option>
-def l = ()->{
-print 2 }
------
-def l = ()->{
-  print 2
-}

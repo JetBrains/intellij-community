@@ -1,3 +1,0 @@
-some <selection><caret>text</selection>
-some <selection>other text<caret></selection>
-<selection>an<caret>other line</selection>

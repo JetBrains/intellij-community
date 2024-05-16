@@ -1,2 +1,0 @@
-# Stub-only module.
-exifread._types

@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun Array<String>.test() {
-    for (element in this) {
-        val out = element
-    }
-}

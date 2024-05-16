@@ -1,5 +1,0 @@
-package packageA;
-
-public class A {
-  public int P;
-}

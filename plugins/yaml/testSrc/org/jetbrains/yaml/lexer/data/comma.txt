@@ -1,4 +1,0 @@
-scalar key ('key')
-: (':')
-whitespace (' ')
-text ('Hello, how are you?')

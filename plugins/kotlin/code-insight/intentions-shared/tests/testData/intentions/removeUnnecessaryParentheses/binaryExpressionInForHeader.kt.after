@@ -1,5 +1,0 @@
-// WITH_STDLIB
-fun main() {
-    for (i in listOf(1)
-            + listOf(2)) {}
-}

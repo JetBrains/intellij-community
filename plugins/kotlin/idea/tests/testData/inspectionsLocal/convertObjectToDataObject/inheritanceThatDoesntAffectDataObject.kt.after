@@ -1,7 +1,0 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+DataObjects
-
-open class Base {
-    open protected fun foo() = "Base"
-}
-
-data object Foo : Base()

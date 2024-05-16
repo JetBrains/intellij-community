@@ -1,1 +1,0 @@
-a = <error descr="Unresolved reference 'true'"><caret>true</error>

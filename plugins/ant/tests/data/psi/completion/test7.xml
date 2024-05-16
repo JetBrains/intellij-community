@@ -1,7 +1,0 @@
-<project default="">
-  <property name="java.asasdasdg.asjdg" value="v"/>
-  <property name="java.asdasg.sdfsjdg" value="v"/>
-  <property name="java.asdasg.sdfssadjdg" value="v"/>
-
-  <antcall target="${java.<caret>asdg.asjdgjh}"/>
-</project>

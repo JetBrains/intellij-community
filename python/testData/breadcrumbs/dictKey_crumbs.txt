@@ -1,4 +1,0 @@
-Crumb:
-"abc"
-Tooltip:
-"abc"

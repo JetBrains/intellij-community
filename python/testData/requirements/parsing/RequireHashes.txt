@@ -1,5 +1,0 @@
-Requirements File(0,16)
-  OptionImpl(OPTION)(0,16)
-    PsiElement(RequirementsTokenType.LONG_OPTION)('--')(0,2)
-    RequireHashesReqImpl(REQUIRE_HASHES_REQ)(2,16)
-      PsiElement(RequirementsTokenType.REQUIRE_HASHES)('require-hashes')(2,16)

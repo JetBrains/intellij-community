@@ -1,4 +1,0 @@
-<invalid-element xmlns="urn:test:simple.rng">
-  <required />
-  <<error>required</error> />
-</invalid-element>

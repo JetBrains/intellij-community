@@ -1,8 +1,0 @@
-for (path in list) {
-    pri<caret>ntln path
-}
------
-for (path in list) {
-    println path
-    <caret>
-}

@@ -1,3 +1,0 @@
-fun <K, T> foo(x: (K) -> T): Pair<K, T>
-
-val x = foo<Int, <spot>_</spot>> { it.toFloat() }

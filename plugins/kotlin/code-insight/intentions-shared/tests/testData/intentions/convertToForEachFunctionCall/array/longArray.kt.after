@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun foo() {
-    longArrayOf(1).forEach { x ->
-        println(x)
-    }
-}

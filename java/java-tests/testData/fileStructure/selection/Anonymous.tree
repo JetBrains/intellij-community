@@ -1,8 +1,0 @@
--Anonymous.java
- -Anonymous
-  Anonymous()
-  foo(): void
-  num1: int
-  num2: int
-  -[o: Object = new Object() {...}]
-   $1

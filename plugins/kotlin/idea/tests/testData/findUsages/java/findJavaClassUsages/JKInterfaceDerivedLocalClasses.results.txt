@@ -1,3 +1,0 @@
-Unclassified 4 open class X : A
-Unclassified 7 open class Y : X()
-Unclassified 9 class Z : T

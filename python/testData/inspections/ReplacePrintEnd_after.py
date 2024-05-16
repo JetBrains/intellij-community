@@ -1,1 +1,0 @@
-print(var, end=' ')

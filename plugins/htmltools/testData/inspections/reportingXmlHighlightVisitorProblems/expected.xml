@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>ReportingXmlHighlightVisitorProblems.xhtml</file>
-    <line>2</line>
-    <description>Attribute cl is not allowed here #loc</description>
-  </problem>
-</problems>
-

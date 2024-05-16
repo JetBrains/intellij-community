@@ -1,6 +1,0 @@
-def <selection>s</selection>='abc"cde';
-print "$s"
-print """$s"""
------
-<caret>print "abc\"cde"
-print """abc"cde"""

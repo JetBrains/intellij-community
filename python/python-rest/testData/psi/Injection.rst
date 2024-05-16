@@ -1,2 +1,0 @@
-.. code-block::
-  import datetime

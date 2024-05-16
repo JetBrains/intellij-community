@@ -1,7 +1,0 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="zzz" xmlns="zzz">
-  <xsd:complexType name="xxx">
-    <xsd:sequence>
-      <xsd:element name="e" type="xsd:string" minOccurs="1" maxOccurs=<error>"0"</error>/>
-    </xsd:sequence>
-  </xsd:complexType>
-</xsd:schema>

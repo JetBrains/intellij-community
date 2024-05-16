@@ -1,9 +1,0 @@
-[javaPropertyGetterUsagesKJ.0.java] Unclassified 17 new A().getP();
-[javaPropertyGetterUsagesKJ.0.java] Unclassified 20 new AA().getP();
-[javaPropertyGetterUsagesKJ.0.java] Unclassified 23 new J().getP();
-[javaPropertyGetterUsagesKJ.0.java] Unclassified 26 new B().getP();
-[javaPropertyGetterUsagesKJ.1.kt] Value read 14 val t = A().p
-[javaPropertyGetterUsagesKJ.1.kt] Value read 17 val t2 = AA().p
-[javaPropertyGetterUsagesKJ.1.kt] Value read 20 val t3 = J().p
-[javaPropertyGetterUsagesKJ.1.kt] Value read 23 val t4 = B().p
-[javaPropertyGetterUsagesKJ.1.kt] Value write 15 A().p = 1

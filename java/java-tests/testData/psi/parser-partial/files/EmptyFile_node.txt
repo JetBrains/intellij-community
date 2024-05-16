@@ -1,3 +1,0 @@
-test.java.file
-  IMPORT_LIST
-    <empty list>

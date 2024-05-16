@@ -1,6 +1,0 @@
-String s = 'a'
-s = 2
-print <selection>s</selection>
------
-String s = 'a'
-print 2 as String

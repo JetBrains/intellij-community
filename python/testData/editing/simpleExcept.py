@@ -1,3 +1,0 @@
-try:
-  pass
-  except<caret>

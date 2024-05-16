@@ -1,7 +1,0 @@
-import kotlin.math.roundToLong
-
-// FIX: Replace with 'roundToLong' function (may change semantics)
-// WITH_STDLIB
-fun test(x: Double) {
-    x.roundToLong()
-}

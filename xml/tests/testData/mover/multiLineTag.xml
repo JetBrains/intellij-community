@@ -1,8 +1,0 @@
-<test>
-    <element
-            attribute="test1"/>
-    <element
-  <caret>     attribute="test2"/>
-    <element
-            attribute="test3"/>
-</test>

@@ -1,8 +1,0 @@
-// "Import extension function 'defNotNull'" "true"
-// ERROR: Unresolved reference: defNotNull
-// COMPILER_ARGUMENTS: -XXLanguage:+DefinitelyNonNullableTypes
-package pckg.useSite
-
-fun test() {
-    "x".<caret>defNotNull("x")
-}

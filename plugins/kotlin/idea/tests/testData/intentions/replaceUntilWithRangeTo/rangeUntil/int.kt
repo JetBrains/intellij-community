@@ -1,5 +1,0 @@
-// WITH_STDLIB
-@OptIn(kotlin.ExperimentalStdlibApi::class)
-fun test(from: Int, to: Int) {
-    from..<to<caret>
-}

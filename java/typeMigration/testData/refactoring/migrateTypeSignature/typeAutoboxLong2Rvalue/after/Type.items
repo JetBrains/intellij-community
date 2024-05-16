@@ -1,9 +1,0 @@
-Types:
-PsiField:myField : long
-PsiReferenceExpression:myField : long
-
-Conversions:
-p -> $
-
-New expression type changes:
-Fails:

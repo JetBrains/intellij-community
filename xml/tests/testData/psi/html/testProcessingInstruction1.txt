@@ -1,7 +1,0 @@
-HtmlFile:test.html
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      PsiElement(XML_PROCESSING_INSTRUCTION)
-        XmlToken:XML_PI_START('<?')
-        XmlToken:XML_PI_TARGET('This is="PI"')
-        XmlToken:XML_PI_END('?>')

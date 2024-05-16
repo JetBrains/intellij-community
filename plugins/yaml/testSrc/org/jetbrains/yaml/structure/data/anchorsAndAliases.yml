@@ -1,9 +1,0 @@
-First occurrence: &xxx
-  list:
-    - item1
-    - item2
-Second occurrence: *xxx
-Override anchor: &xxx
-  key<caret>: &an val
-Reuse anchor: *xxx
-*an: val2

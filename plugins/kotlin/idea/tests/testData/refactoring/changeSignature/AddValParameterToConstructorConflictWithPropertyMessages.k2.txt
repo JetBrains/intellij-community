@@ -1,1 +1,0 @@
-Property 'p' is already declared in class 'Foo'

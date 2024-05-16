@@ -1,8 +1,0 @@
-x = locals()['foo']  # type: List[Item]
-line, col = hero.pos  # type: int, int
-
-for key, value in d.items():  # type: str, int
-    ...
-
-with open() as f:  # type: io.FIle
-    ...

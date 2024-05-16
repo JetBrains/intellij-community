@@ -1,7 +1,0 @@
-<?import javafx.scene.layout.AnchorPane?>
-<?import java.lang.String?>
-<AnchorPane id="AnchorPane" xmlns:fx="http://javafx.com/fxml">
-  <caret><stylesheets>
-    <String fx:value="mystyle.css"/>
-  </stylesheets>
-</AnchorPane>

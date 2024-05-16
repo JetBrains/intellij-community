@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun test(list: List<Int>) {
-    list.sumOf(fun(it: Int): Int {
-        return 1
-    })
-}

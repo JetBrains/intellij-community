@@ -1,7 +1,0 @@
-@prefix : <http://example.org/stuff/1.0/>.
-:a :b ( "apple" "banana" ).
-
-
-
-
-:a :b ( "apple" "banana" ).

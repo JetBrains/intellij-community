@@ -1,5 +1,0 @@
-print(unicode())
-print(unicode(''))
-print(unicode('', 'utf-8'))
-print(unicode('', 'utf-8', 'ignore'))
-print(unicode<warning descr="Unexpected argument(s)Possible callees:unicode(self: unicode)unicode(self: unicode, o: object)unicode(self: unicode, o: str, encoding: unicode = ..., errors: unicode = ...)">('', 'utf-8', 'ignore', foo)</warning>)

@@ -1,5 +1,0 @@
-public class BaseServer {
-  public final Integer method() {
-    return new Integer(10);
-  }
-}

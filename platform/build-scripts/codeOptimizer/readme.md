@@ -1,1 +1,0 @@
-The obfuscating library makes the API simpler by limiting it to only approved classes. This prevents mistakes, like using the wrong class, for example, the fastutil `Pair`.

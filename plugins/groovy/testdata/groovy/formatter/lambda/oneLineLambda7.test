@@ -1,4 +1,0 @@
-<option>LAMBDA_BRACE_STYLE=NEXT_LINE</option>
-def a=(a,b)->c
------
-def a = (a, b) -> c

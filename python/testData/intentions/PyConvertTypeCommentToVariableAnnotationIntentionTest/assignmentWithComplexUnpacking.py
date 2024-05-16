@@ -1,1 +1,0 @@
-[y, (x, (z))] = undefined()  # ty<caret>pe: Optional[Union[None, Any]], (Callable[..., int], Any)

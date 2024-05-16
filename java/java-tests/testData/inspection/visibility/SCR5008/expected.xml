@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>SuperClass.java</file>
-    <line>3</line>
-    <description>package-private</description>
-  </problem>
-</problems>
-

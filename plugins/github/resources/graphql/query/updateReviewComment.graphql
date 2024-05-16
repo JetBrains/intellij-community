@@ -1,7 +1,0 @@
-mutation ($id: ID!, $body: String!) {
-    updatePullRequestReviewComment(input: {pullRequestReviewCommentId: $id, body: $body}) {
-        pullRequestReviewComment {
-            ...pullRequestReviewComment
-        }
-    }
-}

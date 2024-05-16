@@ -1,4 +1,0 @@
-<!ENTITY % xhtml-inlstyle.mod
-     PUBLIC "-//W3C//ELEMENTS XHTML Inline Style 1.0//EN"
-            "http://www.w3.org/TR/xhtml-modularization/DTD/xhtml-inlstyle-1.mod" >
-%xhtml-inlstyle.mod;

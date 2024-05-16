@@ -1,8 +1,0 @@
-Types:
-PsiParameter:i : int
-
-Conversions:
-#bar(long) -> PsiMethod:bar
-
-New expression type changes:
-Fails:

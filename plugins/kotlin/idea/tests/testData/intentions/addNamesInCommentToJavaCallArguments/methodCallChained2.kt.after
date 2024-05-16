@@ -1,4 +1,0 @@
-// IS_APPLICABLE: true
-fun test(j: Java) {
-    j.chained("test", 2).test(/* foo = */ 4, /* bar = */ 8, /* baz = */ 12)
-}

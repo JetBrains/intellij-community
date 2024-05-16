@@ -1,3 +1,0 @@
-class Integer {
-    int i;
-}

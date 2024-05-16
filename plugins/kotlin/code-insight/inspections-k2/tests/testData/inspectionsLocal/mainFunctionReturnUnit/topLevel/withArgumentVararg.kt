@@ -1,1 +1,0 @@
-fun main(vararg args: String): <caret>Int {}

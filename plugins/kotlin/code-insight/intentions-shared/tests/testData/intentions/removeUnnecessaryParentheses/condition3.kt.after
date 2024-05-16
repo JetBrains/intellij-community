@@ -1,6 +1,0 @@
-// DISABLE-ERRORS
-
-fun foo(value: Int): String {
-    return (("a"
-            + "b") + value / 10 + "c")
-}

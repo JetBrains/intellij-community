@@ -1,1 +1,0 @@
-def x = [[1, 2], [3]] as List<Integer>[]

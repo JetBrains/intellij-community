@@ -1,9 +1,0 @@
-version: "3.9"
-services:
-  gitlab-server:
-    hostname: localhost
-    image: gitlab/gitlab-${EDITION}:${VERSION}-${EDITION}.0
-    shm_size: "256m"
-    volumes:
-      - "${DATA_PATH}/data:/var/opt/gitlab"
-      - "${DATA_PATH}/config:/etc/gitlab"

@@ -1,9 +1,0 @@
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.layout.BorderPane?>
-<BorderPane prefHeight="-1.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml">
-    <center>
-        <LineChart fx:id="chart" alternativeColumnFillVisible="false" alternativeRowFillVisible="false" animated="true"
-                   horizontalGridLinesVisible="true" legendVisible="false">
-        </LineChart>
-    </center>
-</BorderPane>

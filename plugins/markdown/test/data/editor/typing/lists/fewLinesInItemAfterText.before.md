@@ -1,3 +1,0 @@
-* item
-  other line
-  <caret>

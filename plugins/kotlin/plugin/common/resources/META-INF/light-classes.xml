@@ -1,8 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.asJava.classes.LightClassInheritanceHelper"
-            serviceImplementation="org.jetbrains.kotlin.idea.caches.lightClasses.IdeLightClassInheritanceHelper"
-    />
-  </extensions>
-</idea-plugin>

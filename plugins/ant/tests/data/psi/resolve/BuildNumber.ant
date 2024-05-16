@@ -1,6 +1,0 @@
-<project name="n" default="main">
-  <buildnumber/>
-  <target name="main">
-    <property name="my.build.number" value="${<ref>build.number}"/>
-  </target>
-</project>

@@ -1,4 +1,0 @@
-class Test {
-    Test() {<caret>
-    }
-}

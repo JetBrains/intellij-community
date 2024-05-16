@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<root>
-	<sample><inner>text1</inner></sample>
-	<sample>text3<inner><caret></inner>tail</sample>
-</root>

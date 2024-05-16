@@ -1,7 +1,0 @@
-SHELL_SCRIPT
-  COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
-      LITERAL
-        PsiElement(word)('a')
-  PsiElement(\n)('\n')
-  PsiComment(Comment)('#Hey')

@@ -1,8 +1,0 @@
-<idea-plugin>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <completion.ml.contextFeatures language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyContextFeatureProvider"/>
-    <completion.ml.elementFeatures language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyElementFeatureProvider"/>
-    <completion.ml.ranking.features.policy language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyCompletionFeaturesPolicy"/>
-  </extensions>
-</idea-plugin>

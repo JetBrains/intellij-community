@@ -1,2 +1,0 @@
-root:
-  key2: value2

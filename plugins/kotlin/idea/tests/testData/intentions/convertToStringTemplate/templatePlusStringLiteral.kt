@@ -1,5 +1,0 @@
-// AFTER-WARNING: Variable 'nv2' is never used
-fun foo() {
-    val nv1 = 1
-    val nv2 = "$nv1" + <caret>"postfix"
-}

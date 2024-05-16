@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:schemas-dig-de:test2">
-    <xs:import namespace="urn:schemas-dig-de:test3" schemaLocation="<error>XsiSchemaLocation2.xsd</error>"/>
-    <xs:include schemaLocation="<error>XsiSchemaLocation2.xsd</error>"/>
-    <xs:import namespace="urn:schemas-dig-de:test3" schemaLocation="XsiSchemaLocation3.xsd"/>
-    <xs:include schemaLocation="XsiSchemaLocation3.xsd"/>
-    <xs:include schemaLocation="http://www.w3.org/1999/XSL/Transform"/>
-</xs:schema>

@@ -1,7 +1,0 @@
-package one.two;
-
-public class Read {
-    public static void main(String[] args) {
-        int i = KotlinObject.Nested.INSTANCE.getExtension(42);
-    }
-}

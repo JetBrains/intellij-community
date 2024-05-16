@@ -1,5 +1,0 @@
-// NEW_NAME: y
-// RENAME: variable
-fun f() {
-    val f = { <caret>y: Int -> y + y }
-}

@@ -1,8 +1,0 @@
-test.java.file
-  CODE_BLOCK
-    LBRACE
-    WHITE_SPACE
-    EMPTY_STATEMENT
-      SEMICOLON
-    WHITE_SPACE
-    RBRACE

@@ -1,8 +1,0 @@
-import java.util.Optional;
-import java.util.stream.Stream;
-
-public class X {
-    Optional<String> foo(Stream<String> stream) {
-        return stream<spot>.filter(name -> name.startsWith("A")).filter(name -> name.length() > 1)</spot>.findFirst();
-    }
-}

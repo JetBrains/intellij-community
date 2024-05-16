@@ -1,1 +1,0 @@
-if (document-uri(/)) then true() else false()

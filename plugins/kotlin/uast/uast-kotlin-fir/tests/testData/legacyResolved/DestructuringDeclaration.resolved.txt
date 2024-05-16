@@ -1,8 +1,0 @@
-UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpression (identifier = Any) -> Decompiled_Class: Object
-    UBinaryExpression (operator = <other>) -> USimpleNameReferenceExpression (identifier = to) -> Decompiled_Method: to
-    UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
-    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = data) -> Kotlin_Light_Value_Parameter: data
-    UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
-    UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = Pair) -> Decompiled_Class: Pair
-    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String

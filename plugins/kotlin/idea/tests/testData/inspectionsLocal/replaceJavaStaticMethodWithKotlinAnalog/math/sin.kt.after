@@ -1,6 +1,0 @@
-import kotlin.math.sin
-
-// WITH_STDLIB
-fun test(x: Double) {
-    sin(x)
-}

@@ -1,2 +1,0 @@
-<selection><caret>some te</selection>xt
-<selection><caret>other</selection> line

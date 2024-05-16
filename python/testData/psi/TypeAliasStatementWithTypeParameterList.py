@@ -1,1 +1,0 @@
-type MyType[T, U] = Union[T, U]

@@ -1,7 +1,0 @@
-import dependency.AFromDependency
-
-fun test(n: AFromDependency<caret>Int) {}
-
-// FIR_COMPARISON
-// FIR_IDENTICAL
-// ELEMENT: AFromDependency

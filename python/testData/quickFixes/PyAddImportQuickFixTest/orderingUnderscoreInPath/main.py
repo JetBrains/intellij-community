@@ -1,1 +1,0 @@
-<error descr="Unresolved reference 'path'">pa<caret>th</error>

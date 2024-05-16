@@ -1,4 +1,0 @@
-//h3[@id='cmnts'] (:The h3 element with id comnts,  :)
-/following-sibling::p[1]  (:The p element child (:Oh yes it is:):)
-/xsl:value-of/@select (:the value-of child, its select attribute :)
-/string(:comment:)(child(:comment:)::*)

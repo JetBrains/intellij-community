@@ -1,7 +1,0 @@
-// FIR_COMPARISON
-/**
- * [dependency.FooBar<caret>]
- */
-fun test() {}
-
-// ELEMENT: FooBar

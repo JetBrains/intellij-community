@@ -1,5 +1,0 @@
-<schema xmlns="http://www.w3.org/2001/XMLSchema"
-        targetNamespace="test">
-    <import schemaLocation="../foo.xsd"/>
-    <element name="root"/>
-</schema>

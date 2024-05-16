@@ -1,2 +1,0 @@
-@foo.A
-module Foo {}

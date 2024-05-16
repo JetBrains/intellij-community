@@ -1,8 +1,0 @@
-{
-  "mainFile": "a/A.kt",
-  "type": "MOVE_KOTLIN_METHOD",
-  "methodToMove": "foo",
-  "methodParameter": "b",
-  "enabledInK1": "true",
-  "enabledInK2": "false"
-}

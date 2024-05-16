@@ -1,3 +1,0 @@
-package classes
-
-class Foo {}

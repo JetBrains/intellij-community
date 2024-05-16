@@ -1,1 +1,0 @@
-Type alias 8 typealias B = A<Int>

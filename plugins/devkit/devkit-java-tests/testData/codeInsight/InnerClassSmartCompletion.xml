@@ -1,8 +1,0 @@
-<idea-plugin>
-    <extensionPoints>
-        <extensionPoint name="ext" interface="foo.Foo"/>
-    </extensionPoints>
-    <extensions>
-        <ext implementation="Fu<caret>"/>
-    </extensions>
-</idea-plugin>

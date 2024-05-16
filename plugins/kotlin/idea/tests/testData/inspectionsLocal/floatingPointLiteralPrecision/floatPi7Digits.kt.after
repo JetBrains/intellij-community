@@ -1,3 +1,0 @@
-// WITH_STDLIB
-
-val pi = 3.1415925f;

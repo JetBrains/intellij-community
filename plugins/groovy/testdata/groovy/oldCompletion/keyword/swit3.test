@@ -1,6 +1,0 @@
-x = 1
-switch (x) {
-  c<caret>
-}
------
-case

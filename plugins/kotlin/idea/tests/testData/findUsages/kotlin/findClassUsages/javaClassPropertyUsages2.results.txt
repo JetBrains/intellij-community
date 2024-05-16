@@ -1,3 +1,0 @@
-Unclassified 4 System.out.println(a.getA() + " " + a.getB());
-Unclassified 4 System.out.println(a.getA() + " " + a.getB());
-Unclassified 5 a.setB(12);

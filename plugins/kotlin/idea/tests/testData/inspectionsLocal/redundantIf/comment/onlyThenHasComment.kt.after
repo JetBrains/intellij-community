@@ -1,6 +1,0 @@
-// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
-fun foo(): Boolean {
-    return !someComplexCondition() // comment explaining the `false` case
-}
-
-fun someComplexCondition(): Boolean = true

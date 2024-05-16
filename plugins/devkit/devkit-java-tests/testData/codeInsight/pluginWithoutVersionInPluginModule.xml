@@ -1,4 +1,0 @@
-<<error descr="'<version>' must be specified">idea-plugin</error>>
-  <id>test</id>
-  <vendor>JetBrains</vendor>
-</idea-plugin>

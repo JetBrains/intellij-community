@@ -1,6 +1,0 @@
-def foo = { Map attrs, cl1 ->
-  cl1.call()
-  attrs.cl2.call()
-}
-
-foo(cl2: { y -> y }) { x->x}

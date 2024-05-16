@@ -1,8 +1,0 @@
-Types:
-PsiParameter:i : java.lang.String...
-
-Conversions:
-
-New expression type changes:
-Fails:
-2->java.lang.String

@@ -1,5 +1,0 @@
-<project name="Some Project" default="all">
-  <target name="all" if="my.prop-after">
-    <property name="new.prop" value="${my.prop-after}"/>
-  </target>
-</project>

@@ -1,9 +1,0 @@
-{
-    "mainFile": "KotlinObject.kt",
-    "usages": [
-        "Read.java",
-        "Read.kt",
-        "Write.java",
-        "Write.kt"
-    ]
-}

@@ -1,8 +1,0 @@
-// INPLACE_VARIABLE_NAME: s
-fun foo(a: Int): String {
-    val s = "abc$a"
-    val x = s
-    val y = s
-    val z = "abc{$a}def"
-    return s + "def"
-}

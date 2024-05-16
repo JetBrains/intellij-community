@@ -1,9 +1,0 @@
-class FooBar {
-    fun m() {
-        //comment1
-        bar()
-    }
-
-    private fun bar() {
-    }
-}

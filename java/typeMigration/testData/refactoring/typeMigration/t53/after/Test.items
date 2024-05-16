@@ -1,9 +1,0 @@
-Types:
-PsiField:f : java.util.Set<java.lang.String>[]
-PsiNewExpression:new double[0] : java.util.Set[]
-
-Conversions:
-
-New expression type changes:
-new double[0] -> java.util.Set[]
-Fails:

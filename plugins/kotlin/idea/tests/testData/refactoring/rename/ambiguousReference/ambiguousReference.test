@@ -1,8 +1,0 @@
-{
-  "type": "MARKED_ELEMENT",
-  "mainFile": "test.kt",
-  "newName": "foo",
-  "withRuntime": "true",
-  "enabledInK2": "false"
-  //this simplification
-}

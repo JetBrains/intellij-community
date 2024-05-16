@@ -1,8 +1,0 @@
-package test
-
-import dependency.*
-import dependency.T
-
-class T
-
-fun foo(t: T) {}

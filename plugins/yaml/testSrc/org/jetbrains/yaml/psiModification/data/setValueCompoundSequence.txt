@@ -1,7 +1,0 @@
-foo:
-  bar:
-    someKey:
-      abl: 1
-      acl: 3
-      blah: 2
-  baz: afoo

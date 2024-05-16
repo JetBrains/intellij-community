@@ -1,2 +1,0 @@
-18|* |[link in inner.md the other.md](../other.md#|same-header-in-two-files|)
-32|[link in main.md to same header in multiple files in the other.md](other.md#|same-header-in-two-files|)

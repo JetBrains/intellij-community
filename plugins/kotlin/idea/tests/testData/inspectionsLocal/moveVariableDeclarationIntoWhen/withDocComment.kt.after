@@ -1,9 +1,0 @@
-// HIGHLIGHT: INFORMATION
-fun test(){
-    // ccc
-    /** aaa */
-    when(1) { /* bbb */
-        1 -> {}
-        2 -> {}
-    }
-}

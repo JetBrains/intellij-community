@@ -1,1 +1,0 @@
-xs:date($i) + xs:yearMonthDuration($j)

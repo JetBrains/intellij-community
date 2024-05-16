@@ -1,8 +1,0 @@
-[*]
-indent_size = 4
-tab_width = 4
-ij_continuation_indent_size = 4
-
-ij_any_else_on_new_line = false
-ij_any_catch_on_new_line = false
-ij_any_finally_on_new_line = false

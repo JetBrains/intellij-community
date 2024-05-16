@@ -1,4 +1,0 @@
-Function call 2 getFoo()
-Function call 7 k.getFoo()
-Value read 3 foo
-Value read 8 k.foo

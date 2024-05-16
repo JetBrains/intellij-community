@@ -1,1 +1,0 @@
-return cond() ? first() : second()

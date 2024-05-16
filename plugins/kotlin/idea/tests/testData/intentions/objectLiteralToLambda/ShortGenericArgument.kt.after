@@ -1,4 +1,0 @@
-// AFTER-WARNING: Variable 'myUser' is never used
-fun use() {
-    val myUser = User<String> { }
-}

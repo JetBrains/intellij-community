@@ -1,7 +1,0 @@
-<option>KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE=false</option>
-<option>LAMBDA_BRACE_STYLE=NEXT_LINE_IF_WRAPPED</option>
-def l = ()->{print 2}
------
-def l = () -> {
-  print 2
-}

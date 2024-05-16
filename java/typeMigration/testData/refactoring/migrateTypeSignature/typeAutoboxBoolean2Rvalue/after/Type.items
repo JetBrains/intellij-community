@@ -1,9 +1,0 @@
-Types:
-PsiField:myField : boolean
-PsiReferenceExpression:myField : boolean
-
-Conversions:
-p -> $
-
-New expression type changes:
-Fails:

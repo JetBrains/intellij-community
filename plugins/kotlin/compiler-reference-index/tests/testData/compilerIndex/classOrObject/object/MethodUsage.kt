@@ -1,3 +1,0 @@
-fun methodUsage() {
-    MyObject.a
-}

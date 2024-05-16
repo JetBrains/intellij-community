@@ -1,5 +1,0 @@
-class Base {
-  public String[] foo() {
-    return new String[]{"Base.foo()"};
-  }
-}

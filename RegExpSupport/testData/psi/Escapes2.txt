@@ -1,5 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\#>
-    RegExpBranchImpl: <\#>
-      RegExpCharImpl: <\#>
-        PsiElement(REDUNDANT_ESCAPE)('\#')

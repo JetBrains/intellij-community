@@ -1,1 +1,0 @@
-<p>&rarr; <icon src="icon"/>&nbsp;beforeField.java, line #9</p>

@@ -1,9 +1,0 @@
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <<error>abc</error>>
-
-  </<error>abcdef</error>>
-
-  <<error>xyz</error>>
-
-  </<error>x</error>>aaa
-</html>

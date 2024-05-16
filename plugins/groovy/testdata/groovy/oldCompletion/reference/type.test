@@ -1,5 +1,0 @@
-import groovy.swing.SwingBuilder as GAGAGA
-
-GAGAGA g = new GA<caret>
------
-GAGAGA

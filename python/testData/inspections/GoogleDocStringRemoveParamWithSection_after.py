@@ -1,5 +1,0 @@
-def foo():
-    """
-    Returns:
-        Nothing:
-    """

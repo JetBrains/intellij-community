@@ -1,3 +1,0 @@
-// AFTER-WARNING: Parameter 'y' is never used, could be renamed to _
-fun foo(a: (Int) -> Int): Int = a(1)
-val x = foo { foo { y -> <caret>it } }

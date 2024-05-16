@@ -1,1 +1,0 @@
-class Foo pe<caret>{}

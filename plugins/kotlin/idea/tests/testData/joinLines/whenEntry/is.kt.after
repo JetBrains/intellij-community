@@ -1,6 +1,0 @@
-fun test(a: Any) {
-    when (a) {
-        is Int, is Long, is Float, is Double -> println(0)
-        is String -> println(1)
-    }
-}

@@ -1,3 +1,0 @@
-soMe<caret> text
-other line
-<caret>yet another line<caret>

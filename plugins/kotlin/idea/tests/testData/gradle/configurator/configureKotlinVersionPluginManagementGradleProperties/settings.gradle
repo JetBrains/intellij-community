@@ -1,5 +1,0 @@
-pluginManagement {
-    plugins {
-        id "org.jetbrains.kotlin.jvm" version kotlinPluginVersion
-    }
-}

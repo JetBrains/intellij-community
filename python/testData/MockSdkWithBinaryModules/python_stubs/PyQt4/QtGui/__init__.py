@@ -1,1 +1,0 @@
-from QPen import QPen

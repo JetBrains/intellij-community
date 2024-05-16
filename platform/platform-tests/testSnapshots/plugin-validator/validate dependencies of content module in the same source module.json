@@ -1,7 +1,0 @@
-1 errors:
-[1]: ------------------------------
-Module not found: com.intellij.diagram (
-  entry=XmlElement(name=module, attributes={name=com.intellij.diagram}, children=[], content=null),
-  referencingDescriptorFile=/intellij.angularJs/intellij.angularJs.diagram.xml
-)
------------------------------------

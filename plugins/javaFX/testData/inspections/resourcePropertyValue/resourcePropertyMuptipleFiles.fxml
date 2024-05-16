@@ -1,8 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
-<VBox>
-  <Label text="%message.text"
-         maxWidth="%message.width"
-         maxHeight=<warning descr="Invalid value: unable to coerce to java.lang.Double">"%message.height"</warning>
-         alignment=<warning descr="Invalid enumerated value">"%message.alignment"</warning>/>
-</VBox>

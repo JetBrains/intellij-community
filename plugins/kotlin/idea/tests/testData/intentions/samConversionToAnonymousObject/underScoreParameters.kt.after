@@ -1,7 +1,0 @@
-fun test() {
-    object : J {
-        override fun test(a: String, b: Int) {
-
-        }
-    }
-}

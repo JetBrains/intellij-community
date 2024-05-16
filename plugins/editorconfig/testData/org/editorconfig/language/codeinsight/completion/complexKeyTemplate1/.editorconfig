@@ -1,3 +1,0 @@
-[foo]
-dotnet_naming_rule.my_rule.severity = warning
-<caret>

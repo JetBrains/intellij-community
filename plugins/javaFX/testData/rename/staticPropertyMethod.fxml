@@ -1,6 +1,0 @@
-<?import javafx.scene.control.Button?>
-<?import container.MyCustomContainer?>
-<MyCustomContainer>
-  <Button text="abc" MyCustomContainer.stati<caret>cProp="123"/>
-  <Button text="abc" MyCustomContainer.staticProp="42"/>
-</MyCustomContainer>

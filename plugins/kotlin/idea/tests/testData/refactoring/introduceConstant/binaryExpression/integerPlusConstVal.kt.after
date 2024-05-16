@@ -1,9 +1,0 @@
-// EXTRACTION_TARGET: property with initializer
-
-const val a = 1
-
-private const val i = a + 1
-
-fun foo(): Int {
-    return i
-}

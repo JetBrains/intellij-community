@@ -1,5 +1,0 @@
-def bar():
-  pass
-
-
-bar()

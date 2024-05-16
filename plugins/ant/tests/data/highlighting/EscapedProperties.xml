@@ -1,5 +1,0 @@
-<project name="build" default="xxx" basedir=".">
-  <property name="prop1" value="${<error>aaa</error>}"/>
-  <property name="prop2" value="$${bbb}"/>
-  <target name="xxx" />
-</project>

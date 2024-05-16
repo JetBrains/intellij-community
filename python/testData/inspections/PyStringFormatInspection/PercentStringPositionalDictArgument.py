@@ -1,1 +1,0 @@
-"%s%s" % <warning descr="Too few arguments for format string">{"foo": 1}</warning>

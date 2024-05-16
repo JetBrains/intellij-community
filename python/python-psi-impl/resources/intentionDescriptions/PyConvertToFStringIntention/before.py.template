@@ -1,2 +1,0 @@
-"Pi is {:03.5}".format(math.pi)
-'%(spam)s' % {'spam': 'eggs'}

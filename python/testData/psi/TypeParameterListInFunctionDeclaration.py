@@ -1,1 +1,0 @@
-def foo[T](a): pass

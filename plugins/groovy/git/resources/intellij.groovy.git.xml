@@ -1,8 +1,0 @@
-<idea-plugin package="com.intellij.groovy.git">
-  <dependencies>
-    <plugin id="Git4Idea"/>
-  </dependencies>
-  <extensions defaultExtensionNs="Git4Idea">
-    <GitCheckinExplicitMovementProvider implementation="com.intellij.groovy.git.GroovyExplicitMovementProvider"/>
-  </extensions>
-</idea-plugin>

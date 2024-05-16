@@ -1,1 +1,0 @@
-ssh ${GROUND_USER}@${GROUND}

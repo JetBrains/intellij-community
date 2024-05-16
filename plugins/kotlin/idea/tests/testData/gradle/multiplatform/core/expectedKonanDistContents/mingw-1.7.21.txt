@@ -1,7 +1,0 @@
-Kotlin/Native {{KGP_VERSION}} - builtin
-Kotlin/Native {{KGP_VERSION}} - gdiplus
-Kotlin/Native {{KGP_VERSION}} - iconv
-Kotlin/Native {{KGP_VERSION}} - opengl32
-Kotlin/Native {{KGP_VERSION}} - posix
-Kotlin/Native {{KGP_VERSION}} - windows
-Kotlin/Native {{KGP_VERSION}} - zlib

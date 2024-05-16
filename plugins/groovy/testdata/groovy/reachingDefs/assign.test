@@ -1,9 +1,0 @@
-int i = 2
-
-<selection>i = 3</selection>
-
-println i
------
-input:
-output:
-i

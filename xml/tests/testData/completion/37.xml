@@ -1,6 +1,0 @@
-<!DOCTYPE aaa [
-  <!ELEMENT aaa (#PCDATA)>
-  <!ATTLIST aaa
-    bbb CDATA #REQUIRED>
-  ]>
-<<caret>aaa bbb="ccc"

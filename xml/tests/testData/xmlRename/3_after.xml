@@ -1,4 +1,0 @@
-<!DOCTYPE another-tag [
-<!ELEMENT another-t<caret>ag (#PCDATA)>
-]>
-<another-tag></another-tag>

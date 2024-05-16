@@ -1,8 +1,0 @@
-class Bar {
-    Bar goo
-
-    def foo() {go<caret>}
-
-}
------
-goo

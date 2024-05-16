@@ -1,6 +1,0 @@
-version = "6.1.*"
-upstream_repository = "https://github.com/mozilla/bleach"
-partial_stub = true
-
-[tool.stubtest]
-ignore_missing_stub = true

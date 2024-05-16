@@ -1,9 +1,0 @@
-PsiJavaFile:YieldBitwiseComplement.java
-  PsiYieldStatement
-    PsiKeyword:yield('yield')
-    PsiWhiteSpace(' ')
-    PsiPrefixExpression:~1
-      PsiJavaToken:TILDE('~')
-      PsiLiteralExpression:1
-        PsiJavaToken:INTEGER_LITERAL('1')
-    PsiJavaToken:SEMICOLON(';')

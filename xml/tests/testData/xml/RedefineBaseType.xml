@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<a:a xmlns:a="http://www.cadence.com/a" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://www.cadence.com/a RedefineBaseType_2.xsd">
-
-
-     <e1>ddd</e1>
-      <e3>dddd</e3>
-    <e2>rrr</e2>
-</a:a>

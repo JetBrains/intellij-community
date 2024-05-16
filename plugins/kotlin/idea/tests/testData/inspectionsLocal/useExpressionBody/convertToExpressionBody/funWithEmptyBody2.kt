@@ -1,2 +1,0 @@
-fun foo(): Unit {<caret>
-}

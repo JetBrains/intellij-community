@@ -1,6 +1,0 @@
-0(1) element: null
-1(2) element: PyAssignmentStatement
-2(3) WRITE ACCESS: foo
-3(4) element: PyDelStatement
-4(5) DELETE ACCESS: foo
-5() element: null

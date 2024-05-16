@@ -1,5 +1,0 @@
-Function call 24 val b = d1 - d2
-Function call 26 val d = b - c
-Function call 31 dInT2 - dInT2
-Function call 36 dInT3 - dInT3
-Function call 40 tt() - tt()

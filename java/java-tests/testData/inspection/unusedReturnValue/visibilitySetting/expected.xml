@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problem>
-  <problem>
-    <file>Test.java</file>
-    <line>17</line>
-    <problem_class>Method can be void</problem_class>
-    <description>Return value of the method is never used</description>
-  </problem>
-</problem>

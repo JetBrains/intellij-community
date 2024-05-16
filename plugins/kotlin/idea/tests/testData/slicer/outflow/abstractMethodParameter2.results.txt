@@ -1,7 +1,0 @@
-14 i.foo(<bold>s</bold>) (in bar(I, String))
-4 	fun foo(<bold>p: Any</bold>) (in I.foo(Any))
-2 		JAVA: public void foo(Object <bold>p</bold>) { (in JavaClass.foo(Object))
-3 			JAVA: System.out.println(<bold>p</bold>); (in JavaClass.foo(Object))
-8 		override fun foo(<bold>p: Any</bold>) { (in C.foo(Any))
-9 			val v = <bold>p</bold> (in C.foo(Any))
-9 				<bold>val v</bold> = p (in C.foo(Any))

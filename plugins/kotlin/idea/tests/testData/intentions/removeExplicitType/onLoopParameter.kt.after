@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun test() {
-    for (x in listOf(1, 2, 3)) {
-        println(x)
-    }
-}

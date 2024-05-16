@@ -1,2 +1,0 @@
-if True:
-    <caret>

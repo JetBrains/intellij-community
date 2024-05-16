@@ -1,3 +1,0 @@
-<addressBook xmlns="urn:test:addressBook">
-  <card email="foo@bar.com" name="bar" />
-</addressBook>

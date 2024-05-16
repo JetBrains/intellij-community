@@ -1,8 +1,0 @@
-# Notice that this fragment will error on 15.7 and below because 'enterprise' is missing.
-# However, there's no reason to first check server version before checking the server version
-# through this fragment. We let this request fail intensionally before 15.7.
-fragment metadata on Metadata {
-  version
-  revision
-  enterprise
-}

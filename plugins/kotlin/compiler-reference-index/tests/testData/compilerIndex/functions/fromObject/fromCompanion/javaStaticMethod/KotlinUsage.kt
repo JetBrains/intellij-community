@@ -1,3 +1,0 @@
-fun kotlinUsage() {
-    Main.doSmth()
-}

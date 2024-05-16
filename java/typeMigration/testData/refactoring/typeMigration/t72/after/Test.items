@@ -1,8 +1,0 @@
-Types:
-PsiField:f : java.lang.Class<java.lang.Integer>
-
-Conversions:
-
-New expression type changes:
-Fails:
-byte.class->java.lang.Class<java.lang.Integer>

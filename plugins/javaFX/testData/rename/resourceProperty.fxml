@@ -1,5 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
-<VBox xmlns:fx="http://javafx.com/fxml">
-  <Label text="%st<caret>ring.key"/>
-</VBox>

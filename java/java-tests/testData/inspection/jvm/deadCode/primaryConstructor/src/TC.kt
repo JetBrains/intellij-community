@@ -1,1 +1,0 @@
-annotation class TC(val name: String)

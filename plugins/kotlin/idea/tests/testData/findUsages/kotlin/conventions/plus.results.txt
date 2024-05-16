@@ -1,6 +1,0 @@
-Function call 12 A(0) + A(1) + 2
-Function call 13 A(0) plus A(1) plus 2
-Function call 14 A(0).plus(A(1).plus(2))
-Function call 17 a += 1
-Function call 23 a1 + 1
-Function call 7 infix operator fun plus(a: A): A = this + a.n

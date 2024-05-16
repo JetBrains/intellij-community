@@ -1,7 +1,0 @@
-PsiJavaFile:WhileIncomplete1.java
-  PsiWhileStatement
-    PsiKeyword:while('while')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:LPARENTH('(')
-    PsiErrorElement:Expression expected
-      <empty list>

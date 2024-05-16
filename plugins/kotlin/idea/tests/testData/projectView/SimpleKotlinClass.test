@@ -1,7 +1,0 @@
-// PATH: SimpleKotlinClass.kt
-// SHOW_MEMBERS: TRUE
-
-// FILE: SimpleKotlinClass.kt
-interface IFace
-
-class SimpleKotlinClass: IFace

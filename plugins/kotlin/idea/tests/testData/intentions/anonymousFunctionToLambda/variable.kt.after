@@ -1,1 +1,0 @@
-val test = { i: Int, s: String -> "$i:$s" }

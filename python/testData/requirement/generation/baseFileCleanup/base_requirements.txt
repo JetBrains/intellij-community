@@ -1,4 +1,0 @@
-Django==1.1.1
-numpy>=1.18.1
-requests==3.3.3
-tox

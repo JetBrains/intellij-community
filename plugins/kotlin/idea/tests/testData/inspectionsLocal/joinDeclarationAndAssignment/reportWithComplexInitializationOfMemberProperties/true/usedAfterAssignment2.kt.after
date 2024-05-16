@@ -1,9 +1,0 @@
-class A {
-    val input: String = ""
-
-    init {
-        println(input)
-    }
-}
-
-fun println(s: String) {}

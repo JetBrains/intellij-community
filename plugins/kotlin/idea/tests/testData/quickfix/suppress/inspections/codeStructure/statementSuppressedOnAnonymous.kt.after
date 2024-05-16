@@ -1,9 +1,0 @@
-// "Suppress 'RemoveSingleExpressionStringTemplate' for fun <anonymous>" "true"
-
-val statementSuppressedOnAnonymous = @Suppress("RemoveSingleExpressionStringTemplate")
-fun(ps: String): String { return "$ps" }
-
-// K1_TOOL: org.jetbrains.kotlin.idea.intentions.RemoveSingleExpressionStringTemplateInspection
-// K2_TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RemoveSingleExpressionStringTemplateInspection
-// FUS_K2_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix
-// FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

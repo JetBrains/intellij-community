@@ -1,1 +1,0 @@
-fun xyzzy() { for (x in 0..1)<start><brace>{ } }

@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun test() {
-    for ((index, element) in listOf(1, 2, 3).withIndex()) {
-        println("$index: $element")
-    }
-}

@@ -1,7 +1,0 @@
-<component>
-    <actions>
-        <action id="CaptureMemorySnapShot" class="com.intellij.util.CaptureMemorySnapshotAction" text="Capture memory snapshot" description="Capture memory snapshot" icon="/actions/profileMemory.png"/>
-
-        <action id="CaptureCPUUsageData" class="com.intellij.util.CaptureCPUUsageDataAction" text="Capture cpu usage data" description="Capture cpu usage data" icon="/actions/profuleCPU.png"/>
-    </actions>
-</component>

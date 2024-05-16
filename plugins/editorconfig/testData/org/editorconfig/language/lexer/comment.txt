@@ -1,1 +1,0 @@
-EditorConfigTokenType.LINE_COMMENT ('; hello, world')

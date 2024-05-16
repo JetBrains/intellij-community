@@ -1,6 +1,0 @@
-UAnnotation (fqName = null) -> USimpleNameReferenceExpression (identifier = Test) -> null: null
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:annotation class MyAnnotation(val text: String): MyAnnotation
-UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:annotation class MyAnnotation(val text: String): MyAnnotation
-UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:annotation class MyAnnotation(val text: String): MyAnnotation
-UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:annotation class MyAnnotation(val text: String): MyAnnotation

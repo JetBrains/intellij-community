@@ -1,5 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.Button?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-    <Button GridPane.columnIndex="<caret>"/>
-</GridPane>

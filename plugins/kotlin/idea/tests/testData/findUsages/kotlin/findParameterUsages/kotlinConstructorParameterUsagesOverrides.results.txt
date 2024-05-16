@@ -1,6 +1,0 @@
-Value read 10 val d = b.p
-Value read 10 val d = b.p
-Value read 9 val c = a.p
-Value write 11 a.p = ""
-Value write 12 b.p = ""
-Value write 12 b.p = ""

@@ -1,7 +1,0 @@
-EditorConfig file
-  EditorConfigRootDeclarationImpl(ROOT_DECLARATION)
-    EditorConfigRootDeclarationKeyImpl(ROOT_DECLARATION_KEY)
-      PsiElement(EditorConfigTokenType.IDENTIFIER)('root')
-    PsiElement(EditorConfigTokenType.SEPARATOR)('=')
-    EditorConfigRootDeclarationValueImpl(ROOT_DECLARATION_VALUE)
-      PsiElement(EditorConfigTokenType.IDENTIFIER)('true')

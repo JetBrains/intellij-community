@@ -1,7 +1,0 @@
-HtmlFile:test.html
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_COMMENT)
-      XmlToken:XML_COMMENT_START('<!--')
-      XmlToken:XML_COMMENT_CHARACTERS(' jQuery. -- >')
-    PsiElement(XML_PROLOG)
-      <empty list>

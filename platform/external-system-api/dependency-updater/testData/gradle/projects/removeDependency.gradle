@@ -1,6 +1,0 @@
-apply plugin: 'java'
-
-dependencies {
-  implementation 'group:artifact:1.0'
-  implementation 'another:artifact:1.0'
-}

@@ -1,3 +1,0 @@
-[*.cs]
-<warning>definitely_unknown_key</warning>=hello
-resharper_space_after_last_pi_attribute=false

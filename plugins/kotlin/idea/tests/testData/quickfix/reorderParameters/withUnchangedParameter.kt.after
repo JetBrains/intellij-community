@@ -1,8 +1,0 @@
-// "Reorder parameters" "true"
-// WITH_STDLIB
-fun foo(
-    c1: String,
-    b: String,
-    a: List<List<String>> = listOf(listOf(b)),
-) {}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReorderParametersFix

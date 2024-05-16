@@ -1,3 +1,0 @@
-class Super implements Hyper<String> {
-  public void foo(String t) {}
-}

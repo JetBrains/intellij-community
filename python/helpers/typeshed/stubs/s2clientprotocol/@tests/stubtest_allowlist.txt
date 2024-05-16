@@ -1,3 +1,0 @@
-# All modules ending with *_pb2 fail to import
-# The error message is "TypeError: Descriptors cannot be create directly"
-s2clientprotocol\..+_pb2

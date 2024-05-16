@@ -1,7 +1,0 @@
-<person>
-    <xsl:attribute name="id">
-        <xsl:text>Big</xsl:text>
-        <xsl:value-of select="test"/>
-        <xsl:text>Boss</xsl:text>
-    </xsl:attribute>
-</person> 

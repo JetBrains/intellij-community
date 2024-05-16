@@ -1,5 +1,0 @@
-concat(
-<error descr="Malformed string literal">'a''b'</error>,
-<error descr="Malformed string literal">"c""d"</error>,
-<error descr="Malformed string literal">"""xz"""</error>,
-<error descr="Malformed string literal">''''</error>)

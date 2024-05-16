@@ -1,9 +1,0 @@
-Cleaning output files:
-out/production/NoSecondFileCompile/A.class
-out/production/NoSecondFileCompile/B.class
-out/production/NoSecondFileCompile/C.class
-End of files
-Compiling files:
-src/A.java
-src/C.java
-End of files

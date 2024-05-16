@@ -1,1 +1,0 @@
-fun foo(): Lon<caret>g? = null

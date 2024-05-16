@@ -1,2 +1,0 @@
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = readLine) -> Decompiled_Method: readLine
-USwitchExpression -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Method: getA

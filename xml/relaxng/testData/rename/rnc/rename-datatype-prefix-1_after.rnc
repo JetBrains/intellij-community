@@ -1,4 +1,0 @@
-namespace aaa = "xxx"
-datatypes bar = "yyy"
-
-start = element foo { bar:string }

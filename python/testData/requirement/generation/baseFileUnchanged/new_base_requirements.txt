@@ -1,3 +1,0 @@
-# versions do not match, but will not be changed
-Django==1.1.1
-requests==3.3.3

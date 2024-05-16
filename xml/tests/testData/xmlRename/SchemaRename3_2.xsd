@@ -1,9 +1,0 @@
-<xsd:schema
-    xmlns = "http://aaa.bbb"
-    xmlns:xsd = "http://www.w3.org/2001/XMLSchema"
-    targetNamespace = "http://aaa.bbb"
-    elementFormDefault = "qualified"
-    attributeFormDefault = "unqualified">
-  <xsd:element name="Company"/>
-  <xsd:element name="zzz" substitutionGroup="Company" />
-</xsd:schema>

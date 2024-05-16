@@ -1,8 +1,0 @@
-// ACTION_CLASS: org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateSecondaryConstructorAction
-class Foo {
-    <selection><caret></selection>constructor(`in`: Int) {
-        this.`in` = `in`
-    }
-
-    val `in`: Int
-}

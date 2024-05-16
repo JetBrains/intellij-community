@@ -1,5 +1,0 @@
-class MyClass {
-    constructor()
-}
-
-val a = MyClass()

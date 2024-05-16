@@ -1,1 +1,0 @@
-val a/*<# :Int #>*/ = listOf(1, 2, 3).sum()

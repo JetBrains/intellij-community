@@ -1,6 +1,0 @@
-
-fun foo(a: Boolean, b: Boolean) {
-    val x = a
-
-    val y = b
-}

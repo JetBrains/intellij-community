@@ -1,6 +1,0 @@
-<idea-plugin package="com.intellij.performanceTesting.vcs">
-  <dependencies>
-    <module name="intellij.platform.vcs.impl"/>
-    <module name="intellij.platform.vcs.log.impl"/>
-  </dependencies>
-</idea-plugin>

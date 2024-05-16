@@ -1,8 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <[\{]>
-    RegExpBranchImpl: <[\{]>
-      RegExpClassImpl: <[\{]>
-        PsiElement(CLASS_BEGIN)('[')
-        RegExpCharImpl: <\{>
-          PsiElement(REDUNDANT_ESCAPE)('\{')
-        PsiElement(CLASS_END)(']')

@@ -1,1 +1,0 @@
-data class Pojo(val fieldA: String, val fieldB: String)

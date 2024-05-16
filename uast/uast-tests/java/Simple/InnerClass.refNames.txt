@@ -1,4 +1,0 @@
-ProtectedMembers -> USimpleNameReferenceExpression (identifier = ProtectedMembers) from PsiJavaCodeReferenceElement:ProtectedMembers
-StaticInner -> UQualifiedReferenceExpression from PsiJavaCodeReferenceElement:ProtectedMembers.StaticInner
-ProtectedMembers -> USimpleNameReferenceExpression (identifier = ProtectedMembers) from PsiJavaCodeReferenceElement:ProtectedMembers
-StaticInner -> USimpleNameReferenceExpression (identifier = StaticInner) from PsiJavaCodeReferenceElement:StaticInner

@@ -1,7 +1,0 @@
-mutation ($body: String!, $line: Int!, $path: String!, $pullRequestReviewId: ID, $side: DiffSide, $startSide: DiffSide, $startLine: Int) {
-  addPullRequestReviewThread(input: {body: $body, line: $line, path: $path, pullRequestReviewId:$pullRequestReviewId, side: $side, startSide: $startSide, startLine: $startLine}) {
-    thread {
-      ...pullRequestReviewThread
-    }
-  }
-}

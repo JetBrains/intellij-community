@@ -1,1 +1,0 @@
-UAnnotation (fqName = TestAnnotation) -> USimpleNameReferenceExpression (identifier = TestAnnotation) -> Kotlin_Light_Class:annotation class TestAnnotation: TestAnnotation

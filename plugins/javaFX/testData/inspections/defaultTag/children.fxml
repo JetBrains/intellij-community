@@ -1,7 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.TextField?>
-<GridPane>
-  <caret><children>
-    <TextField/>
-  </children>
-</GridPane>

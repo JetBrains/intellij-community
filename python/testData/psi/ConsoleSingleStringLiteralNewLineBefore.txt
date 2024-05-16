@@ -1,5 +1,0 @@
-PyFile:Console.py
-  PsiWhiteSpace('\n')
-  PyExpressionStatement
-    PyStringLiteralExpression: foo
-      PsiElement(Py:SINGLE_QUOTED_STRING)('"foo"')

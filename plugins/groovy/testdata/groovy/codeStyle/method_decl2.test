@@ -1,7 +1,0 @@
-<option>METHOD_BRACE_STYLE=NEXT_LINE</option>
-<option>KEEP_SIMPLE_METHODS_IN_ONE_LINE=false</option>
-def foo()    {}
------
-def foo()
-{
-}

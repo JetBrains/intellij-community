@@ -1,2 +1,0 @@
-Function call 10 e.foo("")
-Function call 11 e.foo(2.13)

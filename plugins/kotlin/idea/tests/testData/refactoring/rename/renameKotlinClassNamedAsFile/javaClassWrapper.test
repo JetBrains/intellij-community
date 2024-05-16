@@ -1,6 +1,0 @@
-{
-  "type": "JAVA_CLASS",
-  "classId": "testing/TopLevel.ClassBefore",
-  "newName": "ClassAfter",
-  "enabledInK2": true
-}

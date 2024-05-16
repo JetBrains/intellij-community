@@ -1,6 +1,0 @@
-// "Remove redundant 'if' statement" "true"
-fun foo(bar: Int?): Boolean {
-    return bar != null
-}
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.RedundantIfInspectionBase$RemoveRedundantIf
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.RedundantIfInspectionBase$RemoveRedundantIf

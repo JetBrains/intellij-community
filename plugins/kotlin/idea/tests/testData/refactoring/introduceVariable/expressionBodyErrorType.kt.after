@@ -1,7 +1,0 @@
-// IGNORE_K1
-fun foo(lambda: () -> Int): AAA = aaa
-
-fun test(): AAA {
-    val i = 24
-    return foo { i }
-}

@@ -1,5 +1,0 @@
-mutation ($pullRequestId: ID!, $path: String!) {
-    unmarkFileAsViewed(input: { pullRequestId: $pullRequestId, path: $path }) {
-        __typename
-    }
-}

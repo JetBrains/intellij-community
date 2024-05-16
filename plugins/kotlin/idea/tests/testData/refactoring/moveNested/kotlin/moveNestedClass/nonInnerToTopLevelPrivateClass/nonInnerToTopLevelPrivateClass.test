@@ -1,8 +1,0 @@
-{
-  "mainFile": "test/test.kt",
-  "type": "MOVE_KOTLIN_NESTED_CLASS",
-  "targetClass": "test.PrivateClass",
-  "withRuntime": "true",
-  "enabledInK1": "true",
-  "enabledInK2": "false"
-}

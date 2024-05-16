@@ -1,2 +1,0 @@
-<fixed-attribute xmlns="urn:test:simple.rng" x="<error descr="Attribute should have fixed value 1.0">2.0</error>">
-</fixed-attribute>

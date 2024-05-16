@@ -1,6 +1,0 @@
-// WITH_STDLIB
-package my.simple.name
-
-fun main() {
-    val a = Int.Companion::MAX_VALUE
-}

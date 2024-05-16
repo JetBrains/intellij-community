@@ -1,7 +1,0 @@
-import groovy.swing.SwingBuilder
-
-SwingBuilder builder = new SwingBuilder()
-
-builder.scrollPane(ancestorA<caret>) {}
------
-ancestorAdded

@@ -1,9 +1,0 @@
-def foo(int i) {
-    switch (i) {
-        case 42: ret<caret>fact(5)
-        default:
-            return fact(7)
-    }
-}
------
-return

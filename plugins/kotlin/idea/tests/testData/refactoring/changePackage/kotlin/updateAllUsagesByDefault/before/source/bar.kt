@@ -1,3 +1,0 @@
-package target
-
-class C

@@ -1,5 +1,0 @@
-class LonelyConstructor {
-
-    LonelyConstructor() {<caret>
-    }
-}

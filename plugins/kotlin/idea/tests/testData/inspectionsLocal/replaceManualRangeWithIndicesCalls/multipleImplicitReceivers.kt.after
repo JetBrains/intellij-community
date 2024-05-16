@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun IntArray.arrayToString(): String = buildString {
-    for (element in this@arrayToString) {
-        append(element)
-    }
-}

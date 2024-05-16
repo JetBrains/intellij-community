@@ -1,6 +1,0 @@
-package a
-print 2
------
-package a
-
-print 2

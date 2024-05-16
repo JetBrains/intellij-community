@@ -1,1 +1,0 @@
-print(b'Hello %b!' <caret>% b'World')

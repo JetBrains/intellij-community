@@ -1,5 +1,0 @@
-[kotlinInterfaceDerivedInnerClasses.0.kt] Unclassified 8 open class A : X {
-[kotlinInterfaceDerivedInnerClasses.1.kt] Unclassified 11 open class Z : A() {
-[kotlinInterfaceDerivedInnerClasses.1.kt] Unclassified 15 open class U : Z() {
-[kotlinInterfaceDerivedInnerClasses.1.kt] Unclassified 2 open class B : A() {
-[kotlinInterfaceDerivedInnerClasses.1.kt] Unclassified 6 open class C : Y {

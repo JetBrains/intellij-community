@@ -1,3 +1,0 @@
-fun jjj() {
-    JJJ().test()
-}

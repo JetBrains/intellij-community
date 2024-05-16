@@ -1,6 +1,0 @@
-import kotlin.math.ln1p
-
-// WITH_STDLIB
-fun test(x: Double) {
-    ln1p(x)
-}

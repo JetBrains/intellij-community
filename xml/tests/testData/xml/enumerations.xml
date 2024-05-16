@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<enumerations xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="enumerations.xsd">
-    <enumerationWithAttributes id="ea">A</enumerationWithAttributes>
-    <enumerationWithAttributes id="ea1"><error descr="Wrong tag value">unknown</error></enumerationWithAttributes>
-</enumerations>

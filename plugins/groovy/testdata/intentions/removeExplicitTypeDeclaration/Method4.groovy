@@ -1,1 +1,0 @@
-@Abc def public int f<caret>oo() {}

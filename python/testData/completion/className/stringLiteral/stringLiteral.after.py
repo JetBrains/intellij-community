@@ -1,1 +1,0 @@
-x = 'mypackage.Shazam'

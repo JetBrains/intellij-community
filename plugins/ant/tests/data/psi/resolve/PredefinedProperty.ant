@@ -1,5 +1,0 @@
-<project name="n" default="t">
-<target name="t">
-<echo message="${<ref>java.runtime.version}" />
-</target>
-</project>

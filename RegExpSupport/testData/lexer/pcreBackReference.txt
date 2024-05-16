@@ -1,4 +1,0 @@
-GROUP_BEGIN ('(')
-CHARACTER ('a')
-GROUP_END (')')
-BACKREF ('\g105')

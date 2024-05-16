@@ -1,8 +1,0 @@
-# yaml._yaml is for backwards compatibility so none of it matters anyway
-yaml._yaml.__test__
-
-# Some arguments to these functions are technically positional or keyword
-# arguments at runtime, but according to the documentation and other,
-# similar functions, it's safer to treat them as keyword-only arguments.
-yaml.dump_all
-yaml.serialize_all

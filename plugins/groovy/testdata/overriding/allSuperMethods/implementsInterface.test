@@ -1,9 +1,0 @@
-interface Foo {
-  def foo ()
-}
-
-class A implements Foo {
-  def foo () {}
-}
------
-Interface definition: Foo; HierarchicalMethodSignatureImpl: foo([])

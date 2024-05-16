@@ -1,4 +1,0 @@
-<?import javafx.scene.image.*?>
-<ImageView id="lock" pickOnBounds="true">
-  <<caret>
-</ImageView>

@@ -1,3 +1,0 @@
-[common.kt] Companion object 8 println(Clazz006.AA_A)
-[js.kt] Companion object 12 println(Clazz006.AA_A)
-[jvm.kt] Companion object 9 println(Clazz006.AA_A)

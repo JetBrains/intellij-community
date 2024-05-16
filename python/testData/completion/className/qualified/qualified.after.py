@@ -1,3 +1,0 @@
-import mypackage
-
-mypackage.Shazam

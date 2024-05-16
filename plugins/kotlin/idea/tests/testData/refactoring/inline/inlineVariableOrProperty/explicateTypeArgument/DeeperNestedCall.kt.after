@@ -1,6 +1,0 @@
-import java.util.ArrayList
-
-fun f() {
-    ArrayList(ArrayList<Int?>(listOf()))
-}
-// IGNORE_K2

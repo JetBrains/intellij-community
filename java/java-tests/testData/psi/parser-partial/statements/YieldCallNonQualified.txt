@@ -1,9 +1,0 @@
-PsiJavaFile:YieldCallNonQualified.java
-  PsiYieldStatement
-    PsiKeyword:yield('yield')
-    PsiParenthesizedExpression:()
-      PsiJavaToken:LPARENTH('(')
-      PsiErrorElement:Expression expected
-        <empty list>
-      PsiJavaToken:RPARENTH(')')
-    PsiJavaToken:SEMICOLON(';')

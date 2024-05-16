@@ -1,8 +1,0 @@
-<node text="target_func(x=func1, y=func2(), z=lambda: func3, w=lambda: func4()) (hierarchy.call.Static.Lambda.main)" base="true">
-  <node text="func8() (hierarchy.call.Static.Lambda.file_1)"/>
-  <node text="func13() (hierarchy.call.Static.Lambda.file_1)"/>
-  <node text="func15() (hierarchy.call.Static.Lambda.file_1)"/>
-  <node text="inner(ix=func7, iy=func8(), iz=lambda: func9, iw=lambda: func10()) (hierarchy.call.Static.Lambda.main)">
-    <node text="func11() (hierarchy.call.Static.Lambda.file_1)"/>
-  </node>
-</node>

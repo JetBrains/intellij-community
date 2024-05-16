@@ -1,5 +1,0 @@
-<idea-plugin>
-  <!-- registeredActionInOptionalPluginDescriptor-optional-plugin.xml -->
-  <depends optional="true" config-file="optional-plugin.xml"/>
-  <depends optional="true" config-file="optional-plugin.xml"/>
-</idea-plugin>

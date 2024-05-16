@@ -1,9 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12" viewBox="0 0 12 12">
-  <defs>
-    <path id="lambdabreakpoint_dark-a" d="M6.82148442,2.70703125 L10.8,12 L8.40000005,12 L6.00000005,7.2 L3.60000005,12 L1.20000005,12 C3.60000005,6.56375359 4.80000005,3.76375359 4.80000005,3.6 C4.80000005,3.33461257 4.62967705,3.18418023 4.17379071,2.70703125 C3.9494023,2.46629741 3.60449462,2.4 3.12714849,2.4 L2.40000005,2.4 L2.40000005,0 L3.41660161,0 C4.34082498,0 5.03757565,0.3442169 5.51999993,0.720000029 C6.08367463,1.16687726 6.52187355,1.82343308 6.82148442,2.70703125 Z"/>
-  </defs>
-  <g fill="none" fill-rule="evenodd">
-    <use fill="#C75450" xlink:href="#lambdabreakpoint_dark-a"/>
-  </g>
-</svg>

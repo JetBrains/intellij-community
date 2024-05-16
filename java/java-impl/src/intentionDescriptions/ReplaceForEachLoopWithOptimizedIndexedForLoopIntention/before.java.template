@@ -1,8 +1,0 @@
-public class X {
-  void f() {
-    String[] array = new String[]{"foo", "bar", "baz"};
-    <spot>for</spot> (String content : array) {
-       System.out.println(content);
-    }
-  }
-}

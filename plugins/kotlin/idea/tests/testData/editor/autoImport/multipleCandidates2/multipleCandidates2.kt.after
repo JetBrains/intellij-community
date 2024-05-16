@@ -1,7 +1,0 @@
-package test
-
-import pkg.foo
-
-fun test() {
-    foo()
-}

@@ -1,5 +1,0 @@
->
-  Template(div)
-  >
-    Template(ul)
-    Template(li)

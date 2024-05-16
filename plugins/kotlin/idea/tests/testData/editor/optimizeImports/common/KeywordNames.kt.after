@@ -1,4 +1,0 @@
-// IGNORE_K2
-import foo.`val`.`var`
-
-var v: `var`? = null

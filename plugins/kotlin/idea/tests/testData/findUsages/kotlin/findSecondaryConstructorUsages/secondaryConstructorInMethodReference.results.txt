@@ -1,1 +1,0 @@
-Unclassified 4 Stream.of("b").map(B::new);

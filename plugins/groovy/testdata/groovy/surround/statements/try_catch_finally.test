@@ -1,7 +1,0 @@
-<selection>a - b</selection>
------
-try {
-    a - b
-} catch () {
-} finally {
-}

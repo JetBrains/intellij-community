@@ -1,8 +1,0 @@
-<project name="testProject" default="test">
-  <property name="p1" value="v1"/>
-  <target name="test" depends="beforeTest" if="p1">
-    <echo message="${<ren>p1}"/>
-  </target>
-  <target name="beforeTest" unless="p1">
-  </target>
-</project>

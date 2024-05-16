@@ -1,8 +1,0 @@
-Types:
-PsiField:a : java.util.concurrent.atomic.AtomicLong
-
-Conversions:
-100 -> new java.util.concurrent.atomic.AtomicLong($val$) $val$ 100
-
-New expression type changes:
-Fails:

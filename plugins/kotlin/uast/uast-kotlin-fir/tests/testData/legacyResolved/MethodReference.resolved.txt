@@ -1,6 +1,0 @@
-UField (name = x) -> UCallableReferenceExpression (name = bar) -> Kotlin_Light_Method: bar
-UCallableReferenceExpression (name = bar) -> USimpleNameReferenceExpression (identifier = Foo) -> Kotlin_Light_Class:class Foo {
-    fun bar() {
-    }
-}: Foo
-UCallableReferenceExpression (name = bar) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: bar

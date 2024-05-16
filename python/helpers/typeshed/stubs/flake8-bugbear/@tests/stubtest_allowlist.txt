@@ -1,1 +1,0 @@
-bugbear.BugBearChecker.__getattr__

@@ -1,5 +1,0 @@
-[ui]
-username = John Doe <John.Doe@example.com>
-
-[merge-patterns]
-** = internal:merge

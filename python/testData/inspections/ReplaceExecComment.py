@@ -1,1 +1,0 @@
-<warning descr="Statement seems to have no effect and can be replaced with a function call to have effect">exec</warning><error descr="End of statement expected"> </error><warning descr="Statement seems to have no effect">1</warning>  # <- doesn't work either

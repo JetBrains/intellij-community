@@ -1,8 +1,0 @@
-// NEW_NAME: p
-// RENAME: member
-open class A(private val p: String) {
-
-}
-class B : A("") {
-    val p<caret>1 = ""
-}

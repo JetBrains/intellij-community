@@ -1,9 +1,0 @@
-// NEW_NAME: b
-// RENAME: member
-package rename
-
-val <caret>b = ""
-fun m() {
-    val b = ""
-    val c = rename.b + b
-}

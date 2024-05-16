@@ -1,3 +1,0 @@
-Additional checking of reference Getter: LinkedHashSet
-Additional checking of reference KtSimpleNameReference: LinkedHashSet
-Additional checking of reference KtInvokeFunctionReference: LinkedHashSet<Int>()

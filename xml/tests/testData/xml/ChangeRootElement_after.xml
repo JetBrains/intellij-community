@@ -1,7 +1,0 @@
-<!DOCTYPE xxx [
-  <!ELEMENT xxx (zzz)*>
-  <!ELEMENT zzz (#PCDATA)>
-  ]>
-<xxx<caret>>
-  <zzz/>
-</xxx>

@@ -1,9 +1,0 @@
-"""a\
------
-Groovy script
-  Compound Gstring
-    PsiElement(Gstring begin)('"""')
-    GrStringContentImpl(STRING_CONTENT)
-      PsiElement(Gstring content)('a\')
-    PsiErrorElement:Gstring end expected
-      <empty list>

@@ -1,4 +1,0 @@
-if (true()) then
-'P0DT0H' cast as xs:dayTimeDuration - <error descr="Expected type 'xs:duration', got 'xs:date'">current-date()</error>
-else
-'P0Y' cast as xs:yearMonthDuration - <error descr="Expected type 'xs:duration', got 'xs:date'">current-date()</error>

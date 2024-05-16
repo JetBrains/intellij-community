@@ -1,7 +1,0 @@
-<!DOCTYPE tag [
-   <!ENTITY mine SYSTEM "6.dtd">
-        %mine;
-]>
-<tag id="&mine;">
-    &mine;
-</tag>

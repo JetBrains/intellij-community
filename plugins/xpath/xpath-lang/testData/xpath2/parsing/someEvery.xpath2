@@ -1,1 +1,0 @@
- (some $i in (1,2,3) satisfies $i < 3) = (every $i in (1,2,3) satisfies $i < 4)

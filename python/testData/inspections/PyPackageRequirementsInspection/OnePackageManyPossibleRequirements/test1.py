@@ -1,2 +1,0 @@
-<warning descr="Package requirements 'django-recaptcha-mozilla', 'pyzmq-ctypes' are not satisfied">import <weak_warning descr="Package containing module 'captcha' is not listed in the project requirements">captcha</weak_warning>
-import <weak_warning descr="Package containing module 'zmq' is not listed in the project requirements">zmq</weak_warning></warning>

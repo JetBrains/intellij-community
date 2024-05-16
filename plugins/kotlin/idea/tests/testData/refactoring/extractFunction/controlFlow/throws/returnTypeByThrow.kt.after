@@ -1,7 +1,0 @@
-class C {
-    fun foo(): String = nothing()
-
-    private fun nothing(): Nothing {
-        throw UnsupportedOperationException()
-    }
-}

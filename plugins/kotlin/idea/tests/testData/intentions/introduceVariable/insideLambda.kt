@@ -1,1 +1,0 @@
-fun foo() = {1<caret>}

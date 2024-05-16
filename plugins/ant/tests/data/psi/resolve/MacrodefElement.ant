@@ -1,9 +1,0 @@
-<project name="n" default="main">
-  <macrodef name="md">
-    <element name="ne"/>
-    <sequential>
-      <<ref>ne/>
-    </sequential>
-  </macrodef>
-  <target name="main"/>
-</project>

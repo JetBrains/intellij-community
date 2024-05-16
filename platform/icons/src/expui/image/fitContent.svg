@@ -1,8 +1,0 @@
-<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="11" y="7" width="1" height="4" rx="0.5" fill="#6C707E"/>
-<rect x="12" y="10" width="1" height="4" rx="0.5" transform="rotate(90 12 10)" fill="#6C707E"/>
-<rect x="4" y="5" width="1" height="4" rx="0.5" fill="#6C707E"/>
-<rect x="8" y="5" width="1" height="4" rx="0.5" transform="rotate(90 8 5)" fill="#6C707E"/>
-<rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="#6C707E"/>
-</svg>

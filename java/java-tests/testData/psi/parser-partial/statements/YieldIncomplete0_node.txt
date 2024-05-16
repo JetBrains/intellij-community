@@ -1,6 +1,0 @@
-test.java.file
-  YIELD_STATEMENT
-    YIELD
-    ERROR_ELEMENT
-      <empty list>
-  WHITE_SPACE

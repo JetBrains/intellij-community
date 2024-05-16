@@ -1,5 +1,0 @@
-object ConsumerCommonMain {
-    init {
-        ProducerCommonMain
-    }
-}

@@ -1,8 +1,0 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
-
-fun test(p: String?) {
-    p.length<caret>
-}
-
-// ELEMENT: length

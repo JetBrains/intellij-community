@@ -1,3 +1,0 @@
-Unclassified 12 object O2 : Z()
-Unclassified 5 open class Z : A() {
-Unclassified 9 object O1 : A()

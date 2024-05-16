@@ -1,6 +1,0 @@
-<project name="n" default="main">
-  <target name="main">
-    <fail unless="my.prop" message="my.prop must be set"/>
-    <echo message="Property my.prop is set to ${<ref>my.prop}"/>
-  </target>
-</project>

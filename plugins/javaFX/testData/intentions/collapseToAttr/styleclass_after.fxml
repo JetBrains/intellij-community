@@ -1,5 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-
-<?import java.lang.String?>
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:id="foo" styleClass="foo, foo1">
-</GridPane>

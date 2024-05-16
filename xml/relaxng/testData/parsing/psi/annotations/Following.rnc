@@ -1,3 +1,0 @@
-element foo {
-  text >> x[] >> y[]
-}

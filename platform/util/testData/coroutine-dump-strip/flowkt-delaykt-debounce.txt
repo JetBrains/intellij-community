@@ -1,5 +1,0 @@
-- "ApplicationImpl@1388874451":ProducerCoroutine{Active}@52b98246, state: SUSPENDED [Dispatchers.Default]
-#  at kotlinx.coroutines.flow.FlowKt__DelayKt$debounceInternal$1.invokeSuspend(Delay.kt:355)
-#  at kotlinx.coroutines.flow.internal.FlowCoroutineKt$scopedFlow$1$1.invokeSuspend(FlowCoroutine.kt:51)
-  at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:27)
-#  at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:60)

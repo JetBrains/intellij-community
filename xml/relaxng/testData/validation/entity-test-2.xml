@@ -1,6 +1,0 @@
-<!DOCTYPE missing-element [
-  <!ENTITY content SYSTEM "entity-included-2.xml" >
-]>
-<<error descr="unknown element "foo"">missing-element</error> xmlns="urn:test:simple.rng">
-  &content;
-</missing-element>

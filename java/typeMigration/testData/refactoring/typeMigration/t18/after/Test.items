@@ -1,8 +1,0 @@
-Types:
-PsiField:f : B
-PsiReferenceExpression:f : B
-
-Conversions:
-
-New expression type changes:
-Fails:

@@ -1,6 +1,0 @@
-final java.lang.Object usualType;
-final java.lang.Object nullableType;
-final java.lang.Object[] arrayWithNullableElements;
-final java.lang.Object[] nullableArrayWithNullableElements;
-final java.util.List<java.lang.Boolean> nullableList;
-final java.util.Map<java.lang.Integer, java.lang.Object> mapWithNullableValues;

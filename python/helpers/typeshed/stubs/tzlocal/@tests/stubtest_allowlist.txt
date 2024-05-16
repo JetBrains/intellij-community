@@ -1,6 +1,0 @@
-# Implementation details
-tzlocal.unix
-tzlocal.win32
-
-# Internal stuff:
-tzlocal.utils.log

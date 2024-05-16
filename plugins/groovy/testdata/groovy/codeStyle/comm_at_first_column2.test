@@ -1,8 +1,0 @@
-<option>KEEP_FIRST_COLUMN_COMMENT=false</option>
-class A {
-//
-}
------
-class A {
-  //
-}

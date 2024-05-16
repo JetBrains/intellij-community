@@ -1,9 +1,0 @@
-<idea-plugin>
-
-  <resource-bundle>ActionDescriptionFixBundle</resource-bundle>
-
-  <actions>
-  <<warning descr="String 'lower case description' is not properly capitalized. It should have sentence capitalization"><warning descr="String 'lower case text' is not properly capitalized. It should have title capitalization">action<caret></warning></warning> id="BundleActionWrongCasing"/>
-  </actions>
-
-</idea-plugin>

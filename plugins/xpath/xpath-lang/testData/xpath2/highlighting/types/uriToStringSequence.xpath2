@@ -1,1 +1,0 @@
-substring('any/fake' cast as xs:anyURI, 5)

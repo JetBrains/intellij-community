@@ -1,6 +1,0 @@
-[common.kt] Function call 6 DummyClass001().component1()
-[common.kt] Value read 5 val (a, b) = DummyClass001()
-[js.kt] Function call 7 DummyClass001().component1()
-[js.kt] Value read 6 val (a, b) = DummyClass001()
-[jvm.kt] Function call 5 DummyClass001().component1()
-[jvm.kt] Value read 4 val (a, b) = DummyClass001()

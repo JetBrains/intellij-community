@@ -1,7 +1,0 @@
-{
-  "mainFile": "bar/usages.kt",
-  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
-  "targetPackage": "foo",
-  "enabledInK1": "true",
-  "enabledInK2": "true"
-}

@@ -1,9 +1,0 @@
-<idea-plugin package="com.intellij.java.performancePlugin">
-  <dependencies>
-    <module name="intellij.performanceTesting.vcs"/>
-    <plugin id="com.jetbrains.performancePlugin"/>
-  </dependencies>
-  <extensions defaultExtensionNs="com.jetbrains">
-    <performancePlugin.commandProvider implementation="com.intellij.java.performancePlugin.JavaCommandProvider"/>
-  </extensions>
-</idea-plugin>

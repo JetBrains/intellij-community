@@ -1,6 +1,0 @@
-{
-  "type": "AUTO_DETECT",
-  "newName": "myField1",
-  "mainFile": "testing/test.kt",
-  "enabledInK2": true
-}

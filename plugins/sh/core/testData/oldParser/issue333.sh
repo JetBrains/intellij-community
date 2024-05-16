@@ -1,2 +1,0 @@
-a=
-eval "ech$a"

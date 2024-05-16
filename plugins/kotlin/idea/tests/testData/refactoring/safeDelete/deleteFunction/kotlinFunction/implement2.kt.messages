@@ -1,2 +1,0 @@
-function B.foo() implements function A.foo().
-function B.foo() implements function Z.foo().

@@ -1,4 +1,0 @@
-Function call 2 setFoo("123")
-Function call 9 k.setFoo("123")
-Value write 10 k.foo = "123"
-Value write 3 foo = "123"

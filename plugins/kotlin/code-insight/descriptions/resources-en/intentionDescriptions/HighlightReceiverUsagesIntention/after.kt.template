@@ -1,3 +1,0 @@
-fun <spot>String</spot>.foo(n: Int): Int {
-    return <spot>length</spot>() - n + <spot>this</spot>.substring(2).length()
-}

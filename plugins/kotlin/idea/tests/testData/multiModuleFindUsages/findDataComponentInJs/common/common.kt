@@ -1,1 +1,0 @@
-class A(val a: Int)

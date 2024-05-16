@@ -1,3 +1,0 @@
-pkg/SealedInterface1
-pkg/SealedInterface2
-pkg/SealedInterfaceJvmImpl

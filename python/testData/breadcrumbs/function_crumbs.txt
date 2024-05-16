@@ -1,4 +1,0 @@
-Crumb:
-foo()
-Tooltip:
-foo()

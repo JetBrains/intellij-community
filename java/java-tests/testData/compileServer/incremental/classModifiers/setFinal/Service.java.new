@@ -1,3 +1,0 @@
-public final class Service{
-  public void foo() {}
-}

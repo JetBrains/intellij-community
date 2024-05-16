@@ -1,8 +1,0 @@
-UFile (package = ) [public class Foo {...]
-    UClass (name = Foo) [public class Foo {...}]
-        UMethod (name = bar) [public static fun bar() : void {...}]
-            UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [var FOO_CLASS: java.lang.Class<?> = Foo] = Undetermined
-                    ULocalVariable (name = FOO_CLASS) [var FOO_CLASS: java.lang.Class<?> = Foo]
-                        UClassLiteralExpression [Foo] = Foo
-                            UTypeReferenceExpression (name = Foo) [Foo] = Undetermined

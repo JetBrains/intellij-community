@@ -1,9 +1,0 @@
-REGEXP_FILE
-  PsiWhiteSpace('\Q')
-  RegExpPatternImpl: <\j>
-    RegExpBranchImpl: <\j>
-      RegExpCharImpl: <\>
-        PsiElement(CHARACTER)('\')
-      RegExpCharImpl: <j>
-        PsiElement(CHARACTER)('j')
-  PsiWhiteSpace('\E')

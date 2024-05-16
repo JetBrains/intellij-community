@@ -1,6 +1,0 @@
-while (true)
-  {
-  }
------
-while (true) {
-}

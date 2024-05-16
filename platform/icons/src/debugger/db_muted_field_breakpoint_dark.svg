@@ -1,9 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12" viewBox="0 0 12 12">
-  <defs>
-    <path id="db_muted_field_breakpoint_dark-a" d="M1.54849275e-11,6 C1.06550595,3.63505267 3.35165999,2 6,2 C8.64834001,2 10.9344941,3.63505267 12,6 C10.9344941,8.36494733 8.64834001,10 6,10 C3.35165999,10 1.06550595,8.36494733 1.11676587e-11,6 Z M6,9 C7.65685425,9 9,7.65685425 9,6 C9,4.34314575 7.65685425,3 6,3 C4.34314575,3 3,4.34314575 3,6 C3,7.65685425 4.34314575,9 6,9 Z M6,8 C4.8954305,8 4,7.1045695 4,6 C4,4.8954305 4.8954305,4 6,4 C7.1045695,4 8,4.8954305 8,6 C8,7.1045695 7.1045695,8 6,8 Z"/>
-  </defs>
-  <g fill="none" fill-rule="evenodd">
-    <use fill="#AFB1B3" xlink:href="#db_muted_field_breakpoint_dark-a"/>
-  </g>
-</svg>

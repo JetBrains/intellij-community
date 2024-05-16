@@ -1,3 +1,0 @@
-yet another line
-some ot<caret>her text<caret>
-some text<caret>

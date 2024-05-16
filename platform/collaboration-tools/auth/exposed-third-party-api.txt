@@ -1,3 +1,0 @@
-io/netty/channel/ChannelHandlerContext
-io/netty/handler/codec/http/FullHttpRequest
-io/netty/handler/codec/http/QueryStringDecoder

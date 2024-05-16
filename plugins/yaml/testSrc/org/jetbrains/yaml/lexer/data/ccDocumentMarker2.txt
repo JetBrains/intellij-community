@@ -1,7 +1,0 @@
-scalar key ('---')
-: (':')
-whitespace (' ')
-text ('d')
-Eol ('\n')
-Eol ('\n')
-comment ('# cc - corner case')

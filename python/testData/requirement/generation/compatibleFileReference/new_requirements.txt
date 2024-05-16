@@ -1,2 +1,0 @@
--r base_requirements.txt
-numpy==1.18.1

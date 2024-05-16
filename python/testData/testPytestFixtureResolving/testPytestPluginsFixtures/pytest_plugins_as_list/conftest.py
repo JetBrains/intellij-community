@@ -1,1 +1,0 @@
-pytest_plugins = ["fixtures.first", "fixtures.second"]

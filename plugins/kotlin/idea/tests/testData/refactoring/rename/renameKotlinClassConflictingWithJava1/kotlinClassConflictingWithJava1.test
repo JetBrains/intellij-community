@@ -1,9 +1,0 @@
-{
-  "type": "KOTLIN_CLASS",
-  "classId": "rename/Bar",
-  "mainFile": "rename/test.kt",
-  "newName": "JavaConflict",
-  "enabledInK2": true,
-  "hint": "Class 'JavaConflict' is already declared in package 'rename'",
-  "k1Hint": "Class 'Bar' will be shadowed by class 'JavaConflict'"
-}

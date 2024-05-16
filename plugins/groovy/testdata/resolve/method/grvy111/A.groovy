@@ -1,1 +1,0 @@
-assert [1,[2,3]].<caret>flatten() == [1,2,3]

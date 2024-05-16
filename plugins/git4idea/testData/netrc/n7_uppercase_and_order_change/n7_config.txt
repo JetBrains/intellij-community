@@ -1,3 +1,0 @@
-MACHine BITBUCKET.org
- password pass
- LOGIN john

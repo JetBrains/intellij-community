@@ -1,6 +1,0 @@
-REMOTE
-origin
-git://github.com/JetBrains/intellij-community.git
-https://github.com/JetBrains/intellij-community.git
-+refs/heads/*:refs/remotes/origin/*
-+refs/heads/*:refs/remotes/origin/*

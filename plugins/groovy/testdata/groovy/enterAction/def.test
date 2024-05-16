@@ -1,4 +1,0 @@
-def foo = 3<caret>
------
-def foo = 3
-<caret>

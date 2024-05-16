@@ -1,7 +1,0 @@
-PyFile:TypeAliasStatementRecoveryWithNoAssignedType.py
-  PyTypeAliasStatement
-    PsiElement(Py:TYPE_KEYWORD)('type')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:IDENTIFIER)('MyType')
-    PsiErrorElement:'=' expected
-      <empty list>

@@ -1,8 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <*a>
-    RegExpBranchImpl: <*a>
-      PsiErrorElement:Dangling quantifier '*'
-        <empty list>
-      PsiElement(STAR)('*')
-      RegExpCharImpl: <a>
-        PsiElement(CHARACTER)('a')

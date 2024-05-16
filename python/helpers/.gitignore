@@ -1,6 +1,0 @@
-pydev/build
-/.idea/
-/venv*/
-.tox/
-# pyenv's interpreters list
-.python-version

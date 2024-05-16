@@ -1,8 +1,0 @@
-<idea-plugin>
-  <application-components>
-    <component>
-      <interface-class>java.lang.Runnable</interface-class>
-      <implementation-class><error descr="Component class is not assignable to its interface-class 'java.lang.Runnable'">ApplicationComponent</error></implementation-class>
-    </component>
-  </application-components>
-</idea-plugin>

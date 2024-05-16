@@ -1,5 +1,0 @@
-public class Foo {
-    void m(Object o) {
-        <spot>String.valueOf(123)</spot>$key
-    }
-}

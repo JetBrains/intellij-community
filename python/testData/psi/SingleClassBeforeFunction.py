@@ -1,5 +1,0 @@
-class
-
-
-def foo():
-    pass

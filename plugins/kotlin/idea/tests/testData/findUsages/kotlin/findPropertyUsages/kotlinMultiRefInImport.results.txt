@@ -1,2 +1,0 @@
-Usage in import 6 import server.foo
-Value read 10 val t = 1.foo + foo

@@ -1,1 +1,0 @@
-<error descr="Python version 3.6 does not support a trailing 'L'"><error descr="Python version 3.6 does not support this syntax. It requires '0o' prefix for octal literals">01234L</error></error>

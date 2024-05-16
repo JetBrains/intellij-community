@@ -1,7 +1,0 @@
-public class X {
-
-  private static final DateTimeFormatter formatter =
-    DateTimeFormatter.ofPattern(<spot>"yyyy/MMMM/dd HH:mm:ss"</spot>);
-
-}
-¡

@@ -1,3 +1,0 @@
-FROM centos:7
-
-RUN yum install -y epel-release cmake make gcc-c++ glib2-devel libX11-devel libdbusmenu-devel

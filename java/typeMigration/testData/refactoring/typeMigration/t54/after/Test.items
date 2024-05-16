@@ -1,9 +1,0 @@
-Types:
-PsiField:f : java.util.Set<? extends java.lang.Integer>
-PsiNewExpression:new Set<Object>() : java.util.Set<java.lang.Integer>
-
-Conversions:
-
-New expression type changes:
-new Set<Object>() -> java.util.Set<java.lang.Integer>
-Fails:

@@ -1,3 +1,0 @@
-// DISABLE-ERRORS
-// WITH_STDLIB
-var x: Int = 1

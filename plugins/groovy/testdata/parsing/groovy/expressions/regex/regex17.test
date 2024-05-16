@@ -1,8 +1,0 @@
-/sgfdhj$5dhfg/
------
-Groovy script
-  Literal
-    GroovyASTPsiElementImpl(SLASHY_LITERAL)
-      PsiElement(regex begin)('/')
-      PsiElement(regex content)('sgfdhj$5dhfg')
-      PsiElement(regex end)('/')

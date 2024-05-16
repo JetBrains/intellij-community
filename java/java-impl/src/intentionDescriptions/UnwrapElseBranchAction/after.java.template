@@ -1,8 +1,0 @@
-public class X {
-  void f(boolean b) {
-    if (b) {
-      System.out.println("When true");
-    }
-    System.out.println("Otherwise");
-  }
-}

@@ -1,6 +1,0 @@
-fun test(i: Int) {
-    when (i) {
-        in 1..10, in 11..20 -> println(0)
-        else -> println(1)
-    }
-}

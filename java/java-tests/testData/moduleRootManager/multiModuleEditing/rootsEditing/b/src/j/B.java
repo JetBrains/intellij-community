@@ -1,4 +1,0 @@
-package j;
-
-class B {
-}

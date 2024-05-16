@@ -1,7 +1,0 @@
-lin<caret>e1
-li<selection><caret>ne2</selection>
-<selection>li<caret>ne3</selection>
-line4
-li<selection>ne5
-lin<caret></selection>e6
-line7

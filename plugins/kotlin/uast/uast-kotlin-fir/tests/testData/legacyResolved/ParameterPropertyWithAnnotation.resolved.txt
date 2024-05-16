@@ -1,8 +1,0 @@
-UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:annotation class MyAnnotation: MyAnnotation
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-UAnnotation (fqName = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:annotation class MyAnnotation: MyAnnotation
-UAnnotation (fqName = MyAnnotation2) -> USimpleNameReferenceExpression (identifier = MyAnnotation2) -> Kotlin_Light_Class:annotation class MyAnnotation2: MyAnnotation2
-UAnnotation (fqName = MyAnnotation3) -> USimpleNameReferenceExpression (identifier = MyAnnotation3) -> Kotlin_Light_Class:annotation class MyAnnotation3: MyAnnotation3
-UAnnotation (fqName = MyAnnotation4) -> USimpleNameReferenceExpression (identifier = MyAnnotation4) -> Kotlin_Light_Class:annotation class MyAnnotation4: MyAnnotation4
-UAnnotation (fqName = MyAnnotation5) -> USimpleNameReferenceExpression (identifier = MyAnnotation5) -> Kotlin_Light_Class:annotation class MyAnnotation5: MyAnnotation5
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer

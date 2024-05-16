@@ -1,6 +1,0 @@
-public class X {
-  void m(String s1, String s2) {
-    if (<spot>s1.compareTo(s2) != 0</spot>) {
-    }
-  }
-}

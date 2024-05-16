@@ -1,6 +1,0 @@
-class C(
-    val a: String, // parameter comment
-    i: Int = 1,
-) {
-    val b = i
-}

@@ -1,8 +1,0 @@
-'[{foo, bar}]' at LogicalPosition: (2, 0) =>
-  HEADER at LogicalPosition: (2, 0)
-'charset' at LogicalPosition: (3, 0) =>
-  FLAT_OPTION_KEY at LogicalPosition: (3, 0)
-'[foo]' at LogicalPosition: (5, 0) =>
-  HEADER at LogicalPosition: (5, 0)
-'charset' at LogicalPosition: (6, 0) =>
-  FLAT_OPTION_KEY at LogicalPosition: (6, 0)

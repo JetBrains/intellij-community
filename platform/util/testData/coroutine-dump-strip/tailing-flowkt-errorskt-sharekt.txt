@@ -1,7 +1,0 @@
-- "PackageChecker.VulnerableApiService.intellij.android.projectSystem.gradle":StandaloneCoroutine{Active}@5fcb5066, state: SUSPENDED [Dispatchers.Default]
-#  at kotlinx.coroutines.flow.internal.CombineKt$combineInternal$2.invokeSuspend(Combine.kt:57)
-#  at kotlinx.coroutines.flow.FlowKt__ErrorsKt.catchImpl(Errors.kt:156)
-#  at kotlinx.coroutines.flow.FlowKt__ErrorsKt$retryWhen$$inlined$unsafeFlow$1.collect(Errors.kt:117)
-#  at kotlinx.coroutines.flow.FlowKt__ErrorsKt.catchImpl(Errors.kt:156)
-#  at kotlinx.coroutines.flow.FlowKt__ErrorsKt$catch$$inlined$unsafeFlow$1.collect(Errors.kt:113)
-  at kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1.invokeSuspend(Share.kt:214)

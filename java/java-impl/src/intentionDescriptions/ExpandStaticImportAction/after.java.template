@@ -1,7 +1,0 @@
-import java.util.Arrays;
-
-class Foo {
-    public void foo(String... args) {
-        <spot>Arrays.sort</spot>(args);
-    }
-}

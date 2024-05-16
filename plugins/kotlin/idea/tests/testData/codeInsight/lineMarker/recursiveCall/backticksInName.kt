@@ -1,1 +1,0 @@
-fun `b `(): Unit = <lineMarker descr="Recursive call">`b `</lineMarker>()

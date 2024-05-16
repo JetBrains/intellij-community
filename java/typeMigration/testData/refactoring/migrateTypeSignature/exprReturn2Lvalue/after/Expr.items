@@ -1,9 +1,0 @@
-Types:
-PsiMethod:meth : java.lang.String
-PsiParameter:p : java.lang.String
-PsiReferenceExpression:p : java.lang.String
-
-Conversions:
-
-New expression type changes:
-Fails:

@@ -1,3 +1,0 @@
-<!ELEMENT anothertag (anothertag)*>
-<!ATTLIST anothert<caret>ag
-    id CDATA #IMPLIED>

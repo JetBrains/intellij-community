@@ -1,4 +1,0 @@
-// FIR_COMPARISON
-class C(@get:<caret> val p: String)
-
-// ELEMENT: get

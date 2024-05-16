@@ -1,1 +1,0 @@
-<error descr="Expected type 'node()', got 'xs:string'">token[1]/upper-case(text())</error>/foo

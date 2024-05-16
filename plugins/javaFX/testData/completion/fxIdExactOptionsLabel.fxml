@@ -1,5 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.GridPane?>
-<GridPane fx:controller="FxIdExactOptionsController" xmlns:fx="http://javafx.com/fxml">
-  <Label fx:id="<caret>"/>
-</GridPane>

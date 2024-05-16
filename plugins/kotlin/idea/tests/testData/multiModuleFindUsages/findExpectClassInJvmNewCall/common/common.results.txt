@@ -1,2 +1,0 @@
-[Main.java] Local variable declaration 3 C c = new C();
-[Main.java] New instance creation 3 C c = new C();

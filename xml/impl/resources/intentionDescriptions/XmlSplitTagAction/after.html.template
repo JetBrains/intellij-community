@@ -1,6 +1,0 @@
-<html>
-<body>
-<p>this tag should be <spot></p>
-<p></spot>split at caret position</p>
-</body>
-</html>

@@ -1,7 +1,0 @@
-<caret>
-<caret>
-some text
-<caret>
-another text
-<caret>
-some longer line here

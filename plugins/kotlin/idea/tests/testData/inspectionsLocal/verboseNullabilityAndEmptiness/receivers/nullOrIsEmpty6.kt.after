@@ -1,7 +1,0 @@
-// WITH_STDLIB
-
-fun List<Int>?.foo() {
-    fun List<Int>?.bar() {
-        if (isNullOrEmpty()) println(0) else println(size)
-    }
-}

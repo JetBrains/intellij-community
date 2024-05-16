@@ -1,7 +1,0 @@
-{
-  "type": "KOTLIN_PROPERTY",
-  "classId": "testing/rename/BP",
-  "oldName": "first",
-  "newName": "second",
-  "enabledInK2": true
-}

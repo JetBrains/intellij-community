@@ -1,8 +1,0 @@
-mutation($title: String!, $description: String, $visibilityLevel: VisibilityLevelsEnum!, $projectPath: ID, $blobActions: [SnippetBlobActionInputType!]!) {
-  createSnippet(input: {title: $title, description: $description, visibilityLevel: $visibilityLevel, projectPath: $projectPath, blobActions: $blobActions}) {
-    snippet {
-      ...snippet
-    }
-    errors
-  }
-}

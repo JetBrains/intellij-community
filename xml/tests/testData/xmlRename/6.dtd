@@ -1,3 +1,0 @@
-<!ELEMENT tag2 (#PCDATA)>
-<!ATTLIST tag2 i<caret>d ID #IMPLIED>
-<!ELEMENT tag (tag2)>

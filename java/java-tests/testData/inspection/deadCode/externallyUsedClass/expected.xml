@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>UsefulClass.java</file>
-    <line>4</line>
-    <entry_point TYPE="method" FQNAME="a.UsefulClass UsefulClass()" />
-    <description>Constructor is never used.</description>
-  </problem>
-</problems>

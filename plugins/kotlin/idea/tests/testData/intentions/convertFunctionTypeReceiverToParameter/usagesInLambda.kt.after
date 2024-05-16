@@ -1,5 +1,0 @@
-fun foo(): (Int) -> String = { i ->
-    i.toString() + i.hashCode() + i.hashCode() + bar(i)
-}
-
-fun bar(i: Int) = i + 1

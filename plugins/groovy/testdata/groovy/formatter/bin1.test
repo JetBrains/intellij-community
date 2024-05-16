@@ -1,9 +1,0 @@
-bool = true ||
-false &&
-true ||
-false
------
-bool = true ||
-    false &&
-    true ||
-    false

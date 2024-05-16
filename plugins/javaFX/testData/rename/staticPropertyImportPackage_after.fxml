@@ -1,5 +1,0 @@
-<?import javafx.scene.control.*?>
-<?import container.*?>
-<MyCustomContainer>
-  <Button text="abc" MyCustomContainer.newPropName2="123"/>
-</MyCustomContainer>

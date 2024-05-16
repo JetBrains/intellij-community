@@ -1,1 +1,0 @@
-from sys import path as v<caret>ar

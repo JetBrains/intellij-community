@@ -1,2 +1,0 @@
-[foo]
-dotnet_naming_symbols.my_symbols.applicable_kinds = class, struct, interface, field

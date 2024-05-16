@@ -1,8 +1,0 @@
-// FILE: before.kt
-annotation class B<T>
-@<caret>B
-class A
-// FILE: after.kt
-annotation class <caret>B<T>
-@B
-class A

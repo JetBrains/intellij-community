@@ -1,4 +1,0 @@
-<time>: Executing ':cleanJvmTest :jvmTest --tests "CommonTest.test - success"'...
-<time>: Execution finished ':cleanJvmTest :jvmTest --tests "CommonTest.test - success"'.
-
-<exitCode: 0>

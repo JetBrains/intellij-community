@@ -1,6 +1,0 @@
-<prod:asset id="string" xmlns:prod="product:shared" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="product:shared SeveralImportsWithOneNamespace_product.xsd">
-    <prod:instrumentId domain="string" category="string">e gero</prod:instrumentId>
-    <prod:assetClass>CREDIT_DERIVATIVE</prod:assetClass>
-    <prod:description>string</prod:description>
-</prod:asset>

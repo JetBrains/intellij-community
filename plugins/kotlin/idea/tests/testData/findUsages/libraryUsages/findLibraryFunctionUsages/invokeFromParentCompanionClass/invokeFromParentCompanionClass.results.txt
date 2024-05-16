@@ -1,4 +1,0 @@
-[invokeFromParentCompanionClass.0.kt] Function call 8 SimpleInterface.invoke()
-[invokeFromParentCompanionClass.1.kt] Implicit 'invoke' 5 SimpleInterface()
-[invokeFromParentCompanionClassLib0.kt] Function call 3 SimpleInterface.invoke()
-[invokeFromParentCompanionClassLib1.kt] Implicit 'invoke' 3 SimpleInterface()

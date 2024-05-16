@@ -1,2 +1,0 @@
-[X.java] Unclassified 7 new Outer.Inner().foo();
-[kotlinNestedClassMethodUsages.0.java] Unclassified 10 new Outer.Inner().foo();

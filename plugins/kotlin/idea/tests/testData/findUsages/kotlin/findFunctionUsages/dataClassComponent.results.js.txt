@@ -1,5 +1,0 @@
-Function call 7 k.component1()
-Value read 12 val (f1, b1) = t1
-Value read 18 val (f2, b2) = t2
-Value read 25 val (f3, b3) = kdc
-Value read 26 val (f4, b4) = l.first()

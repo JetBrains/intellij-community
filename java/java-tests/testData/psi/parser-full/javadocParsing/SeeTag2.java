@@ -1,4 +1,0 @@
-/**
- * @see String 
- */
-class C{}

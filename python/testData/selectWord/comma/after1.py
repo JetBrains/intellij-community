@@ -1,1 +1,0 @@
-d = {'school_id':parent_id, "next": <selection>next</selection>}

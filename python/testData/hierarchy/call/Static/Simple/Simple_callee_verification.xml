@@ -1,3 +1,0 @@
-<node text="target_func() (hierarchy.call.Static.Simple.main)" base="true">
-  <node text="func1() (hierarchy.call.Static.Simple.main)"/>
-</node>

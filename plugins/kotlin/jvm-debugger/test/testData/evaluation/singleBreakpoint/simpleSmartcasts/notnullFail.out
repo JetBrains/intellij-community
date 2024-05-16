@@ -1,8 +1,0 @@
-LineBreakpoint created at notnullFail.kt:10
-Run Java
-Connected to the target VM
-notnullFail.kt:10
-Compile bytecode for nullable.length
-Disconnected from the target VM
-
-Process finished with exit code 0

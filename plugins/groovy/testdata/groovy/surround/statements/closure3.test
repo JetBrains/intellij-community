@@ -1,9 +1,0 @@
-{
-    <selection>call 0</selection>
-}
------
-{
-    { ->
-        owner.call 0
-    }.call()
-}

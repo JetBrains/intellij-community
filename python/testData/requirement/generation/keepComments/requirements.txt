@@ -1,5 +1,0 @@
-# This is a comment in requirements file
-requests==2.22.0
-# One more
-Django==3.0.0
-# And another

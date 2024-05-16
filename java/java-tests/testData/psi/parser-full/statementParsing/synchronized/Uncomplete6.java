@@ -1,6 +1,0 @@
-class A{
-  {
-    synchronized(
-    foo();
-  }
-}

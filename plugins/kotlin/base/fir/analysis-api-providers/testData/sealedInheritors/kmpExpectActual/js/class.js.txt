@@ -1,2 +1,0 @@
-pkg/SealedClass1
-pkg/SealedClassJs

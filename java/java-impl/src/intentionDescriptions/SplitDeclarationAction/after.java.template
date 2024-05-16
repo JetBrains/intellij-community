@@ -1,6 +1,0 @@
-public class X {
-  void f() {
-    int i;
-    i = 0;
-  }
-}

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>I.java</file>
-    <line>2</line>
-    <description>Return value of the method is never used</description>
-  </problem>
-</problems>

@@ -1,8 +1,0 @@
-switch (n) {
-  case 1:
-    s = "x";
-    break;
-  case 2:
-    s = "x";
-    break;
-}

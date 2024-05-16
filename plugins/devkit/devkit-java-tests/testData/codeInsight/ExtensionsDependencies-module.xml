@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.myPlugin.module.dependency.fromModule"/>
-  </extensionPoints>
-</idea-plugin>

@@ -1,7 +1,0 @@
-import java.util.List;
-
-public class X {
-    boolean test(List<String> list) {
-      return list.stream()<spot>.anyMatch(s -> s.toLowerCase().equals("test"))</spot>;
-    }
-}

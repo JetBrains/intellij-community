@@ -1,3 +1,0 @@
-[kotlinInterfaceDerivedLocalObjects.0.kt] Unclassified 8 open class A : X {
-[kotlinInterfaceDerivedLocalObjects.1.kt] Unclassified 11 val O2 = object : X {
-[kotlinInterfaceDerivedLocalObjects.1.kt] Unclassified 6 val O1 = object : A() {

@@ -1,5 +1,0 @@
-// IGNORE_K2
-// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces
-sealed class Foo {
-    <caret>protected constructor()
-}

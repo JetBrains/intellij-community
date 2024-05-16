@@ -1,5 +1,0 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect id="Checkbox.Background.Selected_Checkbox.Border.Selected" x="4.5" y="4.5" width="15" height="15" rx="2.5" fill="#3574F0" stroke="#3574F0"/>
-<rect id="Checkbox.Focus.Wide" x="2" y="2" width="20" height="20" rx="4.5" stroke="#3574F0" stroke-width="2"/>
-<rect id="Checkbox.Foreground.Selected" x="6.5" y="11" width="11" height="2" rx="1" fill="white"/>
-</svg>

@@ -1,4 +1,0 @@
-def listener = <spot>{ActionEvent e ->
-    print "action performed"
-} as ActionListener</spot>
-

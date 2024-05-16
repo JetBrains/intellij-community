@@ -1,2 +1,0 @@
-machine bitbucket.org
- login john

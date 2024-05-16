@@ -1,9 +1,0 @@
-Types:
-PsiMethod:meth : java.util.List<T>
-PsiParameter:p : java.util.List<T>
-PsiReferenceExpression:p : java.util.List<T>
-
-Conversions:
-
-New expression type changes:
-Fails:

@@ -1,7 +1,0 @@
-<!DOCTYPE a [
-<!ELEMENT a (#PCDATA)>
-<!ENTITY nbsp2 SYSTEM "1<caret>" >  
-]>
-<a>
-  &nbsp2;
-</a>

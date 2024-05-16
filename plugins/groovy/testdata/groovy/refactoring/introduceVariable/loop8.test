@@ -1,6 +1,0 @@
-while (true) return <begin>1<end>
------
-while (true) {
-    def preved = 1
-    return preved
-}<caret>

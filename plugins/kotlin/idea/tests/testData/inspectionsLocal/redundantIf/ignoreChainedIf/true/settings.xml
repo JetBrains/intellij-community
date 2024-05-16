@@ -1,3 +1,0 @@
-<inspection_tool class="RedundantIfInspection" enabled="true" enabled_by_default="true">
-  <option name="ignoreChainedIf" value="true"/>
-</inspection_tool>

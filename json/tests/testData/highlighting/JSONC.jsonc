@@ -1,9 +1,0 @@
-{
-    /* this is a block comment
-       that continues on another line */
-    "foo": "bar",
-
-    // this is an inline comment
-    "test" : 1
-}
-

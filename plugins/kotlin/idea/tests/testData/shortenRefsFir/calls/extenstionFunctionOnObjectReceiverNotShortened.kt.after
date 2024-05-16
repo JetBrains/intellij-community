@@ -1,9 +1,0 @@
-package test
-
-object T
-
-fun T.ext() {}
-
-fun usage() {
-    T.ext()
-}

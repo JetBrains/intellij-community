@@ -1,5 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-  <path d="M8,4.5A5.965,5.965,0,0,1,13.372,8,5.965,5.965,0,0,1,8,11.5,5.965,5.965,0,0,1,2.628,8,5.965,5.965,0,0,1,8,4.5M8,3A7.541,7.541,0,0,0,1,8a7.541,7.541,0,0,0,7,5,7.541,7.541,0,0,0,7-5A7.541,7.541,0,0,0,8,3Z" fill="#499c54"/>
-  <circle cx="8" cy="8" r="2" fill="#499c54"/>
-</svg>

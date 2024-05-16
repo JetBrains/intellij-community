@@ -1,9 +1,0 @@
-def y = {
-    x*2 + it
-}
-i<caret>nt x
------
-def y = {
-    x*2 + it
-    i<caret>nt x
-}

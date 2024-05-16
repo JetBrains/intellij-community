@@ -1,4 +1,0 @@
-@Deprecated("a")
-<caret>private class C
-
-// IGNORE_K1

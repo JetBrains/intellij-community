@@ -1,7 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <a}>
-    RegExpBranchImpl: <a}>
-      RegExpCharImpl: <a>
-        PsiElement(CHARACTER)('a')
-      RegExpCharImpl: <}>
-        PsiElement(CHARACTER)('}')

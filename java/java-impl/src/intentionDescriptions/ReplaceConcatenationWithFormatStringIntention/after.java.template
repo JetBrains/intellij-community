@@ -1,5 +1,0 @@
-public class X {
-  void p(String s, String t) {
-    System.out.printf("s: %s t: %s", s, t);
-  }
-}

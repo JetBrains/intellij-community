@@ -1,8 +1,0 @@
-class KotlinClass {
-}
-
-fun test() {
-    KotlinClass().extension
-}
-
-val KotlinClass.extension: Int get() = 42

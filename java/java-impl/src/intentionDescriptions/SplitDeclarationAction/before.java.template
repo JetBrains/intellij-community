@@ -1,5 +1,0 @@
-public class X {
-  void f() {
-    <spot>int i = 0</spot>;
-  }
-}

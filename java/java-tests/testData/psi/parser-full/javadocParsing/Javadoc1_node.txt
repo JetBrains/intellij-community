@@ -1,4 +1,0 @@
-java.FILE
-  C_STYLE_COMMENT
-  IMPORT_LIST
-    <empty list>

@@ -1,9 +1,0 @@
-// IGNORE_K1
-fun foo() {
-    val a = 1
-    val bool1 = a > 0
-    if (bool1) {
-        val bool = 0
-        println(bool)
-    }
-}

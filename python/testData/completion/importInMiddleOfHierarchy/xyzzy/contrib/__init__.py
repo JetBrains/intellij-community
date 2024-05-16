@@ -1,2 +1,0 @@
-__author__ = 'yole'
-  

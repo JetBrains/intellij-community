@@ -1,7 +1,0 @@
-package a
-
-import b.HELLO
-
-fun bar() {
-    val p = HELLO
-}

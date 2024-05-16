@@ -1,6 +1,0 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
-class <caret>MyClass
-
-// ELEMENT: "class"
-// CHAR: '\t'

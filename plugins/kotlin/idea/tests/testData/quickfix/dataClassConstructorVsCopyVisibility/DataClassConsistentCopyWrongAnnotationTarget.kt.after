@@ -1,4 +1,0 @@
-// IGNORE_K1
-// "Remove annotation" "true"
-class Foo private constructor(val x: Int)
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

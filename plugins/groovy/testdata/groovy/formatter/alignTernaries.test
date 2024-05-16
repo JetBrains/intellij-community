@@ -1,5 +1,0 @@
-def foo = true ? 2 :
-       2
------
-def foo = true ? 2 :
-          2

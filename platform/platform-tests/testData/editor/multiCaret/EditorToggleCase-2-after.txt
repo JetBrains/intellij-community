@@ -1,2 +1,0 @@
-<selection><caret>SOME</selection> <selection>T<caret>EXT</selection>
-<selection><caret>SOME</selection> <selection>OTHER<caret> T</selection>ext

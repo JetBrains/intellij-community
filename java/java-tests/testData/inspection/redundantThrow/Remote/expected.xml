@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>E.java</file>
-    <line>15</line>
-    <description>The declared exception &lt;code&gt;RemoteException&lt;/code&gt; is never thrown in any method implementation</description>
-  </problem>
-</problems>
-

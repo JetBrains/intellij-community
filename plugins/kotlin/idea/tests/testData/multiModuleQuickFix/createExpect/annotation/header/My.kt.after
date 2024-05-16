@@ -1,4 +1,0 @@
-// My: to be implemented
-// DISABLE-ERRORS
-// IGNORE_K2
-expect annotation class <selection><caret></selection>My(val x: Int, val y: Double)

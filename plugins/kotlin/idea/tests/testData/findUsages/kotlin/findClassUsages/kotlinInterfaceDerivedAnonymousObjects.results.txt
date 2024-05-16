@@ -1,4 +1,0 @@
-[kotlinInterfaceDerivedAnonymousObjects.0.kt] Unclassified 8 open class A : X {
-[kotlinInterfaceDerivedAnonymousObjects.1.kt] Unclassified 10 doSomething(object : A() {}, object : X {})
-[kotlinInterfaceDerivedAnonymousObjects.1.kt] Unclassified 10 doSomething(object : A() {}, object : X {})
-[kotlinInterfaceDerivedAnonymousObjects.1.kt] Unclassified 13 val x = object : X {

@@ -1,6 +1,0 @@
-class A{
-  {
-    switch(
-    foo();
-  }
-}

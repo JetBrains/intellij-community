@@ -1,9 +1,0 @@
-# Gradle
-/build/
-/.gradle/
-/.idea/
-local.properties
-
-# these are intentionally un-ignored
-!/gen
-!*.iml

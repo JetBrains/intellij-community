@@ -1,5 +1,0 @@
-{
-    "inspectionClass": "org.jetbrains.kotlin.idea.intentions.UsePropertyAccessSyntaxInspection",
-    "problem": "none",
-    "mainFile": "CallAccessMethod.kt"
-}

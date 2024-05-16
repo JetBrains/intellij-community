@@ -1,7 +1,0 @@
-fun test() {
-    try {
-        run(1, "text")
-    } catch (e: IllegalArgumentException) {
-        throw e
-    }
-}

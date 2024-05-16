@@ -1,7 +1,0 @@
-<idea-plugin>
-  <id>test</id>
-  <vendor>JetBrains</vendor>
-  <version>1.0</version>
-
-  <idea-version since-build="129.0" until-build="129.9999"/>
-</idea-plugin>

@@ -1,7 +1,0 @@
-class Test {
-  void test(Object obj) {
-    if (Math.random() > 0.5 || (obj instanceof String && ((String) obj).isEmpty())) {
-      System.out.println();
-    }
-  }
-}

@@ -1,5 +1,0 @@
-class A {
-    <spot>def foo = { def x, def y ->
-        print x + y
-    }</spot>
-}

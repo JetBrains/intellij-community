@@ -1,5 +1,0 @@
-def foo(arg1, arg2, arg3) {
-  use(<spot>arg1</spot> + <spot>arg2</spot> + <spot>arg3</spot>)
-}
-
-foo("Hello ", "world", "!")

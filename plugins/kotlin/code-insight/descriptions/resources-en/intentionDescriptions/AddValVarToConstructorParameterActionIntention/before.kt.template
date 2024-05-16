@@ -1,1 +1,0 @@
-class User(name: String, <spot>email</spot>: String)

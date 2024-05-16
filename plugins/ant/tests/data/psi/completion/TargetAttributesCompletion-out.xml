@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-
-<project name="mesquite"
-         basedir="."
-         default="package">
-    <target <caret>/>
-</project>

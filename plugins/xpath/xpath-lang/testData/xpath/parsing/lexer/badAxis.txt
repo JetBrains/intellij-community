@@ -1,3 +1,0 @@
-BAD_AXIS_NAME ('something')
-COLCOL ('::')
-STAR ('*')

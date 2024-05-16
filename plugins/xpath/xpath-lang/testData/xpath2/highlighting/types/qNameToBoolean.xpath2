@@ -1,1 +1,0 @@
-if (<error descr="Expected type 'xs:boolean', got 'xs:QName?'">node-name(/*)</error>) then true() else false()

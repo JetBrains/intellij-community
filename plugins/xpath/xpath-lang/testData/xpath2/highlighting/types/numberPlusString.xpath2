@@ -1,1 +1,0 @@
-55 + <error descr="Expected type 'xs:numeric', got 'xs:string'">'66'</error>

@@ -1,5 +1,0 @@
-typealias AliasedInt = Int
-
-fun test() {
-    val result: Int? = (null as AliasedInt?)?.dec()
-}

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.Button?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-  <Button onAction=<error descr="Page language not specified.">"foo"</error> text="foo" fx:id="b1" />
-</GridPane>

@@ -1,4 +1,0 @@
-r5 url.pushInsteadOf shouldn't override pushUrl
-
-url.<base>.pushUrl shouldn't override explicit pushUrl if the latest is given.
-See also: http://kerneltrap.org/mailarchive/git/2009/9/8/11332

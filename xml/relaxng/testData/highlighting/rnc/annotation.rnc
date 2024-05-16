@@ -1,9 +1,0 @@
-namespace a = "http://www.example.com/annotation"
-
-element addressBook {
-  [ a:documentation [ xml:lang="en" "Information about a single address." ] ]
-  element card {
-    element name { text },
-    element email { text }
-  }*
-}

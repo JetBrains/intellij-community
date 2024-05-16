@@ -1,1 +1,0 @@
-KtNamedFunction: B

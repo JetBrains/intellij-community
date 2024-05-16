@@ -1,7 +1,0 @@
-package my.simple.name
-
-val foo = 3
-
-class A {
-    fun a() = foo
-}

@@ -1,5 +1,0 @@
-import test.MyAlias
-
-fun foo(): MyAlias<caret>
-
-// FIR_COMPARISON

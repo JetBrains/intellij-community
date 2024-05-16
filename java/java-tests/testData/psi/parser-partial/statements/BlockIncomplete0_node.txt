@@ -1,7 +1,0 @@
-test.java.file
-  CODE_BLOCK
-    LBRACE
-    ERROR_ELEMENT
-      <empty list>
-    WHITE_SPACE
-    C_STYLE_COMMENT

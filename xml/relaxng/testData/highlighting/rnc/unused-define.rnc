@@ -1,4 +1,0 @@
-
-start = element foo { empty }
-
-<warning>foo</warning> = element bar { empty }

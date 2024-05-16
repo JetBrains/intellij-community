@@ -1,2 +1,0 @@
-[parameterUsageInAnonymousInheritorWithSearchInOverridings.0.kt] Value read 12 val param2 = param
-[parameterUsageInAnonymousInheritorWithSearchInOverridings.1.java] Unclassified 6 T param2 = param;

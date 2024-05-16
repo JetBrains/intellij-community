@@ -1,2 +1,0 @@
-so<caret>me <selection><caret>text</selection>
-some other <selection>t<caret>ext</selection>

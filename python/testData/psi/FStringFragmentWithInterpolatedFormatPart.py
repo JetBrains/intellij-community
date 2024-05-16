@@ -1,1 +1,0 @@
-s = f'result: {value:{width}.{precision}}'

@@ -1,7 +1,0 @@
-public abstract class X {
-  protected abstract void f();
-}
-<spot>public class XImpl extends X {
-  protected void f() {
-  }
-}</spot>

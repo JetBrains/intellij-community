@@ -1,3 +1,0 @@
-<inspection_tool class="UnnecessaryVariableInspection" enabled="true" enabled_by_default="true">
-    <option name="reportImmediatelyReturnedVariables" value="true"/>
-</inspection_tool>

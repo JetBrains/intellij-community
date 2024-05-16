@@ -1,3 +1,0 @@
-package y;
-
-class TTT {}

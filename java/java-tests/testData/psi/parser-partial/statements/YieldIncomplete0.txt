@@ -1,6 +1,0 @@
-PsiJavaFile:YieldIncomplete0.java
-  PsiYieldStatement
-    PsiKeyword:yield('yield')
-    PsiErrorElement:Expression expected
-      <empty list>
-  PsiWhiteSpace(' ')

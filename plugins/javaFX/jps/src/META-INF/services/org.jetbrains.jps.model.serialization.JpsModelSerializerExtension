@@ -1,4 +1,0 @@
-# Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-org.jetbrains.plugins.javaFX.JpsJavaFxModelSerializerExtension
-org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderModelSerializerExtension
-org.jetbrains.plugins.javaFX.jpackage.JPackageJpsModelSerializerExtension

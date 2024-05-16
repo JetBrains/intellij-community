@@ -1,1 +1,0 @@
-class MyArrayList extends <ref>ArrayList {}

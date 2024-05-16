@@ -1,9 +1,0 @@
-[{*.kt,*.kts}]
-
-ij_kotlin_method_parameters_new_line_after_left_paren = true
-ij_kotlin_method_parameters_right_paren_on_new_line = true
-ij_kotlin_call_parameters_new_line_after_left_paren = true
-ij_kotlin_call_parameters_right_paren_on_new_line = true
-
-# critical subsystem - named params used a lot
-max_line_length = 180

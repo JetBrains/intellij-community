@@ -1,2 +1,0 @@
-* > item
-  item<caret>

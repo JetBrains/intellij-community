@@ -1,6 +1,0 @@
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-
-@A(11)
-public @interface A1 {
-}

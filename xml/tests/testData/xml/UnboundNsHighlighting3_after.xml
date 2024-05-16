@@ -1,1 +1,0 @@
-<html xxx:something="blubb" xmlns:xxx="<caret><selection>someuri</selection>"/>

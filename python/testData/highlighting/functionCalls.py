@@ -1,5 +1,0 @@
-<info descr="PY.FUNCTION_CALL">func</info>()
-mod.Class.<info descr="PY.METHOD_CALL">method</info>()
-<info descr="PY.FUNCTION_CALL">chained</info>().<info descr="PY.METHOD_CALL">calls</info>().<info descr="PY.METHOD_CALL">sample</info>()
-(foo or bar)()
-<info descr="PY.BUILTIN_NAME">len</info>(xs)

@@ -1,4 +1,0 @@
-package x;
-
-public class Concrete extends Abstract{
-}

@@ -1,4 +1,0 @@
-[table]<fold text='{...}'>
-a = <fold text='[...]'>[1, 2, 3]</fold>
-b = []
-c = <fold text='[...]'>[<fold text='{...}'>{ a = 5 }</fold>]</fold></fold>

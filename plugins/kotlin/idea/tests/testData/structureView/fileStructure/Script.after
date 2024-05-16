@@ -1,5 +1,0 @@
--Script.kts
- dependencies
- foo(): Unit
- plugins
- repositories

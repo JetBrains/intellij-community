@@ -1,5 +1,0 @@
-package ppp;
-
-public interface Sub {
-  Object FIELD = new String("abc");
-}

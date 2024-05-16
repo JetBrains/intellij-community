@@ -1,7 +1,0 @@
-0(1) element: null
-1(2) WRITE ACCESS: self
-2(3) WRITE ACCESS: args
-3(4) element: PyAssignmentStatement
-4(5) WRITE ACCESS: self.args
-5(6) READ ACCESS: self
-6() element: null

@@ -1,5 +1,0 @@
-class Foo{
-  {
-    call(new );
-  }
-}

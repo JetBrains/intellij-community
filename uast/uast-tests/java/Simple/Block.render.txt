@@ -1,7 +1,0 @@
-class Block {
-    fun a() : void {
-        if (10 === 20) {
-            return
-        }
-    }
-}

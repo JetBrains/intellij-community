@@ -1,7 +1,0 @@
-PerformanceTestTokenType.COMMAND ('%%project')
-WHITE_SPACE (' ')
-PerformanceTestTokenType.IDENTIFIER ('b2c-demo-shop')
-WHITE_SPACE ('\n')
-PerformanceTestTokenType.COMMAND ('%%profileIndexing')
-WHITE_SPACE (' ')
-PerformanceTestTokenType.IDENTIFIER ('b2c_indexing')

@@ -1,1 +1,0 @@
-from tmp import <weak_warning descr="Access to a protected member _CONSTANT of a class">_CONSTANT</weak_warning>

@@ -1,6 +1,0 @@
-root = true
-
-[foo]
-<caret>hello = world
-key = value
-bar = bas

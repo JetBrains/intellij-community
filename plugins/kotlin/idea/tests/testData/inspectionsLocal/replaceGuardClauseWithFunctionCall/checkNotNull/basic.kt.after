@@ -1,5 +1,0 @@
-// FIX: Replace with 'checkNotNull()' call
-// WITH_STDLIB
-fun test(foo: Int?) {
-    checkNotNull(foo)
-}

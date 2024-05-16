@@ -1,9 +1,0 @@
-PyFile:shell6.py
-  PyAssignmentStatement
-    PyTargetExpression: a
-      PsiElement(Py:IDENTIFIER)('a')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:EQ)('=')
-    PsiWhiteSpace(' ')
-    PyEmptyExpression
-      PsiElement(Py:SHELL_COMMAND)('!!dir')

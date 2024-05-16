@@ -1,9 +1,0 @@
-UFile (package = ) [public class ReturnX {...]
-    UClass (name = ReturnX) [public class ReturnX {...}]
-        UMethod (name = foo) [public static fun foo() : int {...}]
-            UBlockExpression [{...}] = Nothing
-                UDeclarationsExpression [var x: int = 42] = Undetermined
-                    ULocalVariable (name = x) [var x: int = 42]
-                        ULiteralExpression (value = 42) [42] = 42
-                UReturnExpression [return x] = Nothing
-                    USimpleNameReferenceExpression (identifier = x) [x] = (var x = 42)

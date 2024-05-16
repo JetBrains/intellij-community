@@ -1,8 +1,0 @@
-<!DOCTYPE tag SYSTEM "dtd/simple.dtd" [
- <!ELEMENT tag (tag1)>
- ]>
-
-<<ref>tag>
-<tag1>
-</tag1>
-</tag>

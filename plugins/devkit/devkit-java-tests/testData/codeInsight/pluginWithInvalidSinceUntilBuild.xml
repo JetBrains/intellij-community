@@ -1,8 +1,0 @@
-<idea-plugin>
-  <id>test</id>
-  <vendor>JetBrains</vendor>
-  <version>1.0</version>
-
-  <idea-version since-build="<error descr="Invalid build number 'XXX.since' (Documentation)">XXX.since</error>"
-                until-build="<error descr="Invalid build number 'XXX.until' (Documentation)">XXX.until</error>"/>
-</idea-plugin>

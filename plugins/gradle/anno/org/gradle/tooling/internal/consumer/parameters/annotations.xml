@@ -1,5 +1,0 @@
-<root>
-    <item name='org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters java.util.List&lt;java.lang.String&gt; getArguments()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-</root>

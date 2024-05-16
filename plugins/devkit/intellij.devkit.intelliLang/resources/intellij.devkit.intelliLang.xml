@@ -1,8 +1,0 @@
-<idea-plugin package="org.jetbrains.idea.devkit.intelliLang">
-  <dependencies>
-    <plugin id="org.intellij.intelliLang"/>
-  </dependencies>
-  <extensions defaultExtensionNs="org.intellij.intelliLang">
-    <injectionConfig config="devkit-xmlInjections.xml"/>
-  </extensions>
-</idea-plugin>

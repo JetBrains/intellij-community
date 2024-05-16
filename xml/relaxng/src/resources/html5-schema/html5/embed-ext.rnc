@@ -1,3 +1,0 @@
-datatypes w = "http://whattf.org/datatype-draft"
-
-embed.attrs |= common.attr.anything

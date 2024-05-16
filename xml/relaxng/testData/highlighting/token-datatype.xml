@@ -1,4 +1,0 @@
-<token-datatype xmlns="urn:test:simple.rng"
-                a=" v " b="v" c=" x   y " 
-                s1="v"  s2=" v "
-                s3="<error descr="Attribute should have fixed value v">  v  </error>" />

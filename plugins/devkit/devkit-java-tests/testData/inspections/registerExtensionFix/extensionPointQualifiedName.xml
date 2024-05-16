@@ -1,6 +1,0 @@
-<idea-plugin>
-  <id>com.my.plugin</id>
-  <extensionPoints>
-    <extensionPoint qualifiedName="devkit.myExtension" interface="ExtensionPoint"/>
-  </extensionPoints>
-</idea-plugin>

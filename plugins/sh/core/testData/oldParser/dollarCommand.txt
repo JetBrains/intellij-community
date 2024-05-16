@@ -1,8 +1,0 @@
-SHELL_SCRIPT
-  COMMANDS_LIST
-    ASSIGNMENT_COMMAND
-      VARIABLE
-        PsiElement(var)('$x')
-      PsiElement(=)('=')
-      VARIABLE
-        PsiElement(var)('$x')

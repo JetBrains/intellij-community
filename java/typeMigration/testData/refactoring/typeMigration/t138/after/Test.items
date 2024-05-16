@@ -1,8 +1,0 @@
-Types:
-PsiParameter:set : java.util.Collection<java.lang.String>
-PsiReferenceExpression:set : java.util.Collection<java.lang.String>
-
-Conversions:
-
-New expression type changes:
-Fails:

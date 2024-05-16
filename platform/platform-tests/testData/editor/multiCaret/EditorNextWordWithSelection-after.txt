@@ -1,5 +1,0 @@
-<selection>soMe<caret></selection> text
-other line<selection>
-<caret></selection>yet another<selection> line<caret></selection>
-<selection>another line<caret></selection> again
-an<selection>d<caret></selection> again

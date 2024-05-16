@@ -1,7 +1,0 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
-val x : java.lang.reflect.Array
-val y: Array<String>
-
-// ELEMENT: Array
-// TAIL_TEXT: " (java.lang.reflect)"

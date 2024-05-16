@@ -1,8 +1,0 @@
-LineBreakpoint created at localFunctionWithCapturedOuterParameter.kt:7
-Run Java
-Connected to the target VM
-localFunctionWithCapturedOuterParameter.kt:7
-Compile bytecode for args.size
-Disconnected from the target VM
-
-Process finished with exit code 0

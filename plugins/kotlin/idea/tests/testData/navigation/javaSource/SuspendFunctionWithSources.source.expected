@@ -1,6 +1,0 @@
-Object.class
-public class <3>Object {
- SuspendFunctionWithSourcesKt.class
-<1>// IntelliJ API Decompiler stub source generated from a class file
- suspendFunctionWithSources.kt
-suspend fun String.<2>foo(): Int = this.length

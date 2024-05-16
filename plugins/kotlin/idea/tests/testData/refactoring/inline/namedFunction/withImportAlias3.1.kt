@@ -1,3 +1,0 @@
-package some
-
-class SomeClass

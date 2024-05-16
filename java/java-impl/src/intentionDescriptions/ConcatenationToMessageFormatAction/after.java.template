@@ -1,5 +1,0 @@
-public class X {
-  void f(int methods, int classes) {
-    System.out.println(MessageFormat.format("Executed {0} methods in {1} classes", methods, classes));
-  }
-}

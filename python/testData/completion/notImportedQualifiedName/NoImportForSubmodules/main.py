@@ -1,1 +1,0 @@
-mypackage.mysubpackage.<caret>

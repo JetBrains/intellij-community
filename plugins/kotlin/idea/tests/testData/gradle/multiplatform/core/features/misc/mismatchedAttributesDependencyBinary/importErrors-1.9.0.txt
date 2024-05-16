@@ -1,2 +1,0 @@
-Could not resolve org.jetbrains.kotlin.mpp.tests:producer:1.0 for :consumer:linuxX64Main
-Could not resolve org.jetbrains.kotlin.mpp.tests:producer:1.0 for :consumer:linuxX64Test

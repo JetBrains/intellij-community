@@ -1,4 +1,0 @@
-public class X {
-  void f(a,  b) {
-    if (b > a) return;
-}

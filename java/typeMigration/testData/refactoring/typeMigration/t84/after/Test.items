@@ -1,9 +1,0 @@
-Types:
-PsiLocalVariable:f : java.util.Set<? extends java.util.Set>
-PsiParameter:p : java.util.Set<? extends java.util.Set>
-PsiReferenceExpression:p : java.util.Set<? extends java.util.Set>
-
-Conversions:
-
-New expression type changes:
-Fails:

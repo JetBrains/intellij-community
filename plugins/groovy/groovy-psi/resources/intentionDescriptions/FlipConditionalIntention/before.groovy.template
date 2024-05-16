@@ -1,4 +1,0 @@
-public class X {
-  void f(a,  b) {
-    return <spot>a>b?a:b</spot>
-}

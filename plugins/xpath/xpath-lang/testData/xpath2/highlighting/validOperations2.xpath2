@@ -1,5 +1,0 @@
-1 < 2 or
-0 = 0 or
-true() ne false() or
-2 div 1 = 0 or
-xs:yearMonthDuration($i) * 1 = xs:yearMonthDuration($i)

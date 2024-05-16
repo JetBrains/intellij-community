@@ -1,6 +1,0 @@
-Checked type of root
-Resolved (root)
-Searched references to IHaveComponent
-Searched references to iHaveComponentKey in non-Java files
-Used plain search of IHaveComponent.component1() in LocalSearchScope:
-    CLASS:IHaveComponent

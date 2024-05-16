@@ -1,4 +1,0 @@
-{
-
-  "a": <warning descr="Validates against 'not' schema">["a", 5, true, false,true, false, true]</warning>
-}

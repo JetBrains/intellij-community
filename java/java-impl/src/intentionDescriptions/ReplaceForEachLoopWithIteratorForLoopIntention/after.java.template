@@ -1,8 +1,0 @@
-public class X {
-  void f(Set<String> strings) {
-    for (Iterator<String> it = strings.iterator(); it.hasNext();) {
-       String string = it.next();
-       System.out.println(string);
-    }
-  }
-}

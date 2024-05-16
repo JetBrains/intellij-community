@@ -1,6 +1,0 @@
-open class A
-
-fun <T: A> test(list: List<List<T>>) {
-    val ts = list[0]
-    val b = ts
-}

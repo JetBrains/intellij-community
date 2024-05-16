@@ -1,2 +1,0 @@
-NAME=MyClass
-PACKAGE_NAME=com.idea

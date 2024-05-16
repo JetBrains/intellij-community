@@ -1,3 +1,0 @@
-LogicalPosition: (1, 21) - 'xxx': write usage
-LogicalPosition: (3, 22) - 'xxx': read usage
-LogicalPosition: (4, 10) - 'xxx': read usage

@@ -1,5 +1,0 @@
-root:
-  with:
-    nesting: This is invalid
-      <caret>key: value
-  key2: value2

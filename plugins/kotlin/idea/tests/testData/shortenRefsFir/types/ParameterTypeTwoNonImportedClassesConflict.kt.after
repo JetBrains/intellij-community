@@ -1,5 +1,0 @@
-package test
-
-import dependency1.T
-
-fun foo(p1: T, p2: dependency2.T) {}

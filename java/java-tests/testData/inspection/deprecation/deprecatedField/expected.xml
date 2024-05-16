@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Test.java</file>
-    <line>7</line>
-    <description>'b' is deprecated</description>
-  </problem>
-</problems>
-

@@ -1,4 +1,0 @@
-org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
-org.jetbrains.jps.model.serialization.JpsEncodingModelSerializerExtension
-org.jetbrains.jps.model.serialization.jarRepository.JpsRemoteRepositoriesModelSerializerExtension
-com.intellij.platform.jps.model.serialization.resolver.JpsDependencyResolverConfigurationSerializerExtension

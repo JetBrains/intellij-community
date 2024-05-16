@@ -1,3 +1,0 @@
-<caret>s<caret>ome text
-<caret>some <selection><caret>other</selection><selection><caret> text</selection>
-yet an<selection>o<caret></selection>ther <selection>l<caret>ine</selection>

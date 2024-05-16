@@ -1,9 +1,0 @@
-import javax.swing.*
-
-fun main() {
-    val frame = JFrame("FrameDemo")
-    frame.setSize(<caret>)
-
-    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
-    frame.setVisible(true)
-}

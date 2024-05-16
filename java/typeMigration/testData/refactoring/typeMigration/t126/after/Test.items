@@ -1,8 +1,0 @@
-Types:
-PsiMethod:meth : T
-
-Conversions:
-
-New expression type changes:
-Fails:
-map.get(2)->T

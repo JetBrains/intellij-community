@@ -1,8 +1,0 @@
-<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="parcelize.xml"/>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2.ParcelizeK2QuickFixRegistrar"/>
-  </extensions>
-</idea-plugin>

@@ -1,2 +1,0 @@
-datatypes xxx = ""
-a = element foo { xxx:string }

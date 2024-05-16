@@ -1,3 +1,0 @@
-class Base {
-  char s;
-}

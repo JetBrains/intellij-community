@@ -1,1 +1,0 @@
-my_set = <warning descr="Function call can be replaced with set literal">set([1<caret>,2,3])</warning>

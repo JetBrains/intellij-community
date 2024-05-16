@@ -1,3 +1,0 @@
-[enumValueOf.0.kt] Nested class/object 7 MyEnum.valueOf("A")
-[enumValueOf.0.kt] Usage in import 5 import library.MyEnum
-[enumValueOf.kt] Nested class/object 7 MyEnum.valueOf("A")

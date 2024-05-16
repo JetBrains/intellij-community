@@ -1,1 +1,0 @@
-s<caret>ome te<caret>xt

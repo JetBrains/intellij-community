@@ -1,4 +1,0 @@
-# Parts of IPython, files from: https://github.com/ipython/ipython/tree/rel-1.0.0/examples/lib
-# The files in this folder are manual tests for main loop integration
-
-# These tests have been modified to work in the PyDev Console context

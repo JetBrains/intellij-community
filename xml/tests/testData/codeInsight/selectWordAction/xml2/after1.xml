@@ -1,3 +1,0 @@
-<a>
-  <foo attr="asdf <selection><caret>asdf</selection> " />
-</a>

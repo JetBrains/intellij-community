@@ -1,6 +1,0 @@
-{
-  "type": "FILE",
-  "file": "FooBundle.properties",
-  "newName": "BarBundle.properties",
-  "enabledInK2": true
-}

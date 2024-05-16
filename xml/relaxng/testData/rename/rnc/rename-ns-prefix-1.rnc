@@ -1,3 +1,0 @@
-default namespace rng = "http://relaxng.org/ns/structure/1.0"
-
-start = element <caret>rng:foo { text }

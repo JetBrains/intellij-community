@@ -1,4 +1,0 @@
-<build number="1" xsi:noNamespaceSchemaLocation="HighlightWhenNoNsSchemaLocation.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<statusInfo status="SUCCESS"/>
-<statusInfo status="<error descr="Wrong attribute value">SUCCESS2</error>"/>
-</build>

@@ -1,1 +1,0 @@
-def objects = <spot>new Object[] {foo, bar}</spot>

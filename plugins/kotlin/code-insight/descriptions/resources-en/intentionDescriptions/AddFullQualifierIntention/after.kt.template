@@ -1,3 +1,0 @@
-fun example() {
-    <spot>kotlin.collections.</spot>ArrayList<String>()
-}

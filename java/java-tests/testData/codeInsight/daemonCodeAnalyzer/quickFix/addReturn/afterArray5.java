@@ -1,9 +1,0 @@
-// "Add 'return' statement" "true-preview"
-import java.util.*;
-class T {
-    int[] f() {
-        Set<Integer> set = new HashSet<>();
-        set.add(42);
-        return new int[0];
-    }
-}

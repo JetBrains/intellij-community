@@ -1,5 +1,0 @@
-<idea-plugin>
-  <id>main</id>
-  <depends optional="true" config-file="dep2.xml">dep2</depends>
-  <depends optional="true" config-file="dep1.xml">dep1</depends>
-</idea-plugin>

@@ -1,3 +1,0 @@
--r base_requirements.txt
-pandas==1.0.1
-cookiecutter==1.7.0

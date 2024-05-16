@@ -1,2 +1,0 @@
-for e in []:
-    <caret>

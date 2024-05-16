@@ -1,5 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\q>
-    RegExpBranchImpl: <\q>
-      RegExpCharImpl: <\q>
-        PsiElement(INVALID_CHARACTER_ESCAPE_TOKEN)('\q')

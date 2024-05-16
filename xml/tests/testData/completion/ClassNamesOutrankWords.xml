@@ -1,4 +1,0 @@
-<root>
-  <element attribute="foo.SomeClass"/>
-  <element attribute="SomeCl<caret>"/>
-</root>

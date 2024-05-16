@@ -1,7 +1,0 @@
-package test
-
-class GenericParam
-
-class Generic<T, TT>
-
-fun foo(t: Generic<GenericParam>) {}

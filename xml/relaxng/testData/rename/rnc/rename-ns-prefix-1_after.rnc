@@ -1,3 +1,0 @@
-default namespace bar = "http://relaxng.org/ns/structure/1.0"
-
-start = element bar:foo { text }

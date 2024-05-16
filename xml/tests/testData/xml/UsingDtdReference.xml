@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<!DOCTYPE root [
- <!ENTITY % testDTD SYSTEM "UsingDtdReference.dtd">
-        %testDTD;
-]>
-<root>
-  <entry>blah</entry>
-</root>

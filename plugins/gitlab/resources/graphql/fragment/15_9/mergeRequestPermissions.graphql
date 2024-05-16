@@ -1,6 +1,0 @@
-# <15.9 canApprove removed
-fragment mergeRequestPermissions on MergeRequestPermissions {
-  canMerge
-  createNote
-  updateMergeRequest
-}

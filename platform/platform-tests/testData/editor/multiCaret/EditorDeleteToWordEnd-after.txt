@@ -1,2 +1,0 @@
-s<caret>text<caret>o<caret>r text
-an<caret>er l<caret>yet a<caret>her line

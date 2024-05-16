@@ -1,1 +1,0 @@
-"\\<selection>te<caret>st</selection>\\"

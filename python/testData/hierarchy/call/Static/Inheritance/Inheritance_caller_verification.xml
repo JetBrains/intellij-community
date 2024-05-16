@@ -1,4 +1,0 @@
-<node text="A.target_func(self) (A in hierarchy.call.Static.Inheritance.main)" base="true">
-  <node text="C.func(self, a) (C in hierarchy.call.Static.Inheritance.main)"/>
-  <node text="foo2(b) (hierarchy.call.Static.Inheritance.main)"/>
-</node>

@@ -1,9 +1,0 @@
-<!DOCTYPE beans [
-<!ELEMENT property (#PCDATA)>
-<!ATTLIST property<caret>
-]>
-<beans>
-  <bean class="java.lang.StringBuffer">
-    <property name="len"/>
-  </bean>
-</beans>

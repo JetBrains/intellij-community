@@ -1,1 +1,0 @@
-results = %timeit -r1 -n1 -o list(range(1000))

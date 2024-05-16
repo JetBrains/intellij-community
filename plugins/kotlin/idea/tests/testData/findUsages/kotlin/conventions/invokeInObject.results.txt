@@ -1,4 +1,0 @@
-Function call 11 val someObject2 = SomeObject.invoke("some-string2", 2)
-Function call 14 val someObject5 = someObject3.invoke("some-string1", 4)
-Implicit 'invoke' 10 val someObject = SomeObject("some-string1", 1)
-Implicit 'invoke' 13 val someObject4 = someObject3("some-string1", 3)

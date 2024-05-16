@@ -1,7 +1,0 @@
-import kotlin.math.abs
-
-// WITH_STDLIB
-fun x() {
-    val a = 4
-    val b = abs(a).let { println(it) }
-}

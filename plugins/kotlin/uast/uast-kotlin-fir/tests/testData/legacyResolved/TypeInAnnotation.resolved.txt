@@ -1,1 +1,0 @@
-UAnnotation (fqName = null) -> USimpleNameReferenceExpression (identifier = Test) -> null: null

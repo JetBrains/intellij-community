@@ -1,6 +1,0 @@
-0(1) element: null
-1(2) element: PyFunction('foo')
-2(3) READ ACCESS: str
-3(4) READ ACCESS: list
-4(5) WRITE ACCESS: foo
-5() element: null

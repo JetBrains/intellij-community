@@ -1,7 +1,0 @@
-<begin>print 1.getClass()<end>
------
-testMethod()
-
-private testMethod() {
-    print 1.getClass()
-}

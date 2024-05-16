@@ -1,6 +1,0 @@
-<component name="DependencyValidationManager">
-  <state>
-    <option name="SKIP_IMPORT_STATEMENTS" value="false" />
-    <deny_rule from_scope="util-rt" to_scope="util-rt dependencies" is_deny="true" />
-  </state>
-</component>

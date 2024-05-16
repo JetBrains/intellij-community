@@ -1,6 +1,0 @@
-// FIX: Replace 'if' expression with safe access expression
-// HIGHLIGHT: INFORMATION
-// IGNORE_K1
-fun test(baz: Int?) {
-    baz?.let { it + it }
-}

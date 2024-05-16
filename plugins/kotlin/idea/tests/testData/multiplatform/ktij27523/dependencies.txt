@@ -1,1 +1,0 @@
-MODULE native { platform=[Native (ios_arm64), Native (ios_x64)]; root=native }

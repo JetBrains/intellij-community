@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-
-<migrationMap>
-  <name value="JavaFX (8 -&gt; 9)"/>
-  <description value="Fix imports of JavaFX API classes according to JEP 253. Note that a few classes are no longer public."/>
-  <entry oldName="com.sun.javafx.scene.control.skin" newName="javafx.scene.control.skin" type="package"/>
-  <entry oldName="com.sun.javafx.css" newName="javafx.css" type="package"/>
-</migrationMap>

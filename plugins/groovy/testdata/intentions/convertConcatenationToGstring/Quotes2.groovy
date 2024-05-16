@@ -1,1 +1,0 @@
-def s = "Say \"hello\" to the" +<caret> " world"

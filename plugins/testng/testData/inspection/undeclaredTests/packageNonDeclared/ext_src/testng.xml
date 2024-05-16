@@ -1,4 +1,0 @@
-<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="xxx">
-  <test name="p.pp.X2"/>
-</suite>

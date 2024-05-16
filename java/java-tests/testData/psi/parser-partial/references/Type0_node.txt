@@ -1,3 +1,0 @@
-test.java.file
-  TYPE
-    INT_KEYWORD

@@ -1,2 +1,0 @@
-n4 two supplementary records for one host
-One host defined twice, login is set in the first record, password - in the second => complete auth data should be read

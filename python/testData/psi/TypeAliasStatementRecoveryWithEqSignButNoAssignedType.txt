@@ -1,9 +1,0 @@
-PyFile:TypeAliasStatementRecoveryWithEqSignButNoAssignedType.py
-  PyTypeAliasStatement
-    PsiElement(Py:TYPE_KEYWORD)('type')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:IDENTIFIER)('MyType')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:EQ)('=')
-    PsiErrorElement:Expression expected
-      <empty list>

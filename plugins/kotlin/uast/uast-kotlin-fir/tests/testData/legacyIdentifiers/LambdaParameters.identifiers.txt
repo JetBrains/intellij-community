@@ -1,6 +1,0 @@
-lambdaWithRecivier -> UMethod (name = lambdaWithRecivier)
-    buildString -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-        append -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-itParameter -> UMethod (name = itParameter)
-    let -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-        it -> USimpleNameReferenceExpression (identifier = it)

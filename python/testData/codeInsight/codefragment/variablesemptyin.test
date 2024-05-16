@@ -1,7 +1,0 @@
-aaa = 12
-<begin>
-aaa = 123
-<end>
-<result>
-In:
-Out:

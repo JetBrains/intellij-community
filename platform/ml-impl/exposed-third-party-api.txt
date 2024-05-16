@@ -1,5 +1,0 @@
-com/intellij/completion/ngram/slp/counting/trie/ArrayTrieCounter
-com/intellij/completion/ngram/slp/modeling/ngram/NGramModel
-com/intellij/completion/ngram/slp/modeling/runners/ModelRunner
-com/intellij/completion/ngram/slp/translating/Vocabulary
-kotlin/jvm/internal/DefaultConstructorMarker

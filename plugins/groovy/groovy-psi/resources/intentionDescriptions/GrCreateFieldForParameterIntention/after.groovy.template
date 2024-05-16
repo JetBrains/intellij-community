@@ -1,6 +1,0 @@
-class X {
-  <spot>private int myFoo</spot>
-  def X(int foo) {
-    <spot>myFoo = foo</spot>
-  }
-}

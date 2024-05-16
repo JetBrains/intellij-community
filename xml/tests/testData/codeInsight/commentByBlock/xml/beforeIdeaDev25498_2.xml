@@ -1,8 +1,0 @@
-<selection><!--<distributionManagement>
-    &lt;!&ndash; Climbing Vine Repository Distribution &ndash;&gt;
-    <repository>
-      <id>cv</id>
-      <name>CV Repository</name>
-      <url>scp://maven.climbingvine.ca/var/www/maven.climbingvine.ca/htdocs/</url>
-    </repository>
-  </distributionManagement>--></selection>

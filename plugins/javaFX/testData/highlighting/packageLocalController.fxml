@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.geometry.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.text.*?>
-<GridPane fx:controller=<error descr="'PackageLocalController' should be public">"PackageLocalController"</error> xmlns:fx="http://javafx.com/fxml">
-</GridPane>

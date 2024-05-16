@@ -1,7 +1,0 @@
-interface Baz
-
-fun test4(foo: Any) {
-    class Bar: Baz;
-
-    (foo as? String)?.length
-}

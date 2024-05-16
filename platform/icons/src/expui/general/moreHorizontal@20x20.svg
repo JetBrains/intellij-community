@@ -1,6 +1,0 @@
-<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="3.5" cy="10" r="1.5" transform="rotate(-90 3.5 10)" fill="#6C707E"/>
-<circle cx="10" cy="10" r="1.5" transform="rotate(-90 10 10)" fill="#6C707E"/>
-<circle cx="16.5" cy="10" r="1.5" transform="rotate(-90 16.5 10)" fill="#6C707E"/>
-</svg>

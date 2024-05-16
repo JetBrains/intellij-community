@@ -1,9 +1,0 @@
-{}{items}{items[1]}{items[1].descrip}{}
-------
-{}{specialDelivery}{}
-------
-{}{top}{top.hello}{top.hello.world}{top.hello.world.aaa}{top.hello.world.aaa.bbb}
-------
-{}{baz}{baz[1]}{baz[1].boo}{}
-------
-{}{foo}{foo[0]}{}

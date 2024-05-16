@@ -1,2 +1,0 @@
-Function call 11 B.get(2)
-Implicit 'get' 12 B[3]

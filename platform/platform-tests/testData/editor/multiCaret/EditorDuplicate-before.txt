@@ -1,3 +1,0 @@
-so<selection><caret>me</selection> te<selection>xt<caret></selection>
-some other t<caret>ext
-another <selection>l<caret>ine</selection>

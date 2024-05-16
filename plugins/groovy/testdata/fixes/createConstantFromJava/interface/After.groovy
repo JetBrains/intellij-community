@@ -1,3 +1,0 @@
-interface ITest {
-    int FIELD =
-}

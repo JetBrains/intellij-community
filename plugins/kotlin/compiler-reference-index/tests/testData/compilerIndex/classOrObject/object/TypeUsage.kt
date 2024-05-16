@@ -1,2 +1,0 @@
-fun typeUsage(obj: MyObject) {
-}

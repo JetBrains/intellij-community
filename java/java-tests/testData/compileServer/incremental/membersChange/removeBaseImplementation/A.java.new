@@ -1,4 +1,0 @@
-import java.awt.event.*;
-
-public abstract class A implements ActionListener {
-}

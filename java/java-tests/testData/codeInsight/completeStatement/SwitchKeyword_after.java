@@ -1,7 +1,0 @@
-
-class foo {
-    {
-        switch (<caret>) {
-        }
-    }
-}

@@ -1,7 +1,0 @@
-switch (k + 3) {
-      case 1: break
-    }
------
-switch (k + 3) {
-  case 1: break
-}

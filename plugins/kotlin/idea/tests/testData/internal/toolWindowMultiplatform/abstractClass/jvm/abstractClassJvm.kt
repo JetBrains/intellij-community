@@ -1,3 +1,0 @@
-package abstractclass
-
-actual abstract class abstractClassJvm

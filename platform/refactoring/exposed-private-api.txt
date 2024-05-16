@@ -1,7 +1,0 @@
-com/intellij/internal/statistic/eventLog/events/BooleanEventField
-com/intellij/internal/statistic/eventLog/events/ClassEventField
-com/intellij/internal/statistic/eventLog/events/EnumEventField
-com/intellij/internal/statistic/eventLog/events/EventId1
-com/intellij/internal/statistic/eventLog/events/EventId2
-com/intellij/internal/statistic/eventLog/events/EventId3
-com/intellij/internal/statistic/eventLog/events/VarargEventId

@@ -1,5 +1,0 @@
-[{foo, bar}]
-charset=utf-8
-
-[foo]
-<warning>charset</warning>=utf-8

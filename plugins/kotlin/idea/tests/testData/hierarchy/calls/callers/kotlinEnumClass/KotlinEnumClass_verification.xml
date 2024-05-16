@@ -1,6 +1,0 @@
-<node text="C  ()" base="true">
-  <node text="bar(C)(2 usages)  ()"/>
-  <node text="foo(C)(4 usages)  ()">
-    <node text="bar(C)  ()"/>
-  </node>
-</node>

@@ -1,8 +1,0 @@
-{
-    "mainFile": "Main.kt",
-    "usages": [
-        "JavaReadGetter.java",
-        "Usage.kt",
-        "fromFun.kt"
-    ]
-}

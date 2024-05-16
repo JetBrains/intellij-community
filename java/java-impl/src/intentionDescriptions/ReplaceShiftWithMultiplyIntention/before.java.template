@@ -1,5 +1,0 @@
-public class X {
-  void f(int a) {
-    a = <spot>a << 5</spot>;
-  }
-}

@@ -1,4 +1,0 @@
-def (street, house, postCode) = ["Nevsky", 134]
-def sd = house.ab<caret>
------
-abs

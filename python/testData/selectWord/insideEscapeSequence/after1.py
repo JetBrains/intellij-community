@@ -1,1 +1,0 @@
-s = 'Hello<selection>\n</selection>World!'

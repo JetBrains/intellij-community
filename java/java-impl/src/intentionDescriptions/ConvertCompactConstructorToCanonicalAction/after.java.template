@@ -1,9 +1,0 @@
-record Range(int from, int to) {
-  <spot>public Range(int from, int to) {
-    if (from > to) {
-      from = to;
-    }
-    this.from = from;
-    this.to = to;
-  }</spot>
-}

@@ -1,4 +1,0 @@
-class A{
-    static int x = 3
-}
-print "x = $<spot>A.x</spot>"

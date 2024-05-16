@@ -1,4 +1,0 @@
-<project default="A">
-  <checksum totalproperty="prop"/>
-  <target name="A"/>
-</project>

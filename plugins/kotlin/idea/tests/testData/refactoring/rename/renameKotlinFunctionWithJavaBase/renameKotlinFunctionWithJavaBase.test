@@ -1,8 +1,0 @@
-{
-  "type": "KOTLIN_FUNCTION",
-  "mainFile": "test/kotlinInheritors.kt",
-  "classId": "test/E",
-  "oldName": "foo",
-  "newName": "bar",
-  "enabledInK2": true
-}

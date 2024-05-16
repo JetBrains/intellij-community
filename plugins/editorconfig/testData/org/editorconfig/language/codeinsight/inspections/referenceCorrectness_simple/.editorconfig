@@ -1,2 +1,0 @@
-[foo]
-dotnet_naming_rule.my_rule.symbols = <error>my_symbols</error>

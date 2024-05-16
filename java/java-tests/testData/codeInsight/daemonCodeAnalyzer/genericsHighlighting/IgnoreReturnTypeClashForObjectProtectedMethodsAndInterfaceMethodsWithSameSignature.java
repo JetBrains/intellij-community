@@ -1,4 +1,0 @@
-
-interface I {
-  String finalize();
-}

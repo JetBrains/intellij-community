@@ -1,5 +1,0 @@
-<option>RIGHT_MARGIN=10</option>
-try (def a = r(); def b = r2; def c; def d = r4()) {}
------
-try (def a = r(); def b = r2; def c; def d = r4()) {
-}

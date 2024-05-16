@@ -1,1 +1,0 @@
-def <info descr="PY.FUNC_DEFINITION" textAttributesKey="PY.FUNC_DEFINITION">foo</info>[T: <info descr="PY.BUILTIN_NAME" textAttributesKey="PY.BUILTIN_NAME">int</info>](<info descr="PY.PARAMETER" textAttributesKey="PY.PARAMETER">x</info>: <info descr="PY.ANNOTATION" textAttributesKey="PY.ANNOTATION">T</info>): pass

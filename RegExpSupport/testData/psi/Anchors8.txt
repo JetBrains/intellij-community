@@ -1,7 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <$b>
-    RegExpBranchImpl: <$b>
-      RegExpBoundaryImpl: <$>
-        PsiElement(DOLLAR)('$')
-      RegExpCharImpl: <b>
-        PsiElement(CHARACTER)('b')

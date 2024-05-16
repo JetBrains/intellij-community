@@ -1,1 +1,0 @@
-<error descr="Unresolved reference 'baz'">baz</error>.quux()

@@ -1,8 +1,0 @@
-<time>: Executing ':cleanMingwX64Test :mingwX64Test --tests "NativeTest.test - failure"'...
-<time>: Execution finished ':cleanMingwX64Test :mingwX64Test --tests "NativeTest.test - failure"'.
-
-
-com.intellij.openapi.externalSystem.model.ExternalSystemException: There were failing tests. See the report at: file:
-org.gradle.api.tasks.VerificationException: There were failing tests. See the report at: file:
-
-<exitCode: 1>

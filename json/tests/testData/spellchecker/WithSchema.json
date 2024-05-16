@@ -1,7 +1,0 @@
-{
-  "$schema": "./Schema.json",
-  "qwertyuiop": "a",
-  "bugagahjkl": "ququhjkl",
-  "booxxxxmoo": "a",
-  "<TYPO>qwertyzop</TYPO>": "b"
-}

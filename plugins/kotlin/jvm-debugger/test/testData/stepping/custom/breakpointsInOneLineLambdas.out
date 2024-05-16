@@ -1,9 +1,0 @@
-LineBreakpoint created at breakpointsInOneLineLambdas.kt:10 lambdaOrdinal = 1
-LineBreakpoint created at breakpointsInOneLineLambdas.kt:12 lambdaOrdinal = 1
-Run Java
-Connected to the target VM
-breakpointsInOneLineLambdas.kt:10
-breakpointsInOneLineLambdas.kt:12
-Disconnected from the target VM
-
-Process finished with exit code 0

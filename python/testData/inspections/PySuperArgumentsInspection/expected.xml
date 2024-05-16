@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>test.py</file>
-    <line>14</line>
-    <description>'C' is not an instance or a subclass of 'Exception'</description>
-  </problem>
-</problems>

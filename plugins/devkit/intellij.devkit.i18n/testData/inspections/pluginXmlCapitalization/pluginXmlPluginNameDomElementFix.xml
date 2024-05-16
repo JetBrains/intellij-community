@@ -1,4 +1,0 @@
-<idea-plugin>
-
-  <name><warning descr="String 'I am not capitalized' is not properly capitalized. It should have title capitalization"><caret>I am not capitalized</warning></name>
-</idea-plugin>

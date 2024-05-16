@@ -1,7 +1,0 @@
-// AFTER-WARNING: Parameter 'any' is never used
-// AFTER-WARNING: Parameter 'callback' is never used
-fun <T> foo(any: Any, callback: () -> Unit) {}
-
-fun bar() {
-    foo<Int>("") {}
-}

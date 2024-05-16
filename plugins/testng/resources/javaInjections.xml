@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<component name="LanguageInjectionConfiguration">
-  <injection language="RegExp" injector-id="java">
-     <display-name>Test (org.testng.annotations)</display-name>
-     <place><![CDATA[psiMethod().withName("expectedExceptionsMessageRegExp").withParameters().definedInClass("org.testng.annotations.Test")]]></place> 
-   </injection>
-</component>

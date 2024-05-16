@@ -1,3 +1,0 @@
-public void m(String value) {
-  <spot>value</spot>$key
-}

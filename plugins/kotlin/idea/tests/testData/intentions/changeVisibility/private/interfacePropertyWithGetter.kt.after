@@ -1,6 +1,0 @@
-interface Interface {
-    <caret>private val x: String
-        get() {
-            return ""
-        }
-}

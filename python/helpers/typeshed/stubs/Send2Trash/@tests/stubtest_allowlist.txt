@@ -1,3 +1,0 @@
-# Modules that are not meant to be imported by users
-send2trash.mac
-send2trash.compat

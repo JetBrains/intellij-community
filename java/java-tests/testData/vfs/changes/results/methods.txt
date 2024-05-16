@@ -1,4 +1,0 @@
-PsiChangesTest : Modified
-foo : Modified
-bar : Deleted
-bar2 : Added

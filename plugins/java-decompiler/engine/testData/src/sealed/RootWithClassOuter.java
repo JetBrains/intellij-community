@@ -1,4 +1,0 @@
-package sealed;
-
-abstract sealed class RootWithClassOuter permits ClassExtends, ClassNonSealed, ClassNonSealedExtendsImplements {
-}

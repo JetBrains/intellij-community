@@ -1,6 +1,0 @@
-buildSrc/src/main/kotlin/demo.kotlin-application-conventions.gradle.kts
-buildSrc/src/main/kotlin/demo.kotlin-common-conventions.gradle.kts
-buildSrc/build.gradle.kts
-settings.gradle.kts
-buildSrc/build.gradle.kts
-buildSrc/src/main/kotlin/demo.kotlin-application-conventions.gradle.kts

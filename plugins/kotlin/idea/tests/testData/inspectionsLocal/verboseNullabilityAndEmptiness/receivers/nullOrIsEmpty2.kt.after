@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun List<Int>?.test() {
-    if (this@test.isNullOrEmpty()) println(0) else println(size)
-}

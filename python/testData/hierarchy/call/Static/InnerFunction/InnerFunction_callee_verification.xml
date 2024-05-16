@@ -1,5 +1,0 @@
-<node text="target_func() (hierarchy.call.Static.InnerFunction.main)" base="true">
-  <node text="foo() (hierarchy.call.Static.InnerFunction.main)">
-    <node text="bar() (hierarchy.call.Static.InnerFunction.main)"/>
-  </node>
-</node>

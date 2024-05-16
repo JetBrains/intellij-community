@@ -1,3 +1,0 @@
-fun Main.test() {
-    this - ""
-}

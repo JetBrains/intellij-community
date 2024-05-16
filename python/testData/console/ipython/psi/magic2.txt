@@ -1,3 +1,0 @@
-PyFile:magic2.py
-  PyEmptyExpression
-    PsiElement(Py:MAGIC_COMMAND_LINE)('%alias_magic t timeit')

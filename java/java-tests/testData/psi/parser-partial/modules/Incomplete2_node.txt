@@ -1,9 +1,0 @@
-test.java.file
-  IMPORT_LIST
-    <empty list>
-  MODIFIER_LIST
-    <empty list>
-  MODULE
-  WHITE_SPACE
-  ERROR_ELEMENT
-    LBRACE

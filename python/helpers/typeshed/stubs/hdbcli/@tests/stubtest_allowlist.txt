@@ -1,6 +1,0 @@
-# Are set to `None` by default, initialized later:
-hdbcli.dbapi.Error.errorcode
-hdbcli.dbapi.Error.errortext
-hdbcli.dbapi.Warning.errorcode
-hdbcli.dbapi.Warning.errortext
-hdbcli.dbapi.ExecuteManyErrorEntry.rownumber

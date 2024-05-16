@@ -1,5 +1,0 @@
-def l = (C c) -> {
-    def data = (c.with (it) -> it.field)
-    print data
-}
------

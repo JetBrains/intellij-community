@@ -1,9 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd">
-    <path fill="#AFB1B3" d="M7,10 L5,10 L5,3 L7,3 L7,10 Z"/>
-    <rect width="2" height="10" x="5" y="3" fill="#AFB1B3" transform="rotate(90 6 8)"/>
-    <path fill="#40B6E0" d="M5,11 L13,11 L13,12 C13,14.209139 11.209139,16 9,16 L9,16 C6.790861,16 5,14.209139 5,12 L5,11 Z"/>
-    <path fill="#40B6E0" d="M10.5,12 L14.5,12 C15.3284271,12 16,12.6715729 16,13.5 C16,14.3284271 15.3284271,15 14.5,15 L10.5,15 C9.67157288,15 9,14.3284271 9,13.5 C9,12.6715729 9.67157288,12 10.5,12 Z M10.5,13 C10.2238576,13 10,13.2238576 10,13.5 C10,13.7761424 10.2238576,14 10.5,14 L14.5,14 C14.7761424,14 15,13.7761424 15,13.5 C15,13.2238576 14.7761424,13 14.5,13 L10.5,13 Z"/>
-  </g>
-</svg>

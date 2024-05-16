@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun test(collection: Collection<String>?) {
-    if (collection.isNullOrEmpty()) println(0) else println(collection.size)
-}

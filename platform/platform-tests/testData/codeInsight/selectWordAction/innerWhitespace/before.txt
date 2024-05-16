@@ -1,1 +1,0 @@
-This text has four  <caret>  inner whitespaces

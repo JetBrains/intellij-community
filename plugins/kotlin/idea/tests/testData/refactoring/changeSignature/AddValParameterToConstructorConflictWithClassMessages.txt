@@ -1,1 +1,0 @@
-Class 'c' is already declared in class 'Foo'

@@ -1,8 +1,0 @@
-top:
-  First occurrence: &x<caret>xx
-    tt: &yyy hello
-  Second occurrence: *xxx
-  Override anchor: &xxx Bar
-  Use overridden: *xxx
-  New anchor: &zzz Bar
-  Old overridden use: *xxx

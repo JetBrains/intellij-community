@@ -1,5 +1,0 @@
-<idea-plugin package="com.intellij.execution.process.mediator.common">
-  <dependencies>
-    <module name="intellij.libraries.grpc"/>
-  </dependencies>
-</idea-plugin>

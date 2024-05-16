@@ -1,3 +1,0 @@
-NCNAME ('attribute')
-PATH ('/')
-STAR ('*')

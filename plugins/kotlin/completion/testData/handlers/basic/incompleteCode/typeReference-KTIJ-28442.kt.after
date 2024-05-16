@@ -1,9 +1,0 @@
-package one
-
-import second.Foo
-
-fun test(s: Any) {
-    s as? Foo.value?.
-}
-
-// ELEMENT: Foo

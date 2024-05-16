@@ -1,7 +1,0 @@
-class HelloDolly {
-}
-
-HelloDolly <caret>
------
-dolly
-helloDolly

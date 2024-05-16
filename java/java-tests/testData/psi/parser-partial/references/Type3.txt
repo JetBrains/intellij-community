@@ -1,8 +1,0 @@
-PsiJavaFile:Type3.java
-  PsiTypeElement:int[]
-    PsiTypeElement:int
-      PsiKeyword:int('int')
-    PsiJavaToken:LBRACKET('[')
-    PsiJavaToken:RBRACKET(']')
-  PsiErrorElement:Unparsed tokens
-    PsiJavaToken:LBRACKET('[')

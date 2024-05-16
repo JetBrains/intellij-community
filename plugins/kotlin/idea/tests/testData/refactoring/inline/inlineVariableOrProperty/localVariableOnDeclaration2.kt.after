@@ -1,4 +1,0 @@
-fun simpleFun(): String {
-    val s2 = "string"
-    return "string"
-}

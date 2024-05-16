@@ -1,9 +1,0 @@
-<project default="A">
-  <target name="A">
-    <antcall target="B">
-      <target name="C"/>
-      <target name="D"/>
-    </antcall>
-  </target>
-  <target name="B"/>
-</project>

@@ -1,2 +1,0 @@
-r1 One simple remote
-One simple remote defined in .git/config => one remote returned from GitConfig.getRemotes().

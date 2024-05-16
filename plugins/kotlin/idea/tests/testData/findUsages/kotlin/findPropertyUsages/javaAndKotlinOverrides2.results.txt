@@ -1,5 +1,0 @@
-[javaAndKotlinOverrides2.0.kt] Unclassified 24 override var foo: String = ""
-[javaAndKotlinOverrides2.0.kt] Unclassified 27 open class E<T>(override var foo: T) : A<T>(foo)
-[javaAndKotlinOverrides2.0.kt] Unclassified 7 override var foo: String
-[javaAndKotlinOverrides2.1.java] Unclassified 12 public void setFoo(String s) {
-[javaAndKotlinOverrides2.1.java] Unclassified 7 public String getFoo() {

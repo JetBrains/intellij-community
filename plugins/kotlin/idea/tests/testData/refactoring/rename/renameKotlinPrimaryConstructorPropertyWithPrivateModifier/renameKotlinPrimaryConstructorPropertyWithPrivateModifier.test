@@ -1,6 +1,0 @@
-{
-  "type": "MARKED_ELEMENT",
-  "newName": "bar",
-  "mainFile": "RenameKotlinPrimaryConstructorPropertyWithPrivateModifier.kt",
-  "enabledInK2": true
-}

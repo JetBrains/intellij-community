@@ -1,5 +1,0 @@
-buildString -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
-append -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
-let -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtDotQualifiedExpression
-let -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
-it -> USimpleNameReferenceExpression (identifier = it) from KtNameReferenceExpression

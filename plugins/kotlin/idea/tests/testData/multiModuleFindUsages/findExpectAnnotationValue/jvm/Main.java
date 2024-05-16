@@ -1,2 +1,0 @@
-@A("main")
-class Main { }

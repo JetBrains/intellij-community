@@ -1,6 +1,0 @@
-import kotlin.math.tan
-
-// WITH_STDLIB
-fun test(x: Double) {
-    tan(x)
-}

@@ -1,5 +1,0 @@
-PerformanceTestTokenType.COMMAND ('%%project')
-WHITE_SPACE (' ')
-PerformanceTestTokenType.IDENTIFIER ('b2c-demo-shop')
-PerformanceTestTokenType.OPTIONS_SEPARATOR (' ')
-PerformanceTestTokenType.FILE_PATH ('b2c-demo-shop.zip')

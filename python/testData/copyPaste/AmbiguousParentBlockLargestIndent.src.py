@@ -1,1 +1,0 @@
-<selection>x = 42</selection>

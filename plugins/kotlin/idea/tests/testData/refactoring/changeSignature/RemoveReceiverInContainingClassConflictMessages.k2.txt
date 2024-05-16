@@ -1,1 +1,0 @@
-Function 'foo2' is already declared in class 'P'

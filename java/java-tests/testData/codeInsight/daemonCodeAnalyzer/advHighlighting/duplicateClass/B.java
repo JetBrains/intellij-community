@@ -1,4 +1,0 @@
-package duplicateClass;
-
-class Foo {
-}

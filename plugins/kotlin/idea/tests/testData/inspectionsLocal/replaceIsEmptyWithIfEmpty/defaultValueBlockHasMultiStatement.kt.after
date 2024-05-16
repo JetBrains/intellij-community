@@ -1,9 +1,0 @@
-// WITH_STDLIB
-fun foo() = listOf(1)
-
-fun test(list: List<Int>): List<Int> {
-    return list.ifEmpty {
-        println()
-        foo()
-    }
-}

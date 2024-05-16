@@ -1,6 +1,0 @@
-fun foo(x: Int) {
-    // comment
-    println(x)
-}
-
-fun println(i: Int) {}

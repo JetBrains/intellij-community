@@ -1,3 +1,0 @@
-import java.util.TimeZone<caret>
-
-// ELEMENT: TimeZone

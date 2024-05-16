@@ -1,7 +1,0 @@
-<project default="">
-  <property name="asd.asasdasdg.asjdg" value="v"/>
-  <property name="asd.asdasg.sdfsjdg" value="v"/>
-  <property name="asd.asdasg.sdfssadjdg" value="v"/>
-
-  <antcall target="${asd.as<caret>}"/>
-</project>

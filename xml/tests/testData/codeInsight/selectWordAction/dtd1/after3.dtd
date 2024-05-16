@@ -1,3 +1,0 @@
-<selection>   <!ELEMENT myE<caret>lement (#PCDATA)>
-   <!ELEMENT myElement2 (#PCDATA)>
-</selection>

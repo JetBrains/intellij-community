@@ -1,3 +1,0 @@
-PsiJavaFile:TextBlockLiteral0.java
-  PsiLiteralExpression:"""."""
-    PsiJavaToken:TEXT_BLOCK_LITERAL('"""."""')

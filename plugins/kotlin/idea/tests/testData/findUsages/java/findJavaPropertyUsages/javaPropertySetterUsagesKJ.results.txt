@@ -1,9 +1,0 @@
-[javaPropertySetterUsagesKJ.0.java] Unclassified 18 new A().setP(1);
-[javaPropertySetterUsagesKJ.0.java] Unclassified 21 new AA().setP(1);
-[javaPropertySetterUsagesKJ.0.java] Unclassified 24 new J().setP(1);
-[javaPropertySetterUsagesKJ.0.java] Unclassified 27 new B().setP(1);
-[javaPropertySetterUsagesKJ.1.kt] Value read 14 val t = A().p
-[javaPropertySetterUsagesKJ.1.kt] Value write 15 A().p = 1
-[javaPropertySetterUsagesKJ.1.kt] Value write 18 AA().p = 1
-[javaPropertySetterUsagesKJ.1.kt] Value write 21 J().p = 1
-[javaPropertySetterUsagesKJ.1.kt] Value write 24 B().p = 1

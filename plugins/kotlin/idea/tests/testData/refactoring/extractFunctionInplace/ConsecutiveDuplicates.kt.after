@@ -1,9 +1,0 @@
-// CHANGED_NAME: renamed
-fun sample(){
-    renamed<caret>()
-    renamed()
-}
-
-private fun renamed() {
-    println("duplicate")
-}

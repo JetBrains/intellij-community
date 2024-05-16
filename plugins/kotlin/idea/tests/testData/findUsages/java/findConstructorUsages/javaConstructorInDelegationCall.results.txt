@@ -1,3 +1,0 @@
-Constructor delegation reference 2 constructor() : super(1) {
-New instance creation 12 J(2)
-Supertype 7 class B : J(1) {

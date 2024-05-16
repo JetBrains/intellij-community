@@ -1,1 +1,0 @@
-class MyProjectListener : BaseListenerInterface

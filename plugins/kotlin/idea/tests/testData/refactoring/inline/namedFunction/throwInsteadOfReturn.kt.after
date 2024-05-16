@@ -1,9 +1,0 @@
-// TODO: KTIJ-20050 Unexpected Unit added after inline refactoring
-
-fun callFail(p: String?) {
-    val s = p ?: run {
-        throw Exception("message")
-        Unit
-    }
-    println(s)
-}

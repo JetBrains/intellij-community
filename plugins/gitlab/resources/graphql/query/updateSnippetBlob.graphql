@@ -1,8 +1,0 @@
-mutation($snippetId: SnippetID!, $blobAction: SnippetBlobActionInputType!) {
-  updateSnippet(input: {id: $snippetId, blobActions: [$blobAction]}) {
-    snippet {
-      ...snippet
-    }
-    errors
-  }
-}

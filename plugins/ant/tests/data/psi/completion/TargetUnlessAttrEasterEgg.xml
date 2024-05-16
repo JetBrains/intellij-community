@@ -1,3 +1,0 @@
-<project default="default">
-  <target name="default" unless="iii<caret>"/>
-</project>

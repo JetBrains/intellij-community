@@ -1,7 +1,0 @@
-for
------
-Groovy script
-  For statement
-    PsiElement(for)('for')
-    PsiErrorElement:'(' expected
-      <empty list>

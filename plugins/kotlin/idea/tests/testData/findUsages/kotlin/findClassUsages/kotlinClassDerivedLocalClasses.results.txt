@@ -1,3 +1,0 @@
-Unclassified 15 open class Z : A() {
-Unclassified 19 class U : Z() {
-Unclassified 6 open class B : A() {

@@ -1,8 +1,0 @@
-// "Add annotation target" "true"
-// IGNORE_K2
-
-@Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
-actual annotation class Ann actual constructor()
-
-@Ann<caret>
-val jvmProperty = 42

@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun foo() {
-    charArrayOf('a').forEach { x ->
-        println(x)
-    }
-}

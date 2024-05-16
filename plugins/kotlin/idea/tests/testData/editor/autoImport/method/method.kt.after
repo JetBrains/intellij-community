@@ -1,9 +1,0 @@
-package my
-
-import pkg.foo14
-import pkg.foo15
-
-fun test() {
-    foo14()
-    "".foo15()
-}

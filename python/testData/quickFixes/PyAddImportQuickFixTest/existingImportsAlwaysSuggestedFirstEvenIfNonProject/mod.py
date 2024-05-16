@@ -1,2 +1,0 @@
-class datetime:
-    pass

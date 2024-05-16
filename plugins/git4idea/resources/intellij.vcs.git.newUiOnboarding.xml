@@ -1,9 +1,0 @@
-<idea-plugin package="git4idea.newUiOnboarding">
-  <dependencies>
-    <module name="intellij.platform.ide.newUiOnboarding"/>
-  </dependencies>
-
-  <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">
-    <step key="gitWidget" implementationClass="git4idea.newUiOnboarding.GitWidgetStep"/>
-  </extensions>
-</idea-plugin>

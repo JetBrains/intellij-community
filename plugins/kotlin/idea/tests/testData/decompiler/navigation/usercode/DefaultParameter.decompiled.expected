@@ -1,8 +1,0 @@
-ChildOfOpenClassWithFunctionWithDefaultParameter.class
-public final class ChildOfOpenClassWithFunctionWithDefaultParameter public <6>constructor() : testData.libraries.OpenClassWithFunctionWithDefaultParameter {
-    public open fun <7><8>doSmth(condition: kotlin.Boolean): kotlin.Unit { /* compiled code */ }
- MainKt.class
-public fun <1><2>funWithDefaultParameter(a: kotlin.Int, b: kotlin.String = COMPILED_CODE): kotlin.Unit { /* compiled code */ }
- OpenClassWithFunctionWithDefaultParameter.class
-public open class OpenClassWithFunctionWithDefaultParameter public <3>constructor() {
-    public open fun <4><5>doSmth(condition: kotlin.Boolean = COMPILED_CODE): kotlin.Unit { /* compiled code */ }

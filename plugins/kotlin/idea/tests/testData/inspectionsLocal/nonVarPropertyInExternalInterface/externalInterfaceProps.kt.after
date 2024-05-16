@@ -1,9 +1,0 @@
-// JS
-// FIX: Change to 'var'
-
-import react.Props
-
-external interface ExternalInterfaceWithPropertiesExtendingProps : Props {
-    var pl: String
-    var pr: String
-}

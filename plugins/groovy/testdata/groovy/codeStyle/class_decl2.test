@@ -1,5 +1,0 @@
-<option>CLASS_BRACE_STYLE=NEXT_LINE</option>
-class A    {}
------
-class A
-{}

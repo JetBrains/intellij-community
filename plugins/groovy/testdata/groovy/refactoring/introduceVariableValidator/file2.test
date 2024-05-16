@@ -1,9 +1,0 @@
-<begin>0<end>
-
-class A{
-  def foo() {
-    def preved = 1
-  }
-}
------
-ok

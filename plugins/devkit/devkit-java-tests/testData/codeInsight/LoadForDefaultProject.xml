@@ -1,9 +1,0 @@
-<idea-plugin>
-  <project-components>
-      <component>
-          <implementation-class><error descr="Cannot resolve class or package 'foo'">foo</error>.<error descr="Cannot resolve class 'Bar'">Bar</error></implementation-class>
-          <loadForDefaultProject/>
-          <<error descr="Element unknown is not allowed here">unknown</error>/>
-      </component>
-  </project-components>
-</idea-plugin>

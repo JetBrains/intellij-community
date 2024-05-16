@@ -1,1 +1,0 @@
-java -jar ~/Downloads/jflex-1.9.1.jar --skel ../../../../../../../../tools/lexer/idea-flex.skeleton --nobak sh.flex -d ../../../../../gen/com/intellij/sh/lexer/

@@ -1,4 +1,0 @@
-<option>SPACE_BEFORE_CLASS_LBRACE=false</option>
-class A    {}
------
-class A{}

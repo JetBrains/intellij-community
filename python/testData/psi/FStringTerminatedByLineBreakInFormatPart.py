@@ -1,2 +1,0 @@
-s = f'foo{42:bar
-baz}'

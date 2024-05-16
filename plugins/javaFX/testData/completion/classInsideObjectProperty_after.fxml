@@ -1,8 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-
-<?import javafx.geometry.Insets?>
-<GridPane xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-    <padding>
-         <Insets
-    </padding>
-</GridPane>

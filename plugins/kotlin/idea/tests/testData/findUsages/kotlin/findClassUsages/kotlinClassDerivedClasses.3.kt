@@ -1,1 +1,0 @@
-object abc : A()

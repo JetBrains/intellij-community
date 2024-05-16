@@ -1,4 +1,0 @@
-[kotlinMethodUsages.0.kt] Function call 10 ServerEx().processRequest()
-[kotlinMethodUsages.0.kt] Function call 9 Server().processRequest()
-[kotlinMethodUsagesLib1.kt] Function call 5 Server().processRequest()
-[kotlinMethodUsagesLib1.kt] Function call 6 ServerEx().processRequest()

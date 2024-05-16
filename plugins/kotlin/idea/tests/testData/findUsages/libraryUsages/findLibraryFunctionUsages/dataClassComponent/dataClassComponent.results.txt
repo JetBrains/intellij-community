@@ -1,1 +1,0 @@
-Function call 7 k.component1()

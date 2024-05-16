@@ -1,7 +1,0 @@
-package test.test2
-
-val foo = 1
-
-fun usage() {
-    foo
-}

@@ -1,5 +1,0 @@
-machine bitbucket.org
- login john
- password pass
-machine bitbucket.org
- password doesnt_override

@@ -1,9 +1,0 @@
-<option>RESOURCE_LIST_WRAP=WRAP_ALWAYS</option>
-<option>ALIGN_MULTILINE_RESOURCES=false</option>
-try (def a = r(); def b = r2; def c; def d = r4()) {}
------
-try (def a = r();
-    def b = r2;
-    def c;
-    def d = r4()) {
-}

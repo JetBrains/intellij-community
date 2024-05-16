@@ -1,3 +1,0 @@
-<node text="B.target_func(self, p) (B in hierarchy.call.Static.OverriddenMethod.main)" base="true">
-  <node text="A.another_func(self) (A in hierarchy.call.Static.OverriddenMethod.file_1)"/>
-</node>

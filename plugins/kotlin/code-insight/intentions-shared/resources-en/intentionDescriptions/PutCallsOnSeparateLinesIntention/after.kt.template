@@ -1,7 +1,0 @@
-fun calculate(): Int {
-    return call1().call2()
-        .call3()
-        .call5()
-        .call6()
-        .call7()
-}

@@ -1,1 +1,0 @@
-import mypackage.bar

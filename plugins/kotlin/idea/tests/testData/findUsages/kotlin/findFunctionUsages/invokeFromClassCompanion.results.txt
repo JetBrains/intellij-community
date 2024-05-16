@@ -1,2 +1,0 @@
-[invokeFromClassCompanion.0.kt] Implicit 'invoke' 12 Foo()
-[invokeFromClassCompanion.1.kt] Implicit 'invoke' 2 Foo()

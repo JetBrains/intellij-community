@@ -1,1 +1,0 @@
-r"%(completion)s" % dict(completion="smth")

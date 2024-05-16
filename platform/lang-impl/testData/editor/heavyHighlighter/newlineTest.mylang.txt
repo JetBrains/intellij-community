@@ -1,5 +1,0 @@
-<]
-  <brace><]<caret></brace>
-     foobar!
-  <brace>[></brace>
-[>

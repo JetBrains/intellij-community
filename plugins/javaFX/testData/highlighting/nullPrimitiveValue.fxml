@@ -1,8 +1,0 @@
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.control.Label?>
-<VBox xmlns="http://javafx.com/javafx/8.0.91">
-  <Button text="Button1" prefWidth=<error descr="Unable to coerce to double">"$null"</error>/>
-  <Button text="Button2" prefWidth="${null}"/>
-  <Button text="Button3"  defaultButton=<error descr="Unable to coerce to boolean">"$null"</error>/>
-</VBox>

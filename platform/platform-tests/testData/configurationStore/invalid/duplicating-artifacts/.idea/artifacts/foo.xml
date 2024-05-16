@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="foo">
-    <output-path>$PROJECT_DIR$/foo</output-path>
-    <root id="archive" name="edit-js.jar">
-      <element id="module-output" name="fooModule"/>
-    </root>
-  </artifact>
-</component>

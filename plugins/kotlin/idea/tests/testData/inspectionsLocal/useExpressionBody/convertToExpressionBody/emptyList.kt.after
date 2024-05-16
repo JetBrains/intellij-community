@@ -1,3 +1,0 @@
-// WITH_STDLIB
-
-fun foo(): List<String> = emptyList()

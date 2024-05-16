@@ -1,1 +1,0 @@
-[link](stub_without_extension)

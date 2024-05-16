@@ -1,2 +1,0 @@
-<!ELEMENT name (<error>aaa</error>)>
-<!ELEMENT name2 (&<error>entity</error>;)>

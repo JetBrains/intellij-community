@@ -1,8 +1,0 @@
-0: EMPTY
-1: WRITE args
-2: READ args
-3: COND_GOTO [END] 8
-4: WRITE s
-5: READ s
-6: EMPTY
-7: GOTO [END] 3

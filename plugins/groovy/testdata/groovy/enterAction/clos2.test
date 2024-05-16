@@ -1,5 +1,0 @@
-42.times {<caret>}
------
-42.times {
-  <caret>
-}

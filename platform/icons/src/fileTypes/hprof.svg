@@ -1,9 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M1 16H16V9H1V16Z" fill="#40B6E0" fill-opacity="0.6"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M7 1L3 5H7V1Z" fill="#9AA7B0" fill-opacity="0.8"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M8 1V6H3V8H13V1H8Z" fill="#9AA7B0" fill-opacity="0.8"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M2 10H3V12H5V10H6V15H5V13H3V15H2V10Z" fill="#231F20" fill-opacity="0.7"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M8.9 12.5C9.564 12.5 10 12.3844 10 11.75C10 11.1156 9.557 11 8.9 11H8V12.5H8.9ZM7 10H8.971C10.142 10 11 10.642 11 11.65C11 13.2858 9.971 13.5 8.872 13.5H8V15H7V10Z" fill="#231F20" fill-opacity="0.7"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M11.5 15V10H13.6157C14.2041 10 14.6603 10.1786 14.9645 10.5071C15.2223 10.7857 15.3612 11.1786 15.3612 11.65V11.6643C15.3612 12.4714 14.9579 12.9786 14.3694 13.2143L15.5 15H14.3099L13.3182 13.4H12.5182V15H11.5ZM12.5182 12.4286H13.5496C14.0455 12.4286 14.3298 12.1429 14.3298 11.7214V11.7071C14.3298 11.2357 14.0256 10.9929 13.5298 10.9929H12.5182V12.4286Z" fill="#231F20" fill-opacity="0.7"/>
-</svg>

@@ -1,1 +1,0 @@
-ceiling(<error descr="Expected type 'xs:numeric?', got 'xs:boolean'">0 = 1</error>) + floor(<error descr="Expected type 'xs:numeric?', got 'xs:string'">'a'</error>) + round(.)

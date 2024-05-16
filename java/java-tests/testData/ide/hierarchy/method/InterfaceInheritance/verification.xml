@@ -1,7 +1,0 @@
-<node text="B  ()">
-  <node text="C  ()">
-    <node text="E  ()" base="true">
-      <node text="F  ()"/>
-    </node>
-  </node>
-</node>

@@ -1,1 +1,0 @@
-map(lambda x, y: <caret>x * y, [])

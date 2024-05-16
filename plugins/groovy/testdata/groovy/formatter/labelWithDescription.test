@@ -1,9 +1,0 @@
-def "test"() {
-  given: "groovy"
-  def stack = new Stack()
-}
------
-def "test"() {
-  given: "groovy"
-    def stack = new Stack()
-}

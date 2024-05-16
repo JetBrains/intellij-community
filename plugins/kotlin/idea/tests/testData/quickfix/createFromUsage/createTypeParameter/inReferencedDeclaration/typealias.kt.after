@@ -1,7 +1,0 @@
-// "Create type parameter in type alias 'G'" "true"
-
-class C
-typealias G<T> = C
-
-fun <T> a(g: G<T>) = Unit
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterFromUsageFix

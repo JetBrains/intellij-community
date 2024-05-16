@@ -1,7 +1,0 @@
-/**
- * println([10, 20].collect {it * 2}.max())
- */
-------
-/**
- * println([10, 20].collect {it * 2}.max())
- */

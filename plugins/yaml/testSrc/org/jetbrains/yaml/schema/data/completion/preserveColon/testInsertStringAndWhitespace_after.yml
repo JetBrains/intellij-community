@@ -1,7 +1,0 @@
-after_deploy: false
-addons:
-  artifacts: true
-after_failure: true
-after_success: true
-sbt_args: before_cache: skip
-

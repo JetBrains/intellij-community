@@ -1,2 +1,0 @@
-print '''<caret>
-print d'''

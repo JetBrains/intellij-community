@@ -1,5 +1,0 @@
-PsiJavaFile:ThrowIncomplete0.java
-  PsiThrowStatement
-    PsiKeyword:throw('throw')
-    PsiErrorElement:Expression expected
-      <empty list>

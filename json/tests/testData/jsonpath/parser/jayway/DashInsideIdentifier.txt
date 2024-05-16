@@ -1,7 +1,0 @@
-JsonPathFile
-  JsonPathRootSegmentImpl(ROOT_SEGMENT)
-    PsiElement($)('$')
-  PsiElement(.)('.')
-  JsonPathIdSegmentImpl(ID_SEGMENT)
-    JsonPathIdImpl(ID)
-      PsiElement(IDENTIFIER)('int-max-property')

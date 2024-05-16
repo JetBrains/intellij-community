@@ -1,9 +1,0 @@
-<selection>a - b
-a - b</selection>
-println foo
------
-shouldFail() {
-    a - b
-    a - b
-}
-println foo

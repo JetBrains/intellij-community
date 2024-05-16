@@ -1,3 +1,0 @@
-IF ('if')
-WHITE_SPACE (' ')
-LPAREN ('(')

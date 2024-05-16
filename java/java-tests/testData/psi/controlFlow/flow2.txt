@@ -1,7 +1,0 @@
-0: READ i
-1: COND_GOTO [END] 7
-2: WRITE i
-3: READ i
-4: COND_GOTO [END] 6
-5: GOTO [END] 7
-6: GOTO [END] 0

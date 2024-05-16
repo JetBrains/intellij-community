@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<xsd:schema version="1.0"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:p="urn:aaa"
-            elementFormDefault="qualified"
-  >
-  <xsd:import namespace="urn:aaa" schemaLocation="<error>urn:zzz</error>"/>
-</xsd:schema>

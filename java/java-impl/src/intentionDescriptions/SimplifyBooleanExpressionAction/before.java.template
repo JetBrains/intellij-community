@@ -1,5 +1,0 @@
-public class X {
-  void f(int i) {
-    if (<spot>this == null || true || i == 0</spot>) return;
-  }
-}

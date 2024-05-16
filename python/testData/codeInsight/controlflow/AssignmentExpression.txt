@@ -1,5 +1,0 @@
-0(1) element: null
-1(2) element: PyExpressionStatement
-2(3) READ ACCESS: undefined
-3(4) WRITE ACCESS: result
-4() element: null

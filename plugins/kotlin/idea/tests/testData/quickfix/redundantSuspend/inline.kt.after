@@ -1,4 +1,0 @@
-// "Remove 'suspend' modifier" "true"
-
-suspend inline fun foo(c: () -> Unit) {}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

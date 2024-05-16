@@ -1,4 +1,0 @@
-> ```
-> item
-> inner<caret>
-> ```

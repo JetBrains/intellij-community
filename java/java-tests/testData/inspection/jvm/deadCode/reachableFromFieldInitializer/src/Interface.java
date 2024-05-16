@@ -1,3 +1,0 @@
-interface Interface {
-  int getField();
-}

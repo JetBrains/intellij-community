@@ -1,4 +1,0 @@
-def1: &<caret>cur val1 # rename cur -> post
-use1: *cur # no conflict
-def2: &post val2
-use2: *cur # conflict

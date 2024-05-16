@@ -1,6 +1,0 @@
-machine bitbucket.org
- login john
- password pass
-machine github.com
- login bob
- password pswd

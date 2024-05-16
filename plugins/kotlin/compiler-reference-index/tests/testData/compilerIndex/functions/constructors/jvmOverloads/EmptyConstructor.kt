@@ -1,3 +1,0 @@
-fun emptyConstructor() {
-    Main()
-}

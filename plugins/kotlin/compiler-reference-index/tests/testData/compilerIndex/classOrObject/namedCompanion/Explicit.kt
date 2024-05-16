@@ -1,3 +1,0 @@
-fun Explicit() {
-    MainClass.Name
-}

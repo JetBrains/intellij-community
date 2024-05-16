@@ -1,8 +1,0 @@
-Types:
-PsiParameter:p : int
-PsiReferenceExpression:p : int
-
-Conversions:
-
-New expression type changes:
-Fails:

@@ -1,6 +1,0 @@
-// LANGUAGE_VERSION: 1.8
-// COMPILER_ARGUMENTS: -opt-in=kotlin.ExperimentalStdlibApi
-// WITH_STDLIB
-fun main() {
-    0..<10
-}

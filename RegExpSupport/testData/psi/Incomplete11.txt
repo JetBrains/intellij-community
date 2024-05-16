@@ -1,5 +1,0 @@
-REGEXP_FILE
-  PsiWhiteSpace('\Q')
-  RegExpPatternImpl: <>
-    RegExpBranchImpl: <>
-      <empty list>

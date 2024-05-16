@@ -1,6 +1,0 @@
-mock.patch
-mock.mock.patch
-
-# Uses `_timeout_unset` sentinel:
-mock.mock.ThreadingMixin.__init__
-mock.mock.ThreadingMixin.wait_until_called

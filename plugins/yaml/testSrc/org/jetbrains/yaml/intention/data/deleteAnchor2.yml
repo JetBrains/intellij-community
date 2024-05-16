@@ -1,7 +1,0 @@
-someKey: &same<caret>LineAnchor
-        - item1
-        - item2
-nextKey: &usedAnchor
-  - item1_2
-  - item2_2
-useOfAnchor: *usedAnchor

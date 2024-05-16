@@ -1,9 +1,0 @@
-public class X implements <spot>I</spot> {
-  public static void main(String[] args) {
-    System.out.println(FOO);
-  }
-}
-
-interface I {
-  String FOO = "foo";
-}

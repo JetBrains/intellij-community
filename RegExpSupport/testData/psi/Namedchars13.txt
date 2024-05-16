@@ -1,8 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\N{Mahjong Tile Winter}>
-    RegExpBranchImpl: <\N{Mahjong Tile Winter}>
-      RegExpNamedCharacterImpl: <\N{Mahjong Tile Winter}>
-        PsiElement(NAMED_CHARACTER)('\N')
-        PsiElement(LBRACE)('{')
-        PsiElement(NAME)('Mahjong Tile Winter')
-        PsiElement(RBRACE)('}')

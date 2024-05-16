@@ -1,8 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.Label?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-  <fx:define>
-    <Label fx:id="lbl" text="MyText" GridPane.rowIndex="1"/>
-  </fx:define>
-  <fx:reference source="lbl" text="bar" layoutX="10.0" layoutY="10.0" textFill="green"/>
-</GridPane>

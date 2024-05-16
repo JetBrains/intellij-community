@@ -1,3 +1,0 @@
-def cl = {ab -> ass<caret>}
------
-assert

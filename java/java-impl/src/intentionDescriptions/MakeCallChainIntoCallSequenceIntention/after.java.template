@@ -1,7 +1,0 @@
-public class X {
-  void f(String a, String b) {
-    StringBuffer buffer = new StringBuffer();
-    buffer.append(a);
-    buffer.append(b);
-  }
-}

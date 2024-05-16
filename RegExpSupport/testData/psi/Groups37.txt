@@ -1,7 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <(?P=name)>
-    RegExpBranchImpl: <(?P=name)>
-      RegExpNamedGroupRefImpl: <(?P=name)>
-        PsiElement(PYTHON_NAMED_GROUP_REF)('(?P=')
-        PsiElement(NAME)('name')
-        PsiElement(GROUP_END)(')')

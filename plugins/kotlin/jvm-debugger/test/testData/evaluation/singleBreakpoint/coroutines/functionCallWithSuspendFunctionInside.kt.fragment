@@ -1,9 +1,0 @@
-fun foo(): Int {
-    return 1 + one()
-}
-
-fun boo() = one() + 1
-
-foo() + boo()
-
-// RESULT: Suspend function 'one' should be called only from a coroutine or another suspend function

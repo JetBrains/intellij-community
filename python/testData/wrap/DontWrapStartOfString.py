@@ -1,1 +1,0 @@
-call_command(' regressiontests<caret>')

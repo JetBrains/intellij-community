@@ -1,4 +1,0 @@
-annotation class A(val i: Int, val j: Int, vararg val s: String)
-
-@A(1, 2, "foo", "bar")
-class C

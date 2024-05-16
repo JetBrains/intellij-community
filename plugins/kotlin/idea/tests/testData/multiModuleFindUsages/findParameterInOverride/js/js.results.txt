@@ -1,2 +1,0 @@
-[js.kt] Value read 12 val p = a
-[js.kt] Value read 6 println(a)

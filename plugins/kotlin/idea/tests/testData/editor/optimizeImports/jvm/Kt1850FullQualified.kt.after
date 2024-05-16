@@ -1,3 +1,0 @@
-// FIR_COMPARISON
-
-var x : java.util.Map.Entry<java.util.List<String>, String>? = null

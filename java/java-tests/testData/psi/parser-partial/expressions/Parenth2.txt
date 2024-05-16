@@ -1,5 +1,0 @@
-PsiJavaFile:Parenth2.java
-  PsiParenthesizedExpression:(
-    PsiJavaToken:LPARENTH('(')
-    PsiErrorElement:Expression expected
-      <empty list>

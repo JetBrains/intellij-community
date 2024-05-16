@@ -1,1 +1,0 @@
-'{foo["]}'.format(foo=undefined)

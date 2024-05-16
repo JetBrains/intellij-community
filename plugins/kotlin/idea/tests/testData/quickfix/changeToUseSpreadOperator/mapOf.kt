@@ -1,9 +1,0 @@
-// "Change 'pairs' to '*pairs'" "true"
-// WITH_STDLIB
-
-fun <K, V> yourMapOf(vararg pairs: Pair<K, V>) {}
-
-fun myMapOf(vararg pairs: Pair<String,String>) {
-    val myMap = yourMapOf(<caret>pairs)
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToUseSpreadOperatorFix

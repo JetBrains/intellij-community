@@ -1,4 +1,0 @@
-<!ELEMENT zzz (#PCDATA)>
-<!ATTLIST zzz
-  my-i<caret>d CDATA #REQUIRED>
-]>

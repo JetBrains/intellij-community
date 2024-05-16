@@ -1,5 +1,0 @@
-def foo(char c) {
-  ...
-}
-
-foo('a' as char)

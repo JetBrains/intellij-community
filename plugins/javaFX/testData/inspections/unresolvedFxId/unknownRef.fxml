@@ -1,5 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.TextField?>
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="Controller">
-  <TextField fx:id="unk<caret>nown"/>
-</GridPane>

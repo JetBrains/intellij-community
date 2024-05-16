@@ -1,3 +1,0 @@
-fun test(): String {
-    return "a" + ("1" + "1")
-}

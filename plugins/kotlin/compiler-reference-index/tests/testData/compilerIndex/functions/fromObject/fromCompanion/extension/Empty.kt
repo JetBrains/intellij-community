@@ -1,4 +1,0 @@
-fun empty() {
-    fun test() {
-    }
-}

@@ -1,3 +1,0 @@
-class Derived extends Base {
-  public static String myField = "Derived.myField";
-}

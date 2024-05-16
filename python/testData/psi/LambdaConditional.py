@@ -1,1 +1,0 @@
-lambda x: 5 if x else 2

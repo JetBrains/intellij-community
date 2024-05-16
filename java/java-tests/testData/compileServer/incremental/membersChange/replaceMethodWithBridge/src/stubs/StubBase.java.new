@@ -1,4 +1,0 @@
-package stubs;
-
-public class StubBase<T> extends ObjectStubBase<StubElement> implements StubElement{
-}

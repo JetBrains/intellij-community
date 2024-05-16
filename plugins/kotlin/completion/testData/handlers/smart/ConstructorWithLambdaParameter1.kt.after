@@ -1,5 +1,0 @@
-class Foo(p : () -> Unit)
-
-var a : Foo = Foo { <caret> }
-
-// AUTOCOMPLETE_SETTING: true

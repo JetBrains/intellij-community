@@ -1,2 +1,0 @@
-x: int
-xs: List = []

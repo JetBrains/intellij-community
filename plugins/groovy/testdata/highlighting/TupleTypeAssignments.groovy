@@ -1,5 +1,0 @@
-def foo = [1, 2, 3]
-Double <warning descr="Cannot assign 'ArrayList<Integer>' to 'Double'">d</warning> = [1, 2, 3]
-List<Double> <warning descr="Cannot assign 'ArrayList<String>' to 'List<Double>'">list</warning> = ["1", "2"]
-List<Double> doubleList = [1, 2]
-List<Double> secondDoubleList = [1.2, 2.5]

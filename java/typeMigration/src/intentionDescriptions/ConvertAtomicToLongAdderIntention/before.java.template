@@ -1,8 +1,0 @@
-public class X {
-  void m() {
-    AtomicLong <spot>l</spot> = new AtomicLong();
-
-    l.incrementAndGet();
-    long res = l.get();
-  }
-}

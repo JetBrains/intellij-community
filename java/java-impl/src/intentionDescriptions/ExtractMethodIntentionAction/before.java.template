@@ -1,9 +1,0 @@
-void test() {
-  while (checkCondition()) {
-    somethingElse();
-    <spot>if (checkCondition()) {
-      break;
-    }
-    System.out.println("Text");</spot>
-  }
-}

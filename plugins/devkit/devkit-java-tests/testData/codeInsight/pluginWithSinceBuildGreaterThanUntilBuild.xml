@@ -1,7 +1,0 @@
-<idea-plugin>
-  <id>test</id>
-  <vendor>JetBrains</vendor>
-  <version>1.0</version>
-
-  <idea-version since-build="145.99" until-build="<error descr="\"until-build\" must be greater than \"since-build\"">145.98</error>"/>
-</idea-plugin>

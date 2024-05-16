@@ -1,9 +1,0 @@
-// AFTER-WARNING: Variable 'x' is never used
-// WITH_STDLIB
-fun test() {
-    val x =
-        """
-                #a
-                #b
-            """.<caret>trimMargin("#")
-}

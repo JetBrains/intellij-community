@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.layout.*?>
-<?import java.lang.Double?>
-
-<GridPane xmlns:fx="http://javafx.com/fxml" alignment="center">
-  <<error descr="Unable to coerce java.lang.Double to javafx.scene.Node">Double</error> />
-</GridPane>

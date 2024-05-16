@@ -1,5 +1,0 @@
-package one
-
-fun op() {}
-
-// IGNORE_K1

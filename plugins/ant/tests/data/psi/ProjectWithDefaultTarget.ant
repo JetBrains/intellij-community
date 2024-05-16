@@ -1,3 +1,0 @@
-<project name="Project" default="main">
-  <target name="main"></target>
-</project>

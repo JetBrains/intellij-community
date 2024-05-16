@@ -1,7 +1,0 @@
-[*]
-insert_final_newline=false
-indent_style=<caret>tab
-charset=utf-8
-
-[foo]
-charset=utf-16be

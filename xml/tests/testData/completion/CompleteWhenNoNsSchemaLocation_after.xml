@@ -1,6 +1,0 @@
-<build number="1" xsi:noNamespaceSchemaLocation="CompleteWhenNoNsSchemaLocation.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<statusInfo status="SUCCESS"<caret>/>
-<statsValue key="dd" value="asd">asd</statsValue>
-<statsValue key="dd1" value="asd1"/>
-<statusInfo status="sdsd1">aa1</statusInfo>
-</build>

@@ -1,6 +1,0 @@
-PyFile:helpWildcards.py
-  PyEmptyExpression
-    PsiElement(Py:MULT)('*')
-    PsiElement(Py:IDENTIFIER)('int')
-    PsiElement(Py:MULT)('*')
-    PsiElement(Py:QUESTION_MARK)('?')

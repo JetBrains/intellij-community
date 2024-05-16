@@ -1,1 +1,0 @@
-from one.two.three import foo

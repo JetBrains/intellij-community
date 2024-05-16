@@ -1,7 +1,0 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
-//INVOCATION_COUNT: 2
-fun main() {
-    "java.lang.Integer"
-}
-//ELEMENT: Integer

@@ -1,3 +1,0 @@
-print "                              {left(email.user?.raw, (length / 2).toInteger())}@${left(email.domain?.raw, (length - length / 2 - 1).toInteger())}"
------
-print "                              {left(email.user?.raw, (length / 2).toInteger())}@${left(email.domain?.raw, (length - length / 2 - 1).toInteger())}"

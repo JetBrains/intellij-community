@@ -1,9 +1,0 @@
-Types:
-PsiField:f : java.util.Set<java.util.List<int[]>>
-PsiNewExpression:new Set<List<char[]>>() : java.util.Set<java.util.List<int[]>>
-
-Conversions:
-
-New expression type changes:
-new Set<List<char[]>>() -> java.util.Set<java.util.List<int[]>>
-Fails:

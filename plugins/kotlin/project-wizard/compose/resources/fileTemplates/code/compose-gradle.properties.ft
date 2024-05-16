@@ -1,4 +1,0 @@
-org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
-kotlin.code.style=official
-kotlin.version=${context.getBomProperty("kotlin.version")}
-compose.version=${context.getBomProperty("compose.version")}

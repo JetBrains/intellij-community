@@ -1,7 +1,0 @@
-// FIR_COMPARISON
-
-class B : Thread() {
-    init {
-        currentThread()
-    }
-}

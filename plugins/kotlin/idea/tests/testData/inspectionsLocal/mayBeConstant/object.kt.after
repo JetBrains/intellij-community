@@ -1,5 +1,0 @@
-// WITH_STDLIB
-
-object O {
-    const val s = "He" + "llo"
-}

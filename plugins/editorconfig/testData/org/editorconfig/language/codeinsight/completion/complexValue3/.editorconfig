@@ -1,2 +1,0 @@
-[foo]
-csharp_new_line_before_open_brace = accessors, <caret>

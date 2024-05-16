@@ -1,7 +1,0 @@
-// LIBRARY_NAME: myLibraryWithFacade
-// FILE: facade.kt
-
-@file:JvmName("MyCustomFacade")
-@file:JvmMultifileClass
-
-fun myFun() = Unit

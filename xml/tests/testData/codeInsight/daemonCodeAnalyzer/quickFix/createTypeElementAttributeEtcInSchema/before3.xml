@@ -1,7 +1,0 @@
-<!-- "Create Complex Type myType" "true" -->
-<xsd:schema xmlns="http://www.foo.org/test"
-         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-         targetNamespace="http://www.foo.org/test"
-         elementFormDefault="qualified" attributeFormDefault="unqualified">
-  <xsd:element name="foo" type="my<caret>Type"/>
-</xsd:schema>

@@ -1,4 +1,0 @@
-fun foo() {
-    val j = J()
-    j.foo(/* number = */ 1, /* v = */ "a")
-}

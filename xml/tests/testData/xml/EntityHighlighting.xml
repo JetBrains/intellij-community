@@ -1,8 +1,0 @@
-<!DOCTYPE a [
-<!ELEMENT a (#PCDATA)>
-<!ENTITY nbsp2 "!!!" >  
-]>
-<a>
-  &<error>nbsp1</error>;
-  &nbsp2;
-</a>

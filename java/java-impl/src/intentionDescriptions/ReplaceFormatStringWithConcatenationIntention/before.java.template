@@ -1,6 +1,0 @@
-class X {
-
-  public String message(String actual, String expected) {
-    return <spot>String.format("Expected to get a '%s', got a '%s' instead", expected, actual)</spot>;
-  }
-}

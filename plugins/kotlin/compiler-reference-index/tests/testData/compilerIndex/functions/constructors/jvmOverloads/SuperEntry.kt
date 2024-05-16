@@ -1,1 +1,0 @@
-class SuperEntry : Main(4)

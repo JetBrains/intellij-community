@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <package>com.jetbrains.one.three</package>
-    <entry_point TYPE="package" FQNAME="com.jetbrains.one.three" />
-    <problem_class id="PackageWithTooFewClasses" severity="WARNING" attribute_key="WARNING_ATTRIBUTES" />
-    <description>Package 'com.jetbrains.one.three' contains too few classes (1 &lt; 3)</description>
-  </problem>
-</problems>

@@ -1,4 +1,0 @@
-enum MyEnum {
-    A,
-    B;
-}

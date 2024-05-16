@@ -1,5 +1,0 @@
-class C {
-    void f(int param) {
-        if (param == 0) <spot>throw new IllegalArgumentException()</spot>;
-    }
-}

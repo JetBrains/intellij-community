@@ -1,9 +1,0 @@
-Types:
-PsiParameter:o : C
-PsiReferenceExpression:o : C
-
-Conversions:
-
-New expression type changes:
-Fails:
-o->C

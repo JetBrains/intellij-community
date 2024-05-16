@@ -1,7 +1,0 @@
-{
-  "mainFile": "b/B.java",
-  "type": "MOVE_FILES",
-  "targetPackage": "a",
-  "enabledInK1": "true",
-  "enabledInK2": "true"
-}

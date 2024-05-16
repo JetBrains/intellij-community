@@ -1,8 +1,0 @@
-<component xmlns="http://jetbrains.org/intellij/schema/application-info">
-  <version codename="Community Edition" major="10" minor="0" eap="true"/>
-  <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
-  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <logo url="/idea_community_logo.png"/>
-  <icon svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
-  <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
-</component>

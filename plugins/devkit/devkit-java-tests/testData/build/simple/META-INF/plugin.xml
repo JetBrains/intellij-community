@@ -1,9 +1,0 @@
-<idea-plugin>
-  <id>test.plugin</id>
-  <name>Test Plugin</name>
-  <version>1.0</version>
-
-  <actions>
-      <action id="xxx.MyAction" class="xxx.MyAction" text="Something"/>
-  </actions>
-</idea-plugin>

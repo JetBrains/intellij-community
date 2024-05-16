@@ -1,5 +1,0 @@
-<root>
-  <item name='org.eclipse.jgit.storage.file.FileRepositoryBuilder org.eclipse.jgit.lib.Repository build()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

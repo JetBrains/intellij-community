@@ -1,3 +1,0 @@
-# Metaclass differs:
-invoke.parser.ParseMachine
-invoke.parser.parser.ParseMachine

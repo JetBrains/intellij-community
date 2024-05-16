@@ -1,1 +1,0 @@
-Not a generic purpose ZIP file implementation. Must be in the package `com.intellij.util.lang` because any class from `com.intellij.util.lang.` will be loaded from app class loader. As it must be for `ImmutableZipFile` and related classes. See `PathClassLoader.findClass`.

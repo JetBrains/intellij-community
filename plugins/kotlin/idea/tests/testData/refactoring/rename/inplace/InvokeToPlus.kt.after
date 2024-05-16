@@ -1,9 +1,0 @@
-// NEW_NAME: plus
-// RENAME: member
-class A {
-    fun plus(n: Int, s: String) = 1
-}
-
-fun test() {
-    A().plus(1, "2")
-}

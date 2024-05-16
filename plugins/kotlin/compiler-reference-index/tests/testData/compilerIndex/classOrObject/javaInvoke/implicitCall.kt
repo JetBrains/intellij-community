@@ -1,3 +1,0 @@
-fun implicitCall() {
-    Main.INSTANCE()
-}

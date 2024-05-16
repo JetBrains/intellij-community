@@ -1,4 +1,0 @@
-<root>
-  <element attribute="ABxxCDEF"/>
-  <element attribute="ABxxCDEF<caret>"/>
-</root>

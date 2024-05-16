@@ -1,1 +1,0 @@
-typealias MyAlias = top.level.KotlinInterface

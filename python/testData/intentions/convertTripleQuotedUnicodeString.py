@@ -1,2 +1,0 @@
-s = u"""<caret>string
-"""

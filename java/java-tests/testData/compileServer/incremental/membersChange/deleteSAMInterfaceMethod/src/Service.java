@@ -1,3 +1,0 @@
-interface Service {
-  void foo();
-}

@@ -1,1 +1,0 @@
-print (<warning descr="Key 'fst' has no corresponding argument">"first is {fst}"</warning>.format(**{1: "3"})<EOLError descr="')' expected"></EOLError>

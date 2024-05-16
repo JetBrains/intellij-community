@@ -1,1 +1,0 @@
-def s = <caret>doo()

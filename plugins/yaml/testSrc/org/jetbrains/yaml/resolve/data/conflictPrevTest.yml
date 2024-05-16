@@ -1,4 +1,0 @@
-def1: &prev val1
-def2: &<caret>cur val2 # rename cur -> prev
-use1: *prev # conflict
-use2: *cur

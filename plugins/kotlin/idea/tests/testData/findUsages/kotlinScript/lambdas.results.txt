@@ -1,1 +1,0 @@
-New instance creation (someThing) 9 val foo = Foo()

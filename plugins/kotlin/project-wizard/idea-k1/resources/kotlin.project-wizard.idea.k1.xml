@@ -1,9 +1,0 @@
-<idea-plugin package="org.jetbrains.kotlin.tools.projectWizard.k1">
-  <dependencies>
-    <module name="kotlin.project-wizard.idea"/>
-  </dependencies>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
-    <ideaWizardService implementation="org.jetbrains.kotlin.tools.projectWizard.k1.service.IdeaInspectionsWizardService"/>
-  </extensions>
-</idea-plugin>

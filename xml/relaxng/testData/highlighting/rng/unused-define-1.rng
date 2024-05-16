@@ -1,3 +1,0 @@
-<grammar xmlns="http://relaxng.org/ns/structure/1.0" ns="urn:test:simple.rng">
-  <define name=<warning>"foo"</warning> />
-</grammar>

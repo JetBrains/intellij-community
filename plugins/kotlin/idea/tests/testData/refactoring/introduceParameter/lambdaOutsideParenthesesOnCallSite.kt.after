@@ -1,8 +1,0 @@
-// WITH_DEFAULT_VALUE: false
-fun f(g: () -> Unit, i: Int) {
-    println(i)
-}
-
-fun call() {
-    f({}, 123)
-}

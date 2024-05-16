@@ -1,3 +1,0 @@
-[table]<fold text='{...}'>
-a = <fold text='{...}'>{ a = 1, b = <fold text='[...]'>[2, 3]</fold> }</fold>
-b = {}</fold>

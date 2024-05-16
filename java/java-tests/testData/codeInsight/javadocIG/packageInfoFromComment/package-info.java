@@ -1,4 +1,0 @@
-/**
- * some text
- */
-package packageInfoFromComment;

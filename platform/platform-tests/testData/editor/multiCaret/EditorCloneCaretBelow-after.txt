@@ -1,3 +1,0 @@
-s<caret>ome text
-s<caret>ome other <selection>text<caret></selection>
-a<caret>not<caret>her lin<selection>e of<caret></selection> text

@@ -1,4 +1,0 @@
-def preved = 5
-<begin>3<end>
------
-Introduced variable will conflict with local variable preved

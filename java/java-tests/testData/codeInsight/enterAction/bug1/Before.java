@@ -1,3 +1,0 @@
-<caret>
-public class Test{
-}

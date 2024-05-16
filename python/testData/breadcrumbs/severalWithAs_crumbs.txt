@@ -1,4 +1,0 @@
-Crumb:
-with open("file.txt") as f, ope…
-Tooltip:
-with open("file.txt") as f, open("file2.txt") as f2

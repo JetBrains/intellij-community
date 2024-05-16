@@ -1,3 +1,0 @@
-[*.cs]
-<warning>definitely_unknown_key</warning>=hello
-csharp_space_before_dot=false

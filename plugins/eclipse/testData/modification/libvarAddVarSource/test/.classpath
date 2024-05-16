@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-  <classpathentry kind="lib" path="$ROOT$/variableidea/test.jar" sourcepath="$ROOT$/jars/test.jar" />
-  <classpathentry kind="output" path="bin" />
-</classpath>

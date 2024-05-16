@@ -1,8 +1,0 @@
-def a = 0
-<selection>def b = a</selection>
-def c = b
------
-input:
-a
-output:
-b

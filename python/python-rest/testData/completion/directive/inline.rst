@@ -1,4 +1,0 @@
-
-Some text::
-
-  .. no<caret>

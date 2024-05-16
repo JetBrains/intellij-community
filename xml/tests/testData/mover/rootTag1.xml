@@ -1,6 +1,0 @@
-<test>
-    <element
-            attribute="test1"/>
-    <element
-            attribute="test2"/>
-</te<caret>st>

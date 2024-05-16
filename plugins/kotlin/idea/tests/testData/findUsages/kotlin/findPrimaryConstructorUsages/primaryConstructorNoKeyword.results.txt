@@ -1,4 +1,0 @@
-Constructor delegation reference 5 constructor() : this(1)
-Constructor delegation reference 9 constructor(n: Int) : super(n)
-New instance creation 16 A(1)
-Supertype 12 class C() : A(1)

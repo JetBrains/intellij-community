@@ -1,3 +1,0 @@
-%stopProfile collapsed,flamegraph,jfr,traces=5000
-%addFile C:/ProgramFiles/some/path,file.txt
-%deleteFile C:/ProgramFiles/some/path,file.txt

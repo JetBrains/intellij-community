@@ -1,1 +1,0 @@
-PyInstaller\.utils\.win32\.versioninfo\.\w+?

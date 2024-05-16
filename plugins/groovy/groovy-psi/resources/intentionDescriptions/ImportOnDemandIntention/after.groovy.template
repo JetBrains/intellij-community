@@ -1,3 +1,0 @@
-import static java.lang.Math.*;
-
-def pi = PI;

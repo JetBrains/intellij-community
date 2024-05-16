@@ -1,1 +1,0 @@
-s = '<TYPO descr="Typo: In word 'potat'">potat</TYPO> <TYPO descr="Typo: In word 'potat'">potat</TYPO>' u'<TYPO descr="Typo: In word 'potat'">potat</TYPO> <TYPO descr="Typo: In word 'potat'">potat</TYPO>' r'<TYPO descr="Typo: In word 'potat'">potat</TYPO> <TYPO descr="Typo: In word 'potat'">potat</TYPO>'

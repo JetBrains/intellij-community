@@ -1,3 +1,0 @@
-b5 Example of git-svn config
-Inspired by IDEA-83764
-Several svn-remotes defined for different svn branches.

@@ -1,6 +1,0 @@
-<idea-plugin>
-    <name>URLs Test</name>
-    <id>com.jetbrains.plugins.urls</id>
-    <idea-version since-build="10000"/>
-    <version>0.1</version>
-</idea-plugin>

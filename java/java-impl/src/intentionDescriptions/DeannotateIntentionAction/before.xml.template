@@ -1,5 +1,0 @@
-<root>
-  <item name='java.lang.Iterable Iterator<T> iterator()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

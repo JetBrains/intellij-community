@@ -1,9 +1,0 @@
-// IGNORE_K2
-class C {
-    fun foo() {
-        when (this) {
-            <caret> -> {}
-            else -> {}
-        }
-    }
-}

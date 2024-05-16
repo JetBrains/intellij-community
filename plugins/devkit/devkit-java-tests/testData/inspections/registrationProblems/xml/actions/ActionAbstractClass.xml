@@ -1,6 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action id="invalid"
-            class="<error descr="'MyAbstractAction' is not a concrete class"><error descr="Abstract class is not allowed">MyAbstractAction</error></error>"/>
-  </actions>
-</idea-plugin>

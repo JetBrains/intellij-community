@@ -1,1 +1,0 @@
-class SimpleClass : X

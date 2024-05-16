@@ -1,7 +1,0 @@
-import p.Foo
-
-<begin>Foo.foo()<end>
------
-import p.Foo
-
-def preved = Foo.foo()<caret>

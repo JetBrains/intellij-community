@@ -1,5 +1,0 @@
-test.java.file
-  ERROR_ELEMENT
-    PACKAGE_KEYWORD
-  IMPORT_LIST
-    <empty list>

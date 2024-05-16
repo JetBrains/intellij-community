@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd">
-    <polygon fill="#9AA7B0" fill-opacity=".8" points="7 1 3 5 7 5"/>
-    <path fill="#9AA7B0" fill-opacity=".8" d="M13,10 L7.5,10 L5.4,15 L3,15 L3,6 L8,6 L8,1 L13,1 L13,10 Z"/>
-    <path fill="#231F20" fill-opacity=".7" d="M3.15,3 L2.49612121,1.4 L1.85,3 L3.15,3 Z M2.109,0 L2.89,0 L5,5 L3.9,5 L3.4,4 L1.6,4 L1.1,5 L0,5 L2.109,0 Z" transform="translate(6 11)"/>
-    <polygon fill="#231F20" fill-opacity=".7" points="11.494 16 11.494 15.214 14.382 11.938 11.598 11.938 11.598 11 15.841 11 15.841 11.786 12.952 15.063 15.841 15.063 15.841 16"/>
-  </g>
-</svg>

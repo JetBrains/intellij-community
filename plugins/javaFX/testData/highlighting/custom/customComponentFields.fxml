@@ -1,8 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Button?>
-<fx:root type="CustomVBox" xmlns:fx="http://javafx.com/fxml" >
-    <Label text="Hello" fx:id="lab1"/>
-    <TextField fx:id="t<caret>f"/>
-    <Button text="Click Me" onAction= "#myMethod"/>
-</fx:root>

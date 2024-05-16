@@ -1,8 +1,0 @@
-{
-  "a": <warning descr="Incompatible types.
- Required: string. Actual: integer.">5</warning>,
-  "b": <warning descr="Incompatible types.
- Required: string. Actual: integer.">7</warning>,
-  "c": <warning descr="Incompatible types.
- Required: string. Actual: integer.">9</warning>
-}

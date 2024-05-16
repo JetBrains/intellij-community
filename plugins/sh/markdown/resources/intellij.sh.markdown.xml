@@ -1,8 +1,0 @@
-<idea-plugin package="com.intellij.sh.markdown">
-  <dependencies>
-    <plugin id="org.intellij.plugins.markdown"/>
-  </dependencies>
-  <extensions defaultExtensionNs="org.intellij.markdown">
-    <markdownRunner implementation="com.intellij.sh.markdown.ShMarkdownRunner"/>
-  </extensions>
-</idea-plugin>

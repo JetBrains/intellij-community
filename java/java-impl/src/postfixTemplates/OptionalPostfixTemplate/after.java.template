@@ -1,6 +1,0 @@
-public void m(int intValue, double doubleValue, long longValue, Object objValue) {
-  OptionalInt.of(intValue)
-  OptionalDouble.of(doubleValue)
-  OptionalLong.of(longValue)
-  Optional.ofNullable(objValue)
-}

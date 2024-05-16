@@ -1,8 +1,0 @@
-XmlFile:test.xml
-  PsiElement(XML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      <empty list>
-    XmlTag::foo
-      XmlToken:XML_START_TAG_START('<')
-      XmlToken:XML_NAME(':foo')
-      XmlToken:XML_EMPTY_ELEMENT_END('/>')

@@ -1,3 +1,0 @@
-some<caret> te<caret>xt
-other<selection>text<caret></selection>
-<selection>an<caret>other</selection> line

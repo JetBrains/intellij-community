@@ -1,6 +1,0 @@
-<project name="Project" default="defaultTarget">
-  <target name="target1"/>
-  <target name="target2"/>
-  <target name="target3"/>
-  <target name="defaultTarget" depends="target1,target2,target3"/>
-</project>

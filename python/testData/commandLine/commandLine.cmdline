@@ -1,1 +1,0 @@
-command_name positional_argument_1 positional_argument_2 -sSMALL_OPTION_VALUE -a --long-option --long-option-2=long_option_value --long-option-3 argument_for_long_option

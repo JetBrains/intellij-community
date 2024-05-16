@@ -1,1 +1,0 @@
-print("%s: <selection>Hello</selection> %s" % ("Error", "World"))

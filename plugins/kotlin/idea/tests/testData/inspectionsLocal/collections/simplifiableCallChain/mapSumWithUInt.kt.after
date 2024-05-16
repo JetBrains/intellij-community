@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun main() {
-    listOf(1u, 2u).sumOf { it * it }
-}

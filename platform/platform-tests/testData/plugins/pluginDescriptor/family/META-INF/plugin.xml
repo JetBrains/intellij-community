@@ -1,4 +1,0 @@
-<idea-plugin>
-  <id>griffins</id>
-  <depends optional="true" config-file="brian.xml">pets.allowed</depends>
-</idea-plugin>

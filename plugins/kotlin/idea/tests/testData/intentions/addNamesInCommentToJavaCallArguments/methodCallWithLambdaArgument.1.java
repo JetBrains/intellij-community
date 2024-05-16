@@ -1,8 +1,0 @@
-public class Java {
-    @FunctionalInterface
-    public interface I {
-        void execute();
-    }
-
-    public void test(int foo, int bar, long baz, I i) {}
-}

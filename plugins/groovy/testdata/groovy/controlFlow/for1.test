@@ -1,9 +1,0 @@
-for(int i = 0; i < 10; i++);
------
-0(1) element: null
-1(2) WRITE i
-2(3) element: For statement
-3(4,6) READ i
-4(5) READ i
-5(2) WRITE i
-6() element: null

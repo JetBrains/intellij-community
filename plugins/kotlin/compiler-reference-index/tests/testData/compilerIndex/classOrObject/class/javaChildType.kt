@@ -1,3 +1,0 @@
-fun javaChildType(j: JavaChild) {
-
-}

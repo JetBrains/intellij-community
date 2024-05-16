@@ -1,9 +1,0 @@
-test.java.file
-  YIELD_STATEMENT
-    YIELD
-    WHITE_SPACE
-    REFERENCE_EXPRESSION
-      REFERENCE_PARAMETER_LIST
-        <empty list>
-      IDENTIFIER
-    SEMICOLON

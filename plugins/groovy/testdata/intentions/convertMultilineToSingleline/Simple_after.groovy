@@ -1,1 +1,0 @@
-print '\nprint d'

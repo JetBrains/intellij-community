@@ -1,5 +1,0 @@
-class Computer {
-    void f() {
-        double pi = <spot>Math</spot>.PI;
-    }
-}

@@ -1,4 +1,0 @@
-<node text="target_func() (hierarchy.call.Static.DefaultValue.main)" base="true">
-  <node text="func2() (hierarchy.call.Static.DefaultValue.main)"/>
-  <node text="func4() (hierarchy.call.Static.DefaultValue.main)"/>
-</node>

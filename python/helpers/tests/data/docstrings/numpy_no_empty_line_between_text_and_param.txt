@@ -1,9 +1,0 @@
-Summary
-
-This is an example of a module level function.
-Parameters
-----------
-param1 : int
-    The first parameter.
-param2 : Optional[str]
-    The second parameter.

@@ -1,9 +1,0 @@
-interface Foo {
-  def foo (String str)
-}
-
-class A implements Foo {
-  def foo (String s) {}
-}
------
-Interface definition: Foo; HierarchicalMethodSignatureImpl: foo([PsiType:String])

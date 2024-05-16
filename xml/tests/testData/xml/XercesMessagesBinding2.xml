@@ -1,8 +1,0 @@
-<database xmlns="XercesMessagesBinding2.xsd">
-   <table>
-       <description><p/></description>
-       <col <error>name</error>="aaa" <error>size</error>="-1">
-         <description> <p/> </description>
-       </col>
-   </table>
-</database>

@@ -1,8 +1,0 @@
-<?import InheritedConstantData?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.layout.VBox?>
-<VBox xmlns:fx="http://javafx.com/fxml">
-  <Button>
-    <InheritedConstantData fx:constant="<caret>"/>
-  </Button>
-</VBox>

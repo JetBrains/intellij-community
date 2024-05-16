@@ -1,3 +1,0 @@
-Generic<T, T.TT>
-T
-T

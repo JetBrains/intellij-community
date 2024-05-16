@@ -1,5 +1,0 @@
-Resolved Foo()
-Searched references to Foo.Companion
-Used plain search of invoke() in LocalSearchScope:
-    FUN:invoke
-    OBJECT_DECLARATION:Companion

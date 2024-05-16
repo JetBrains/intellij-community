@@ -1,5 +1,0 @@
-public void m2() {
-  <spot>m()</spot>.try
-}
-
-public void m() throws CheckedException { }

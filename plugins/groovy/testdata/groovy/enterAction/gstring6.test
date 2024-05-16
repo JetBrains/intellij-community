@@ -1,4 +1,0 @@
-"asd $i ASDASD $gdfg Fsdfsdfs $sdfs<caret> dfgd"
------
-"asd $i ASDASD $gdfg Fsdfsdfs $sdfs" +
-    "<caret> dfgd"

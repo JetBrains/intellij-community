@@ -1,8 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <[k]>
-    RegExpBranchImpl: <[k]>
-      RegExpClassImpl: <[k]>
-        PsiElement(CLASS_BEGIN)('[')
-        RegExpCharImpl: <k>
-          PsiElement(CHARACTER)('k')
-        PsiElement(CLASS_END)(']')

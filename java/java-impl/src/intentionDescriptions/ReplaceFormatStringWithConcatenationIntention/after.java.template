@@ -1,6 +1,0 @@
-class X {
-
-  public String message(String actual, String expected) {
-    return "Expected to get a '" + expected + "', got a '" + actual + "' instead";
-  }
-}

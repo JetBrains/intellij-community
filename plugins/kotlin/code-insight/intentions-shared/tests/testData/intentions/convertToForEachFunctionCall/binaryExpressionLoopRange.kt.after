@@ -1,7 +1,0 @@
-// WITH_STDLIB
-// AFTER-WARNING: The expression is unused
-fun main() {
-    1.rangeTo(2).forEach { x ->
-        x
-    }
-}

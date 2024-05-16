@@ -1,6 +1,0 @@
-<spot>if</spot> (cond()) {
-  return first()
-}
-else {
-  return second()
-}

@@ -1,9 +1,0 @@
-default namespace = "urn:test:simple.rng"
-
-start = target1
-div {
-  target1 = element a { empty }
-}
-div {
-  target2 = target1
-}

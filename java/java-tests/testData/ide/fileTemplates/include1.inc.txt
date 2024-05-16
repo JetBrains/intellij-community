@@ -1,7 +1,0 @@
- /*
- * $Author$
- * $Id$
- * @author $Author
- * @version $Revision$
- * This is a file header
-*/

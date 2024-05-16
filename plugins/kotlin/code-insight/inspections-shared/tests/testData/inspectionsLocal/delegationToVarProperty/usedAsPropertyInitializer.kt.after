@@ -1,4 +1,0 @@
-// FIX: Change to 'val'
-class Foo(val text: CharSequence): CharSequence by text {
-    val bar = text
-}

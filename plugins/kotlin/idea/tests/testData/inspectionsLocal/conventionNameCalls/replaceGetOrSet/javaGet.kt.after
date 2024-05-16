@@ -1,4 +1,0 @@
-// HIGHLIGHT: INFORMATION
-fun test(foo: Foo) {
-    foo[""]
-}

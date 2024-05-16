@@ -1,2 +1,0 @@
-class Handler(object):
-    pass

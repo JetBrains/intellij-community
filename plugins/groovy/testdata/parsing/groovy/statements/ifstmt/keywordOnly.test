@@ -1,7 +1,0 @@
-if
------
-Groovy script
-  IF statement
-    PsiElement(if)('if')
-    PsiErrorElement:'(' expected
-      <empty list>

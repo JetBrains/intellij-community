@@ -1,1 +1,0 @@
-class Clazz[T]: pass

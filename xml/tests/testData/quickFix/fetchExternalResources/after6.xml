@@ -1,9 +1,0 @@
-<!-- "Fetch external resource" "true" -->
-
-<jsp:root version="2.0"
-xmlns="http://www.w3.org/1999/xhtml"
-xmlns:jsp="http://java.sun.com/JSP/Page"
-xmlns:a4j="https://ajax4<caret>jsf.dev.java.net/ajax"
-xmlns:f="http://java.sun.com/jsf/core"
-xmlns:h="http://java.sun.com/jsf/html"
-xmlns:t="http://myfaces.apache.org/tomahawk">

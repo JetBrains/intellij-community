@@ -1,6 +1,0 @@
-test.java.file
-  BREAK_STATEMENT
-    BREAK_KEYWORD
-    WHITE_SPACE
-    IDENTIFIER
-    SEMICOLON

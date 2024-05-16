@@ -1,4 +1,0 @@
-public final [ResolvedTo(BODY_RESOLVE)] object TopLevelObject : R|kotlin/Any| {
-    public final [ResolvedTo(BODY_RESOLVE)] fun objectFunction(): R|kotlin/Unit|
-
-}

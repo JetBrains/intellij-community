@@ -1,6 +1,0 @@
-fun example() {
-    listOf(1, 2, 3).find { n ->
-        print("Testing number $n")
-        <spot>return@find</spot> n % 2 == 0
-    }
-}

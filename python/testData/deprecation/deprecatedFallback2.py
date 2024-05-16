@@ -1,1 +1,0 @@
-from deprecatedAsFallback import bar

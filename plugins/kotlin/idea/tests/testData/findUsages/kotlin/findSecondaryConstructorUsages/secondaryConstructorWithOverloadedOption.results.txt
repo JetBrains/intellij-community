@@ -1,3 +1,0 @@
-New instance creation 15 A()
-New instance creation 16 A(1)
-Supertype 12 class C() : A(1)

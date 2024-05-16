@@ -1,1 +1,0 @@
-class Xyzzy: pass

@@ -1,5 +1,0 @@
-// INPLACE_VARIABLE_NAME: i, i1
-// WITH_STDLIB
-fun test() {
-    val (i, i1) = 1 to 2
-}

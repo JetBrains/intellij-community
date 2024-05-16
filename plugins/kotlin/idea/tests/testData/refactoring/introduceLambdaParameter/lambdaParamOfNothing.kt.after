@@ -1,8 +1,0 @@
-// WITH_DEFAULT_VALUE: false
-fun foo(a: Int, nothing: (Int) -> Nothing) {
-    nothing(a)
-}
-
-fun test() {
-    foo(1) { a -> throw Exception("Error: $a") }
-}

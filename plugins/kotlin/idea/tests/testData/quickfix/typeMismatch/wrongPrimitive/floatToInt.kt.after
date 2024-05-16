@@ -1,9 +1,0 @@
-// "Change to '1'" "true"
-// ACTION: Change to '1'
-// ACTION: Change type of 'a' to 'Float'
-// ACTION: Convert property initializer to getter
-// ACTION: Convert to lazy property
-
-val a : Int = 1<caret>
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrongPrimitiveLiteralFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrongPrimitiveLiteralFix

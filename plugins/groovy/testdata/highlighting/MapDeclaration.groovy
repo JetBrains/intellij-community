@@ -1,1 +1,0 @@
-Map<String, Integer> map=['abc':1, "xyz":2, wow:3]

@@ -1,6 +1,0 @@
-top:
-  next:
-    ? several
-      line
-      target<caret>Key
-    : value

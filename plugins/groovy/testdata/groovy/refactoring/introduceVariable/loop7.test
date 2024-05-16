@@ -1,8 +1,0 @@
-while (<all>true<end>) {
-    true
-}
------
-def preved = true
-while (preved<caret>) {
-    preved
-}

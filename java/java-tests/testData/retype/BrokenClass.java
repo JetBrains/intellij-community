@@ -1,5 +1,0 @@
-class BrockenClass {
-  void foo() {
-    (
-  }
-}

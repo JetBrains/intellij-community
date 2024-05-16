@@ -1,4 +1,0 @@
-// AFTER-WARNING: Parameter 'it' is never used, could be renamed to _
-fun main() {
-    Test().foo <caret>{ "" }
-}

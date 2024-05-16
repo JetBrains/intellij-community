@@ -1,3 +1,0 @@
-plugins {
-    <caret>application
-}

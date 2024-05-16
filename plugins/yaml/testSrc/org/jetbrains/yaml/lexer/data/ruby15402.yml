@@ -1,4 +1,0 @@
-MetalProductsBundle:Products:searchSuggest:
-    path:      /search-suggest/
-    host:      "{subdomain}.%base_host%"
-    defaults:  { _controller: MetalProductsBundle:Products:searchSuggest }

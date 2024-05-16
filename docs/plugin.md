@@ -1,1 +1,0 @@
-See https://youtrack.jetbrains.com/articles/IJPL-A-31/Plugin-Model

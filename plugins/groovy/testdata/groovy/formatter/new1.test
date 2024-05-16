@@ -1,3 +1,0 @@
-def mkp = new groovy.xml  .  MarkupBuilder (out)
------
-def mkp = new groovy.xml.MarkupBuilder(out)

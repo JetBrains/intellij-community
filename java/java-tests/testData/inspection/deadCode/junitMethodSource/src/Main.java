@@ -1,2 +1,0 @@
-@SuppressWarnings("ALL")
-class Main {}

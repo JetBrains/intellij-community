@@ -1,6 +1,0 @@
-<node text="X  (foo)" base="true">
-  <node text="Y  (foo)">
-    <node text="Z  (foo)"/>
-  </node>
-  <node text="YY  (foo)"/>
-</node>

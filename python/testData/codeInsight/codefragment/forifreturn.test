@@ -1,4 +1,0 @@
-for start, end, name in self.talks:
-    <begin>if hour >= start and hour < end: return name<end>
-<result>
-Cannot perform refactoring when execution flow is interrupted

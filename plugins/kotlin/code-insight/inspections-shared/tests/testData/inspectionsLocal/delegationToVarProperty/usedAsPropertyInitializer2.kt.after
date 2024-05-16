@@ -1,4 +1,0 @@
-// FIX: Remove 'var'
-class Foo(text: CharSequence): CharSequence by text {
-    val bar = text
-}

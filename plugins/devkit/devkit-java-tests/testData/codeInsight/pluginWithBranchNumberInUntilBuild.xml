@@ -1,7 +1,0 @@
-<idea-plugin>
-  <id>test</id>
-  <vendor>JetBrains</vendor>
-  <version>1.0</version>
-
-  <idea-version since-build="145" until-build="<error descr="Plain numbers in 'until-build' attribute may be misleading. '145' means the same as '145.0', so the plugin won't be compatible with 145.* builds. It's better to specify '144.*' instead.">145</error>"/>
-</idea-plugin>

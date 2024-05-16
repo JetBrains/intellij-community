@@ -1,3 +1,0 @@
-datatypes xxx = "yyy"
-
-element foo { xxx:string }

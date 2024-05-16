@@ -1,7 +1,0 @@
-{
-  "type": "MARKED_ELEMENT",
-  "mainFile": "test/test.kt",
-  "newName": "funMe2",
-  "withRuntime": "true",
-  "enabledInK2": "true"
-}

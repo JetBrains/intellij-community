@@ -1,2 +1,0 @@
-Function call 13 a.set(2, B(2))
-Implicit 'set' 14 a[1] = B(2)

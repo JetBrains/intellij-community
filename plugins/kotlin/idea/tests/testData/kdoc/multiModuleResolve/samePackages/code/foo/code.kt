@@ -1,4 +1,0 @@
-package foo
-
-class Bar {
-}

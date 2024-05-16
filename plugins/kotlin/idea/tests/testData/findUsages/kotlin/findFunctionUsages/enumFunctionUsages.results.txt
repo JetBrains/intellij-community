@@ -1,6 +1,0 @@
-Function call 15 foo(1)
-Function call 22 foo(1)
-Function call 29 e.foo(4)
-Function call 30 E.A.foo(4)
-Function call 31 E.O.foo(3)
-Function call 8 foo(1)

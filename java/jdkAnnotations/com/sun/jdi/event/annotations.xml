@@ -1,7 +1,0 @@
-<root>
-  <item name='com.sun.jdi.event.EventSet int suspendPolicy()'>
-    <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="flagsFromClass" val="com.sun.jdi.request.EventRequest.class" />
-    </annotation>
-  </item>
-</root>

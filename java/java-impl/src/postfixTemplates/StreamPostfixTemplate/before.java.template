@@ -1,3 +1,0 @@
-public void m(String[] array) {
-  <spot>array</spot>.stream
-}

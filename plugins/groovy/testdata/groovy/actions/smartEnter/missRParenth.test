@@ -1,5 +1,0 @@
-while (afd<caret>
------
-while (afd) {
-    <caret>
-}

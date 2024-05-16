@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="test_compound" type="CompoundRunConfigurationType">
-    <toRun name="Clang tests" type="JUnit" />
-    <toRun name="IntelliJ Project Structure tests" type="JUnit" />
-    <method v="2" />
-  </configuration>
-</component>

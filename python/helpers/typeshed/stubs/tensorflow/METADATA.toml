@@ -1,8 +1,0 @@
-version = "2.12.*"
-upstream_repository = "https://github.com/tensorflow/tensorflow"
-# requires a version of numpy with a `py.typed` file
-requires = ["numpy>=1.20", "types-protobuf"]
-partial_stub = true
-
-[tool.stubtest]
-ignore_missing_stub = true

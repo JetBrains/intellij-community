@@ -1,9 +1,0 @@
-if (true) return a else return b
------
-0(1) element: null
-1(2,4) element: IF statement
-2(3) READ a
-3(6) element: RETURN statement
-4(5) READ b
-5(6) element: RETURN statement
-6() element: null

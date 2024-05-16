@@ -1,3 +1,0 @@
-package com.intellij.jvm.analysis.internal.testFramework.logging
-
-abstract class LoggingStringTemplateAsArgumentInspectionTestBase : LoggingInspectionTestBase()

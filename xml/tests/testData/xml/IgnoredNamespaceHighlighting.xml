@@ -1,7 +1,0 @@
-<mine:template xmlns="http://www.w3.org/1999/xhtml" xmlns:mine="http://ignored/uri">
-     <div>
-         <mine:tag type="">
-             <div />
-         </mine:tag>
-     </div>
-</mine:template>

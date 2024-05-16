@@ -1,7 +1,0 @@
-<!DOCTYPE aaa [
-  <!ELEMENT aaa (#PCDATA)>
-  <!-- this is the class name -->
-  <!ATTLIST aaa
-    bbb CDATA #REQUIRED>
-  ]>
-<aaa b<caret>bb="ccc"/>

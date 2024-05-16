@@ -1,5 +1,0 @@
-# scan_code *should* never be None in real use. This is also according to docs.
-keyboard.KeyboardEvent.scan_code
-keyboard._keyboard_event.KeyboardEvent.scan_code
-# TODO: Should this be allowlisted?
-keyboard.__main__

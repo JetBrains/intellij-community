@@ -1,8 +1,0 @@
-{
-  "type": "KOTLIN_FUNCTION",
-  "classId": "test/Bar",
-  "oldName": "oldName",
-  "newName": "newName",
-  "mainFile": "test/test.kt",
-  "enabledInK2": true
-}

@@ -1,1 +1,0 @@
-Extension receiver type 2 val <T> T.foo: Boolean get() = TODO()

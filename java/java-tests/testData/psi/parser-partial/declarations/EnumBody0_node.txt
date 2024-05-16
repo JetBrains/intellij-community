@@ -1,6 +1,0 @@
-test.java.file
-  LBRACE
-  WHITE_SPACE
-  SEMICOLON
-  WHITE_SPACE
-  RBRACE

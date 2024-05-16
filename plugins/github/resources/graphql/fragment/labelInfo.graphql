@@ -1,6 +1,0 @@
-fragment labelInfo on Label {
-  ...nodeInfo
-  url
-  name
-  color
-}

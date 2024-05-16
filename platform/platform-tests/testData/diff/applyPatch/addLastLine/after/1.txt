@@ -1,3 +1,0 @@
-first
-third
-last

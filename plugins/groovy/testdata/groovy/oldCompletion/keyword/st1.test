@@ -1,5 +1,0 @@
-@Nullable
-pr<caret>StrictMath getDomainClassPackageName() {}
------
-private
-protected

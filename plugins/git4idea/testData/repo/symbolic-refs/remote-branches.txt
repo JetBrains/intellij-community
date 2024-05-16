@@ -1,8 +1,0 @@
-d85a972e14b616273c5a6f9dd858a02f9f5b12ad refs/remotes/brother/master
-d85a972e14b616273c5a6f9dd858a02f9f5b12ad refs/remotes/smallteam/brother/master
-a86078364a9ddc9f0b61f40b91ea9f4c8929f54b refs/remotes/smallteam/coolfeature
-6bce43bed0bc3eb069086ad16d6d200be51f93f2 refs/remotes/smallteam/feature
-a86078364a9ddc9f0b61f40b91ea9f4c8929f54b refs/remotes/smallteam/master
-4a6e262820fe3d5ac1c7ed52ea0dd42287780447 refs/remotes/origin/feature
-06d720e2dfe18592a3b7ebc938c57b0c6940176b refs/remotes/origin/master
-

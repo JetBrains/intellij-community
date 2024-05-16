@@ -1,4 +1,0 @@
-Gradle:{{space}}com.example.lib:lib:commonMain:0.0.1 repo/com/example/lib/lib/0.0.1/lib-0.0.1-sources.jar lib
-Gradle:{{space}}com.example.lib:lib-jvm:0.0.1 repo/com/example/lib/lib-jvm/0.0.1/lib-jvm-0.0.1-sources.jar lib
-Gradle:{{space}}com.example.lib:lib-linuxx64:0.0.1 repo/com/example/lib/lib-linuxx64/0.0.1/lib-linuxx64-0.0.1-sources.jar lib
-Gradle:{{space}}com.example.lib:lib-iosarm64:0.0.1 repo/com/example/lib/lib-iosarm64/0.0.1/lib-iosarm64-0.0.1-sources.jar lib

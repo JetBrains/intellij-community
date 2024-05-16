@@ -1,1 +1,0 @@
-expect class SimpleWConstructor(i: Int)

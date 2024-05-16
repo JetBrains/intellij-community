@@ -1,8 +1,0 @@
-{
-  "type": "MARKED_ELEMENT",
-  "mainFile": "test/test.kt",
-  "newName": "BarNew",
-  "withRuntime": "true",
-  "libraries": ["JUnit4"],
-  "enabledInK2": "false"
-}

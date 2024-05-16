@@ -1,9 +1,0 @@
-default namespace = "urn:test:simple.rnc"
-
-element missing-element {
-  element required { empty }
-} |
-element invalid-element {
-  element required { empty }
-}
-

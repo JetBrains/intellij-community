@@ -1,2 +1,0 @@
-<c:out value="${model.name}"/>
-

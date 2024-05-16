@@ -1,7 +1,0 @@
-public class X extends <spot>WindowAdapter</spot> {
-
-  @Override
-  public void componentAdded(ContainerEvent e) {
-    super.componentAdded(e);
-  }
-}

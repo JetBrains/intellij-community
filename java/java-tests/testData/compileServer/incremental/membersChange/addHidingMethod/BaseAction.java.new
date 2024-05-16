@@ -1,8 +1,0 @@
-public class BaseAction {
-  public void action() {}
-
-  public int getData() {
-     return 20;
-  }
-
-}

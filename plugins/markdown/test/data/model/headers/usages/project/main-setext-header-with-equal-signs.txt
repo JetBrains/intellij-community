@@ -1,4 +1,0 @@
-22|* |[link to other setext header](#|setext-header-with-equal-signs|)
-29|* |[Setext header with equal signs](#|setext-header-with-equal-signs|)
-5|* |[link to other setext header](../main.md#|setext-header-with-equal-signs|)
-7|* |[link to other setext header](main.md#|setext-header-with-equal-signs|)

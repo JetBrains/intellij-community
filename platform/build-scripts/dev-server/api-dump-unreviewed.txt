@@ -1,2 +1,0 @@
-f:org.jetbrains.intellij.build.devServer.DevMainImpl
-- sf:buildDevMain():java.util.Collection

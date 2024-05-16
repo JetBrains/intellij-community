@@ -1,5 +1,0 @@
-<?import javafx.scene.control.Button?>
-<fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml">
-   <<error descr="Copy constructor not found for 'Button'">fx:copy</error> source="<error descr="btn not found">btn</error>"/>
-   <Button fx:id="btn"/>
-</fx:root>

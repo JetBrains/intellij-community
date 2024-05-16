@@ -1,8 +1,0 @@
-class A {
-  @Delegated(<caret>)
-  Del d
-}
------
-false
-null
-true

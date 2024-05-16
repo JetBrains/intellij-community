@@ -1,1 +1,0 @@
-"format: %(fooo)s" % {"boo":1, "foo<caret>"}

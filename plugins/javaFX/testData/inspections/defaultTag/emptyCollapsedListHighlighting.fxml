@@ -1,7 +1,0 @@
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.control.ListView?>
-<VBox xmlns:fx="http://javafx.com/fxml">
-  <ListView fx:id="list">
-    <warning descr="Default property tag could be removed"><items/></warning>
-  </ListView>
-</VBox>

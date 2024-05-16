@@ -1,3 +1,0 @@
-path = "something"
-
-pat<caret>

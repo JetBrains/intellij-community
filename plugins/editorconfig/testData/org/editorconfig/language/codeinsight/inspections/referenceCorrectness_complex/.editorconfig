@@ -1,5 +1,0 @@
-[foo]
-dotnet_naming_rule.my_rule.style = <error>my_symbols</error>
-
-dotnet_naming_symbols.my_symbols.applicable_kinds = property, method, field, event, delegate
-dotnet_naming_symbols.my_symbols.required_modifiers = private

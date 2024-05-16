@@ -1,6 +1,0 @@
-def foo(){
-  return f<caret>
-}
------
-false
-float

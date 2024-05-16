@@ -1,5 +1,0 @@
-Value write 11 ++v
-Value write 12 v--
-Value write 14 v += 1
-Value write 15 (v) -= 1
-Value write 9 (v) = 2

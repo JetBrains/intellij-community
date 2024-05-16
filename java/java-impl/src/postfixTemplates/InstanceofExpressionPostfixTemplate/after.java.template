@@ -1,5 +1,0 @@
-public class Foo {
-    void m(Object o) {
-        o instanceof <spot></spot> ? ((<spot></spot>) o) : null;
-    }
-}

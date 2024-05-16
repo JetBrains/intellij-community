@@ -1,4 +1,0 @@
-[kotlinInterfaceDerivedInterfaces.0.kt] Unclassified 12 interface Y : X {
-[kotlinInterfaceDerivedInterfaces.1.kt] Unclassified 20 interface D : Y {}
-[kotlinInterfaceDerivedInterfaces.2.kt] Unclassified 1 interface X2 : X
-[kotlinInterfaceDerivedInterfaces.6.java] Unclassified 1 interface YW extends X {

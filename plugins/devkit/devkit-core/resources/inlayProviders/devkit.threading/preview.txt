@@ -1,8 +1,0 @@
-class IntelliJThreading {
-  fun method() {
-    /*<# @EDT #>*/requiresEDTMethod()
-  }
-
-  @RequiresEDT
-  fun requiresEDTMethod() {}
-}

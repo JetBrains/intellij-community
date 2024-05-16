@@ -1,6 +1,0 @@
- <test xmlns:a='abc' >
-   <foo xmlns:b='abc' b:xxx='xxx'>
-     <bar a:yyy='yyy' zzz='zzz'/>
-     <bar2 a:yyy='yyy' xmlns="def" zzz='zzz'/>
-   </foo>
-</test>

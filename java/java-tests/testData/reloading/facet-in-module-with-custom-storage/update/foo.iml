@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<module external.system.id="GRADLE" external.system.module.version="42.0" classpath="custom" version="4">
-  <component name="FacetManager">
-    <facet type="MockFacetId" name="MockFacet">
-      <configuration data="changed-data" />
-    </facet>
-  </component>
-</module>

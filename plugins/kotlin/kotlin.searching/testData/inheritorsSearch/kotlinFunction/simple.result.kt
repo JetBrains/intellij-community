@@ -1,2 +1,0 @@
-KtNamedFunction: f
-KtNamedFunction: f

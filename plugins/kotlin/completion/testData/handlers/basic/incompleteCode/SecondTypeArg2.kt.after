@@ -1,9 +1,0 @@
-import java.io.BufferedReader
-
-fun foo() {
-    val v = HashMap<String, BufferedReader
-}
-
-// FIR_COMPARISON
-// FIR_IDENTICAL
-// ELEMENT: BufferedReader

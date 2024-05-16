@@ -1,8 +1,0 @@
-<xsd:schema xmlns="http://www.bar.org/test"
-	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-	targetNamespace="http://www.bar.org/test"
-	elementFormDefault="qualified" attributeFormDefault="unqualified">
-
-  <xsd:attribute name="bar" type="xsd:boolean"/>
-
-</xsd:schema>

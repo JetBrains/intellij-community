@@ -1,4 +1,0 @@
-start = start.element
-div {
-  start.element = element foo { empty }
-}

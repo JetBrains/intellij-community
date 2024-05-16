@@ -1,4 +1,0 @@
-// OPTION: 0
-fun test() {
-    println(123)<caret>
-}

@@ -1,3 +1,0 @@
-Unclassified 10 val O1 = object : A() {}
-Unclassified 13 val O2 = object : Z() {}
-Unclassified 6 open class Z : A() {

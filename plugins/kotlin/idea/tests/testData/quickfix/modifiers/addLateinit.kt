@@ -1,8 +1,0 @@
-// "Add 'lateinit' modifier" "true"
-
-class A {
-    private var a: String<caret>
-}
-
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFix

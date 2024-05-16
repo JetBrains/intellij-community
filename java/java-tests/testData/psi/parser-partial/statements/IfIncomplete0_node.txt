@@ -1,5 +1,0 @@
-test.java.file
-  IF_STATEMENT
-    IF_KEYWORD
-    ERROR_ELEMENT
-      <empty list>

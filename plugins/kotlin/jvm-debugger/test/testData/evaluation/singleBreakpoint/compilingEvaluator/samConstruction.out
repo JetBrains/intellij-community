@@ -1,8 +1,0 @@
-LineBreakpoint created at samConstruction.kt:3
-Run Java
-Connected to the target VM
-samConstruction.kt:3
-Compile bytecode for check(1, Checker { it % 2 == 0 })
-Disconnected from the target VM
-
-Process finished with exit code 0

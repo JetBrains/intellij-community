@@ -1,2 +1,0 @@
-def f(a):
-    return <spot>a</spot>$key

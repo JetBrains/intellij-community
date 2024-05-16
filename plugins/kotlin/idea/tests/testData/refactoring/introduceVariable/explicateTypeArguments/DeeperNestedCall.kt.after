@@ -1,7 +1,0 @@
-// WITH_STDLIB
-import java.util.ArrayList
-
-fun f() {
-    val c = ArrayList<List<List<Int>>>(listOf())
-    val list: List<List<List<Int>>> = ArrayList(c)
-}

@@ -1,4 +1,0 @@
-// DISABLE-ERRORS
-annotation class Ann
-
-expect fun foo()

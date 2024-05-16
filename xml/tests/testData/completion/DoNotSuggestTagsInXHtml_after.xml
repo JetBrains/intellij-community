@@ -1,9 +1,0 @@
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:foo="foo">
-  <head>
-    <title>test</title>
-    <bo<caret>
-  </head>
-
-  <body>
-  </body>
-</html>

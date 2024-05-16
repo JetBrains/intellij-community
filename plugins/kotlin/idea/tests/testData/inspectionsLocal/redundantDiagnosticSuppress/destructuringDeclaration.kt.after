@@ -1,6 +1,0 @@
-fun d() {
-    val (a, b) = A(1,  2)
-    b
-}
-
-data class A(val i: Int, val b: Int)

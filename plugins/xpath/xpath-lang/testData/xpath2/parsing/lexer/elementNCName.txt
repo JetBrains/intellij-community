@@ -1,3 +1,0 @@
-NCNAME ('element')
-PATH ('/')
-STAR ('*')

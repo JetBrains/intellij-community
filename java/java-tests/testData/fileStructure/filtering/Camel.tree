@@ -1,5 +1,0 @@
--Camel.java
- -Camel
-  doSomethingWithMyHead(): void
-  getSomeArtHeader(): void
-  [getSomeHead(): void]

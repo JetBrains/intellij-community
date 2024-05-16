@@ -1,3 +1,0 @@
-ArrayList<String> al = new ArrayList<>( ) {}
------
-ArrayList<String> al = new ArrayList<>() {}

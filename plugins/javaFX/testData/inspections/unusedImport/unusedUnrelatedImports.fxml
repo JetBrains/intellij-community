@@ -1,8 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.*?>
-<warning descr="Unused import"><?import java.net.URL?></warning>
-<warning descr="Unused import"><?import javafx.scene.layout.Region?></warning>
-<warning descr="Unused import"><?import javafx.scene.control.Label?></warning>
-<GridPane xmlns:fx="http://javafx.com/fxml" >
-    <Label/>
-</GridPane>

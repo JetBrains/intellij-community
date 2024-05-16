@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>X.java</file>
-    <line>2</line>
-    <description>Undeclared</description>
-  </problem>
-</problems>

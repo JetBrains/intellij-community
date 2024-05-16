@@ -1,6 +1,0 @@
-<component>
-  <option name="CLASS_TEMPLATE" value="/*&#10; * Created by IntelliJ IDEA.&#10; * User: $USER$&#10; * Date: $DATE$&#10; * Time: $TIME$&#10; * To change template for new class use &#10; * Code Style | Class Templates options (Tools | IDE Options).&#10; */&#10;package $PACKAGE_NAME$;&#10;public class $NAME$ { }&#10;" />
-  <option name="INTERFACE_TEMPLATE" value="/*&#10; * Created by IntelliJ IDEA.&#10; * User: $USER$&#10; * Date: $DATE$&#10; * Time: $TIME$&#10; * To change template for new interface use &#10; * Code Style | Class Templates options (Tools | IDE Options).&#10; */&#10;package $PACKAGE_NAME$;&#10;public interface $NAME$ { }&#10;" />
-  <option name="ADJUST_CLASS_TEMPLATE" value="true" />
-  <option name="ADJUST_INTERFACE_TEMPLATE" value="true" />
-</component>

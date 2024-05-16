@@ -1,1 +1,0 @@
-Integer.<caret>methods.each { println it.name }

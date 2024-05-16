@@ -1,6 +1,0 @@
-class Foo {
-    /*/
-    / */
-    fun foo() {
-    }
-}

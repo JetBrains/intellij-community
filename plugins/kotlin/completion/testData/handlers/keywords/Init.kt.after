@@ -1,9 +1,0 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
-class C {
-    init {
-        <caret>
-    }
-}
-
-// ELEMENT: init

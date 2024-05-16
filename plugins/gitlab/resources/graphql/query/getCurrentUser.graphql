@@ -1,5 +1,0 @@
-query {
-  currentUser {
-    ...userDetailed
-  }
-}

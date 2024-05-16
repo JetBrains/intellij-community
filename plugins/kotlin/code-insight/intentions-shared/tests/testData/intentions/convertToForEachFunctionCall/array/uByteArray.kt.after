@@ -1,7 +1,0 @@
-// WITH_STDLIB
-@OptIn(ExperimentalUnsignedTypes::class)
-fun foo() {
-    ubyteArrayOf(1u).forEach { x ->
-        println(x)
-    }
-}

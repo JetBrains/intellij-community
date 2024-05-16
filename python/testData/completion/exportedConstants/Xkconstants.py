@@ -1,1 +1,0 @@
-LEFT = 'left'

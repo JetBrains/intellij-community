@@ -1,4 +1,0 @@
-/**
- * {@value FIELD}
- */
-class Test {}

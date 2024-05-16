@@ -1,8 +1,0 @@
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = lazy) -> Decompiled_Method: lazy
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = MyColor) -> Kotlin_Light_Method: MyColor
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = lazy) -> Decompiled_Method: lazy
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = MyColor) -> Kotlin_Light_Method: MyColor
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = MyColor) -> Kotlin_Light_Method: MyColor

@@ -1,7 +1,0 @@
-// WITH_STDLIB
-fun List<Int>.doSmth2() {
-    with (Any()) {
-        for (element in this@doSmth2) {
-        }
-    }
-}

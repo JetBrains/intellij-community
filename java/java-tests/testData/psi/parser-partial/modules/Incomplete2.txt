@@ -1,9 +1,0 @@
-PsiJavaFile:Incomplete2.java
-  PsiImportList
-    <empty list>
-  PsiModifierList:
-    <empty list>
-  PsiKeyword:module('module')
-  PsiWhiteSpace(' ')
-  PsiErrorElement:Module declaration expected
-    PsiJavaToken:LBRACE('{')

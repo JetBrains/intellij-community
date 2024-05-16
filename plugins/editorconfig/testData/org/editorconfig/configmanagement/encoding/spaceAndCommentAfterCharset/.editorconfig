@@ -1,4 +1,0 @@
-root = true
-
-[*]
-charset = latin1 # followed by a trailing space and a comment, this value will be parsed as "latin1 " by ec4j

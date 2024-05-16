@@ -1,9 +1,0 @@
-[kotlinInterfaceDerivedClasses.0.kt] Unclassified 8 open class A : X {
-[kotlinInterfaceDerivedClasses.1.kt] Unclassified 12 open class Z : A() {
-[kotlinInterfaceDerivedClasses.1.kt] Unclassified 16 class U : Z() {
-[kotlinInterfaceDerivedClasses.1.kt] Unclassified 4 open class B : A() {
-[kotlinInterfaceDerivedClasses.1.kt] Unclassified 8 open class C : Y {
-[kotlinInterfaceDerivedClasses.3.kt] Unclassified 1 object a : X
-[kotlinInterfaceDerivedClasses.4.kt] Unclassified 2 val b = object : X {
-[kotlinInterfaceDerivedClasses.5.java] Unclassified 1 class D implements X {
-[kotlinInterfaceDerivedClasses.7.kt] Unclassified 1 class SimpleClass : X

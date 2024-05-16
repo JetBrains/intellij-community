@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<service xmlns="urn:test" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:test derived.xsd">
-    <resource someAttribute="a" newAttribute="b">
-        <value>x</value>
-    </resource>
-</service>

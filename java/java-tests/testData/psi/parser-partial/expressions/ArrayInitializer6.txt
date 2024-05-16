@@ -1,7 +1,0 @@
-PsiJavaFile:ArrayInitializer6.java
-  PsiArrayInitializerExpression:{  ,  }
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace('  ')
-    PsiJavaToken:COMMA(',')
-    PsiWhiteSpace('  ')
-    PsiJavaToken:RBRACE('}')

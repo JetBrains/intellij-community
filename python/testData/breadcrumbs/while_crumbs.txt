@@ -1,4 +1,0 @@
-Crumb:
-while i < 30
-Tooltip:
-while i < 30

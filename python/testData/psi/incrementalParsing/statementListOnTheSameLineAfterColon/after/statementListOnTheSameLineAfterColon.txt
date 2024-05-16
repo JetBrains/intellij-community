@@ -1,8 +1,0 @@
-Original text:
----------------
-def foo(): print(1); print(2); pass
----------------
-Subtree: Language: Python
----------------
-def foo(): <reparse>print(1); print(3); pass</reparse>
----------------

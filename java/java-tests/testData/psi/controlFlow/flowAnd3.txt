@@ -1,8 +1,0 @@
-0: EMPTY
-1: READ container
-2: COND_GOTO [END] 8
-3: WRITE parent
-4: COND_GOTO [END] 8
-5: READ parent
-6: COND_GOTO [END] 8
-7: EMPTY

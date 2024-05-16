@@ -1,4 +1,0 @@
-// "Convert 'String.() -> Unit' to '(String) -> Unit'" "true"
-// IGNORE_K2
-
-external var b: (String) -> Unit

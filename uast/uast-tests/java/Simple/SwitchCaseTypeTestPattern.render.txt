@@ -1,9 +1,0 @@
-public class TypePattern {
-    public static fun foo(x: java.lang.Number) : int {
-        switch (x)
-            java.lang.Integer i -> {
-            }
-
-
-    }
-}

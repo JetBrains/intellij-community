@@ -1,3 +1,0 @@
-paramiko.SFTPServer.__init__
-paramiko.sftp_server.SFTPServer.__init__
-paramiko.util.SupportsClose

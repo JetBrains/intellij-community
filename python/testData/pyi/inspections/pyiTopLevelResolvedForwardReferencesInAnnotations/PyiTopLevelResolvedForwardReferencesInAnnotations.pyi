@@ -1,9 +1,0 @@
-def f(x: C) -> C: ...
-
-D = C
-
-class C: ...
-
-E = C
-
-def g(x: E) -> E: ...

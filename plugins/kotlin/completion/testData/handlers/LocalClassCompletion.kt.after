@@ -1,9 +1,0 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
-fun foo() {
-    class LocalClass {}
-
-    val v: LocalClass<caret>
-}
-
-// ELEMENT: "LocalClass"

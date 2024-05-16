@@ -1,2 +1,0 @@
-<!ENTITY % test2 SYSTEM "UsingDtdReference2.dtd">
-%test2;

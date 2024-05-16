@@ -1,3 +1,0 @@
-<fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml">
-   <fx:include source="sample.fxml" charset="UTF-8"/>
-</fx:root>

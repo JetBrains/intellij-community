@@ -1,7 +1,0 @@
-def allowedMethods = a[delete: 'POST',
-save: 'POST',
-update: 'POST']
------
-def allowedMethods = a[delete: 'POST',
-    save: 'POST',
-    update: 'POST']

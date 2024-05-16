@@ -1,1 +1,0 @@
-<spot>InputStream stream = connection.getInputStream();</spot>

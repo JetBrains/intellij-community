@@ -1,3 +1,0 @@
-// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
-val foo = "foo"
-val bar = <caret>"$foo"

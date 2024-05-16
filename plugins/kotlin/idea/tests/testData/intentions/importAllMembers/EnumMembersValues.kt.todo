@@ -1,4 +1,0 @@
-// IS_APPLICABLE: false
-// WITH_STDLIB
-
-val v = <caret>LazyThreadSafetyMode.values

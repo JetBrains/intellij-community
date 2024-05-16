@@ -1,8 +1,0 @@
-UTypeReferenceExpression (name = boolean) -> USimpleNameReferenceExpression (identifier = Boolean) -> Decompiled_Class: Boolean
-    UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Variable: x
-    UBinaryExpression (operator = in) -> USimpleNameReferenceExpression (identifier = in) -> Decompiled_Method: contains
-    UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> FUN: rangeTo
-    UBinaryExpression (operator = &&) -> USimpleNameReferenceExpression (identifier = &&) -> null: null
-    UBinaryExpression (operator = !in) -> USimpleNameReferenceExpression (identifier = y) -> Kotlin_Light_Variable: y
-    UBinaryExpression (operator = !in) -> USimpleNameReferenceExpression (identifier = !in) -> Decompiled_Method: contains
-    UBinaryExpression (operator = ..) -> USimpleNameReferenceExpression (identifier = ..) -> FUN: rangeTo

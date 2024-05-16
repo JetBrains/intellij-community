@@ -1,9 +1,0 @@
-{
-    "mainFile": "Main.kt",
-    "usages": [
-        "Explicit.kt",
-        "Explicit2.kt",
-        "Implicit.kt",
-        "JavaClass.java"
-    ]
-}

@@ -1,1 +1,0 @@
-<error descr="Operator 'idiv' cannot be applied to expressions of type 'xs:dayTimeDuration'">'P0DTOH' cast as xs:dayTimeDuration idiv 4</error>

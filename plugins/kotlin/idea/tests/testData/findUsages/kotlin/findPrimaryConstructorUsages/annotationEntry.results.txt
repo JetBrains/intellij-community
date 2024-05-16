@@ -1,2 +1,0 @@
-Annotation 6 @MyAnnotation
-Unclassified 8 MyAnnotation::class.java

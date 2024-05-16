@@ -1,1 +1,0 @@
---extra-index-url https://example.com

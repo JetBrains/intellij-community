@@ -1,3 +1,0 @@
-val x: () -> String = { (fun(): String {
-    return "OK"
-})() }

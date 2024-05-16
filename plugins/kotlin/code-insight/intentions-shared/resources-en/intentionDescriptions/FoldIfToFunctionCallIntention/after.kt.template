@@ -1,1 +1,0 @@
-println(if (b) x else y)

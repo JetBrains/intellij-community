@@ -1,6 +1,0 @@
-String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
-A -> USimpleNameReferenceExpression (identifier = A) from KtNameReferenceExpression
-AA -> USimpleNameReferenceExpression (identifier = AA) from KtNameReferenceExpression
-AA -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
-A -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
-AAA -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression

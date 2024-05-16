@@ -1,8 +1,0 @@
-copy:
-  src="keys/{{ item }}"
-  dest="{{ deploy_home }}/.ssh/"
-  owner="{{ deploy_user }}"
-  group="{{ deploy_group }}"
-  mode=0600
-with_items:
-  - "id_rsa"

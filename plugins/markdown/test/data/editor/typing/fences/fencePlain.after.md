@@ -1,5 +1,0 @@
-```
-item
-inner
-<caret>
-```

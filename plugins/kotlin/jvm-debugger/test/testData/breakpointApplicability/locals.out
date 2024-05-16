@@ -1,4 +1,0 @@
-λ 15 Highlight range: 'fun() { println() }'
-λ 24 Highlight range: 'fun() = println()'
-λ 34 Highlight range: '{ println() }'
-λ 38 Highlight range: '{ println() }'

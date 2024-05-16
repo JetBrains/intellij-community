@@ -1,8 +1,0 @@
-// OPTION: 2
-fun test() {
-    {
-        val x = 1
-    }<caret>
-}
-
-fun foo(a: Int, body: () -> Unit) {}

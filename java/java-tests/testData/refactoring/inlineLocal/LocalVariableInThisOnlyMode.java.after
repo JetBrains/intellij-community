@@ -1,5 +1,0 @@
-class X {
-  void foo() {
-      System.out.println(2 + 2);
-  }
-}

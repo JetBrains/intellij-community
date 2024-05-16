@@ -1,3 +1,0 @@
-fun kkk() {
-    KKK().property
-}

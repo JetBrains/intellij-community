@@ -1,6 +1,0 @@
-- >  # comment in folded style block scalar header
-   hello
-   world
-- | # comment in literal style block scalar header
-   forever
-   young

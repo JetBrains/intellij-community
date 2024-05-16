@@ -1,6 +1,0 @@
-// PROBLEM: "Redundant lambda arrow"
-fun foo(f: () -> Unit) {}
-
-fun bar() {
-    foo { <caret>-> }
-}

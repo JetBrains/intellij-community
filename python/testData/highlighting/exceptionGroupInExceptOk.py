@@ -1,4 +1,0 @@
-try:
-    ...
-except ExceptionGroup:
-    pass

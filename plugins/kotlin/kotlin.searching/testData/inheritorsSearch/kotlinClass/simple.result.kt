@@ -1,2 +1,0 @@
-KtClass: B
-KtClass: C

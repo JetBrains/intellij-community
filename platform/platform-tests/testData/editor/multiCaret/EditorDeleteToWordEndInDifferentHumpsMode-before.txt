@@ -1,3 +1,0 @@
-Ab<caret>r<caret>aCaDabra<caret>
-Hum<selection><caret>pD</selection>ump Hu<selection>mpDu<caret></selection>mp
-<selection>YetAnot<caret>herHumpedWord</selection>

@@ -1,9 +1,0 @@
-Types:
-PsiParameter:i : java.lang.Integer
-PsiReferenceExpression:i : java.lang.Integer
-
-Conversions:
-i -> $
-
-New expression type changes:
-Fails:

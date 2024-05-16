@@ -1,4 +1,0 @@
-{
-  "mode": "ftp<error descr="Control character '\u0009' is not allowed in string literals">	</error>",
-  "name": "test\t"
-}

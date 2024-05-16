@@ -1,8 +1,0 @@
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="tag:ujay68@gmail.com,2019:testing" xmlns:my="tag:ujay68@gmail.com,2019:testing">
-  <xs:element name="root" type="my:myType"/>
-  <xs:complexType name="myType">
-    <xs:sequence>
-      <xs:element name="code" form="unqualified" type="xs:string"/>
-    </xs:sequence>
-  </xs:complexType>
-</xs:schema>

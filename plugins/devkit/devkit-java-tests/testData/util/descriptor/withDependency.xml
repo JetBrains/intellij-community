@@ -1,5 +1,0 @@
-<idea-plugin>
-  <id>com.intellij.example</id>
-  <name>MyPlugin</name>
-  <depends>my.dependency</depends>
-</idea-plugin>

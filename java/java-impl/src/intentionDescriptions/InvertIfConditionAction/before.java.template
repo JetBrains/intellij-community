@@ -1,5 +1,0 @@
-public class X {
-  void f(boolean a, boolean b) {
-    <spot>if</spot> (a) b = false;
-  }
-}

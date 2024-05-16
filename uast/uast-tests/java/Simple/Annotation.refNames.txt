@@ -1,9 +1,0 @@
-Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from PsiJavaCodeReferenceElement:Annotation
-Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from PsiJavaCodeReferenceElement:Annotation
-AnnotationArray -> USimpleNameReferenceExpression (identifier = AnnotationArray) from PsiJavaCodeReferenceElement:AnnotationArray
-Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from PsiJavaCodeReferenceElement:Annotation
-AnnotationArray -> USimpleNameReferenceExpression (identifier = AnnotationArray) from PsiJavaCodeReferenceElement:AnnotationArray
-Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from PsiJavaCodeReferenceElement:Annotation
-Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from PsiJavaCodeReferenceElement:Annotation
-AnnotationArray -> USimpleNameReferenceExpression (identifier = AnnotationArray) from PsiJavaCodeReferenceElement:AnnotationArray
-Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from PsiJavaCodeReferenceElement:Annotation

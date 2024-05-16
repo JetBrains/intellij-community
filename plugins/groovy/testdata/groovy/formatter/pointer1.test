@@ -1,7 +1,0 @@
-class C {
-def foo = a .& b .& c
-}
------
-class C {
-  def foo = a.&b.&c
-}

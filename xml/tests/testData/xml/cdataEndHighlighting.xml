@@ -1,4 +1,0 @@
-<test>
-  <test>[CDATA[foo<error descr="Character sequence ']]>' must not appear in content unless used to mark the end of a CDATA section">]]></error></test>
-  <test><![CDATA[foo]]></test>
-</test>

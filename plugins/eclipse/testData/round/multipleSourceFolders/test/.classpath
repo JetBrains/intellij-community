@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry including="**" kind="src" output="out" path="src"/>
-	<classpathentry including="java/util/" kind="src" output="out2" path="src2"/>
-	<classpathentry kind="output" path="myout"/>
-</classpath>

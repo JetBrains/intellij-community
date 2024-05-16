@@ -1,5 +1,0 @@
-import dependency.Receiver
-
-fun List<Receiver<caret>>foo() {}
-
-// ELEMENT: Receiver

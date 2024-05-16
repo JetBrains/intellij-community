@@ -1,9 +1,0 @@
-test.java.file
-  NEW_EXPRESSION
-    NEW_KEYWORD
-    REFERENCE_PARAMETER_LIST
-      <empty list>
-    WHITE_SPACE
-    INT_KEYWORD
-    ERROR_ELEMENT
-      <empty list>

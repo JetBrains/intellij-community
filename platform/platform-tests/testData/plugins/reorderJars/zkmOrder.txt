@@ -1,1 +1,0 @@
-com/intellij/zkm/ZKMBundle.class:zkm.jar

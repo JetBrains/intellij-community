@@ -1,3 +1,0 @@
-// WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:+ReferencesToSyntheticJavaProperties
-val x = listOf(Int::class.java).map(Class<Int>::na<caret>me)

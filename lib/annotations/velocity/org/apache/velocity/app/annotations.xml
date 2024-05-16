@@ -1,5 +1,0 @@
-<root>
-    <item name='org.apache.velocity.app.Velocity'>
-        <annotation name='java.lang.Deprecated'/>
-    </item>
-</root>

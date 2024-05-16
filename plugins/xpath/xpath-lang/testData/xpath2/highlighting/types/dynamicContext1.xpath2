@@ -1,1 +1,0 @@
-(1 to 30)[. = <error descr="Expected type 'xs:integer', got 'xs:string'">'x'</error>]

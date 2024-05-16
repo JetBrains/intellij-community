@@ -1,7 +1,0 @@
-def a, b
-<selection>return a = b</selection>
------
-def a, b
-{ ->
-    return a = b
-}.call()

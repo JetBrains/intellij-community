@@ -1,3 +1,0 @@
-// WITH_STDLIB
-
-val xx = (fun Int.(x: Int, y: Int) = this + x + y).invoke(1.also { }, 2, 3)

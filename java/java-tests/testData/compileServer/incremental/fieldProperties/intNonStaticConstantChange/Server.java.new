@@ -1,3 +1,0 @@
-class Server {
-  final int var = 500;
-}

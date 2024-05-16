@@ -1,7 +1,0 @@
-<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="8" y="8" width="64" height="64" fill="white"/>
-<path d="M40 40L8 8H72L40 40Z" fill="#F6F6F6"/>
-<path d="M40 40L8 8V72L40 40Z" fill="#E4E4E4"/>
-<path d="M40 40L8 72H72L40 40Z" fill="#BFBFBF"/>
-<path d="M72 8L40 40L72 72V8Z" fill="#4DACF0"/>
-</svg>

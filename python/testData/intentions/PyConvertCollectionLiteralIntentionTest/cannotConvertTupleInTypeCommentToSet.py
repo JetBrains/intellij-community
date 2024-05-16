@@ -1,1 +1,0 @@
-my_variable = 42 # type: Union[i<caret>nt, str]

@@ -1,3 +1,0 @@
-
-rootProject.name = "conventions"
-include("javamodule", "kotlinmodule")

@@ -1,8 +1,0 @@
-<idea-plugin>
-  <actions>
-    <group class="MyActionGroup" id="firstDeclaration"/>
-  </actions>
-  <actions>
-    <group class="MyActionGroup" id="secondDeclaration"/>
-  </actions>
-</idea-plugin>

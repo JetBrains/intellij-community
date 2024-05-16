@@ -1,5 +1,0 @@
-HtmlFile:codeBlock.md
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      <empty list>
-  PsiElement(MARKDOWN_OUTER_BLOCK)('A code block:\n\n    /**\n     * Load a {@link String} from the {@link #BUNDLE} {@link ResourceBundle}.\n     *\n     * @param key    the key of the resource.\n     * @param params the optional parameters for the specific resource.\n     * @return the {@link String} value or {@code null} if no resource found for the key.\n     */\n    public static String message(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {\n        return CommonBundle.message(BUNDLE, key, params);\n    }')

@@ -1,8 +1,0 @@
-<root>
-    <item name='p.TestDeannotation java.lang.String get()'>
-      <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='p.TestDeannotation1 java.lang.String get(java.lang.String) 0'>
-      <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-</root>

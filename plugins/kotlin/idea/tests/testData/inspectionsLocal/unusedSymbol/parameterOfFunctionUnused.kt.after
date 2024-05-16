@@ -1,9 +1,0 @@
-class AbsClass {
-    fun op() {}
-}
-
-fun main() {
-    AbsClass().op()
-}
-
-// IGNORE_K1

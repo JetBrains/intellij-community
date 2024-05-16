@@ -1,7 +1,0 @@
----
-foo: >
-bar:
-  abc: def
-  ghi: >
-  jkl: mno
-baz: qwe

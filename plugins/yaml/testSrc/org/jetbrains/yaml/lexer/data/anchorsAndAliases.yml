@@ -1,4 +1,0 @@
-key1: &an
-  k1: v1
-  k2: v2
-key2: *an

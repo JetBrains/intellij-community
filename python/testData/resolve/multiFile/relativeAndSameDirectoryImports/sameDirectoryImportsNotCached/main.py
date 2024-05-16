@@ -1,2 +1,0 @@
-import os
-print(os)

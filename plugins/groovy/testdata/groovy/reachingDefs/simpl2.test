@@ -1,9 +1,0 @@
-def a = 0
-<selection>def b = a, d = 0</selection>
-def c = b * d
------
-input:
-a
-output:
-b
-d

@@ -1,4 +1,0 @@
-import java.util.List;
-class ListTypeArguments implements List<Object> {
-  public boolean add(Object o){return true;}
-}

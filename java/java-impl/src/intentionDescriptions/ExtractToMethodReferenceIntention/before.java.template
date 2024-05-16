@@ -1,8 +1,0 @@
-class X {
-  {
-      JButton b = new JButton();
-      b.addActionListener(e -> {
-        <spot>System.out.println("clicked");</spot>
-      });
-  }
-}

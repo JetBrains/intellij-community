@@ -1,7 +1,0 @@
-<profile version="1.0">
-  <option name="myName" value="Custom name" />
-  <inspection_tool class="TodoComment" enabled="true" level="ERROR" enabled_by_default="true">
-    <scope name="glob:path/Some.java" level="ERROR" enabled="false" />
-    <scope name="glob:**/*.java" level="ERROR" enabled="true" />
-  </inspection_tool>
-</profile>

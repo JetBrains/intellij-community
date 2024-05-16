@@ -1,4 +1,0 @@
-+ com.intellij
-+ com.jetbrains.restClient
-+ com.intellij.microservices.ui
-+ com.jetbrains.restClient | intellij.restClient/microservicesUI

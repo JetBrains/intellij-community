@@ -1,6 +1,0 @@
-annotation class Inject
-
-class Request(
-    <spot>@Inject</spot>
-    var context: Context
-)

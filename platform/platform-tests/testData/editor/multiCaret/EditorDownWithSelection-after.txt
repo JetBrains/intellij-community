@@ -1,5 +1,0 @@
-yet ano<selection>ther line
-blah <caret></selection>blah<selection>
-<caret></selection>
-some ot<selection>her text
-some text<caret></selection>

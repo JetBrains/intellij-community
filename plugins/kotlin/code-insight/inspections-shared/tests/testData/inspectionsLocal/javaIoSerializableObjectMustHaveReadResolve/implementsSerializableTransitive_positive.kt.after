@@ -1,7 +1,0 @@
-open interface Bar : java.io.Serializable
-
-open interface Baz : Bar
-
-object Foo : Baz {
-    private fun readResolve(): Any = Foo
-}

@@ -1,7 +1,0 @@
-{
-  "aaa": 1,
-  "bbb": true,
-  "s": 1,
-  "ccc": <warning descr="Incompatible types.
- Required: integer. Actual: string.">"3"</warning>
-}

@@ -1,9 +1,0 @@
-[foo]
-charset=utf-8
-end_of_line=crlf
-
-[bar]
-charset=utf-8
-
-[foo]<caret>
-insert_final_newline=true

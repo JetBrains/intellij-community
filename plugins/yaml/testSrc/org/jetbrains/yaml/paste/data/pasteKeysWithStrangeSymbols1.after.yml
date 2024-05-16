@@ -1,4 +1,0 @@
-top:
-  key1: hello
-  workspace{w1}/next:
-    ^sub[Key]*(%magic%):<caret>

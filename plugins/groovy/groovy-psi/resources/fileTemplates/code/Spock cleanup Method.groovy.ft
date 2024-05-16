@@ -1,3 +1,0 @@
-void cleanup() {
-  ${BODY}
-}

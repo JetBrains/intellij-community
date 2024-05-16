@@ -1,9 +1,0 @@
-class Test {
-    class InnerM {
-        val o = O
-        val foo = O.foo
-    }
-    object O {
-        const val foo = 1
-    }
-}

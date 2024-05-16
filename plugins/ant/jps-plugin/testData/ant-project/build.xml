@@ -1,9 +1,0 @@
-<project name="ant-project" default="show-message">
-    <target name="show-message">
-        <echo message="message"/>
-    </target>
-
-    <target name="create-file">
-        <echo file="${artifact.output.path}/echo.txt" message="${message.text}"/>
-    </target>
-</project>

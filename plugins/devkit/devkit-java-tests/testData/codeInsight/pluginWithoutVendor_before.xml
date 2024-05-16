@@ -1,8 +1,0 @@
-<idea-plugin>
-    <name>test</name>
-    <id>test</id>
-    <description>test</description>
-    <version>1</version>
-    <actions>
-    </actions>
-</idea-plugin>

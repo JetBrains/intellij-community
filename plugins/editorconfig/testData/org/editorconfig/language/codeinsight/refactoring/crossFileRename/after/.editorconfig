@@ -1,2 +1,0 @@
-[*.{cs,vb}]
-dotnet_naming_style.<caret>my_new_style.capitalization = all_lower

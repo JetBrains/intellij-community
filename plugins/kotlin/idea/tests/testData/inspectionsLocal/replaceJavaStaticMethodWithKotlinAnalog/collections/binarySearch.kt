@@ -1,8 +1,0 @@
-// IGNORE_K1
-// WITH_STDLIB
-import java.util.Collections
-
-fun test() {
-    val array = listOf(1, 2, 3)
-    val result = Collections.<caret>binarySearch(array, 2)
-}

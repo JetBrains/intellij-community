@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.SplitPane?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-  <SplitPane id="Split Pane" dividerPositions="0.23661270236612703" focusTraversable="true" minHeight="550.0"
-             minWidth="800.0" prefHeight="550.0" prefWidth="800.0" />
-</GridPane>

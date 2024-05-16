@@ -1,6 +1,0 @@
-
-class Foo {
-    {
-        while<caret>
-    }
-}

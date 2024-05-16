@@ -1,4 +1,0 @@
-annotation class A(val p1: Int, val p2: Int)
-
-@A(p1 = 1, p2 = 2)
-class Test

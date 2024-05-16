@@ -1,2 +1,0 @@
-Django
--e /some/locations/we/dont/know

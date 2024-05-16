@@ -1,5 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action class="MyAction" id="singleDeclaration"/>
-  </actions>
-</idea-plugin>

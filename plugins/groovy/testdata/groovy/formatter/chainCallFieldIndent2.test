@@ -1,7 +1,0 @@
-new DD().copy()
-.f
-.copy()
------
-new DD().copy()
-        .f
-        .copy()

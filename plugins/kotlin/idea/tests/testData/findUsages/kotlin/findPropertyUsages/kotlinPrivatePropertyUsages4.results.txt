@@ -1,3 +1,0 @@
-[kotlinPrivatePropertyUsages4.0.kt] Named argument 10 public class ServerEx() : Server(foo = "!") {
-[kotlinPrivatePropertyUsages4.0.kt] Value read 7 open fun processRequest() = foo
-[kotlinPrivatePropertyUsages4.1.kt] Named argument 5 println(Server(foo = "!"))

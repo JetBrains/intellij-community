@@ -1,9 +1,0 @@
-just a text
-
-{ something }
-
-text again
-
-{ somethingelse }
-
-last <caret>text

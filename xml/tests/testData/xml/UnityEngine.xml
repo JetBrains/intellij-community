@@ -1,6 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" >
-    <ui:VisualElement name="row" class="container">
-        <ui:Label text="UXML" />
-        <ui:TextField />
-    </ui:VisualElement>
-</ui:UXML>

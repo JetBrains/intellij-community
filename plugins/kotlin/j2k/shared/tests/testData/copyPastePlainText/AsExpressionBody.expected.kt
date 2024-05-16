@@ -1,1 +1,0 @@
-fun foo() = ArrayList<String>()

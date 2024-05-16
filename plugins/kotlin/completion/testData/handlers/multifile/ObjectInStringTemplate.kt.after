@@ -1,7 +1,0 @@
-import ppp.OOOOO
-
-// IGNORE_K2
-
-fun foo(): String {
-    val s = "${OOOOO<caret>}"
-}

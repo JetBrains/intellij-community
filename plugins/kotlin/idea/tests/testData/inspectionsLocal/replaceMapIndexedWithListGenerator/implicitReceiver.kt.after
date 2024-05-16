@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun List<String>.test() {
-    List(size) { index ->
-        index + 42
-    }
-}

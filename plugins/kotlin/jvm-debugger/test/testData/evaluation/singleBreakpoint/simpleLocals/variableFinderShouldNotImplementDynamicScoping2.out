@@ -1,8 +1,0 @@
-LineBreakpoint created at variableFinderShouldNotImplementDynamicScoping2.kt:9
-Run Java
-Connected to the target VM
-variableFinderShouldNotImplementDynamicScoping2.kt:9
-Compile bytecode for x
-Disconnected from the target VM
-
-Process finished with exit code 0

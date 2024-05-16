@@ -1,3 +1,0 @@
-fun KotlinInterface.test() {
-    this("")
-}

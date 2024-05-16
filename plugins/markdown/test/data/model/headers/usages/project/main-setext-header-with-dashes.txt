@@ -1,4 +1,0 @@
-21|* |[link to dashed setext header](#|setext-header-with-dashes|)
-28|* |[Setext header with dashes](#|setext-header-with-dashes|)
-4|* |[link to dashed setext header](../main.md#|setext-header-with-dashes|)
-6|* |[link to dashed setext header](main.md#|setext-header-with-dashes|)

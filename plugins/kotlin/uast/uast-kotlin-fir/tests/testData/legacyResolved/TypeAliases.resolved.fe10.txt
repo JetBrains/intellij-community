@@ -1,5 +1,0 @@
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A: A
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A: A
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A: A
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = F) -> Decompiled_Class: Function2
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = F) -> Decompiled_Class: Function2

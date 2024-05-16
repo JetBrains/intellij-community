@@ -1,2 +1,0 @@
-// IGNORE_K2
-<error descr="[WRONG_MODIFIER_TARGET] Modifier 'open' is not applicable to 'top level function'"><symbolName descr="null">open</symbolName></error> <symbolName descr="null">suspend</symbolName> fun <symbolName descr="null">f</symbolName>() {}

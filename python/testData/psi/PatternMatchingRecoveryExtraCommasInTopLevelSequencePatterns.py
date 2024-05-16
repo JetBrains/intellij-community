@@ -1,9 +1,0 @@
-match x:
-    case ,:
-        pass
-    case 1, ,:
-        pass
-    case 1, , 3:
-        pass
-    case , , 3:
-        pass

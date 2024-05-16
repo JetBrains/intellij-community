@@ -1,4 +1,0 @@
-package a
-
-class X { }
-

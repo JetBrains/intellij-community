@@ -1,9 +1,0 @@
-package pkg;
-
-public class B {
-  
-}
-
-class Local {
-  
-}

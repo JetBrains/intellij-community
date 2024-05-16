@@ -1,1 +1,0 @@
-AtomicInteger i = new AtomicInteger(...)

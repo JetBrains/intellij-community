@@ -1,6 +1,0 @@
-<templateSet>
-  <template name="name"
-            value="template"
-            description="my descr<caret>iption">
-  </template>
-</templateSet>

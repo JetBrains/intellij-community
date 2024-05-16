@@ -1,1 +1,0 @@
-record Foo(int a, <selection>int<caret> b</selection>) {}

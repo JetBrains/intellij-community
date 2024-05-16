@@ -1,7 +1,0 @@
-while (true)
-foo <begin>foo<end>
------
-while (true) {
-    def preved = foo
-    foo preved
-}<caret>

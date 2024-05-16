@@ -1,8 +1,0 @@
-class ConcatenationTurnsIntoAddition {
-
-    public static void main(String[] args) throws Exception {
-        String s = 1 + (2 + "x") + 2;
-        System.out.println(s);
-    }
-
-}

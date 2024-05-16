@@ -1,6 +1,0 @@
-{
-  "mainFile": "test.kt",
-  "inspectionClass": "org.jetbrains.kotlin.idea.refactoring.move.changePackage.PackageDirectoryMismatchInspection",
-  "k2InspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.PackageDirectoryMismatchInspection",
-  "fix": "Change file's package to source root"
-}

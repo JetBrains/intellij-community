@@ -1,9 +1,0 @@
-// WITH_STDLIB
-// AFTER-WARNING: Parameter 'action' is never used
-
-fun testAAA(action: () -> Unit) = Unit
-fun t() {
-    testAAA(fun() {
-        println(42)
-    })
-}

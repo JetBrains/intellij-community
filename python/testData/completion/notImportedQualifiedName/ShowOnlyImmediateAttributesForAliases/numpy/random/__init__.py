@@ -1,2 +1,0 @@
-def rand():
-    pass

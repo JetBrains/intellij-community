@@ -1,8 +1,0 @@
-Specification-Title: Groovy Reset Agent
-Specification-Version: 1.0.0
-Specification-Vendor: Groovy
-Implementation-Title: org.groovy
-Implementation-Version: 1.0.0
-Implementation-Vendor: Groovy
-Premain-Class: org.groovy.debug.hotswap.ResetAgent
-Can-Redefine-Classes: true

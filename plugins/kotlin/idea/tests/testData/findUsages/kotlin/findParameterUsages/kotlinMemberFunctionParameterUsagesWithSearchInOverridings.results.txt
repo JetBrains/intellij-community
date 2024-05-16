@@ -1,4 +1,0 @@
-[kotlinMemberFunctionParameterUsagesWithSearchInOverridings.0.kt] Value read 16 val t2: T = t
-[kotlinMemberFunctionParameterUsagesWithSearchInOverridings.0.kt] Value read 8 println(t)
-[kotlinMemberFunctionParameterUsagesWithSearchInOverridings.0.kt] Value read 9 return t
-[kotlinMemberFunctionParameterUsagesWithSearchInOverridings.1.java] Unclassified 5 T myT = t;

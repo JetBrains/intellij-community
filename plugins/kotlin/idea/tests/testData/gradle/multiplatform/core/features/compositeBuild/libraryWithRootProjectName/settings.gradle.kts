@@ -1,2 +1,0 @@
-includeBuild("includedLibrary")
-includeBuild("includedApp")

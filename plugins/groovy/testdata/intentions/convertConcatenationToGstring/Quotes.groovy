@@ -1,1 +1,0 @@
-print "abc" +<caret>x+'dfg"hj"df'

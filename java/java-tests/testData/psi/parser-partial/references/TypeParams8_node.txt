@@ -1,8 +1,0 @@
-test.java.file
-  TYPE_PARAMETER_LIST
-    LT
-    ERROR_ELEMENT
-      QUEST
-      EXTENDS_BOUND_LIST
-        <empty list>
-    GT

@@ -1,8 +1,0 @@
-test.java.file
-  YIELD_STATEMENT
-    YIELD
-    WHITE_SPACE
-    LITERAL_EXPRESSION
-      TEXT_BLOCK_LITERAL
-    ERROR_ELEMENT
-      <empty list>

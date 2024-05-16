@@ -1,1 +1,0 @@
-x: &an1 <error descr="Multiple anchors are not permitted">&an2</error> hello world

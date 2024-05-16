@@ -1,3 +1,0 @@
-<entry>
-  <key x="long line inspection       sds" y="sadasd" z="addddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd<warning descr="Line is longer than allowed by code style (> 120 columns)">ddddddddddddddddddddddd">some text here</key></warning>
-</entry>

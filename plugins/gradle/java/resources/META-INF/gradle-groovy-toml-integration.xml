@@ -1,7 +1,0 @@
-<idea-plugin>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.toml.GradleVersionCatalogTomlAwareGotoDeclarationHandler"/>
-    <referencesSearch implementation="org.jetbrains.plugins.gradle.service.toml.GradleGroovyVersionCatalogReferencesSearcher"/>
-  </extensions>
-</idea-plugin>

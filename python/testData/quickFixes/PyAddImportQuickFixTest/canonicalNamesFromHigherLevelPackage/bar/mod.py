@@ -1,2 +1,0 @@
-class MyClass(object):
-    pass

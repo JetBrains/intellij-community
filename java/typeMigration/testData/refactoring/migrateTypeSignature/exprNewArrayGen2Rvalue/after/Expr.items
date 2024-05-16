@@ -1,9 +1,0 @@
-Types:
-PsiField:myField : java.util.Set<java.lang.Integer>[]
-PsiReferenceExpression:myField : java.util.Set<java.lang.Integer>[]
-
-Conversions:
-
-New expression type changes:
-Fails:
-new Set[1]->java.util.Set<java.lang.Integer>[]

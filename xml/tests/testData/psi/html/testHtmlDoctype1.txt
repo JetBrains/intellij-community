@@ -1,9 +1,0 @@
-HtmlFile:test.html
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      PsiElement(XML_DOCTYPE)
-        XmlToken:XML_DOCTYPE_START('<!DOCTYPE')
-        PsiWhiteSpace(' ')
-        XmlToken:XML_NAME('html')
-        XmlToken:XML_DOCTYPE_END('>')
-      PsiWhiteSpace('\n')

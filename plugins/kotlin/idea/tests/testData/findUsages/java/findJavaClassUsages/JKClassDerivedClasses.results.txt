@@ -1,5 +1,0 @@
-Unclassified 1 open class X : A()
-Unclassified 11 interface W : Y, T
-Unclassified 4 interface T : A
-Unclassified 6 open class Y : X()
-Unclassified 8 class Z : Y(), T

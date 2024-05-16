@@ -1,9 +1,0 @@
-// "Add missing actual members" "true"
-// DISABLE-ERRORS
-// IGNORE_K2
-
-actual class My {
-    actual fun foo(param: String): Int {
-        TODO("Not yet implemented")
-    }
-}

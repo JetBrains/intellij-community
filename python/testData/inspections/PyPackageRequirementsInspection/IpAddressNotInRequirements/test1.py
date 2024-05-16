@@ -1,4 +1,0 @@
-import ipaddress
-
-
-print(ipaddress)

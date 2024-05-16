@@ -1,5 +1,0 @@
-// RUNTIME_WITH_FULL_JDK
-
-fun test() {
-    System.out.println(42)
-}

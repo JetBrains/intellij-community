@@ -1,7 +1,0 @@
-switch (k + 3) {
-      case 1 -> yield 30
-    }
------
-switch (k + 3) {
-  case 1 -> yield 30
-}

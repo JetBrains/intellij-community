@@ -1,1 +1,0 @@
-"in percent string it's %<ref>s argument, but i want to pass %d arguments" % ("string", 1423)

@@ -1,3 +1,0 @@
-PyFile:shell1.py
-  PyEmptyExpression
-    PsiElement(Py:SHELL_COMMAND)('!pwd')

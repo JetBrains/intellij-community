@@ -1,3 +1,0 @@
-val a = A()
-a.one() + a.two() + a.three()
-// RESULT: 6: I

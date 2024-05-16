@@ -1,4 +1,0 @@
-<node text="DummyImpl.doSth()  ()" base="true">
-  <node text="ShownDependency.hi()  ()"/>
-  <node text="InvisibleDependency.hi()  ()"/>
-</node>

@@ -1,8 +1,0 @@
-word ('read')
-WHITE_SPACE (' ')
-RAW_STRING (''test'')
-WHITE_SPACE (' ')
-word ('a')
-[ ('[')
-int ('0')
-] (']')

@@ -1,9 +1,0 @@
-LineBreakpoint created at hideSyntheticThis.kt:6
-Run Java
-Connected to the target VM
-hideSyntheticThis.kt:6
-KotlinStackFrame (hideSyntheticThis.kt:6)
-    JavaValue[local] this: java.lang.String = foo
-Disconnected from the target VM
-
-Process finished with exit code 0

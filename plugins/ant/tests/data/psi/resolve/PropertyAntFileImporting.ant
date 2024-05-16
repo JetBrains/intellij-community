@@ -1,8 +1,0 @@
-<project name="importing" default="including">
-	<import file="PropertyAntFileImported.ant"/>
-	<target name="including" depends="included-a">
-		<echo message="ant.file == ${ant.file}"/>
-		<echo message="ant.file.included == ${<ref>ant.file.imported}"/>
-		<echo message="ant.file.including-ant.file == ${ant.file.importing}"/>
-	</target>
-</project>

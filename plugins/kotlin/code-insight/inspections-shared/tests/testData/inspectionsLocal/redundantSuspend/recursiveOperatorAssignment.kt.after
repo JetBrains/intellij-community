@@ -1,7 +1,0 @@
-class A(val x: Int) {
-    operator fun plus(a: A): A {
-        var a = a
-        a += a
-        return a
-    }
-}

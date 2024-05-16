@@ -1,5 +1,0 @@
-<selection>so<caret></selection>Me text<selection><caret>
-</selection>other line
-yet <selection><caret>another</selection> line
-<selection><caret>Heavily</selection>HumpedWord
-<selection><caret>HeavilyHump</selection>edWord

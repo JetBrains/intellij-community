@@ -1,9 +1,0 @@
-fun foo(f: (Int) -> Int) = f(0)
-
-fun test() {
-    foo {
-        val p = 1
-        val p1 = p
-        foo { p1 }
-    }
-}

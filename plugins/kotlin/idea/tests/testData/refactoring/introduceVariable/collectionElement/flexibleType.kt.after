@@ -1,6 +1,0 @@
-import java.util.Arrays
-
-fun test() {
-    val i = Arrays.asList(1)[0]
-    val b = i
-}

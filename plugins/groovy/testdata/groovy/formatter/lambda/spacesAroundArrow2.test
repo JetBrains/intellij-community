@@ -1,6 +1,0 @@
-def l = ()->{
-print 2}
------
-def l = () -> {
-  print 2
-}

@@ -1,4 +1,0 @@
-<selection>a = t</selection>
------
-while (a = t) {
-}

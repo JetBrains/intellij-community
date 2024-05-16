@@ -1,1 +1,0 @@
-{"productCode":"IU","versions":[{"majorBuildVersionBorders":{"from":"2019.2","to":"2020.3"},"endpoints":{"send":"https://send/endpoint"},"options":{"option1":"value1"},"releaseFilters":[{"releaseType":"ALL","from":0,"to":256}]}]}

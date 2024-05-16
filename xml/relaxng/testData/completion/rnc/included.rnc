@@ -1,3 +1,0 @@
-div {
-  included.start.element = element foo { empty }
-}

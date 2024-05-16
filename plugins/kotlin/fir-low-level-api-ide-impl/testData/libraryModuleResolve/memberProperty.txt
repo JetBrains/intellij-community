@@ -1,2 +1,0 @@
-public final [ResolvedTo(BODY_RESOLVE)] val memberProperty: R|kotlin/Int|
-    public [ResolvedTo(BODY_RESOLVE)] get(): R|kotlin/Int|

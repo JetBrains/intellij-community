@@ -1,6 +1,0 @@
-<?import javafx.scene.layout.VBox?>
-<fx:root type="GuessedRoot" fx:controller="FxIdGuessedOptionsController" fx:id="pane" xmlns:fx="http://javafx.com/fxml">
-  <VBox fx:id="box">
-    <GuessedNode fx:id="<caret>"/>
-  </VBox>
-</fx:root>

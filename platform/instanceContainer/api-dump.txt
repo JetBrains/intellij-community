@@ -1,7 +1,0 @@
-*f:com.intellij.platform.instanceContainer.CycleInitializationException
-- java.lang.IllegalStateException
-*:com.intellij.platform.instanceContainer.InstanceContainer
-- a:instance(java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object
-- a:requestedInstance(java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object
-*f:com.intellij.platform.instanceContainer.InstanceNotRegisteredException
-- java.lang.IllegalStateException

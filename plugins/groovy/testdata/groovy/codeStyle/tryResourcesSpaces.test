@@ -1,7 +1,0 @@
-<option>SPACE_WITHIN_TRY_PARENTHESES=true</option>
-<option>SPACE_BEFORE_TRY_PARENTHESES=false</option>
-<option>SPACE_BEFORE_TRY_LBRACE=false</option>
-try (def a) {}
------
-try( def a ){
-}

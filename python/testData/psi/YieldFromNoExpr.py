@@ -1,2 +1,0 @@
-def f():
-    yield from

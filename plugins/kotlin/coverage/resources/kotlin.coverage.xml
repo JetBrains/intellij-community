@@ -1,9 +1,0 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.coverage">
-  <dependencies>
-    <plugin id="Coverage"/>
-  </dependencies>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <javaCoverageEngineExtension implementation="org.jetbrains.kotlin.idea.coverage.KotlinCoverageExtension"/>
-  </extensions>
-</idea-plugin>

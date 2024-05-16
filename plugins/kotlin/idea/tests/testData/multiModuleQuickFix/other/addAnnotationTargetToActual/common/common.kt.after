@@ -1,2 +1,0 @@
-@Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
-expect annotation class Ann()

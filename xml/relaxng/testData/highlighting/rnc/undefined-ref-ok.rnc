@@ -1,4 +1,0 @@
-# the display of "unresolved pattern" errors from the external parser is
-# intentionally disabled - the internal validator is a) just as smart and
-# b) knows about backward includes
-start = doesntexist

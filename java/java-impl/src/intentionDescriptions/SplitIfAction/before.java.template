@@ -1,5 +1,0 @@
-public class X {
-  void f(boolean a, boolean b) {
-    if (a <spot>&&</spot> b) return;
-  }
-}

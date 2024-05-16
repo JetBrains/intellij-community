@@ -1,2 +1,0 @@
-some <caret>te<caret>xt
-ot<selection><caret>her</selection> line

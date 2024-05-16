@@ -1,5 +1,0 @@
-class KGeneric : Generic<Int>()
-
-fun test() {
-    KGeneric().foo(/* t = */ 10)
-}

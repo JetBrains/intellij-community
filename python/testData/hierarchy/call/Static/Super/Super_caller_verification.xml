@@ -1,3 +1,0 @@
-<node text="SubclassTwo.a_method(self) (SubclassTwo in hierarchy.call.Static.Super.main)" base="true">
-  <node text="that_function() (hierarchy.call.Static.Super.main)"/>
-</node>

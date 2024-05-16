@@ -1,7 +1,0 @@
-<root xmlns="http://test/a" 
-      xmlns:b="http://test/b"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://test/b schema-b.xsd">
-
-    <<caret>
-</root>

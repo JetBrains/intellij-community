@@ -1,1 +1,0 @@
-Template(div{attr1=%boolean, attr2=, %default=file.js, attr3=val})

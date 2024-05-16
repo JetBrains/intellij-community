@@ -1,4 +1,0 @@
-Unclassified 10 override fun coll(c: MutableCollection<Any?>) = Unit
-Unclassified 14 override fun coll(c: MutableCollection<Any?>?) = Unit
-Unclassified 2 override fun coll(c: Collection<Any?>?) = Unit
-Unclassified 6 override fun coll(c: Collection<Any?>) = Unit

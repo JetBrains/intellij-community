@@ -1,4 +1,0 @@
-[kotlinAliasedMethodUsages.0.kt] Function call 10 process()
-[kotlinAliasedMethodUsages.0.kt] Usage in import 6 import server.processRequest as process
-[kotlinAliasedMethodUsagesLib1.kt] Function call 7 process()
-[kotlinAliasedMethodUsagesLib1.kt] Usage in import 3 import server.processRequest as process

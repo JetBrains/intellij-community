@@ -1,9 +1,0 @@
-<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd">
-    <rect width="5" height="5" x="2" y="2" fill="#40B6E0" fill-opacity=".6"/>
-    <rect width="6" height="6" x="8" y="8" fill="#40B6E0" fill-opacity=".6"/>
-    <rect width="6" height="5" x="8" y="2" fill="#9AA7B0" fill-opacity=".8"/>
-    <rect width="5" height="6" x="2" y="8" fill="#9AA7B0" fill-opacity=".8"/>
-  </g>
-</svg>

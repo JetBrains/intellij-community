@@ -1,9 +1,0 @@
-<xsd:schema xmlns="http://www.w3.org/2001/XMLSchema"
-	    targetNamespace="http://java.sun.com/xml/ns/j2ee"
-	    xmlns:j2ee="http://java.sun.com/xml/ns/j2ee"
-	    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-	    elementFormDefault="qualified"
-	    attributeFormDefault="unqualified"
-	    version="1.4">
-  <annotation/>
-</xsd:schema>

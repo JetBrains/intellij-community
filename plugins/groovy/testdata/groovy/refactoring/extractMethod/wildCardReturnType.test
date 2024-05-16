@@ -1,7 +1,0 @@
-print <begin>Class.forName('java.lang.Object').newInstance()<end>
------
-print testMethod()
-
-private testMethod() {
-    return Class.forName('java.lang.Object').newInstance()
-}

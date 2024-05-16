@@ -1,6 +1,0 @@
-fun J.m(p: Any?) {
-    val v = any(p)
-    val l = foo
-}
-
-private fun any(p: Any?): Any? = p

@@ -1,6 +1,0 @@
-[kotlinTopLevelExternalFunction.0.kt] Function call 10 a.extFun()
-[kotlinTopLevelExternalFunction.0.kt] Usage in import 6 import server.extFun
-[kotlinTopLevelExternalFunction.1.java] Unclassified 6 KotlinTopLevelExternalFunctionLib0Kt.extFun(a);
-[kotlinTopLevelExternalFunction.1.java] Unclassified 7 KotlinTopLevelExternalFunctionLib0Kt.extFun(a);
-[kotlinTopLevelExternalFunctionLib1.kt] Function call 7 a.extFun()
-[kotlinTopLevelExternalFunctionLib1.kt] Usage in import 3 import server.extFun

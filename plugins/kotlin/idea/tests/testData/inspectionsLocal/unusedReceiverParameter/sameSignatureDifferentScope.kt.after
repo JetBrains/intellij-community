@@ -1,5 +1,0 @@
-class CompetitorA
-fun compete() {}
-
-class CompetitorB
-fun CompetitorB.compete() {}

@@ -1,3 +1,0 @@
-package pkg;
-
-enum EmptyEnum { }

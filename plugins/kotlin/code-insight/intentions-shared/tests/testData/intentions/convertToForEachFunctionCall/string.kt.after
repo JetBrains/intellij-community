@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun foo() {
-    "123".forEach { x ->
-        println(x)
-    }
-}

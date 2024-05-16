@@ -1,7 +1,0 @@
-- "com.intellij.ide.startup.impl.StartupManagerImpl":StandaloneCoroutine{Active}@31b4ad08, state: SUSPENDED [Dispatchers.Default]
-#  at kotlinx.coroutines.channels.AbstractChannel.receiveCatching-JP2dKIU(AbstractChannel.kt:633)
-#  at kotlinx.coroutines.flow.FlowKt__ChannelsKt.emitAllImpl$FlowKt__ChannelsKt(Channels.kt:51)
-#  at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:123)
-  at com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager$execute$2.invokeSuspend(LibraryDependentToolWindowManager.kt:67)
-  at com.intellij.ide.startup.impl.StartupManagerImpl$runPostStartupActivities$4$1$1.invokeSuspend(StartupManagerImpl.kt:254)
-  at com.intellij.ide.startup.impl.StartupManagerImpl$runPostStartupActivities$4$1.invokeSuspend(StartupManagerImpl.kt:253)

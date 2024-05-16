@@ -1,9 +1,0 @@
-class A<T> {
-  T foo(){return null;}
-  T bar(){return foo();}
-}
-
-class B extends A<Object> {
-  Object foo(){return super.bar();}
-  Object bar(){return super.foo();}
-}

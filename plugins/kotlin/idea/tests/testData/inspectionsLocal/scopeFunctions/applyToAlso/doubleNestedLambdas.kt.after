@@ -1,9 +1,0 @@
-// WITH_STDLIB
-
-val x = hashSetOf("abc").also { strings ->
-    strings.forEach {
-        strings.forEach {
-            println(strings)
-        }
-    }
-}

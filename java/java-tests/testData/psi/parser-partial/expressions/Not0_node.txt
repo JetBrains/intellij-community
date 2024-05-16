@@ -1,9 +1,0 @@
-test.java.file
-  PREFIX_EXPRESSION
-    EXCL
-    PREFIX_EXPRESSION
-      EXCL
-      REFERENCE_EXPRESSION
-        REFERENCE_PARAMETER_LIST
-          <empty list>
-        IDENTIFIER

@@ -1,7 +1,0 @@
-default namespace = "broken.rnc"
-
-start = element foo {
-  (element bar { empty } | foo)
-}
-
-foo = element x { a }

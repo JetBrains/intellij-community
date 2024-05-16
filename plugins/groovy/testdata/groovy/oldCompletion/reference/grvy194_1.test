@@ -1,6 +1,0 @@
-import javax.swing.*
-
-JScrollPane pane = new JScrollPane()
-pane.ancestorA<caret>
------
-ancestorAdded

@@ -1,4 +1,0 @@
-package one;
-class JavaClass {
-
-}

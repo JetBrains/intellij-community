@@ -1,3 +1,0 @@
-Named argument 14 foo(t = ":)")
-Value read 5 println(t)
-Value read 6 return t

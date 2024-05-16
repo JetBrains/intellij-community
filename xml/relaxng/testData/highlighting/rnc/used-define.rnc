@@ -1,4 +1,0 @@
-
-start = foo
-
-foo = element bar { empty }

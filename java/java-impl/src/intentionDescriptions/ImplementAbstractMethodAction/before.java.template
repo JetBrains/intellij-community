@@ -1,6 +1,0 @@
-public abstract class X {
-    <spot>abstract void f()</spot>;
-}
-abstract class Y extends X {
-
-}

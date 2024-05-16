@@ -1,8 +1,0 @@
-LineBreakpoint created at inlineFunctionDeepInliningSameFile.kt:6
-Run Java
-Connected to the target VM
-inlineFunctionDeepInliningSameFile.kt:6
-Compile bytecode for myFun1 { 50 }
-Disconnected from the target VM
-
-Process finished with exit code 0

@@ -1,8 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\p{InLATIN_1_SUPPLEMENT}>
-    RegExpBranchImpl: <\p{InLATIN_1_SUPPLEMENT}>
-      RegExpPropertyImpl: <\p{InLATIN_1_SUPPLEMENT}>
-        PsiElement(PROPERTY)('\p')
-        PsiElement(LBRACE)('{')
-        PsiElement(NAME)('InLATIN_1_SUPPLEMENT')
-        PsiElement(RBRACE)('}')

@@ -1,1 +1,0 @@
-Value read 10 val (b, n) = a

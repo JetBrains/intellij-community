@@ -1,6 +1,0 @@
-:type param1: `MyClass`
-:param param1: the first parameter
-:type param2: :class:`MyClass`
-:param param2: the second parameter
-:type param3: :py:class:`MyClass`
-:param param3: the third parameter

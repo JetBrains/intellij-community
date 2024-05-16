@@ -1,5 +1,0 @@
-public class X {
-  boolean f(boolean a) {
-    <spot>return a</spot>;
-  }
-}

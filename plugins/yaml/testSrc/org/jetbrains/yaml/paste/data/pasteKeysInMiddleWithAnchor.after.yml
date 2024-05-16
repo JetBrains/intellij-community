@@ -1,8 +1,0 @@
-top:
-  middle: &an
-    first:
-      - hello
-      - world
-    next:
-      subKey:<caret>
-    last: value2

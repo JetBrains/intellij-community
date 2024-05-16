@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="Windows-1251"?>
-<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="12_4_sample.xsd sample.xsd"
-          xmlns="12_4_sample.xsd">
-
-        <sample align="LEFT<caret>"/>
-</root>
-

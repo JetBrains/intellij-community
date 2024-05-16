@@ -1,7 +1,0 @@
-indexes:
-
-- kind: MessageIndex
-  properties:
-  - name: group_name
-  - name: created_at
-    direction: desc

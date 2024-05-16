@@ -1,3 +1,0 @@
-[foo]
-dotnet_naming_symbols.<warning>my_symbols</warning>.applicable_kinds = property
-dotnet_naming_symbols.<warning>my_symbols</warning>.required_modifiers = private

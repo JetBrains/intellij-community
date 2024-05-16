@@ -1,9 +1,0 @@
-<channel id="rm32" name="RubyMine 3.2" status="Release"
-         url="https://www.jetbrains.com/ruby/download"
-         majorVersion="3">
-     <!--<build number="117.230" version="4.0.3">-->
-          <!--<message>RubyMine 4.0.3 is available.</message>-->
-          <!--<button name="Release Notes"-->
-                  <!--url="http://blog.jetbrains.com/ruby/2012/04/rubymine-4-0-3-update-is-available/"/>-->
-     <!--</build>-->
-</channel>

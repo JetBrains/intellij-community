@@ -1,5 +1,0 @@
-# In these files persistent line endings are crucial
-# as we use their binary content for hashes.
-data/generator3/**/*.py text eol=lf
-data/generator3/**/*.so -text
-data/remote_sync/**/* text eol=lf

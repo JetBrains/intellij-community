@@ -1,7 +1,0 @@
-Tag: root(default)
-  Attribute: xmlns:mig(default)
-Tag: mig:migger_root(http://migger/mig)
-Tag: migger(default)
-  Attribute: xx:XXXX(default)
-Tag: mig:migger_root(http://migger/mig)
-  Attribute: mig:dd(http://migger/mig)

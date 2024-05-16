@@ -1,3 +1,0 @@
-class Main {
-    operator fun Int.it<caret>erator(): Iterator<String> = TODO()
-}

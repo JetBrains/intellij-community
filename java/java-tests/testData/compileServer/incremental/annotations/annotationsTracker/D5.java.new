@@ -1,6 +1,0 @@
-import org.jetbrains.jps.builders.java.dependencyView.MockAnnotation;
-
-public interface D5 {
-  @MockAnnotation
-  public abstract Object method ();
-}

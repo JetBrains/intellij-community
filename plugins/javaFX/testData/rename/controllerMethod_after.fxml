@@ -1,6 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
-<VBox fx:controller="ControllerMethod"
-      xmlns:fx="http://javafx.com/fxml">
-  <Label text="${controller.newName}"/>
-</VBox>

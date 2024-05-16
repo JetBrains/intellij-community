@@ -1,8 +1,0 @@
-LineBreakpoint created at downcastFail.kt:10
-Run Java
-Connected to the target VM
-downcastFail.kt:10
-Compile bytecode for derived is Derived && derived.prop == 1
-Disconnected from the target VM
-
-Process finished with exit code 0

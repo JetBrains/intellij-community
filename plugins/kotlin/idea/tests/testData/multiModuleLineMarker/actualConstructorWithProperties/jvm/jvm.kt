@@ -1,1 +1,0 @@
-actual class <!LINE_MARKER("descr='Has expects in common module'; targets=[(text=WithConstructor; container=common; icon=nodes/Module.svg); (text=s; container=common; icon=nodes/Module.svg); (text=x; container=common; icon=nodes/Module.svg)]")!>WithConstructor<!> actual constructor(actual val x: Int, actual val s: String)

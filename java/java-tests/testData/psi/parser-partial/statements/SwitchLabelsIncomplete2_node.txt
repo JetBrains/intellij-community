@@ -1,5 +1,0 @@
-test.java.file
-  SWITCH_LABEL_STATEMENT
-    DEFAULT_KEYWORD
-    ERROR_ELEMENT
-      <empty list>

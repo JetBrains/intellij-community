@@ -1,2 +1,0 @@
-#noinspection PyUnresolvedReferences
-print(xxx)

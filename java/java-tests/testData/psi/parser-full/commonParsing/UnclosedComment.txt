@@ -1,6 +1,0 @@
-PsiJavaFile:UnclosedComment.java
-  PsiComment(END_OF_LINE_COMMENT)('// unclosed comment')
-  PsiWhiteSpace('\n')
-  PsiComment(C_STYLE_COMMENT)('/*\n\nimport java.io.*;\n\nclass a {\n}')
-  PsiImportList
-    <empty list>

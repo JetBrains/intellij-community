@@ -1,7 +1,0 @@
-bar
-.baz(
-a->a)
------
-bar
-    .baz(
-        a -> a)

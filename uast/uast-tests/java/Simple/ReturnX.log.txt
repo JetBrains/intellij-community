@@ -1,9 +1,0 @@
-UFile (package = )
-    UClass (name = ReturnX)
-        UMethod (name = foo)
-            UBlockExpression
-                UDeclarationsExpression
-                    ULocalVariable (name = x)
-                        ULiteralExpression (value = 42)
-                UReturnExpression
-                    USimpleNameReferenceExpression (identifier = x)

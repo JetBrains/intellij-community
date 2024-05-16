@@ -1,4 +1,0 @@
-<?import p.Foo?>
-<p.Foo xmlns:fx="http://javafx.com/fxml" >
-  <Foo.foo>1</Foo.foo>
-</p.Foo>

@@ -1,1 +1,0 @@
-'receiver' is used in declaration body

@@ -1,5 +1,0 @@
-if (flag) <spot>{
-    return true
-} else {
-    println("Flag is disabled")
-}</spot>

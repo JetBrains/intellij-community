@@ -1,2 +1,0 @@
-so<caret>me text
-some other text

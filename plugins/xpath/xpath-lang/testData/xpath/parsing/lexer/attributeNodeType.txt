@@ -1,3 +1,0 @@
-FUNCTION_NAME ('attribute')
-LPAREN ('(')
-RPAREN (')')

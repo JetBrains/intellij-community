@@ -1,9 +1,0 @@
-package androidx.annotation.experimental
-
-import kotlin.annotation.Retention
-import kotlin.annotation.Target
-import kotlin.reflect.KClass
-
-public abstract annotation UseExperimental {
-    public abstract fun markerClass() : java.lang.Class<? extends java.lang.annotation.Annotation>[] = UastEmptyExpression
-}

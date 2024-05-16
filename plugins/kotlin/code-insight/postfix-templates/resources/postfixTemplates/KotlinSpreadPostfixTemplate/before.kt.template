@@ -1,5 +1,0 @@
-fun test(list: List<String>) {
-    process(<spot>list.toTypedArray()</spot>$key)
-}
-
-fun process(vararg args: String) {}

@@ -1,8 +1,0 @@
-<?import javafx.scene.layout.VBox?>
-<?import java.lang.Double?>
-<VBox xmlns:fx="http://javafx.com/fxml" alignment="center" spacing="20">
-    <fx:define>
-        <Double fx:id="CONTENT_SPACING" fx:value=<error descr="Invalid value: unable to coerce to java.lang.Double">"200p"</error>/>
-    </fx:define>
-    <VBox fx:id="content" spacing="$CONTENT_SPACING"/>
-</VBox>

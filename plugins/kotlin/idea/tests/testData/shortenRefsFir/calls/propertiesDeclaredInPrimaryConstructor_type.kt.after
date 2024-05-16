@@ -1,6 +1,0 @@
-package some
-
-interface A
-interface B
-
-class Complete(var field1: A, var field2: B)

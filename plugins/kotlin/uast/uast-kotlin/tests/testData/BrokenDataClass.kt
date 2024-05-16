@@ -1,1 +1,0 @@
-data class Cls(val a: Long, b: Long) : this(a, a, a)

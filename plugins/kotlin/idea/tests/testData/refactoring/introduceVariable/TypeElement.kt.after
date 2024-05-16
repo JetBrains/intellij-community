@@ -1,4 +1,0 @@
-fun foo(t: Any) {
-    val strings = t as List<String>
-    val x = strings
-}

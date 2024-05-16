@@ -1,7 +1,0 @@
-import dependency.A
-import dependency.B
-
-fun test(b: B) {
-    val lambda: (A) -> Boolean = { it == b.a }
-    b.foo(lambda)
-}

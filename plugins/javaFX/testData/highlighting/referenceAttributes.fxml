@@ -1,5 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-  <<error descr="Element fx:reference doesn't have required attribute source">fx:reference</error> GridPane.halignment="CENTER" />
-  <fx:reference GridPane.halignment="CENTER" source="<error descr="Cannot resolve symbol 'lbl'">lbl</error>"/>
-</GridPane>

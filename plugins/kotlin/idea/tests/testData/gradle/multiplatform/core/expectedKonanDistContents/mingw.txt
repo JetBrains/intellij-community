@@ -1,8 +1,0 @@
-Kotlin/Native: builtin
-Kotlin/Native: gdiplus
-Kotlin/Native: iconv
-Kotlin/Native: opengl32
-Kotlin/Native: posix
-Kotlin/Native: windows
-Kotlin/Native: winhttp
-Kotlin/Native: zlib

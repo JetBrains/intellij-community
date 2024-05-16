@@ -1,7 +1,0 @@
-fun foo(list: List<String>) {
-    list.map { String()<caret> }
-}
-
-// IGNORE_K2
-// ELEMENT: String
-// TAIL_TEXT: " (kotlin)"

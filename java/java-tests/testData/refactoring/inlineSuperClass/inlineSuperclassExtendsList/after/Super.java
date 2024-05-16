@@ -1,5 +1,0 @@
-
-interface Int {}
-
-class Dummy {}
-

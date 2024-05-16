@@ -1,1 +1,0 @@
-f'{<error descr="Missing closing quote [']"><error descr="Python version 3.6 does not allow nesting of string literals with the same quote type inside f-strings">'</error></error><EOLError descr="Type conversion, ':' or '}' expected"></EOLError><EOLError descr="' expected"></EOLError>

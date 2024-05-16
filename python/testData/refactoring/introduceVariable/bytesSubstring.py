@@ -1,1 +1,0 @@
-b'foo<selection>bar</selection>baz' + suffix

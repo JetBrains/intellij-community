@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project name="javafxapplication">
-  <target name="artifact.unnamed">
-    <<error descr="Cannot resolve symbol 'application'">application</error> id="unnamed_id"/>
-    <<error descr="Cannot resolve symbol 'application'">application</error> refid="unnamed_id"/>
-  </target>
-</project>

@@ -1,7 +1,0 @@
-import kotlin.Suppress as MySuppress
-
-class A {
-    fun check() {
-        4
-    }
-}

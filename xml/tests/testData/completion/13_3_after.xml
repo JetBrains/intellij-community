@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<!DOCTYPE hibernate-configuration PUBLIC
-  "-//Hibernate/Hibernate Configuration DTD//EN"
-  "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd"
-[<!ENTITY baseEntity SYSTEM "classpath://foo/incl.xml">]>
-<hibernate-configuration>
-    &baseEntity;<caret>
-
-</hibernate-configuration>

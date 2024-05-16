@@ -1,1 +1,0 @@
-<weak_warning descr="Relative import outside of a package">from .util import foo, bar as b</weak_warning>

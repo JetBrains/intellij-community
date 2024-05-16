@@ -1,8 +1,0 @@
-package com.idea;
-
-/*
- * $Log$
- * @version $Id$
- */
-public class MyClass {
-}

@@ -1,3 +1,0 @@
-fun jjjk() {
-    JJJK().property
-}

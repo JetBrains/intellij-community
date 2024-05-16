@@ -1,9 +1,0 @@
-{
-  "type": "KOTLIN_PROPERTY",
-  "classId": "test/X",
-  "oldName": "v",
-  "mainFile": "test/test.kt",
-  "newName": "value",
-  "enabledInK2": true,
-  "enabledInK1": false
-}

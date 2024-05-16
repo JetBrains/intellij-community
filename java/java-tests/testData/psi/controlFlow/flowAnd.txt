@@ -1,7 +1,0 @@
-0: EMPTY
-1: READ c
-2: COND_GOTO [END] 6
-3: READ a
-4: COND_GOTO [END] 6
-5: READ b
-6: WRITE doProgressThing

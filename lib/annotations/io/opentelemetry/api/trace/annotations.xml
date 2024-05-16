@@ -1,5 +1,0 @@
-<root>
-  <item name='io.opentelemetry.api.trace.SpanBuilder io.opentelemetry.api.trace.Span startSpan()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

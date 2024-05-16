@@ -1,8 +1,0 @@
-// AFTER-WARNING: Unchecked cast: Array<String?> to Array<String>
-fun test(n: Int): Array<String> {
-    var x: Array<String> = arrayOfNulls<String>(1) as Array<String>
-
-    <caret>if (n > 5) x[0] = "A" else x[0] = "B"
-
-    return x
-}

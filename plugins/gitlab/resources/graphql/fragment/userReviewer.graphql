@@ -1,7 +1,0 @@
-fragment userReviewer on MergeRequestReviewer {
-  ...user
-  mergeRequestInteraction {
-    approved
-    reviewed
-  }
-}

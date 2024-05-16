@@ -1,7 +1,0 @@
-Types:
-PsiField:t : java.lang.String
-
-Conversions:
-
-New expression type changes:
-Fails:

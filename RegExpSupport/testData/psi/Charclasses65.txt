@@ -1,5 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\R>
-    RegExpBranchImpl: <\R>
-      RegExpSimpleClassImpl: <\R>
-        PsiElement(CHAR_CLASS)('\R')

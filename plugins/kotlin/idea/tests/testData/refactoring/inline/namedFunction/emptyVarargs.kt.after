@@ -1,5 +1,0 @@
-fun <T> newFun(vararg elements: T) {}
-
-fun foo() {
-    newFun<String>()
-}

@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun Thread.foo() {
-    name = "name"<caret>
-}

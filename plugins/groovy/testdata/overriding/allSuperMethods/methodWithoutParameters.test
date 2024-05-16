@@ -1,8 +1,0 @@
-interface Foo {
-  def foo (String str, int number)
-}
-
-class A implements Foo {
-  def foo (String s) {}
-}
------

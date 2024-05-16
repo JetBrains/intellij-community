@@ -1,5 +1,0 @@
-// AFTER-WARNING: Parameter 's' is never used
-fun test(a: Any, b: Any, c: Any): String {
-    return "a:$a, b:${b}_ c:${c.toString("")}"
-}
-fun Any.toString(s: String) = ""

@@ -1,6 +1,0 @@
-<<weak_warning descr="Plugin should provide 'pluginIcon.svg' (Documentation)">idea-plugin</weak_warning>>
-  <id>plugin.without.icon</id>
-  <name>No Icon</name>
-  <vendor>Icons Inc.</vendor>
-  <version>1.0</version>
-</idea-plugin>

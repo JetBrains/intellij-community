@@ -1,5 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\u004a>
-    RegExpBranchImpl: <\u004a>
-      RegExpCharImpl: <\u004a>
-        PsiElement(UNICODE_CHAR)('\u004a')

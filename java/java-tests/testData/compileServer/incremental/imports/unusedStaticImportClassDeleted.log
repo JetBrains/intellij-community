@@ -1,9 +1,0 @@
-Cleaning output files:
-out/production/UnusedStaticImportClassDeleted/packageA/A.class
-End of files
-Cleaning output files:
-out/production/UnusedStaticImportClassDeleted/B.class
-End of files
-Compiling files:
-src/B.java
-End of files

@@ -1,8 +1,0 @@
-[Usages.java] Unclassified 12 Foo.foo(1, 1.0);
-[Usages.java] Unclassified 16 Foo.foo(1, 1.0, "1");
-[Usages.java] Unclassified 4 Foo.foo();
-[Usages.java] Unclassified 8 Foo.foo(1);
-[jvmOverloaded.0.java] Unclassified 13 Foo.foo(1);
-[jvmOverloaded.0.java] Unclassified 17 Foo.foo(1, 1.0);
-[jvmOverloaded.0.java] Unclassified 21 Foo.foo(1, 1.0, "1");
-[jvmOverloaded.0.java] Unclassified 9 Foo.foo();

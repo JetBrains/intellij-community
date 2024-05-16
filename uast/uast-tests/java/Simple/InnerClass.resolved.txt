@@ -1,4 +1,0 @@
-UClass (name = AccessingProtectedMembersFromSubclass) -> USimpleNameReferenceExpression (identifier = ProtectedMembers) -> PsiClass:ProtectedMembers: ProtectedMembers
-        UClass (name = StaticInnerImpl1) -> UQualifiedReferenceExpression -> PsiClass:StaticInner: StaticInner
-        UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ProtectedMembers) -> PsiClass:ProtectedMembers: ProtectedMembers
-        UClass (name = StaticInnerImpl2) -> USimpleNameReferenceExpression (identifier = StaticInner) -> PsiClass:StaticInner: StaticInner

@@ -1,7 +1,0 @@
-<templateSet>
-  <template name="name"
-            value="template"
-            <error descr="Attribute unknown is not allowed here">unknown</error>=""
-            description="<warning descr="Extract description for i18n">my descr<caret>iption</warning>">
-  </template>
-</templateSet>

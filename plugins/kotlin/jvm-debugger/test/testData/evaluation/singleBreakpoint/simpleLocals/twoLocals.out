@@ -1,9 +1,0 @@
-// IGNORE_BACKEND: JVM_IR_WITH_OLD_EVALUATOR
-LineBreakpoint created at twoLocals.kt:10
-Run Java
-Connected to the target VM
-twoLocals.kt:10
-Compile bytecode for l1()
-Disconnected from the target VM
-
-Process finished with exit code 0

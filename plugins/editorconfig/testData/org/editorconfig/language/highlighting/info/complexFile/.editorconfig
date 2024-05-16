@@ -1,7 +1,0 @@
-<info descr="null">root</info>=<info descr="null">true</info>
-[<info descr="null">*</info>]
-<info descr="null">charset</info>    =<info descr="null">utf-8</info>
-; hello world
-
-[{<info descr="null">*</info><info descr="null">.java</info>,<info descr="null">*</info><info descr="null">.groovy</info>}]
-<info descr="null">charset</info>=<info descr="null">utf-1024</info>

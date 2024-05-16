@@ -1,3 +1,0 @@
-public void tearDown() throws Exception {
-  ${BODY}
-}

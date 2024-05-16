@@ -1,9 +1,0 @@
-// NEW_NAME: OT
-// RENAME: member
-package rename
-
-class P<OT> {
-    companion object {
-        fun <<caret>K> foo() {}
-    }
-}

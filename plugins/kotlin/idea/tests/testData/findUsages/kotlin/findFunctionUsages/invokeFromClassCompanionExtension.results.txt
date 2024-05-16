@@ -1,2 +1,0 @@
-[invokeFromClassCompanionExtension.1.kt] Implicit 'invoke' 2 Foo()
-[invokeFromClassCompanionExtension.2.kt] Function call 2 Foo.invoke()

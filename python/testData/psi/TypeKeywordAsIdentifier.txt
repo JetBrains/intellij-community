@@ -1,9 +1,0 @@
-PyFile:TypeKeywordAsIdentifier.py
-  PyAssignmentStatement
-    PyTargetExpression: type
-      PsiElement(Py:IDENTIFIER)('type')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:EQ)('=')
-    PsiWhiteSpace(' ')
-    PyNumericLiteralExpression
-      PsiElement(Py:INTEGER_LITERAL)('3')

@@ -1,6 +1,0 @@
-<!DOCTYPE tag [
-<!ELEMENT tag (#PCDATA)>
-<!ATTLIST tag id ID #IMPLIED>
-<!ELEMENT tag2 (tag)>
-]>
-<t<caret>ag></tag>

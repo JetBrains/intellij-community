@@ -1,4 +1,0 @@
-fun foo() = try {
-    println("")
-} finally {
-<selection><caret></selection>}

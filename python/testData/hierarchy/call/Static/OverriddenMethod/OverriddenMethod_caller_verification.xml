@@ -1,5 +1,0 @@
-<node text="B.target_func(self, p) (B in hierarchy.call.Static.OverriddenMethod.main)" base="true">
-  <node text="C.func1(self, a) (C in hierarchy.call.Static.OverriddenMethod.main)"/>
-  <node text="bar1(a) (hierarchy.call.Static.OverriddenMethod.main)"/>
-  <node text="C.func2(self) (C in hierarchy.call.Static.OverriddenMethod.main)"/>
-</node>

@@ -1,1 +1,0 @@
-element foo { <error>xxx</error>:string }

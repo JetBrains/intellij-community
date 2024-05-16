@@ -1,8 +1,0 @@
-PsiJavaFile:YieldWithTextBlock.java
-  PsiYieldStatement
-    PsiKeyword:yield('yield')
-    PsiWhiteSpace(' ')
-    PsiLiteralExpression:"""foo"""
-      PsiJavaToken:TEXT_BLOCK_LITERAL('"""foo"""')
-    PsiErrorElement:';' expected
-      <empty list>

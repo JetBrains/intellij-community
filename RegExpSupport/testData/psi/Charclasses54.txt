@@ -1,8 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\pl>
-    RegExpBranchImpl: <\pl>
-      RegExpPropertyImpl: <\pl>
-        PsiElement(PROPERTY)('\p')
-        PsiErrorElement:Illegal category shorthand
-          <empty list>
-        PsiElement(CHARACTER)('l')

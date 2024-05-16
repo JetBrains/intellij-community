@@ -1,1 +1,0 @@
-print String.<caret>'package'.name

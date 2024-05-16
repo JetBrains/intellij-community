@@ -1,6 +1,0 @@
-count // all ascii is ok
-<warning descr="Non-ASCII symbols in ASCII word">çö</warning>unt // turkish chars at the beginning
-Şğöçç  // all turkish is ok
-non<warning descr="Non-ASCII symbols in ASCII word">Şğ</warning>  // turkish at the end
-Şğö12çç0  // all turkish and COMMON/INHERITED script is ok
-<warning descr="Non-ASCII symbols in ASCII word">Şğö</warning>1x2<warning descr="Non-ASCII symbols in ASCII word">çç</warning>0  // report turkish only, ignore COMMON/INHERITED script

@@ -1,7 +1,0 @@
-package main
-
-import pkg.one
-
-fun test() {
-    val p = ::one
-}

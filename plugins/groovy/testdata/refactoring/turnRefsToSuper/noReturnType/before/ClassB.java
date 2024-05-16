@@ -1,1 +1,0 @@
-public class ClassB implements ClassB1 {}

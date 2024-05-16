@@ -1,6 +1,0 @@
-class A {
-  def foo() {
-    pu<caret> 
-  }
-}
------

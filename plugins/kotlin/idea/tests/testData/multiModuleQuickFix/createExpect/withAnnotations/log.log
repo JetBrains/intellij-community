@@ -1,3 +1,0 @@
-These declarations cannot be transformed:
-fun foo(arg: Int){…}
-actual lateinit var some: Boolean

@@ -1,4 +1,0 @@
-<div>
-  <div id="a"/>
-  <div ref="a"/>
-</div>

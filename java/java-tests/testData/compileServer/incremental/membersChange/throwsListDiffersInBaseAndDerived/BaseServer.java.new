@@ -1,5 +1,0 @@
-public class BaseServer {
-  public Integer method() throws Exception2 {
-    return new Integer(0);
-  }
-}

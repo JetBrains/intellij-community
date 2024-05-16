@@ -1,4 +1,0 @@
-- "com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger":StandaloneCoroutine{Active}@10e52e89, state: SUSPENDED [Dispatchers.Default]
-#  at kotlinx.coroutines.DelayKt.awaitCancellation(Delay.kt:148)
-#  at com.intellij.util.CoroutineScopeKt$namedChildScope$2$1.invokeSuspend(coroutineScope.kt:41)
-  at com.intellij.util.CoroutineScopeKt$namedChildScope$2.invokeSuspend(coroutineScope.kt:39)

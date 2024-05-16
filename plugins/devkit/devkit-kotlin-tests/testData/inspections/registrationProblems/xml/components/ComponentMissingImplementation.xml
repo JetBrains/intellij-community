@@ -1,7 +1,0 @@
-<idea-plugin>
-  <application-components>
-    <<error descr="'implementation-class' child tag should be defined">component</error>>
-      <interface-class>java.lang.Runnable</interface-class>
-    </component>
-  </application-components>
-</idea-plugin>

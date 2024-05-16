@@ -1,7 +1,0 @@
-(1 lt 3) or
-(2 eq 2) or
-(4 idiv 2) or
-(. union $i) or
-(. is .) or
-(/ << /*) or
-(child:* >> .)

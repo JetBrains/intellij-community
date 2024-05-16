@@ -1,6 +1,0 @@
-public class JavaClass extends MyClassForJava {
-
-    public JavaClass(int i) {
-        super(i);
-    }
-}

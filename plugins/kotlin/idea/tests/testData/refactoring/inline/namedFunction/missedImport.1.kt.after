@@ -1,5 +1,0 @@
-package b
-
-val HELLO: String = ""
-class Foo {
-}

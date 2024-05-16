@@ -1,5 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\x4a>
-    RegExpBranchImpl: <\x4a>
-      RegExpCharImpl: <\x4a>
-        PsiElement(HEX_CHAR)('\x4a')

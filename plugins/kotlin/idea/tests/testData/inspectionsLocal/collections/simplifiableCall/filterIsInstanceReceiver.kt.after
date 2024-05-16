@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun List<Any>.test() {
-    filterIsInstance<String>()
-}

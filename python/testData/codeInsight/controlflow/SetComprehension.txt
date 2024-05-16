@@ -1,9 +1,0 @@
-0(1) element: null
-1(2) element: PyAssignmentStatement
-2(3) element: PySetCompExpression
-3(4,8) element: PyParenthesizedExpression
-4(5) element: PyTargetExpression: x
-5(6) WRITE ACCESS: x
-6(7) element: PyReferenceExpression: x
-7(4,8) READ ACCESS: x
-8() element: null

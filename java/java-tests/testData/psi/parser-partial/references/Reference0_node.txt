@@ -1,5 +1,0 @@
-test.java.file
-  JAVA_CODE_REFERENCE
-    IDENTIFIER
-    REFERENCE_PARAMETER_LIST
-      <empty list>

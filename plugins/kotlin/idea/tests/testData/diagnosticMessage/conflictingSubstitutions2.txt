@@ -1,2 +1,0 @@
-<!-- conflictingSubstitutions2 -->
-Not enough information to infer type variable E

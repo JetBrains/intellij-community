@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensionPoints>
-    <extensionPoint name="myExtension" interface="ExtensionPoint"/>
-  </extensionPoints>
-</idea-plugin>

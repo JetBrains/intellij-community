@@ -1,1 +1,0 @@
-from .mod2 import Class

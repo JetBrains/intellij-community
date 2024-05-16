@@ -1,9 +1,0 @@
-FunWithTypeParamKt.class
-<1><3>// IntelliJ API Decompiler stub source generated from a class file
-// Implementation of methods is not available
-
-package testData.libraries
-
-public fun <T : kotlin.CharSequence> <4>funWithTypeParam(t: T): kotlin.Unit { /* compiled code */ }
-
-public fun <T : kotlin.Number> <2>funWithTypeParam(t: T): kotlin.Unit { /* compiled code */ }

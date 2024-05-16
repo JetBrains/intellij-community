@@ -1,9 +1,0 @@
-def final
------
-Groovy script
-  Modifiers
-    PsiElement(def)('def')
-    PsiWhiteSpace(' ')
-    PsiElement(final)('final')
-  PsiErrorElement:identifier expected
-    <empty list>

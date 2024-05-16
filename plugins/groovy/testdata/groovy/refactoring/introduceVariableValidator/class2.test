@@ -1,7 +1,0 @@
-class A{
-  def foo(int preved) {
-    <begin>1<end>
-  }
-}
------
-Introduced variable will conflict with parameter preved

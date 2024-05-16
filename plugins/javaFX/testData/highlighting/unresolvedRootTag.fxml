@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Label?>
-
-<fx:root type=<error descr="Cannot resolve class unknownPackage.unknownClass">"unknownPackage.unknownClass"</error> xmlns:fx="http://javafx.com/fxml">
-  <TextField fx:id="textField" text=""/>
-  <Label text="Hello"/>
-</fx:root>

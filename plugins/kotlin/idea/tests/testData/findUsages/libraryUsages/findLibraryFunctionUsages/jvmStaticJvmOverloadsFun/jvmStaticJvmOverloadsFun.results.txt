@@ -1,4 +1,0 @@
-[Bar.java] Unclassified 5 Foo.foo(2);
-[Bar.java] Unclassified 6 Foo.foo();
-[jvmStaticJvmOverloadsFun.0.java] Unclassified 8 Foo.foo(2);
-[jvmStaticJvmOverloadsFun.0.java] Unclassified 9 Foo.foo();

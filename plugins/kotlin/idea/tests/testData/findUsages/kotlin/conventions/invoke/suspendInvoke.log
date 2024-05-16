@@ -1,7 +1,0 @@
-Checked type of a
-Resolved WithSuspend()
-Resolved a()
-Searched references to WithSuspend
-Searched references to a in non-Java files
-Used plain search of WithSuspend.invoke() in LocalSearchScope:
-    CLASS:WithSuspend

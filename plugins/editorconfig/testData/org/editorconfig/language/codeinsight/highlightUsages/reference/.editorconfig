@@ -1,8 +1,0 @@
-[foo]
-dotnet_naming_rule.my_rule.severity = warning
-dotnet_naming_rule.my_rule.style = <ELEMENT_UNDER_CARET><ELEMENT_UNDER_CARET>dotnet_<caret>naming_rule</ELEMENT_UNDER_CARET></ELEMENT_UNDER_CARET>
-dotnet_naming_rule.my_rule.symbols = my_symbols
-
-dotnet_naming_style.<ELEMENT_UNDER_CARET>dotnet_naming_rule</ELEMENT_UNDER_CARET>.capitalization = pascal_Case
-dotnet_naming_style.<ELEMENT_UNDER_CARET>dotnet_naming_rule</ELEMENT_UNDER_CARET>.required_prefix = dotnet_naming_rule
-dotnet_naming_symbols.my_Symbols.applicable_kinds = *

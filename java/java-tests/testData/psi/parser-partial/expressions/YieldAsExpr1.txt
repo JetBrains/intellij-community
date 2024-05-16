@@ -1,7 +1,0 @@
-PsiJavaFile:YieldAsExpr1.java
-  PsiPostfixExpression:yield++
-    PsiReferenceExpression:yield
-      PsiReferenceParameterList
-        <empty list>
-      PsiIdentifier:yield('yield')
-    PsiJavaToken:PLUSPLUS('++')

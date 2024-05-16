@@ -1,4 +1,0 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
-impor<caret>
-// AUTOCOMPLETE_SETTING: true

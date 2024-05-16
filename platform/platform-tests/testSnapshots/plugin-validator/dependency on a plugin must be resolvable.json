@@ -1,7 +1,0 @@
-1 errors:
-[1]: ------------------------------
-Plugin not found: incorrectId (
-  entry=XmlElement(name=plugin, attributes={id=incorrectId}, children=[], content=null),
-  referencingDescriptorFile=/dependent/META-INF/plugin.xml
-)
------------------------------------

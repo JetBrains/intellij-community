@@ -1,8 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <experimentalFeature id="my.feature.id" percentOfUsers="100" requireRestart="true">
-      <description>Feature ID Description</description>
-    </experimentalFeature>
-    <experimentalFeature id="my.internal.feature.id" internalFeature="true"/>
-  </extensions>
-</idea-plugin>

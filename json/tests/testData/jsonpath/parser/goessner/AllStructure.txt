@@ -1,6 +1,0 @@
-JsonPathFile
-  JsonPathRootSegmentImpl(ROOT_SEGMENT)
-    PsiElement($)('$')
-  PsiElement(..)('..')
-  JsonPathWildcardSegmentImpl(WILDCARD_SEGMENT)
-    PsiElement(*)('*')

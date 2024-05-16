@@ -1,3 +1,0 @@
-- "com.intellij.idea.ScreenReaderStateManager":StandaloneCoroutine{Active}@38d500f5, state: SUSPENDED [Dispatchers.Default]
-#  at kotlinx.coroutines.flow.SharedFlowImpl.collect$suspendImpl(SharedFlow.kt:380)
-  at com.intellij.idea.ScreenReaderStateManager$1.invokeSuspend(IdeStarter.kt:242)

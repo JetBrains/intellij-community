@@ -1,2 +1,0 @@
-fun <T> f(a: Iterable<T>, b: Iterable<T>): Int =
-    a.intersect(<spot>b.toSet()</spot>).size

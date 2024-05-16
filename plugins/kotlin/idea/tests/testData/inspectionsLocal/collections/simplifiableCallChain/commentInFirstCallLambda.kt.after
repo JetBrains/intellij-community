@@ -1,9 +1,0 @@
-// WITH_STDLIB
-fun test(): List<Int> {
-    return listOf(1, null, 2).mapNotNull {
-        // TEXT2
-        // TEXT2
-        // TEXT2
-        it
-    } // Some Additional Comment
-}

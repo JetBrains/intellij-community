@@ -1,5 +1,0 @@
-<!-- bad comment before PI -->
-<error><?xml version="1.0" encoding="UTF-8"?></error>
-<!DOCTYPE weblogic-ejb-jar PUBLIC "-//BEA Systems, Inc.//DTD WebLogic 7.0.0 EJB//EN" "http://www.bea.com/servers/wls700/dtd/weblogic-ejb-jar.dtd" >
-<weblogic-ejb-jar/>
-

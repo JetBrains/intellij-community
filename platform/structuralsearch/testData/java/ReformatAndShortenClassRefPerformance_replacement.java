@@ -1,1 +1,0 @@
-java.util.List.assertEquals($v2$, $v1$, $t$);

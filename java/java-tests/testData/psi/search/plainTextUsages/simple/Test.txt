@@ -1,3 +1,0 @@
-aaa com.Foo bbb
-aaacom.Foo
-aaa com.Foobbb

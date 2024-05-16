@@ -1,3 +1,0 @@
-<begin>foo 1,2,3<end>
------
-def preved = foo 1,2,3<caret>

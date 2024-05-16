@@ -1,5 +1,0 @@
-<selection>println "foo"</selection>
------
-for (<caret>) {
-    println "foo"
-}

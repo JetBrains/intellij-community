@@ -1,4 +1,0 @@
-def sum = 2 + 2
-def diff = 3 - <selection>sum</selection>
------
-def diff = 3 - (2 + 2)<caret>

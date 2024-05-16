@@ -1,2 +1,0 @@
-data class Person(val age: Int, val id: Int)
-val f = { (age): Person -> age == 21 }

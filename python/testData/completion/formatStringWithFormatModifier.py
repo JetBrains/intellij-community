@@ -1,1 +1,0 @@
-r"{compl<caret>}".format(completed="hood")

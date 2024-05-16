@@ -1,5 +1,0 @@
-PsiJavaFile:SwitchLabelsIncomplete2.java
-  PsiSwitchLabelStatement
-    PsiKeyword:default('default')
-    PsiErrorElement:':' or '->' expected
-      <empty list>

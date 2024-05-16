@@ -1,7 +1,0 @@
-{
-  "mainFile": "com/xxxxxxx/yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz/X.kt",
-  "type": "MOVE_FILES",
-  "targetPackage": "org.xxxxxx.yyyyyy.zzzzzz.ttttt",
-  "enabledInK1": "true",
-  "enabledInK2": "true"
-}

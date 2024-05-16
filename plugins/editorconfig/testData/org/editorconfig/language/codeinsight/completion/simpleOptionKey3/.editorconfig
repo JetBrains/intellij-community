@@ -1,6 +1,0 @@
-[foo]
-indent_size = 2
-indent_style = space
-
-[bar]
-cha<caret>

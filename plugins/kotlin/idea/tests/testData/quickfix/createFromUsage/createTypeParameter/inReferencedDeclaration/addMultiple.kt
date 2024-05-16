@@ -1,6 +1,0 @@
-// "Create type parameters in class 'X'" "true"
-
-class X<T>
-
-fun foo(x: X<<caret>String, Int, Boolean>) {}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterFromUsageFix

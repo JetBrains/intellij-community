@@ -1,6 +1,0 @@
-import kotlin.math.pow
-
-// WITH_STDLIB
-fun test(x: Double, y: Double) {
-    x.pow(y)
-}

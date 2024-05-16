@@ -1,3 +1,0 @@
-match x:
-    # comment
-pass

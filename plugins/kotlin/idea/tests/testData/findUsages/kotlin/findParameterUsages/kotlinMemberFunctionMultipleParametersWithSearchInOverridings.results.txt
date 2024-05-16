@@ -1,3 +1,0 @@
-[kotlinMemberFunctionMultipleParametersWithSearchInOverridings.0.kt] Value read 14 val t3: T = t2
-[kotlinMemberFunctionMultipleParametersWithSearchInOverridings.0.kt] Value read 8 return t2
-[kotlinMemberFunctionMultipleParametersWithSearchInOverridings.1.java] Unclassified 6 return t2;

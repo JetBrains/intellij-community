@@ -1,5 +1,0 @@
-<root>
-  <item name='org.eclipse.jgit.errors.TransportException org.eclipse.jgit.errors.TransportException.Status getStatus()'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-</root>

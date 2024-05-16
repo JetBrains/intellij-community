@@ -1,7 +1,0 @@
-bar
-.foo { closure }
-. bar { closure }
------
-bar
-    .foo { closure }
-    .bar { closure }

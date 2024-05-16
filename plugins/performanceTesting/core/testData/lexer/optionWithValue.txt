@@ -1,5 +1,0 @@
-PerformanceTestTokenType.COMMAND ('%stopProfile')
-WHITE_SPACE (' ')
-PerformanceTestTokenType.IDENTIFIER ('traces')
-PerformanceTestTokenType.ASSIGNMENT_OPERATOR ('=')
-PerformanceTestTokenType.NUMBER ('1000')

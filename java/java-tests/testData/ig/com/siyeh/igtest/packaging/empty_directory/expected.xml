@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>simple</file>
-    <problem_class id="EmptyDirectory" severity="WARNING" attribute_key="WARNING_ATTRIBUTES" />
-    <description>Empty directory &lt;code&gt;simple&lt;/code&gt;</description>
-  </problem>
-</problems>

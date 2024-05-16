@@ -1,6 +1,0 @@
-class B() {
-
-    fun main() {
-        B()
-    }
-}

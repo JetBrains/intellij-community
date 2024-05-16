@@ -1,3 +1,0 @@
-fun test() {
-    System.out.println("test")
-}

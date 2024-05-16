@@ -1,3 +1,0 @@
-<selection>s<caret>ome</selection> <selection>t<caret>ext</selection>
-<selection>s<caret>ome</selection> other
-<selection>another li<caret>ne</selection>

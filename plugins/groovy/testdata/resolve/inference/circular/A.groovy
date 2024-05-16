@@ -1,1 +1,0 @@
-def b = <ref>a, a = b

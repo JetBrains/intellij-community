@@ -1,3 +1,0 @@
-
-rootProject.name = 'project'
-include 'submoduleA', 'submoduleB', 'submoduleA:submoduleA1', 'submoduleA:submoduleA2', 'submoduleA:submoduleA3'

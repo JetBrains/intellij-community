@@ -1,9 +1,0 @@
-<idea-plugin>
-
-  <actions>
-    <group id="separatorGroup">
-      <separator text="<warning descr="String 'separator title case' is not properly capitalized. It should have title capitalization"><caret>separator title case</warning>"/>
-    </group>
-  </actions>
-
-</idea-plugin>

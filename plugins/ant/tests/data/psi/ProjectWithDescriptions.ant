@@ -1,4 +1,0 @@
-<project name="Project" default="defaultTarget">
-  <description>This if a fake project named 'Project'</description>
-  <target name="defaultTarget" description="Default project's target"/>
-</project>

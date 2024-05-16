@@ -1,3 +1,0 @@
-Author=ven
-PACKAGE_NAME=com.idea
-Name=MyClass

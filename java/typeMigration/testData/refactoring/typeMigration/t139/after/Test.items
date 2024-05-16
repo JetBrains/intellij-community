@@ -1,7 +1,0 @@
-Types:
-PsiParameter:s : java.lang.Integer
-
-Conversions:
-
-New expression type changes:
-Fails:

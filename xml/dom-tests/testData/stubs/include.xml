@@ -1,6 +1,0 @@
-<foo>
-  <bar string="included" int="666"></bar>
-  <bar-2>
-    <bar string="included2"/>
-  </bar-2>
-</foo>

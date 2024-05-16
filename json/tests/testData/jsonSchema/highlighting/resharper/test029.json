@@ -1,8 +1,0 @@
-{
-  "webJobName":  "ProcessQueryJob",   
-  "startTime": null,
-  "endTime": null,
-  "jobRecurrenceFrequency": "Day",
-  "runMode": "Continuous",
-  "interval": 5
-} 

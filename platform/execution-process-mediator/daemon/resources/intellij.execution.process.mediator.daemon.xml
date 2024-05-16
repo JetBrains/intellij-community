@@ -1,7 +1,0 @@
-<idea-plugin package="com.intellij.execution.process.mediator.daemon">
-  <dependencies>
-    <module name="intellij.libraries.grpc"/>
-    <module name="intellij.libraries.grpc.netty.shaded"/>
-    <module name="intellij.execution.process.mediator.common"/>
-  </dependencies>
-</idea-plugin>

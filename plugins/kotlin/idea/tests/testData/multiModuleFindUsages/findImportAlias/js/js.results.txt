@@ -1,2 +1,0 @@
-[common.kt] Parameter type 5 fun smth(p: ImportAlias) {}
-[common.kt] Usage in import 2 import foo.OnlyInCommonInterface014 as ImportAlias

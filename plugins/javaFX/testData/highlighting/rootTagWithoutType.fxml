@@ -1,7 +1,0 @@
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Label?>
-
-<<error descr="Element fx:root doesn't have required attribute type">fx:root</error> xmlns:fx="http://javafx.com/fxml">
-  <TextField fx:id="textField" text=""/>
-  <Label text="Hello"/>
-</<error descr="Element fx:root doesn't have required attribute type">fx:root</error>>

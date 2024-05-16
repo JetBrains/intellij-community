@@ -1,7 +1,0 @@
-<spot>public interface X</spot> {
-  void f();
-}
-class Y implements X {
-  public void f() {
-  }
-}

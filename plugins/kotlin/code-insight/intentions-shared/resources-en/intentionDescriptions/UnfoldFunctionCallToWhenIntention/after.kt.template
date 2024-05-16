@@ -1,4 +1,0 @@
-when {
-    b -> println(x)
-    else -> println(y)
-}

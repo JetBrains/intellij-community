@@ -1,7 +1,0 @@
-<!DOCTYPE a [
-<!ELEMENT a (#PCDATA)>
-<!ENTITY help SYSTEM "file:Z.xml">
-]>
-<a>
-  &he<caret>
-</a>

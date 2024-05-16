@@ -1,1 +1,0 @@
-if (x instance of xs:string) then x treat as xs:string else if (x castable as xs:string) then x cast as xs:string else ''

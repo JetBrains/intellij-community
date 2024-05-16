@@ -1,1 +1,0 @@
-inp<caret>ut()

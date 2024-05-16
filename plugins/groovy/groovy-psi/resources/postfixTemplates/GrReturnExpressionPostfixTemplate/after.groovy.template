@@ -1,3 +1,0 @@
-def foo() {
-  return expr<spot></spot>
-}

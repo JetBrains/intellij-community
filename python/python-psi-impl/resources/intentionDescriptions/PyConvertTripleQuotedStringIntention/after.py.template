@@ -1,3 +1,0 @@
-a = ("This line is ok," "\n"
-    "but \"this\" includes far too much" "\n"
-    "whitespace at the start")

@@ -1,5 +1,0 @@
-<project name="testProject" default="test">
-  <target name="test" depends="a,b-after"/>
-  <target name="a"/>
-  <target name="b-after"/>
-</project>

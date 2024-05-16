@@ -1,3 +1,0 @@
-@Anno(
-  param
-)<caret>

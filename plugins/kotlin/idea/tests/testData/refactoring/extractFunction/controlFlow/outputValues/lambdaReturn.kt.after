@@ -1,9 +1,0 @@
-val a: List<Int> = listOf(1, 2, 3).map {
-    i(it)
-}
-
-private fun i(i: Int): Int = i.let {
-    it
-}
-
-// IGNORE_K1

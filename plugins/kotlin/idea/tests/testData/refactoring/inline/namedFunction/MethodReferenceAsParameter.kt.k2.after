@@ -1,8 +1,0 @@
-fun main() {
-    "foo".let {
-        println(it)
-        println(42)
-        it.let<String, String> { "$it" }
-        Unit
-    }
-}

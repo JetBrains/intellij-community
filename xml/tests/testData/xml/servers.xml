@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<Requests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:noNamespaceSchemaLocation="servers.xsd">
-   <Request Url="http://google.com" Types="get <error descr="Wrong attribute value">unknown</error> post"/>
-</Requests>

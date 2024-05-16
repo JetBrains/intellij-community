@@ -1,6 +1,0 @@
-public class X {
-  int p1;
-
-  void f(<spot>int p1, int p2, int p3</spot>) {
-  }
-}

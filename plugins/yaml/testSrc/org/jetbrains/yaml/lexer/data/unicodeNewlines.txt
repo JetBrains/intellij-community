@@ -1,12 +1,0 @@
-scalar key ('foo')
-: (':')
-whitespace (' ')
-text ('IC Real Tech, Inc. 3050 N Andrews Ave EXT Pompano Beach, FL 33064')
-Eol ('\n')
-scalar key ('bar')
-: (':')
-whitespace (' ')
-scalar text ('>')
-block scalar EOL ('\n')
-indent ('  ')
-scalar text ('IC Real Tech, Inc. 3050 N Andrews Ave EXT Pompano Beach, FL 33064')

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Foo.java</file>
-    <line>21</line>
-    <description>ObjectStreamException</description>
-  </problem>
-</problems>
-

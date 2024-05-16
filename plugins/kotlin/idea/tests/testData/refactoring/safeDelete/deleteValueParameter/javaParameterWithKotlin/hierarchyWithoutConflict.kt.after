@@ -1,5 +1,0 @@
-class B: A() {
-    public override fun foo() {
-
-    }
-}

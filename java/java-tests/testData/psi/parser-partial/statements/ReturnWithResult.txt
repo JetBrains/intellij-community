@@ -1,7 +1,0 @@
-PsiJavaFile:ReturnWithResult.java
-  PsiReturnStatement
-    PsiKeyword:return('return')
-    PsiWhiteSpace(' ')
-    PsiLiteralExpression:10
-      PsiJavaToken:INTEGER_LITERAL('10')
-    PsiJavaToken:SEMICOLON(';')

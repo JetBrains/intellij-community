@@ -1,5 +1,0 @@
-import dependency.extProp
-
-fun foo() {
-    dependency.AnObject.extProp()
-}

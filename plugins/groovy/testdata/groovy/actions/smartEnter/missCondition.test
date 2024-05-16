@@ -1,4 +1,0 @@
-while (<caret>
------
-while (<caret>) {
-}

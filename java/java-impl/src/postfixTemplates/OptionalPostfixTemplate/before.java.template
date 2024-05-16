@@ -1,6 +1,0 @@
-public void m(int intValue, double doubleValue, long longValue, Object objValue) {
-  <spot>intValue</spot>.opt
-  <spot>doubleValue</spot>.opt
-  <spot>longValue</spot>.opt
-  <spot>objValue</spot>.opt
-}

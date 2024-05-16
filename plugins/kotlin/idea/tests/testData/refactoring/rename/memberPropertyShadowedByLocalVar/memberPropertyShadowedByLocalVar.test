@@ -1,8 +1,0 @@
-{
-  "type": "MARKED_ELEMENT",
-  "mainFile": "test/test.kt",
-  "newName": "name2",
-  "withRuntime": "true",
-  "enabledInK2": "false"
-  //simplify this@A.x https://youtrack.jetbrains.com/issue/KT-62676
-}

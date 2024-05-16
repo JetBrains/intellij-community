@@ -1,9 +1,0 @@
-PyFile:PatternMatchingRecoveryMatchStatementWithoutClausesAtEndOfFile.py
-  PyMatchStatement
-    PsiElement(Py:MATCH_KEYWORD)('match')
-    PsiWhiteSpace(' ')
-    PyReferenceExpression: x
-      PsiElement(Py:IDENTIFIER)('x')
-    PsiElement(Py:COLON)(':')
-    PsiErrorElement:Indent expected
-      <empty list>

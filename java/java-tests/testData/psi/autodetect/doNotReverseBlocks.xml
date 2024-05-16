@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<root>
-  <item name="java.lang.String String(byte[], java.lang.String) 1">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
-</root>

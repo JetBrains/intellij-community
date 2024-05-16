@@ -1,2 +1,0 @@
-/* Doc comment */
-class Some

@@ -1,2 +1,0 @@
-# This function gets the wrong signature from functools.wraps()
-aiofiles.os.sendfile

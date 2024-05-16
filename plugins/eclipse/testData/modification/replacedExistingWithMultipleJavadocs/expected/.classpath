@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-  <classpathentry kind="var" path="variable/test.jar">
-    <attributes>
-      <attribute name="javadoc_location" value="jar:file:/$ROOT$/srcvariableidea1/test.jar!/" />
-    </attributes>
-  </classpathentry>
-  <classpathentry kind="output" path="bin" />
-</classpath>

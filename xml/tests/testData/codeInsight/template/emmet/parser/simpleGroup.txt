@@ -1,5 +1,0 @@
-+
-  >
-    Template(div)
-    Template(span)
-  Template(div)

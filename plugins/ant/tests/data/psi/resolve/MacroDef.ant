@@ -1,6 +1,0 @@
-<project name="n" default="t">
-  <target name="t">
-    <<ref>mytask/>
-  </target>
-  <macrodef name="mytask"/>
-</project>

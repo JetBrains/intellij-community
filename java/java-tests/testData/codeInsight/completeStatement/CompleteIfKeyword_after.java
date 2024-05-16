@@ -1,7 +1,0 @@
-
-class foo {
-    {
-        if (<caret>) {
-        }
-    }
-}

@@ -1,5 +1,0 @@
-class FooTest extends TestCase {
-    public void testFoo() {
-        <spot>assert "1" == "1" : "Error"</spot>
-    }
-}

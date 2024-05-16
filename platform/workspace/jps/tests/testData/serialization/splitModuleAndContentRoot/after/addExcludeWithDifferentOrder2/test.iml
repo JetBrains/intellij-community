@@ -1,9 +1,0 @@
-<module version="4">
-  <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$/myContentRoot">
-      <excludeFolder url="file://$MODULE_DIR$/myContentRoot2" />
-      <excludeFolder url="file://$MODULE_DIR$/myContentRoot1" />
-    </content>
-    <orderEntry type="sourceFolder" forTests="false" />
-  </component>
-</module>

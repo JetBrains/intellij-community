@@ -1,6 +1,0 @@
-<!DOCTYPE missing-element [
-  <!ENTITY content SYSTEM "entity-included.xml" >
-]>
-<missing-element xmlns="urn:test:simple.rng">
-  &content;
-</missing-element>

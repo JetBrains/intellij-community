@@ -1,9 +1,0 @@
-Types:
-PsiField:f : java.util.List<java.lang.String>
-PsiLocalVariable:i : java.lang.String
-PsiReferenceExpression:f : java.util.List<java.lang.String>
-
-Conversions:
-
-New expression type changes:
-Fails:

@@ -1,4 +1,0 @@
-<option>SPACE_BEFORE_METHOD_PARENTHESES=true</option>
-def foo(int i)throws Exception{}
------
-def foo (int i) throws Exception {}

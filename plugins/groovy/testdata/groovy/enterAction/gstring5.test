@@ -1,4 +1,0 @@
-"preved $id<caret> medved"
------
-"preved $id" +
-    "<caret> medved"

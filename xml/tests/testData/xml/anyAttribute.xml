@@ -1,9 +1,0 @@
-<?xml version="1.0" ?>
-<container xmlns="http://symfony.com/schema/dic/services">
-
-    <services>
-        <service id="example.form.type" class="Acme\ExampleBundle\Form\Type\ExampleFormType">
-            <tag name="form.type" alias="example_form"/>
-        </service>
-    </services>
-</container>

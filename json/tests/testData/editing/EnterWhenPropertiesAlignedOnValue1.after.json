@@ -1,8 +1,0 @@
-{
-    "scripts"          : {
-        "post-install-cmd": [
-            "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installRequirementsFile"
-        ],
-        <caret>
-    }
-}

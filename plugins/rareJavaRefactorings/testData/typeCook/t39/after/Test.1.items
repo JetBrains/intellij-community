@@ -1,5 +1,0 @@
-LinkedList<java.lang.Integer,java.lang.Integer>\nPsiLocalVariable:y
-LinkedList<java.lang.Integer,java.lang.Integer>\nparameter 0 of f
-LinkedList<java.lang.Integer,java.lang.Integer>\nreturn of f
-ListLinked<java.lang.Integer>\nPsiLocalVariable:x
-ListLinked<java.lang.Integer>\nnew

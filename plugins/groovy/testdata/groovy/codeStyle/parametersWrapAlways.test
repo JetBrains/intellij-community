@@ -1,6 +1,0 @@
-<option>METHOD_PARAMETERS_WRAP=WRAP_ALWAYS</option>
-def foooooooooooooo(a,b,c) {}
------
-def foooooooooooooo(a,
-                    b,
-                    c) {}

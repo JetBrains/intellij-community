@@ -1,5 +1,0 @@
-<!DOCTYPE aaa [
-  <!ENTITY laquo  "&#171;"> <!-- left-pointing double angle quotation mark
-                                  = left pointing guillemet, U+00AB ISOnum -->
-  ]>
-<aaa bbb="c&la<caret>quo;cc"/>

@@ -1,3 +1,0 @@
-decho() {
-  <caret>decho
-}

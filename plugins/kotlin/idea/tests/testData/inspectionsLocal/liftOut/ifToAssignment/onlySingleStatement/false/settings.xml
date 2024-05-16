@@ -1,3 +1,0 @@
-<inspection_tool class="LiftReturnOrAssignmentInspection" enabled="true" enabled_by_default="true">
-  <option name="reportOnlyIfSingleStatement" value="false"/>
-</inspection_tool>

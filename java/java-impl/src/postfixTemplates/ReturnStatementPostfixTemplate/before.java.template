@@ -1,5 +1,0 @@
-public class Foo {
-    String m() {
-        <spot>"result"</spot>$key
-    }
-}

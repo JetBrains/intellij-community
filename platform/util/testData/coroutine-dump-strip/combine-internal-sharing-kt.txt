@@ -1,3 +1,0 @@
-- "PackageChecker.ProjectDependenciesModelImpl":StandaloneCoroutine{Active}@5bb82df7, state: SUSPENDED [Dispatchers.Default]
-#  at kotlinx.coroutines.flow.internal.CombineKt$combineInternal$2.invokeSuspend(Combine.kt:57)
-  at kotlinx.coroutines.flow.FlowKt__ShareKt$launchSharing$1.invokeSuspend(Share.kt:219)

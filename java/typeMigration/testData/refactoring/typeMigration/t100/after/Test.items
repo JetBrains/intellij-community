@@ -1,9 +1,0 @@
-Types:
-PsiField:f : java.util.Map<java.lang.String,java.lang.Integer>
-PsiNewExpression:new HashMap<String,String>() : java.util.HashMap<java.lang.String,java.lang.Integer>
-
-Conversions:
-
-New expression type changes:
-new HashMap<String,String>() -> java.util.HashMap<java.lang.String,java.lang.Integer>
-Fails:

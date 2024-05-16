@@ -1,2 +1,0 @@
-Alias will refer to another anchor
-Anchor already has the same name

@@ -1,9 +1,0 @@
-Types:
-PsiField:list : java.util.Collection<java.lang.Integer>
-PsiNewExpression:new ArrayList<>(2) : java.util.ArrayList<java.lang.Integer>
-
-Conversions:
-
-New expression type changes:
-new ArrayList<>(2) -> java.util.ArrayList<java.lang.Integer>
-Fails:

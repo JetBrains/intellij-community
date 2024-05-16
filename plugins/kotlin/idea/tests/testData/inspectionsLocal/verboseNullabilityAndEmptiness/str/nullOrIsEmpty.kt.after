@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun test(str: String?) {
-    if (str.isNullOrEmpty()) println(0) else println(str.length)
-}

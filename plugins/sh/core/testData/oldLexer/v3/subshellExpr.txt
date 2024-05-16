@@ -1,7 +1,0 @@
-OPEN_BACKQUOTE ('`')
-word ('dd')
-WHITE_SPACE (' ')
-word ('if')
-= ('=')
-word ('a')
-CLOSE_BACKQUOTE ('`')

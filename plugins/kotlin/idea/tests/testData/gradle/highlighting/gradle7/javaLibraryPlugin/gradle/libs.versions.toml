@@ -1,9 +1,0 @@
-[libraries]
-
-junit-api = "org.junit.jupiter:junit-jupiter-api:5.7.0"
-junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
-
-commons-math3 = "org.apache.commons:commons-math3:3.6.1"
-
-guava = "com.google.guava:guava:30.0-jre"
-

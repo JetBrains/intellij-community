@@ -1,5 +1,0 @@
-0(1) element: null
-1(2) element: PyFunction('foo')
-2(3) READ ACCESS: classmethod
-3(4) WRITE ACCESS: foo
-4() element: null

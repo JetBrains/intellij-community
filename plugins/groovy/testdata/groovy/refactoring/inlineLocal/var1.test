@@ -1,4 +1,0 @@
-def var = 1
-<selection>var</selection>
------
-1<caret>

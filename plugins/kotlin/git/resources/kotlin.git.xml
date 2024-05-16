@@ -1,9 +1,0 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.git">
-  <dependencies>
-    <plugin id="Git4Idea"/>
-  </dependencies>
-
-  <extensions defaultExtensionNs="Git4Idea">
-    <GitCheckinExplicitMovementProvider  implementation="org.jetbrains.kotlin.idea.git.KotlinExplicitMovementProvider"/>
-  </extensions>
-</idea-plugin>

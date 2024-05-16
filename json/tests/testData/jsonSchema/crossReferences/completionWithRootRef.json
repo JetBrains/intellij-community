@@ -1,9 +1,0 @@
-{
-  "testProp": {
-    "testProp": {
-      "testProp": {
-        <caret>
-      }
-    }
-  }
-}

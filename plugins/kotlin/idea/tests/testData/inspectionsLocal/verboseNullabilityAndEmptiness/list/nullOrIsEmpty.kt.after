@@ -1,6 +1,0 @@
-// WITH_STDLIB
-// PROBLEM: Replace subsequent checks with 'isNullOrEmpty()' call
-// FIX: Replace with 'isNullOrEmpty()' call
-fun test(list: List<Int>?) {
-    if (list.isNullOrEmpty()) println(0) else println(list.size)
-}

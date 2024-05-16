@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Test.java</file>
-    <line>1</line>
-    <problem_class severity="WARNING" attribute_key="DEPRECATED_ATTRIBUTES">Deprecated API usage</problem_class>
-    <description>'a.B' is deprecated</description>
-  </problem>
-</problems>

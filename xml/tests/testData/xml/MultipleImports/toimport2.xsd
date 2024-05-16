@@ -1,7 +1,0 @@
-<xsd:schema xmlns="http://import.local" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://import.local">
-    <xsd:simpleType name="invisibleType">
-        <xsd:restriction base="xsd:string">
-            <xsd:minLength value="1"/>
-        </xsd:restriction>
-    </xsd:simpleType>
-</xsd:schema>

@@ -1,7 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\g'name'>
-    RegExpBranchImpl: <\g'name'>
-      RegExpNamedGroupRefImpl: <\g'name'>
-        PsiElement(RUBY_QUOTED_NAMED_GROUP_CALL)('\g'')
-        PsiElement(NAME)('name')
-        PsiElement(QUOTE)(''')

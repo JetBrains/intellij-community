@@ -1,9 +1,0 @@
-<idea-plugin>
-  <id>com.intellij.yyy</id>
-
-  <extensionPoints>
-    <extensionPoint name="myExtension"/>
-  </extensionPoints>
-
-  <depends optional="true" config-file="dep.xml">com.intellij.xxx</depends>
-</idea-plugin>

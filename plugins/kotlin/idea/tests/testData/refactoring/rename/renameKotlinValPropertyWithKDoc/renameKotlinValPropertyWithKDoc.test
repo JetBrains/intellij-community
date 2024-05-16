@@ -1,7 +1,0 @@
-{
-  "type": "KOTLIN_PROPERTY",
-  "packageFqn": "testing.rename",
-  "oldName": "property",
-  "newName": "newProperty",
-  "enabledInK2": true
-}

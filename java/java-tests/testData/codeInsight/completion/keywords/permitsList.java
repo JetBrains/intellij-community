@@ -1,1 +1,0 @@
-sealed class Foo <caret>{}

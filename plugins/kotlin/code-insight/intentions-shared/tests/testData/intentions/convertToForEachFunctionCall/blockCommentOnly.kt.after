@@ -1,9 +1,0 @@
-// WITH_STDLIB
-// AFTER-WARNING: Parameter 'l' is never used, could be renamed to _
-fun foo() {}
-
-fun test() {
-    listOf(1, 2).forEach { l ->
-        /* comment */
-    }
-}

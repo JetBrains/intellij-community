@@ -1,5 +1,0 @@
-PerformanceTestTokenType.COMMAND ('%goto')
-WHITE_SPACE (' ')
-PerformanceTestTokenType.NUMBER ('1418')
-PerformanceTestTokenType.OPTIONS_SEPARATOR (' ')
-PerformanceTestTokenType.NUMBER ('1')

@@ -1,4 +1,0 @@
-some t<caret>Ext
-other <caret>line<caret>
-yet <caret>another line
-<caret>HeavilyHumped<caret>Word

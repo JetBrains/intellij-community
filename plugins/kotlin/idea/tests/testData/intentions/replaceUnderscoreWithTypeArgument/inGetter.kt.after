@@ -1,4 +1,0 @@
-val x: List<String>
-    get() = listOf<String>()
-
-// WITH_STDLIB

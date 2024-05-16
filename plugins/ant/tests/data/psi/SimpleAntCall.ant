@@ -1,6 +1,0 @@
-<project default="A">
-  <target name="A">
-    <antcall target="B"/>
-  </target>
-  <target name="B"/>
-</project>

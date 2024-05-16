@@ -1,7 +1,0 @@
-// WITH_STDLIB
-@OptIn(ExperimentalUnsignedTypes::class)
-fun foo() {
-    ushortArrayOf(1u).forEach { x ->
-        println(x)
-    }
-}

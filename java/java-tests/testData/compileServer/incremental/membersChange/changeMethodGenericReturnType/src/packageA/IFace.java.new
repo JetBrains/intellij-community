@@ -1,6 +1,0 @@
-package packageA;
-import java.util.List;
-
-public interface IFace {
-    List<? extends Info2> getKeys();
-}

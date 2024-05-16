@@ -1,7 +1,0 @@
-<option>BRACE_STYLE=END_OF_LINE</option>
-<option>SPACE_WITHIN_WHILE_PARENTHESES=true</option>
-<option>SPACE_BEFORE_WHILE_PARENTHESES=false</option>
-while (true)    {}
------
-while( true ) {
-}

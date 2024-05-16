@@ -1,5 +1,0 @@
-[foo]
-dotnet_naming_rule.my_rule.symbols = mysymbols
-dotnet_naming_rule.my_rule2.symbols = <error>mySymbols2</error>
-
-dotnet_naming_symbols.mySymbols.applicable_kinds = *

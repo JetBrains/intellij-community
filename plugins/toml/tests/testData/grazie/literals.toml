@@ -1,7 +1,0 @@
-oneline_double_quoted_literal = "It <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> bad error in string literal"
-oneline_single_quoted_literal = 'das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!'
-multiline_double_quoted_literal = """Это случилось <GRAMMAR_ERROR descr="INVALID_DATE">31
-ноября</GRAMMAR_ERROR> 2014 г."""
-multiline_single_quoted_literal = '''В моей коробке лежало <GRAMMAR_ERROR descr="Sklonenije_NUM_NN">пять
-карандаша</GRAMMAR_ERROR>.'''
-

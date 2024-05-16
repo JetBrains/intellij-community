@@ -1,4 +1,0 @@
-Unclassified 10 override fun <T> meth(c: MutableCollection<T>?) = Unit
-Unclassified 14 override fun <T> meth(c: MutableCollection<T>) = Unit
-Unclassified 2 override fun <T> meth(c: Collection<T>?) = Unit
-Unclassified 6 override fun <T> meth(c: Collection<T>) = Unit

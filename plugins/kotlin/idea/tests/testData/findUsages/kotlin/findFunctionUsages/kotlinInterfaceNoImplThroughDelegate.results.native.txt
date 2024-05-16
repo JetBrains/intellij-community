@@ -1,1 +1,0 @@
-Function call 12 fun test(twdni: InterfaceWithDelegatedNoImpl) = twdni.foo()

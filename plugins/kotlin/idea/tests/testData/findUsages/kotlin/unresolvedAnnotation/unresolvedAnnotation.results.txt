@@ -1,1 +1,0 @@
-Usage in extends/implements clause 1 public class Client extends Foo {

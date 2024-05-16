@@ -1,5 +1,0 @@
-PsiJavaFile:BreakIncomplete.java
-  PsiBreakStatement
-    PsiKeyword:break('break')
-    PsiErrorElement:';' expected
-      <empty list>

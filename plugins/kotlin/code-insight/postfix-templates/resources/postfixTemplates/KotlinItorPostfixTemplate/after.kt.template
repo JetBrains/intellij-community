@@ -1,6 +1,0 @@
-fun test(list: List<String>) {
-    val iterator = list.iterator()
-    while (iterator.hasNext()) {
-        val next = iterator.next()
-    }
-}

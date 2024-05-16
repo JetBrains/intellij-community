@@ -1,5 +1,0 @@
-<idea-plugin package="com.intellij.coverage.listeners.java.testng">
-  <extensions defaultExtensionNs="com.theoryinpractice.testng">
-    <listener implementation="com.intellij.coverage.listeners.java.testng.IDEATestNGCoverageListener"/>
-  </extensions>
-</idea-plugin>

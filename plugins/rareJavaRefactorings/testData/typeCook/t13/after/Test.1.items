@@ -1,3 +1,0 @@
-LinkedList<LinkedList>\nPsiField:y
-LinkedList\nPsiField:x
-LinkedList\nPsiTypeCastExpression:(LinkedList) y.get()

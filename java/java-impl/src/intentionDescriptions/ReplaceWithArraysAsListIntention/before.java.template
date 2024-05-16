@@ -1,7 +1,0 @@
-import java.util.*;
-
-public class X {
-  List<String> f() {
-    return <spot>Collections.emptyList()</spot>;
-  }
-}

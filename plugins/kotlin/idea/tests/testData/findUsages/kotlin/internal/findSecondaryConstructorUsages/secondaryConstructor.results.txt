@@ -1,4 +1,0 @@
-Constructor delegation reference 15 constructor(a: Int) : super("") {
-Constructor delegation reference 5 constructor() : this("") {
-New instance creation 25 B("")
-Supertype 20 class C : B("") {

@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun f() = 42
-
-val answer: Int = f()

@@ -1,5 +1,0 @@
-// WITH_STDLIB
-
-fun test(b: Boolean) {
-    (if (b) 1 else 0).toString()
-}

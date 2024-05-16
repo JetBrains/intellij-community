@@ -1,5 +1,0 @@
-<root>
-  <item name='com.sun.jna.platform.win32.Ole32Util com.sun.jna.platform.win32.Guid.GUID getGUIDFromString(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-</root>

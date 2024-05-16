@@ -1,9 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="splitHorizontally">
-<g id="Group 358">
-<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M3 7L3 13H14V7L3 7ZM4 8V12H13V8H4Z" fill="#6E6E6E"/>
-<path id="Combined Shape_2" fill-rule="evenodd" clip-rule="evenodd" d="M3 2L3 8H14V2L3 2ZM4 3V7L13 7V3L4 3Z" fill="#6E6E6E"/>
-</g>
-</g>
-</svg>

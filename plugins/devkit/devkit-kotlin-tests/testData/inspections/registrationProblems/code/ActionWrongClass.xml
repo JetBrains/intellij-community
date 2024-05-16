@@ -1,6 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action id="invalid"
-            class="MyActionWrongClass"/>
-  </actions>
-</idea-plugin>

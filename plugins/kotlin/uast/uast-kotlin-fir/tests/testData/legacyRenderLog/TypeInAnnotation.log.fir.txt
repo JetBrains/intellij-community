@@ -1,6 +1,0 @@
-UFile (package = )
-    UClass (name = C)
-        UMethod (name = foo)
-            UAnnotation (fqName = null)
-            UBlockExpression
-        UMethod (name = C)

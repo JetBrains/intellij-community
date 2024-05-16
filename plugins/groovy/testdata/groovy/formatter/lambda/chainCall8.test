@@ -1,8 +1,0 @@
-bar.
-foo( (a)->
-  closure )
-
------
-bar.
-    foo((a) ->
-        closure)

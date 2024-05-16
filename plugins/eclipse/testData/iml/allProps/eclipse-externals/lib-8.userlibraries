@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<eclipse-userlibraries version="2">
-    <library name="lib-8" systemlibrary="false">
-        <archive javadoc="jar:file:/C:/uf/Alexander.Chernikov/work/eclipse-externals/lib-8/jar-every/apidoc.zip!/" path="C:/uf/Alexander.Chernikov/work/eclipse-externals/lib-8/jar-every/lib-8.jar" source="C:/uf/Alexander.Chernikov/work/eclipse-externals/lib-8/jar-every/src.zip"/>
-    </library>
-</eclipse-userlibraries>

@@ -1,7 +1,0 @@
-:param foo: something
-:type foo: int
-
-:param int bar: something
-
-:type baz: int
-:rtype: str

@@ -1,3 +1,0 @@
-Function call 7 p.component1()
-Value read 12 val (x, y) = 1 to "a"
-Value read 8 val (x, y) = p

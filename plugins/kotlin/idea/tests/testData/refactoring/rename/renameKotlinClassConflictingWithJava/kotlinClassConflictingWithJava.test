@@ -1,8 +1,0 @@
-{
-  "type": "KOTLIN_CLASS",
-  "classId": "rename/X.Bar",
-  "mainFile": "rename/test.kt",
-  "newName": "JavaConflict",
-  "enabledInK2": true,
-  "enabledInK1": false
-}

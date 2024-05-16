@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.image.*?>
-<ImageView id="lock" pickOnBounds="true">
-  <<error descr="Cannot resolve symbol 'geomBoundsInvalid'">geomBoundsInvalid</error>/>
-</ImageView>

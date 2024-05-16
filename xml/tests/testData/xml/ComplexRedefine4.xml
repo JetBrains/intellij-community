@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<outer xmlns="http://simple"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://simple ComplexRedefine4.xsd">
-    <inner attr="true" extended.attr="fail"/>
-</outer>

@@ -1,5 +1,0 @@
-fun check() = Unit
-
-fun check2() {
-    4
-}

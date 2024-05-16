@@ -1,7 +1,0 @@
-if (someCondition) {
-  doSomeAction();
-} <spot>else</spot> if (otherCondition) {
-  doAnotherAction();
-} else {
-  defaultAction();
-}

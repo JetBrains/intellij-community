@@ -1,5 +1,0 @@
-Requirements File(0,15)
-  OptionImpl(OPTION)(0,15)
-    PsiElement(RequirementsTokenType.LONG_OPTION)('--')(0,2)
-    PreferBinaryReqImpl(PREFER_BINARY_REQ)(2,15)
-      PsiElement(RequirementsTokenType.PREFER_BINARY)('prefer-binary')(2,15)

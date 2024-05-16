@@ -1,5 +1,0 @@
-<project default="">
-  <property name="asd" value="v"/>
-
-  <antcall target="${a<caret>}"/>
-</project>

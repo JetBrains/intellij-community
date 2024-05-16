@@ -1,6 +1,0 @@
-[remote "origin"]
-	url = git@git.server.example.com:server/origin
-	fetch = +refs/heads/*:refs/remotes/origin/*
-[branch "master"]
-	remote = origin
-	merge = refs/heads/master

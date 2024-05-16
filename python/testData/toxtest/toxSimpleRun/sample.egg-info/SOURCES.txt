@@ -1,8 +1,0 @@
-README.rst
-setup.py
-sample.egg-info/PKG-INFO
-sample.egg-info/SOURCES.txt
-sample.egg-info/dependency_links.txt
-sample.egg-info/entry_points.txt
-sample.egg-info/requires.txt
-sample.egg-info/top_level.txt

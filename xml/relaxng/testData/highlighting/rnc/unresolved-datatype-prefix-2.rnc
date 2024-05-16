@@ -1,3 +1,0 @@
-namespace xxx = "yyy"
-
-element foo { <error>xxx</error>:string }

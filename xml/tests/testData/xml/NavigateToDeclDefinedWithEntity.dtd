@@ -1,2 +1,0 @@
-<!ENTITY % my.mod SYSTEM "NavigateToDeclDefinedWithEntity.ent" >
-%my.mod;

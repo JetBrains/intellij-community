@@ -1,8 +1,0 @@
-[
-    "correctly escaped trailing slashes \\\\",
-    "illegal escape sequence: <error descr="Illegal escape sequence">\q</error>",
-    "illegal unicode escapes: <error descr="Illegal unicode escape sequence">\u</error>ZZZZ",
-    "illegal unicode escapes: <error descr="Illegal unicode escape sequence">\uBEE</error>",
-    <error descr="Missing closing quote">"unclosed double quoted string ,</error><EOLError descr="',' or ']' expected, got ''unclosed single quo...'"></EOLError>
-    <error descr="Missing closing quote">'unclosed single quoted string</error>
-]

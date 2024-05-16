@@ -1,8 +1,0 @@
-<idea-plugin>
-  <id>test.plugin</id>
-  <name>Test Plugin</name>
-  <version>1.0</version>
-  <extensions defaultExtensionNs="com.intellij">
-    <compileServer.plugin classpath="jps/jps-plugin.jar"/>
-  </extensions>
-</idea-plugin>

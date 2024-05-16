@@ -1,5 +1,0 @@
-class Test{
-  {
-    for<EOLError/>
-  }
-}

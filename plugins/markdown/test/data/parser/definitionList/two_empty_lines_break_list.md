@@ -1,4 +1,0 @@
-term
-
-
-: definition

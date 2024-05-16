@@ -1,2 +1,0 @@
-b1 No valid branches
-One with incorrect remote, other without merge/rebase item

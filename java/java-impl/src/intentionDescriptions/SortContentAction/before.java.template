@@ -1,9 +1,0 @@
-public class X {
-  void varargFunction(int x, String... y) {
-      ...
-  }
-
-  void f(int i) {
-    <spot>varargFunction(12, "BBB", "AAA", "CCC")</spot>;
-  }
-}

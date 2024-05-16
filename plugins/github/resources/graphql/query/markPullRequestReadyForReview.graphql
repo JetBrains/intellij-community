@@ -1,5 +1,0 @@
-mutation ($pullRequestId: ID!) {
-    markPullRequestReadyForReview(input: {pullRequestId: $pullRequestId}) {
-        __typename
-    }
-}

@@ -1,5 +1,0 @@
-public class X {
-  String f() {
-    return new StringBuffer().append("1").append("2").toString();
-  }
-}

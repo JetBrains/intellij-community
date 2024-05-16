@@ -1,8 +1,0 @@
-{
-  "foo": {
-    "another-key": "another-value",
-    "yet-another-key2": "yet-another-value",
-    "yet-another-key3": "yet-another-value"
-  },
-  "yet-another-key1": "yet-another-value"
-}

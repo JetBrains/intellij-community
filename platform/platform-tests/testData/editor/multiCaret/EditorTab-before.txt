@@ -1,2 +1,0 @@
-so<caret>me t<selection><caret>ex</selection>t
-<selection>some<caret></selection> <selection>ot<caret>her</selection> text

@@ -1,8 +1,0 @@
-public class X extends TestCase{
-  int field;
-
-  @Override
-  public void setUp() throws Exception {
-    field = 0;
-  }
-}

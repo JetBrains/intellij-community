@@ -1,8 +1,0 @@
-<root>
-  <item name='java.security.MessageDigest byte[] digest()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.security.MessageDigest java.security.MessageDigest getInstance(java.lang.String)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

@@ -1,8 +1,0 @@
-LineBreakpoint created at genericWithMultipleUpperBounds.kt:21
-Run Java
-Connected to the target VM
-genericWithMultipleUpperBounds.kt:21
-Compile bytecode for x.foo() + " " + x.bar()
-Disconnected from the target VM
-
-Process finished with exit code 0

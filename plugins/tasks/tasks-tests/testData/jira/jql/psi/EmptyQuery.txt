@@ -1,2 +1,0 @@
-FILE(0,0)
-  <empty list>

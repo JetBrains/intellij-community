@@ -1,8 +1,0 @@
-<nam:rootEelment xmlns="http://common-namespace2" xmlns:nam="http://namespace2" xmlns:cmn1="http://common-namespace1">
-  <nam:Request1>
-    <cmn1:Name>string</cmn1:Name>
-  </nam:Request1>
-  <nam:Request2>
-    <Name>string</Name>
-  </nam:Request2>
-</nam:rootEelment>

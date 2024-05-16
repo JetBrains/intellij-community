@@ -1,9 +1,0 @@
-// RENAME: member
-// NEW_NAME: bar
-class One: JavaInterface {
-    override fun b<caret>ar() {}
-}
-
-class Two: JavaInterface {
-    override fun bar() {}
-}

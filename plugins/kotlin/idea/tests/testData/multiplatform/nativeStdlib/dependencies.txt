@@ -1,8 +1,0 @@
-MODULE common { platform=[JVM] }
-MODULE native { platform=[Native] }
-
-
-native -> common { kind=DEPENDS_ON }
-
-common -> STDLIB_COMMON, KOTLIN_SDK { kind=DEPENDENCY }
-native -> STDLIB_NATIVE, KOTLIN_SDK { kind=DEPENDENCY }

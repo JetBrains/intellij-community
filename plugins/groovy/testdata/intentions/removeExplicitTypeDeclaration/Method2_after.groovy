@@ -1,2 +1,0 @@
-@Nullable
-def foo() {}

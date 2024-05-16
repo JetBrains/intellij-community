@@ -1,1 +1,0 @@
-<x:foo for="abc" xmlns:x="<error>foo</error>" />

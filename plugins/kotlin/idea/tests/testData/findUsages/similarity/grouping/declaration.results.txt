@@ -1,5 +1,0 @@
-[{
-3|val| kClass: |KClass| = KClass()}
-, {
-3|val| kClass: KClass = |KClass|()}
-]

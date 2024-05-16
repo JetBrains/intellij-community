@@ -1,1 +1,0 @@
-[foo6:'aaa', d<caret>]

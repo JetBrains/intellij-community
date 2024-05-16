@@ -1,1 +1,0 @@
-<caret>x = None

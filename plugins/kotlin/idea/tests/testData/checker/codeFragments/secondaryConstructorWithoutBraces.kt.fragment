@@ -1,1 +1,0 @@
-<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: a">a</error> + b + <error descr="[INSTANCE_ACCESS_BEFORE_SUPER_CALL] Cannot access 'c' before the instance has been initialized">c</error> + <error descr="[INSTANCE_ACCESS_BEFORE_SUPER_CALL] Cannot access 'a1' before the instance has been initialized">a1</error>

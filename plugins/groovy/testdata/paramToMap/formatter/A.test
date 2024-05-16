@@ -1,5 +1,0 @@
-def foo(Map attrs, int aaa, String sss) {
-  println(aaa + attrs.bbb + sss)
-}
-
-foo(42, "abc", bbb: 239)

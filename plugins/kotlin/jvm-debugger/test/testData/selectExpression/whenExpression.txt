@@ -1,5 +1,0 @@
-when (a) {
-        is Int -> 1
-        is String -> 2
-        else -> 3
-    }

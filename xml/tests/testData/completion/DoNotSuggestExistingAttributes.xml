@@ -1,6 +1,0 @@
-<xsd:schema xmlns="http://www.foo.org/test"
-            <caret>
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="http://www.foo.org/test foo.xsd http://www.bar.org/test bar.xsd" >
-</xsd:schema>

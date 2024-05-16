@@ -1,5 +1,0 @@
-PerformanceTestTokenType.COMMAND ('%delayType')
-WHITE_SPACE (' ')
-PerformanceTestTokenType.NUMBER ('150')
-PerformanceTestTokenType.PIPE ('|')
-PerformanceTestTokenType.TEXT ('classpath "commons-io:commons-io:2.2"')

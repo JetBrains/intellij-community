@@ -1,6 +1,0 @@
-// INLINE_PROPERTY_KEEP: true
-
-fun simpleFun(): String {
-    val s2 = "string"
-    return "string"
-}

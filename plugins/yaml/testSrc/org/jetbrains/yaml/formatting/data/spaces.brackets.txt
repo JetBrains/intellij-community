@@ -1,2 +1,0 @@
-key1: values
-key2: { key3: [a, b, { c }] }

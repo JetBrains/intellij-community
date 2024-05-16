@@ -1,3 +1,0 @@
-package pkg
-
-fun foo() {}

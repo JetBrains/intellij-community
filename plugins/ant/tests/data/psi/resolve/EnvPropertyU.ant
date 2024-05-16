@@ -1,5 +1,0 @@
-<project name="n" default="main">
-  <target name="main">
-    <echo message="p1=${<ref>env.PATH}"/>
-  </target>
-</project>

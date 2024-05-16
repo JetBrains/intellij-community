@@ -1,3 +1,0 @@
-Integer foo(a) {
-  a
-}

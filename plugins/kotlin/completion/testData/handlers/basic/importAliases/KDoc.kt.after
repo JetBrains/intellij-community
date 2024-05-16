@@ -1,9 +1,0 @@
-import java.util.List as UtilList
-
-/**
- * [UtilList<caret>]
- */
-fun foo(){}
-
-// IGNORE_K2
-// ELEMENT: UtilList

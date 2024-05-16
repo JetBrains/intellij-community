@@ -1,8 +1,0 @@
-Types:
-PsiField:j : int
-
-Conversions:
-i -> $
-
-New expression type changes:
-Fails:

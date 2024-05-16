@@ -1,9 +1,0 @@
-// KTIJ-24026
-// ALLOW_ERRORS
-// CHECK_SYMBOL_NAMES
-// HIGHLIGHTER_ATTRIBUTES_KEY
-
-class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>ClassB<!> {}
-
-class <!HIGHLIGHTING("severity='ERROR'; descr='[PACKAGE_OR_CLASSIFIER_REDECLARATION] Redeclaration: ClassA'; textAttributesKey='ERRORS_ATTRIBUTES'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>ClassA<!>: <!HIGHLIGHTING("severity='ERROR'; descr='[FINAL_SUPERTYPE] This type is final, so it cannot be inherited from'; textAttributesKey='ERRORS_ATTRIBUTES'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CONSTRUCTOR'")!>ClassB<!>() {}
-class <!HIGHLIGHTING("severity='ERROR'; descr='[PACKAGE_OR_CLASSIFIER_REDECLARATION] Redeclaration: ClassA'; textAttributesKey='ERRORS_ATTRIBUTES'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>ClassA<!>: <!HIGHLIGHTING("severity='ERROR'; descr='[FINAL_SUPERTYPE] This type is final, so it cannot be inherited from'; textAttributesKey='ERRORS_ATTRIBUTES'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CONSTRUCTOR'")!>ClassB<!>() {}

@@ -1,7 +1,0 @@
-package test
-
-import dependency.T
-
-fun usage() {
-    T.TT
-}

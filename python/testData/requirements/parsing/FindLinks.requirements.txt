@@ -1,2 +1,0 @@
--f https://example.com
---find-links https://example.com

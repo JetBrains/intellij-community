@@ -1,4 +1,0 @@
-scalar key ('foo[in_brackets]')
-: (':')
-whitespace (' ')
-text ('text')

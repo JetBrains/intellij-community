@@ -1,5 +1,0 @@
-<node text="X  ()">
-  <node text="Y  ()" base="true">
-    <node text="Z  ()"/>
-  </node>
-</node>

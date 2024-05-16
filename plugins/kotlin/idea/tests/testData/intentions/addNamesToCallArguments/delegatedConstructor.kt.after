@@ -1,5 +1,0 @@
-@file:Suppress("UNUSED_PARAMETER")
-
-class C(p1: Int, p2: Int) {
-    constructor() : this(p1 = 1, p2 = 2)
-}

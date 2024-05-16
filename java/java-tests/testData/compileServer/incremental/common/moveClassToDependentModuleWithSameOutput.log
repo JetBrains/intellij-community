@@ -1,9 +1,0 @@
-Compiling files:
-moduleA/src/com/ppp/Inner.java
-End of files
-Cleaning output files:
-out/com/ppp/B.class
-End of files
-Compiling files:
-moduleB/src/com/ppp/B.java
-End of files

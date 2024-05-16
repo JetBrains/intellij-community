@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.scene.layout.<error descr="Cannot resolve class 'GridPane1'">GridPane1</error>?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.GridPane.Interval?>
-<GridPane fx:id="gp"
-          xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-</GridPane>

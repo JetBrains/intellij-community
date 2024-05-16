@@ -1,1 +1,0 @@
-print p."a$c"

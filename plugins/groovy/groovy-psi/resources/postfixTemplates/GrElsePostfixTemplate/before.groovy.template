@@ -1,3 +1,0 @@
-void m(boolean b) {
-    <spot>b</spot>$key
-}

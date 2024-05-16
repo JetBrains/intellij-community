@@ -1,3 +1,0 @@
-public class A<T extends String> {
-  T foo() {return null;}
-}

@@ -1,6 +1,0 @@
-import kotlin.math.log10
-
-// WITH_STDLIB
-fun test(x: Double) {
-    log10(x)
-}

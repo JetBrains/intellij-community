@@ -1,3 +1,0 @@
-fun test(example: Example) {
-    example.execute<spot>(1, 2, 3)</spot>
-}

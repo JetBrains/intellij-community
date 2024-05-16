@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun test(set: Set<Int>?) {
-    if (set.isNullOrEmpty()) println(0) else println(set.size)
-}

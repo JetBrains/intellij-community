@@ -1,3 +1,0 @@
-<Button fx:id="btn">
-      <spot><text>text</text></spot>    
-</Button>

@@ -1,6 +1,0 @@
-<node text="SubclassTwo.a_method(self) (SubclassTwo in hierarchy.call.Static.Super.main)" base="true">
-  <node text="super.__init__(self, __t, __obj) (super in builtins stub)"/>
-  <node text="super.__init__(self, __t) (super in builtins stub)"/>
-  <node text="super.__init__(self) (super in builtins stub)"/>
-  <node text="SomeBaseClass.a_method(self) (SomeBaseClass in hierarchy.call.Static.Super.main)"/>
-</node>

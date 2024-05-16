@@ -1,8 +1,0 @@
-<!DOCTYPE title 
-  [
-<!ELEMENT title (#PCDATA | body)* >
-<!ELEMENT body EMPTY>
-<!ELEMENT supplements EMPTY>
-  ]>
-
-<title/>

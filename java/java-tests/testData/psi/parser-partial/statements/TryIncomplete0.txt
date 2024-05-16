@@ -1,5 +1,0 @@
-PsiJavaFile:TryIncomplete0.java
-  PsiTryStatement
-    PsiKeyword:try('try')
-    PsiErrorElement:'{' expected
-      <empty list>

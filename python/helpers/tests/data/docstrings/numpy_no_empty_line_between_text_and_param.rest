@@ -1,7 +1,0 @@
-Summary
-
-This is an example of a module level function.
-:param param1: The first parameter.
-:type param1: int
-:param param2: The second parameter.
-:type param2: Optional[str]

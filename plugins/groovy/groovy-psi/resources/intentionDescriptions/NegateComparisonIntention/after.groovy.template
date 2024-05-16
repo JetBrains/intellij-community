@@ -1,5 +1,0 @@
-class X {
-  void f(a,  b) {
-    if (<spot>!(b >= a)</spot>) return
-  }
-}

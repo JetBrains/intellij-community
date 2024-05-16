@@ -1,2 +1,0 @@
-* item
-  > quote<caret>

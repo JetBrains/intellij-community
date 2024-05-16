@@ -1,7 +1,0 @@
-class A {}
-
-class <caret>B extends A {}
------
-class <caret>A {}
-
-class B extends A {}

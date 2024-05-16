@@ -1,3 +1,0 @@
-retry.compat
-retry.tests
-retry.tests.test_retry

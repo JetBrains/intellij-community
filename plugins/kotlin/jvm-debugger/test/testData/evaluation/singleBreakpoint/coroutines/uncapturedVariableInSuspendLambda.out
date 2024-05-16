@@ -1,9 +1,0 @@
-LineBreakpoint created at uncapturedVariableInSuspendLambda.kt:17
-Run Java
-Connected to the target VM
-uncapturedVariableInSuspendLambda.kt:17
-Compile bytecode for usedInside
-Compile bytecode for notUsedInside
-Disconnected from the target VM
-
-Process finished with exit code 0

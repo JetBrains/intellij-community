@@ -1,2 +1,0 @@
-class Service(object):
-    pass

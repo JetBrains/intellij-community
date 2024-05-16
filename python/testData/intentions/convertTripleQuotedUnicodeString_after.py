@@ -1,1 +1,0 @@
-s = u"string\n"

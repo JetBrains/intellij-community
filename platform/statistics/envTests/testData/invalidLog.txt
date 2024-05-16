@@ -1,1 +1,0 @@
-{"recorder_version":"40","session":"12345","build":"202.0","bucket":"175","time":1586765061695,"group":{"id":"productivity","version":"40"},"event":{"count":1,"data":{"created":1586765061695,"plugin_type":"PLATFORM","id":"editing.select.word","group":"editing"},"id":"feature.used"}}

@@ -1,7 +1,0 @@
-<module version="4">
-  <component name="ExternalSystem" externalSystem="GRADLE" externalSystemModuleGroup="group" externalSystemModuleVersion="42.0" linkedProjectId="test" linkedProjectPath="$MODULE_DIR$" rootProjectPath="$MODULE_DIR$" />
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
-    <content url="file://$MODULE_DIR$/myContentRoot" />
-    <orderEntry type="sourceFolder" forTests="false" />
-  </component>
-</module>

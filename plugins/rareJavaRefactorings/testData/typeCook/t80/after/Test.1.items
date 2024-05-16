@@ -1,5 +1,0 @@
-Iterator<Set<java.lang.String>>\nPsiLocalVariable:i
-OfList<Set<java.lang.String>>\nPsiLocalVariable:x
-OfList<Set<java.lang.String>>\nnew
-Set<java.lang.String>\nPsiLocalVariable:u
-Set<java.lang.String>\nPsiTypeCastExpression:(Set) i.get()

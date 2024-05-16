@@ -1,5 +1,0 @@
-<c:root xmlns:p="parent" xmlns:c="child">
-    <p:parent-element/>
-    
-    <c:child-element/>
-</c:root>

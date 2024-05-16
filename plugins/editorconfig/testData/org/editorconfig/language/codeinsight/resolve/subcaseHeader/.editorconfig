@@ -1,7 +1,0 @@
-root = true
-
-[{foo, bar}]
-charset = utf-8
-
-[foo]
-charse<caret>t = utf-16le

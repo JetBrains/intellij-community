@@ -1,7 +1,0 @@
-public java.lang.String toString() {
-   return new org.apache.commons.lang.builder.ToStringBuilder(this)
-#foreach ($member in $members)
-   .append("$member.name", $member.accessor)
-#end
-   .toString();
-}

@@ -1,1 +1,0 @@
-interface INode {String tag();String toKotlin();}

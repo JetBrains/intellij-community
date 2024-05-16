@@ -1,7 +1,0 @@
-<module version="4">
-  <component name="AdditionalModuleElements">
-    <content url="file://$MODULE_DIR$/myExistingRoot" dumb="true">
-      <sourceFolder url="file://$MODULE_DIR$/myContentRoot" type="mock" />
-    </content>
-  </component>
-</module>

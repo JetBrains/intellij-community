@@ -1,3 +1,0 @@
-fun test(example: Example) {
-    example.execute<spot>(/* x = */ 1, /* y = */ 2, /* z = */ 3)</spot>
-}

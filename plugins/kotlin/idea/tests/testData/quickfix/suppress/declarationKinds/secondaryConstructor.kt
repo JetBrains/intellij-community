@@ -1,8 +1,0 @@
-// "Suppress 'DIVISION_BY_ZERO' for secondary constructor of C" "true"
-
-class C {
-    constructor(s: Int = 2 / <caret>0)
-}
-
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction

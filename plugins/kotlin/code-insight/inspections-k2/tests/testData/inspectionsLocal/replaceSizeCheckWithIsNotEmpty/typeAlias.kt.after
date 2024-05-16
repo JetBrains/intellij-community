@@ -1,7 +1,0 @@
-// WITH_STDLIB
-
-typealias MyArray = Array<Int>
-
-fun test(a: MyArray) {
-    a.isNotEmpty()
-}

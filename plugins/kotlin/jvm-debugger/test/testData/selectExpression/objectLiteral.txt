@@ -1,5 +1,0 @@
-object : Runnable {
-        override fun run() {
-            print("foo")
-        }
-    }

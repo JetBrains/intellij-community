@@ -1,7 +1,0 @@
-EditorConfig file
-  EditorConfigSectionImpl(SECTION)
-    EditorConfigHeaderImpl(HEADER)
-      PsiElement(EditorConfigTokenType.L_BRACKET)('[')
-      EditorConfigFlatPatternImpl(FLAT_PATTERN)
-        PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('.gitignore')
-      PsiElement(EditorConfigTokenType.R_BRACKET)(']')

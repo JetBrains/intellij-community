@@ -1,7 +1,0 @@
-while (true) {
-    <begin>239<end>
-}
------
-while (true) {
-    def preved = 239<caret>
-}

@@ -1,8 +1,0 @@
-class A {
-  p<caret> def foo();
-}
------
-private
-protected
-public
-strictfp

@@ -1,7 +1,0 @@
-fun findClasses() {
-    val classloader = B::class.java.classLoader
-    val kotlin = classloader?.loadClass("hi")?.kotlin
-    val obj = kotlin
-}
-
-class B

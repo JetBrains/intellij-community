@@ -1,5 +1,0 @@
-<?xml encoding="iso-8859-1" version="1.0" ?>
-<!DOCTYPE entity-element [
-    <!ENTITY uuml "ü" >
-]>
-<entity-element xmlns="urn:test:simple.rng">&uuml;&quot;</entity-element>

@@ -1,3 +1,0 @@
-interface A {
-  pri<caret>
-}

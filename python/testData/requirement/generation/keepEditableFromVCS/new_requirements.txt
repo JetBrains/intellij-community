@@ -1,3 +1,0 @@
-Django==3.0.0
--e git+https://github.com/tox-dev/tox.git@fcba59158f853c4da38f164dbf8523b1aeb0fedf#egg=tox
-numpy==1.18.1

@@ -1,2 +1,0 @@
-# Technically exists on all OSs, but crashes on all but Windows. So we hide it in stubs
-cffi.(api.)?FFI.getwinerror

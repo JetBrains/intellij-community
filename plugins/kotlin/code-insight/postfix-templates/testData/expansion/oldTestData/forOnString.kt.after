@@ -1,5 +1,0 @@
-fun foo(list: List<String>) {
-    for (<selection>c<caret></selection> in list[0]) {
-
-    }
-}

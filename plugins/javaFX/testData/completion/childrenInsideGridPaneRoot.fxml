@@ -1,5 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.Label?>
-<fx:root type="javafx.scene.layout.GridPane" xmlns:fx="http://javafx.com/fxml">
-  <<caret>
-</fx:root>

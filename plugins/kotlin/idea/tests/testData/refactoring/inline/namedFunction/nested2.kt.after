@@ -1,5 +1,0 @@
-fun test() {
-    println("top level")
-    println("is print")
-    println(42)
-}

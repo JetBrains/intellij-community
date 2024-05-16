@@ -1,5 +1,0 @@
---no-index
---find-links http://some.archives.com/archives
-requests==2.22.0
---no-binary
-cookiecutter==1.7.0

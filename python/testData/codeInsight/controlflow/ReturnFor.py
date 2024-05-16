@@ -1,1 +1,0 @@
-return dict((name, val) for name, val in {'a': 1})

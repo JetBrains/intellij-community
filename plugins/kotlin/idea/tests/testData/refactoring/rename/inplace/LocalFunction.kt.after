@@ -1,9 +1,0 @@
-// NEW_NAME: bar
-// RENAME: member
-fun f() {
-    fun <caret>bar(a: Int) {
-    }
-
-    bar(1)
-    bar(217)
-}

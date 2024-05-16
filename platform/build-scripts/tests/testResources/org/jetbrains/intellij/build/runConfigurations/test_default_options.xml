@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="test default options" type="JUnit" factoryName="JUnit">
-    <module name="main-module"/>
-    <option name="MAIN_CLASS_NAME" value="com.example.test.MainTest"/>
-    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin"/>
-  </configuration>
-</component>

@@ -1,3 +1,0 @@
-[kotlinInterfaceDerivedInnerObjects.0.kt] Unclassified 8 open class A : X {
-[kotlinInterfaceDerivedInnerObjects.1.kt] Unclassified 10 object O2 : X {
-[kotlinInterfaceDerivedInnerObjects.1.kt] Unclassified 5 object O1 : A() {

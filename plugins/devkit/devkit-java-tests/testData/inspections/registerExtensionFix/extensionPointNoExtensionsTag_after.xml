@@ -1,9 +1,0 @@
-<idea-plugin>
-  <id>com.my.plugin</id>
-  <extensionPoints>
-    <extensionPoint name="myExtension" interface="ExtensionPoint"/>
-  </extensionPoints>
-    <extensions defaultExtensionNs="com.my.plugin">
-        <myExtension implementation="MyExtensionPoint"/>
-    </extensions>
-</idea-plugin>

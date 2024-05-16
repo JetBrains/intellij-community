@@ -1,9 +1,0 @@
-fun calculate(f: () -> Int) {
-    f()
-}
-
-fun main(args: String) {
-    calculate(fun(): Int {
-        return 1
-    })
-}

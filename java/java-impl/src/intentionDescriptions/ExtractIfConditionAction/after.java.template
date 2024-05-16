@@ -1,7 +1,0 @@
-if (b && c) {
-    x = 1;
-} else if (a) {
-    x = 1;
-} else {
-    x = 2;
-}

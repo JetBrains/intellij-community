@@ -1,8 +1,0 @@
-{
-  "type": "JAVA_METHOD",
-  "classId": "testing/JavaClass",
-  "methodSignature": "String foo()",
-  "oldName": "foo",
-  "newName": "bar",
-  "enabledInK2": true
-}

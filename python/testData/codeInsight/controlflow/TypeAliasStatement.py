@@ -1,1 +1,0 @@
-type myType = str

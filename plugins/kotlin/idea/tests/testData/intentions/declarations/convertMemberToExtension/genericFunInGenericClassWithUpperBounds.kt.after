@@ -1,5 +1,0 @@
-// AFTER-WARNING: Parameter 't' is never used
-abstract class Owner<T, X: List<T>> {
-}
-
-fun <T, X : List<T>, R : T> Owner<T, X>.<caret>f(t: T, r: R): R = r

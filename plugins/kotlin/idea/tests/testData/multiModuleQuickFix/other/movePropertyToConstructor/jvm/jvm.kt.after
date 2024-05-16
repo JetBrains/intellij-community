@@ -1,4 +1,0 @@
-// "Move to constructor" "true"
-
-actual class SimpleWConstructor(val b: String = "") {
-}

@@ -1,5 +1,0 @@
-test.java.file
-  ARRAY_INITIALIZER_EXPRESSION
-    LBRACE
-    WHITE_SPACE
-    RBRACE

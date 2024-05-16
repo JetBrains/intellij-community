@@ -1,7 +1,0 @@
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:spring="http://www.springframework.org/schema/beans">
-    <xsl:template>
-      <xsl:call-template name="zzz">
-        <spr<caret>
-      </xsl:call-template>
-    </xsl:template>
-</xsl:stylesheet>

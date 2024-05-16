@@ -1,2 +1,0 @@
-line1
-<caret>line2

@@ -1,4 +1,0 @@
-<option>METHOD_BRACE_STYLE=END_OF_LINE</option>
-def foo()    {}
------
-def foo() {}

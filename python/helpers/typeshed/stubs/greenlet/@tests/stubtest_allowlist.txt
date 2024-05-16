@@ -1,7 +1,0 @@
-# Error: is not present in stub
-# =============================
-# this module only contains C code and exports no Python code, so it's better
-# if we pretend it doesn't exist
-greenlet.platform
-# the tests should not be part of the modules
-greenlet.tests

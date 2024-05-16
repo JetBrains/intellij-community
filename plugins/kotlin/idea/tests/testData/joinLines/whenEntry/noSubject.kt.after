@@ -1,6 +1,0 @@
-fun test(i: Int) {
-    when {
-        i == 1 || i == 2 -> println(0)
-        else -> println(1)
-    }
-}

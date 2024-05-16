@@ -1,3 +1,0 @@
-class A(param: Any) {
-    val prop: Any = param
-}

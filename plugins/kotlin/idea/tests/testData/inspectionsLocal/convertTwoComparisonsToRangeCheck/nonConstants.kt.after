@@ -1,5 +1,0 @@
-// WITH_STDLIB
-// COMPILER_ARGUMENTS: -XXLanguage:-RangeUntilOperator
-fun foo(bar: Int, min: Int, max: Int) {
-    bar in (min + 1) until max
-}

@@ -1,5 +1,0 @@
-java.util.Iterator<java.util.Map.Entry>\nPsiLocalVariable:entryIter
-java.util.List\nPsiLocalVariable:eventList
-java.util.List\nPsiTypeCastExpression:(List) entry.getValue()
-java.util.Map.Entry\nPsiLocalVariable:entry
-java.util.Map\nparameter 0 of test

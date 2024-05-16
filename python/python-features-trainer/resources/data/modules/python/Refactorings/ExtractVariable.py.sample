@@ -1,6 +1,0 @@
-def bubble_sort(arr):
-    n = len(arr)
-    for j in range(n):
-        for i in range(0, n - j - 1):
-            if arr[i] > arr[<select>i + 1</select>] :
-                arr[i], arr[i + 1] = arr[i + 1], arr[i]

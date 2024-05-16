@@ -1,9 +1,0 @@
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<GridPane fx:controller="FxIdUsedInSameNode"
-          xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-  <HBox fx:id="navigationPane" id="navigationPane" managed="${navigationPane.visible}">
-    <Label text="Hi"/>
-  </HBox>
-</GridPane>

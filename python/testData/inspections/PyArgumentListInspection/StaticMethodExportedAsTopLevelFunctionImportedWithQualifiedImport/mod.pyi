@@ -1,6 +1,0 @@
-class C:
-    @staticmethod
-    def method(a: int, b: int) -> int: ...
-
-_inst: C = ...
-func = _inst.method

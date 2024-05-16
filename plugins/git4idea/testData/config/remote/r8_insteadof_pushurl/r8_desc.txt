@@ -1,4 +1,0 @@
-r8 url.insteadOf overrides pushUrl
-
-url.<base>.insteadOf should override all urls, i.e. remote.<name>.pushUrl along with remote.<name>.url.
-See clarification on this from Junio Hamano: http://article.gmane.org/gmane.comp.version-control.git/183587

@@ -1,4 +1,0 @@
-<project default="A">
-  <p4counter property="prop"/>
-  <target name="A"/>
-</project>

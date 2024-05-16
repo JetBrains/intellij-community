@@ -1,2 +1,0 @@
-'receiver' is used in declaration body
-Parameter $this$justFun is used in method body

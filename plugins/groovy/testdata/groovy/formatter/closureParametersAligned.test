@@ -1,7 +1,0 @@
-  foo({
-   println "a"
-   })
------
-foo({
-  println "a"
-})

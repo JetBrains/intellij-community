@@ -1,3 +1,0 @@
-FILE
-  PsiErrorElement:LITERAL_STARTS_FROM_LETTER expected, got '--can_t_be'
-    PsiElement(LONG_OPTION_NAME_TOKEN)('--can_t_be')

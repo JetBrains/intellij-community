@@ -1,7 +1,0 @@
-
-println("a")<caret>
-println("b")
------
-println("a")<caret>
-
-println("b")

@@ -1,3 +1,0 @@
-'d' is used in declaration body
-'s' is used in declaration body
-Parameter j is used in method body

@@ -1,5 +1,0 @@
-<root>
-  <item name='com.fasterxml.jackson.databind.ObjectMapper byte[] writeValueAsBytes(java.lang.Object)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

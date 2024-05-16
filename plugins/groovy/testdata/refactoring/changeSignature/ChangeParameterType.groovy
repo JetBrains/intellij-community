@@ -1,1 +1,0 @@
-def fo<caret>o(String s) {}

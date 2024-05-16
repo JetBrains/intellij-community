@@ -1,3 +1,0 @@
-try {
-  throw new RuntimeException(expr)<spot></spot>
-} catch (e) {}

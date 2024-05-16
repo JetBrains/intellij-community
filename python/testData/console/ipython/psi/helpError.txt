@@ -1,7 +1,0 @@
-PyFile:helpError.py
-  PyEmptyExpression
-    PsiElement(Py:IDENTIFIER)('int')
-    PsiWhiteSpace(' ')
-    PsiElement(Py:QUESTION_MARK)('?')
-    PsiErrorElement:IPython introspection syntax error
-      <empty list>

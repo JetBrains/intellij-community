@@ -1,5 +1,0 @@
-Additional checking of reference Getter: Charsets
-Additional checking of reference KtSimpleNameReference: Charsets
-Additional checking of reference Getter: HashMap
-Additional checking of reference KtSimpleNameReference: HashMap
-Additional checking of reference KtInvokeFunctionReference: HashMap<String, Int>()

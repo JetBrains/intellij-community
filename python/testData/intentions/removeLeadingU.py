@@ -1,1 +1,0 @@
-a = <caret>u"text"

@@ -1,4 +1,0 @@
-// IGNORE_K2
-// some comment
-
-val v: HashSet<ArrayList<String>>

@@ -1,3 +1,0 @@
-<caret>some t<caret>e<caret>xt
-<caret>ot<selection><caret>her</selection> t<selection>ext<caret></selection>
-another <selection>l<caret>ine</selection>

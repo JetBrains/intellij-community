@@ -1,6 +1,0 @@
-class Parent:
-    ...
-
-
-class Child(Parent):
-    ...

@@ -1,8 +1,0 @@
-// "Cast expression 'Foo<Number>()' to 'Foo<Int>'" "true"
-class Foo<out T>
-
-fun foo(): Foo<Int> {
-    return Foo<Number>() as Foo<Int><caret>
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CastExpressionFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.CastExpressionFixFactories$CastExpressionModCommandAction

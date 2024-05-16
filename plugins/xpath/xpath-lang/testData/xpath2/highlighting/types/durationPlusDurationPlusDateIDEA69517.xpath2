@@ -1,1 +1,0 @@
-'P1Y' cast as xs:yearMonthDuration + 'P1Y' cast as xs:yearMonthDuration + current-date()

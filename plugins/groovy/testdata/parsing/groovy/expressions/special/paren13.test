@@ -1,8 +1,0 @@
-(expr)
------
-Groovy script
-  Parenthesized expression
-    PsiElement(()('(')
-    Reference expression
-      PsiElement(identifier)('expr')
-    PsiElement())(')')

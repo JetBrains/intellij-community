@@ -1,4 +1,0 @@
-s<caret>o<caret>me text<caret>
-o<selection>t<caret>he</selection>r text
-an<selection><caret>oth</selection>er l<caret>i<caret>ne
-yet a<selection>not<caret></selection>her line

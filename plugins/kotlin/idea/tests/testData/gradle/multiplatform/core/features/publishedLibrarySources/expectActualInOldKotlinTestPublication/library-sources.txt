@@ -1,4 +1,0 @@
-Kotlin/Native:{{space}}stdlib repo/com/example/stdlib/stdlib-linuxx64/0.0.1/stdlib-linuxx64-0.0.1-sources.jar stdlib
-Gradle:{{space}}org.jetbrains.kotlin:kotlin-test-common:{{kotlin_version}} repo/com/example/kotlin-test/0.0.1/kotlin-test-0.0.1-sources.jar kotlin-test
-Gradle:{{space}}org.jetbrains.kotlin:kotlin-test:{{kotlin_version}} repo/com/example/kotlin-test-jvm/0.0.1/kotlin-test-jvm-0.0.1-sources.jar kotlin-test
-Gradle:{{space}}org.jetbrains.kotlin:kotlin-test-js:{{kotlin_version}} repo/com/example/kotlin-test-js/0.0.1/kotlin-test-js-0.0.1-sources.jar kotlin-test

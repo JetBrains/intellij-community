@@ -1,9 +1,0 @@
-Types:
-PsiField:f : java.lang.Object
-PsiReferenceExpression:f : java.lang.Object
-
-Conversions:
-
-New expression type changes:
-Fails:
-f->java.lang.Object

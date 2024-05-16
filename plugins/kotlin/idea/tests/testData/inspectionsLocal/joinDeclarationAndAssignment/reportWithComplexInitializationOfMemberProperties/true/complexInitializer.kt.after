@@ -1,7 +1,0 @@
-class A {
-    val input: String = if (true) {
-        "some string"
-    } else {
-        "some other string"
-    }
-}

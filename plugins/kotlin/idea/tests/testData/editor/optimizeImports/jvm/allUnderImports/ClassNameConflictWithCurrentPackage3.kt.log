@@ -1,2 +1,0 @@
-Changed resolve type of KtSimpleNameReference: ArrayList
-Trying to build import list again with import rules: +kotlin.collections.ArrayList

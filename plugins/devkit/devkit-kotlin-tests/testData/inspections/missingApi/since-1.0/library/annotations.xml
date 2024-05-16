@@ -1,7 +1,0 @@
-<root>
-  <item name='library.RecentClass'>
-    <annotation name='org.jetbrains.annotations.ApiStatus.AvailableSince'>
-      <val name="value" val="&quot;1.0&quot;"/>
-    </annotation>
-  </item>
-</root>

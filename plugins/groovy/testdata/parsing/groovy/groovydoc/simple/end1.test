@@ -1,6 +1,0 @@
-/**/
------
-Groovy script
-  GrDocComment
-    PsiElement(GDOC_COMMENT_START)('/**')
-    PsiElement(GDOC_COMMENT_DATA)('/')

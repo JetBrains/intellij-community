@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<!DOCTYPE page-specification PUBLIC
-  "-//Apache Software Foundation//Tapestry Specification 3.0//EN"
-  "http://jakarta.apache.org/tapestry/dtd/Tapestry_3_0.dtd">
-
-<page-specification class="org.sigpath.tapestry.pages.ViewUsersPage">
-    <property-specification name="users" type="java.util.Collection" persistent="yes"/>
-    <<error>bean</error> name="evenOdd" <error>type</error>="org.apache.tapestry.bean.EvenOdd"/>
-</page-specification>

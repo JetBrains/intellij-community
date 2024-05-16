@@ -1,7 +1,0 @@
-mutation ($id: ID!, $body: String!) {
-    updateIssueComment(input: {id: $id, body: $body}) {
-        issueComment {
-            ...comment
-        }
-    }
-}

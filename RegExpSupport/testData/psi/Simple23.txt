@@ -1,4 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <>
-    RegExpBranchImpl: <>
-      <empty list>

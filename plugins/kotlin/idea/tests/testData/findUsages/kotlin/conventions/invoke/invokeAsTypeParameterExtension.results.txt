@@ -1,1 +1,0 @@
-Implicit 'invoke' 14 Foo()

@@ -1,3 +1,0 @@
-<caret>{
-  lorem ipsum
-}

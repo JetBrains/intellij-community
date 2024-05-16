@@ -1,4 +1,0 @@
-Function<String, String> filter = String::trim;
-Function<String, Integer> converter = Integer::parseInt;
-
-int result = converter.apply(<spot>filter.apply("  123  ")</spot>);

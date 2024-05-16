@@ -1,3 +1,0 @@
-f<caret>
-
-foo = "something"

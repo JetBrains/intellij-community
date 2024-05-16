@@ -1,3 +1,0 @@
-package com;
-class a {
-}

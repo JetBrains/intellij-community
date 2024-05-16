@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun test() {
-    arrayOf(1).forEachIndexed { index, element ->
-        println("$index:$element")
-    }
-}

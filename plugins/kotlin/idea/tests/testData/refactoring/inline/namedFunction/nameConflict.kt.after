@@ -1,4 +1,0 @@
-fun callShadow() {
-    val v1 = 1 + 1
-    val v = v1
-}

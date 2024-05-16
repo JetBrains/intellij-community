@@ -1,3 +1,0 @@
-for (<spot>(index, item) in list.withIndices()</spot>) {
-
-}

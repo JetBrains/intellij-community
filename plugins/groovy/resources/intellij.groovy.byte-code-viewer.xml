@@ -1,8 +1,0 @@
-<idea-plugin package="org.jetbrains.plugins.groovy.byteCodeViewer">
-  <dependencies>
-    <plugin id="ByteCodeViewer"/>
-  </dependencies>
-  <extensions defaultExtensionNs="ByteCodeViewer">
-    <classSearcher implementation="org.jetbrains.plugins.groovy.byteCodeViewer.GroovyScriptClassSearcher"/>
-  </extensions>
-</idea-plugin>

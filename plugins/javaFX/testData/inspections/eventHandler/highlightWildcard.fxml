@@ -1,6 +1,0 @@
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.HBox?>
-<HBox xmlns:fx="http://javafx.com/fxml" fx:controller="HighlightWildcard">
-    <TableView onScrollTo="#scrollPositive"/>
-    <TableView onScrollTo=<warning descr="Incompatible generic parameter of event handler argument: javafx.scene.control.ScrollToEvent<? super java.lang.Number> is not assignable from javafx.scene.control.ScrollToEvent<java.lang.Integer>">"#scrollNegative"</warning>/>
-</HBox>

@@ -1,6 +1,0 @@
-class C(
-    val a: String,
-    i: Int = 1, /* comment1 */ /* comment2 */
-) {
-    val b = i
-}

@@ -1,1 +1,0 @@
-class MyApplicationListener implements BaseListenerInterface { }

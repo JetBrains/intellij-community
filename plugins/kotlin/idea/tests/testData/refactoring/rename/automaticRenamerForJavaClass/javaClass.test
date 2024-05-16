@@ -1,7 +1,0 @@
-{
-  "type": "JAVA_CLASS",
-  "classId": "/Foo",
-  "newName": "Bar",
-  "mainFile": "Foo.java",
-  "enabledInK2": "true"
-}

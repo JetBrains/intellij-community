@@ -1,9 +1,0 @@
-PsiJavaFile:New9.java
-  PsiNewExpression:new int
-    PsiKeyword:new('new')
-    PsiReferenceParameterList
-      <empty list>
-    PsiWhiteSpace(' ')
-    PsiKeyword:int('int')
-    PsiErrorElement:'[' expected
-      <empty list>

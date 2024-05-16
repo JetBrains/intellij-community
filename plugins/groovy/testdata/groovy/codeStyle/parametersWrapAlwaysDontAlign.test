@@ -1,7 +1,0 @@
-<option>METHOD_PARAMETERS_WRAP=WRAP_ALWAYS</option>
-<option>ALIGN_MULTILINE_PARAMETERS=false</option>
-def foooooooooooooo(a,b,c) {}
------
-def foooooooooooooo(a,
-    b,
-    c) {}

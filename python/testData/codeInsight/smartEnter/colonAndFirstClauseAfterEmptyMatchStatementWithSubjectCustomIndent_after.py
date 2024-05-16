@@ -1,2 +1,0 @@
-match x:
-  case <caret>:

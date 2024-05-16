@@ -1,1 +1,0 @@
-public abstract class <error descr="Plugin component class must not be abstract">AbstractApplicationComponent</error> implements com.intellij.openapi.components.BaseComponent {}

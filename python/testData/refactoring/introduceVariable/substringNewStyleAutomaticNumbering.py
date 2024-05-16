@@ -1,1 +1,0 @@
-print("<selection>Hello</selection>, {}!".format("World"))

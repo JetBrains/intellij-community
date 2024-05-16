@@ -1,5 +1,0 @@
-fun main() {
-    "Bob".oldFunction("Doug")
-}
-
-fun Any.oldFunction(that: Any) = print("$that and $this")

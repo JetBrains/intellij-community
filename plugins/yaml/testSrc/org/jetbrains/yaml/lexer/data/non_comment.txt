@@ -1,4 +1,0 @@
-scalar key ('hello')
-: (':')
-whitespace (' ')
-text ('hello#my_non_comment')

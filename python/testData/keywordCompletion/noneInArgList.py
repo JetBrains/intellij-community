@@ -1,1 +1,0 @@
-def foo(x=Non<caret>):

@@ -1,3 +1,0 @@
-<selection>s<caret>oMe te</selection>xt
-other line<caret>
-yet another<caret> line

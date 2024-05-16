@@ -1,5 +1,0 @@
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.VBox?>
-<VBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/null" fx:controller="EventHandlerMethodTypeParam">
-    <TextField onKeyTyped="#<caret>"/>
-</VBox>

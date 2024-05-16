@@ -1,1 +1,0 @@
-fun foo() = <selection>println("")</selection>

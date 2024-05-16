@@ -1,3 +1,0 @@
-Function return types 4 inline fun <reified T> fff(labelText: String, a: Any): T {
-Target type of 'is' operation 5 if (a is T) {}
-Unclassified 6 return T::class.java.getConstructor().newInstance()

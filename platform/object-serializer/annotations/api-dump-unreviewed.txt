@@ -1,6 +1,0 @@
-@:com.intellij.serialization.Property
-- java.lang.annotation.Annotation
-- a:allowedTypes():java.lang.Class[]
-@:com.intellij.serialization.PropertyMapping
-- java.lang.annotation.Annotation
-- a:value():java.lang.String[]

@@ -1,7 +1,0 @@
-mutation ($pullRequestId: ID!, $event: PullRequestReviewEvent, $body: String, $commitOid: GitObjectID, $threads: [DraftPullRequestReviewThread]) {
-  addPullRequestReview(input: {pullRequestId: $pullRequestId, event: $event, body: $body, commitOID: $commitOid, threads: $threads}) {
-    pullRequestReview {
-      ...pullRequestPendingReview
-    }
-  }
-}

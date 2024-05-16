@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<foo:foo xmlns:foo="http://www.foo.org/test"
-         xmlns:bar="http://www.bar.org/test">
-  <foo:child bar:bar="false" flag="false"/>
-</foo:foo>

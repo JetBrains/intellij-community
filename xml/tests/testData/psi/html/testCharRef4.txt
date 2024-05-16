@@ -1,5 +1,0 @@
-HtmlFile:test.html
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      <empty list>
-    XmlToken:XML_CHAR_ENTITY_REF('&#xaBcD123;')

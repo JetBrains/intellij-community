@@ -1,4 +1,0 @@
-def path = /C:\Documents and Settings\victoria.dumova\.IntelliJIdea10/
-println <selection>path</selection>
------
-println 'C:\\Documents and Settings\\victoria.dumova\\.IntelliJIdea10'

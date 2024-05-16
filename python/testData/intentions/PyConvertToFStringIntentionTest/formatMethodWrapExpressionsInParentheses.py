@@ -1,1 +1,0 @@
-'{0.real}, {1.imag}, {2[0]}, {3}, {4.attr}'.format(-42, 42, [1] + [2], lambda: None, ~MyClass())

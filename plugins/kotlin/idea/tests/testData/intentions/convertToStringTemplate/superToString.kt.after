@@ -1,4 +1,0 @@
-class C {
-    override fun toString(): String =
-        "${super.toString()} and more!"
-}

@@ -1,5 +1,0 @@
-PsiJavaFile:DoIncomplete0.java
-  PsiDoWhileStatement
-    PsiKeyword:do('do')
-    PsiErrorElement:Statement expected
-      <empty list>

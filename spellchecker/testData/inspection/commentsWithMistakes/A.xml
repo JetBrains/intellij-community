@@ -1,6 +1,0 @@
-<xml>
-  <!--<TYPO descr="Typo: In word 'commments'">commments</TYPO> in xml-->
-  <a>tag value <!--<TYPO descr="Typo: In word 'commments'">commments</TYPO> in xml-->
-    plain text
-  </a>
-</xml>

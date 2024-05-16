@@ -1,6 +1,0 @@
-foo:
-  bar:
-    someKey:
-      - bla
-      - bla
-  baba: papa

@@ -1,1 +1,0 @@
-s = 'Hello\<caret>nWorld!'

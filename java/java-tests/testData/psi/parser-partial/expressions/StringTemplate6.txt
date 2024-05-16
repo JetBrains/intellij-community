@@ -1,7 +1,0 @@
-PsiJavaFile:StringTemplate6.java
-  PsiTemplateExpression
-    PsiTemplate
-      PsiFragment:STRING_TEMPLATE_BEGIN('"\{')
-      PsiExpression(empty)
-        <empty list>
-      PsiFragment:STRING_TEMPLATE_END('}"')

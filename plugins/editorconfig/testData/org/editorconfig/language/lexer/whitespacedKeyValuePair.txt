@@ -1,4 +1,0 @@
-EditorConfigTokenType.IDENTIFIER ('my key')
-EditorConfigTokenType.SEPARATOR ('=')
-WHITE_SPACE ('  ')
-EditorConfigTokenType.IDENTIFIER ('value ??')

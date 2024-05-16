@@ -1,3 +1,0 @@
-public class X {
-  private <spot>List<String></spot> ss = new ArrayList<>();
-}

@@ -1,6 +1,0 @@
-// INPLACE_VARIABLE_NAME: s
-fun foo(param: Boolean) {
-    val s = "bc"
-    val p = "sd${s}ggt"
-    val str = if (param) "a${s}def" else null
-}

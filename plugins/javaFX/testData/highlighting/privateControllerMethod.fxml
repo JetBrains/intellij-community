@@ -1,5 +1,0 @@
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.VBox?>
-<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="PrivateControllerMethod">
-    <TableView onSort=<error descr="'onSort(SortEvent<TableView>)' should be public or annotated with @FXML">"#onSort"</error>/>
-</VBox>

@@ -1,6 +1,0 @@
-[kotlinClassConstructorUsages.0.kt] Constructor delegation reference 7 constructor(name: String): this() {
-[kotlinClassConstructorUsages.1.kt] Constructor delegation reference 29 constructor(name: String) : super(name) {
-[kotlinClassConstructorUsages.1.kt] Constructor delegation reference 33 constructor() : super("") {
-[kotlinClassConstructorUsages.1.kt] New instance creation 6 var nextServer: Server? = Server("")
-[kotlinClassConstructorUsages.1.kt] Supertype 24 object ClientObject : Server("") {
-[kotlinClassConstructorUsages.1.kt] Supertype 5 class Client : Server("") {

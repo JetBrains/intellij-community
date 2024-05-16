@@ -1,9 +1,0 @@
-bounds:
-  'JTextField #0': [0, 0, 480, 30]
-  'JPasswordField #1': [0, 40, 480, 30]
-  'ComboBox #2': [0, 80, 480, 30]
-  'ComboBox #3': [0, 120, 480, 30]
-  label: [0, 240, 480, 30]
-  enabled: [0, 200, 480, 30]
-  'JBIntSpinner #7': [0, 280, 480, 30]
-  'TextFieldWithHistoryWithBrowseButton #8': [0, 320, 480, 30]

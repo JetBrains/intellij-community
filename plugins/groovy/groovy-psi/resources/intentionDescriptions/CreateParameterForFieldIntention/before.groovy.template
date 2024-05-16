@@ -1,6 +1,0 @@
-class Foo {
-  def field
-
-  def Foo() {
-  }
-}

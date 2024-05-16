@@ -1,8 +1,0 @@
-public abstract annotation SimpleAnnotation {
-}
-
-public class SimpleClass {
-    @java.lang.Deprecated
-    public fun foo() : java.lang.Object = UastEmptyExpression
-    public fun bar(param: int) : java.lang.String = UastEmptyExpression
-}

@@ -1,3 +1,0 @@
-<caret>some text<caret>
-some <caret>other text
-yet another line

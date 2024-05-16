@@ -1,8 +1,0 @@
-/**
- * @see a.b.c  <caret>aaaa
- */
------
-/**
- * @see a.b.c  
- * <caret>aaaa
- */

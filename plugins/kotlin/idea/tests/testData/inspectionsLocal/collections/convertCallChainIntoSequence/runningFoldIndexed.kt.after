@@ -1,5 +1,0 @@
-// WITH_STDLIB
-
-fun test(list: List<Int>) {
-    val x: List<Int> = list.asSequence().filter { it > 1 }.runningFoldIndexed(0) { _, acc, i -> acc + i }.toList()
-}

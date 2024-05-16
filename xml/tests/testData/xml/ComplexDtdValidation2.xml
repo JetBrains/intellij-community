@@ -1,2 +1,0 @@
-<!DOCTYPE foo SYSTEM "ComplexDtdValidation2.dtd">
-<<error>foo</error>></<error>foo</error>>

@@ -1,5 +1,0 @@
-HtmlFile:complex.md
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      <empty list>
-  PsiElement(MARKDOWN_OUTER_BLOCK)('# 123\n\nHello how are you\n\n    blockquote\n\n# Other header\n  # And other')

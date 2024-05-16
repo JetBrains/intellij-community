@@ -1,9 +1,0 @@
-<idea-plugin>
-
-  <actions>
-    <group id="separatorGroup">
-      <separator text="Separator Title Case"/>
-    </group>
-  </actions>
-
-</idea-plugin>

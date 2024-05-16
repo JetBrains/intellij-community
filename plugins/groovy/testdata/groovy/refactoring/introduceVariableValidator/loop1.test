@@ -1,6 +1,0 @@
-int preved = 5
-for (i in 1..5){
-  <begin>6<end>
-}
------
-Introduced variable will conflict with local variable preved

@@ -1,6 +1,0 @@
-def path = /C:\Docum${a}ents and Settings\victoria.dumova\.IntelliJI
-dea10/
-println <selection>path</selection>
------
-println """C:\\Docum${a}ents and Settings\\victoria.dumova\\.IntelliJI
-dea10"""

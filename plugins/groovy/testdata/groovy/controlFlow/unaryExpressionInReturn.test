@@ -1,9 +1,0 @@
-!list
------
-0(1) element: null
-1(2) Condition Unary expression
-2(3,5) READ list
-3(4)  Positive goto instruction, condition=1Unary expression
-4(6) element: Unary expression MAYBE_RETURN
-5(6) element: Unary expression MAYBE_RETURN
-6() element: null

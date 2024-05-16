@@ -1,3 +1,0 @@
-package <caret>
-
-// EXIST: generated.

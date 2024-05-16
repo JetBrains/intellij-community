@@ -1,9 +1,0 @@
-class Foo {
-    companion object {
-        val bar = 10
-    }
-
-    fun test() {
-        println(bar)
-    }
-}

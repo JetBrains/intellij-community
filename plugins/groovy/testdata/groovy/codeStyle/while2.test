@@ -1,8 +1,0 @@
-<option>BRACE_STYLE=NEXT_LINE</option>
-<option>SPACE_WITHIN_WHILE_PARENTHESES=false</option>
-<option>SPACE_BEFORE_WHILE_PARENTHESES=true</option>
-while   (true)    {}
------
-while (true)
-{
-}

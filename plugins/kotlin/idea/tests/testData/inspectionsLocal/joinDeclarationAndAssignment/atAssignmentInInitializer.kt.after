@@ -1,9 +1,0 @@
-// AFTER-WARNING: Variable 'foo' is never used
-class A {
-    init {
-        bar()
-        val foo<selection>: String</selection><caret> = ""
-    }
-
-    fun bar() {}
-}

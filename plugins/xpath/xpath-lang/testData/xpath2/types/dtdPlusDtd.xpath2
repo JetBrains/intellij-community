@@ -1,1 +1,0 @@
-xs:dayTimeDuration($i) + xs:dayTimeDuration($j)

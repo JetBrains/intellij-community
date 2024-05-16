@@ -1,5 +1,0 @@
-0: WRITE i
-1: READ i
-2: COND_GOTO [END] 5
-3: WRITE i
-4: WRITE i

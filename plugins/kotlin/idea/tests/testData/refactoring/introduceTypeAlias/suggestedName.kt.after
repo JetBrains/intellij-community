@@ -1,7 +1,0 @@
-typealias NullableStringToBooleanList = List<(String?) -> Boolean>
-
-// WITH_STDLIB
-// SIBLING:
-fun foo(list: NullableStringToBooleanList) {
-
-}

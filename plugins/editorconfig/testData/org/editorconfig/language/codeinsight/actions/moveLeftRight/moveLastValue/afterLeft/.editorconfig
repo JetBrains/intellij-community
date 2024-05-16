@@ -1,2 +1,0 @@
-[foo]
-charset = utf-8, utf-16, <caret>utf-64, utf-32

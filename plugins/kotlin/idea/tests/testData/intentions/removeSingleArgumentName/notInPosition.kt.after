@@ -1,5 +1,0 @@
-fun foo(a: Int, b: Int) = a + b
-
-fun main() {
-    foo(1, b = 3)
-}

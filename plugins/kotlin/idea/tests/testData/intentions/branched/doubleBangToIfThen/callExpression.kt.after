@@ -1,9 +1,0 @@
-// WITH_STDLIB
-// AFTER-WARNING: Parameter 'args' is never used
-fun foo(): String? {
-    return "foo"
-}
-
-fun main(args: Array<String>) {
-    if (foo() == null) throw NullPointerException("Expression 'foo()' must not be null")
-}

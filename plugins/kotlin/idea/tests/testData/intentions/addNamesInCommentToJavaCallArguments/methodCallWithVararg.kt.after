@@ -1,3 +1,0 @@
-fun test(j: Java) {
-    j.test(/* foo = */ "", /* ...bar = */ 1, 2, 3)
-}

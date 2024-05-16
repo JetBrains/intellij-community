@@ -1,8 +1,0 @@
-{
-    "mainFile": "KotlinClass.kt",
-    "usages": [
-        "Usage.java",
-        "Usage.kt",
-        "UsageWithoutCompanionName.kt"
-    ]
-}

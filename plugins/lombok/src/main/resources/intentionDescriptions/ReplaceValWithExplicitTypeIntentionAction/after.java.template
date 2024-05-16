@@ -1,5 +1,0 @@
-public class X {
-  void a() {
-    final ArrayList<String> arrayList = new ArrayList<>();
-  }
-}

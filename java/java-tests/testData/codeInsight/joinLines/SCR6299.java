@@ -1,3 +1,0 @@
-<caret>
-class Test {
-}

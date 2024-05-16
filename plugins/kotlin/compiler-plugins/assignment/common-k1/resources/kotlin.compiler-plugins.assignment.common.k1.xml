@@ -1,7 +1,0 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1">
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <assignResolutionAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1.IdeAssignPluginResolutionAltererExtension"/>
-    <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1.IdeAssignmentContainerContributor"/>
-    <quickFixContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.assignment.k1.AssignmentPluginQuickFixContributor"/>
-  </extensions>
-</idea-plugin>

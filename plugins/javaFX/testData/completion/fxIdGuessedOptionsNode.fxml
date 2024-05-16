@@ -1,4 +1,0 @@
-<fx:root type="GuessedRoot" fx:controller="FxIdGuessedOptionsController" fx:id="pane" xmlns:fx="http://javafx.com/fxml">
-  <GuessedNode fx:id="<caret>">
-  </GuessedNode>
-</fx:root>

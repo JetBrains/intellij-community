@@ -1,6 +1,0 @@
-<idea-plugin>
-  <actions>
-    <action id="invalid"
-            class="<error descr="'java.lang.String' is not assignable to 'com.intellij.openapi.actionSystem.AnAction'">java.lang.String</error>"/>
-  </actions>
-</idea-plugin>

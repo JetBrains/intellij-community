@@ -1,4 +1,0 @@
-fun a() {
-    val a: Int = 42
-    println(a)
-}

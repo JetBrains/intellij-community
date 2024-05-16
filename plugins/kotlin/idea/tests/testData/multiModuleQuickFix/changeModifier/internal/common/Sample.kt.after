@@ -1,3 +1,0 @@
-// "Make internal" "true"
-// IGNORE_K2
-internal expect <caret>class Sample

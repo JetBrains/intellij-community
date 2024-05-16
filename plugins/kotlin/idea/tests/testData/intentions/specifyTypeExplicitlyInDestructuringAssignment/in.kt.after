@@ -1,8 +1,0 @@
-// WITH_STDLIB
-// AFTER-WARNING: Variable 'key' is never used
-// AFTER-WARNING: Variable 'value' is never used
-fun test() {
-    val map = mapOf(1 to "two")
-    for ((key: Int, value: String<caret>) in map) {
-    }
-}

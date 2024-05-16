@@ -1,2 +1,0 @@
-Changed resolve type of KtSimpleNameReference: Transient
-Trying to build import list again with import rules: +kotlin.jvm.Transient

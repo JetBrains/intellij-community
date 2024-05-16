@@ -1,5 +1,0 @@
-+
-  Template(div)
-  >
-    EMPTY_NODE
-    Template(div)

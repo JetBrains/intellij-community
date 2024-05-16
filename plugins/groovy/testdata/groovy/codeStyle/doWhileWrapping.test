@@ -1,8 +1,0 @@
-<option>WHILE_ON_NEW_LINE=true</option>
-<option>KEEP_SIMPLE_BLOCKS_IN_ONE_LINE=true</option>
-<option>BRACE_STYLE=END_OF_LINE</option>
-do
-{} while ()
------
-do {}
-while ()

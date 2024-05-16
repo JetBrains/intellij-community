@@ -1,5 +1,0 @@
-<!DOCTYPE tv [ <!ELEMENT tv (date)*> <!ELEMENT date (#PCDATA)> <!ATTLIST tv id ID #IMPLIED>]>
-
-<tv <error>id</error>="1" <error>id</error>="3">
-
-</tv>

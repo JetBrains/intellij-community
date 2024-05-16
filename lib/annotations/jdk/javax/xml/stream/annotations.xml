@@ -1,5 +1,0 @@
-<root>
-  <item name='javax.xml.stream.XMLInputFactory javax.xml.stream.XMLInputFactory newInstance()'>
-    <annotation name='java.lang.Deprecated'/>
-  </item>
-</root>

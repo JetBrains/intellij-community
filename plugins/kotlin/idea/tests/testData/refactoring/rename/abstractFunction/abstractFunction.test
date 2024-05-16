@@ -1,8 +1,0 @@
-{
-  "type": "KOTLIN_FUNCTION",
-  "classId": "/A.B",
-  "oldName": "absFun",
-  "newName": "absFun2",
-  "mainFile": "toBeRenamed.kt",
-  "enabledInK2": true
-}

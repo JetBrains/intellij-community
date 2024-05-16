@@ -1,1 +1,0 @@
-Function 'm' is already declared in interface 'A'

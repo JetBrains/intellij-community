@@ -1,2 +1,0 @@
-s<caret>ome <selection>text<caret></selection>
-some <selection><caret>other</selection> <selection><caret>text</selection>

@@ -1,8 +1,0 @@
-[hello]
-<fold text='...'>foo=bar
-abc=def</fold>
-
-[world]
-<fold text='...'>ghi=jkl
-mno=pqr
-stu=vwx</fold>

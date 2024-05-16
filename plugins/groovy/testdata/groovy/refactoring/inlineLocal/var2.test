@@ -1,4 +1,0 @@
-def <selection>preved</selection> = 42
-println preved + preved * preved
------
-<caret>println 42 + 42 * 42

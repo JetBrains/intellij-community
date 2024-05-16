@@ -1,9 +1,0 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
-package classCompletionImport
-
-import java.util.SortedSet
-
-fun other() : SortedSet
-
-// AUTOCOMPLETE_SETTING: true

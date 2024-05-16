@@ -1,7 +1,0 @@
-// FIR_COMPARISON
-class Inheritor : Base() {
-    init {
-        fooBar()
-    }
-}
-// AUTOCOMPLETE_SETTING: true

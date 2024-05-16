@@ -1,8 +1,0 @@
-// WITH_STDLIB
-// FIX: Change call to 'map'
-
-fun foo(c: Sequence<String>) {
-    c.map label@{
-        return@label ""
-    }
-}

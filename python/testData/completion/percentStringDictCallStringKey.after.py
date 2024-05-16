@@ -1,1 +1,0 @@
-"%(completion)s" % dict(completion)

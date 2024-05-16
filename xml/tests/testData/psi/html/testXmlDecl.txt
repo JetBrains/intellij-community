@@ -1,7 +1,0 @@
-HtmlFile:test.html
-  PsiElement(HTML_DOCUMENT)
-    PsiElement(XML_PROLOG)
-      PsiElement(XML_PROCESSING_INSTRUCTION)
-        XmlToken:XML_PI_START('<?')
-        XmlToken:XML_PI_TARGET('xml version="1.0" encoding='cp1251' ')
-        XmlToken:XML_PI_END('?>')

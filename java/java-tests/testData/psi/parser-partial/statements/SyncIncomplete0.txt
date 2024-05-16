@@ -1,5 +1,0 @@
-PsiJavaFile:SyncIncomplete0.java
-  PsiSynchronizedStatement
-    PsiKeyword:synchronized('synchronized')
-    PsiErrorElement:'(' expected
-      <empty list>

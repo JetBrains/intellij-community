@@ -1,3 +1,0 @@
-PyFile:shell5.py
-  PyEmptyExpression
-    PsiElement(Py:SHELL_COMMAND)('!!')

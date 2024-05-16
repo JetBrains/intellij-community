@@ -1,5 +1,0 @@
-<idea-plugin>
-  <id>my.plugin</id>
-  <version>0.1.0</version>
-  <module value="foo.bar"/>
-</idea-plugin>

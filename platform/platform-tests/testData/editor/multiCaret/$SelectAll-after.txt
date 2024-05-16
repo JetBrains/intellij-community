@@ -1,2 +1,0 @@
-<selection>some text
-some <caret>other text</selection>

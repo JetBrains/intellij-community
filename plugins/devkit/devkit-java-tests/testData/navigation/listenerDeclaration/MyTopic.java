@@ -1,1 +1,0 @@
-public interface My<caret>Topic {}

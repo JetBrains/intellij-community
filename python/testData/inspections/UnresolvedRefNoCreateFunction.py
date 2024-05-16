@@ -1,1 +1,0 @@
-<error descr="Unresolved reference 'my_ref'">my_<caret>ref</error>.do_smth(1, 2)

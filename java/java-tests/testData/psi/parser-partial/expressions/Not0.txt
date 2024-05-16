@@ -1,9 +1,0 @@
-PsiJavaFile:Not0.java
-  PsiPrefixExpression:!!a
-    PsiJavaToken:EXCL('!')
-    PsiPrefixExpression:!a
-      PsiJavaToken:EXCL('!')
-      PsiReferenceExpression:a
-        PsiReferenceParameterList
-          <empty list>
-        PsiIdentifier:a('a')

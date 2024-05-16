@@ -1,1 +1,0 @@
-print('<selection>foo</selection>bar'.upper())

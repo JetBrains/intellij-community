@@ -1,3 +1,0 @@
-fun kjj() {
-    KJJ().test()
-}

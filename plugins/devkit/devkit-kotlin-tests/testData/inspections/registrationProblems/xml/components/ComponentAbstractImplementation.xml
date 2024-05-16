@@ -1,7 +1,0 @@
-<idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class><error descr="Plugin component class must not be abstract">AbstractApplicationComponent</error></implementation-class>
-    </component>
-  </application-components>
-</idea-plugin>

@@ -1,2 +1,0 @@
-@PkgAnno
-package pkg;

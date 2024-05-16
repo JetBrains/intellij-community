@@ -1,7 +1,0 @@
-fragment checkRun on CheckRun {
-  name
-  conclusion
-  isRequired(pullRequestNumber: $number) # See: findPullRequestMergeability
-  detailsUrl
-  url
-}

@@ -1,3 +1,0 @@
-// WITH_STDLIB
-
-val x: Float = 1.0f

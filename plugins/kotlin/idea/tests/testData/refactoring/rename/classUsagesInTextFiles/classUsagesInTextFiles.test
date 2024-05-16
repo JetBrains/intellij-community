@@ -1,7 +1,0 @@
-{
-  "type": "MARKED_ELEMENT",
-  "mainFile": "test/test.kt",
-  "newName": "D",
-  "withRuntime": "true",
-  "enabledInK2": true
-}

@@ -1,7 +1,0 @@
-PsiJavaFile:IfIncomplete1.java
-  PsiIfStatement
-    PsiKeyword:if('if')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:LPARENTH('(')
-    PsiErrorElement:Expression expected
-      <empty list>

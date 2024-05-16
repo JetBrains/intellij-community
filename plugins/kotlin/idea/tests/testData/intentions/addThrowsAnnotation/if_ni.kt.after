@@ -1,6 +1,0 @@
-// WITH_STDLIB
-
-@Throws(Throwable::class)
-fun a(b: Boolean) {
-    throw if (b) RuntimeException() else Exception()
-}

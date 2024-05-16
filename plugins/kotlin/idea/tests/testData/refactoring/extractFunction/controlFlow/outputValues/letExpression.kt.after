@@ -1,7 +1,0 @@
-fun main() {
-    val c = string()
-}
-
-private fun string(): String = "".let { it }
-
-// IGNORE_K1

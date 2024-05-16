@@ -1,4 +1,0 @@
-UFile (package = testpackage)
-    UAnnotation (fqName = org.apache.struts2.convention.annotation.ParentPackage)
-        UNamedExpression (name = null)
-            ULiteralExpression (value = "foo")

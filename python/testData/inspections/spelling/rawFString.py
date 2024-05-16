@@ -1,1 +1,0 @@
-(f'\t<TYPO descr="Typo: In word 'eapot'">eapot</TYPO>{42}teapot' rf'\teapot{42}teapot')

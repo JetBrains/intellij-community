@@ -1,4 +1,0 @@
-test.java.file
-  CONTINUE_STATEMENT
-    CONTINUE_KEYWORD
-    SEMICOLON

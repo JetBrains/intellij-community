@@ -1,1 +1,0 @@
-args.any { it == 'hoge' }

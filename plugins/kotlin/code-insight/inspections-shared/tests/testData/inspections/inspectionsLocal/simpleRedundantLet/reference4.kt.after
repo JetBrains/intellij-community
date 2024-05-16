@@ -1,5 +1,0 @@
-// WITH_STDLIB
-
-fun Int.foo() {
-    also(::println)
-}

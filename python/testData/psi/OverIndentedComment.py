@@ -1,3 +1,0 @@
-if test:
-        # comment
-    pass

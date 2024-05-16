@@ -1,9 +1,0 @@
-import java.io.File
-
-fun foo() {
-    File.listRoots()<caret>
-}
-
-// IGNORE_K2
-// INVOCATION_COUNT: 2
-// ELEMENT_TEXT: "File.listRoots"

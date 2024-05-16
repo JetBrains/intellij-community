@@ -1,1 +1,0 @@
-[link](topDir/stub_with_repeated_extension.md)

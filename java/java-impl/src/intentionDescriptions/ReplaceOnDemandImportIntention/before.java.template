@@ -1,7 +1,0 @@
-<spot>import java.util.*</spot>;
-
-public class X {
-  List<String> f() {
-    return new ArrayList<String>();
-  }
-}

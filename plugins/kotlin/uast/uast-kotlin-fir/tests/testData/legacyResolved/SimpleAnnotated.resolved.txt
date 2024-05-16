@@ -1,5 +1,0 @@
-UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = println) -> Decompiled_Method: println
-UTypeReferenceExpression (name = kotlin.SinceKotlin) -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:kotlin: kotlin
-UAnnotation (fqName = kotlin.SinceKotlin) -> USimpleNameReferenceExpression (identifier = SinceKotlin) -> Decompiled_Class: SinceKotlin
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String

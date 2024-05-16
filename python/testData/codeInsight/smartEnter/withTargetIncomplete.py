@@ -1,1 +1,0 @@
-with open('file.txt') <caret>as

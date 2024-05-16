@@ -1,2 +1,0 @@
-class Super extends Hyper {
-}

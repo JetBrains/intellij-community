@@ -1,5 +1,0 @@
-def foo = { Map attrs, a ->
-  a + attrs.b
-}
-
-foo(1, b: 2)

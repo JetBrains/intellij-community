@@ -1,5 +1,0 @@
-public class Foo {
-  public Foo(int arg) {
-    <spot>arg</spot>$key
-  }
-}

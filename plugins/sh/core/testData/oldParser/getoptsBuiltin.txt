@@ -1,5 +1,0 @@
-SHELL_SCRIPT
-  COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
-      LITERAL
-        PsiElement(word)('getopts')

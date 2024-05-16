@@ -1,4 +1,0 @@
-
-rootProject.name = 'project'
-include 'submoduleA', 'submoduleB'
-

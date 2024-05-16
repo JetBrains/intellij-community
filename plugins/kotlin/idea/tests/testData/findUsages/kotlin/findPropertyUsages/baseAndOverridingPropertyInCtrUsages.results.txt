@@ -1,6 +1,0 @@
-Value read 10 val c = b.openProp //not found by K2 KTIJ-26343
-Value read 11 val d = m.openProp
-Value read 11 val d = m.openProp
-Value write 12 b.openProp = "" //not found by K2 KTIJ-26343
-Value write 13 m.openProp = ""
-Value write 13 m.openProp = ""

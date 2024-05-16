@@ -1,8 +1,0 @@
-public class X {
-  int f() {
-      int a = 2;
-      int b = 3;
-      int c = 4;
-      int d = 1 - a * (b + c);
-  }
-}

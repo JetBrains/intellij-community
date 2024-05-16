@@ -1,1 +1,0 @@
-class Main(@get:JvmName("getter") @set:JvmName("setter") var a<caret>: Int)

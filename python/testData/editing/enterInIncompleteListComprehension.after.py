@@ -1,2 +1,0 @@
-xs = [foo for
-      foo

@@ -1,1 +1,0 @@
-exec('import __builtin__')

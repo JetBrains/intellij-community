@@ -1,8 +1,0 @@
-test.java.file
-  IMPORT_LIST
-    <empty list>
-  MODIFIER_LIST
-    <empty list>
-  MODULE
-  ERROR_ELEMENT
-    <empty list>

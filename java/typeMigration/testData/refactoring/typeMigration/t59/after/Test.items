@@ -1,8 +1,0 @@
-Types:
-PsiField:f : java.lang.Cloneable
-
-Conversions:
-new String[1] -> $
-
-New expression type changes:
-Fails:

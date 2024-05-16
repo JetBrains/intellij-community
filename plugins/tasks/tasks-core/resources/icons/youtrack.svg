@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd" transform="translate(.605 .568)">
-    <rect width="13.969" height="13.969" x=".449" y=".479" fill="#FF1B88" fill-rule="nonzero"/>
-    <rect width="13.037" height="13.037" x=".931" y=".931" fill="#111" fill-rule="nonzero"/>
-    <rect width="6" height="1" x="2.403" y="10.432" fill="#FFF" fill-rule="nonzero"/>
-    <polygon fill="#FFF" points="4.424 6.266 2.374 2.432 3.751 2.432 5.058 5.061 6.357 2.432 7.727 2.432 5.653 6.297 5.653 8.441 4.424 8.441"/>
-    <polygon fill="#FFF" points="9.412 3.5 7.803 3.5 7.803 2.436 12.2 2.436 12.2 3.5 10.592 3.5 10.592 8.436 9.412 8.436"/>
-  </g>
-</svg>

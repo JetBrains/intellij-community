@@ -1,9 +1,0 @@
-import static I.FOO;
-public class X {
-  public static void main(String[] args) {
-    System.out.println(FOO);
-  }
-}
-interface I {
-  String FOO = "foo";
-}

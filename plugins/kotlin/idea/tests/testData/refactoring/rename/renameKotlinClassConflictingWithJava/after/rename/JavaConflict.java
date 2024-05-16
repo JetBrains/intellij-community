@@ -1,3 +1,0 @@
-package rename;
-
-class JavaConflict {}

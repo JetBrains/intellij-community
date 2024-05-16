@@ -1,2 +1,0 @@
-new A().test<caret>()
-

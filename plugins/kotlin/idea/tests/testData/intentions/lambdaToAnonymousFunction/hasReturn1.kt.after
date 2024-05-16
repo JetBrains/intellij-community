@@ -1,8 +1,0 @@
-// AFTER-WARNING: Parameter 'f' is never used
-fun foo(f: (Int) -> String) {}
-
-fun test() {
-    foo(fun(it: Int): String {
-        return "$it"
-    })
-}

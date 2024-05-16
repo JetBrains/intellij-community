@@ -1,8 +1,0 @@
-Types:
-PsiMethod:method : java.lang.Integer[]
-
-Conversions:
-112 -> $
-
-New expression type changes:
-Fails:

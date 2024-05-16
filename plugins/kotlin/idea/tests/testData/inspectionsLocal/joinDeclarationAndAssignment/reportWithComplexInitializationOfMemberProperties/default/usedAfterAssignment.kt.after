@@ -1,9 +1,0 @@
-class A {
-    val input: String = ""
-
-    init {
-        input.additionalInit()
-    }
-}
-
-fun String.additionalInit() {}

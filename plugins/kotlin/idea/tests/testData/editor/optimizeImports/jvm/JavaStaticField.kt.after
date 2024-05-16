@@ -1,6 +1,0 @@
-// FIR_COMPARISON
-import MyJavaClass.TEST
-
-fun main() {
-    TEST
-}

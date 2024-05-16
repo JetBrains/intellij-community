@@ -1,4 +1,0 @@
-IGNORE IDEA-81364 Git config is case insensitive in the native Git, but not in IDEA
-r9 Upper case sections and items
-
-One remote defined with upper case "REMOTE" section name and upper case "URL" and "FETCH".

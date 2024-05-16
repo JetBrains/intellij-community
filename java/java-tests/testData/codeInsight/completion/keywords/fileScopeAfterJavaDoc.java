@@ -1,2 +1,0 @@
-/** javadoc */
-<caret>

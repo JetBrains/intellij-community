@@ -1,5 +1,0 @@
-root = true
-
-[foo]
-key = value
-another_key = value

@@ -1,4 +1,0 @@
-package xxx;
-
-class PackagePrivateClass {
-}

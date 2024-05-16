@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>module-info.java</file>
-    <line>1</line>
-    <entry_point TYPE="java.module" FQNAME="m.src" />
-    <description>Redundant directive 'requires java.base'. 'java.base' is implicitly required.</description>
-  </problem>
-</problems>

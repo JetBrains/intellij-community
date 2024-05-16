@@ -1,9 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import java.net.URL?>
-<GridPane xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10"
-          fx:id="myGridPane">
-  <stylesheets>
-    <URL value="@mystyle.css"/>
-    <URL value="@very/deeply/located/small.css"/>
-  </stylesheets>
-</GridPane>

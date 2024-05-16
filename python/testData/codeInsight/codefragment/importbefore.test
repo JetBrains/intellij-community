@@ -1,9 +1,0 @@
-print("start")
-import foo
-<begin>
-print("code")
-<end>
-foo.bar
-<result>
-In:
-Out:

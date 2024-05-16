@@ -1,6 +1,0 @@
-import java.util.*;
-class Computer {
-    void f() {
-        List<String> l = <spot>Arrays.asList("a", "b", "c")</spot>;
-    }
-}

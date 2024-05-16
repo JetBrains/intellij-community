@@ -1,8 +1,0 @@
-diff -r -u before/1.txt after/1.txt
---- 1.txt.old	Mon Nov 20 18:17:02 2006
-+++ 1.txt	Mon Nov 20 18:17:18 2006
-@@ -2,3 +2,4 @@
- dos
- tres
- cuatro
-+cinco

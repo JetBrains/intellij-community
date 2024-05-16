@@ -1,3 +1,0 @@
-def foo(Object ... o) {}
------
-def foo(Object... o) {}

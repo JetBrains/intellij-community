@@ -1,3 +1,0 @@
-EditorConfigTokenType.L_BRACKET ('[')
-EditorConfigTokenType.PATTERN_IDENTIFIER ('foo.kt')
-EditorConfigTokenType.R_BRACKET (']')

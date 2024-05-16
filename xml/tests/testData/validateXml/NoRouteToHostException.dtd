@@ -1,3 +1,0 @@
-<!ENTITY % zzz SYSTEM "http://aaa.bbb.ccc/x.ent">
-%zzz;
-<!ELEMENT a EMPTY>

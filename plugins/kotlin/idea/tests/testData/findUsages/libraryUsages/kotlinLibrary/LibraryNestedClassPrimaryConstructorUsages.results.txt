@@ -1,7 +1,0 @@
-[LibraryNestedClassPrimaryConstructorUsages.0.kt] Constructor delegation reference 12 constructor(n: Int) : super(n)
-[LibraryNestedClassPrimaryConstructorUsages.0.kt] New instance creation 19 val aa = A.T(1)
-[LibraryNestedClassPrimaryConstructorUsages.0.kt] Supertype 15 class Y() : A.T(1)
-[LibraryNestedClassPrimaryConstructorUsages.1.java] New instance creation 12 A.T aa = new A.T(1);
-[library.kt] Constructor delegation reference 7 constructor() : this(1)
-[library.kt] New instance creation 63 val t = A.T(1)
-[library.kt] Supertype 28 class V() : A.T(1)

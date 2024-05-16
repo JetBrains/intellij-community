@@ -1,3 +1,0 @@
-class NonExtension {
-  static { }
-}

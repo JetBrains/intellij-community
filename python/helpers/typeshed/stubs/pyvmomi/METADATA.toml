@@ -1,7 +1,0 @@
-version = "8.0.0.*"
-upstream_repository = "https://github.com/vmware/pyvmomi"
-partial_stub = true
-obsolete_since = "8.0.1.0.1" # Released on 2023-05-25
-
-[tool.stubtest]
-ignore_missing_stub = true

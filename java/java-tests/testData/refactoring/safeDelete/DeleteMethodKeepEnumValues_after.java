@@ -1,4 +1,0 @@
-enum Test {
-    A, B;
-
-}

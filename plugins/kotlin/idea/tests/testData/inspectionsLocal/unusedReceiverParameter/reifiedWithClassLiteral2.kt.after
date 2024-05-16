@@ -1,4 +1,0 @@
-// WITH_STDLIB
-inline fun <reified T> testFun(): String {
-    return (T::class.java).name
-}

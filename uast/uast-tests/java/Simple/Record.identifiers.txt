@@ -1,2 +1,0 @@
-Record -> UClass (name = Record) from PsiIdentifier:Record
-x -> UParameter (name = x) from PsiIdentifier:x

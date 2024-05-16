@@ -1,2 +1,0 @@
-    class Sub extends Super {
-    }

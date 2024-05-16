@@ -1,8 +1,0 @@
-<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="foo://bar">
-  <import schemaLocation="include.xsd" namespace="foo://bar"/>
-  <element name="root">
-    <complexType>
-      <anyAttribute/>
-    </complexType>
-  </element>
-</schema>

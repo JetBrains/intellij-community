@@ -1,1 +1,0 @@
-scalar string (''here''s to "quotes"'')

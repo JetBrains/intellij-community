@@ -1,6 +1,0 @@
-void append(<spot>a</spot>, <spot>b</spot>) {
-  a.add(b)
-}
-
-append([], 1)
-append([], 'q')

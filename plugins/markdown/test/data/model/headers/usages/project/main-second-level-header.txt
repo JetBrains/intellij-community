@@ -1,4 +1,0 @@
-18|[Own usage of second level header](#|second-level-header|)
-27|* |[Second level header](#|second-level-header|)
-7|* |[link to secondary header](../main.md#|second-level-header|)
-9|* |[link to secondary header](main.md#|second-level-header|)

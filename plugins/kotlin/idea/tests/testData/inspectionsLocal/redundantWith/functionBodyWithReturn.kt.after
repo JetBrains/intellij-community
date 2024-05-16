@@ -1,3 +1,0 @@
-// WITH_STDLIB
-fun foo(s: String): Int =
-    42

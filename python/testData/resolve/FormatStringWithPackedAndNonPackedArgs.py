@@ -1,1 +1,0 @@
-print("pos: {} {<ref>} {}".format(1, *[2, 3]))

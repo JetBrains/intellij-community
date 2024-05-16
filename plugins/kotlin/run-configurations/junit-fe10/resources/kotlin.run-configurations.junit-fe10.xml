@@ -1,9 +1,0 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.fe10.junit">
-  <dependencies>
-    <plugin id="JUnit"/>
-  </dependencies>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <junitRecognizer implementation="org.jetbrains.kotlin.idea.fe10.junit.KotlinMultiplatformJUnitRecognizer"/>
-  </extensions>
-</idea-plugin>

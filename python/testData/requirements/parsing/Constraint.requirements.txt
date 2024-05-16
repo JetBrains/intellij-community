@@ -1,3 +1,0 @@
--c errors.txt
-
---constraint other.txt

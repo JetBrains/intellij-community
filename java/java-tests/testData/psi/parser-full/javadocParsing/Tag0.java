@@ -1,4 +1,0 @@
-/**
- * @param param
- */
-class C{}

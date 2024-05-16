@@ -1,7 +1,0 @@
-import one.two.*
-
-//@formatter:off
-// IMPORT: class: one.two.MyClass
-fun test() {
-    MyClass()
-}

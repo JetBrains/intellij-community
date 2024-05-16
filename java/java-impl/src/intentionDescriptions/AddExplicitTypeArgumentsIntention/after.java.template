@@ -1,6 +1,0 @@
-import java.util.*;
-class Computer {
-    void f() {
-        List<String> l = Arrays.<String>asList("a", "b", "c");
-    }
-}

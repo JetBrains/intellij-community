@@ -1,2 +1,0 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
-actual value class <caret>IC actual constructor(actual val i: Int)

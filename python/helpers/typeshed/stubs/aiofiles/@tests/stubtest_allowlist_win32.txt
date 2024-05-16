@@ -1,5 +1,0 @@
-# At runtime, __all__ includes some items that are not available on Windows.
-# https://github.com/Tinche/aiofiles/pull/174
-aiofiles.os.__all__
-aiofiles.os.sendfile
-aiofiles.os.statvfs

@@ -1,5 +1,0 @@
-fragment repositoryOwnerName on RepositoryOwner {
-    __typename
-    ...nodeInfo
-    login
-}

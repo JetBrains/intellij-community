@@ -1,1 +1,0 @@
-<node text="target_func(x=func1, y=func2(), z=lambda: func3, w=lambda: func4()) (hierarchy.call.Static.Lambda.main)" base="true"/>

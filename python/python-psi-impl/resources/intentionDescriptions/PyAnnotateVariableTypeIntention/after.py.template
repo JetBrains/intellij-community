@@ -1,5 +1,0 @@
-class C:
-    attr: str
-
-    def __init__(self, attr='spam'):
-        self.attr = attr

@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<!DOCTYPE name [
-<!ENTITY entity <caret>>
-]>
-<name>&entity;</name>

@@ -1,6 +1,0 @@
-
-apply plugin: "groovy"
-
-allprojects {
-  //
-apply plugin: 'java'}

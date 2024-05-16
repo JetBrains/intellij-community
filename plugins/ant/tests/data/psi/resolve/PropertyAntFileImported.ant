@@ -1,7 +1,0 @@
-<project name="imported" default="included-a">
-	<target name="included-a">
-		<echo message="ant.file == ${ant.file}"/>
-		<echo message="ant.file.included == ${ant.file.imported}"/>
-		<echo message="ant.file.including-ant.file == ${<ref>ant.file.importing}"/>
-	</target>
-</project>

@@ -1,9 +1,0 @@
-uno
-
-dos
-tres
-
-cuarto
-
-cinco
-seis

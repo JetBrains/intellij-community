@@ -1,6 +1,0 @@
-import first.foo
-
-fun use() {
-    foo()
-    second.foo()
-}

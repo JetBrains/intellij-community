@@ -1,2 +1,0 @@
-[Bar.java] Unclassified 5 Foo.foo();
-[jvmStaticFun.0.java] Unclassified 8 Foo.foo();

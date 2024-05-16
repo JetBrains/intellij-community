@@ -1,7 +1,0 @@
-// WITH_STDLIB
-fun LongArray.arrayToString(): String = buildString {
-    for (i in this@arrayToString.indices) {
-        if (i > 0) append(", ")
-        append(this@arrayToString[i])
-    }
-}

@@ -1,5 +1,0 @@
-// FIX: Change to 'val'
-// NO_FIX: Remove 'var'
-class Foo(val text: CharSequence) {
-    inner class Bar: CharSequence by text
-}

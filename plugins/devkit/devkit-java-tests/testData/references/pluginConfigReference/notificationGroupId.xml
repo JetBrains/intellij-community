@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <notificationGroup id="my.balloon" displayType="BALLOON"/>
-    <notificationGroup id="my.toolwindow" toolWindowId="my.toolwindow.id" isLogByDefault="false" displayType="TOOL_WINDOW"/>
-  </extensions>
-</idea-plugin>

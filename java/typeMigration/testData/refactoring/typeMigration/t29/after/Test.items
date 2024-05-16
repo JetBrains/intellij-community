@@ -1,8 +1,0 @@
-Types:
-PsiMethod:get : java.util.List<java.lang.String>
-
-Conversions:
-f.toArray(new String[f.size()]) -> $qualifier$ $qualifier$.toArray($expr$)
-
-New expression type changes:
-Fails:

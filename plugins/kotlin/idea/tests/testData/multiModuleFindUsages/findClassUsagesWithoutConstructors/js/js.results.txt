@@ -1,2 +1,0 @@
-[common.kt] New instance creation 2 val ac = Clazz004()
-[jvm.kt] New instance creation 2 val a2 = Clazz004()

@@ -1,7 +1,0 @@
-<!DOCTYPE tag [
-   <!ENTITY our SYSTEM "6.dtd">
-   %our;
-]>
-<tag id="&ou<caret>r;">
-  &our;
-</tag>

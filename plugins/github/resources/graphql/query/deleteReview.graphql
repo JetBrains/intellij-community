@@ -1,5 +1,0 @@
-mutation ($reviewId: ID!){
-    deletePullRequestReview(input: {pullRequestReviewId: $reviewId}) {
-        __typename
-    }
-}

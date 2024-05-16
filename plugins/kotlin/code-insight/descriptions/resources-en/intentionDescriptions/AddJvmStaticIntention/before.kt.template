@@ -1,3 +1,0 @@
-object Example {
-    fun main(args: Array<String>) {}
-}

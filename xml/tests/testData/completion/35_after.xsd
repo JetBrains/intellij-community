@@ -1,7 +1,0 @@
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           elementFormDefault="qualified"
-           attributeFormDefault="unqualified">
-  <xs:simpleType name="YYY">
-    <xs:list itemType="xs:integer<caret>"/>
-  </xs:simpleType>
-</xs:schema>

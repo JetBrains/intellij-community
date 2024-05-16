@@ -1,3 +1,0 @@
-foo <selection>a</selection>.prop, 2
------
-foo((() a).prop, 2)

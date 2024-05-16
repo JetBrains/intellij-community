@@ -1,1 +1,0 @@
-element \x{abc<error>x</error>} { empty }

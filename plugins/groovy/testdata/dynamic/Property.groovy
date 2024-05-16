@@ -1,1 +1,0 @@
-def String a = <caret>b

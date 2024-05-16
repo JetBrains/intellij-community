@@ -1,2 +1,0 @@
-if <spot>not a == b</spot>:
-    return a

@@ -1,5 +1,0 @@
-(90,108)
-class A: T by Z(1)
-
-(203,221)
-class D: T by Z(1)

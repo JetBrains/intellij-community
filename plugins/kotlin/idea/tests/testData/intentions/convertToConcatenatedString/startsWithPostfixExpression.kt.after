@@ -1,4 +1,0 @@
-fun test(): String {
-    var l = 0
-    return l++.toString() + "a" + l
-}

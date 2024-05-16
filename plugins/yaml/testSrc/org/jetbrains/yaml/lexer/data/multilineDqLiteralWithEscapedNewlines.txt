@@ -1,4 +1,0 @@
-scalar key ('somevalue')
-: (':')
-whitespace (' ')
-scalar dstring ('"text text skjdfhjksd fjs djfksjdkfksdfkds jf\\n  sdkjfhsjkdfhjkshdfjhsdjkfhskjdf"')

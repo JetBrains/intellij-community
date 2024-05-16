@@ -1,8 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\d+>
-    RegExpBranchImpl: <\d+>
-      RegExpClosureImpl: <\d+>
-        RegExpSimpleClassImpl: <\d>
-          PsiElement(CHAR_CLASS)('\d')
-        RegExpQuantifierImpl: <+>
-          PsiElement(PLUS)('+')

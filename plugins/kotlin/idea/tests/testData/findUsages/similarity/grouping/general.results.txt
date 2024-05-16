@@ -1,8 +1,0 @@
-[{
-16|java.lang.System.out.println(|off|(|1|))}
-, {
-17|off|(|1|),
-18|off|(|1|)}
-, {
-19|if| (|off|(getFive())) {}
-]

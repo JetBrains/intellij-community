@@ -1,6 +1,0 @@
-<project name="testProject" default="test">
-  <tstamp>
-    <format property="p-after"/>
-  </tstamp>
-  <target name="test" if="p-after"/>
-</project>

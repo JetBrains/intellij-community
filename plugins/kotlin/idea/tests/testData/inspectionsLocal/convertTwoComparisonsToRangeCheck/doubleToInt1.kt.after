@@ -1,4 +1,0 @@
-// WITH_STDLIB
-fun foo(bar: Double) {
-    bar in 0.0..10.0
-}

@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry including="**" kind="src" output="out" path="src"/>
-	<classpathentry kind="output" path="myout"/>
-</classpath>

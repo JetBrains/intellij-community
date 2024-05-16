@@ -1,5 +1,0 @@
-// ACTION_CLASS: org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateSecondaryConstructorAction
-class Foo : Base {
-    <caret>constructor(`in`: Int) : super(`in`)
-    constructor(`in`: Int, i: Int, `when`: Int) : super(`in`, i, `when`)
-}

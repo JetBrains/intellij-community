@@ -1,8 +1,0 @@
-class MyClass {
-    fun test() = publicFun() + publicVal + protectedFun() + protectedVal + protectedField + privateFun() + privateFun()
-}
-
-val a = MyClass()
-a.test()
-
-// RESULT: 27: I

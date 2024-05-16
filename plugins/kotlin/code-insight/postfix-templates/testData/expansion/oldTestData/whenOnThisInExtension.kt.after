@@ -1,7 +1,0 @@
-// IGNORE_K2
-fun String.foo() {
-    when (this) {
-        <caret> -> {}
-        else -> {}
-    }
-}

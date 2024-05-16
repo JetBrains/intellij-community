@@ -1,4 +1,0 @@
-if (true()) then
-true() =  <error descr="Expected type 'xs:boolean', got 'xs:string'">'+2'</error>
-else
-(1 = 0) = <error descr="Expected type 'xs:boolean', got 'xs:integer'">2</error>

@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <filePrediction.referencesProvider implementation="com.intellij.filePrediction.references.java.JavaFileReferenceProvider"/>
-  </extensions>
-</idea-plugin>

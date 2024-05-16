@@ -1,9 +1,0 @@
-// AFTER-WARNING: Parameter 'i' is never used
-
-fun foo(i: () -> Unit, f: Boolean.(Int) -> String) {
-    false.f(1)
-}
-
-fun baz(f: (Int, Boolean) -> String) {
-    foo({}, { i -> f(i, this) })
-}

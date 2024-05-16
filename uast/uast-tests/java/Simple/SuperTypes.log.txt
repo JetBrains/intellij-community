@@ -1,4 +1,0 @@
-UFile (package = )
-    UClass (name = A)
-    UClass (name = B)
-    UClass (name = Test)

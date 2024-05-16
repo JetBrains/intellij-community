@@ -1,1 +1,0 @@
-open class KotlinBase(s: String)

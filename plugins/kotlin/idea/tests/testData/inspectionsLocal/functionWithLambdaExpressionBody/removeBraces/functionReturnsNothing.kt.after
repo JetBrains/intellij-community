@@ -1,3 +1,0 @@
-// FIX: Remove braces
-// WITH_STDLIB
-fun test(): Nothing = error("")

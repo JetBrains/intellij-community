@@ -1,5 +1,0 @@
-Requirements File(0,5)
-  OptionImpl(OPTION)(0,5)
-    PsiElement(RequirementsTokenType.LONG_OPTION)('--')(0,2)
-    PreReqImpl(PRE_REQ)(2,5)
-      PsiElement(RequirementsTokenType.PRE)('pre')(2,5)

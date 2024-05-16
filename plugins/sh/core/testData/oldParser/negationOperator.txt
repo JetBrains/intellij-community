@@ -1,9 +1,0 @@
-SHELL_SCRIPT
-  COMMANDS_LIST
-    CONDITIONAL_COMMAND
-      PsiElement([[)('[[')
-      PsiWhiteSpace(' ')
-      LITERAL_CONDITION
-        PsiElement(word)('!(a)')
-      PsiWhiteSpace(' ')
-      PsiElement(]])(']]')

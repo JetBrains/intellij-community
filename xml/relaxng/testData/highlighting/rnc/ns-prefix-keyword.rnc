@@ -1,3 +1,0 @@
-namespace text = "yyy"
-
-element text:foo { text }

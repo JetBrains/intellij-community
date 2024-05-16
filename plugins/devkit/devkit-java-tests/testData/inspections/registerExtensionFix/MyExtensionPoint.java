@@ -1,1 +1,0 @@
-public class <warning descr="Class 'MyExtensionPoint' is never used">My<caret>ExtensionPoint</warning> implements ExtensionPoint {}

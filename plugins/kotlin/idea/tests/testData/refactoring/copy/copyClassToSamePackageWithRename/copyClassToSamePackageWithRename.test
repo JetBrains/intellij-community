@@ -1,6 +1,0 @@
-{
-  "mainFile": "foo/test.kt",
-  "targetPackage": "foo",
-  "newName": "X",
-  "enabledInK2": "false"
-}

@@ -1,8 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <^*>
-    RegExpBranchImpl: <^*>
-      RegExpClosureImpl: <^*>
-        RegExpBoundaryImpl: <^>
-          PsiElement(CARET)('^')
-        RegExpQuantifierImpl: <*>
-          PsiElement(STAR)('*')

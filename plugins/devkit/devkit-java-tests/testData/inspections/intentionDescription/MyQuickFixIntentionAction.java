@@ -1,1 +1,0 @@
-public class My<caret>QuickFixIntentionAction implements com.intellij.codeInsight.intention.IntentionAction {}

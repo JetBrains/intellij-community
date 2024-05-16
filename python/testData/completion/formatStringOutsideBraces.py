@@ -1,1 +1,0 @@
-"Yeah you can take me out the {hood} But you can’t take the ho<caret> up outta me".format(hood="hood")

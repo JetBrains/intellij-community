@@ -1,2 +1,0 @@
-while a:
-    <caret>

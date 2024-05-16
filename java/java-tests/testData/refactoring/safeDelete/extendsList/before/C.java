@@ -1,1 +1,0 @@
-class C<TC> extends B<TC>{}

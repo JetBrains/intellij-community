@@ -1,6 +1,0 @@
-public class Foo {
-    void m() {
-        int[] values = {1, 2, 3};
-        <spot>values</spot>$key
-    }
-}

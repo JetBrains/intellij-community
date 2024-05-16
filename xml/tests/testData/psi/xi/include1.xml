@@ -1,9 +1,0 @@
-<include1>
-  <foo attr1="val1">
-    <fooChild/>
-  </foo>
-
-  <bar>
-
-  </bar>
-</include1>

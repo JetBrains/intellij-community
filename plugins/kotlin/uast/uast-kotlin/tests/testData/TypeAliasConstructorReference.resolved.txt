@@ -1,6 +1,0 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightClass:class A(param: String): A
-UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = AA) -> KtUltraLightClass:class A(param: String): A
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = AA) -> KtUltraLightClass:class A(param: String): A
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = A) -> KtUltraLightMethodForSourceDeclaration:A: A
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to KtUltraLightMethodForSourceDeclaration:A) -> USimpleNameReferenceExpression (identifier = AAA) -> KtUltraLightClass:class A(param: String): A

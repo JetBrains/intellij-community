@@ -1,9 +1,0 @@
-import dependency.AFromDependency
-
-fun test(a: Any) {
-    a as? AFromDependency<caret> .length
-}
-
-// FIR_COMPARISON
-// FIR_IDENTICAL
-// ELEMENT: AFromDependency

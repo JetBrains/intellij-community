@@ -1,5 +1,0 @@
-mutation ($reviewId: ID!, $event: PullRequestReviewEvent!, $body: String){
-    submitPullRequestReview(input: {pullRequestReviewId: $reviewId, event: $event, body: $body}) {
-        __typename
-    }
-}

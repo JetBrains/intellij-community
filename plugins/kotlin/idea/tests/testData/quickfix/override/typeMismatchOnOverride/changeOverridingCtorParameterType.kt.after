@@ -1,9 +1,0 @@
-// "Change type to 'CharSequence'" "true"
-interface A {
-    val x: CharSequence
-}
-
-class B(override val x: CharSequence) : A
-
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix$OnType
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

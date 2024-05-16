@@ -1,4 +1,0 @@
-def foo():
-    ...
-
-aaa = foo

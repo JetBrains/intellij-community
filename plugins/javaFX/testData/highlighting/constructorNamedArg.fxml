@@ -1,8 +1,0 @@
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-  <Spinner GridPane.columnIndex="1" GridPane.rowIndex="2" editable="true"
-           amountToStepBy="1" initialValue="3"
-           max="6000" min="1"/>
-  <Spinner min="1" max="5" initialValue="1"/>
-</GridPane>

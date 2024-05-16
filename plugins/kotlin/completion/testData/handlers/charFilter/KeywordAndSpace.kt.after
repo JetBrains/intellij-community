@@ -1,6 +1,0 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
-class <caret>
-
-// ELEMENT: class
-// CHAR: ' '

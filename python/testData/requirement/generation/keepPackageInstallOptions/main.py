@@ -1,2 +1,0 @@
-import requests
-import cookiecutter

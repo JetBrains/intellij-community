@@ -1,8 +1,0 @@
-<grammar xmlns="http://relaxng.org/ns/structure/1.0" ns="urn:test:simple.rng">
-
-  <include href="<error>does-not-exist.rng</error>" />
-
-  <start>
-    <element name="foo"><empty /></element>
-  </start>
-</grammar>

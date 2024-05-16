@@ -1,6 +1,0 @@
-{
-    "inspectionClass": "org.jetbrains.kotlin.idea.refactoring.move.changePackage.PackageDirectoryMismatchInspection",
-    "k2InspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.PackageDirectoryMismatchInspection",
-    "mainFile": "foo/test.kt",
-    "fix": "Change file's package to 'foo'"
-}

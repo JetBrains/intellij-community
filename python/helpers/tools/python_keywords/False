@@ -1,5 +1,0 @@
-<div class="section" id="false">
-<tt class="descname">False</tt>
-<p>The false value of the <a class="reference internal" href="functions.html#bool" title="bool"><tt class="xref py py-class docutils literal"><span class="pre">bool</span></tt></a> type. Assignments to <tt class="docutils literal"><span class="pre">False</span></tt>
-are illegal and raise a <a class="reference internal" href="exceptions.html#SyntaxError" title="SyntaxError"><tt class="xref py py-exc docutils literal"><span class="pre">SyntaxError</span></tt></a>.</p>
-</div>

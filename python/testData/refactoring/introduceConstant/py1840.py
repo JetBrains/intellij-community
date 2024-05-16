@@ -1,1 +1,0 @@
-exec(open("tmp<caret>.txt").read())

@@ -1,6 +1,0 @@
-Value read 10 print(v)
-Value read 13 print(-v)
-Value write 11 ++v
-Value write 12 v--
-Value write 14 v += 1
-Value write 15 (v) -= 1

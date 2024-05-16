@@ -1,4 +1,0 @@
-foo(1, 2, 3) <begin>{x->x}<end>
------
-def preved = { x->x}
-foo(1, 2, 3, preved<caret>)

@@ -1,4 +1,0 @@
-```xml
-<html><caret>
-</html>
-```

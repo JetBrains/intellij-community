@@ -1,1 +1,0 @@
-val foo: <caret>Long = 1L + 1

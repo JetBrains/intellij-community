@@ -1,8 +1,0 @@
-<!DOCTYPE tribhip [
-  <!ELEMENT tribhip EMPTY>
-  <!ATTLIST tribhip
-	startaend CDATA #IMPLIED
-	startbend CDATA #IMPLIED
-	weight CDATA #IMPLIED>
-  ]>
-<tribhip star<caret>taend="value" weight="true"/>

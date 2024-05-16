@@ -1,8 +1,0 @@
-url: '<info>http://some.url</info>'
-nested:
-  another: '<info>http://urls</info>'
-  double:
-    quotes: "<info>http://localhost:8080</info>"
-  plain-url: <info>http://localhost</info>
-  not-url: http :// some
-also-not-url: 'http : url'

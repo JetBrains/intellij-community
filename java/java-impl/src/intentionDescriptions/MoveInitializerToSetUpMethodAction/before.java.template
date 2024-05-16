@@ -1,7 +1,0 @@
-public class X extends TestCase{
-  <spot>int field = 0;</spot>
-
-  @Override
-  public void setUp() throws Exception {
-  }
-}

@@ -1,7 +1,0 @@
-package sealed;
-
-sealed interface RootWithInterfaceInnerAndOuter permits RootWithInterfaceInnerAndOuter.Inner, ClassNonSealed {
-   public static final class Inner implements RootWithInterfaceInnerAndOuter {
-   }
-}
-

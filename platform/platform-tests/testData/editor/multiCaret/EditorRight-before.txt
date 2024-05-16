@@ -1,4 +1,0 @@
-some text<caret>
-some <selection><caret>other</selection> text
-yet a<selection>no<caret></selection>ther <selection>l<caret>ine</selection>
-<caret>

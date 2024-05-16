@@ -1,4 +1,0 @@
-fun <T> test(list: List<T>) {
-    val t = list[0]
-    val b = t
-}

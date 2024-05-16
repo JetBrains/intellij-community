@@ -1,7 +1,0 @@
-public class X {
-  void f(Set<String> strings) {
-    <spot>for</spot> (String string : strings) {
-       System.out.println(string);
-    }
-  }
-}

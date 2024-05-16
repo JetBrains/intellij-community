@@ -1,6 +1,0 @@
-// WITH_STDLIB
-fun foo() {
-    byteArrayOf(1).forEach { x ->
-        println(x)
-    }
-}

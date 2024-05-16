@@ -1,4 +1,0 @@
-# added dynamically and not detected by stubtest
-cffi.(api.)?FFI.CData
-cffi.(api.)?FFI.CType
-cffi.(api.)?FFI.buffer

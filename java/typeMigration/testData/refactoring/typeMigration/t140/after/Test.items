@@ -1,9 +1,0 @@
-Types:
-PsiMethod:meth : java.util.Set<U>
-PsiParameter:p : java.util.Set<U>
-PsiReferenceExpression:p : java.util.Set<U>
-
-Conversions:
-
-New expression type changes:
-Fails:

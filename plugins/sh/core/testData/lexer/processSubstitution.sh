@@ -1,6 +1,0 @@
-cat < <(true)
-cat >(true)
-cat < <(true && false)
-cat >(true && false)
-cat < <(true)
-cat >(true)

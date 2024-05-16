@@ -1,3 +1,0 @@
-fun test(item: String) {
-    val items = <spot>listOf(item)</spot>
-}

@@ -1,5 +1,0 @@
-public class X  extends TestCase{
-  void f(boolean x) {
-   <spot>x >3</spot>
-  }
-}

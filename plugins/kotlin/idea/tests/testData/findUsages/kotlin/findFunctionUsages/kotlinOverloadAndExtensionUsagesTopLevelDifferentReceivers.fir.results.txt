@@ -1,2 +1,0 @@
-Function call 14 e.myFoo("")
-Function call 15 e.myFoo(2.13)

@@ -1,4 +1,0 @@
-// IGNORE_K2
-fun foo(x: Boolean) {
-    assert(x) { "<caret>" }
-}

@@ -1,9 +1,0 @@
-'foo'()
------
-Groovy script
-  Method call
-    Reference expression
-      PsiElement(single quoted string)(''foo'')
-    Arguments
-      PsiElement(()('(')
-      PsiElement())(')')

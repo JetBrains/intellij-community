@@ -1,5 +1,0 @@
-fun foo(list: List<String>) {
-    for (string in list.reversed()) {
-
-    }
-}

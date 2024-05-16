@@ -1,5 +1,0 @@
-fragment commitHash on Commit {
-    ...nodeInfo
-    oid
-    abbreviatedOid
-}

@@ -1,3 +1,0 @@
-git+git://git.example.com/MyProject12#egg=MyProject12 ; python_version < '3'
-
-install/pkg/gdata-3.0.1-py3-none-any.whl ; python_version < '3'

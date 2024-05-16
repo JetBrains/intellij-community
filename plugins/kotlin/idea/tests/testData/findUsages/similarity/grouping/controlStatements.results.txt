@@ -1,9 +1,0 @@
-[{
-10|if| (|getBar|().isEmpty()) { |//one statement print simple string,
-14|if| (|getBar|().isEmpty()) { |//one statement print simple string}
-, {
-18|if| (|getBar|().isEmpty()) { |//print expression with print some calculation}
-, {
-22|if| (!|getBar|().isEmpty() && getInt() > |1|) { |//'complex' statement,
-29|if| (!|getBar|().isEmpty() && getInt() > |1|) { |// 'complex' statement}
-]

@@ -1,3 +1,0 @@
-10|* |[link to header](../other.md#|some-header-in-the-othermd-file|)
-14|* |[link to own header](#|some-header-in-the-othermd-file|)
-15|* |[link to own header](#|some-header-in-the-othermd-file|)

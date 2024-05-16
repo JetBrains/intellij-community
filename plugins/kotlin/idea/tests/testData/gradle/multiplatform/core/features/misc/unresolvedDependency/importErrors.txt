@@ -1,6 +1,0 @@
-Could not resolve unresolved:unresolved:1.0 for my-app:iosArm64Main
-Could not resolve unresolved:unresolved:1.0 for my-app:iosArm64Test
-Could not resolve unresolved:unresolved:1.0 for my-app:iosX64Main
-Could not resolve unresolved:unresolved:1.0 for my-app:iosX64Test
-Could not resolve unresolved:unresolved:1.0 for my-app:jvmMain
-Could not resolve unresolved:unresolved:1.0 for my-app:jvmTest

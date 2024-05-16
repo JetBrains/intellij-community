@@ -1,4 +1,0 @@
-// FIR_IDENTICAL
-// CHECK_SYMBOL_NAMES
-// HIGHLIGHTER_ATTRIBUTES_KEY
-val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>weekYear<!> = java.util.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ABSTRACT_CLASS'")!>Calendar<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>getInstance<!>().<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_SYNTHETIC_EXTENSION_PROPERTY'")!>weekYear<!>

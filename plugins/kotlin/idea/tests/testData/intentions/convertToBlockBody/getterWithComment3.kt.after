@@ -1,5 +1,0 @@
-val foo: String
-    get() {
-        /* foo */
-        return ""
-    }

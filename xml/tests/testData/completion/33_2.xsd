@@ -1,9 +1,0 @@
-<xsd:schema xmlns="http://www.bar.org/test"
-		xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-		targetNamespace="http://www.bar.org/test"
-		elementFormDefault="qualified" attributeFormDefault="unqualified">
-
-  <xsd:element name="bar-a"/>
-  <xsd:element name="bar-b"/>
-
-</xsd:schema>

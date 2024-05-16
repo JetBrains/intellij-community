@@ -1,7 +1,0 @@
-<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <g fill="none" fill-rule="evenodd">
-    <circle cx="6.5" cy="9.5" r="4.5" fill="#C75450"/>
-    <path fill="#C75450" d="M6.46771758,3.50008502 C7.20405263,2.01832047 8.73310557,1 10.5,1 C12.9852814,1 15,3.01471863 15,5.5 C15,7.26689443 13.9816795,8.79594737 12.499915,9.53228242 C12.4999716,9.52152829 12.5,9.51076746 12.5,9.5 C12.5,6.1862915 9.8137085,3.5 6.5,3.5 C6.48923254,3.5 6.47847171,3.50002836 6.46771758,3.50008502 Z"/>
-  </g>
-</svg>

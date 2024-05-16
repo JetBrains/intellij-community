@@ -1,4 +1,0 @@
-<option>SPACE_IN_NAMED_ARGUMENT_BEFORE_COLON=true</option>
-xxx(a: 1, b : 1, c    : [aaa: a, bbb : b, ccc    : c])
------
-xxx(a : 1, b : 1, c : [aaa : a, bbb : b, ccc : c])

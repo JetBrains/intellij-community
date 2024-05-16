@@ -1,4 +1,0 @@
-<time>: Executing ':cleanLinuxX64Test :linuxX64Test --tests "NativeTest.test - success"'...
-<time>: Execution finished ':cleanLinuxX64Test :linuxX64Test --tests "NativeTest.test - success"'.
-
-<exitCode: 0>

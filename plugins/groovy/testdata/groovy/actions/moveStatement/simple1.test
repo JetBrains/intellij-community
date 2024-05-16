@@ -1,7 +1,0 @@
-println "preved2222"
-<caret>println "preved1111"
-hack
------
-<caret>println "preved1111"
-println "preved2222"
-hack

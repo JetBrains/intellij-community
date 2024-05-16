@@ -1,9 +1,0 @@
-var var
------
-Groovy script
-  Variable definitions
-    Modifiers
-      PsiElement(var)('var')
-    PsiWhiteSpace(' ')
-    Variable
-      PsiElement(var)('var')

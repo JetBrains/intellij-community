@@ -1,3 +1,0 @@
-pkg/SealedClass1
-pkg/SealedClass2
-pkg/SealedClassJvm

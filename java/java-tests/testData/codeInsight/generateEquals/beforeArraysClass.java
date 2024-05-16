@@ -1,3 +1,0 @@
-class Arrays {
-  int[] i;
-}

@@ -1,3 +1,0 @@
-fun jkkk() {
-    JKKK().test()
-}

@@ -1,5 +1,0 @@
-foo:
-  bar: baz
-  #hello world
-  key: value
-

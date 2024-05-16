@@ -1,6 +1,0 @@
-fragment mergeRequestPermissions on MergeRequestPermissions {
-  canApprove
-  canMerge
-  createNote
-  updateMergeRequest
-}

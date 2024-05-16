@@ -1,4 +1,0 @@
-so<caret>Me text
-other line
-<caret>yet another<caret> line<caret>
-HeavilyHumped<caret>Word

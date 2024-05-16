@@ -1,6 +1,0 @@
-// HIGHLIGHT: INFORMATION
-fun foo(k: K) {
-    k.x = 0
-}
-
-class K : J()

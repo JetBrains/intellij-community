@@ -1,7 +1,0 @@
--InheritedSynthesizedFromDataClass.kt
- -Derived
-  a: Int
-  field: Int
-  some(): Unit location=→TestData
- -TestData
-  constructor TestData(Int)

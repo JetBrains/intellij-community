@@ -1,5 +1,0 @@
-fun foo(i: Int, j: Int, lambda: () -> Int) { i + j + lambda() }
-
-fun test() {
-    foo(1, 2) { 3 }
-}

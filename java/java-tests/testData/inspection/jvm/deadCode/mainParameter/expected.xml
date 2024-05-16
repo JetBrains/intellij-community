@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Main.kt</file>
-    <line>1</line>
-    <problem_class id="unused" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused declaration</problem_class>
-    <description>Parameter &lt;code&gt;args&lt;/code&gt; is not used</description>
-  </problem>
-</problems>

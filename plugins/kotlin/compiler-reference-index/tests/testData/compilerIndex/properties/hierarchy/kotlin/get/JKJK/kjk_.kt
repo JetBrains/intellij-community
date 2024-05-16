@@ -1,3 +1,0 @@
-fun kjk() {
-    KJK().property
-}

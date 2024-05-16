@@ -1,5 +1,0 @@
-// "Remove parameter 'a'" "true"
-
-fun String.foo(b: Int) {
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix

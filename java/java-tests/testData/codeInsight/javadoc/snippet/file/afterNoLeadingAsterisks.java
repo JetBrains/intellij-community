@@ -1,6 +1,0 @@
-class  HelloWorld {
-   void
-        f(
-                             ) {
-   }
-   }

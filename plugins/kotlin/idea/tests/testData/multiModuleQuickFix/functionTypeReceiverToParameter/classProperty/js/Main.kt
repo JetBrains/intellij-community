@@ -1,5 +1,0 @@
-// "Convert 'String.() -> Unit' to '(String) -> Unit'" "true"
-// IGNORE_K2
-external class C {
-    val foo: Str<caret>ing.() -> Unit
-}

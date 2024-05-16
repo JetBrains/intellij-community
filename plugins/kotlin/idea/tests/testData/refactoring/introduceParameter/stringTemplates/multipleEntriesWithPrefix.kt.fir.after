@@ -1,5 +1,0 @@
-fun foo(a: Int, string: String = "cd$a:${a + 1}ef"): String {
-    val x = "+${string}g"
-    val y = "+cd$a${a + 1}efg"
-    return "ab$string"
-}

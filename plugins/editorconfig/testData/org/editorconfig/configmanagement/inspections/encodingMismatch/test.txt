@@ -1,1 +1,0 @@
-<warning descr="Current file encoding doesn't match ISO-8859-1 from .editorconfig">Some UTF-8 content</warning>

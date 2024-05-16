@@ -1,5 +1,0 @@
-<root>
-  <item name='org.yaml.snakeyaml.Yaml T loadAs(java.io.Reader, java.lang.Class&lt;T&gt;)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-</root>

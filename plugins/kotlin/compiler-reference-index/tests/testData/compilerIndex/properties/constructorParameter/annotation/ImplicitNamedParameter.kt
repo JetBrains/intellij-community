@@ -1,2 +1,0 @@
-@KAnn("abc")
-class ImplicitUsage

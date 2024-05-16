@@ -1,9 +1,0 @@
-Types:
-PsiParameter:os : long
-PsiReferenceExpression:os : long
-
-Conversions:
-
-New expression type changes:
-Fails:
-os->long

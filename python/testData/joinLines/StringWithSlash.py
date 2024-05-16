@@ -1,2 +1,0 @@
-<caret>a = 'some \
- string'

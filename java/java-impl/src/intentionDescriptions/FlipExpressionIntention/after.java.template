@@ -1,5 +1,0 @@
-public class X {
-  int f(int a, int b) {
-    return b + a;
-  }
-}

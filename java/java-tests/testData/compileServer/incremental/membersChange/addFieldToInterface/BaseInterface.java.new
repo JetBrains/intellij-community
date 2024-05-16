@@ -1,3 +1,0 @@
-interface BaseInterface {
-  String field = "BaseInterface";
-}

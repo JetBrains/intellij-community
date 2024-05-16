@@ -1,6 +1,0 @@
-test.java.file
-  IMPORT_LIST
-    IMPORT_STATEMENT
-      IMPORT_KEYWORD
-      ERROR_ELEMENT
-        <empty list>

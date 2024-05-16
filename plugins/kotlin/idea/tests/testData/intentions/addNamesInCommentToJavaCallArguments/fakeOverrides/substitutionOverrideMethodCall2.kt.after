@@ -1,6 +1,0 @@
-abstract class GenericB<B> : GenericAB<Int, B>()
-class Concrete : GenericB<String>()
-
-fun test() {
-    Concrete().foo(/* a = */ 10, /* b = */ "hello")
-}

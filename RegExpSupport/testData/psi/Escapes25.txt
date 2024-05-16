@@ -1,5 +1,0 @@
-REGEXP_FILE
-  RegExpPatternImpl: <\c0>
-    RegExpBranchImpl: <\c0>
-      RegExpCharImpl: <\c0>
-        PsiElement(CTRL)('\c0')

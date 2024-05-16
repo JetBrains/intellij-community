@@ -1,4 +1,0 @@
-/**
- * @see #wait()
- */
-class C{}

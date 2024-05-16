@@ -1,5 +1,0 @@
-// WITH_STDLIB
-// FIX: Change call to 'isBlank'
-
-val s: String? = ""
-val blank = s<caret>?.isNullOrBlank()

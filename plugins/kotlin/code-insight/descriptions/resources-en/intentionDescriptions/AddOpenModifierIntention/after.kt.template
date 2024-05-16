@@ -1,3 +1,0 @@
-open class Example {
-    <spot>open</spot> fun run() {}
-}

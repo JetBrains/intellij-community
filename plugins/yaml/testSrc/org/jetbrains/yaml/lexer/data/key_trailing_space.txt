@@ -1,3 +1,0 @@
-scalar key ('foo')
-whitespace ('   ')
-: (':')

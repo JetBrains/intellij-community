@@ -1,3 +1,0 @@
-package interfaceDeclaration
-
-expect interface interfaceDeclarationJvm

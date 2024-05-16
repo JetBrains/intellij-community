@@ -1,1 +1,0 @@
-[v<caret>ar for var in range(10)]

@@ -1,7 +1,0 @@
-fun foo(b: Boolean?) {
-    if (b != null) {
-        if (b) {
-            <selection><caret></selection>
-        }
-    }
-}

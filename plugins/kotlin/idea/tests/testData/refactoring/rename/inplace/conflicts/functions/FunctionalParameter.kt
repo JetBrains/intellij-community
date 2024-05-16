@@ -1,7 +1,0 @@
-// NEW_NAME: foo
-// RENAME: member
-inline fun String.foo(b: () -> Unit): Unit {}
-
-fun String.fo<caret>o2() = foo {  }
-
-// IGNORE_K1

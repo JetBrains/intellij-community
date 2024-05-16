@@ -1,4 +1,0 @@
-[kotlinDefaultAnnotationParameterUsages.0.kt] Named argument 10 @KAnn(value = "abc")
-[kotlinDefaultAnnotationParameterUsages.0.kt] Unclassified 6 @KAnn("abc")
-[kotlinDefaultAnnotationParameterUsages.1.java] Unclassified 2 @KAnn("abc")
-[kotlinDefaultAnnotationParameterUsages.1.java] Unclassified 6 @KAnn(value = "abc")

@@ -1,4 +1,0 @@
-PyFile:helpObjectSuffix.py
-  PyEmptyExpression
-    PsiElement(Py:IDENTIFIER)('object')
-    PsiElement(Py:QUESTION_MARK)('?')

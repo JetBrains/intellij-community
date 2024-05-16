@@ -1,1 +1,0 @@
-class <error descr="According to its registration in plugin.xml, the class should extend 'com.intellij.openapi.actionSystem.AnAction'">MyActionWrongClass</error> : java.util.ArrayList<String>()

@@ -1,3 +1,0 @@
-fun test(value: Boolean) {
-    if (<spot>value</spot>$key) {}
-}

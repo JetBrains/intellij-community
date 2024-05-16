@@ -1,2 +1,0 @@
-interface J extends Runnable {
-}

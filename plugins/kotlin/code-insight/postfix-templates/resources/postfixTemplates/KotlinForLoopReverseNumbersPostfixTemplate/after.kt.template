@@ -1,5 +1,0 @@
-fun foo() {
-    for (int in 10 downTo 0) {
-
-    }
-}

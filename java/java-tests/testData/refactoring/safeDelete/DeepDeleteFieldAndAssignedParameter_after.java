@@ -1,5 +1,0 @@
-class MyTest {
-
-    public MyTest() {
-    }
-}

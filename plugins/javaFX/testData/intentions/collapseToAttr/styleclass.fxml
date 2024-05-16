@@ -1,9 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-
-<?import java.lang.String?>
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:id="foo">
-    <style<caret>Class>
-        <String fx:value="foo"/>
-        <String fx:value="foo1"/>
-    </styleClass>
-</GridPane>

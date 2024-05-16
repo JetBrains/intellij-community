@@ -1,6 +1,0 @@
-// AFTER-WARNING: Parameter 'index' is never used
-class A {
-    operator fun get(index: Int) = ""
-}
-
-fun test(a: A): <caret>String = a[0]

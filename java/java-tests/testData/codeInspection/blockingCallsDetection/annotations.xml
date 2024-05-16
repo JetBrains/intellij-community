@@ -1,3 +1,0 @@
-<item name="TestExternalAnnotationsDetection void func()">
-<annotation name="org.jetbrains.annotations.NonBlocking"/>
-</item>

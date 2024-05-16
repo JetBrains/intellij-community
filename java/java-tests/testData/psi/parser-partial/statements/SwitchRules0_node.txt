@@ -1,7 +1,0 @@
-test.java.file
-  SWITCH_LABELED_RULE
-    DEFAULT_KEYWORD
-    WHITE_SPACE
-    ARROW
-    ERROR_ELEMENT
-      <empty list>

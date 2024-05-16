@@ -1,1 +1,0 @@
-<selection>"foo" + "ba<caret>r goo"</selection>

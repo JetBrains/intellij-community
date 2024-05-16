@@ -1,1 +1,0 @@
-"format: %(fooo)s" % {"fooo"}

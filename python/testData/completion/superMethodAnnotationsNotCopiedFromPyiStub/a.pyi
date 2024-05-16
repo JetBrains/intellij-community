@@ -1,3 +1,0 @@
-class Super:
-    def method(self, x: int) -> str:
-        ...

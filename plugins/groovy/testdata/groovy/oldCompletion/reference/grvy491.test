@@ -1,7 +1,0 @@
-class Test {
-    double c = 0
-}
-
-new Test().c.doubleVa<caret>
------
-doubleValue

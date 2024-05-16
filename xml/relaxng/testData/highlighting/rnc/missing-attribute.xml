@@ -1,3 +1,0 @@
-<addressBook xmlns="urn:test:addressBook">
-  <<error descr="Element card doesn't have required attribute email">card</error> />
-</addressBook>

@@ -1,5 +1,0 @@
-class Base {
-  char method() {
-    return 'a';
-  }
-}

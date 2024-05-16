@@ -1,1 +1,0 @@
-s = 'Hello\nWo<caret>rld!'

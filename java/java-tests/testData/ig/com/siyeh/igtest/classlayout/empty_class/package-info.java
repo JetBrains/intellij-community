@@ -1,1 +1,0 @@
-package com.siyeh.igtest.classlayout.emptyclass;

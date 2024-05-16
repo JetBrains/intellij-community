@@ -1,8 +1,0 @@
-if (cond) {
-  doSomething()
-  return
-}
-<spot>else {
-  doSomethingElse()
-}</spot>
-next()

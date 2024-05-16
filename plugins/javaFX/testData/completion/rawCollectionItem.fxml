@@ -1,7 +1,0 @@
-<?import javafx.scene.control.ChoiceBox?>
-<?import javafx.scene.layout.GridPane?>
-<GridPane>
-  <ChoiceBox>
-    <<caret>
-  </ChoiceBox>
-</GridPane>

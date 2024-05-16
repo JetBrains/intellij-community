@@ -1,6 +1,0 @@
-<project name="n" default="main">
-  <property environment="env"/>
-  <target name="main">
-    <echo message="p1=${<ref>env.non.existing.environment.property}"/>
-  </target>
-</project>

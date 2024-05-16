@@ -1,6 +1,0 @@
-public class X {
-  // Tooltip shown: <spot>2022/11/29 13:16:27</spot>
-  private static final DateTimeFormatter formatter =
-    DateTimeFormatter.ofPattern("yyyy/MMMM/dd HH:mm:ss");
-
-}

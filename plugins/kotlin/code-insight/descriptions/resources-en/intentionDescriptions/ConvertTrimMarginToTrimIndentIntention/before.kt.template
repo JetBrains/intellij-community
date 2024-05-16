@@ -1,7 +1,0 @@
-fun foo() {
-    <spot>val x =
-        """
-            a
-            b
-        """.trimIndent()</spot>
-}

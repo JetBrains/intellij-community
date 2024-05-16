@@ -1,6 +1,0 @@
-[common.kt] Function call 10 b.firstFun()
-[common.kt] Function call 11 impl.firstFun()
-[js.kt] Function call 12 b.firstFun()
-[js.kt] Function call 13 impl.firstFun()
-[jvm.kt] Function call 10 b.firstFun()
-[jvm.kt] Function call 11 impl.firstFun()

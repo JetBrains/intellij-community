@@ -1,5 +1,0 @@
-<foo bar="xxx"<error></error>baz="yyy">
-  <![CDATA[
-  ]]>
-  <error>]]></error>
-</foo>

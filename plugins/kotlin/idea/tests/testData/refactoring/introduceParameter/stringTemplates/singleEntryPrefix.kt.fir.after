@@ -1,6 +1,0 @@
-fun foo(a: Int, string: String = "abc"): String {
-    val x = "x$string$a"
-    val y = "${a}${string}x"
-    val z = "xacb$a"
-    return "${string}def"
-}

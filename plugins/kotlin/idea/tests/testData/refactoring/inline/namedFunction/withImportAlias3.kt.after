@@ -1,9 +1,0 @@
-package simple
-
-import some.SomeClass
-import some.SomeClass as CustomName
-
-fun usage() {
-    val s = SomeClass()
-    CustomName()
-}

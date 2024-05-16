@@ -1,6 +1,0 @@
-BRANCH
-master
-origin git@git.labs.intellij.net:idea/community git@git.labs.intellij.net:idea/community +refs/heads/*:refs/remotes/origin/* +refs/heads/*:refs/remotes/origin/*
-refs/heads/master
-origin/master
-merge

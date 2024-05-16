@@ -1,3 +1,0 @@
-fun test() {
-    <spot>call(1, "text")</spot>$key
-}

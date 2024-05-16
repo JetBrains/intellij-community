@@ -1,5 +1,0 @@
-fun callUsage() {
-    when {
-        else -> { println(6) }
-    }
-}

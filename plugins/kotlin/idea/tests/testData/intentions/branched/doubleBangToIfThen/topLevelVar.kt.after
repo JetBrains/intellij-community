@@ -1,8 +1,0 @@
-// WITH_STDLIB
-// AFTER-WARNING: Parameter 'args' is never used
-// AFTER-WARNING: Variable 't' is never used
-var a: String? = "A"
-fun main(args: Array<String>) {
-    val a1 = a
-    val t = if (a1 != null) a1 else throw NullPointerException("Expression 'a' must not be null")
-}

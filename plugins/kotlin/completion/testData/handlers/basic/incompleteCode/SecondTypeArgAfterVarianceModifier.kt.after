@@ -1,9 +1,0 @@
-import java.io.File
-
-class A<U, V>
-
-fun foo() {
-    A<Int, out File<caret>
-}
-
-// ELEMENT: File

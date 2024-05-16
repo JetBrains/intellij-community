@@ -1,3 +1,0 @@
-a = []
-for x in xrange(5):
-  a.add(x)

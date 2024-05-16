@@ -1,8 +1,0 @@
-<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M13.5 11C13.2239 11 13 11.2239 13 11.5V13H11.5C11.2239 13 11 13.2239 11 13.5C11 13.7761 11.2239 14 11.5 14H13V15.5C13 15.7761 13.2239 16 13.5 16C13.7761 16 14 15.7761 14 15.5V14H15.5C15.7761 14 16 13.7761 16 13.5C16 13.2239 15.7761 13 15.5 13H14V11.5C14 11.2239 13.7761 11 13.5 11Z" fill="#CED0D6"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8C14 8.70127 13.8797 9.37444 13.6586 10H14.7101C14.8987 9.36629 15 8.69497 15 8C15 4.13401 11.866 1 8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C8.69497 15 9.36629 14.8987 10 14.7101V13.6586C9.37444 13.8797 8.70127 14 8 14C4.68629 14 2 11.3137 2 8Z" fill="#CED0D6"/>
-<circle cx="6" cy="6" r="1" fill="#CED0D6"/>
-<circle cx="10" cy="6" r="1" fill="#CED0D6"/>
-<path d="M10.7632 9.43809C9.74436 11.5683 6.2445 11.5276 5.21858 9.43527" stroke="#CED0D6" stroke-linecap="round"/>
-</svg>

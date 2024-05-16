@@ -1,5 +1,0 @@
-<root>
-  <item name='com.google.gson.JsonObject com.google.gson.JsonArray getAsJsonArray(java.lang.String)'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-</root>

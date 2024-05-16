@@ -1,9 +1,0 @@
-LineBreakpoint created at ktij26694.kt:5
-Run Java
-Connected to the target VM
-ktij26694.kt:5
-CollectionsJVM.!EXT!
-Compile bytecode for listOf(1).map { it }
-Disconnected from the target VM
-
-Process finished with exit code 0

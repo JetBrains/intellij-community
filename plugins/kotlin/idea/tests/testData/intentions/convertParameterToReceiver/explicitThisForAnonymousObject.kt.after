@@ -1,8 +1,0 @@
-// WITH_STDLIB
-fun Any.foo() {
-    object : Runnable {
-        override fun run() {
-            print(this)
-        }
-    }
-}

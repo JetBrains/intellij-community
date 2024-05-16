@@ -1,9 +1,0 @@
-public final class BrokenGenericKt {
-    public static final fun test(@org.jetbrains.annotations.NotNull a: int) : void {
-        var x1: <ErrorType> = UIdentifier (Identifier (<))()
-        var x2: <ErrorType> = UIdentifier (Identifier (<))()
-        var x3: <ErrorType> = UIdentifier (Identifier (<))()
-        var x4: <ErrorType> = UIdentifier (Identifier (<))()
-        var x5: <ErrorType> = UIdentifier (Identifier (<))()
-    }
-}

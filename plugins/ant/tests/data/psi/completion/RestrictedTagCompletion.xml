@@ -1,5 +1,0 @@
-<project name="name" default="main">
-  <condition property="ok">
-    <mat<caret>
-  </condition>
-</project>

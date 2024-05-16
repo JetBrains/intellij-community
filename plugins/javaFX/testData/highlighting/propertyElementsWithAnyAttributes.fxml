@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.control.Button?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-  <Button  text="Press Me" fx:id="b1" >
-    <properties pp1="pp1_value" pp2="pp2_value" foo="bar"/>
-  </Button>
-</GridPane>

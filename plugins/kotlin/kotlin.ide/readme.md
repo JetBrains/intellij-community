@@ -1,1 +1,0 @@
-`kotlin.ide` module contains frontend agnostic, IDE-oriented code. For example, actions or editor related extensions. 

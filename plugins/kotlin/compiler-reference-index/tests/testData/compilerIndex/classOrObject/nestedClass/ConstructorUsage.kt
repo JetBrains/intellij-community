@@ -1,3 +1,0 @@
-fun constructorUsage() {
-    MainClass.NestedClass()
-}

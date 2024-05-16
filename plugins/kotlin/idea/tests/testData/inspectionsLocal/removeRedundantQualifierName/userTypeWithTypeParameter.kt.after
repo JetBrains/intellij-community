@@ -1,5 +1,0 @@
-// WITH_STDLIB
-
-fun main() {
-    val a: Pair<Int, Int>
-}

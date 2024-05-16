@@ -1,1 +1,0 @@
-print Long.newInstance().<caret>longValue()

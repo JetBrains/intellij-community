@@ -1,8 +1,0 @@
-EditorConfigTokenType.L_BRACKET ('[')
-EditorConfigTokenType.L_BRACKET ('[')
-EditorConfigTokenType.CHARCLASS_LETTER ('a')
-EditorConfigTokenType.CHARCLASS_LETTER ('b')
-EditorConfigTokenType.CHARCLASS_LETTER ('c')
-EditorConfigTokenType.R_BRACKET (']')
-EditorConfigTokenType.PATTERN_IDENTIFIER ('foo.kt')
-EditorConfigTokenType.R_BRACKET (']')

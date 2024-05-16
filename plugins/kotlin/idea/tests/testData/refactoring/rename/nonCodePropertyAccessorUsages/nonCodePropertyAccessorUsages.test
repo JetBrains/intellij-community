@@ -1,7 +1,0 @@
-{
-  "type": "MARKED_ELEMENT",
-  "mainFile": "test/Used.kt",
-  "newName": "usedVar2",
-  "withRuntime": "true",
-  "enabledInK2": true
-}

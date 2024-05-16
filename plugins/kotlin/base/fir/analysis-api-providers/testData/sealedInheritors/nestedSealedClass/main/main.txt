@@ -1,5 +1,0 @@
-/RegularClass.NestedSealedClass.Nested2SealedClassInheritor1
-/RegularClass.NestedSealedClass.Nested2SealedClassInheritor1.Nested3SealedClassInheritor1
-/RegularClass.NestedSealedClass.Nested2SealedClassInheritor1.Nested3SealedClassInheritor2
-/RegularClass.NestedSealedClassInheritor1
-/RegularClass.NestedSealedClassInheritor2

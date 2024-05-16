@@ -1,4 +1,0 @@
-try:
-    pass
-except*:
-    pass

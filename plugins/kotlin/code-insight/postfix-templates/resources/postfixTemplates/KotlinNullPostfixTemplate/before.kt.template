@@ -1,3 +1,0 @@
-fun test(value: Any?) {
-    <spot>value</spot>$key
-}

@@ -1,1 +1,0 @@
-Following declarations would clash: to move class test.A.C and destination class test.C declared in scope test

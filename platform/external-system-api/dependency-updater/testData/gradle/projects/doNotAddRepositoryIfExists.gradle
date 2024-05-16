@@ -1,8 +1,0 @@
-apply plugin: 'java'
-
-repositories {
-    maven {
-        url 'https://example.com'
-        name 'myName'
-    }
-}

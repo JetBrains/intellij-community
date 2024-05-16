@@ -1,4 +1,0 @@
-// "Add 'inline' modifier" "true"
-// IGNORE_K2
-
-expect inline fun <reified T> inlineFun(t: T)

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://instrumentreference" targetNamespace="http://instrumentreference" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xsd:complexType name="InstrumentId" mixed="true">
-		<xsd:attribute name="domain" type="xsd:string" use="required"/>
-		<xsd:attribute name="category" type="xsd:string" use="optional"/>
-	</xsd:complexType>
-</xsd:schema>

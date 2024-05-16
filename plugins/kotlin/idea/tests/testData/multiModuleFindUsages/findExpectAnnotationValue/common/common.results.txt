@@ -1,2 +1,0 @@
-[Main.java] Unclassified 1 @A("main")
-[jvm.kt] Unclassified 3 @A("a")

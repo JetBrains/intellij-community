@@ -1,3 +1,0 @@
-s<caret>ome t<caret>e<caret>xt
-s<selection><caret>o</selection>me other
-another <selection>li<caret>ne</selection>

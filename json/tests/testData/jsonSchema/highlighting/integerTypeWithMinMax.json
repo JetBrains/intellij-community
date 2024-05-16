@@ -1,9 +1,0 @@
-{
-  "rules": {
-    "rule -1": <warning descr="Less than the minimum 0">-1</warning>,
-    "rule 0": 0,
-    "rule 1": 1,
-    "rule 2": 2,
-    "rule 3": <warning descr="Greater than the maximum 2">3</warning>
-  }
-}

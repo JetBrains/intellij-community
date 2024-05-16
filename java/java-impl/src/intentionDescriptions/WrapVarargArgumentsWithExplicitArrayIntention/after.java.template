@@ -1,5 +1,0 @@
-public class X {
-  List f(int x, int y) {
-    return java.util.Arrays.asList(new Integer[]{x, y});
-  }
-}

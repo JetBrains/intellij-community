@@ -1,5 +1,0 @@
-<!DOCTYPE tag1 [
-<!ELEMENT tag1 (#PCDATA)>
-]>
-<<ref>tag1>
-</tag1>

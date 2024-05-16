@@ -1,9 +1,0 @@
-Types:
-PsiField:i : byte
-PsiReferenceExpression:i : byte
-
-Conversions:
-l -> $
-
-New expression type changes:
-Fails:

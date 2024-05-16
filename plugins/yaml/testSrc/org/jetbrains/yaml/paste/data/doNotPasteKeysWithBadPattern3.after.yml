@@ -1,4 +1,0 @@
-top:
-  next: value1
-  key:
-    some.strange..text<caret>

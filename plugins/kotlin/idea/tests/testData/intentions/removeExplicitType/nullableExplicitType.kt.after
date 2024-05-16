@@ -1,4 +1,0 @@
-// AFTER-WARNING: Variable 'i' is never used
-fun test() {
-    val i = 1
-}

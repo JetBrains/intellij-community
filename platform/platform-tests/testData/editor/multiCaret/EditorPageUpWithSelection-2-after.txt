@@ -1,2 +1,0 @@
-<selection><caret>The quick brown fox jumps over the lazy dog.
- The quick brown fox jumps</selection> over the lazy dog.

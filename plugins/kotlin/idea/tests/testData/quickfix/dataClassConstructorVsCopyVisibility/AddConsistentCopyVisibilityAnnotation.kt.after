@@ -1,6 +1,0 @@
-// IGNORE_K1
-// "Add '@ConsistentCopyVisibility' annotation" "true"
-@ConsistentCopyVisibility
-data class Foo private constructor(val x: Int)
-
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix

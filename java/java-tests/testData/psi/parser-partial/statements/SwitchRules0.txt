@@ -1,7 +1,0 @@
-PsiJavaFile:SwitchRules0.java
-  PsiSwitchLabeledRule
-    PsiKeyword:default('default')
-    PsiWhiteSpace(' ')
-    PsiJavaToken:ARROW('->')
-    PsiErrorElement:Expression, block or throw statement expected
-      <empty list>

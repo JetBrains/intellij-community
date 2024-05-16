@@ -1,5 +1,0 @@
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.image.*?>
-<GridPane xmlns:fx="http://javafx.com/fxml">
-  <fx:script source="s1.js"/>
-</GridPane>

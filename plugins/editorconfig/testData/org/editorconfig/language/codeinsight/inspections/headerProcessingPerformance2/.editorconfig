@@ -1,8 +1,0 @@
-root = true
-
-[*]
-indent_size = 2
-
-[{**/Commands/**.cs,**/Contracts/**.cs,**/DTOs/**.cs,**/Events/**.cs,**/Entities/**.cs,**/Model/**.cs,**/Models/**.cs,**/Queries/**.cs,**/Requests/**.cs,**/ViewModels/**.cs,**/PricingSheets/*.cs}]
-
-indent_size = 4

@@ -1,3 +1,0 @@
-Author=Misha Yakovlev
-PACKAGE_NAME=com.idea
-Name=MyClass

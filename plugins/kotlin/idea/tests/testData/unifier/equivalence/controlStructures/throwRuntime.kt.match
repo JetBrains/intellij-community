@@ -1,5 +1,0 @@
-(16,38)
-throw AssertionError()
-
-(97,121)
-throw (AssertionError())

@@ -1,9 +1,0 @@
-fun main() {
-    Foo.myToInt("foo")
-}
-
-class Foo {
-    companion object {
-        fun myToInt(str: String) = str.toInt()
-    }
-}

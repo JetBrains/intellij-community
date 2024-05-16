@@ -1,8 +1,0 @@
-<root>
-  <item name='java.nio.file.spi.FileSystemProvider java.nio.file.Path getPath(java.net.URI)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.nio.file.spi.FileSystemProvider java.nio.file.Path getPath(java.net.URI) 0'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-</root>

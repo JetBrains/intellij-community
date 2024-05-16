@@ -1,6 +1,0 @@
-var a = () => {
-  return (
-    <selection><div>
-    </div></selection>
-  );
-};

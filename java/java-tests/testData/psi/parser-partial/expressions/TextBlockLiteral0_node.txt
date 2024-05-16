@@ -1,3 +1,0 @@
-test.java.file
-  LITERAL_EXPRESSION
-    TEXT_BLOCK_LITERAL

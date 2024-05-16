@@ -1,6 +1,0 @@
-Summary
-
-Description
-Attributes:
-    attr1 (int): attr1 description
-    attr2: attr2 description

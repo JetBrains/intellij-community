@@ -1,5 +1,0 @@
-fun foo(k: K) {
-    k.x
-}
-
-class K : J()

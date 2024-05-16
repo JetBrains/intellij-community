@@ -1,8 +1,0 @@
-// INTENTION_TEXT: "Replace size zero check with 'isEmpty'"
-// WITH_STDLIB
-fun main() {
-    val range = 1 until 2
-    if (range.isEmpty()) {
-        println()
-    }
-}

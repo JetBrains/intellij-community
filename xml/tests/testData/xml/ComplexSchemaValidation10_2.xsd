@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema targetNamespace="http://www.w3.org/2001/vxml" elementFormDefault="qualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <xsd:complexType name="say-as" mixed="true">
-    <xsd:el></xsd:el>
-  </xsd:complexType>
-  <xsd:group name="said">
-    <xsd:sequence/>
-  </xsd:group>
-</xsd:schema>

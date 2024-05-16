@@ -1,6 +1,0 @@
-<!DOCTYPE name [
-  <!ELEMENT aaa <caret>>
-  <!ELEMENT name (aaa)>
-  <!ELEMENT name2 (%entity;)>
-]>
-<name></name>

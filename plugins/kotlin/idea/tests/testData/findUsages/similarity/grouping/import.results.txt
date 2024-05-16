@@ -1,6 +1,0 @@
-[{
-4|import java.lang.|System}
-, {
-6|java.lang.|System|.out.println(off(|1|)),
-7|java.lang.|System|.out.println(off(|1|))}
-]

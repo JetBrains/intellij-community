@@ -1,8 +1,0 @@
-<option>SPACE_WITHIN_WHILE_PARENTHESES=true</option>
-<option>SPACE_BEFORE_DO_LBRACE=false</option>
-<option>SPACE_BEFORE_WHILE_PARENTHESES=false</option>
-<option>SPACE_BEFORE_WHILE_KEYWORD=false</option>
-do   {}     while    (condition)
------
-do{
-}while( condition )

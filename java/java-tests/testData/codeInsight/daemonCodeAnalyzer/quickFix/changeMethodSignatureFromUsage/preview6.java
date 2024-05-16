@@ -1,1 +1,0 @@
-void f(int i, int s, int i2) {}

@@ -1,7 +1,0 @@
-class X {
-  void f(a,  b) {
-    <spot>if (a)
-       if(b)
-         return</spot>
-  }
-}

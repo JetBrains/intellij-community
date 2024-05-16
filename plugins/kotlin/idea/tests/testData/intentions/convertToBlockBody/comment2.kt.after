@@ -1,5 +1,0 @@
-fun bar(): Int {
-    // bar
-    // bar2
-    return 42
-}

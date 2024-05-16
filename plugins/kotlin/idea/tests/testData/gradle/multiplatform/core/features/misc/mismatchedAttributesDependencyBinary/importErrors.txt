@@ -1,6 +1,0 @@
-Could not resolve org.jetbrains.kotlin.mpp.tests:producer:1.0 for :consumer:linuxMain
-Could not resolve org.jetbrains.kotlin.mpp.tests:producer:1.0 for :consumer:linuxTest
-Could not resolve org.jetbrains.kotlin.mpp.tests:producer:1.0 for :consumer:linuxX64Main
-Could not resolve org.jetbrains.kotlin.mpp.tests:producer:1.0 for :consumer:linuxX64Test
-Could not resolve org.jetbrains.kotlin.mpp.tests:producer:1.0 for :consumer:nativeMain
-Could not resolve org.jetbrains.kotlin.mpp.tests:producer:1.0 for :consumer:nativeTest

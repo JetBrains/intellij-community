@@ -1,6 +1,0 @@
-<node text="A.__init__(self) (A in hierarchy.call.Static.Constructor.main)" base="true">
-  <node text="invokeA() (hierarchy.call.Static.Constructor.main)">
-    <node text="C.bar(self) (C in hierarchy.call.Static.Constructor.main)"/>
-  </node>
-  <node text="C.bar(self) (C in hierarchy.call.Static.Constructor.main)"/>
-</node>

@@ -1,2 +1,0 @@
-interface DerivedService extends Service {
-}

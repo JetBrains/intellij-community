@@ -1,4 +1,0 @@
-@org.junit.AfterClass
-public static void afterClass() throws Exception {
-  ${BODY}
-}

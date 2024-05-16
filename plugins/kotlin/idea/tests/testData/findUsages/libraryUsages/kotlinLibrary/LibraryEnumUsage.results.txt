@@ -1,4 +1,0 @@
-[LibraryEnumUsage.0.kt] Function call 11 e.fooEnum(4)
-[LibraryEnumUsage.0.kt] Function call 12 EnumWithEnumEntries.AnEntry.fooEnum(4)
-[library.kt] Function call 105 fooEnum(1)
-[library.kt] Function call 98 fooEnum(42)

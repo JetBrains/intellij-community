@@ -1,7 +1,0 @@
-some
- <caret>te
- <caret>xt
-other
-<caret>
-
-<caret> line

@@ -1,9 +1,0 @@
-// WITH_STDLIB
-fun test() = buildString {
-    append("hello")
-    append(1)
-    append("world") // $
-}
-
-// Unrelated comment
-fun unrelatedFunction() = ""

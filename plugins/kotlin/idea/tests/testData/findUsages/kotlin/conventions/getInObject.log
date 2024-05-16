@@ -1,6 +1,0 @@
-Checked type of b
-Resolved B[3]
-Searched references to B
-Searched references to b in non-Java files
-Used plain search of B.get(i: Int) in LocalSearchScope:
-    OBJECT_DECLARATION:B

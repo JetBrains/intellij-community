@@ -1,3 +1,0 @@
-package foo
-
-interface A
