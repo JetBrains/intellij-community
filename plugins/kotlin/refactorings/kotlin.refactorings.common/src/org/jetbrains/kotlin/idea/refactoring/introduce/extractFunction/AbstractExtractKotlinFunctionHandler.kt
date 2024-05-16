@@ -28,6 +28,9 @@ abstract class AbstractExtractKotlinFunctionHandler(
     )
 
     fun selectElements(editor: Editor, file: KtFile, continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit) {
+        val selection: ((elements: List<PsiElement>, commonParent: PsiElement) -> PsiElement?)? = if (allContainersEnabled) {
+            { elements, parent -> parent.getExtractionContainers(elements.size == 1, false, acceptScripts).firstOrNull() }
+        } else null
         selectElementsWithTargetSibling(
             EXTRACT_FUNCTION,
             editor,
@@ -36,7 +39,8 @@ abstract class AbstractExtractKotlinFunctionHandler(
             listOf(ElementKind.EXPRESSION),
             ::validateExpressionElements,
             { elements, parent -> parent.getExtractionContainers(elements.size == 1, allContainersEnabled, acceptScripts) },
-            continuation
+            continuation,
+            selection
         )
     }
 

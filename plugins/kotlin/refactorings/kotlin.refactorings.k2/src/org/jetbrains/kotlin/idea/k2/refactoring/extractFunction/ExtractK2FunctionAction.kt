@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.extractFunction
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BasePlatformRefactoringAction
@@ -11,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtElement
 
 class ExtractK2FunctionAction : BasePlatformRefactoringAction() {
     override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? =
-        KotlinFirExtractFunctionHandler(false)
+        KotlinFirExtractFunctionHandler(Registry.`is`("k2.extract.function.scope.chooser", true))
 
     override fun isAvailableInEditorOnly(): Boolean {
         return true
