@@ -133,8 +133,7 @@ private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("c
 
 @OptIn(ExperimentalSerializationApi::class)
 private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
-  val name = SearchableOptionsRegistrar.getSearchableOptionsName()
-  val xmlName = "$name.xml"
+  val names = SearchableOptionsRegistrar.getSearchableOptionsNames()
 
   val visited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
   val serializer = ConfigurableEntry.serializer()
@@ -145,56 +144,61 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
     }
 
     val classifier = if (module.moduleName == null) "p-${module.pluginId.idString}" else "m-${module.moduleName}"
-    classLoader.getResourceAsBytes("$classifier-$name.json", false)?.let { data ->
-      try {
-        decodeFromJsonFormat(data, serializer).forEach {
-          processor.putOptionsWithHelpId(it)
+
+    names.forEach { name ->
+      classLoader.getResourceAsBytes("$classifier-$name.json", false)?.let { data ->
+        try {
+          decodeFromJsonFormat(data, serializer).forEach {
+            processor.putOptionsWithHelpId(it)
+          }
         }
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        throw RuntimeException("Can't parse searchable options $name for plugin ${module.pluginId}", e)
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          throw RuntimeException("Can't parse searchable options $name for plugin ${module.pluginId}", e)
+        }
+        // if the data is found in JSON format, there's no need to search in XML
+        return@forEach
       }
 
-      // if the data is found in JSON format, there's no need to search in XML
-      return
-    }
-
-    classLoader.processResources("search", Predicate { it.endsWith(xmlName) }) { _, stream ->
-      try {
-        readInXml(root = readXmlAsModel(stream), processor)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        throw RuntimeException("Can't parse searchable options $name for plugin ${module.pluginId}", e)
+      val xmlName = "$name.xml"
+      classLoader.processResources("search", Predicate { it.endsWith(xmlName) }) { _, stream ->
+        try {
+          readInXml(root = readXmlAsModel(stream), processor)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          throw RuntimeException("Can't parse searchable options $name for plugin ${module.pluginId}", e)
+        }
       }
     }
   }
 
   // process additional locations
-  LOCATION_EP_NAME.forEachExtensionSafe { provider ->
-    val additionalLocation = provider.additionalLocation ?: return@forEachExtensionSafe
-    if (Files.isDirectory(additionalLocation)) {
-      Files.list(additionalLocation).use { stream ->
-        stream
-          .forEach { file ->
-            val fileName = file.fileName.toString()
-            try {
-              if (fileName.endsWith(xmlName)) {
-                readInXml(root = readXmlAsModel(file), processor = processor)
+  names.forEach { name ->
+    val xmlName = "$name.xml"
+    LOCATION_EP_NAME.forEachExtensionSafe { provider ->
+      val additionalLocation = provider.additionalLocation ?: return@forEachExtensionSafe
+      if (Files.isDirectory(additionalLocation)) {
+        Files.list(additionalLocation).use { stream ->
+          stream.forEach { file ->
+              val fileName = file.fileName.toString()
+              try {
+                if (fileName.endsWith(xmlName)) {
+                  readInXml(root = readXmlAsModel(file), processor = processor)
+                }
+              }
+              catch (e: CancellationException) {
+                throw e
+              }
+              catch (e: Throwable) {
+                throw RuntimeException("Can't parse searchable options $name", e)
               }
             }
-            catch (e: CancellationException) {
-              throw e
-            }
-            catch (e: Throwable) {
-              throw RuntimeException("Can't parse searchable options $name", e)
-            }
-          }
+        }
       }
     }
   }

@@ -59,6 +59,12 @@ public abstract class SearchableOptionsRegistrar{
     return SEARCHABLE_OPTIONS_XML_NAME + (langTag.equals("en") ? "" : "_" + langTag);
   }
 
+  @ApiStatus.Internal
+  public static Set<String> getSearchableOptionsNames() {
+    String langTag = DynamicBundle.getLocale().toLanguageTag();
+    return (langTag.equals("en")) ? Set.of(SEARCHABLE_OPTIONS_XML_NAME) : Set.of(SEARCHABLE_OPTIONS_XML_NAME, SEARCHABLE_OPTIONS_XML_NAME + "_" + langTag);
+  }
+
   public interface AdditionalLocationProvider {
     /**
      * Returns the additional location for {@code searchableOptions.xml}.
