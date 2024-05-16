@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -15,6 +16,8 @@ import java.util.Collection;
 import java.util.function.Supplier;
 
 public final class LookupOffsets implements DocumentListener {
+  private static final Logger LOG = Logger.getInstance(LookupOffsets.class);
+
   @NotNull private String myAdditionalPrefix = "";
 
   private boolean myStableStart;
@@ -77,6 +80,7 @@ public final class LookupOffsets implements DocumentListener {
   }
 
   public void appendPrefix(char c) {
+    LOG.debug("Append prefix :: char=" + c + ", myAdditionalPrefix: " + myAdditionalPrefix);
     myAdditionalPrefix += c;
   }
 

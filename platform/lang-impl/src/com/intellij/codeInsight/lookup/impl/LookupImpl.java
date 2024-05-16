@@ -205,6 +205,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void setLookupFocusDegree(@NotNull LookupFocusDegree lookupFocusDegree) {
+    LOG.debug("Set lookup focus degree to " + lookupFocusDegree);
     myLookupFocusDegree = lookupFocusDegree;
     for (LookupListener listener : myListeners) {
       listener.focusDegreeChanged();

@@ -73,6 +73,7 @@ open class CompletionServiceImpl : BaseCompletionService() {
     // Keep the function for compatibility with external plugins
     @JvmStatic
     fun setCompletionPhase(phase: CompletionPhase) {
+      LOG.trace("Set completion phase :: phase=$phase")
       val clientCompletionService = tryGetClientCompletionService(getAppSession()) ?: return
       clientCompletionService.completionPhase = phase
     }
@@ -264,6 +265,7 @@ private class ClientCompletionService(private val appSession: ClientAppSession) 
             .completionPhaseChanged(isCompletionRunning)
         }
 
+        LOG.debug("Dispose old phase :: oldPhase=$oldPhase, newPhase=$phase, indicator=${if (phase.indicator != null) phase.indicator.hashCode() else -1}", Throwable())
         Disposer.dispose(oldPhase)
         completionPhaseHolder = CompletionPhaseHolder(phase = phase, phaseTrace = Throwable())
       }
