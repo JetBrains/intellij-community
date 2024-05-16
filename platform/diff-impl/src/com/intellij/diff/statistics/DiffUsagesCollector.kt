@@ -87,7 +87,7 @@ internal class DiffUsagesCollector : ApplicationUsagesCollector() {
                    data)
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isAutoApplyNonConflictedChanges }, MERGE_APPLY_NOT_CONFLICTED, data)
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isEnableLstGutterMarkersInMerge }, MERGE_ENABLE_LST_MARKERS, data)
-      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isAutoApplyNonConflictedChanges }, MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS, data)
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isAutoResolveImportConflicts }, MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS, data)
       addBoolIfDiffers(set, diffSettings, defaultDiffSettings, { isUnifiedToolDefault(it) }, USE_UNIFIED_DIFF, data)
     }
 
