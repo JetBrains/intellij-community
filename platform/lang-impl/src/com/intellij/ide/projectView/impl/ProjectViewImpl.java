@@ -23,6 +23,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
@@ -966,6 +967,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public synchronized void setupImpl(@NotNull ToolWindow toolWindow, final boolean loadPaneExtensions) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isInitialized) return;
+
+    var loadStatisticsReporter = new ProjectViewInitReporter();
+    project.getMessageBus().connect(loadStatisticsReporter).subscribe(ProjectViewListener.TOPIC, loadStatisticsReporter);
     project.getService(ProjectViewInitNotifier.class).initStarted();
 
     actionGroup = new DefaultActionGroup();
@@ -2199,5 +2203,37 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public EventLogGroup getGroup() {
       return GROUP;
     }
+  }
+
+  private static final class ProjectViewInitReporter implements Disposable, ProjectViewListener {
+
+    private long initStarted;
+
+    @Override
+    public void initStarted() {
+      initStarted = System.currentTimeMillis();
+    }
+
+    @Override
+    public void initCachedNodesLoaded() {
+      if (initStarted == 0L) {
+        LOG.warn(new Throwable("Cached nodes are loaded, but init hasn't even started yet"));
+        return;
+      }
+      ProjectViewPerformanceCollector.logCachedStateLoadDuration(System.currentTimeMillis() - initStarted);
+    }
+
+    @Override
+    public void initCompleted() {
+      if (initStarted == 0L) {
+        LOG.warn(new Throwable("Project view initialized, but init hasn't even started yet"));
+        return;
+      }
+      ProjectViewPerformanceCollector.logFullStateLoadDuration(System.currentTimeMillis() - initStarted);
+      Disposer.dispose(this);
+    }
+
+    @Override
+    public void dispose() { }
   }
 }

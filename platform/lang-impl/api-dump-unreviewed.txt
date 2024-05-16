@@ -16971,10 +16971,6 @@ f:com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper$SelectionDesc
 - targetPsiElement():com.intellij.psi.PsiElement
 - targetVirtualFile():com.intellij.openapi.vfs.VirtualFile
 - f:toString():java.lang.String
-f:com.intellij.ide.projectView.impl.ProjectViewPerformanceCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- s:logExpandDirDuration(J):V
 c:com.intellij.ide.projectView.impl.ProjectViewRenderer
 - com.intellij.ide.util.treeView.NodeRenderer
 - <init>():V
