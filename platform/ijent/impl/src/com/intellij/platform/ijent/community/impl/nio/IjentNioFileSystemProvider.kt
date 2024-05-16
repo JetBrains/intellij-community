@@ -6,6 +6,7 @@ import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSessionRegistry
 import com.intellij.platform.ijent.IjentWindowsApi
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
+import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem.*
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
@@ -53,8 +54,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val fs = IjentNioFileSystem(
       this,
       when (val ijentApi = IjentSessionRegistry.instance().ijents[ijentId]) {
-        is IjentPosixApi -> IjentNioFileSystem.FsAndUserApi.Posix(ijentApi.fs, ijentApi.info.user)
-        is IjentWindowsApi -> IjentNioFileSystem.FsAndUserApi.Windows(ijentApi.fs, ijentApi.info.user)
+        is IjentPosixApi -> FsAndUserApi.Posix(ijentApi.fs, ijentApi.info.user)
+        is IjentWindowsApi -> FsAndUserApi.Windows(ijentApi.fs, ijentApi.info.user)
         null -> throw IllegalArgumentException("$ijentApi is not registered in ${IjentSessionRegistry::class.java.simpleName}")
       })
 
@@ -78,8 +79,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     getFileSystem(uri).run {
       getPath(
         when (ijent) {
-          is IjentNioFileSystem.FsAndUserApi.Posix -> uri.path
-          is IjentNioFileSystem.FsAndUserApi.Windows -> uri.path.trimStart('/')
+          is FsAndUserApi.Posix -> uri.path
+          is FsAndUserApi.Windows -> uri.path.trimStart('/')
         }
       )
     }
@@ -195,7 +196,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val fs = ensureIjentNioPath(path).nioFs
     fs.fsBlocking {
       when (val ijent = fs.ijent) {
-        is IjentNioFileSystem.FsAndUserApi.Posix -> {
+        is FsAndUserApi.Posix -> {
           // According to the javadoc, this method must follow symlinks.
           when (val v = ijent.fs.stat(ensurePathIsAbsolute(path.ijentPath), resolveSymlinks = true)) {
             is Stat.Ok -> {
@@ -240,7 +241,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
             is IjentFsResult.Error -> v.throwFileSystemException()
           }
         }
-        is IjentNioFileSystem.FsAndUserApi.Windows -> TODO()
+        is FsAndUserApi.Windows -> TODO()
       }
     }
   }
