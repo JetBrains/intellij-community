@@ -66,7 +66,7 @@ private fun GitRepository.calcIcon(): Icon? {
   if (state == Repository.State.NORMAL) {
     return null
   }
-  if (GitRefUtil.getCurrentReference(this) is GitTag) {
+  if (state == Repository.State.DETACHED && GitRefUtil.getCurrentReference(this) is GitTag) {
     return DvcsImplIcons.BranchLabel
   }
   return AllIcons.General.Warning

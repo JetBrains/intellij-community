@@ -32,7 +32,7 @@ class GitBranchesTreeSelectedRepoModel(
       addSeparatorIfNeeded(matchedActions, actionsSeparator)
     }
     val topNodes = matchedActions + matchedRepos
-    val localAndRemoteNodes = getLocalAndRemoteTopLevelNodes(localBranchesTree, remoteBranchesTree, recentCheckoutBranchesTree)
+    val localAndRemoteNodes = getLocalAndRemoteTopLevelNodes(localBranchesTree, remoteBranchesTree, tagsTree, recentCheckoutBranchesTree)
 
     return if (localAndRemoteNodes.isEmpty()) topNodes else topNodes + branchesSubtreeSeparator + localAndRemoteNodes
   }

@@ -2,6 +2,7 @@
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,11 +24,9 @@ import git4idea.*;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRefUtil;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitTagLoader;
 import git4idea.ui.branch.GitBranchActionsUtilKt;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import it.unimi.dsi.fastutil.Hash;
@@ -170,8 +169,10 @@ public final class GitBranchUtil {
   public static @Nls @NotNull String getDisplayableBranchText(@NotNull GitRepository repository,
                                                               @NotNull Function<@NotNull @NlsSafe String, @NotNull @NlsSafe String> branchNameTruncator) {
     GitRepository.State state = repository.getState();
-    String detachedStatePresentableText = getDetachedStatePresentableText(repository, state, branchNameTruncator);
-    if (detachedStatePresentableText != null) return detachedStatePresentableText;
+    if (state == Repository.State.DETACHED) {
+      String detachedStatePresentableText = getDetachedStatePresentableText(repository, branchNameTruncator);
+      return detachedStatePresentableText != null ? detachedStatePresentableText : "";
+    }
 
     GitBranch branch = repository.getCurrentBranch();
     String branchName = (branch == null ? "" : branchNameTruncator.apply(branch.getName()));
@@ -194,11 +195,9 @@ public final class GitBranchUtil {
   }
 
   @Nls
-  private static @Nullable String getDetachedStatePresentableText(@NotNull GitRepository repository, GitRepository.State state,
-                                                        @NotNull Function<@NotNull @NlsSafe String, @NotNull @NlsSafe String> branchNameTruncator) {
-    if (state != GitRepository.State.DETACHED) {
-      return null;
-    }
+  private static String getDetachedStatePresentableText(@NotNull GitRepository repository,
+                                                        @NotNull Function<@NotNull @NlsSafe String,
+                                                        @NotNull @NlsSafe String> branchNameTruncator) {
     GitReference currentReference = GitRefUtil.getCurrentReference(repository);
     if (currentReference instanceof GitTag) {
       return branchNameTruncator.apply(currentReference.getName());
@@ -269,6 +268,10 @@ public final class GitBranchUtil {
     return collectCommon(repositories.stream().map(repository -> repository.getBranches().getRemoteBranches()));
   }
 
+  public static @NotNull List<GitTag> getCommonTags(@NotNull Collection<? extends GitRepository> repositories) {
+    return collectCommon(repositories.stream().map(repository -> repository.getTagHolder().getTags().keySet()));
+  }
+
   public static @NotNull <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups) {
     return collectCommon(groups, null);
   }
@@ -307,7 +310,7 @@ public final class GitBranchUtil {
    */
   @RequiresBackgroundThread
   public static @NotNull Collection<String> getBranches(@NotNull Project project, @NotNull VirtualFile root, boolean localWanted,
-                                               boolean remoteWanted, @Nullable String containingCommit) throws VcsException {
+                                                        boolean remoteWanted, @Nullable String containingCommit) throws VcsException {
     // preparing native command executor
     final GitLineHandler handler = new GitLineHandler(project, root, GitCommand.BRANCH);
     handler.setSilent(true);

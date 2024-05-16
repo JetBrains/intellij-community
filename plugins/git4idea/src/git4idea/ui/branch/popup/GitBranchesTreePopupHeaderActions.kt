@@ -20,7 +20,7 @@ import git4idea.GitUtil
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitTagLoader
+import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.BranchGroupingAction
 
 internal class GitBranchesTreePopupSettings :
@@ -120,14 +120,11 @@ internal class GitBranchesTreePopupShowTagsAction :
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
-    val tagLoader = GitTagLoader.getInstance(project)
-    if (state) {
-      tagLoader.loadTags(false)
-    }
-    else {
-      tagLoader.cancelLoading()
-    }
     GitVcsSettings.getInstance(project).setShowTags(state)
+
+    for (repository in GitRepositoryManager.getInstance(project).repositories) {
+      repository.tagHolder.updateEnabled()
+    }
     e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
   }
 }

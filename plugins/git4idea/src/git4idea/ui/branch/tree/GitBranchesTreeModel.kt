@@ -20,6 +20,7 @@ interface GitBranchesTreeModel : TreeModel {
 
   fun getPreferredSelection(): TreePath?
 
+  fun updateTags()
   fun filterBranches(matcher: MinusculeMatcher? = null) {}
 
   object TreeRoot : PathElementIdProvider {
@@ -40,6 +41,7 @@ interface GitBranchesTreeModel : TreeModel {
   data class RefUnderRepository(val repository: GitRepository, val ref: GitReference): PresentableNode {
     override fun getPresentableText(): String = ref.name
   }
+
   object RecentNode : BranchType, PathElementIdProvider {
     const val NAME = "RECENT"
     override fun getName(): String = NAME
@@ -62,7 +64,7 @@ interface GitBranchesTreeModel : TreeModel {
     val userValue = node ?: return false
     return (userValue is GitRepository && this !is GitBranchesTreeMultiRepoFilteringModel) ||
            userValue is TopLevelRepository ||
-           userValue is GitBranch ||
+           userValue is GitReference ||
            userValue is RefUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled)
   }

@@ -46,14 +46,13 @@ import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryChangeListener
-import git4idea.repo.GitRepositoryManager
+import git4idea.repo.*
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopupFetchAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
+import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer.Companion.getText
@@ -122,6 +121,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       installRepoListener()
       installResizeListener()
       warnThatBranchesDivergedIfNeeded()
+      installTagsListener(step.treeModel)
       DvcsBranchSyncPolicyUpdateNotifier(project, GitVcs.getInstance(project),
                                          GitVcsSettings.getInstance(project), GitRepositoryManager.getInstance(project))
         .initBranchSyncPolicyIfNotInitialized()
@@ -288,6 +288,16 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     })
   }
 
+  private fun installTagsListener(treeModel: GitBranchesTreeModel) {
+    project.messageBus.connect(this).subscribe(GitTagHolder.GIT_TAGS_LOADED, GitTagLoaderListener {
+      runInEdt {
+        val state = GitBranchesPopupTreeStateHolder.createStateForTree(tree)
+        treeModel.updateTags()
+        state?.applyTo(tree)
+      }
+    })
+  }
+
   private fun installResizeListener() {
     addResizeListener({ userResized = true }, this)
   }
@@ -320,7 +330,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     val branchUnderRepository = userObject as? RefUnderRepository
     val reference = userObject as? GitReference ?: branchUnderRepository?.ref ?: return
     val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositories
-    val branchType = GitRefType.of(reference as GitBranch)//TODO
+    val branchType = GitRefType.of(reference)
     val branchManager = project.service<GitBranchManager>()
     val anyNotFavorite = repositories.any { repository -> !branchManager.isFavorite(branchType, repository, reference.name) }
     repositories.forEach { repository ->
@@ -444,7 +454,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   private fun JTree.calculateTopLevelVisibleRows() =
     model.getChildCount(model.root) + model.getChildCount(
       if (model is GitBranchesTreeSingleRepoModel
-          && GitVcsSettings.getInstance(treeStep.project).showRecentBranches()) RecentNode else GitBranchType.LOCAL)
+          && GitVcsSettings.getInstance(treeStep.project).showRecentBranches()) RecentNode
+      else GitBranchType.LOCAL)
 
   private fun overrideTreeActions(tree: JTree) = with(tree) {
     overrideBuiltInAction("toggle") {

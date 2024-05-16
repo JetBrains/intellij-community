@@ -3,6 +3,7 @@ package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.diverged
+import com.intellij.dvcs.getCommonName
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
@@ -26,9 +27,11 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.containers.FList
 import git4idea.GitBranch
 import git4idea.GitReference
+import git4idea.GitTag
 import git4idea.GitVcs
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
+import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import git4idea.ui.branch.tree.*
@@ -101,7 +104,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
   fun isBranchesDiverged(): Boolean {
     return repositories.size > 1
-           && repositories.diverged()
+           && getCommonName(repositories) { GitRefUtil.getCurrentReference(it)?.fullName ?: return@getCommonName null } == null
            && userWantsSyncControl(project)
   }
 
@@ -263,6 +266,12 @@ class GitBranchesTreePopupStep(internal val project: Project,
         sink[CommonDataKeys.PROJECT] = project
         sink[GitBranchActionsUtil.REPOSITORIES_KEY] = repositories
         sink[GitBranchActionsUtil.SELECTED_REPO_KEY] = selectedRepository
+        if (reference is GitBranch) {
+          sink[GitBranchActionsUtil.BRANCHES_KEY] = listOf(reference)
+        }
+        else if (reference is GitTag) {
+          sink[GitBranchActionsUtil.TAGS_KEY] = listOf(reference)
+        }
         sink[GitBranchActionsUtil.BRANCHES_KEY] = (reference as? GitBranch)?.let(::listOf)
       }
 
