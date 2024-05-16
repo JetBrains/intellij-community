@@ -193,11 +193,6 @@ c:com.intellij.usages.impl.rules.FileGroupingRule$FileUsageGroup
 - isValid():Z
 - navigate(Z):V
 - update():V
-f:com.intellij.usages.impl.rules.ImportUsageFilteringRule
-- com.intellij.usages.rules.UsageFilteringRule
-- sf:INSTANCE:com.intellij.usages.impl.rules.ImportUsageFilteringRule
-- getActionId():java.lang.String
-- isVisible(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
 f:com.intellij.usages.impl.rules.ReadAccessFilteringRule
 - com.intellij.usages.rules.UsageFilteringRule
 - sf:INSTANCE:com.intellij.usages.impl.rules.ReadAccessFilteringRule

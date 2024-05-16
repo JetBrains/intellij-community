@@ -5,8 +5,10 @@ import com.intellij.usages.Usage
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.rules.ImportFilteringRule
 import com.intellij.usages.rules.UsageFilteringRule
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 
+@Internal
 @VisibleForTesting
 object ImportUsageFilteringRule : UsageFilteringRule {
 
