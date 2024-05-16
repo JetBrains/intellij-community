@@ -73,8 +73,8 @@ object ReviewAddedImports {
         file: KtFile,
         importedClasses: Collection<String>,
     ) {
-        val dialog = RestoreReferencesDialog(project, ArrayUtil.toObjectArray(importedClasses))
-        dialog.title = KotlinBundle.message("dialog.import.on.paste.title3")
+        val dialog = RestoreReferencesDialog(project, ArrayUtil.toObjectArray(importedClasses), /* inRemoveMode = */ true)
+        dialog.title = KotlinBundle.message("copy.paste.select.imports.to.remove.dialog")
         if (dialog.showAndGet()) {
             removeImports(project, file, dialog.selectedElements.map { it as String }.toSortedSet())
         }

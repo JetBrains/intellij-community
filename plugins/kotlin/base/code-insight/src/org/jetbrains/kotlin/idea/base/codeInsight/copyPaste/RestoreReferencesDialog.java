@@ -12,6 +12,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,13 +24,15 @@ import static com.intellij.util.ui.UIUtil.FontColor.BRIGHTER;
 // Cell renderer was replaced by custom implementation
 public class RestoreReferencesDialog extends DialogWrapper {
     private final Object[] myNamedElements;
+    private final boolean myInRemoveMode;
     private JList myList;
     private Object[] mySelectedElements = PsiClass.EMPTY_ARRAY;
     private boolean myContainsClassesOnly = true;
 
-    public RestoreReferencesDialog(final Project project, final Object[] elements) {
+    public RestoreReferencesDialog(final Project project, final Object[] elements, final boolean inRemoveMode) {
         super(project, true);
         myNamedElements = elements;
+        myInRemoveMode = inRemoveMode;
         for (Object element : elements) {
             if (!(element instanceof PsiClass)) {
                 myContainsClassesOnly = false;
@@ -46,6 +49,10 @@ public class RestoreReferencesDialog extends DialogWrapper {
         myList.setSelectionInterval(0, myNamedElements.length - 1);
     }
 
+    public RestoreReferencesDialog(final Project project, final Object[] elements) {
+        this(project, elements, false);
+    }
+
     @Override
     protected void doOKAction() {
         mySelectedElements = myList.getSelectedValuesList().toArray(new Object[0]);
@@ -59,9 +66,15 @@ public class RestoreReferencesDialog extends DialogWrapper {
         myList.setCellRenderer(new KotlinImportListRenderer());
         panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
 
-        panel.add(new JBLabel(myContainsClassesOnly ?
-                              JavaBundle.message("dialog.paste.on.import.text") :
-                              JavaBundle.message("dialog.paste.on.import.text2"), SMALL, BRIGHTER), BorderLayout.NORTH);
+        String text;
+        if (myInRemoveMode) {
+            text = KotlinBundle.message("copy.paste.select.imports.to.remove.text");
+        } else {
+            text = myContainsClassesOnly ?
+                   JavaBundle.message("dialog.paste.on.import.text") :
+                   JavaBundle.message("dialog.paste.on.import.text2");
+        }
+        panel.add(new JBLabel(text, SMALL, BRIGHTER), BorderLayout.NORTH);
 
         final JPanel buttonPanel = new JPanel(new VerticalFlowLayout());
         final JButton okButton = new JButton(CommonBundle.getOkButtonText());
