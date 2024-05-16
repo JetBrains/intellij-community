@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
+import java.awt.Color
 import kotlin.io.path.invariantSeparatorsPathString
 
 private val WORKSPACE_NODE = DataKey.create<Boolean>("project.view.workspace.node")
@@ -110,6 +111,8 @@ internal class WorkspaceTreeStructureProvider(val project: Project) : TreeStruct
       projectNode.update(data)
       data.setIcon(ExpUiIcons.Nodes.Workspace)
     }
+
+    override fun computeBackgroundColor(): Color? = null
 
     override fun contains(file: VirtualFile): Boolean {
       return projectNode.contains(file)
