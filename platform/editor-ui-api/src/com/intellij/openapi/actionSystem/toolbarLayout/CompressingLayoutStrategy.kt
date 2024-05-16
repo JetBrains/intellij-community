@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.*
+import java.util.*
 import javax.swing.JComponent
 import kotlin.math.max
 
@@ -135,17 +136,26 @@ open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
   }
 
   private fun calculateComponentWidths(availableWidth: Double, components: List<Component>): Map<Component, Int> {
-    if (availableWidth >= components.sumOf { it.preferredSize.width}) {
+    val preferredWidths = components.map { it.preferredSize.width }
+    if (availableWidth >= preferredWidths.sum()) {
       return components.associateWith { it.preferredSize.width }
     }
-    val componentWidths = components.associateWith { it.minimumSize.width}.toMutableMap()
-    while (availableWidth > componentWidths.values.sum()) {
-      val minWidthComponent = componentWidths.filter { it.value < it.key.preferredSize.width }.minByOrNull { it.value }?.key
-      if (minWidthComponent != null) {
+
+    val componentWidths = components.associateWith { it.minimumSize.width }.toMutableMap()
+    var currentWidthSum = componentWidths.values.sum()
+
+    // Create a priority queue that polls the smallest width component
+    val minWidthQueue: PriorityQueue<Component> = PriorityQueue(
+      compareBy({ componentWidths[it]!! }, { -(it.preferredSize.width) })
+    )
+    minWidthQueue.addAll(componentWidths.keys)
+
+    while (availableWidth > currentWidthSum && !minWidthQueue.isEmpty()) {
+      val minWidthComponent =  minWidthQueue.poll()
+      if (minWidthComponent != null && componentWidths[minWidthComponent]!! < minWidthComponent.preferredSize.width) {
+        currentWidthSum++
         componentWidths[minWidthComponent] = componentWidths[minWidthComponent]!! + 1
-      }
-      else {
-        return componentWidths
+        minWidthQueue.add(minWidthComponent)
       }
     }
     return componentWidths

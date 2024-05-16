@@ -125,20 +125,18 @@ class FilenameToolbarWidgetAction : ExpandableComboAction(), DumbAware, ActionRe
     }
 
     fun update(presentation: Presentation) {
-      val path = presentation.getClientProperty(FILE_FULL_PATH)
       isOpaque = false
-      leftIcons = listOf(presentation.icon!!)
+      if (!(presentation.icon === leftIcons.firstOrNull() || leftIcons.firstOrNull() == presentation.icon)) leftIcons = listOf(presentation.icon!!)
       foreground = presentation.getClientProperty(FILE_COLOR)
-      text = presentation.textWithMnemonic
       toolTipText = presentation.description
+      val path = presentation.getClientProperty(FILE_FULL_PATH)
+      text = if (path != null) "${presentation.textWithMnemonic} [$path]" else presentation.textWithMnemonic
       if (text.isNullOrEmpty()) {
         // A trick to avoid flashing the "unknown" icon on the toolbar during initialization,
         // as the action system goes out of its way to make the action visible until the first update.
         isVisible = false
       }
-      if (path != null) {
-        text = "$text [$path]"
-      }
+
     }
 
     override fun installListeners(project: Project?, disposable: Disposable) {

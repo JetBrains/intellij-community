@@ -66,21 +66,16 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    val customizer = ProjectWindowCustomizerService.getInstance()
+    val project = presentation.getClientProperty(projectKey)
+    if (project != null && customizer.isAvailable()) {
+      presentation.putClientProperty(LEFT_ICONS_KEY, listOf(customizer.getProjectIcon(project)))
+    }
     super.updateCustomComponent(component, presentation)
 
     val widget = component as? ToolbarComboButton ?: return
-
-    widget.text = presentation.text
-    widget.toolTipText = presentation.description
-    widget.leftIcons = emptyList()
     widget.isOpaque = false
 
-    val customizer = ProjectWindowCustomizerService.getInstance()
-    val project = presentation.getClientProperty(projectKey)
-
-    if (project != null && customizer.isAvailable()) {
-      widget.leftIcons = listOf(customizer.getProjectIcon(project))
-    }
   }
 
   override fun update(e: AnActionEvent) {
