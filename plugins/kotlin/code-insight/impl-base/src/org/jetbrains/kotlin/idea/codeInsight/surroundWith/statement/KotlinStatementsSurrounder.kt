@@ -7,10 +7,8 @@ import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtExpression
 
@@ -24,12 +22,8 @@ abstract class KotlinStatementsSurrounder : ModCommandSurrounder() {
             val expr = elements[0] as KtExpression
             if (!isApplicableWhenUsedAsExpression) {
                 allowAnalysisOnEdt {
-                    @OptIn(KtAllowAnalysisFromWriteAction::class)
-                    // TODO: drop `allowAnalysisFromWriteAction` when IJPL-149774 is fixed
-                    allowAnalysisFromWriteAction {
-                        if (analyze(expr) { expr.isUsedAsExpression() }) {
-                            return false
-                        }
+                    if (analyze(expr) { expr.isUsedAsExpression() }) {
+                        return false
                     }
                 }
             }

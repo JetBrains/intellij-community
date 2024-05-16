@@ -6,10 +6,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -30,16 +28,12 @@ abstract class KotlinExpressionSurrounder : ModCommandSurrounder() {
     @OptIn(KtAllowAnalysisOnEdt::class)
     protected open fun isApplicable(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
-            // TODO: drop `allowAnalysisFromWriteAction` when IJPL-149774 is fixed
-            allowAnalysisFromWriteAction {
-                return analyze(expression) {
-                    val type = expression.getKtType()
-                    if (type == null || type is KtErrorType || type.isUnit && isApplicableToStatements) {
-                        false
-                    } else {
-                        isApplicableToStatements || expression.isUsedAsExpression()
-                    }
+            return analyze(expression) {
+                val type = expression.getKtType()
+                if (type == null || type is KtErrorType || type.isUnit && isApplicableToStatements) {
+                    false
+                } else {
+                    isApplicableToStatements || expression.isUsedAsExpression()
                 }
             }
         }

@@ -6,10 +6,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -36,13 +34,9 @@ class KotlinWhenSurrounder : KotlinExpressionSurrounder() {
             }
 
         val remainingBranches = allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
-            // TODO: drop `allowAnalysisFromWriteAction` when IJPL-149774 is fixed
-            allowAnalysisFromWriteAction {
-                analyze(whenExpression) {
-                    whenExpression.getMissingCases().takeIf {
-                        it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
-                    }
+            analyze(whenExpression) {
+                whenExpression.getMissingCases().takeIf {
+                    it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
                 }
             }
         }
