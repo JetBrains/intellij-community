@@ -57,14 +57,11 @@ public final class StatisticsUploadAssistant {
       return true;
     }
 
-    return isAllowedByFreeLicense();
-  }
-
-  public static boolean isAllowedByFreeLicense() {
     ConsentOptionsProvider consentsProvider = ApplicationManager.getApplication().getService(ConsentOptionsProvider.class);
     if (consentsProvider != null && consentsProvider.isActivatedWithFreeLicense()) {
       return true;
     }
+
     return false;
   }
 
