@@ -74,6 +74,7 @@ sealed class K2MoveRenameUsageInfo(
             if (to !is KtNamedDeclaration) error("Usage must reference a Kotlin element")
             val element = element ?: return element
             val newLightElement = to.toLightElements()[lightElementIndex]
+            if (element.reference?.isReferenceTo(newLightElement) == true) return element
             if (element is PsiReferenceExpression
                 && wasMember
                 && newLightElement is PsiMember
