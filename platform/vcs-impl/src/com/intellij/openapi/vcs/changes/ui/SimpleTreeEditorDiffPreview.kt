@@ -8,6 +8,7 @@ import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
+@Deprecated("Use ChangesTreeEditorDiffPreview")
 abstract class SimpleTreeEditorDiffPreview(
   protected val changeViewProcessor: ChangeViewDiffRequestProcessor,
   tree: ChangesTree,
