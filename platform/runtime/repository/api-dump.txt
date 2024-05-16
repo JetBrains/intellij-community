@@ -1,7 +1,5 @@
 *f:com.intellij.platform.runtime.repository.MalformedRepositoryException
 - java.lang.RuntimeException
-- <init>(java.lang.String):V
-- <init>(java.lang.String,java.lang.Throwable):V
 *:com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 - a:getDependencies():java.util.List
 - a:getModuleClasspath():java.util.List
@@ -28,6 +26,7 @@
 - a:getResolvedModule():com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 *f:com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - <init>(java.lang.String,java.util.List,java.util.List):V
+- s:create(java.lang.String,java.util.List,java.util.List):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - equals(java.lang.Object):Z
 - getDependencies():java.util.List
 - getId():java.lang.String
@@ -35,7 +34,6 @@
 - hashCode():I
 - toString():java.lang.String
 *f:com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
-- <init>(java.util.Map,java.nio.file.Path,java.lang.String):V
 - findDescriptor(java.lang.String):com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 - getAllIds():java.util.Set
 - getBasePath():java.nio.file.Path

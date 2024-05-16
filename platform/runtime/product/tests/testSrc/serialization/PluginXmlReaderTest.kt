@@ -22,7 +22,7 @@ class PluginXmlReaderTest {
   fun `single module`() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor("plugin.main", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin.main", listOf("plugin"), emptyList()),
     )
     writePluginXml(tempDirectory.rootPath / "plugin", 
         """
@@ -41,8 +41,8 @@ class PluginXmlReaderTest {
   fun `multiple modules`() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor("plugin.main", listOf("plugin"), emptyList()),
-      RawRuntimeModuleDescriptor("plugin.optional", emptyList(), listOf("plugin.main")),
+      RawRuntimeModuleDescriptor.create("plugin.main", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin.optional", emptyList(), listOf("plugin.main")),
     )
     @Suppress("XmlUnusedNamespaceDeclaration") 
     writePluginXml(tempDirectory.rootPath / "plugin", 

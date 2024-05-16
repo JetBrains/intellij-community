@@ -117,7 +117,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
         context.messages.error("Cannot generate runtime module repository for cross-platform distribution: different dependencies for module '$moduleId', ${descriptor.dependencies} and $commonDependencies")
       }
     }
-    commonDescriptors.add(RawRuntimeModuleDescriptor(moduleId, commonResourcePaths.toList(), commonDependencies))
+    commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
   }
   val targetFile = context.paths.tempDir.resolve("cross-platform-module-repository").resolve(JAR_REPOSITORY_FILE_NAME)
   saveModuleRepository(commonDescriptors, targetFile, context)
@@ -171,7 +171,7 @@ private fun generateRepositoryForDistribution(
     val actualResourcePaths = resourcePaths.mapTo(ArrayList()) {
       if (it.startsWith("$MODULES_DIR_NAME/")) it.removePrefix("$MODULES_DIR_NAME/") else "../$it"
     }
-    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId.stringId, actualResourcePaths, actualDependencies))
+    distDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, actualResourcePaths, actualDependencies))
   }
 
   /* include descriptors of aggregating modules which don't have own resources (and therefore don't have DistributionFileEntry),

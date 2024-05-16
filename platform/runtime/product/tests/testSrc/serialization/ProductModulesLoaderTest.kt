@@ -26,9 +26,9 @@ class ProductModulesLoaderTest {
   @Test
   fun simple() {
     val repository = createRepository(tempDirectory.rootPath,
-                                      RawRuntimeModuleDescriptor("util", emptyList(), emptyList()),
-                                      RawRuntimeModuleDescriptor("root", emptyList(), listOf("util")),
-                                      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
+                                      RawRuntimeModuleDescriptor.create("util", emptyList(), emptyList()),
+                                      RawRuntimeModuleDescriptor.create("root", emptyList(), listOf("util")),
+                                      RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), emptyList()),
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "<idea-plugin><id>plugin</id></idea-plugin>")
     val xml = generateProductModulesWithPlugin()
@@ -49,9 +49,9 @@ class ProductModulesLoaderTest {
   @Test
   fun `optional modules in main module group`() {
     val repository = createRepository(tempDirectory.rootPath,
-                                      RawRuntimeModuleDescriptor("util", emptyList(), emptyList()),
-                                      RawRuntimeModuleDescriptor("root", emptyList(), emptyList()),
-                                      RawRuntimeModuleDescriptor("optional", emptyList(), listOf("root")),
+                                      RawRuntimeModuleDescriptor.create("util", emptyList(), emptyList()),
+                                      RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
+                                      RawRuntimeModuleDescriptor.create("optional", emptyList(), listOf("root")),
     )
     val xml = directoryContent { 
       xml(FILE_NAME, """
@@ -79,9 +79,9 @@ class ProductModulesLoaderTest {
   fun `multiple modules in plugin module group`() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor("root", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
-      RawRuntimeModuleDescriptor("optional", emptyList(), listOf("plugin")),
+      RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor.create("optional", emptyList(), listOf("plugin")),
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "optional", "unknown")
 
@@ -102,13 +102,13 @@ class ProductModulesLoaderTest {
   fun `enable plugin modules in relevant modes`() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor("root", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("intellij.platform.frontend", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("intellij.platform.localIde", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
-      RawRuntimeModuleDescriptor("plugin.common", emptyList(), listOf("plugin")),
-      RawRuntimeModuleDescriptor("plugin.frontend", emptyList(), listOf("plugin", "intellij.platform.frontend")),
-      RawRuntimeModuleDescriptor("plugin.localIde", emptyList(), listOf("plugin", "intellij.platform.localIde")),
+      RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("intellij.platform.frontend", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("intellij.platform.localIde", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin.common", emptyList(), listOf("plugin")),
+      RawRuntimeModuleDescriptor.create("plugin.frontend", emptyList(), listOf("plugin", "intellij.platform.frontend")),
+      RawRuntimeModuleDescriptor.create("plugin.localIde", emptyList(), listOf("plugin", "intellij.platform.localIde")),
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "plugin.common", "plugin.frontend", "plugin.localIde")
 
@@ -131,10 +131,10 @@ class ProductModulesLoaderTest {
   fun inclusion() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor("root", listOf("root"), emptyList()),
-      RawRuntimeModuleDescriptor("common.plugin", listOf("common.plugin"), emptyList()),
-      RawRuntimeModuleDescriptor("additional", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor.create("root", listOf("root"), emptyList()),
+      RawRuntimeModuleDescriptor.create("common.plugin", listOf("common.plugin"), emptyList()),
+      RawRuntimeModuleDescriptor.create("additional", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), emptyList()),
     )
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("common.plugin"), "common")
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin"), "plugin")
@@ -167,10 +167,10 @@ class ProductModulesLoaderTest {
   fun `inclusion without some modules`() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor("root", listOf("root"), emptyList()),
-      RawRuntimeModuleDescriptor("additional", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
-      RawRuntimeModuleDescriptor("plugin2", listOf("plugin2"), emptyList()),
+      RawRuntimeModuleDescriptor.create("root", listOf("root"), emptyList()),
+      RawRuntimeModuleDescriptor.create("additional", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin2", listOf("plugin2"), emptyList()),
     )
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin"), "plugin")
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin2"), "plugin2")
