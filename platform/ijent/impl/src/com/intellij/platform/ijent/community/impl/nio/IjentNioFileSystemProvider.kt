@@ -202,8 +202,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
                 else -> OTHER
               }
 
-              // UnixFileSystemProvider#checkAccess checks the read access if there are no flags specified.
-              if (AccessMode.READ in modes || modes.isEmpty()) {
+              if (AccessMode.READ in modes) {
                 val canRead = when (filePermissionBranch) {
                   OWNER -> v.value.permissions.ownerCanRead
                   GROUP -> v.value.permissions.groupCanRead
