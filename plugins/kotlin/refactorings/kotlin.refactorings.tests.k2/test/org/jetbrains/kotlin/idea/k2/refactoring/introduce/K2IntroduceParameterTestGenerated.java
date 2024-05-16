@@ -380,6 +380,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             runTest("../../idea/tests/testData/refactoring/introduceParameter/propertyAccessor.kt");
         }
 
+        @TestMetadata("resultedType.kt")
+        public void testResultedType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/resultedType.kt");
+        }
+
         @TestMetadata("return.kt")
         public void testReturn() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/return.kt");

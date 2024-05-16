@@ -3636,6 +3636,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/propertyAccessor.kt");
             }
 
+            @TestMetadata("resultedType.kt")
+            public void testResultedType() throws Exception {
+                runTest("testData/refactoring/introduceParameter/resultedType.kt");
+            }
+
             @TestMetadata("return.kt")
             public void testReturn() throws Exception {
                 runTest("testData/refactoring/introduceParameter/return.kt");

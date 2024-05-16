@@ -91,7 +91,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
 
         testClass<AbstractK2IntroduceParameterTest> {
-            model("refactoring/introduceParameter", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroduceParameterTest")
+            model("refactoring/introduceParameter", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceParameterTest")
         }
 
         testClass<AbstractK2IntroducePropertyTest> {
