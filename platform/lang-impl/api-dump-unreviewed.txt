@@ -14192,6 +14192,7 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - com.intellij.ide.actions.searcheverywhere.ScopeSupporting
 - com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 - com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
+- p:isScopeDefaultAndAutoSet:Z
 - pf:myProject:com.intellij.openapi.project.Project
 - pf:myPsiContext:com.intellij.psi.SmartPsiElementPointer
 - p:myScopeDescriptor:com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -14215,6 +14216,7 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - getSearchProviderId():java.lang.String
 - getSupportedScopes():java.util.List
 - isDumbAware():Z
+- p:isEverywhere():Z
 - isMultiSelectionSupported():Z
 - isShownInSeparateTab():Z
 - p:preparePsi(com.intellij.psi.PsiElement,I,java.lang.String):com.intellij.psi.PsiElement
@@ -14244,10 +14246,12 @@ c:com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 - getSortWeight():I
 - f:includeNonProjectItemsText():java.lang.String
 - isEmptyPatternSupported():Z
+- pf:isScopeDefaultAndAutoSet():Z
 - isShownInSeparateTab():Z
 - pf:processRecentActions(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function2,java.lang.String,kotlin.jvm.functions.Function2):V
 - processSelectedItem(com.intellij.ide.util.gotoByName.GotoActionModel$MatchedValue,I,java.lang.String):Z
 - pf:setMyDisabledActions(Z):V
+- pf:setScopeDefaultAndAutoSet(Z):V
 - showInFindResults():Z
 f:com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor$Companion
 - f:showAssignShortcutDialog(com.intellij.openapi.project.Project,com.intellij.ide.util.gotoByName.GotoActionModel$MatchedValue):V

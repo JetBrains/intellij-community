@@ -2810,6 +2810,7 @@ com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 - a:canToggleEverywhere():Z
 - a:isEverywhere():Z
 - a:setEverywhere(Z):V
+- setScopeIsDefaultAndAutoSet(Z):V
 com.intellij.ide.actions.searcheverywhere.SearchFieldActionsContributor
 - a:createRightActions(kotlin.jvm.functions.Function1,java.lang.Runnable):java.util.List
 com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor

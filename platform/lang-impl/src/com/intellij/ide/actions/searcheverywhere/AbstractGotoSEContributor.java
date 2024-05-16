@@ -69,6 +69,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   private final GlobalSearchScope myEverywhereScope;
   private final GlobalSearchScope myProjectScope;
+  protected boolean isScopeDefaultAndAutoSet = true;
 
   protected final SmartPsiElementPointer<PsiElement> myPsiContext;
 
@@ -179,6 +180,11 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         return myScopeDescriptor.scopeEquals(myEverywhereScope) ||
                myScopeDescriptor.scopeEquals(myProjectScope);
       }
+
+      @Override
+      public void setScopeIsDefaultAndAutoSet(boolean scopeDefaultAndAutoSet) {
+        isScopeDefaultAndAutoSet = scopeDefaultAndAutoSet;
+      }
     });
     result.add(new PreviewAction());
     result.add(new SearchEverywhereFiltersAction<>(filter, onChanged, statisticsCollector));
@@ -285,6 +291,8 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   public void setScope(ScopeDescriptor scope) {
     setSelectedScope(scope);
   }
+
+  protected boolean isEverywhere() { return myScopeDescriptor.scopeEquals(myEverywhereScope); }
 
   @Override
   public List<ScopeDescriptor> getSupportedScopes() {

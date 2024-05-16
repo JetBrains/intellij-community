@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapManager
@@ -53,6 +52,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   protected val model: GotoActionModel
   private val myProvider: ActionAsyncProvider
   protected var myDisabledActions: Boolean = false
+  protected var isScopeDefaultAndAutoSet: Boolean = true
 
   private val isRecentEnabled: Boolean
     get() = Registry.`is`("search.everywhere.recents") || ApplicationManager.getApplication().isInternal
@@ -113,6 +113,10 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
       override fun setEverywhere(state: Boolean) {
         myDisabledActions = state
         onChanged.run()
+      }
+
+      override fun setScopeIsDefaultAndAutoSet(isDefault: Boolean) {
+        isScopeDefaultAndAutoSet = isDefault
       }
     })
   }
