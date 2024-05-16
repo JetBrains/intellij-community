@@ -4,11 +4,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.fs.*
-import com.intellij.platform.ijent.fs.IjentFileSystemApi.*
 import com.intellij.util.text.nullize
-import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import java.nio.file.*
 
 /**
@@ -46,13 +42,6 @@ internal fun IjentFsResult.Error.throwFileSystemException(): Nothing {
 internal fun Path.toIjentPath(isWindows: Boolean): IjentPath =
   when {
     this is IjentNioPath -> ijentPath
-
-    startsWith("ijent:") && nameCount >= 3 ->
-      IjentNioFileSystemProvider.getInstance()
-        .getPath(URI(asSequence().drop(1).joinToString("/", prefix = "ijent://") {
-          URLEncoder.encode(it.toString(), StandardCharsets.UTF_8)
-        }))
-        .ijentPath
 
     isAbsolute -> throw InvalidPathException(toString(), "This path can't be converted to IjentPath")
 
