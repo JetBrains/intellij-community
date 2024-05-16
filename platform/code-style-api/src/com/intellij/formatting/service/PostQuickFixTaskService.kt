@@ -3,6 +3,7 @@ package com.intellij.formatting.service
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -16,10 +17,12 @@ import org.jetbrains.annotations.ApiStatus
 interface PostQuickFixTaskService {
 
   /**
-   * Executes the given [block] after changes to documents (made during the quickfix) are actually committed.
-   * This can happen immediately if the documents are already committed (e.g. in IDEA), but will be delayed if not (e.g. in Fleet).
+   * Executes the given [block] after changes to [filesToSave] (made during the quickfix) are actually saved in OS
+   * and changed documents' contents are available for third party processes (e.g. build systems)
+   * This can happen immediately if the documents are already saved (e.g. in IDEA), but will be delayed if not (e.g. in Fleet).
+   * If block doesn't invoke third party processes, it's ok to leave filesToSave empty
    */
-  fun runOrRegisterPostQuickFixTask(block: () -> Unit)
+  fun runOrRegisterPostQuickFixTask(filesToSave: List<VirtualFile>, block: () -> Unit)
 
   companion object {
     fun getInstance(project: Project): PostQuickFixTaskService = project.service<PostQuickFixTaskService>()

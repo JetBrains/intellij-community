@@ -115,7 +115,7 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
             }
         }
 
-        PostQuickFixTaskService.getInstance(project).runOrRegisterPostQuickFixTask {
+        PostQuickFixTaskService.getInstance(project).runOrRegisterPostQuickFixTask(emptyList()) {
             progressManager.run(collectTask)
         }
     }
