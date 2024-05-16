@@ -5,6 +5,7 @@
     <plugin id="com.intellij.modules.platform"/>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="org.toml.lang"/>
+    <module name="intellij.notebooks.tables"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
