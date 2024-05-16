@@ -10,6 +10,7 @@ import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.*
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil.getLinesInRange
@@ -21,7 +22,6 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.infoStateIn
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -35,6 +35,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.detailsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 private val LOG = logger<GHPRReviewCommentBodyViewModel>()
 
@@ -55,6 +56,8 @@ class GHPRReviewCommentBodyViewModel internal constructor(
   val htmlImageLoader: AsyncHtmlImageLoader = dataContext.htmlImageLoader
   private val server: GithubServerPath = dataContext.repositoryDataService.repositoryMapping.repository.serverPath
   private val repository: GitRepository = dataContext.repositoryDataService.remoteCoordinates.repository
+
+  private val twVm by lazy { project.service<GHPRToolWindowViewModel>() }
 
   private val threadData = MutableStateFlow<ThreadData?>(null)
   private val canResolvedThread = MutableStateFlow(false)
@@ -184,6 +187,10 @@ class GHPRReviewCommentBodyViewModel internal constructor(
         LOG.warn("Failed to apply suggested change\n${patch.hunks.joinToString("\n\n") { it.text }}", e)
       }
     }
+  }
+
+  fun openPullRequestInfoAndTimeline(number: Long) {
+    twVm.projectVm.value?.openPullRequestInfoAndTimeline(number)
   }
 
   private fun createSuggestionBlock(htmlContent: String,

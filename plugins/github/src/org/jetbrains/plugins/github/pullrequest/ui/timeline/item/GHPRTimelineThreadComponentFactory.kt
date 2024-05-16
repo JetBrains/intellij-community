@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.launchNowIn
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
@@ -21,11 +22,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.buildTimelineItem
+import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -160,9 +163,11 @@ internal object GHPRTimelineThreadComponentFactory {
 
   private fun CoroutineScope.createCollapsedThreadCommentBody(vm: GHPRReviewThreadCommentViewModel): JComponent {
     val cs = this
-    val textPane = SimpleHtmlPane().apply {
+    val project = vm.bodyVm.project
+    val textPane = SimpleHtmlPane(addBrowserListener = false).apply {
+      addGithubHyperlinkListener(vm.bodyVm::openPullRequestInfoAndTimeline)
       foreground = UIUtil.getContextHelpForeground()
-      bindTextIn(cs, vm.bodyVm.body)
+      bindTextIn(cs, vm.bodyVm.body.mapState { it.convertToHtml(project) })
     }.let { pane ->
       CollaborationToolsUIUtil
         .wrapWithLimitedSize(pane, DimensionRestrictions.LinesHeight(pane, 2, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH))

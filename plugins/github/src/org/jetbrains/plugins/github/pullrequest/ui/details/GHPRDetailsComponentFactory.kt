@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
+import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -65,15 +66,20 @@ internal object GHPRDetailsComponentFactory {
     )).apply {
       isOpaque = false
 
-      add(ReviewDetailsUIUtil.createTitlePanel(title, timelineLink),CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
+      add(ReviewDetailsUIUtil.createTitlePanel(title, timelineLink), CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
-      add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, detailsVm.changesVm.selectedCommit,
-                                                             commitPresentation = { commit ->
-                                                               createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser) {
-                                                                 it.convertToHtml(project)
-                                                               }
-                                                             },
-                                                             htmlPaneFactory = { SimpleHtmlPane() }),
+      add(CodeReviewDetailsCommitInfoComponentFactory.create(
+        scope, detailsVm.changesVm.selectedCommit,
+        commitPresentation = { commit ->
+          createCommitsPopupPresenter(commit, detailsVm.securityService.ghostUser) {
+            it.convertToHtml(project)
+          }
+        },
+        htmlPaneFactory = {
+          SimpleHtmlPane(addBrowserListener = false).apply {
+            addGithubHyperlinkListener(detailsVm::openPullRequestInfoAndTimeline)
+          }
+        }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(commitFilesBrowserComponent, CC().grow().shrinkPrioY(200))
       add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))

@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
@@ -42,16 +43,20 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
+import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
-internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimelineViewModel,
-                                              private val initialDetails: GHPRDetailsFull,
-                                              private val cs: CoroutineScope) {
+internal class GHPRFileEditorComponentFactory(private val cs: CoroutineScope,
+                                              private val project: Project,
+                                              private val projectVm: GHPRToolWindowProjectViewModel,
+                                              private val timelineVm: GHPRTimelineViewModel,
+                                              private val initialDetails: GHPRDetailsFull) {
 
   private val uiDisposable = cs.nestedDisposable()
 
@@ -170,7 +175,8 @@ internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimeli
     val author = loadedDetailsState.value.author
     val createdAt = loadedDetailsState.value.createdAt
 
-    val textPane = SimpleHtmlPane(customImageLoader = timelineVm.htmlImageLoader).apply {
+    val textPane = SimpleHtmlPane(customImageLoader = timelineVm.htmlImageLoader, addBrowserListener = false).apply {
+      addGithubHyperlinkListener(projectVm::openPullRequestInfoAndTimeline)
       bindTextIn(cs, loadedDetailsState.mapState { it.descriptionHtml ?: noDescriptionHtmlText })
     }
 
@@ -208,7 +214,7 @@ internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimeli
     return CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon)
   }
 
-  private fun createItemComponentFactory() = GHPRTimelineItemComponentFactory(timelineVm)
+  private fun createItemComponentFactory() = GHPRTimelineItemComponentFactory(project, timelineVm)
 
   private val noDescriptionHtmlText by lazy {
     HtmlBuilder()

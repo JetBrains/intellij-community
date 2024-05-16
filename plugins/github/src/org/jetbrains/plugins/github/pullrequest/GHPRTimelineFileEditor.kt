@@ -32,7 +32,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
-                                      projectVm: GHPRToolWindowProjectViewModel,
+                                      private val projectVm: GHPRToolWindowProjectViewModel,
                                       private val file: GHPRTimelineVirtualFile)
   : FileEditorBase() {
   private val cs = parentCs
@@ -89,7 +89,7 @@ internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
   }
 
   private fun JPanel.showTimeline(details: GHPRDetailsFull) {
-    val timeline = GHPRFileEditorComponentFactory(timelineVm, details, cs).create()
+    val timeline = GHPRFileEditorComponentFactory(cs, file.project, projectVm, timelineVm, details).create()
     setLayoutAndComponent(BorderLayout(), timeline)
   }
 
