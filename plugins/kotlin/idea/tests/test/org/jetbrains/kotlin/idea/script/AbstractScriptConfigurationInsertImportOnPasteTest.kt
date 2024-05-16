@@ -13,9 +13,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.ReviewAddedImports
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
-import org.jetbrains.kotlin.idea.codeInsight.ReviewAddedImports
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile

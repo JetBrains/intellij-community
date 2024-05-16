@@ -23,6 +23,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.RestoreReferencesDialog
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.getFqNameAtOffset
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -120,8 +121,14 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                 emptyList()
             }
 
-            // Step 4. Restore references, i.e. add missing imports or qualifiers.
             withContext(Dispatchers.EDT) {
+                // Step 4. If necessary, ask user which references should be restored.
+                val askBeforeRestoring = CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK
+                val selectedTargetReferencesToRestore = if (askBeforeRestoring && targetReferencesToRestore.isNotEmpty()) {
+                    showRestoreReferencesDialog(project, targetReferencesToRestore)
+                } else targetReferencesToRestore
+
+                // Step 5. Restore references, i.e. add missing imports or qualifiers.
                 // TODO: remove `blockingContext`, see KTIJ-30071
                 blockingContext {
                     project.executeCommand(KotlinBundle.message("copy.paste.restore.pasted.references.capitalized")) {
@@ -131,13 +138,13 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                                 /* project = */ project,
                                 /* parentComponent = */ null,
                             ) { indicator ->
-                                for ((index, referenceToRestore) in targetReferencesToRestore.withIndex()) {
+                                for ((index, referenceToRestore) in selectedTargetReferencesToRestore.withIndex()) {
                                     if (indicator.isCanceled) break
 
                                     Helper.restoreReference(targetFile, referenceToRestore)
 
                                     add(referenceToRestore)
-                                    indicator.fraction = (index + 1).toDouble() / targetReferencesToRestore.size
+                                    indicator.fraction = (index + 1).toDouble() / selectedTargetReferencesToRestore.size
                                 }
                             }
                         }
@@ -161,5 +168,21 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
         val targetImports = targetFile.importDirectives.map { it.text }.toSet()
 
         return sourceImports != targetImports
+    }
+
+    /**
+     * @return list of [Helper.ReferenceToRestore]s selected by user
+     */
+    private fun showRestoreReferencesDialog(
+        project: Project,
+        targetReferencesToRestore: List<Helper.ReferenceToRestore>
+    ): List<Helper.ReferenceToRestore> {
+        val fqNames = targetReferencesToRestore.map { it.fqName.asString() }.toSortedSet()
+        val dialog = RestoreReferencesDialog(project, fqNames.toTypedArray())
+
+        dialog.show()
+
+        val selectedFqNames = dialog.selectedElements.toSet()
+        return targetReferencesToRestore.filter { selectedFqNames.contains(it.fqName.asString()) }
     }
 }
