@@ -35,6 +35,12 @@ import org.jetbrains.kotlin.name.StandardClassIds
 context(KtAnalysisSession)
 @ApiStatus.Internal
 internal fun PresentationTreeBuilder.printKtType(type: KtType) {
+    // See org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer.renderType
+    type.abbreviatedType?.let { abbreviatedType ->
+        printKtType(abbreviatedType)
+        return
+    }
+
     var markedNullable = type.isMarkedNullable
     when (type) {
         is KtCapturedType -> text("*")

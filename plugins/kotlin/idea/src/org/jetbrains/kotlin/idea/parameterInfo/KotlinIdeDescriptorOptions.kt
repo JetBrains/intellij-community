@@ -101,6 +101,7 @@ open class KotlinIdeDescriptorOptions : DescriptorRendererOptions {
     override var renderConstructorKeyword by property(true)
     override var renderUnabbreviatedType by property(true)
     override var renderTypeExpansions by property(false)
+    override var renderAbbreviatedTypeComments: Boolean by property(false)
     override var includeAdditionalModifiers by property(true)
     override var parameterNamesInFunctionalTypes by property(true)
     override var renderFunctionContracts by property(false)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.platforms
 
 import com.intellij.openapi.application.runReadAction
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
+import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -167,7 +167,7 @@ class LibraryEffectiveKindProvider(private val project: Project) {
                             result = KnownLibraryKindForIndex.JS
 
                         result == null &&
-                                nameSequence.endsWith(MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION) &&
+                                nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION) &&
                                 fileType == KotlinBuiltInFileType ->
                             result = KnownLibraryKindForIndex.COMMON
 

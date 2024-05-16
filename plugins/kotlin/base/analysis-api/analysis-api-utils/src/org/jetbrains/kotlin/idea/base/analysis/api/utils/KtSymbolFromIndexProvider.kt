@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import com.intellij.openapi.progress.ProgressManager
@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.serialization.deserialization.METADATA_FILE_EXTENSION
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 class KtSymbolFromIndexProvider private constructor(
@@ -328,7 +329,7 @@ private val KotlinBuiltins = setOf("kotlin/ArrayIntrinsicsKt", "kotlin/internal/
 fun KtCallableDeclaration.isKotlinBuiltins(): Boolean {
     val file = containingKtFile
     val virtualFile = file.virtualFile
-    if (virtualFile.extension == "kotlin_metadata") return true
+    if (virtualFile.extension == METADATA_FILE_EXTENSION) return true
     if (this !is KtNamedFunction) return false
     return file.packageFqName.asString().replace(".", "/") + "/" + virtualFile.nameWithoutExtension in KotlinBuiltins
 }

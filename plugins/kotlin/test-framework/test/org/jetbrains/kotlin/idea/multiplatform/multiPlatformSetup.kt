@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
-import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM1
-import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM1
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.platform.*
@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.platform.wasm.isWasmJs
 import org.jetbrains.kotlin.platform.wasm.isWasmWasi
 import org.jetbrains.kotlin.projectModel.*
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.types.typeUtil.closure
+import org.jetbrains.kotlin.utils.closure
 import java.io.File
 
 // allows to configure a test mpp project
