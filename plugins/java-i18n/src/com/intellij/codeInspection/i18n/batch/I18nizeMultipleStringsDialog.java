@@ -219,7 +219,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     renderer.putClientProperty("html.disable", Boolean.TRUE);
     myTable.setDefaultRenderer(String.class, renderer);
     myTable.getSelectionModel().addListSelectionListener(e -> {
-      updateUsagePreview(myTable);
+      updateUsagePreview(myProject, myTable);
     });
 
     AnActionButtonRunnable removeAction = new AnActionButtonRunnable() {
@@ -227,7 +227,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
       public void run(AnActionButton button) {
         TableUtil.removeSelectedItems(myTable);
         myTable.repaint();
-        updateUsagePreview(myTable);
+        updateUsagePreview(myProject, myTable);
       }
     };
 
@@ -284,13 +284,13 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     return selection;
   }
 
-  private void updateUsagePreview(JBTable table) {
+  private void updateUsagePreview(@NotNull Project project, JBTable table) {
     int index = table.getSelectionModel().getLeadSelectionIndex();
     if (index != -1 && index < myKeyValuePairs.size()) {
-      myUsagePreviewPanel.updateLayout(myUsagePreviewProvider.apply(myKeyValuePairs.get(index).contextData()));
+      myUsagePreviewPanel.updateLayout(project, myUsagePreviewProvider.apply(myKeyValuePairs.get(index).contextData()));
     }
     else {
-      myUsagePreviewPanel.updateLayout(null);
+      myUsagePreviewPanel.updateLayout(project, null);
     }
   }
 

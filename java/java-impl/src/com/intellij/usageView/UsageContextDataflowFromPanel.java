@@ -3,18 +3,16 @@
 package com.intellij.usageView;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
-import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class UsageContextDataflowFromPanel extends UsageContextDataflowToPanel {
   public static final class Provider extends UsageContextDataflowToPanel.Provider {
     @Override
     public @NotNull UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsageContextDataflowFromPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
+      return new UsageContextDataflowFromPanel(usageView.getPresentation());
     }
 
     @Override
@@ -23,8 +21,8 @@ public class UsageContextDataflowFromPanel extends UsageContextDataflowToPanel {
     }
   }
 
-  public UsageContextDataflowFromPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
-    super(project, presentation);
+  public UsageContextDataflowFromPanel(@NotNull UsageViewPresentation presentation) {
+    super(presentation);
   }
 
 

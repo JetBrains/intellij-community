@@ -82,7 +82,7 @@ class UsagePreviewToolbarWithSimilarUsagesLink(previewPanel: UsagePreviewPanel,
                                               override fun actionPerformed(e: AnActionEvent) {
                                                 previewPanel.removeAll()
                                                 Disposer.dispose(similarUsagesComponent)
-                                                previewPanel.updateLayout(infos, myUsageView)
+                                                previewPanel.updateLayout(firstSelectedInfo.project, infos, myUsageView)
                                               }
                                             })), BorderLayout.NORTH)
       previewPanel.add(similarUsagesComponent.createLazyLoadingScrollPane(onlyValidUsages))

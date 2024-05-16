@@ -17,6 +17,7 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,10 +33,10 @@ import java.util.List;
  */
 public interface UsageContextPanel extends Disposable {
   // usage selection changes, panel should update its view for the newly select usages
-  void updateLayout(@Nullable("null means there are no usages to show") List<? extends UsageInfo> infos);
+  void updateLayout(@NotNull Project project, @Nullable("null means there are no usages to show") List<? extends UsageInfo> infos);
 
-  default void updateLayout(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
-    updateLayout(infos);
+  default void updateLayout(@NotNull Project project, @NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+    updateLayout(project, infos);
   }
 
   @NotNull

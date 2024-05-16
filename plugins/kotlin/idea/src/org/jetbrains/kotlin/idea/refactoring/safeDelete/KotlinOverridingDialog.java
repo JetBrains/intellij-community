@@ -40,6 +40,7 @@ import java.util.List;
 *  (replace PsiMethod formatting)
 */
 class KotlinOverridingDialog extends DialogWrapper {
+    private final Project myProject;
     private final List<UsageInfo> myOverridingMethods;
     private final String[] myMethodText;
     private final boolean[] myChecked;
@@ -50,6 +51,7 @@ class KotlinOverridingDialog extends DialogWrapper {
 
     KotlinOverridingDialog(Project project, List<UsageInfo> overridingMethods) {
         super(project, true);
+        myProject = project;
         myOverridingMethods = overridingMethods;
         myChecked = new boolean[myOverridingMethods.size()];
         Arrays.fill(myChecked, true);
@@ -165,10 +167,10 @@ class KotlinOverridingDialog extends DialogWrapper {
                 int index = myTable.getSelectionModel().getLeadSelectionIndex();
                 if (index != -1) {
                     UsageInfo usageInfo = myOverridingMethods.get(index);
-                    myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+                    myUsagePreviewPanel.updateLayout(usageInfo.getProject(), Collections.singletonList(usageInfo));
                 }
                 else {
-                    myUsagePreviewPanel.updateLayout(null);
+                    myUsagePreviewPanel.updateLayout(myProject, null);
                 }
             }
         };
@@ -177,7 +179,7 @@ class KotlinOverridingDialog extends DialogWrapper {
         final Splitter splitter = new Splitter(true, 0.3f);
         splitter.setFirstComponent(panel);
         splitter.setSecondComponent(myUsagePreviewPanel);
-        myUsagePreviewPanel.updateLayout(null);
+        myUsagePreviewPanel.updateLayout(myProject, null);
 
         Disposer.register(myDisposable, new Disposable() {
             @Override

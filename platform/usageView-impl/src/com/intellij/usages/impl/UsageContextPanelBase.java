@@ -34,12 +34,10 @@ import java.awt.*;
 import java.util.List;
 
 public abstract class UsageContextPanelBase extends JBPanelWithEmptyText implements UsageContextPanel {
-  protected final Project myProject;
   @NotNull protected final UsageViewPresentation myPresentation;
   protected volatile boolean isDisposed;
 
-  public UsageContextPanelBase(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
-    myProject = project;
+  public UsageContextPanelBase(@NotNull UsageViewPresentation presentation) {
     myPresentation = presentation;
     setLayout(new BorderLayout());
     setBorder(JBUI.Borders.empty());
@@ -60,20 +58,20 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
   protected void onEditorCreated(@NotNull Editor editor) {}
 
   @Override
-  public final void updateLayout(@Nullable final List<? extends UsageInfo> infos) {
-    AppUIExecutor.onUiThread().withDocumentsCommitted(myProject).expireWith(this).execute(() -> updateLayoutLater(infos));
+  public final void updateLayout(@NotNull Project project, @Nullable final List<? extends UsageInfo> infos) {
+    AppUIExecutor.onUiThread().withDocumentsCommitted(project).expireWith(this).execute(() -> updateLayoutLater(project, infos));
   }
 
   @Override
-  public final void updateLayout(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
-    AppUIExecutor.onUiThread().withDocumentsCommitted(myProject).expireWith(this)
-      .execute(() -> updateLayoutLater(infos, usageView));
+  public final void updateLayout(@NotNull Project project, @NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+    AppUIExecutor.onUiThread().withDocumentsCommitted(project).expireWith(this)
+      .execute(() -> updateLayoutLater(project, infos, usageView));
   }
 
   @RequiresEdt
-  protected void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
-    updateLayoutLater(infos);
+  protected void updateLayoutLater(@NotNull Project project, @NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+    updateLayoutLater(project, infos);
   }
 
-  protected abstract void updateLayoutLater(@Nullable List<? extends UsageInfo> infos);
+  protected abstract void updateLayoutLater(@NotNull Project project, @Nullable List<? extends UsageInfo> infos);
 }

@@ -353,7 +353,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
         previewTitle.append(spaceAndThinSpace() + getPresentablePath(project, vFile),
                             new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
       }
-      usagePreviewPanel.updateLayout(List.of(adapter.getUsageInfo()));
+      usagePreviewPanel.updateLayout(project, List.of(adapter.getUsageInfo()));
     }
   }
 

@@ -31,7 +31,7 @@ public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase 
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsageContextCallHierarchyPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
+      return new UsageContextCallHierarchyPanel(usageView.getPresentation());
     }
 
     @Override
@@ -60,8 +60,8 @@ public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase 
     }
   }
 
-  public UsageContextCallHierarchyPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
-    super(project, presentation);
+  public UsageContextCallHierarchyPanel(@NotNull UsageViewPresentation presentation) {
+    super(presentation);
   }
 
   @Override
@@ -71,7 +71,7 @@ public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase 
   }
 
   @Override
-  public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
+  public void updateLayoutLater(@NotNull Project project, @Nullable final List<? extends UsageInfo> infos) {
     PsiElement element = ContainerUtil.isEmpty(infos) ? null : getElementToSliceOn(infos);
     if (myBrowser instanceof Disposable) {
       Disposer.dispose((Disposable)myBrowser);

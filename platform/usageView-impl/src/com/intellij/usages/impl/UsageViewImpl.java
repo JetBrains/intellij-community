@@ -391,7 +391,7 @@ public class UsageViewImpl implements UsageViewEx {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         if (!isDisposed()) {
-          updateOnSelectionChanged();
+          updateOnSelectionChanged(myProject);
           myNeedUpdateButtons = true;
         }
       });
@@ -725,7 +725,7 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     myCurrentUsageContextProvider = provider;
     updateUsagesContextPanels();
-    updateOnSelectionChanged();
+    updateOnSelectionChanged(myProject);
   }
 
   private void disposeUsageContextPanels() {
@@ -1491,7 +1491,7 @@ public class UsageViewImpl implements UsageViewEx {
     List<Node> toUpdate = new ArrayList<>();
     checkNodeValidity(root, new TreePath(root), toUpdate);
     queueUpdateBulk(toUpdate, EmptyRunnable.getInstance());
-    updateOnSelectionChanged();
+    updateOnSelectionChanged(myProject);
   }
 
   private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
@@ -1534,11 +1534,11 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
 
-  private void updateOnSelectionChanged() {
+  private void updateOnSelectionChanged(@NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
     if (myCurrentUsageContextPanel != null) {
       try {
-        myCurrentUsageContextPanel.updateLayout(ContainerUtil.notNullize(getSelectedUsageInfos()), this);
+        myCurrentUsageContextPanel.updateLayout(project, ContainerUtil.notNullize(getSelectedUsageInfos()), this);
       }
       catch (IndexNotReadyException ignore) {
       }

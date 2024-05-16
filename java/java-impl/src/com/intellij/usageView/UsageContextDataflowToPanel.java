@@ -31,7 +31,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   public static class Provider implements UsageContextPanel.Provider {
     @Override
     public @NotNull UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsageContextDataflowToPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
+      return new UsageContextDataflowToPanel(usageView.getPresentation());
     }
 
     @Override
@@ -52,8 +52,8 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     }
   }
 
-  public UsageContextDataflowToPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
-    super(project, presentation);
+  public UsageContextDataflowToPanel(@NotNull UsageViewPresentation presentation) {
+    super(presentation);
   }
 
   @Override
@@ -63,7 +63,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   }
 
   @Override
-  public void updateLayoutLater(final @Nullable List<? extends UsageInfo> infos) {
+  public void updateLayoutLater(@NotNull Project project, final @Nullable List<? extends UsageInfo> infos) {
     if (ContainerUtil.isEmpty(infos)) {
       removeAll();
       JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
@@ -79,7 +79,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
       PsiElement restored = JavaSliceUsage.createRootUsage(element, createParams(element, isDataflowToThis())).getElement();
       if (restored == null || restored.getContainingFile() == null) return;
 
-      JComponent panel = createPanel(element, isDataflowToThis());
+      JComponent panel = createPanel(project, element, isDataflowToThis());
       myPanel = panel;
       Disposer.register(this, (Disposable)panel);
       removeAll();
@@ -100,13 +100,13 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     return params;
   }
 
-  protected @NotNull JComponent createPanel(@NotNull PsiElement element, final boolean dataFlowToThis) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
+  protected @NotNull JComponent createPanel(@NotNull Project project, @NotNull PsiElement element, final boolean dataFlowToThis) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
     SliceAnalysisParams params = createParams(element, dataFlowToThis);
 
-    SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(), JavaSliceUsage.createRootUsage(element, params));
+    SliceRootNode rootNode = new SliceRootNode(project, new DuplicateMap(), JavaSliceUsage.createRootUsage(element, params));
 
-    return new SlicePanel(myProject, dataFlowToThis, rootNode, false, toolWindow) {
+    return new SlicePanel(project, dataFlowToThis, rootNode, false, toolWindow) {
       @Override
       public boolean isToShowAutoScrollButton() {
         return false;
