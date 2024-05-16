@@ -6,11 +6,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.util.Disposer
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -23,13 +25,8 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
 
   init {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
-    if (!GlobalSdkTableBridge.isEnabled()) {
-      componentManager.registerService(SdkTableImplementationDelegate::class.java, LegacyProjectJdkTableDelegate::class.java,
-                                       ComponentManagerImpl.fakeCorePluginDescriptor, false)
-    } else {
-      componentManager.registerService(SdkTableImplementationDelegate::class.java, SdkTableBridgeImpl::class.java,
-                                       ComponentManagerImpl.fakeCorePluginDescriptor, false)
-    }
+    componentManager.registerService(SdkTableImplementationDelegate::class.java, SdkTableBridgeImpl::class.java,
+                                     ComponentManagerImpl.fakeCorePluginDescriptor, false)
     delegate = SdkTableImplementationDelegate.getInstance()
 
     SdkType.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<SdkType> {

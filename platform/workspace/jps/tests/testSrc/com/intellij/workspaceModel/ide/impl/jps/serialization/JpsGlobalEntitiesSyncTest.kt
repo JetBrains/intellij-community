@@ -19,8 +19,6 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
-import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -47,7 +45,6 @@ class JpsGlobalEntitiesSyncTest {
 
   @Test
   fun `test project and global storage sdk sync`() {
-    Assume.assumeTrue("Test has to be executed on the new implementation of SDK", GlobalSdkTableBridge.isEnabled())
     copyAndLoadGlobalEntities(originalFile = "sdk/loading", expectedFile = "sdk/sync", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable, ) { _, entitySource ->
       val sdkInfos = mutableListOf(SdkTestInfo("corretto-20", "Amazon Corretto version 20.0.2", "JavaSDK"),

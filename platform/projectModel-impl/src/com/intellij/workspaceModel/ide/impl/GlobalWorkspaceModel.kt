@@ -30,7 +30,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLib
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHandler
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -273,8 +272,6 @@ class GlobalWorkspaceModel : Disposable {
       if (libraryBridge != null) mutableEntityStorage.mutableLibraryMap.addIfAbsent(libraryEntityCopy, libraryBridge)
     }
 
-    // If registry flag for SDK is disabled we don't need to apply its data to the storage
-    if (!GlobalSdkTableBridge.isEnabled()) return mutableEntityStorage
     // Copying sdks
     storage.entities(SdkEntity::class.java).forEach { sdkEntity ->
       if (!globalEntitiesFilter.invoke(sdkEntity.entitySource)) return@forEach

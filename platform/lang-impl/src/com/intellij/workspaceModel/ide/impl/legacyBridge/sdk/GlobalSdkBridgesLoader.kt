@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Compa
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 
 class GlobalSdkBridgeInitializer : BridgeInitializer {
-  override fun isEnabled(): Boolean = GlobalSdkTableBridge.isEnabled()
+  override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     @Suppress("UNCHECKED_CAST")
