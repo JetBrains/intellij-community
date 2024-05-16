@@ -42,4 +42,9 @@ public class FirRenderingKDocTestGenerated extends AbstractFirRenderingKDocTest 
     public void testPropertyRendering() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/renderingKDoc/propertyRendering.kt");
     }
+
+    @TestMetadata("trickyMarkdown.kt")
+    public void testTrickyMarkdown() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/renderingKDoc/trickyMarkdown.kt");
+    }
 }
