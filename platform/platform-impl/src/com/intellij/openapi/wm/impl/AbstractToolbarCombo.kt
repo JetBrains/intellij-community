@@ -6,6 +6,7 @@ import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.ui.popup.PopupAlignableComponent
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager
@@ -28,6 +29,7 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
 
   protected fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
     firePropertyChange(prop.name, oldValue, newValue)
+    if (Objects.equals(oldValue, newValue)) return
     revalidate()
     repaint()
   }
