@@ -11,6 +11,7 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.jvm.javaio.toByteReadChannel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.InetAddress
 import java.nio.ByteBuffer
@@ -31,6 +32,7 @@ import kotlin.coroutines.coroutineContext
  * [dispose] this object to stop forwarding.
  *
  */
+@ApiStatus.Internal
 class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int) : Disposable {
   private companion object {
     /**
