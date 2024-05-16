@@ -389,13 +389,21 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     Exception error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        Map<LocalVariable, Value> values = getAllValues();
         LocalVariable variable = localVariable.getVariable();
+        Map<LocalVariable, Value> values;
+        try {
+          values = getAllValues();
+        }
+        catch (InconsistentDebugInfoException ignored) {
+          // possibly failed due to one of the variables, try getting one by one
+          return getSingleValue(variable);
+        }
+
         if (values.containsKey(variable)) {
           return values.get(variable);
         }
-        else { // try direct get
-          return getStackFrame().getValue(variable);
+        else {
+          return getSingleValue(variable);
         }
       }
       catch (InvalidStackFrameException e) {
@@ -425,6 +433,10 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
       }
     }
     throw new EvaluateException(error.getMessage(), error);
+  }
+
+  private Value getSingleValue(@NotNull LocalVariable variable) throws EvaluateException {
+    return getStackFrame().getValue(variable);
   }
 
   @NotNull
