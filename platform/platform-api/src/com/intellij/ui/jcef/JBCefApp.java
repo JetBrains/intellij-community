@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
@@ -124,6 +125,15 @@ public final class JBCefApp {
                 RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
                 notification.expire();
                 ApplicationManager.getApplication().restart();
+              })
+          );
+
+          notification.addAction(
+            NotificationAction.createSimple(
+              IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.learn.more"),
+              () -> {
+                // TODO(kharitonov): move to https://intellij-support.jetbrains.com/hc/en-us/sections/201620045-Troubleshooting
+                BrowserUtil.browse("https://youtrack.jetbrains.com/articles/JBR-A-11");
               })
           );
 
