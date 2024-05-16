@@ -349,6 +349,7 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
   }
 }
 
+@Internal
 class ScopeRuleValidator : CustomValidationRule() {
   override fun doValidate(data: String, context: EventContext): ValidationResultType =
     if (ScopeIdMapper.standardNames.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
