@@ -143,6 +143,21 @@ public class MultiModuleRenameTestGenerated extends AbstractMultiModuleRenameTes
         runTest("testData/refactoring/renameMultiModule/implClassAndTypeAliasByHeaderClass/implClassAndTypeAliasByHeaderClass.test");
     }
 
+    @TestMetadata("overrideFunctionsByCommonModuleFromOverrider/overrideFunctionsByCommonModuleFromOverrider.test")
+    public void testOverrideFunctionsByCommonModuleFromOverrider_OverrideFunctionsByCommonModuleFromOverrider() throws Exception {
+        runTest("testData/refactoring/renameMultiModule/overrideFunctionsByCommonModuleFromOverrider/overrideFunctionsByCommonModuleFromOverrider.test");
+    }
+
+    @TestMetadata("overrideFunctionsByCommonModule/overrideFunctionsByCommonModule.test")
+    public void testOverrideFunctionsByCommonModule_OverrideFunctionsByCommonModule() throws Exception {
+        runTest("testData/refactoring/renameMultiModule/overrideFunctionsByCommonModule/overrideFunctionsByCommonModule.test");
+    }
+
+    @TestMetadata("overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test")
+    public void testOverrideFunctionsByPlatformModule_OverrideFunctionsByPlatformModule() throws Exception {
+        runTest("testData/refactoring/renameMultiModule/overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test");
+    }
+
     @TestMetadata("suspendFunImplInImplModule/suspendFunImplInImplModule.test")
     public void testSuspendFunImplInImplModule_SuspendFunImplInImplModule() throws Exception {
         runTest("testData/refactoring/renameMultiModule/suspendFunImplInImplModule/suspendFunImplInImplModule.test");
