@@ -181,21 +181,32 @@ function addContexts(sessionDiv, popup, lookup) {
   sessionDiv.classList.remove("features", "suggestions")
 
   if (!("cc_context" in lookup["additionalInfo"])) return
-  maybeAddButtonToCopyCompletionContext(sessionDiv, popup, lookup)
 
-  let addInfo = lookup["additionalInfo"]
-  let contextBlock = document.createElement("DIV")
-  contextBlock.style.whiteSpace = "inherit"
-  let code = document.createElement("code")
-  code.innerHTML = addInfo["cc_context"]
-  contextBlock.appendChild(code)
-  code.style.whiteSpace = "inherit"
-  popup.appendChild(contextBlock)
+  const contextJson = lookup["additionalInfo"]["cc_context"]
+  maybeAddButtonToCopyCompletionContext(contextJson, sessionDiv, popup, lookup)
+
+  const contextObject = JSON.parse(contextJson)
+  contextObject.contexts.items.forEach(context => {
+      popup.appendChild(createContextBlock(context))
+  })
 }
 
-function maybeAddButtonToCopyCompletionContext(sessionDiv, popup, lookup) {
-  if (!("cc_request_json" in lookup["additionalInfo"])) return
-  let contextAsJson = lookup["additionalInfo"]["cc_request_json"]
+function createContextBlock(context) {
+  const contextBlock = document.createElement("DIV");
+  contextBlock.style.whiteSpace = "inherit"
+  const codeElement = createCodeElement(context)
+  contextBlock.appendChild(codeElement)
+  return contextBlock
+}
+
+function createCodeElement(context) {
+  const code = document.createElement("code")
+  code.innerHTML = `<b>File: ${context.filetype}</b><br><b>Type: ${context.type}</b><br><pre>${context.content}</pre>`
+  code.style.whiteSpace = "inherit"
+  return code
+}
+
+function maybeAddButtonToCopyCompletionContext(context, sessionDiv, popup, lookup) {
   let buttonDiv = document.createElement("DIV")
   let button = document.createElement("BUTTON")
   button.textContent = "Copy Context"
@@ -203,7 +214,7 @@ function maybeAddButtonToCopyCompletionContext(sessionDiv, popup, lookup) {
   popup.appendChild(buttonDiv)
 
   button.addEventListener("click", async function () {
-    await navigator.clipboard.writeText(contextAsJson)
+    await navigator.clipboard.writeText(context)
   })
 }
 
