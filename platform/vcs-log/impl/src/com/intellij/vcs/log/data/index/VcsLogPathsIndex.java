@@ -7,8 +7,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.EqualityPolicy;
@@ -81,7 +81,12 @@ final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<ChangeKind>, Co
   }
 
   int getPathId(@NotNull LightFilePath path) throws IOException {
-    return myPathsIndexer.myPathsEnumerator.enumerate(path);
+    try {
+      return myPathsIndexer.myPathsEnumerator.enumerate(path);
+    }
+    catch (IllegalArgumentException e) {
+      throw new IOException(e);
+    }
   }
 
   @Nullable
