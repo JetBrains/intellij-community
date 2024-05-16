@@ -18,6 +18,8 @@ import org.jsoup.nodes.Comment
 import org.jsoup.nodes.DataNode
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
+import java.net.URLDecoder
+import java.nio.charset.Charset
 
 @ApiStatus.Internal
 class IncrementalDOMBuilder(
@@ -120,6 +122,7 @@ class IncrementalDOMBuilder(
       return
     }
     if (!hasFileHost) {
+      path = URLDecoder.decode(path, Charset.defaultCharset())
       if (SystemInfo.isWindows) {
         path = StringUtil.replace(path, "\\", "/")
       }

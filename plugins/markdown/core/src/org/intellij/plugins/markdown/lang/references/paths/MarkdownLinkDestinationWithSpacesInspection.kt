@@ -28,20 +28,15 @@ class MarkdownLinkDestinationWithSpacesInspection: LocalInspectionTool() {
   }
 
   private fun checkReference(element: MarkdownLinkDestination, holder: ProblemsHolder) {
-    val references = element.references
-    val reference = references.find { it is FileReferenceOwner } ?: return
+    val references = element.references.filterNotNull().filter { it is FileReferenceOwner }
+    if (references.isEmpty()) return
     @Suppress("NAME_SHADOWING")
-    val element = reference.element as? MarkdownLinkDestination ?: return
-    val range = reference.rangeInElement
+    val element = references.first().element as? MarkdownLinkDestination ?: return
     val text = element.text
-    if (range.isEmpty || range.endOffset > text.length) {
-      return
-    }
-    val content = range.substring(text)
-    if (!content.contains(' ')) {
-      return
-    }
-    val replacement = content.replace(" ", "%20")
+    val ranges = references.map { it.rangeInElement }.filterNot { it.isEmpty || it.endOffset > text.length }
+    if (!text.contains(' ') || ranges.none()) return
+    val range = TextRange(ranges.first().startOffset, ranges.last().endOffset)
+    val replacement = text.substring(range.startOffset, range.endOffset).replace(" ", "%20")
     holder.registerProblem(
       element,
       MarkdownBundle.message("markdown.link.destination.with.spaces.inspection.description"),

@@ -15,8 +15,20 @@ class FileLinkWithSpacesInspectionTest: LightPlatformCodeInsightFixture4TestCase
   }
 
   @Test
+  fun `test complex file link with spaces`() {
+    val content = "[](<warning descr=\"$warningMessage\">some path/some file.md</warning>)"
+    doTest(content)
+  }
+
+  @Test
   fun `test file link with spaces and header reference`() {
     val content = "[](<warning descr=\"$warningMessage\">some file link.md</warning>#with-header-reference)"
+    doTest(content)
+  }
+
+  @Test
+  fun `test complex file link with spaces and header reference`() {
+    val content = "[](<warning descr=\"$warningMessage\">some path/some file link.md</warning>#with-header-reference)"
     doTest(content)
   }
 
