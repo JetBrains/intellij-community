@@ -24,10 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class JavaFormatterUtil {
   /**
@@ -37,6 +34,11 @@ public final class JavaFormatterUtil {
     .create(JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD);
 
   private static final int CALL_EXPRESSION_DEPTH = 500;
+
+  private static final Set<String> KNOWN_TYPE_ANNOTATIONS = Set.of(
+    "org.jetbrains.annotations.NotNull",
+    "org.jetbrains.annotations.Nullable"
+  );
 
   private JavaFormatterUtil() { }
 
@@ -292,7 +294,8 @@ public final class JavaFormatterUtil {
           if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
               javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER &&
               isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER) ||
-              isAnnotationAfterKeyword(last)
+              isAnnotationAfterKeyword(last) ||
+              isSingleTypeAnnoBeforeTypeInMethod(prev, child, parent)
           ) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
@@ -513,6 +516,18 @@ public final class JavaFormatterUtil {
     return CommonCodeStyleSettings.DO_NOT_WRAP;
   }
 
+  private static boolean isSingleTypeAnnoBeforeTypeInMethod(@NotNull ASTNode modifierList, @NotNull ASTNode typeNode, @NotNull ASTNode parent) {
+    if (parent.getElementType() != JavaElementType.METHOD) return false;
+    if (typeNode.getElementType() != JavaElementType.TYPE && typeNode.getElementType() != JavaElementType.TYPE_PARAMETER_LIST) return false;
+    if (modifierList.getFirstChildNode() != modifierList.getLastChildNode()) return false;
+
+    PsiElement element = modifierList.getFirstChildNode().getPsi();
+    if (element instanceof PsiAnnotation psiAnnotation) {
+      return KNOWN_TYPE_ANNOTATIONS.contains(psiAnnotation.getQualifiedName());
+    }
+    return false;
+  }
+
   private static boolean isAnnoInsideModifierListWithAtLeastOneKeyword(@NotNull ASTNode current, @NotNull ASTNode parent) {
     if (current.getElementType() != JavaElementType.ANNOTATION || parent.getElementType() != JavaElementType.MODIFIER_LIST) return false;
     while (true) {
@@ -525,7 +540,6 @@ public final class JavaFormatterUtil {
     }
     return false;
   }
-
 
   /**
    * Traverses the children of the node and collects nodes with type method calls or reference expressions to the list.
