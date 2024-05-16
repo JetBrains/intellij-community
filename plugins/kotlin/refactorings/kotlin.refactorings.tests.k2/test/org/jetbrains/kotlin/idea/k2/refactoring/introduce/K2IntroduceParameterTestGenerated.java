@@ -255,6 +255,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             runTest("../../idea/tests/testData/refactoring/introduceParameter/conflictingName.kt");
         }
 
+        @TestMetadata("conflictingName1.kt")
+        public void testConflictingName1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/conflictingName1.kt");
+        }
+
         @TestMetadata("defaultParameter.kt")
         public void testDefaultParameter() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/defaultParameter.kt");
