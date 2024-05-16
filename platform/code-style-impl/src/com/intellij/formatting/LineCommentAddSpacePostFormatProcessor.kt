@@ -10,7 +10,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleProvider
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 
 
-class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
+internal class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
 
   override fun processElement(source: PsiElement, settings: CodeStyleSettings) = source
     .also { processText(it.containingFile, it.textRange, settings) }

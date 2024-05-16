@@ -5,11 +5,13 @@ import com.intellij.formatting.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class WrapBlocksState extends State {
   private final InitialInfoBuilder myWrapper;
   private final BlockIndentOptions myBlockIndentOptions;

@@ -4,9 +4,11 @@ package com.intellij.formatting;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class IndentInside {
   public int whiteSpaces = 0;
   public int tabs = 0;

@@ -6,12 +6,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 final class CaretOffsetUpdater {
   private final Map<Editor, Integer> myCaretOffsets = new HashMap<>();
 

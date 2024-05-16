@@ -6,8 +6,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class BlockRangesMap {
   private final LeafBlockWrapper myLastBlock;
   private final Int2ObjectMap<LeafBlockWrapper> myTextRangeToWrapper;

@@ -10,11 +10,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class DataLanguageBlockFragmentWrapper implements Block {
+final class DataLanguageBlockFragmentWrapper implements Block {
   private final Block myOwner;
   private final TextRange myRange;
 
-  public DataLanguageBlockFragmentWrapper(final @NotNull Block owner, final @NotNull TextRange range) {
+  DataLanguageBlockFragmentWrapper(final @NotNull Block owner, final @NotNull TextRange range) {
     myOwner = owner;
     myRange = range;
   }

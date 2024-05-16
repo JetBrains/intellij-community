@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.formatting.FormatProcessor.FormatOptions;
 
+@ApiStatus.Internal
 public final class FormatterImpl extends FormatterEx
   implements IndentFactory,
              WrapFactory,

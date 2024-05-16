@@ -12607,21 +12607,6 @@ f:com.intellij.formatting.ExcludedFileFormattingRestriction
 com.intellij.formatting.FormattingModelBuilderEx
 - com.intellij.formatting.FormattingModelBuilder
 - getIndentOptionsToUse(com.intellij.psi.PsiFile,com.intellij.formatting.FormatTextRanges,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
-f:com.intellij.formatting.FormattingProgressTask
-- com.intellij.util.SequentialModalProgressTask
-- com.intellij.formatting.FormattingProgressCallback
-- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):V
-- afterApplyingChange(com.intellij.formatting.LeafBlockWrapper):V
-- afterProcessingBlock(com.intellij.formatting.LeafBlockWrapper):V
-- afterWrappingBlock(com.intellij.formatting.LeafBlockWrapper):V
-- beforeApplyingFormatChanges(java.util.Collection):V
-- cancelled():V
-- onCancel():V
-- onThrowable(java.lang.Throwable):V
-f:com.intellij.formatting.FormattingProgressTaskFactory
-- com.intellij.formatting.FormattingProgressCallbackFactory
-- <init>():V
-- createProgressCallback(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):com.intellij.formatting.FormattingProgressCallback
 f:com.intellij.formatting.alignment.AlignmentInColumnsConfig
 - <init>(com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
 - getCommentTokenTypes():com.intellij.psi.tree.TokenSet

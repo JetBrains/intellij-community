@@ -2,11 +2,13 @@
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class WrapProcessor {
   private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
   private final BlockRangesMap myBlockRangesMap;

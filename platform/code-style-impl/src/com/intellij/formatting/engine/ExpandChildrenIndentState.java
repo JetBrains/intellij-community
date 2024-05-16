@@ -4,6 +4,7 @@ package com.intellij.formatting.engine;
 import com.intellij.formatting.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class ExpandChildrenIndentState extends State {
   private final Document myDocument;
   private final WrapBlocksState myWrapState;

@@ -8,12 +8,14 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.codeStyle.LanguageCodeStyleProvider;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class KeptLineFeedsCollector {
 
   private static final ThreadLocal<KeptLineFeedsCollector> THREAD_LOCAL = new ThreadLocal<>();

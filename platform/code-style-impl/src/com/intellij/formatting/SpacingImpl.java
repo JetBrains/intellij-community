@@ -3,12 +3,14 @@
 package com.intellij.formatting;
 
 import com.intellij.formatting.engine.BlockRangesMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * Extends {@link Spacing} in order to keep number of additional settings like {@code 'minSpaces'}, {@code 'minLineFeeds'},
  * {@code 'prefLineFeeds'} etc.
  */
+@ApiStatus.Internal
 public class SpacingImpl extends Spacing {
   private int myMinSpaces;
   private int myKeepBlankLines;

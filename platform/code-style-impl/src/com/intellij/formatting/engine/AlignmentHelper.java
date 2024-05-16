@@ -8,9 +8,11 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class AlignmentHelper {
   private static final Logger LOG = Logger.getInstance(AlignmentHelper.class);
 
@@ -51,7 +53,7 @@ public final class AlignmentHelper {
   private final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> myBackwardShiftedAlignedBlocks = new HashMap<>();
   private final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> myAlignmentMappings = new HashMap<>();
 
-  public AlignmentHelper(Document document, MultiMap<Alignment, Block> blocksToAlign, BlockIndentOptions options) {
+  AlignmentHelper(Document document, MultiMap<Alignment, Block> blocksToAlign, BlockIndentOptions options) {
     myDocument = document;
     myBlockIndentOptions = options;
     int totalBlocks = blocksToAlign.values().size();

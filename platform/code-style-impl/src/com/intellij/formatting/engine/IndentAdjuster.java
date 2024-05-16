@@ -4,9 +4,11 @@ package com.intellij.formatting.engine;
 import com.intellij.formatting.*;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class IndentAdjuster {
   private final AlignmentHelper myAlignmentHelper;
   private final BlockIndentOptions myBlockIndentOptions;

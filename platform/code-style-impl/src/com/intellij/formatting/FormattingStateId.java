@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 /**
  * Enumerates formatting processing states.
  */
-public enum FormattingStateId {
+enum FormattingStateId {
 
   /**
    * Corresponds to {@link InitialInfoBuilder#buildFrom(Block, int, CompositeBlockWrapper, WrapImpl, Block)}.

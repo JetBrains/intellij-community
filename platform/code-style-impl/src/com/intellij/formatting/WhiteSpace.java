@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.util.BitUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
  * <p/>
  * Not thread-safe.
  */
+@ApiStatus.Internal
 public final class WhiteSpace {
 
   private static final char LINE_FEED = '\n';

@@ -2,9 +2,11 @@
 package com.intellij.formatting;
 
 import com.intellij.psi.codeStyle.ExternalFormatProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ExternalFormattingModelBuilderImpl implements FormattingModelBuilder {
   private final @Nullable FormattingModelBuilder myDefaultBuilder;
 

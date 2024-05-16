@@ -5,7 +5,9 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.Indent;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class IndentImpl implements Indent{
   private final CodeStyleSettings mySettings;
   private final int myIndentLevel;

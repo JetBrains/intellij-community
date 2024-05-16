@@ -47,13 +47,11 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.TextRangeUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class PostprocessReformattingAspectImpl extends PostprocessReformattingAspect {
   private static final Logger LOG = Logger.getInstance(PostprocessReformattingAspectImpl.class);
   private final Project myProject;
