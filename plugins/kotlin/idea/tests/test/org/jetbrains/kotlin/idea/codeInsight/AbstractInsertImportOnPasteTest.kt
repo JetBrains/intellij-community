@@ -14,7 +14,9 @@ import kotlinx.coroutines.future.future
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
-import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.ReviewAddedImports
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeDeleted
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeReviewed
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinCopyPasteCoroutineScopeService
@@ -96,17 +98,15 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
                 file.kotlinCustomSettings.PACKAGES_TO_USE_STAR_IMPORTS.addEntry(KotlinPackageEntry(it.trim(), false))
             }
 
-            KotlinCopyPasteReferenceProcessor.declarationsToImportSuggested = emptyList()
-            ReviewAddedImports.importsToBeReviewed = emptyList()
+            val targetFile = configureTargetFile(getTestFileNameWithExtension(".to.kt"))
 
             val importsToBeDeletedFile = dataFile(getTestFileNameWithExtension(".imports_to_delete"))
-            ReviewAddedImports.importsToBeDeleted = if (importsToBeDeletedFile.exists()) {
+            targetFile.importsToBeDeleted = if (importsToBeDeletedFile.exists()) {
                 importsToBeDeletedFile.readLines()
             } else {
                 emptyList()
             }
 
-            configureTargetFile(getTestFileNameWithExtension(".to.kt"))
             performNotWriteEditorAction(IdeActions.ACTION_PASTE)
             waitForAsyncPasteCompletion()
 
@@ -115,11 +115,10 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
                 return@withCustomCompilerOptions
             }
 
-            val namesToImportDump = KotlinCopyPasteReferenceProcessor.declarationsToImportSuggested.joinToString("\n")
-            if (!isFirPlugin) {
-                KotlinTestUtils.assertEqualsToFile(dataFile(getTestFileNameWithExtension(".expected.names")), namesToImportDump)
-            }
-            assertEquals(namesToImportDump, ReviewAddedImports.importsToBeReviewed.joinToString("\n"))
+            val namesToImportDump = targetFile.declarationsSuggestedToBeImported.joinToString("\n")
+            KotlinTestUtils.assertEqualsToFile(dataFile(getTestFileNameWithExtension(".expected.names")), namesToImportDump)
+
+            assertEquals(namesToImportDump, targetFile.importsToBeReviewed.joinToString("\n"))
 
             val expectedResultFile = dataFile(getTestFileNameWithExtension(".expected.kt"))
             val resultFile = myFixture.file as KtFile

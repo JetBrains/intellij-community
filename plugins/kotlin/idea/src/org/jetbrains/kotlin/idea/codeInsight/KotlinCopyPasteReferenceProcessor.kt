@@ -28,12 +28,12 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.RestoreReferencesDialog
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.ReviewAddedImports.reviewAddedImports
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -407,7 +407,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
     ) {
         invokeLater {
             val selectedReferencesToRestore =
-                showRestoreReferencesDialog(project, referencesPossibleToRestore)
+                showRestoreReferencesDialog(project, referencesPossibleToRestore, file)
             if (selectedReferencesToRestore.isEmpty()) return@invokeLater
 
             project.executeWriteCommand(KotlinBundle.message("copy.paste.restore.pasted.references.capitalized")) {
@@ -826,12 +826,13 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
     private fun showRestoreReferencesDialog(
         project: Project,
-        referencesToRestore: List<ReferenceToRestoreData>
+        referencesToRestore: List<ReferenceToRestoreData>,
+        file: KtFile,
     ): Collection<ReferenceToRestoreData> {
         val fqNames = referencesToRestore.map { it.refData.fqName }.toSortedSet()
 
         if (isUnitTestMode()) {
-            declarationsToImportSuggested = fqNames
+            file.declarationsSuggestedToBeImported = fqNames
         }
 
         val shouldShowDialog = CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK
@@ -857,9 +858,6 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         }
 
     companion object {
-        @get:TestOnly
-        var declarationsToImportSuggested: Collection<String> = emptyList()
-
         private val LOG = Logger.getInstance(KotlinCopyPasteReferenceProcessor::class.java)
 
         private val IGNORE_REFERENCES_INSIDE: Array<Class<out KtElement>> = arrayOf(

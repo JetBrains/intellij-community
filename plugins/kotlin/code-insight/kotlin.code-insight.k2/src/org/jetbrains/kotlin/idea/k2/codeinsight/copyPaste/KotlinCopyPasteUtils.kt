@@ -19,6 +19,8 @@ internal val KaSymbol.isExtension: Boolean get() = this is KaCallableSymbol && i
 internal inline fun <reified T: KtElement> KtFile.collectElementsOfTypeInRange(startOffset: Int, endOffset: Int): List<T> =
     elementsInRange(TextRange(startOffset, endOffset)).flatMap { it.collectDescendantsOfType<T>() }
 
+internal fun <T> Collection<T>.toSortedStringSet(): Set<String> = map { it.toString() }.toSortedSet()
+
 /**
  * In the resulting map symbols that cannot be imported (e.g., local symbols) are associated with `null` key.
  */

@@ -23,12 +23,15 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.RestoreReferencesDialog
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.ReviewAddedImports.reviewAddedImports
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.getFqNameAtOffset
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinCopyPasteCoroutineScopeService
 import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.datatransfer.Transferable
@@ -121,6 +124,10 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                 emptyList()
             }
 
+            if (isUnitTestMode()) {
+                targetFile.declarationsSuggestedToBeImported = targetReferencesToRestore.toSortedStringSet()
+            }
+
             withContext(Dispatchers.EDT) {
                 // Step 4. If necessary, ask user which references should be restored.
                 val askBeforeRestoring = CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK
@@ -130,7 +137,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
 
                 // Step 5. Restore references, i.e. add missing imports or qualifiers.
                 // TODO: remove `blockingContext`, see KTIJ-30071
-                blockingContext {
+                val restoredTargetReferences = blockingContext {
                     project.executeCommand(KotlinBundle.message("copy.paste.restore.pasted.references.capitalized")) {
                         buildList {
                             ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
@@ -150,6 +157,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                         }
                     }
                 }
+                reviewAddedImports(project, editor, targetFile, restoredTargetReferences.toSortedStringSet())
             }
         }
     }
@@ -177,7 +185,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
         project: Project,
         targetReferencesToRestore: List<Helper.ReferenceToRestore>
     ): List<Helper.ReferenceToRestore> {
-        val fqNames = targetReferencesToRestore.map { it.fqName.asString() }.toSortedSet()
+        val fqNames = targetReferencesToRestore.toSortedStringSet()
         val dialog = RestoreReferencesDialog(project, fqNames.toTypedArray())
 
         dialog.show()

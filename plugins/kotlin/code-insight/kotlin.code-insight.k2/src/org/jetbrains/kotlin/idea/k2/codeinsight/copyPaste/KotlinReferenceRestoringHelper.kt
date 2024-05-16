@@ -106,12 +106,16 @@ internal object KotlinReferenceRestoringHelper {
 
     data class ReferenceToImport(
         override val fqName: FqName,
-    ) : ReferenceToRestore()
+    ) : ReferenceToRestore() {
+        override fun toString(): String = fqName.asString()
+    }
 
     data class ReferenceToBindToFqName(
         override val fqName: FqName,
         val reference: KtSimpleNameReference,
-    ) : ReferenceToRestore()
+    ) : ReferenceToRestore() {
+        override fun toString(): String = fqName.asString()
+    }
 
     context(KaSession)
     fun getTargetReferencesToRestore(

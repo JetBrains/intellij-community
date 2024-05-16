@@ -14,36 +14,30 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeDeleted
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeReviewed
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
-import java.util.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
 object ReviewAddedImports {
-    @get:TestOnly
-    var importsToBeReviewed: Collection<String> = emptyList()
-
-    @get:TestOnly
-    var importsToBeDeleted: Collection<String> = emptyList()
-
     fun reviewAddedImports(
         project: Project,
         editor: Editor,
         file: KtFile,
-        imported: TreeSet<String>
+        imported: Collection<String>,
     ) {
         if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.YES &&
             !imported.isEmpty()
         ) {
             if (isUnitTestMode()) {
-                importsToBeReviewed = imported
-                removeImports(project, file, importsToBeDeleted)
+                file.importsToBeReviewed = imported
+                removeImports(project, file, file.importsToBeDeleted)
                 return
             }
             val notificationText = KotlinBundle.htmlMessage("copy.paste.reference.notification", imported.size)
@@ -77,7 +71,7 @@ object ReviewAddedImports {
     private fun reviewImports(
         project: Project,
         file: KtFile,
-        importedClasses: Set<String>
+        importedClasses: Collection<String>,
     ) {
         val dialog = RestoreReferencesDialog(project, ArrayUtil.toObjectArray(importedClasses))
         dialog.title = KotlinBundle.message("dialog.import.on.paste.title3")

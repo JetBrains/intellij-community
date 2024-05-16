@@ -13,9 +13,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.ReviewAddedImports
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeDeleted
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeReviewed
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
@@ -48,29 +49,27 @@ abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScri
 
         performEditorAction(cutOrCopy)
 
-        KotlinCopyPasteReferenceProcessor.declarationsToImportSuggested = emptyList()
-        ReviewAddedImports.importsToBeReviewed = emptyList()
+        val targetScript = createFileAndSyncDependencies(File(testDataFile, "target.kts"))
+        val targetFile = targetScript.toKtFile()
 
         val importsToBeDeletedFile = File(testDataFile, "imports_to_delete")
-        ReviewAddedImports.importsToBeDeleted = if (importsToBeDeletedFile.exists()) {
+        targetFile.importsToBeDeleted = if (importsToBeDeletedFile.exists()) {
             importsToBeDeletedFile.readLines()
         } else {
             emptyList()
         }
 
-        val targetScript = createFileAndSyncDependencies(File(testDataFile, "target.kts"))
         performEditorAction(IdeActions.ACTION_PASTE)
         UIUtil.dispatchAllInvocationEvents()
 
-        val namesToImportDump = KotlinCopyPasteReferenceProcessor.declarationsToImportSuggested.joinToString("\n")
+        val namesToImportDump = targetFile.declarationsSuggestedToBeImported.joinToString("\n")
         KotlinTestUtils.assertEqualsToFile(File(testDataFile, "expected.names"), namesToImportDump)
-        assertEquals(namesToImportDump, ReviewAddedImports.importsToBeReviewed.joinToString("\n"))
+        assertEquals(namesToImportDump, targetFile.importsToBeReviewed.joinToString("\n"))
 
-        val sourceFile = targetScript.toKtFile()
         val sourceText = if (noErrorsDump)
-            sourceFile.text
+            targetFile.text
         else
-            sourceFile.dumpTextWithErrors()
+            targetFile.dumpTextWithErrors()
         KotlinTestUtils.assertEqualsToFile(File(testDataFile, "expected.kts"), sourceText)
     }
 
