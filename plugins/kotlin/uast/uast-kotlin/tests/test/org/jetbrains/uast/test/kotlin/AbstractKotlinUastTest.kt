@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
@@ -120,8 +121,7 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
         return KotlinTestUtils.newConfiguration(ConfigurationKind.STDLIB_REFLECT, TestJdkKind.FULL_JDK).apply {
             addKotlinSourceRoot(sourceFile.canonicalPath)
 
-            val messageCollector = PrintingMessageCollector(System.err, MessageRenderer.PLAIN_RELATIVE_PATHS, true)
-            put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
+            messageCollector = PrintingMessageCollector(System.err, MessageRenderer.PLAIN_RELATIVE_PATHS, true)
 
             put(CommonConfigurationKeys.MODULE_NAME, LightProjectDescriptor.TEST_MODULE_NAME)
 
