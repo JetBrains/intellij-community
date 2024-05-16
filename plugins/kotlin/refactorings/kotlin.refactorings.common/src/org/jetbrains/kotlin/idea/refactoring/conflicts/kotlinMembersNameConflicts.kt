@@ -28,11 +28,11 @@ import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUs
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.nonStaticOuterClasses
 
 /**
  * Checks for conflicts with members declared in the same scope if [declaration] would be named as [newName].
@@ -113,17 +113,21 @@ fun checkDeclarationNewNameConflicts(
         }
 
         if (symbol is KtTypeParameterSymbol) {
-            val typeParameters = (containingSymbol as? KtSymbolWithTypeParameters)?.typeParameters ?: return emptySequence()
+            val typeParameters = (containingSymbol as? KtSymbolWithTypeParameters)?.typeParameters?.filter { it.name == newName }?.asSequence() ?: return emptySequence()
 
-            val outerTypeParameters = (containingSymbol.psi as? KtElement)?.nonStaticOuterClasses()?.flatMap { outerClass -> outerClass.typeParameters.filter { pName -> pName.nameAsName == newName }.map { p -> p.getSymbol() } }.orEmpty()
+            val outerTypeParameters = generateSequence<KtClassOrObject>(declaration.getStrictParentOfType()) {
+                if (it is KtClass && it.isInner()) it.getStrictParentOfType() else null
+            }.flatMap { outerClass ->
+                outerClass.typeParameters.filter { pName -> pName.nameAsName == newName }.map { p -> p.getSymbol() }
+            }
 
-            val innerTypeParameters = (containingSymbol.psi as? KtElement)?.let {  currentPsi ->
+            val innerTypeParameters = (containingSymbol.psi as? KtElement)?.let { currentPsi ->
                 PsiTreeUtil.findChildrenOfType(currentPsi, KtClass::class.java)
                     .filter { it.isInner() }
                     .flatMap { innerClass -> innerClass.typeParameters.mapNotNull { p -> if (p.nameAsName == newName) p.getSymbol() else null } }
             }.orEmpty()
 
-            return typeParameters.filter { it.name == newName }.asSequence() + outerTypeParameters + innerTypeParameters
+            return typeParameters + outerTypeParameters + innerTypeParameters
         }
 
         return when (containingSymbol) {

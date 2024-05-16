@@ -5,10 +5,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.introduce.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.isObjectOrNonInnerClass
+import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetParent
+import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getValueParameterList
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 
 fun selectNewParameterContext(
@@ -41,9 +44,11 @@ fun selectNewParameterContext(
 }
 
 interface KotlinIntroduceParameterHelper<Descriptor> {
-    class Default<D> : KotlinIntroduceParameterHelper<D>
+    class Default<D> : KotlinIntroduceParameterHelper<D> {
+        override fun configure(descriptor: IntroduceParameterDescriptor<D>): IntroduceParameterDescriptor<D> = descriptor
+    }
 
-    fun configure(descriptor: IntroduceParameterDescriptor<Descriptor>): IntroduceParameterDescriptor<Descriptor> = descriptor
+    fun configure(descriptor: IntroduceParameterDescriptor<Descriptor>): IntroduceParameterDescriptor<Descriptor>
 }
 
 val INTRODUCE_PARAMETER: String

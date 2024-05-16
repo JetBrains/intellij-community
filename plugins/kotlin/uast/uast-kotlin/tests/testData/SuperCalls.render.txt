@@ -18,13 +18,13 @@ public class A {
     public final fun getStr() : java.lang.String = UastEmptyExpression
     public fun A(@org.jetbrains.annotations.NotNull str: java.lang.String) = UastEmptyExpression
     public fun A(@org.jetbrains.annotations.NotNull i: int) {
-        <init>(i.toString())
+        A(i.toString())
     }
 }
 
 public final class B : A {
     public fun B(@org.jetbrains.annotations.NotNull param: java.lang.String) {
-        <init>(param)
+        A(param)
     }
 }
 
@@ -33,10 +33,10 @@ public final class C : A {
         super.foo(a)
     }
     public fun C(@org.jetbrains.annotations.NotNull p: java.lang.String) {
-        <init>(p)
+        A(p)
     }
     public fun C(@org.jetbrains.annotations.NotNull i: int) {
-        <init>(i)
+        A(i)
         println()
     }
 }
@@ -44,6 +44,6 @@ public final class C : A {
 public final class O : A {
     @null public static final var INSTANCE: O
     private fun O() {
-        <init>("text")
+        A("text")
     }
 }

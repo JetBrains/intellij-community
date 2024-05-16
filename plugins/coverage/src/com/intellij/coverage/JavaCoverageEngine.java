@@ -555,7 +555,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
       return createBriefReport(lineData, conditions, switches);
     }
-    catch (ProcessCanceledException | CancellationException e) {
+    catch (CancellationException e) {
       throw e;
     }
     catch (Exception e) {

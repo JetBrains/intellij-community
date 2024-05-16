@@ -1,0 +1,15 @@
+{
+  "icons": {
+    "new": {
+      "vcs.svg": [
+        "vcs/branchNode.svg",
+        "vcs/branch.svg"
+      ],
+      "stash.svg": [
+        "icons/Shelve.svg",
+        "icons/shelveSilent.svg",
+        "icons/Stash.svg"
+      ]
+    }
+  }
+}

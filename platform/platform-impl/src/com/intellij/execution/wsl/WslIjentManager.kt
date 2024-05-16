@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.bootstrapOverShellSession
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +28,7 @@ interface WslIjentManager {
   /**
    * The returned instance is not supposed to be closed by the caller. [WslIjentManager] closes [IjentApi] by itself during shutdown.
    */
-  suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi
+  suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi
 
   @Deprecated(
     "Use WslIjentAvailabilityService.runWslCommandsViaIjent",
@@ -49,7 +50,7 @@ suspend fun deployAndLaunchIjent(
   project: Project?,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-): IjentApi = deployAndLaunchIjentGettingPath(project, wslDistribution, wslCommandLineOptionsModifier).second
+): IjentPosixApi = deployAndLaunchIjentGettingPath(project, wslDistribution, wslCommandLineOptionsModifier).second
 
 @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
 @VisibleForTesting
@@ -57,7 +58,7 @@ suspend fun deployAndLaunchIjentGettingPath(
   project: Project?,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-): Pair<String, IjentApi> {
+): Pair<String, IjentPosixApi> {
   // IJent can start an interactive shell by itself whenever it needs.
   // Enabling an interactive shell for IJent by default can bring problems, because stdio of IJent must not be populated
   // with possible user extensions in ~/.profile

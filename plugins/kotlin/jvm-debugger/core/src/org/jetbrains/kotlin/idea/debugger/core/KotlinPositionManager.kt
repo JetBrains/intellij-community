@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -46,6 +47,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.jetbrains.jdi.ReferenceTypeImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import kotlinx.coroutines.*
@@ -79,6 +81,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
+import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.resume
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
@@ -304,9 +307,13 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun getCallableReferenceIfInside(location: Location, file: KtFile, lineNumber: Int): KtCallableReferenceExpression? {
         val currentLocationClassName = location.getClassName() ?: return null
         val allReferenceExpressions = getElementsAtLineIfAny<KtCallableReferenceExpression>(file, lineNumber)
-
-        return allReferenceExpressions.firstOrNull {
-            it.calculatedClassNameMatches(currentLocationClassName, false)
+        if (allReferenceExpressions.isEmpty()) return null
+        analyze(allReferenceExpressions.first()) {
+            val (inlinedReference, notInlined) = allReferenceExpressions.separateInlinedAndNonInlinedElements(location)
+            if (inlinedReference != null) return inlinedReference
+            return notInlined.firstOrNull {
+                it.calculatedClassNameMatches(currentLocationClassName, false)
+            }
         }
     }
 
@@ -324,24 +331,30 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             return null
         }
         analyze(literalsOrFunctions.first()) {
-            val notInlinedLambdas = mutableListOf<KtFunction>()
-            var innermostContainingLiteral: KtFunction? = null
-            for (literal in literalsOrFunctions) {
-                val inlineArgument = getInlineArgumentSymbol(literal)
-                if (inlineArgument != null && (!inlineArgument.isCrossinline || isInlinedArgument(literal, location))) {
-                    if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
-                        innermostContainingLiteral = literal
-                    }
-                } else {
-                    notInlinedLambdas.add(literal)
-                }
-            }
+            val (innermostContainingLiteral, notInlinedLambdas) = literalsOrFunctions.separateInlinedAndNonInlinedElements(location)
             if (innermostContainingLiteral != null) return innermostContainingLiteral
 
             return notInlinedLambdas.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName) ?:
                    notInlinedLambdas.getAppropriateLiteralForCrossinlineLambda(currentLocationClassName) ?:
                    notInlinedLambdas.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
         }
+    }
+
+    context(KtAnalysisSession)
+    private fun <T : KtExpression> List<T>.separateInlinedAndNonInlinedElements(location: Location): Pair<T?, List<T>> {
+        val notInlined = mutableListOf<T>()
+        var innermostInlinedElement: T? = null
+        for (expression in this) {
+            val inlineArgument = getInlineArgumentSymbol(expression)
+            if (inlineArgument != null && (!inlineArgument.isCrossinline || isInlinedArgument(expression, location))) {
+                if (isInsideInlineArgument(expression, location, debugProcess as DebugProcessImpl)) {
+                    innermostInlinedElement = expression
+                }
+            } else {
+                notInlined.add(expression)
+            }
+        }
+        return innermostInlinedElement to notInlined
     }
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName: String): KtFunction? {
@@ -400,8 +413,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {
         val classNameProvider = ClassNameProvider(
-            debugProcess.project,
-            debugProcess.searchScope,
             ClassNameProvider.Configuration.DEFAULT.copy(alwaysReturnLambdaParentClass = false)
         )
 
@@ -529,16 +540,19 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
             val candidates = syncNonBlockingReadAction(psiFile.project) {
                 if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return@syncNonBlockingReadAction null
-                getReferenceTypesCandidates(sourcePosition)
+                getCandidates(sourcePosition)
             } ?: return emptyList()
+            val (classes, classesWithInlinedCode) = candidates.getReferenceTypesCandidates(sourcePosition)
 
-            val referenceTypesInKtFile = candidates.ifNotEmpty { findTargetClasses(this, sourcePosition) } ?: emptyList()
+            val referenceTypesInKtFile = classes.ifNotEmpty { findTargetClasses(this, sourcePosition) } ?: emptyList()
 
-            if (sourcePosition.isInsideProjectWithCompose()) {
-                return referenceTypesInKtFile + getComposableSingletonsClasses(debugProcess, psiFile)
+            val composeClassesIfNeeded = if (sourcePosition.isInsideProjectWithCompose()) {
+                getComposableSingletonsClasses(debugProcess, psiFile)
+            } else {
+                emptyList()
             }
 
-            return referenceTypesInKtFile
+            return (referenceTypesInKtFile + classesWithInlinedCode + composeClassesIfNeeded).distinct()
         }
 
         if (psiFile is ClsFileImpl) {
@@ -553,10 +567,29 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     @RequiresReadLock
-    private fun getReferenceTypesCandidates(sourcePosition: SourcePosition): List<ReferenceType> {
-        val classNameProvider = ClassNameProvider(debugProcess.project, debugProcess.searchScope, ClassNameProvider.Configuration.DEFAULT)
-        return classNameProvider.getCandidates(sourcePosition)
-            .flatMap { className -> debugProcess.virtualMachineProxy.classesByName(className) }
+    private fun getCandidates(sourcePosition: SourcePosition): List<ClassNameProvider.ClassNameCandidateInfo> =
+        ClassNameProvider().getCandidatesInfo(sourcePosition)
+
+    private fun List<ClassNameProvider.ClassNameCandidateInfo>.getReferenceTypesCandidates(sourcePosition: SourcePosition): CandidatesSet {
+        val classes = flatMap { (className, _) -> debugProcess.virtualMachineProxy.classesByName(className) }
+
+        val candidatesWithInline = filterHasInlineElements()
+        if (candidatesWithInline.isEmpty()) return CandidatesSet(classes, emptyList())
+
+        val line = sourcePosition.line + 1
+        val classesWithInlinedCode = getClassesWithInlinedCode(candidatesWithInline, line)
+        return CandidatesSet(classes, classesWithInlinedCode)
+    }
+
+    private fun getClassesWithInlinedCode(candidatesWithInline: List<String>, line: Int): List<ReferenceType> {
+        val candidatesWithInlineInternalNames = candidatesWithInline.map { it.fqnToInternalName() }
+        val futures = debugProcess.virtualMachineProxy.allClasses().map { type ->
+            hasInlinedLinesToAsync(type, line, candidatesWithInlineInternalNames).thenApply { hasInlinedLines ->
+                type.takeIf { hasInlinedLines }
+            }
+        }.toTypedArray()
+        CompletableFuture.allOf(*futures).join()
+        return futures.mapNotNull { it.get() }
     }
 
     @RequiresReadLockAbsence
@@ -621,21 +654,28 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val xSession = debugProcess.asSafely<DebugProcessImpl>()?.xdebugProcess?.session.asSafely<XDebugSessionImpl>()
         return runBlockingCancellable {
             if (xBreakpoint == null || xSession == null) {
-                collectPrepareRequestPatterns(requestor, position, isInsideProjectWithCompose, file)
+                collectPrepareRequestsWithProgress(requestor, position, isInsideProjectWithCompose, file)
             } else {
                 cancelIfExpired({ readAction { xSession.isBreakpointActive(xBreakpoint) } }) {
-                    collectPrepareRequestPatterns(requestor, position, isInsideProjectWithCompose, file)
+                    collectPrepareRequestsWithProgress(requestor, position, isInsideProjectWithCompose, file)
                 }
             }
-        }.mapNotNull { pattern -> debugProcess.requestsManager.createClassPrepareRequest(requestor, pattern) }
+        }.mapNotNull { request ->
+            debugProcess.requestsManager.createClassPrepareRequest(request.requestor, request.pattern)?.apply {
+                val vmProxy = debugProcess.virtualMachineProxy as? VirtualMachineProxyImpl ?: return@apply
+                if (request.fileName != null && vmProxy.canUseSourceNameFilters()) {
+                    addSourceNameFilter(request.fileName)
+                }
+            }
+        }
     }
 
-    private suspend fun collectPrepareRequestPatterns(
+    private suspend fun collectPrepareRequestsWithProgress(
         requestor: ClassPrepareRequestor,
         position: SourcePosition,
         isInsideProjectWithCompose: Boolean,
         file: KtFile
-    ): List<String> {
+    ): List<PrepareRequest> {
         val project = debugProcess.project
         return withBackgroundProgress(
             project, KotlinDebuggerCoreBundle.message("progress.title.installing.kotlin.breakpoint"),
@@ -645,35 +685,112 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 waitForSmartMode(project)
             }
             smartReadAction(project) {
-                doCollectPrepareRequestPatterns(requestor, position, isInsideProjectWithCompose, file)
+                collectPrepareRequests(requestor, position, isInsideProjectWithCompose, file)
             }
         }
     }
 
-    private fun doCollectPrepareRequestPatterns(
+    private fun collectPrepareRequests(
         requestor: ClassPrepareRequestor, position: SourcePosition,
         isInsideProjectWithCompose: Boolean, file: KtFile
-    ): List<String> {
-        val kotlinRequests = getKotlinClassPrepareRequestPatterns(requestor, position)
+    ): List<PrepareRequest> {
+        val kotlinRequests = getKotlinClassPrepareRequests(requestor, position)
         return if (isInsideProjectWithCompose) {
-            val singletonRequest = getClassPrepareRequestPatternForComposableSingletons(file)
-            kotlinRequests + singletonRequest
+            val singletonRequestPattern = getClassPrepareRequestPatternForComposableSingletons(file)
+            kotlinRequests + PrepareRequest(requestor, singletonRequestPattern)
         } else {
             kotlinRequests
         }
     }
 
     @RequiresReadLock
-    private fun getKotlinClassPrepareRequestPatterns(requestor: ClassPrepareRequestor, position: SourcePosition): List<String> {
+    private fun getKotlinClassPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): List<PrepareRequest> {
         val refinedPosition = when (requestor) {
             is SourcePositionRefiner -> requestor.refineSourcePosition(position)
             else -> position
         }
 
-        return ClassNameProvider(debugProcess.project, debugProcess.searchScope, ClassNameProvider.Configuration.DEFAULT)
-            .getCandidates(refinedPosition)
-            .flatMap { name -> listOf(name, "$name$*") }
+        val classRequests = mutableListOf<PrepareRequest>()
+        val candidates = getCandidates(refinedPosition)
+        candidates.flatMap { (name, _) -> listOf(name, "$name$*") }.mapTo(classRequests) { PrepareRequest(requestor, it) }
+
+        val candidatesWithInline = candidates.filterHasInlineElements().map { it.fqnToInternalName() }
+        if (candidatesWithInline.isNotEmpty()) {
+            val line = refinedPosition.line + 1
+            // We install a 'prepare request' for all classes that have mapping to this source position.
+            // We do not know the class name for these classes, so we pass `null` pattern, meaning that all classes are suitable.
+            // But we do know that the target class must have mapping to the file, so we pass the file name as a source pattern.
+            val inlineCallRequest = PrepareRequest(
+                InlineCallRequestorWrapper(requestor, line, candidatesWithInline),
+                pattern = null,
+                fileName = refinedPosition.file.name
+            )
+            classRequests.add(inlineCallRequest)
+        }
+        return classRequests
     }
+}
+
+private data class CandidatesSet(val classes: List<ReferenceType>, val classesWithInlinedCode: List<ReferenceType>)
+private data class PrepareRequest(val requestor: ClassPrepareRequestor, val pattern: String?, val fileName: String? = null)
+
+private fun List<ClassNameProvider.ClassNameCandidateInfo>.filterHasInlineElements() = filter { it.hasInlineElements }.map { it.name }
+
+private class InlineCallRequestorWrapper(
+    private val originalRequestor: ClassPrepareRequestor,
+    private val line: Int,
+    private val sourceCandidatesInternalName: List<String>,
+) : ClassPrepareRequestor {
+    override fun processClassPrepare(debuggerProcess: DebugProcess?, referenceType: ReferenceType?) {
+        if (referenceType == null) return
+        val hasInlinedLines = if (referenceType is ReferenceTypeImpl) {
+            referenceType.hasMappedLineTo(KOTLIN_STRATA_NAME, line) { path ->
+                sourcePathMatchesCandidates(path, sourceCandidatesInternalName)
+            }
+        } else {
+            fallbackHasInlinedLinesTo(referenceType, line, sourceCandidatesInternalName)
+        }
+        if (hasInlinedLines) {
+            originalRequestor.processClassPrepare(debuggerProcess, referenceType)
+        }
+    }
+}
+
+private fun hasInlinedLinesToAsync(
+    referenceType: ReferenceType,
+    line: Int,
+    sourceCandidatesInternalName: List<String>
+): CompletableFuture<Boolean> {
+    return if (referenceType is ReferenceTypeImpl) {
+        referenceType.hasMappedLineToAsync(KOTLIN_STRATA_NAME, line) { path ->
+            sourcePathMatchesCandidates(path, sourceCandidatesInternalName)
+        }
+    } else {
+        CompletableFuture.completedFuture(fallbackHasInlinedLinesTo(referenceType, line, sourceCandidatesInternalName))
+    }
+}
+
+private fun fallbackHasInlinedLinesTo(referenceType: ReferenceType, line: Int, sourceCandidatesInternalName: List<String>): Boolean {
+    val locations = try {
+        DebuggerUtilsAsync.locationsOfLineSync(referenceType, KOTLIN_STRATA_NAME, null, line)
+    } catch (e: AbsentInformationException) {
+        emptyList()
+    }
+    return locations.any { location ->
+        val internalName = location.safeSourcePath(KOTLIN_STRATA_NAME)?.let { FileUtil.toSystemIndependentName(it) } ?: return@any false
+        sourceCandidatesInternalName.any { candidate -> internalName.matchesInternalNameWithSubClasses(candidate) }
+    }
+}
+
+private fun sourcePathMatchesCandidates(sourcePath: String, sourceCandidatesInternalName: List<String>): Boolean {
+    val internalName = FileUtil.toSystemIndependentName(sourcePath)
+    return sourceCandidatesInternalName.any { candidate -> internalName.matchesInternalNameWithSubClasses(candidate) }
+}
+
+private fun String.matchesInternalNameWithSubClasses(internalName: String): Boolean {
+    if (length < internalName.length) return false
+    if (!startsWith(internalName)) return false
+    return length == internalName.length || this[internalName.length] == '$'
 }
 
 private val FUNCTION_TYPES = arrayOf(

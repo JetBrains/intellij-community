@@ -27,3 +27,6 @@ fun test() {
     val t4 = B().p
     B().p = 1
 }
+
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code

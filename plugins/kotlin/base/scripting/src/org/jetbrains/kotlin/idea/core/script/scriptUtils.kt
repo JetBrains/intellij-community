@@ -101,6 +101,4 @@ suspend fun configureGradleScriptsK2(
     }
 }
 
-fun k2ScriptingEnabled(): Boolean = KotlinPluginModeProvider.isK2Mode() && scriptingEnabled
-
 val scriptingEnabled = Registry.`is`("kotlin.k2.scripting.enabled", false)

@@ -3,13 +3,13 @@ package com.intellij.ui.dsl.listCellRenderer
 
 import com.intellij.icons.AllIcons
 import com.intellij.testFramework.TestApplicationManager
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import org.junit.Before
 import org.junit.Test
 import java.awt.Component
-import javax.swing.JLabel
 import javax.swing.JList
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -50,9 +50,9 @@ class BuilderTest {
 
     val component = renderer.getListCellRendererComponent(list, 1, 0, false, false)
     setRendererSize(component, 100, 100)
-    val a = findLabel(component, "A")
-    val b = findLabel(component, "B")
-    val c = findLabel(component, "C")
+    val a = findTextComponent(component, "A")
+    val b = findTextComponent(component, "B")
+    val c = findTextComponent(component, "C")
 
     assertTrue(a.x >= 0)
     assertEquals(a.x + a.width + DEFAULT_GAP, b.x)
@@ -92,9 +92,9 @@ class BuilderTest {
     UIUtil.uiTraverser(component).forEach { it.doLayout() }
   }
 
-  private fun findLabel(root: Component, text: String): JLabel {
-    val result = UIUtil.uiTraverser(root).filter { it is JLabel && it.text == text }.toList()
+  private fun findTextComponent(root: Component, text: String): SimpleColoredComponent {
+    val result = UIUtil.uiTraverser(root).filter { it is SimpleColoredComponent && it.getCharSequence(false).toString() == text }.toList()
     assertEquals(result.size, 1)
-    return result[0] as JLabel
+    return result[0] as SimpleColoredComponent
   }
 }

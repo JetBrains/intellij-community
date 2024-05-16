@@ -20,12 +20,14 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -210,7 +212,19 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
 
-    XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
+    XmlAttributeDescriptor[] attributes;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
+      attributes = descriptor.getAttributesDescriptors(tag);
+    }
+    else {
+      // Try not to block EDT for a long time
+      attributes = ProgressIndicatorUtils.withTimeout(500, () -> descriptor.getAttributesDescriptors(tag));
+    }
+
+    if (attributes == null || attributes.length == 0) {
+      return null;
+    }
+
     StringBuilder indirectRequiredAttrs = null;
 
     if (WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes()) {

@@ -101,9 +101,10 @@ public interface MarkupModel extends UserDataHolder {
   /**
    * Removes all highlighter instances.
    * <p>
-   * To avoid affecting unrelated subsystems (that is almost impossible to debug),
+   * To avoid affecting unrelated subsystem's highlighters (symptoms of which are almost impossible to debug),
    * it is advised not to use the method on editors and documents that are created and controlled by someone else.
    * Especially so, on the global {@link com.intellij.openapi.fileEditor.TextEditor}.
+   * Instead, call {@link #removeHighlighter(RangeHighlighter)} only on the {@link RangeHighlighter} you've created.
    */
   void removeAllHighlighters();
 

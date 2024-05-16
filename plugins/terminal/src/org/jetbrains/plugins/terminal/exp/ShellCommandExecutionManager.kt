@@ -3,11 +3,13 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.util.containers.nullize
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.input.InputEvent.CTRL_MASK
 import com.jediterm.core.input.KeyEvent.VK_HOME
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.exp.ShellCommandManager.Companion.LOG
@@ -17,15 +19,30 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Prevents sending shell generator concurrently with other generator or other shell command.
+ */
 internal class ShellCommandExecutionManager(private val session: BlockTerminalSession, commandManager: ShellCommandManager) {
 
+  /**
+   * Used to synchronize access to several private fields of this object.
+   */
   private val lock: Lock = Lock()
 
-  // these fields are guarded by `lock`
+  /** Access to this field is synchronized using `lock` */
   private val scheduledGenerators: Queue<Generator> = LinkedList()
+  private val scheduledKeyBindings: Queue<KeyBinding> = LinkedList()
+
+  /** Access to this field is synchronized using `lock` */
   private var runningGenerator: Generator? = null
+
+  /** Access to this field is synchronized using `lock` */
   private val scheduledCommands: Queue<String> = LinkedList()
+
+  /** Access to this field is synchronized using `lock` */
   private var isInitialized: Boolean = false
+
+  /** Access to this field is synchronized using `lock` */
   private var isCommandRunning: Boolean = false
 
   private val commandSentListeners: MutableList<(String) -> Unit> = CopyOnWriteArrayList()
@@ -33,38 +50,37 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   init {
     commandManager.addListener(object : ShellCommandListener {
       override fun initialized() {
-        lock.withLock { withoutLock ->
+        lock.withLock {
           isInitialized = true
-          cancelGenerators(withoutLock, "initialized")
         }
         processQueueIfReady()
       }
 
       override fun commandFinished(event: CommandFinishedEvent) {
-        lock.withLock { withoutLock ->
+        lock.withLock {
           if (!isCommandRunning) {
             LOG.warn("Received command_finished event, but command wasn't started")
           }
           isCommandRunning = false
-          cancelGenerators(withoutLock, "command_finished")
         }
         processQueueIfReady()
       }
 
-      override fun generatorFinished(requestId: Int, result: String) {
-        lock.withLock { withoutLock ->
+      override fun generatorFinished(event: GeneratorFinishedEvent) {
+        lock.withLock { registrar ->
           if (runningGenerator == null) {
-            LOG.warn("Received generator_finished event (request_id=${requestId}), but no running generator")
+            LOG.warn("Received generator_finished event (request_id=${event.requestId}), but no running generator")
           }
           else {
             val runningGeneratorLocal = runningGenerator!!
             runningGenerator = null
-            withoutLock {
-              if (requestId == runningGeneratorLocal.requestId) {
+            registrar.afterLock {
+              if (event.requestId == runningGeneratorLocal.requestId) {
+                val result = ShellCommandResult.create(event.output, event.exitCode)
                 runningGeneratorLocal.deferred.complete(result)
               }
               else {
-                val msg = "Received generator_finished event (request_id=${requestId}), but $runningGeneratorLocal was expected"
+                val msg = "Received generator_finished event (request_id=${event.requestId}), but $runningGeneratorLocal was expected"
                 LOG.warn(msg)
                 runningGeneratorLocal.deferred.completeExceptionally(IllegalStateException(msg))
               }
@@ -76,26 +92,29 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }, session)
   }
 
-  private fun cancelGenerators(withoutLock: WithoutLockRegistrar, receivedEvent: String) {
+  private fun cancelGenerators(registrar: AfterLockActionRegistrar, incompatibleCondition: String) {
     runningGenerator?.let { runningGenerator ->
-      withoutLock {
-        val msg = "Unexpectedly running $runningGenerator when $receivedEvent event received"
+      registrar.afterLock {
+        val msg = "Unexpectedly running $runningGenerator, but $incompatibleCondition"
         LOG.warn(msg)
         runningGenerator.deferred.completeExceptionally(IllegalStateException(msg))
       }
     }
     runningGenerator = null
     scheduledGenerators.drainToList().nullize()?.let { cancelledGenerators ->
-      LOG.warn("Unexpected scheduled generators $cancelledGenerators when $receivedEvent event received")
-      withoutLock {
+      LOG.warn("Unexpected scheduled generators $cancelledGenerators, but $incompatibleCondition")
+      registrar.afterLock {
         cancelledGenerators.forEach {
           it.deferred.cancel(CancellationException(
-            "Unexpectedly scheduled generator when $receivedEvent event received"))
+            "Unexpectedly scheduled generator, but $incompatibleCondition"))
         }
       }
     }
   }
 
+  /**
+   * If the command could not be executed right now, then we add it to the queue.
+   */
   fun sendCommandToExecute(shellCommand: String) {
     // in the IDE we use '\n' line separator, but Windows requires '\r\n'
     val command = shellCommand.replace("\n", System.lineSeparator())
@@ -111,19 +130,29 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     processQueueIfReady()
   }
 
-  fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): CompletableDeferred<String> {
-    val generator = Generator(generatorName, generatorParameters)
-    lock.withLock { withoutLock ->
-      val cancelReason: String? = when {
-        isCommandRunning -> "Generator shouldn't be scheduled when command is running"
-        !isInitialized -> "Generator shouldn't be scheduled when session hasn't been initialized yet"
-        else -> null
-      }
-      if (cancelReason != null) {
-        withoutLock {
-          generator.deferred.completeExceptionally(IllegalStateException(cancelReason))
-        }
-      }
+  /**
+   * Adds the KeyBinding to the queue to be executed when the terminal becomes free.
+   * Guaranteed to execute only if the terminal is free.
+   * If the terminal is executing user command, then queued Key Bindings could be lost.
+   * If a new command starts after the Key Binding execution is queued, then queued Key Binding could be lost and not applied.
+   */
+  internal fun sendKeyBinding(keyBinding: KeyBinding) {
+    lock.withLock {
+      scheduledKeyBindings.offer(keyBinding)
+    }
+    processQueueIfReady()
+  }
+
+  /**
+   * This is similar to sendCommandToExecute with the difference in termination signal.
+   * This sends "GENERATOR_FINISHED" instead of "Command finished" event.
+   *
+   * This does not execute command immediately, rather adds it to queue to be
+   * executed when other commands\generators are finished and the shell is free.
+   */
+  fun runGeneratorAsync(shellCommand: String): Deferred<ShellCommandResult> {
+    val generator = Generator(shellCommand)
+    lock.withLock {
       scheduledGenerators.offer(generator)
     }
     processQueueIfReady()
@@ -135,25 +164,42 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     TerminalUtil.addItem(commandSentListeners, listener, disposable)
   }
 
-  // should be called without `lock`
+  /**
+   * Should be called without [lock].
+   *
+   * Tries to progress the queue of terminal actions (e.g. commands, generators).
+   * Any command cancels all the generators.
+   */
   private fun processQueueIfReady() {
-    lock.withLock { withoutLock ->
-      if (runningGenerator == null && !isCommandRunning && isInitialized) {
-        scheduledCommands.poll()?.let { command ->
-          // cancel previously scheduled generators, because user command is already ready
-          scheduledGenerators.drainToList().nullize()?.let { cancelledGenerators ->
-            withoutLock {
-              cancelledGenerators.forEach { it.deferred.cancel(CancellationException("Generator cancelled because of executing command")) }
-            }
-          }
-          isCommandRunning = true
-          doSendCommandToExecute(command)
-          return@withLock
+    lock.withLock { registrar ->
+      if (!isInitialized) {
+        cancelGenerators(registrar, "not initialized yet")
+        return@withLock // `initialized` event will resume queue processing
+      }
+      if (isCommandRunning) {
+        cancelGenerators(registrar, "command is running")
+        return@withLock // `commandFinished` event will resume queue processing
+      }
+      if (runningGenerator != null) {
+        return@withLock // `generatorFinished` event will resume queue processing
+      }
+
+      scheduledKeyBindings.drainToList().forEach { scheduledInput ->
+        session.terminalStarterFuture.thenAccept { terminalStarter ->
+          terminalStarter?.sendBytes(scheduledInput.bytes, false)
         }
-        pollNextGeneratorToRun()?.let {
-          runningGenerator = it
-          doSendCommandToExecute(it.shellCommand())
-        }
+      }
+
+      scheduledCommands.poll()?.let { command ->
+        cancelGenerators(registrar, "user command is ready to execute")
+        isCommandRunning = true
+        doSendCommandToExecute(command)
+        return@withLock // `commandFinished` event will resume queue processing
+      }
+      pollNextGeneratorToRun()?.let {
+        runningGenerator = it
+        doSendCommandToExecute(it.shellCommand())
+        // `generatorFinished` event will resume queue processing
       }
     }
   }
@@ -167,6 +213,9 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     return generator
   }
 
+  /**
+   * Polls all the elements of the queue and collects them to a new list.
+   */
   private fun <T> Queue<T>.drainToList(): List<T> = ArrayList<T>(size).also {
     while (isNotEmpty()) {
       it.add(poll()!!)
@@ -190,41 +239,61 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }
   }
 
-  private inner class Generator(val name: String, val parameters: List<String>) {
+  /**
+   * This is a shell command.
+   * User does not type this in prompt.
+   * It is the command created for Shell Integration
+   * to gain some data from shell.
+   * Usually, generators are implemented as shell functions reporting
+   * back to IDE information wrapped in a custom OSC escape sequence.
+   *
+   * @see org.jetbrains.plugins.terminal.exp.completion.DataProviderCommand
+   */
+  private inner class Generator(private val shellCommand: String) {
     val requestId: Int = NEXT_REQUEST_ID.incrementAndGet()
-    val deferred: CompletableDeferred<String> = CompletableDeferred()
+    val deferred: CompletableDeferred<ShellCommandResult> = CompletableDeferred()
 
     fun shellCommand(): String {
-      val joinedParams = when (session.shellIntegration.shellType) {
-        ShellType.POWERSHELL -> parameters.joinToString(" ") { StringUtil.wrapWithDoubleQuote(escapePowerShellParameter(it)) }
-        else -> ParametersListUtil.join(parameters)
+      val escapedCommand = when (session.shellIntegration.shellType) {
+        ShellType.POWERSHELL -> StringUtil.wrapWithDoubleQuote(escapePowerShellParameter(shellCommand))
+        else -> ParametersListUtil.escape(shellCommand)
       }
-      return "$name $requestId $joinedParams"
+      return "$GENERATOR_COMMAND $requestId $escapedCommand"
     }
 
-    override fun toString(): String = "Generator($name, parameters=$parameters, requestId=$requestId)"
+    override fun toString(): String = "Generator(command=$shellCommand, requestId=$requestId)"
   }
 
+  internal class KeyBinding(val bytes: ByteArray)
+
+  /**
+   * A wrapper for invoking code in synchronized section.
+   * Allows executing a lambda under the lock.
+   * Allows collecting the tasks to be executed after the lock is released.
+   */
   private class Lock {
     private val lock: Any = Any()
 
-    fun withLock(block: (WithoutLockRegistrar) -> Unit) {
-      val withoutLockBlocks: MutableList<() -> Unit> = ArrayList()
+    fun withLock(block: (AfterLockActionRegistrar) -> Unit) {
+      val afterLockBlocks: MutableList<() -> Unit> = ArrayList()
       try {
         synchronized(lock) {
-          block {
-            withoutLockBlocks.add(it)
-          }
+          block(object : AfterLockActionRegistrar {
+            override fun afterLock(block: () -> Unit) {
+              afterLockBlocks.add(block)
+            }
+          })
         }
       }
       finally {
-        withoutLockBlocks.forEach { it() }
+        afterLockBlocks.forEach { it() }
       }
     }
   }
 
   companion object {
     private val NEXT_REQUEST_ID = AtomicInteger(0)
+    private const val GENERATOR_COMMAND = "__jetbrains_intellij_run_generator"
 
     private val pwshCharsToEscape: Map<Char, String> = mapOf(
       '`' to "``",
@@ -240,7 +309,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
       '$' to "`$"
     )
 
-    private fun escapePowerShellParameter(parameter: String): String {
+    fun escapePowerShellParameter(parameter: String): String {
       return buildString(parameter.length) {
         for (ch in parameter) {
           append(pwshCharsToEscape[ch] ?: ch)
@@ -250,4 +319,6 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 }
 
-private typealias WithoutLockRegistrar = (() -> Unit) -> Unit
+private interface AfterLockActionRegistrar {
+  fun afterLock(block: () -> Unit)
+}

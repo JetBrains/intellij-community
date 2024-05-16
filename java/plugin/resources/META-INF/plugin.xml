@@ -35,6 +35,8 @@
     <module name="intellij.java.structuralSearch"/>
     <module name="intellij.java.featuresTrainer"/>
     <module name="intellij.java.performancePlugin"/>
+    <module name="intellij.java.unscramble"/>
+    <module name="intellij.java.vcs"/>
   </content>
 
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>

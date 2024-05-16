@@ -21,12 +21,14 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class RefreshLogAction extends RefreshAction {
   private static final Logger LOG = Logger.getInstance(RefreshLogAction.class);
 

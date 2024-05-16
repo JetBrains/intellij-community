@@ -1,4 +1,4 @@
-<idea>
+<idea-plugin>
   <content>
     <module name="intellij.platform.settings.local"/>
     <module name="intellij.libraries.ktor.client"/>
@@ -9,4 +9,4 @@
     <module name="intellij.platform.navbar.frontend.compatibility"/>
     <module name="intellij.platform.navbar.monolith.compatibility"/>
   </content>
-</idea>
+</idea-plugin>

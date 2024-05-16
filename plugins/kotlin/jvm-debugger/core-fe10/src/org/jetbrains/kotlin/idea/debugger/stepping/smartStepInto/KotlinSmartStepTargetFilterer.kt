@@ -96,11 +96,6 @@ class KotlinSmartStepTargetFilterer(
         targets.filterIndexed { i, _ ->
             !targetWasVisited[i]
         }
-
-    fun reset() {
-        Arrays.fill(targetWasVisited, false)
-        functionCounter.clear()
-    }
 }
 
 private fun String.getSignatureWithoutFirstArgument(): String {

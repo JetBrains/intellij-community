@@ -14,6 +14,7 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.ui.VcsBookmarkRef;
 import com.intellij.vcs.log.ui.details.commit.ReferencesPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +29,22 @@ class TooltipReferencesPanel extends ReferencesPanel {
   private static final int REFS_LIMIT = 10;
   private boolean myHasGroupWithMultipleRefs;
 
-  TooltipReferencesPanel(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> refs) {
+  TooltipReferencesPanel(@NotNull VcsLogData logData,
+                         @NotNull Collection<? extends VcsRef> refs,
+                         @NotNull Collection<VcsBookmarkRef> bookmarks) {
     super(new VerticalFlowLayout(JBUIScale.scale(H_GAP), JBUIScale.scale(V_GAP)), REFS_LIMIT);
-    VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(refs)).getRoot();
-    setReferences(ContainerUtil.sorted(refs, logData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
+
+    List<VcsRef> sortedRefs;
+    if (refs.isEmpty()) {
+      sortedRefs = Collections.emptyList();
+    }
+    else {
+      VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(refs)).getRoot();
+      sortedRefs = ContainerUtil.sorted(refs, logData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+    }
+    List<VcsBookmarkRef> sortedBookmarks = ContainerUtil.sorted(bookmarks, Comparator.comparing(b -> b.getType()));
+
+    setReferences(sortedRefs, sortedBookmarks);
   }
 
   @Override

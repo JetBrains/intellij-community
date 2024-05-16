@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtilCore.ensureValid
 import com.intellij.psi.util.PsiUtilCore.getVirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.VisibleForTesting
 
 /**
@@ -168,6 +169,8 @@ internal fun ensurePsiFromExtensionIsValid(psi: PsiElement, message: String, cla
   try {
     ensureValid(psi)
   }
+  catch (e: CancellationException) { throw e }
+  catch (e: ProcessCanceledException) { throw e }
   catch (t: Throwable) {
     if (clazz != null) {
       throw PluginException.createByClass("$message, psi class: ${psi.javaClass.canonicalName}", t, clazz)

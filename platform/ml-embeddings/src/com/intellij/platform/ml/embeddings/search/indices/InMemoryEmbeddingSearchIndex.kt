@@ -72,6 +72,8 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
     idToEmbedding = (ids zip embeddings).toMap().toMutableMap()
   }
 
+  override suspend fun offload() = idToEmbedding.clear()
+
   override suspend fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredText> = lock.read {
     idToEmbedding.findClosest(searchEmbedding, topK, similarityThreshold)
   }

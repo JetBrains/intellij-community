@@ -379,7 +379,6 @@ f:com.intellij.ide.ui.NotRoamableUiSettings
 - f:setPresentationModeIdeScale(F):V
 f:com.intellij.ide.ui.NotRoamableUiSettings$Companion
 - f:getInstance():com.intellij.ide.ui.NotRoamableUiSettings
-f:com.intellij.ide.ui.NotRoamableUiSettingsKt
 *:com.intellij.ide.ui.ToolbarSettings
 - com.intellij.openapi.components.PersistentStateComponent
 - *sf:Companion:com.intellij.ide.ui.ToolbarSettings$Companion
@@ -436,6 +435,7 @@ f:com.intellij.ide.ui.UISettings
 - sf:getEditorFractionalMetricsHint():java.lang.Object
 - f:getEditorTabLimit():I
 - f:getEditorTabPlacement():I
+- f:getExpandNodesWithSingleClick():Z
 - f:getFontFace():java.lang.String
 - f:getFontScale():F
 - f:getFontSize():I
@@ -481,7 +481,6 @@ f:com.intellij.ide.ui.UISettings
 - f:getShowIconInQuickNavigation():Z
 - f:getShowIconsInMenus():Z
 - f:getShowInplaceComments():Z
-- f:getShowInplaceCommentsInternal():Z
 - f:getShowMainMenu():Z
 - f:getShowMainToolbar():Z
 - f:getShowMembersInNavigationBar():Z
@@ -524,6 +523,7 @@ f:com.intellij.ide.ui.UISettings
 - f:setEditorAAType(com.intellij.ide.ui.AntialiasingType):V
 - f:setEditorTabLimit(I):V
 - f:setEditorTabPlacement(I):V
+- f:setExpandNodesWithSingleClick(Z):V
 - f:setFontFace(java.lang.String):V
 - f:setFontScale(F):V
 - f:setFontSize(I):V
@@ -601,7 +601,6 @@ f:com.intellij.ide.ui.UISettings$Companion
 - f:setupEditorAntialiasing(javax.swing.JComponent):V
 - f:setupFractionalMetrics(java.awt.Graphics2D):V
 - f:setupFractionalMetrics(javax.swing.JComponent):V
-f:com.intellij.ide.ui.UISettingsKt
 com.intellij.ide.ui.UISettingsListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -633,6 +632,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:getEditorTabLimit():I
 - f:getEditorTabPlacement():I
 - f:getEnableAlphaMode():Z
+- f:getExpandNodesWithSingleClick():Z
 - f:getFontFace():java.lang.String
 - f:getFontScale():F
 - f:getFontSize():I
@@ -717,6 +717,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:setEditorTabLimit(I):V
 - f:setEditorTabPlacement(I):V
 - f:setEnableAlphaMode(Z):V
+- f:setExpandNodesWithSingleClick(Z):V
 - f:setFontFace(java.lang.String):V
 - f:setFontScale(F):V
 - f:setFontSize(I):V
@@ -1446,9 +1447,6 @@ com.intellij.openapi.actionSystem.ex.AnActionListener
 - beforeActionPerformed(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.AnActionEvent):V
 - beforeEditorTyping(C,com.intellij.openapi.actionSystem.DataContext):V
 - beforeShortcutTriggered(com.intellij.openapi.actionSystem.Shortcut,java.util.List,com.intellij.openapi.actionSystem.DataContext):V
-a:com.intellij.openapi.actionSystem.ex.AnActionListener$Adapter
-- com.intellij.openapi.actionSystem.ex.AnActionListener
-- <init>():V
 com.intellij.openapi.actionSystem.ex.CustomComponentAction
 - sf:ACTION_KEY:com.intellij.openapi.util.Key
 - sf:COMPONENT_KEY:com.intellij.openapi.util.Key
@@ -1858,6 +1856,7 @@ com.intellij.openapi.editor.EditorSettings
 - a:isInsertParenthesesAutomatically():Z
 - a:isLeadingWhitespaceShown():Z
 - a:isLineMarkerAreaShown():Z
+- a:isLineNumbersAfterIcons():Z
 - a:isLineNumbersShown():Z
 - a:isMouseClickSelectionHonorsCamelWords():Z
 - isPaintSoftWraps():Z
@@ -1903,6 +1902,7 @@ com.intellij.openapi.editor.EditorSettings
 - a:setLeadingWhitespaceShown(Z):V
 - a:setLineCursorWidth(I):V
 - a:setLineMarkerAreaShown(Z):V
+- a:setLineNumbersAfterIcons(Z):V
 - a:setLineNumbersShown(Z):V
 - a:setLineNumerationType(com.intellij.openapi.editor.EditorSettings$LineNumerationType):V
 - a:setMouseClickSelectionHonorsCamelWords(Z):V

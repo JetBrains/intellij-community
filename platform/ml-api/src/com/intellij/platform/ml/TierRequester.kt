@@ -1,15 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml
 
+import com.intellij.platform.ml.environment.Environment
 import org.jetbrains.annotations.ApiStatus
+
 
 /**
  * An interface that represents an object, that requires some additional tiers
  * for proper functioning.
  *
  * If the requirements could not be satisfied, then the main object's functionality will not be run.
- * Please address the interface's inheritors, such as [TierDescriptor], [EnvironmentExtender],
- * and [com.intellij.platform.ml.impl.model.MLModel.Provider] for more details.
+ * Please address the interface's inheritors, such as [TierDescriptor], [com.intellij.platform.ml.environment.EnvironmentExtender],
+ * and [com.intellij.platform.ml.MLModel.Provider] for more details.
  */
 @ApiStatus.Internal
 interface TierRequester {

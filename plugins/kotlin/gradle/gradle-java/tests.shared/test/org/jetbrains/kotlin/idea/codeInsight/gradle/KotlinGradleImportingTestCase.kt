@@ -153,7 +153,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         )
     }
 
-    protected fun checkFiles(files: List<VirtualFile>) {
+    protected fun checkFiles(files: List<VirtualFile>, properties: Map<String, String>? = null) {
         FileDocumentManager.getInstance().saveAllDocuments()
 
         files.filter {
@@ -168,21 +168,21 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
                 if (it.name == GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME &&
                     !File(testDataDirectory(), GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME + AFTER_SUFFIX).exists()) return@forEach
 
-                val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(it).toString())
+                val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(it).toString(), properties)
                 val expectedFileName = if (File(testDataDirectory(), it.name + ".$gradleVersion" + AFTER_SUFFIX).exists()) {
                     it.name + ".$gradleVersion" + AFTER_SUFFIX
                 } else {
                     it.name + AFTER_SUFFIX
                 }
                 val expectedFile = File(testDataDirectory(), expectedFileName)
-                KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s) }
+                KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s, properties) }
             }
     }
 
     /**
      * Compares expected (with ".after" postfix) and actual files with directory traversal.
      */
-    protected fun checkFilesInMultimoduleProject(files: List<VirtualFile>, subModules: List<String>) {
+    protected fun checkFilesInMultimoduleProject(files: List<VirtualFile>, subModules: List<String>, properties: Map<String, String>? = null) {
         FileDocumentManager.getInstance().saveAllDocuments()
 
         files.filter {
@@ -197,7 +197,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
                 if (it.name == GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME &&
                     !File(testDataDirectory(), GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME + AFTER_SUFFIX).exists()) return@forEach
 
-                val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(it).toString())
+                val actualText = configureKotlinVersionAndProperties(LoadTextUtil.loadText(it).toString(), properties)
                 var moduleForBuildScript = ""
                 for (module in subModules) {
                     if(it.path.substringBefore("/" + it.name).endsWith(module)) {
@@ -211,7 +211,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
                     it.name + AFTER_SUFFIX
                 }
                 val expectedFile = File(testDataDirectory(), if (moduleForBuildScript.isNotEmpty()) {"$moduleForBuildScript/$expectedFileName"} else expectedFileName)
-                KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s) }
+                KotlinTestUtils.assertEqualsToFile(expectedFile, actualText) { s -> configureKotlinVersionAndProperties(s, properties) }
             }
     }
 

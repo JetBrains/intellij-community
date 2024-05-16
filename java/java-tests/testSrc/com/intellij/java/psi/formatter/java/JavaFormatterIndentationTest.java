@@ -734,7 +734,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       class Formatting {
           void test() {
               String block = ""\"
-                                                  \s
+                     \s
                        text
                       block""\";
           }

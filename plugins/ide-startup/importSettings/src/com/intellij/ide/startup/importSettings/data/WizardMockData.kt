@@ -72,6 +72,7 @@ class ThemeServiceImpl : ThemeService {
     }
 
   override val schemesList: List<WizardScheme> = map.values.toList()
+  override val initialSchemeId: String? = null
 
   override fun onStepEnter(isForwardDirection: Boolean) {}
 
@@ -110,12 +111,6 @@ class PluginServiceImpl : PluginService {
     WizardPluginImpl(AllIcons.TransferSettings.Vscode, "Ideolog",
                      "An interactive viewer for log files with customizible highlighting, filtration and navigation to source code."),
 
-  )
-
-  private val listOf1: List<WizardPlugin> = listOf(
-    WizardPluginImpl(AllIcons.Plugins.PluginLogo, "Python Community Edition", "The Python plugin provides smart editing for Python scripts. The feature set of the plugin corresponds to PyCharm IDE Community Edition"),
-    WizardPluginImpl(AllIcons.Plugins.PluginLogoDisabled, "IdeaVim", "Emulates Vim editor"),
-    WizardPluginImpl(AllIcons.TransferSettings.RecentProjects, "Heap Allocation Viewer", "Highlights local object allocations, boxing, delegates and closure creations points"),
   )
 
   override val plugins: List<WizardPlugin> = listOf

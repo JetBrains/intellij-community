@@ -35,10 +35,6 @@
     <!-- Global Workspace Model Libraries -->
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl"/>
-    <!-- Custom Workspace Model Libraries -->
-    <registryKey key="workspace.model.custom.library.bridge" defaultValue="true"
-                 description="Enables new implementation for Custom libraries which works via Workspace Model"
-                 restartRequired="true"/>
     <!-- Global or Custom Workspace Model Libraries -->
     <workspace.bridgeInitializer
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalAndCustomLibraryTableBridgeInitializer"/>

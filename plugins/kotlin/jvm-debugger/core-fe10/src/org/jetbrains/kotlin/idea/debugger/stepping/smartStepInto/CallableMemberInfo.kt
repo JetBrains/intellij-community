@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
 
 data class CallableMemberInfo(
     val isInvoke: Boolean,
+    val isSuspend: Boolean,
     val isInlineClassMember: Boolean,
     val hasInlineClassInValueParameters: Boolean,
     val isInternalMethod: Boolean,
@@ -27,15 +28,21 @@ context(KtAnalysisSession)
 internal fun CallableMemberInfo(
     symbol: KtFunctionLikeSymbol,
     name: String = symbol.methodName()
-) = CallableMemberInfo(
-    isInvoke = symbol is KtFunctionSymbol && symbol.isBuiltinFunctionInvoke,
-    isInlineClassMember = symbol.isInsideInlineClass(),
-    hasInlineClassInValueParameters = symbol.containsInlineClassInValueArguments(),
-    isInternalMethod = symbol is KtSymbolWithVisibility && symbol.visibility == Visibilities.Internal,
-    isExtension = symbol.isExtension,
-    isInline = symbol is KtFunctionSymbol && symbol.isInline,
-    name = name,
-)
+): CallableMemberInfo {
+    val isInvoke = symbol is KtFunctionSymbol && symbol.isBuiltinFunctionInvoke
+    val isSuspend = symbol is KtFunctionSymbol && symbol.isSuspend
+    val effectiveName = if (isInvoke && isSuspend) "invokeSuspend" else name
+    return CallableMemberInfo(
+        isInvoke = isInvoke,
+        isSuspend = isSuspend,
+        isInlineClassMember = symbol.isInsideInlineClass(),
+        hasInlineClassInValueParameters = symbol.containsInlineClassInValueArguments(),
+        isInternalMethod = symbol is KtSymbolWithVisibility && symbol.visibility == Visibilities.Internal,
+        isExtension = symbol.isExtension,
+        isInline = symbol is KtFunctionSymbol && symbol.isInline,
+        name = effectiveName,
+    )
+}
 
 context(KtAnalysisSession)
 internal fun KtFunctionLikeSymbol.containsInlineClassInValueArguments(): Boolean =

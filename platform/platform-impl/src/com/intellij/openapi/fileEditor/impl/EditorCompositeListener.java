@@ -19,6 +19,8 @@ public interface EditorCompositeListener extends EventListener {
 
   default void editorAdded(@NotNull FileEditorWithProvider editorWithProvider) { }
 
+  default void editorRemoved(@NotNull String editorTypeId) { }
+
   default void displayNameChanged(@NotNull FileEditor editor, @NotNull @NlsContexts.TabTitle String name) { }
 
   default void topComponentAdded(@NotNull FileEditor editor, int index, @NotNull JComponent component, @NotNull JComponent container) { }

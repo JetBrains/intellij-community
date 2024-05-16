@@ -13,13 +13,12 @@ UFile (package = )
                 UThrowExpression
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                         UIdentifier (Identifier (UnsupportedOperationException))
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException)
+                        USimpleNameReferenceExpression (identifier = UnsupportedOperationException, resolvesTo = PsiClass: UnsupportedOperationException)
         UMethod (name = Model)
             UBlockExpression
                 UBlockExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
                         UIdentifier (Identifier (crashMe))
-                        USimpleNameReferenceExpression (identifier = crashMe, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
                                 USimpleNameReferenceExpression (identifier = Callback)
@@ -36,7 +35,7 @@ UFile (package = )
                                                     UThrowExpression
                                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                                                             UIdentifier (Identifier (UnsupportedOperationException))
-                                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException)
+                                                            USimpleNameReferenceExpression (identifier = UnsupportedOperationException, resolvesTo = PsiClass: UnsupportedOperationException)
                                                             UPolyadicExpression (operator = +)
                                                                 ULiteralExpression (value = "")
                                             UMethod (name = )

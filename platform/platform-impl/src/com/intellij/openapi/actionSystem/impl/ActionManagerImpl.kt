@@ -1315,21 +1315,21 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 private fun doPerformAction(action: AnAction,
                             event: AnActionEvent,
                             result: ActionCallback) {
-  ActionUtil.lastUpdateAndCheckDumb(action, event, false)
-  if (!event.presentation.isEnabled) {
-    result.setRejected()
-    return
-  }
-  addAwtListener(AWTEvent.WINDOW_EVENT_MASK, result) {
-    if (it.id == WindowEvent.WINDOW_OPENED || it.id == WindowEvent.WINDOW_ACTIVATED) {
-      if (!result.isProcessed) {
-        val we = it as WindowEvent
-        IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
-          result.createSetDoneRunnable(), ModalityState.defaultModalityState())
+  (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+    ActionUtil.lastUpdateAndCheckDumb(action, event, false)
+    if (!event.presentation.isEnabled) {
+      result.setRejected()
+      return@performUserActivity
+    }
+    addAwtListener(AWTEvent.WINDOW_EVENT_MASK, result) {
+      if (it.id == WindowEvent.WINDOW_OPENED || it.id == WindowEvent.WINDOW_ACTIVATED) {
+        if (!result.isProcessed) {
+          val we = it as WindowEvent
+          IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
+            result.createSetDoneRunnable(), ModalityState.defaultModalityState())
+        }
       }
     }
-  }
-  (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
     try {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event)
     }
@@ -1401,7 +1401,7 @@ private class CapturingListener(@JvmField val timerListener: TimerListener) : Ti
   val childContext: ChildContext = createChildContext()
 
   override fun run() {
-    installThreadContext(childContext.context).use {
+    installThreadContext(childContext.context, true).use {
       // this is periodic runnable that is invoked on timer; it should not complete a parent job
       childContext.runAsCoroutine(completeOnFinish = false, timerListener::run)
     }

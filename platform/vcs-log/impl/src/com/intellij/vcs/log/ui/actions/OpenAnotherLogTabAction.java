@@ -19,11 +19,13 @@ import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
 
   protected OpenAnotherLogTabAction() {
@@ -92,6 +94,7 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
+  @ApiStatus.Internal
   public static class InToolWindow extends OpenAnotherLogTabAction {
     @Override
     protected @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e) {
@@ -110,6 +113,7 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
     }
   }
 
+  @ApiStatus.Internal
   public static class InEditor extends OpenAnotherLogTabAction {
     @Override
     public void update(@NotNull AnActionEvent e) {

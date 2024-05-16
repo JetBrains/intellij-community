@@ -18,10 +18,13 @@ import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.test.runAll
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.*
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readText
+import kotlin.io.path.relativeTo
 
 abstract class AbstractOutsiderHighlightingTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginMode
+
+    override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor() = KotlinJvmLightProjectDescriptor.DEFAULT

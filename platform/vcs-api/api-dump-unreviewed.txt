@@ -74,7 +74,6 @@ a:com.intellij.openapi.vcs.AbstractVcs
 - getEditFileProvider():com.intellij.openapi.vcs.EditFileProvider
 - getIntegrateEnvironment():com.intellij.openapi.vcs.update.UpdateEnvironment
 - f:getKeyInstanceMethod():com.intellij.openapi.vcs.VcsKey
-- getMenuItemText():java.lang.String
 - getMergeProvider():com.intellij.openapi.vcs.merge.MergeProvider
 - f:getName():java.lang.String
 - f:getOutgoingChangesProvider():com.intellij.openapi.vcs.VcsOutgoingChangesProvider
@@ -1084,7 +1083,6 @@ com.intellij.openapi.vcs.changes.ChangelistBuilder
 - a:processChangeInList(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ChangeList,com.intellij.openapi.vcs.VcsKey):V
 - a:processChangeInList(com.intellij.openapi.vcs.changes.Change,java.lang.String,com.intellij.openapi.vcs.VcsKey):V
 - a:processIgnoredFile(com.intellij.openapi.vcs.FilePath):V
-- processIgnoredFile(com.intellij.openapi.vfs.VirtualFile):V
 - a:processLocallyDeletedFile(com.intellij.openapi.vcs.FilePath):V
 - a:processLocallyDeletedFile(com.intellij.openapi.vcs.changes.LocallyDeletedChange):V
 - a:processLockedFolder(com.intellij.openapi.vfs.VirtualFile):V
@@ -1478,6 +1476,9 @@ f:com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary
 - f:getCalledOnViewDispose():java.lang.Runnable
 - f:getPopupActions():java.util.List
 - f:getToolbarActions():java.util.List
+com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
+- sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getCommitMessage(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.openapi.project.Project):java.lang.String
 com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 - a:createHandler(com.intellij.openapi.vcs.CheckinProjectPanel,com.intellij.openapi.vcs.changes.CommitContext):com.intellij.openapi.vcs.checkin.CheckinHandler
 - a:createSystemReadyHandler(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler
@@ -2137,7 +2138,6 @@ f:com.intellij.openapi.vcs.update.UpdatedFiles
 - toString():java.lang.String
 f:com.intellij.openapi.vcs.update.UpdatedFiles$Companion
 - f:create():com.intellij.openapi.vcs.update.UpdatedFiles
-f:com.intellij.openapi.vcs.update.UpdatedFilesKt
 c:com.intellij.openapi.vcs.update.UpdatedFilesReverseSide
 - <init>(com.intellij.openapi.vcs.update.UpdatedFiles):V
 - accumulateFiles(com.intellij.openapi.vcs.update.UpdatedFiles,com.intellij.openapi.vcs.update.UpdatedFilesReverseSide$DuplicateLevel):V

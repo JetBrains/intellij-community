@@ -93,5 +93,6 @@
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="aalto-xml" level="project" />
+    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="TEST" />
   </component>
 </module>

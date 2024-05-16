@@ -15,9 +15,7 @@ internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
                                                scope: ActivityScope,
                                                selection: ChangeSetSelection,
                                                isOldContentUsed: Boolean): ActivityDiffData {
-  val rootEntry = selection.data.getRootEntry(gateway)
-  val entryPath = getEntryPath(gateway, scope)
-  val differences = getDiff(rootEntry, selection, entryPath, isOldContentUsed)
+  val differences = getDiff(gateway, scope, selection, isOldContentUsed)
   val differenceObjects = JBIterable.from(differences).filter { it.isFile }
     .mapNotNull { it.toDiffObject(gateway, scope, selection, isOldContentUsed) }
   return ActivityDiffDataImpl(differenceObjects)
@@ -36,8 +34,8 @@ internal fun LocalHistoryFacade.createSingleFileDiffRequestProducer(project: Pro
                                                                     isOldContentUsed: Boolean): DiffRequestProducer {
   val loadDifference = {
     val rootEntry = selection.data.getRootEntry(gateway)
-    val entryPath = getEntryPath(gateway, scope)
-    getSingleFileDiff(rootEntry, selection, entryPath, isOldContentUsed)
+    val entryPath = getEntryPaths(gateway, scope)
+    getSingleFileDiff(rootEntry, selection, entryPath.single(), isOldContentUsed)
   }
   if (scope is ActivityScope.Selection) {
     val calculator = selection.data.getSelectionCalculator(this, gateway, scope, isOldContentUsed)

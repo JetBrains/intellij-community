@@ -6,6 +6,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,14 +79,14 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
 
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiClass containingClass = psiField.getContainingClass();
-    if (null != containingClass) {
-
-      final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
-      final Collection<PsiField> params = getConstructorFields(containingClass, forceConstructorWithJavaDefaults);
-
-      if (PsiClassUtil.getNames(params).contains(psiField.getName())) {
-        return LombokPsiElementUsage.WRITE;
+    final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
+    if(forceConstructorWithJavaDefaults) {
+      final PsiClass containingClass = psiField.getContainingClass();
+      if (null != containingClass) {
+        final boolean classAnnotatedWithValue = PsiAnnotationSearchUtil.isAnnotatedWith(containingClass, LombokClassNames.VALUE);
+        if (isRequiredField(psiField, false, classAnnotatedWithValue)) {
+          return LombokPsiElementUsage.WRITE;
+        }
       }
     }
     return LombokPsiElementUsage.NONE;

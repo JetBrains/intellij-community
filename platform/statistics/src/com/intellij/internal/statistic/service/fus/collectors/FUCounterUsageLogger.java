@@ -158,31 +158,6 @@ public final class FUCounterUsageLogger {
   }
 
   /**
-   * Records new <strong>project-wide</strong> event without context.
-   * <br/><br/>
-   * For events with context use {@link FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)},
-   * useful to report structured events.<br/><br/>
-   * <i>Example:</i><br/>
-   * "eventId": "tooltip.shown"
-   *
-   * @param project shows in which project event was invoked, useful to separate events from two simultaneously opened projects.
-   * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
-   * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
-   * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
-   * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
-   */
-  @Deprecated(forRemoval = true)
-  public void logEvent(@Nullable Project project,
-                       @NonNls @NotNull String groupId,
-                       @NonNls @NotNull String eventId) {
-    final EventLogGroup group = findRegisteredGroupById(groupId);
-    if (group != null) {
-      final Map<String, Object> data = new FeatureUsageData(group.getRecorder()).addProject(project).build();
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data);
-    }
-  }
-
-  /**
    * Records new <strong>project-wide</strong> event with context.
    * <br/><br/>
    * <i>Example:</i><br/>
@@ -210,9 +185,7 @@ public final class FUCounterUsageLogger {
    * Records new <strong>application-wide</strong> event without context.
    * <br/><br/>
    * For events with context use {@link FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)},
-   * useful to report structured events.<br/>
-   * For project-wide events use {@link FUCounterUsageLogger#logEvent(Project, String, String)},
-   * useful to separate events from two simultaneously opened projects.<br/><br/>
+   * useful to report structured events.<br/><br/>
    *
    * <i>Example:</i><br/>
    * "eventId": "hector.clicked"

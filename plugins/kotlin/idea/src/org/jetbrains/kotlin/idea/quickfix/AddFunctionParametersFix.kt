@@ -164,7 +164,7 @@ class AddFunctionParametersFix(
                 })
             }
 
-            override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean {
+            override fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean {
                 val onlyFunction = affectedFunctions.singleOrNull() ?: return false
                 return kind != Kind.ChangeSignature && !isConstructor() && !hasOtherUsages(onlyFunction)
             }

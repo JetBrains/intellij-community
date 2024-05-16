@@ -10,6 +10,7 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
+@org.jetbrains.annotations.ApiStatus.Internal
 public final class PythonCommunityImplHuggingFaceIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonCommunityImplHuggingFaceIcons.class.getClassLoader(), cacheKey, flags);

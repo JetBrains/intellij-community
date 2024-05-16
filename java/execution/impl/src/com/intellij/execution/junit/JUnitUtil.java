@@ -12,8 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -597,25 +595,17 @@ public final class JUnitUtil {
 
   public static PsiMethod getTestMethod(final PsiElement element, boolean checkAbstract, boolean checkRunWith) {
     if (element == null) return null;
-    try {
-      return DumbService.getInstance(element.getProject()).computeWithAlternativeResolveEnabled(() -> {
-        final PsiManager manager = element.getManager();
-        if (element instanceof PsiMethod) {
-          Location<PsiMethod> location = PsiLocation.fromPsiElement(manager.getProject(), (PsiMethod)element);
-          return isTestMethod(location, checkAbstract, checkRunWith) ? (PsiMethod)element : null;
-        }
-        final Location<PsiElement> location = PsiLocation.fromPsiElement(manager.getProject(), element);
-        for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
-          final Location<? extends PsiMethod> methodLocation = iterator.next();
-          if (isTestMethod(methodLocation, checkAbstract, checkRunWith)) return methodLocation.getPsiElement();
-        }
-        return null;
-      });
+    final PsiManager manager = element.getManager();
+    if (element instanceof PsiMethod) {
+      Location<PsiMethod> location = PsiLocation.fromPsiElement(manager.getProject(), (PsiMethod)element);
+      return isTestMethod(location, checkAbstract, checkRunWith) ? (PsiMethod)element : null;
     }
-    catch (IndexNotReadyException e) {
-      LOG.error(e);
-      return null;
+    final Location<PsiElement> location = PsiLocation.fromPsiElement(manager.getProject(), element);
+    for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
+      final Location<? extends PsiMethod> methodLocation = iterator.next();
+      if (isTestMethod(methodLocation, checkAbstract, checkRunWith)) return methodLocation.getPsiElement();
     }
+    return null;
   }
 
   public static class NoJUnitException extends CantRunException {

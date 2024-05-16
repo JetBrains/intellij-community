@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
@@ -57,12 +56,7 @@ public final class Divider {
                                                     @Nullable Predicate<? super PsiFile> rootFilter,
                                                     @NotNull Processor<? super DividedElements> processor) {
     FileViewProvider viewProvider = file.getViewProvider();
-    for (Language language : viewProvider.getLanguages()) {
-      PsiFile root = viewProvider.getPsi(language);
-      if (root == null) {
-        LOG.error(viewProvider + "("+viewProvider.getClass()+").getPsi(" + language + ") is null for file "+file);
-        continue;
-      }
+    for (PsiFile root : viewProvider.getAllFiles()) {
       if (rootFilter == null || !rootFilter.test(root)) {
         continue;
       }

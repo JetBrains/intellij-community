@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 /**
  * The ranges are relative to the passed element,
  *  i.e., if range covers the whole element when it should return `[0, element.length)`.
+ *
+ *  See [org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges] for the commonly occurring applicability ranges.
  */
 object ApplicabilityRange {
 

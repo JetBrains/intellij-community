@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -44,8 +46,7 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       TextRange restrict = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL);
       if (restrict == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, editor.getDocument());
       ProperTextRange priority = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
-      return new ChameleonSyntaxHighlightingPass(file, editor.getDocument(), ProperTextRange.create(restrict),
-                                                 priority, editor, new DefaultHighlightInfoProcessor());
+      return new ChameleonSyntaxHighlightingPass(file, editor.getDocument(), ProperTextRange.create(restrict), priority, editor);
     }
 
     @Override
@@ -53,7 +54,7 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
                                                                           @NotNull Document document,
                                                                           @NotNull HighlightInfoProcessor highlightInfoProcessor) {
       ProperTextRange range = ProperTextRange.from(0, document.getTextLength());
-      return new ChameleonSyntaxHighlightingPass(file, document, range, range, null, highlightInfoProcessor);
+      return new ChameleonSyntaxHighlightingPass(file, document, range, range, null);
     }
   }
 
@@ -61,10 +62,9 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
                                           @NotNull Document document,
                                           @NotNull ProperTextRange restrictRange,
                                           @NotNull ProperTextRange priorityRange,
-                                          @Nullable Editor editor,
-                                          @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+                                          @Nullable Editor editor) {
     super(file, document, restrictRange.getStartOffset(), restrictRange.getEndOffset(), true, priorityRange, editor,
-          highlightInfoProcessor);
+          true, true, true, HighlightInfoUpdater.getInstance(file.getProject()));
   }
 
   @Override
@@ -91,16 +91,19 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
     for (int i=0; i<holderInside.size();i++) {
       inside.add(holderInside.get(i));
     }
-    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), inside, myPriorityRange, myRestrictRange, getId());
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(), myProject, true);
+    BackgroundUpdateHighlightersUtil.setHighlightersInRange(myPriorityRange, inside, markupModel, getId(), getHighlightingSession());
     for (PsiElement e : lazyOutside) {
       collectHighlights(e, holderInside, holderOutside, myPriorityRange);
     }
     for (int i=0; i<holderOutside.size();i++) {
       outside.add(holderOutside.get(i));
     }
-    myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), outside, myPriorityRange, myRestrictRange, getId());
+    BackgroundUpdateHighlightersUtil.setHighlightersOutsideRange(outside, myRestrictRange, myPriorityRange, getId(), getHighlightingSession());
     myHighlights.addAll(inside);
     myHighlights.addAll(outside);
+    setProgressLimit(1);
+    advanceProgress(1);
   }
 
   private void collectHighlights(@NotNull PsiElement element,
@@ -119,7 +122,10 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       IElementType type = PsiUtilCore.getElementType(token);
       @NotNull HighlightInfoHolder holder = priorityRange.contains(tokenRange) ? inside : outside;
       TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(type);
-      InjectedGeneralHighlightingPass.addSyntaxInjectedFragmentInfo(scheme, tokenRange, keys, info -> holder.add(info));
+      List<HighlightInfo> infos = InjectedGeneralHighlightingPass.addSyntaxInjectedFragmentInfo(scheme, tokenRange, keys);
+      for (HighlightInfo info : infos) {
+        holder.add(info);
+      }
     }
   }
 

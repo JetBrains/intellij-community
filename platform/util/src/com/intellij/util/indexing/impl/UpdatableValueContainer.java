@@ -4,6 +4,8 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -11,27 +13,29 @@ import java.io.IOException;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public abstract class UpdatableValueContainer<T> extends ValueContainer<T> {
 
   public abstract void addValue(int inputId, T value);
 
   /**
-   * Removes inputId from the value it is associated with (if any).
-   * TODO RC: it is assumed if may be at most 1 value associated with particular inputId -- why?
+   * Removes inputId from the value it is associated with, if any.
+   * (It must be at most 1 value associated with particular inputId)
    *
    * @return true if inputId was actually removed (i.e. anything was changed) as a result
    */
   public abstract boolean removeAssociatedValue(int inputId);
 
-  private volatile boolean myNeedsCompacting;
+  private volatile boolean needsCompacting;
 
-  boolean needsCompacting() {
-    return myNeedsCompacting;
+  public boolean needsCompacting() {
+    return needsCompacting;
   }
 
-  void setNeedsCompacting(boolean value) {
-    myNeedsCompacting = value;
+  public void setNeedsCompacting(boolean value) {
+    needsCompacting = value;
   }
 
-  public abstract void saveTo(DataOutput out, DataExternalizer<? super T> externalizer) throws IOException;
+  public abstract void saveTo(@NotNull DataOutput out,
+                              @NotNull DataExternalizer<? super T> externalizer) throws IOException;
 }

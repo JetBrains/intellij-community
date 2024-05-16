@@ -12,9 +12,17 @@ import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import java.util.function.Function
 
 object CoroutineBreakpointFacility {
+    fun installCoroutineResumedBreakpoint(context: SuspendContextImpl): Boolean {
+        val method = context.frameProxy?.safeLocation()?.safeMethod() ?: return false
+        context.debugProcess.cancelRunToCursorBreakpoint()
+        return installCoroutineResumedBreakpoint(context, method)
+    }
+
     fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, method: Method): Boolean {
         val debugProcess = context.debugProcess
         val project = debugProcess.project

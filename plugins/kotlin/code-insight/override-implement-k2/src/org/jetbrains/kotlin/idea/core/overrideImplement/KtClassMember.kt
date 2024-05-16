@@ -135,8 +135,10 @@ fun generateMember(
             val containingSymbol = targetClass?.getSymbol() as? KtClassOrObjectSymbol
             otherModifiersProvider = object : KtRendererOtherModifiersProvider {
                 //copy from KtRendererOtherModifiersProvider.ALL with `actual` and `override` specifics
-                context(KtAnalysisSession)
-                override fun getOtherModifiers(s: KtDeclarationSymbol): List<KtModifierKeywordToken> = buildList {
+                override fun getOtherModifiers(
+                    analysisSession: KtAnalysisSession,
+                    s: KtDeclarationSymbol
+                ): List<KtModifierKeywordToken> = buildList {
                     if (mode == MemberGenerateMode.OVERRIDE && s is KtPossibleMultiplatformSymbol && containingSymbol?.isActual == true) {
                         //include actual modifier explicitly when containing class has modifier
                         if (s.isActual) add(KtTokens.ACTUAL_KEYWORD)

@@ -153,16 +153,13 @@ public class InvokeIntention extends ActionOnFile {
         }
       }
 
-      private static @Nullable String validateCommand(ModCommand command) {
+      private @Nullable String validateCommand(ModCommand command) {
         List<ModCommand> commands = command.unpack();
-        // TODO: debug commands that do nothing. This should not be generally the case
         if (commands.isEmpty()) return "Does nothing";
         for (ModCommand modCommand : commands) {
-          if (modCommand instanceof ModDisplayMessage message && message.kind() == ModDisplayMessage.MessageKind.ERROR) {
-            return "Error: " + message.messageText();
-          }
-          if (modCommand instanceof ModUpdateSystemOptions option) {
-            return "Updates "+option.options().stream().map(opt -> opt.bindId()).collect(Collectors.joining("; "));
+          String error = myPolicy.validateCommand(modCommand);
+          if (error != null) {
+            return error;
           }
         }
         return null;

@@ -10,9 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
-import java.io.InputStream
-import java.io.Reader
-import java.io.StringReader
+import java.io.*
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandler
@@ -73,7 +71,24 @@ object HttpClientUtil {
                                          bodyStream: InputStream,
                                          reader: (Reader) -> T): T {
     checkStatusCodeWithLogging(logger, request.logName(), responseInfo.statusCode(), bodyStream)
-    return responseReaderWithLogging(logger, request.logName(), bodyStream).use(reader)
+    return responseReaderWithLogging(logger, request.logName(), bodyStream).use {
+      val result = reader(it)
+
+      // Ensure that the reader is finished reading.
+      // Otherwise, a subscription canceled exception will be thrown by Http1AsyncReceiver,
+      // cascading into 'chunked transfer encoding, state: READING_LENGTH'.
+      // See also: java.net.http.HttpResponse.BodySubscribers.ofInputStream
+      // and: jdk.internal.net.http.Http1AsyncReceiver.handlePendingDelegate
+      // and: https://youtrack.jetbrains.com/issue/IJPL-148688
+      try {
+        if (it.ready()) it.copyTo(Writer.nullWriter())
+      }
+      catch (ioe: IOException) {
+        // thrown if the stream was closed, so we don't need to do anything more
+      }
+
+      result
+    }
   }
 
   /**

@@ -11,4 +11,3 @@ public class JavaClassWI {
     }
 }
 
-// IGNORE_K2_LOG

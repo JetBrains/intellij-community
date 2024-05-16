@@ -84,14 +84,7 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
 
         for ((i, kotlinFile) in resultFiles.withIndex()) {
             val expectedFile = expectedResultFile(i)
-            val shouldCheckForErrors = expectedFile.readText().contains(ERROR_HEADER)
-            val actualText = if (shouldCheckForErrors) {
-                // Optimization: K2 `getFileTextWithErrors` is expensive
-                kotlinFile.getFileTextWithErrors()
-            } else {
-                kotlinFile.text
-            }
-
+            val actualText = kotlinFile.getFileTextWithErrors()
             val actualTextWithoutRedundantImports = removeRedundantImports(actualText)
             KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithoutRedundantImports)
         }

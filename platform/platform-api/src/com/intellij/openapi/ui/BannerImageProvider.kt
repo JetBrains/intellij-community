@@ -4,6 +4,7 @@ package com.intellij.openapi.ui
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceOrNull
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Dimension
 import java.awt.Image
 
 @ApiStatus.Internal
@@ -14,6 +15,6 @@ interface BannerImageProvider {
     fun getInstance(): BannerImageProvider? = ApplicationManager.getApplication().serviceOrNull()
   }
 
-  fun getIDEBanner(): Image?
+  fun getIDEBanner(size: Dimension): Image?
 
 }

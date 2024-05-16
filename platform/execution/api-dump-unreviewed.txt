@@ -434,7 +434,6 @@ c:com.intellij.execution.configuration.RunConfigurationExtensionsManager
 - f:readExternal(com.intellij.execution.configurations.RunConfigurationBase,org.jdom.Element):V
 - f:validateConfiguration(com.intellij.execution.configurations.RunConfigurationBase,Z):V
 - f:writeExternal(com.intellij.execution.configurations.RunConfigurationBase,org.jdom.Element):V
-f:com.intellij.execution.configuration.RunConfigurationExtensionsManagerKt
 com.intellij.execution.configurations.AdditionalTabComponentManager
 - a:addAdditionalTabComponent(com.intellij.diagnostic.logging.AdditionalTabComponent,java.lang.String):V
 - a:removeAdditionalTabComponent(com.intellij.diagnostic.logging.AdditionalTabComponent):V
@@ -789,7 +788,6 @@ e:com.intellij.execution.configurations.RunConfigurationSingletonPolicy
 - f:isPolicyConfigurable():Z
 - s:valueOf(java.lang.String):com.intellij.execution.configurations.RunConfigurationSingletonPolicy
 - s:values():com.intellij.execution.configurations.RunConfigurationSingletonPolicy[]
-f:com.intellij.execution.configurations.RunConfigurationTypeKt
 com.intellij.execution.configurations.RunConfigurationWithRunnerSettings
 - com.intellij.execution.configurations.RunConfiguration
 - a:isSettingsNeeded():Z
@@ -1469,7 +1467,6 @@ a:com.intellij.execution.target.TargetConfigurationWithId
 - <init>(java.lang.String):V
 - f:getTargetAndTypeId():kotlin.Pair
 - pa:getTargetId-ZldOt9U():java.lang.Object
-f:com.intellij.execution.target.TargetConfigurationWithIdKt
 com.intellij.execution.target.TargetConfigurationWithLocalFsAccess
 - a:getAsTargetConfig():com.intellij.execution.target.TargetEnvironmentConfiguration
 - a:getTargetPathIfLocalPathIsOnTarget(java.nio.file.Path):java.lang.String
@@ -1683,7 +1680,6 @@ com.intellij.execution.target.TargetEnvironmentType$TargetSpecificVolumeContribu
 - a:resetFrom(java.util.Map):V
 com.intellij.execution.target.TargetEnvironmentType$TargetSpecificVolumeData
 - a:toStorableMap():java.util.Map
-f:com.intellij.execution.target.TargetEnvironmentTypeKt
 f:com.intellij.execution.target.TargetEnvironmentUtil
 - <init>():V
 - s:reuploadRootFile(java.io.File,com.intellij.execution.target.TargetEnvironmentRequest,com.intellij.execution.target.TargetEnvironment,com.intellij.execution.target.TargetProgressIndicator,java.lang.Runnable):Z

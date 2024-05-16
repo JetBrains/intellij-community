@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
@@ -17,15 +16,14 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
 import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
 class TypeLookupElementFactory {
     context(KtAnalysisSession)
-fun createLookup(type: KtType): LookupElement? {
+    fun createLookup(type: KtType): LookupElement? {
         val renderedType = type.render(TYPE_RENDERING_OPTIONS_SHORT_NAMES, position = Variance.INVARIANT)
         val lookupObject = TypeLookupObject(type.render(TYPE_RENDERING_OPTIONS, position = Variance.INVARIANT))
 
@@ -50,7 +48,7 @@ fun createLookup(type: KtType): LookupElement? {
     }
 
     context(KtAnalysisSession)
-fun createLookup(symbol: KtClassifierSymbol): LookupElement? {
+    fun createLookup(symbol: KtClassifierSymbol): LookupElement? {
         val (relativeNameAsString, fqNameAsString) = when (symbol) {
             is KtTypeParameterSymbol -> symbol.name.asString().let { it to it }
 
@@ -88,11 +86,6 @@ data class TypeLookupObject(val fqRenderedType: String)
 private object TypeInsertHandler : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val lookupObject = item.`object` as TypeLookupObject
-        val targetFile = context.file as? KtFile ?: return
-
-        context.document.replaceString(context.startOffset, context.tailOffset, lookupObject.fqRenderedType)
-        context.commitDocument()
-
-        shortenReferencesInRange(targetFile, TextRange(context.startOffset, context.tailOffset))
+        context.insertAndShortenReferencesInStringUsingTemporarySuffix(lookupObject.fqRenderedType)
     }
 }

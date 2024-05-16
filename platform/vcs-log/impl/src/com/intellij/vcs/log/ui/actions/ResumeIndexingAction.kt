@@ -17,7 +17,7 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.util.VcsLogUtil
 
-class ResumeIndexingAction : DumbAwareAction() {
+internal class ResumeIndexingAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null) {

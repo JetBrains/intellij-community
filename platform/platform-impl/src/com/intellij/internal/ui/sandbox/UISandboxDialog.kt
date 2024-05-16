@@ -8,6 +8,10 @@ import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.internal.showSources
 import com.intellij.internal.ui.sandbox.components.*
 import com.intellij.internal.ui.sandbox.dsl.*
+import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrComboBoxPanel
+import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrListPanel
+import com.intellij.internal.ui.sandbox.dsl.listCellRenderer.LcrOthersPanel
+import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -37,13 +41,13 @@ import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.TreeNode
 import javax.swing.tree.TreeSelectionModel
 
 private const val SEARCH_UPDATE_DELAY = 300
 private const val SELECTED_TREE_ITEM = "UISandboxDialog.selected.tree.item"
+private const val TREE_ITEM_PATH_SEPARATOR = ">"
 
-internal class UISandboxDialog(private val project: Project?) : DialogWrapper(project, null, true, IdeModalityType.IDE, true) {
+internal class UISandboxDialog(private val project: Project?) : DialogWrapper(project, null, true, IdeModalityType.MODELESS, true) {
 
   private val treeContent: List<Any> = listOf(
     Group("Components", children = listOf(
@@ -61,13 +65,18 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       JBTabsPanel())),
 
     Group("Kotlin UI DSL", children = listOf(
+      Group("ListCellRenderer", children = listOf(
+        LcrListPanel(),
+        LcrComboBoxPanel(),
+        LcrOthersPanel()
+      )),
+
       CellsWithSubPanelsPanel(),
       CheckBoxRadioButtonPanel(),
       CommentsPanel(),
       DeprecatedApiPanel(),
       GroupsPanel(),
       LabelsPanel(),
-      ListCellRendererPanel(),
       LongTextsPanel(),
       OnChangePanel(),
       OthersPanel(),
@@ -79,7 +88,11 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       ValidationPanel(),
       ValidationRefactoringPanel(),
       VisibleEnabledPanel()
-    ))
+    )),
+
+    Group("Tests", children = listOf(
+      Group("Components", children = listOf(JBTextAreaTestPanel())))
+    )
   )
 
   private val filter = ElementFilter<SandboxTreeNodeBase> {
@@ -217,32 +230,23 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     }
 
     getPropertyComponent().getValue(SELECTED_TREE_ITEM)?.let {
-      selectItem(it)
+      selectItem(it.split(TREE_ITEM_PATH_SEPARATOR))
     }
     return result
   }
 
-  private fun selectItem(item: String) {
-    val node = findChild(treeModel.getChildren(treeModel.root), item)
+  private fun selectItem(path: List<String>) {
+    var currentNode = treeModel.root
+    for (item in path) {
+      val children = treeModel.getChildren(currentNode)
+      val foundChild = children.find { extractSandboxTreeNode(it)?.title == item } ?: break
+      currentNode = foundChild
+    }
 
-    if (node != null) {
-      val filteringNode = ((node as? DefaultMutableTreeNode)?.userObject as? FilteringTreeStructure.FilteringNode) ?: return
+    if (currentNode != null) {
+      val filteringNode = ((currentNode as? DefaultMutableTreeNode)?.userObject as? FilteringTreeStructure.FilteringNode) ?: return
       treeModel.select(filteringNode, tree, Consumer {})
     }
-  }
-
-  private fun findChild(children: List<TreeNode>, item: String): TreeNode? {
-    for (child in children) {
-      if (extractSandboxTreeNode(child)?.title == item) {
-        return child
-      }
-      val childResult = findChild(treeModel.getChildren(child), item)
-      if (childResult != null) {
-        return childResult
-      }
-    }
-
-    return null
   }
 
   private fun onFilterUpdated() {
@@ -277,7 +281,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
     // Don't store when treeModel is disposing while closing the dialog
     if (treeModel.getRoot() != null) {
-      getPropertyComponent().setValue(SELECTED_TREE_ITEM, selectedNode?.title)
+      getPropertyComponent().setValue(SELECTED_TREE_ITEM, getNodePathString(selectedNode))
     }
   }
 
@@ -291,25 +295,37 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       for (child in group.children) {
         row {
           link(child.title) {
-            selectItem(child.title)
+            selectItem(getNodePath(child))
           }.customize(UnscaledGaps(bottom = 4))
         }
       }
     }
   }
 
-  private fun fillBreadcrumbs() {
-    val path = mutableListOf<String>()
-    var currentNode = selectedNode
-    while (currentNode != null && currentNode.parent != null) {
-      path.add(currentNode.title)
+  private fun getNodePath(node: SandboxTreeNodeBase?): List<String> {
+    val result = mutableListOf<String>()
+    var currentNode = node
+    while (currentNode != null && currentNode.title != "") {
+      result.add(currentNode.title)
       currentNode = currentNode.parent as SandboxTreeNodeBase?
     }
 
-    val crumbs = path.reversed().map {
+    if (result.isEmpty()) {
+      return result
+    }
+
+    return result.reversed()
+  }
+
+  private fun fillBreadcrumbs() {
+    val crumbs = getNodePath(selectedNode).map {
       Crumb.Impl(null, it, null, null)
     }
     breadcrumbs.setCrumbs(crumbs)
+  }
+
+  private fun getNodePathString(node: SandboxTreeNodeBase?): String {
+    return getNodePath(node).joinToString(TREE_ITEM_PATH_SEPARATOR)
   }
 
   private fun extractSandboxTreeNode(node: Any): SandboxTreeNodeBase? {

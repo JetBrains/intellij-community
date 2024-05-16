@@ -64,7 +64,7 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
   thread: GHPRReviewThreadViewModel,
   initialDataWithIndex: IndexedValue<GHPullRequestReviewComment>
 ) : GHPRReviewThreadCommentViewModel {
-  private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Thread Comment View Model"))
+  private val cs = parentCs.childScope("GitHub Pull Request Thread Comment View Model")
   private val reviewData = dataProvider.reviewData
   private val taskLauncher = SingleCoroutineLauncher(cs)
 

@@ -18,30 +18,33 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaWithSynchronizedSurrounder extends JavaStatementsSurrounder{
+public class JavaWithSynchronizedSurrounder extends JavaStatementsModCommandSurrounder {
   @Override
   public String getTemplateDescription() {
     return JavaBundle.message("surround.with.synchronized.template");
   }
 
   @Override
-  public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+  protected void surroundStatements(@NotNull ActionContext context,
+                                    @NotNull PsiElement container,
+                                    @NotNull PsiElement @NotNull [] statements,
+                                    @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, false);
-    if (statements.length == 0){
-      return null;
-    }
+    if (statements.length == 0) return;
 
     @NonNls String text = "synchronized(a){\n}";
     PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)factory.createStatementFromText(text, null);
@@ -50,20 +53,16 @@ public class JavaWithSynchronizedSurrounder extends JavaStatementsSurrounder{
     synchronizedStatement = (PsiSynchronizedStatement)addAfter(synchronizedStatement, container, statements);
 
     PsiCodeBlock synchronizedBlock = synchronizedStatement.getBody();
-    if (synchronizedBlock == null) {
-      return null;
-    }
+    if (synchronizedBlock == null) return;
     SurroundWithUtil.indentCommentIfNecessary(synchronizedBlock, statements);
     addRangeWithinContainer(synchronizedBlock, container, statements, true);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     synchronizedStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(synchronizedStatement);
     PsiExpression lockExpression = synchronizedStatement.getLockExpression();
-    if (lockExpression == null) {
-      return null;
-    }
+    if (lockExpression == null) return;
     TextRange range = lockExpression.getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    return new TextRange(range.getStartOffset(), range.getStartOffset());
+    lockExpression.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    updater.moveCaretTo(range.getStartOffset());
   }
 }

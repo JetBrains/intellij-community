@@ -8,6 +8,7 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -23,6 +24,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CheckBoxList<T> extends JBList<JCheckBox> {
   private static final int    RESET_ROLLOVER = -1;
@@ -263,6 +265,15 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     if (ind >= 0) {
       model.set(ind, checkBox); // to fire contentsChanged event
     }
+  }
+
+  public @NotNull List<T> getCheckedItems() {
+    return ContainerUtil.mapNotNull(myItemMap.entrySet(),
+                                    entry -> entry.getValue().isSelected() ? entry.getKey() : null);
+  }
+
+  public @NotNull Set<T> getAllItems() {
+    return myItemMap.keySet();
   }
 
   public @Nullable T getItemAt(int index) {

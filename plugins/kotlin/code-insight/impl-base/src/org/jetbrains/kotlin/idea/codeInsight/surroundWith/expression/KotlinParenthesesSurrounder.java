@@ -3,12 +3,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder;
 import org.jetbrains.kotlin.psi.KtExpression;
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression;
@@ -21,20 +19,20 @@ public class KotlinParenthesesSurrounder extends KotlinExpressionSurrounder {
         return CodeInsightBundle.message("surround.with.parenthesis.template");
     }
 
-    @Nullable
     @Override
-    public TextRange surroundExpression( @NotNull Project project, @NotNull Editor editor, @NotNull KtExpression expression) {
+    protected void surroundExpression(@NotNull ActionContext context, @NotNull KtExpression expression, @NotNull ModPsiUpdater updater) {
+        KtPsiFactory factory = new KtPsiFactory(context.project());
         KtParenthesizedExpression parenthesizedExpression =
-                (KtParenthesizedExpression) new KtPsiFactory(expression.getProject()).createExpression("(a)");
+                (KtParenthesizedExpression) factory.createExpression("(a)");
         KtExpression expressionWithoutParentheses = parenthesizedExpression.getExpression();
         assert expressionWithoutParentheses != null : "KtExpression should exists for " + parenthesizedExpression.getText() + " expression";
         expressionWithoutParentheses.replace(expression);
 
         expression = (KtExpression) expression.replace(parenthesizedExpression);
 
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expression);
+        CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
 
         int offset = expression.getTextRange().getEndOffset();
-        return new TextRange(offset, offset);
+        updater.moveCaretTo(offset);
     }
 }

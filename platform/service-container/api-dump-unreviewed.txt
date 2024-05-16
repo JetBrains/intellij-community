@@ -16,11 +16,6 @@ a:com.intellij.openapi.extensions.AbstractExtensionPointBean
 - f:setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 f:com.intellij.serviceContainer.ComponentManagerImplKt
 - sf:handleComponentError(java.lang.Throwable,java.lang.String,com.intellij.openapi.extensions.PluginId):V
-f:com.intellij.serviceContainer.ConstructorInjectionKt
 f:com.intellij.serviceContainer.ContextKt
 - *sf:instance(java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withContainerContext(com.intellij.openapi.components.ComponentManager,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.serviceContainer.InstantiateKt
-f:com.intellij.serviceContainer.LightServiceInstanceSupportKt
-f:com.intellij.serviceContainer.ServiceComponentAdapterKt
-f:com.intellij.serviceContainer.ServiceInstanceInitializerKt

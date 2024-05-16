@@ -364,7 +364,12 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         } else {
             OldCodeFragmentCompilingStrategy(codeFragment)
         }
-        patchCodeFragment(context, codeFragment, compilerStrategy.stats)
+        try {
+            patchCodeFragment(context, codeFragment, compilerStrategy.stats)
+        } catch (e: Exception) {
+            compilerStrategy.processError(e, codeFragment, emptyList(), context)
+            throw e
+        }
 
         compilerStrategy.beforeAnalyzingCodeFragment()
         val analysisResult = analyze(codeFragment, debugProcess)

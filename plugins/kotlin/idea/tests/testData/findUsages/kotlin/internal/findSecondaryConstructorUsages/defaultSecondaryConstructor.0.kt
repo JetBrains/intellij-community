@@ -29,4 +29,4 @@ fun test() {
     B()
 }
 
-
+// ISSUE: KTIJ-29704

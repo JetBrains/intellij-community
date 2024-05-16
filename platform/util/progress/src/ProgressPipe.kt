@@ -13,7 +13,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
- * A pipe which has 2 ends: one for reporting progress, and another for reading the progress.
+ * A pipe which has two ends: one for reporting progress, and another for reading the progress.
+ *
+ * To obtain an instance, call [createProgressPipe].
  */
 @Experimental
 sealed interface ProgressPipe {

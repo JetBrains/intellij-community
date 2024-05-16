@@ -1,15 +1,15 @@
-class A {
+class AX823 {
     companion object {
     }
 }
 
-class B {
+class BX823 {
     companion object Named {
     }
 }
 
 fun main(args: Array<String>) {
     println(args)
-    val a = A
-    B.Named
+    val a = AX823
+    BX823.Named
 }

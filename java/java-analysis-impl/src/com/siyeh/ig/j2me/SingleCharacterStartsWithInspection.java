@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,19 +30,16 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class SingleCharacterStartsWithInspection extends BaseInspection {
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "single.character.startswith.problem.descriptor");
+    return InspectionGadgetsBundle.message("single.character.startswith.problem.descriptor");
   }
 
   @Override
-  @Nullable
   protected LocalQuickFix buildFix(Object... infos) {
     return new SingleCharacterStartsWithFix();
   }

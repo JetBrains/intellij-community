@@ -214,7 +214,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     if (aClass instanceof PsiAnonymousClass) return JavaElementKind.ANONYMOUS_CLASS.subject();
 
-    getDocInfoGenerator(aClass.getProject(), false);
     JavaDocInfoGenerator docInfoGenerator = getDocInfoGenerator(aClass.getProject(), false);
 
     generateOrderEntryAndPackageInfo(buffer, aClass);

@@ -22,7 +22,7 @@
                     interface="com.intellij.platform.ml.impl.turboComplete.SmartPipelineRunner"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ml.impl.approach"
-                    interface="com.intellij.platform.ml.impl.MLTaskApproachBuilder"
+                    interface="com.intellij.platform.ml.MLTaskApproachBuilder"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

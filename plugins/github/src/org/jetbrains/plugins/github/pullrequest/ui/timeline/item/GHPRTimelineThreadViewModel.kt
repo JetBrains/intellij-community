@@ -78,7 +78,7 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
   private val dataProvider: GHPRDataProvider,
   initialData: GHPullRequestReviewThread
 ) : GHPRTimelineThreadViewModel {
-  private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Timeline Thread View Model"))
+  private val cs = parentCs.childScope("GitHub Pull Request Timeline Thread View Model")
   private val reviewData: GHPRReviewDataProvider = dataProvider.reviewData
   private val taskLauncher = SingleCoroutineLauncher(cs)
 

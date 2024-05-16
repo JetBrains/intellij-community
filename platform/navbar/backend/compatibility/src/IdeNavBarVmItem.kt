@@ -3,7 +3,7 @@ package com.intellij.platform.navbar.backend.compatibility
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
-import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.NavBarVmItem.ItemExpandResult
 import com.intellij.platform.navbar.backend.NavBarItem
@@ -21,7 +21,7 @@ class IdeNavBarVmItem @RequiresReadLock constructor(
 
   val pointer: Pointer<out NavBarItem> = item.createPointer()
 
-  override val presentation: NavBarItemPresentation = item.presentation()
+  override val presentation: NavBarItemPresentationData = item.presentation() as NavBarItemPresentationData
 
   override val isModuleContentRoot: Boolean = item.isModuleContentRoot()
 

@@ -2,12 +2,13 @@
 package com.intellij.platform.ml
 
 import com.intellij.platform.ml.Session.StartOutcome.Failure
+import com.intellij.platform.ml.environment.Environment
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * A period of making predictions with an ML model.
  *
- * The session's depth corresponds to the number of levels in a [com.intellij.platform.ml.impl.MLTask].
+ * The session's depth corresponds to the number of levels in a [com.intellij.platform.ml.MLTask].
  *
  * This is a builder of the tree-like session structure.
  * To learn how sessions work, please address this interface's implementations.

@@ -84,7 +84,7 @@ private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until sea
 private const val TAG_HIDDEN = "hidden"             // hidden until search
 
 class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification {
-  override fun getBehavior() = if (PlatformUtils.isRider()) ActionRemoteBehavior.FrontendThenBackend else ActionRemoteBehavior.BackendOnly
+  override fun getBehavior() = if (PlatformUtils.isRider() || PlatformUtils.isCLion()) ActionRemoteBehavior.FrontendThenBackend else ActionRemoteBehavior.BackendOnly
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()

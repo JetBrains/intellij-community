@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -268,13 +268,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         return;
       }
 
-      List<RefMethod> refConstructors = refClass.getConstructors();
-      if (refConstructors.size() == 1) {
-        addEntryPoint(refConstructors.get(0), isPersistent);
-      }
-      else if (refConstructors.size() > 1) {
-        // Many constructors here. Need to ask user which ones are used
-        for (RefMethod refConstructor : refConstructors) {
+      if (isPersistent) {
+        for (RefMethod refConstructor : refClass.getConstructors()) {
           addEntryPoint(refConstructor, isPersistent);
         }
       }

@@ -35,7 +35,7 @@ internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
                                       private val file: GHPRTimelineVirtualFile)
   : FileEditorBase() {
   private val cs = parentCs
-    .childScope(Dispatchers.Main + CoroutineName("GitHub Pull Request Timeline UI"))
+    .childScope("GitHub Pull Request Timeline UI", Dispatchers.Main)
     .cancelledWith(this)
 
   private val timelineVm = projectVm.acquireTimelineViewModel(file.pullRequest, this)

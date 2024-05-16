@@ -10,10 +10,6 @@ UFile (package = ) [public final class ElvisTypeKt {...]
     if (var63c495f9 != null) var63c495f9 else return
 })(Undetermined)
                         UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                        USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] = external bar(elvis {
-    var var63c495f9: java.lang.String = text
-    if (var63c495f9 != null) var63c495f9 else return
-})(Undetermined)
                         UExpressionList (elvis) [elvis {...}] = Undetermined
                             UDeclarationsExpression [var var63c495f9: java.lang.String = text] = Undetermined
                                 ULocalVariable (name = var63c495f9) [var var63c495f9: java.lang.String = text]

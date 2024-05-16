@@ -54,7 +54,8 @@ abstract class LanguageServiceWidgetItem {
   fun createWidgetAction(): AnAction {
     val mainAction = createWidgetMainAction()
     if (isError) {
-      mainAction.templatePresentation.icon = layeredIcon(arrayOf(mainAction.templatePresentation.icon, AllIcons.Nodes.ErrorMark))
+      mainAction.templatePresentation.icon = mainAction.templatePresentation.icon?.let {
+        layeredIcon(arrayOf(it, AllIcons.Nodes.ErrorMark)) }
     }
 
     if (ExperimentalUI.isNewUI()) {

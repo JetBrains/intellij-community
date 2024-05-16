@@ -52,8 +52,6 @@ class InlineCompletionLineRenderer(
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int = maxOf(1, widths.sum())
 
-  override fun calcHeightInPixels(inlay: Inlay<*>): Int = InlineCompletionFontUtils.fontMetrics(editor).height
-
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     if (blocks.isEmpty()) {
       return

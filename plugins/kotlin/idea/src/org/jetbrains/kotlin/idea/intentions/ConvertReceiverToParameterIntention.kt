@@ -41,7 +41,7 @@ class ConvertReceiverToParameterIntention : SelfTargetingOffsetIndependentIntent
                 }
             }
 
-            override fun performSilently(affectedFunctions: Collection<PsiElement>) = true
+            override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = true
         }
 
     override fun startInWriteAction() = false

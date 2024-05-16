@@ -6,7 +6,6 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import java.io.File
 
 fun CodeInsightTestFixture.configureByFilesWithSuffixes(mainFile: File, testDataDirectory: File, vararg suffixes: String) {
@@ -41,10 +40,4 @@ inline fun <reified T : Any, R> ComponentManager.withComponentRegistered(instanc
     } finally {
         picoContainer.unregisterComponent(key)
     }
-}
-
-fun firFileName(originalFileName: String, testDataDirectory: File, vararg additionalExtensions: String): String {
-    val originalFile = File(testDataDirectory, originalFileName)
-    val refinedFile = IgnoreTests.getFirTestFileIfFirPassing(originalFile, IgnoreTests.DIRECTIVES.FIR_COMPARISON, *additionalExtensions)
-    return refinedFile.toRelativeString(testDataDirectory)
 }

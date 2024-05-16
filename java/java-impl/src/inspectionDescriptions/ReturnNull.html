@@ -18,8 +18,7 @@ to failing with a <code>NullPointerException</code>.
 <p>After the quick-fix is applied:</p>
 <pre><code>
   class Person {
-    @Nullable
-    public String getName () {
+    public @Nullable String getName () {
       return null;
     }
   }

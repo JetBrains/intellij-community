@@ -78,6 +78,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myLineMarkerAreaShown: Boolean by property(true)
   var myAllowSingleLogicalLineFolding: Boolean by property(false)
   var myAutoCodeFoldingEnabled: Boolean by property(true)
+  var myAreLineNumbersAfterIcons: Boolean by property { EditorSettingsExternalizable.getInstance().isLineNumbersAfterIcons }
 
   // These come from CodeStyleSettings.
   var myUseTabCharacter: Boolean by property {
@@ -179,8 +180,8 @@ class EditorSettingsState(private val editor: EditorImpl?,
       EditorSettingsExternalizable.getInstance().areStickyLinesShownFor(it.id)
     }
     // Return true to avoid the late appearance of the sticky panel.
-    // Even if the actual value for the language is false,
-    // the panel won't be shown because breadcrumbs' provider respects the settings
+    // If the actual value for the language is false,
+    // the editor removes all lines from the sticky model later
     ?: true
   }
   var myStickyLinesLimit: Int by property { EditorSettingsExternalizable.getInstance().stickyLineLimit }
@@ -336,6 +337,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
   private fun onLanguageChanged() {
     refresh(::softMargins)
     refresh(::rightMargin)
+    refresh(::myStickyLinesShownForLanguage)
   }
 }
 

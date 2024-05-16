@@ -1,15 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Methods for launching tunnels for TCP sockets, Unix sockets, etc.
  */
-@ApiStatus.Experimental
-interface IjentTunnelsApi {
+sealed interface IjentTunnelsApi
+
+interface IjentTunnelsPosixApi : IjentTunnelsApi {
   /**
    * Creates a remote UNIX socket forwarding, i.e. IJent listens waits for a connection on the remote machine, and when the connection
    * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
@@ -47,3 +47,5 @@ interface IjentTunnelsApi {
     data class MkTemp(val directory: String = "", val prefix: String = "", val suffix: String = "") : CreateFilePath
   }
 }
+
+interface IjentTunnelsWindowsApi : IjentTunnelsApi

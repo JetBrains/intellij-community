@@ -90,12 +90,6 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
     return it + b
 })(Undetermined)
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] = external bar({ var it: int ->
-
-    if (it > 5) return
-    var b: int = 1
-    return it + b
-})(Undetermined)
                     ULambdaExpression [{ var it: int ->...}] = Undetermined
                         UParameter (name = it) [var it: int]
                         UBlockExpression [{...}] = Nothing
@@ -115,29 +109,26 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                     ULocalVariable (name = x) [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = Nothing
-                                UReturnExpression [return @org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()] = Nothing
-                                    UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()] = Undetermined
+                                UReturnExpression [return @org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.UIdentifier (Identifier (component2))()] = Nothing
+                                    UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.UIdentifier (Identifier (component2))()] = Undetermined
                                         ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)]
                                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf(1, 2)] = external listOf(1, 2)(1, 2)
                                                 UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                                                USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(1, 2)(1, 2)
                                                 ULiteralExpression (value = 1) [1] = 1
                                                 ULiteralExpression (value = 2) [2] = 2
-                                        ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: int = vardbcd0724.<anonymous class>()]
+                                        ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: int = vardbcd0724.UIdentifier (Identifier (component1))()]
                                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                            UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] = external <anonymous class>()()
+                                            UQualifiedReferenceExpression [vardbcd0724.UIdentifier (Identifier (component1))()] = external UIdentifier (Identifier (component1))()()
                                                 USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] = external vardbcd0724()
-                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] = external UIdentifier (Identifier (component1))()()
                                                     UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
-                                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
-                                        ULocalVariable (name = b) [@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()]
+                                        ULocalVariable (name = b) [@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.UIdentifier (Identifier (component2))()]
                                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                            UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] = external <anonymous class>()()
+                                            UQualifiedReferenceExpression [vardbcd0724.UIdentifier (Identifier (component2))()] = external UIdentifier (Identifier (component2))()()
                                                 USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] = external vardbcd0724()
-                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] = external UIdentifier (Identifier (component2))()()
                                                     UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
-                                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
                 UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}] = Undetermined
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] = Undetermined
@@ -145,7 +136,6 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                 UReturnExpression [return listOf(1)] = Nothing
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] = external listOf(1)(1)
                                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(1)(1)
                                         ULiteralExpression (value = 1) [1] = 1
         UMethod (name = bar) [private static final fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,java.lang.Integer>) : void {...}]
             UParameter (name = lmbd) [@org.jetbrains.annotations.NotNull var lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,java.lang.Integer>]
@@ -153,5 +143,4 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
             UBlockExpression [{...}] = external invoke(1)(1)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [invoke(1)] = external invoke(1)(1)
                     UIdentifier (Identifier (lmbd)) [UIdentifier (Identifier (lmbd))]
-                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] = external invoke(1)(1)
                     ULiteralExpression (value = 1) [1] = 1

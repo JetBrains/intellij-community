@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.Future
 
 @ApiStatus.Internal
 interface UnindexedFilesScannerExecutor {
@@ -16,18 +17,15 @@ interface UnindexedFilesScannerExecutor {
 
   fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable)
   fun suspendQueue()
-  fun resumeQueue(onFinish: () -> Unit)
+  fun resumeQueue()
   fun cancelAllTasksAndWait()
   fun getPauseReason(): StateFlow<PersistentList<String>>
 
-  fun submitTask(task: FilesScanningTask)
+  fun submitTask(task: FilesScanningTask): Future<*>
 
   companion object {
     @JvmStatic
     fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
-
-    @JvmStatic
-    fun shouldScanInSmartMode(): Boolean = true
 
     fun <T: MergeableQueueTask<T>> unwrapTask(task: MergingTaskQueue.QueuedTask<T>): T {
       return task.task

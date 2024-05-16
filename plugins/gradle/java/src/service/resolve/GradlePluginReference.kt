@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.io.File
 
 /**
  * According to the Gradle documentation, a plugin ID could refer different kinds of plugins: e.g., Core plugins (included in Gradle),
@@ -88,19 +87,18 @@ class GradlePluginReference(
    * @see <a href="https://docs.gradle.org/current/userguide/custom_plugins.html#sec:precompile_script_plugin">Gradle Precompiled plugins</a>
    */
   private fun isPrecompiledPlugin(file: VirtualFile, packageParts: List<String> = emptyList()): Boolean {
-    val slash = File.separator
     val language = when (file.extension) {
       "kts" -> "kotlin"
       "gradle" -> "groovy"
       else -> return false
     }
     val packagePath = if (packageParts.isEmpty()) {
-      "(?:|.+$slash)" // empty string or any non-zero number of characters ending with a slash
+      "(?:|.+/)" // empty string or any non-zero number of characters ending with a slash
     }
     else {
-      packageParts.joinToString(separator = slash, postfix = slash)
+      packageParts.joinToString(separator = "/", postfix = "/")
     }
-    val pathPattern = ".*${slash}src${slash}main${slash}$language${slash}$packagePath${file.presentableName}"
+    val pathPattern = ".*/src/main/$language/$packagePath${file.presentableName}"
     return file.path.matches(Regex(pathPattern))
   }
 

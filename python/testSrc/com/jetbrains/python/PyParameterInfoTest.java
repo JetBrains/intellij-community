@@ -1222,6 +1222,33 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("s: str = 'foo'", new String[]{"s: str = 'foo'"});
   }
 
+  // PY-55044
+  public void testTypedDictKwdFunction() {
+    final Map<String, PsiElement> marks = loadTest(3);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, *, name: str, year: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, name: str, year: int", new String[]{"name: str, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int, *, name: str, year: int", new String[]{"year: int"});
+  }
+
+  // PY-55044
+  public void testTypedDictWithRequiredKeyKwdFunction() {
+    final Map<String, PsiElement> marks = loadTest(3);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, *, name: str = ..., year: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, name: str = ..., year: int", new String[]{"name: str = ..., "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int, *, name: str = ..., year: int", new String[]{"year: int"});
+  }
+
+  // PY-55044
+  public void testTypedDictWithNotRequiredKeyKwdFunction() {
+    final Map<String, PsiElement> marks = loadTest(3);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, *, name: str = ..., year: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, *, name: str = ..., year: int", new String[]{"name: str = ..., "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int, *, name: str = ..., year: int", new String[]{"year: int"});
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile());

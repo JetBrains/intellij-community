@@ -7,6 +7,7 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("ThrowablePrintedToSystemOut")
 public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
@@ -22,7 +23,6 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
     doStatementTest("System.out.println(/*'Throwable' argument 'new RuntimeException()' to 'System.out.println()' call*/new RuntimeException()/**/);");
   }
 
-  @SuppressWarnings("ThrowableNotThrown")
   public void testSimpleLogFix() {
     addSlf4j();
 
@@ -31,7 +31,7 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
         class Test{
           void foo() {
             final RuntimeException x = new RuntimeException();
-            System.out.println(/*'Throwable' argument 'x' to 'System.out.println()' call*/x<caret>/**/);
+            System.out.println(/*'Throwable' argument 'x' to 'System.out.println()' call*/x/*_*//**/);
           }
         }
         """);
@@ -64,7 +64,6 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
     """);
   }
 
-  @SuppressWarnings("ThrowableNotThrown")
   public void testSimpleExistedLogFix() {
     addSlf4j();
 
@@ -72,13 +71,13 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
         """
         import org.slf4j.Logger;
         import org.slf4j.LoggerFactory;
-
+        
         class Test{
           private static final Logger logger = LoggerFactory.getLogger(Test.class);
-  
+        
           void foo() {
             final RuntimeException x = new RuntimeException();
-            System.out.println(/*'Throwable' argument 'x' to 'System.out.println()' call*/x<caret>/**/);
+            System.out.println(/*'Throwable' argument 'x' to 'System.out.println()' call*/x/*_*//**/);
           }
         }
         """);

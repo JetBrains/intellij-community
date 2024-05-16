@@ -3,28 +3,29 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
 import org.jetbrains.kotlin.psi.*;
 
 import static org.jetbrains.kotlin.idea.codeInsight.surroundWith.SurroundWithUtilKt.addStatementsInBlock;
 
 public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder {
-    @Nullable
+
     @Override
-    protected TextRange surroundStatements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement container, PsiElement @NotNull [] statements) {
+    protected void surroundStatements(
+            @NotNull ActionContext context,
+            @NotNull PsiElement container,
+            @NotNull PsiElement @NotNull [] statements,
+            @NotNull ModPsiUpdater updater
+    ) {
         statements = MoveDeclarationsOutHelperKt.move(container, statements, true);
 
-        if (statements.length == 0) {
-            return null;
-        }
+        if (statements.length == 0) return;
 
-        KtPsiFactory psiFactory = new KtPsiFactory(project);
+        KtPsiFactory psiFactory = new KtPsiFactory(context.project());
         KtCallExpression callExpression = (KtCallExpression) psiFactory.createExpression("run {\n}");
         callExpression = (KtCallExpression) container.addAfter(callExpression, statements[statements.length - 1]);
         container.addBefore(psiFactory.createWhiteSpace(), callExpression);
@@ -44,7 +45,7 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
         assert callExpression != null;
         KtExpression literalName = callExpression.getCalleeExpression();
         assert literalName != null : "Run expression should have callee expression " + callExpression.getText();
-        return literalName.getTextRange();
+        updater.select(literalName);
     }
 
     @Override

@@ -42,7 +42,6 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
                         USimpleNameReferenceExpression (identifier = case4) [case4] : PsiType:String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [repeat(4)] : PsiType:String
                         UIdentifier (Identifier (repeat)) [UIdentifier (Identifier (repeat))]
-                        USimpleNameReferenceExpression (identifier = repeat, resolvesTo = null) [repeat] : PsiType:String
                         ULiteralExpression (value = 4) [4] : PsiType:int
                 ULiteralExpression (value = " z") [" z"] : PsiType:String
         UField (name = empty) [@org.jetbrains.annotations.NotNull private static final var empty: java.lang.String = ""]
@@ -67,7 +66,6 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
             UBlockExpression [{...}] : PsiType:void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] : PsiType:Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
                     UPolyadicExpression (operator = +) [baz] : PsiType:String
                         USimpleNameReferenceExpression (identifier = baz) [baz]
                 UDeclarationsExpression [var template1: java.lang.String = simpleForTemplate()]
@@ -75,11 +73,9 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
                         UPolyadicExpression (operator = +) [simpleForTemplate()] : PsiType:String
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] : PsiType:String
                                 UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
-                                USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] : PsiType:String
                 UDeclarationsExpression [var template2: java.lang.String = "." + simpleForTemplate()]
                     ULocalVariable (name = template2) [var template2: java.lang.String = "." + simpleForTemplate()]
                         UPolyadicExpression (operator = +) ["." + simpleForTemplate()] : PsiType:String
                             ULiteralExpression (value = ".") ["."] : PsiType:String
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] : PsiType:String
                                 UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
-                                USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] : PsiType:String

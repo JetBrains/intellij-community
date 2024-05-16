@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,7 @@ import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +28,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
-public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input>,
-                                                                  MeasurableIndexStore {
+@Internal
+public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex<Key, Value, Input>,
+                                                                   MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
   private static final boolean USE_READ_LOCK_ON_UPDATE =
     SystemProperties.getBooleanProperty("idea.map.reduce.index.use.read.lock.on.update", false);
@@ -152,7 +154,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @Override
-  public void flush() throws StorageException{
+  public void flush() throws StorageException {
     ConcurrencyUtil.withLock(myLock.readLock(), () -> {
       try {
         doFlush();
@@ -210,6 +212,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   protected void doDispose() throws StorageException {
     try {
       myStorage.close();
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
     }
     finally {
       try {
@@ -273,7 +278,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
     if (myForwardIndex != null) {
       if (myUseIntForwardIndex) {
-        ((IntForwardIndex)myForwardIndex).putInt(inputId, ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).serializeIndexedDataToInt(data));
+        ((IntForwardIndex)myForwardIndex).putInt(inputId,
+                                                 ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).serializeIndexedDataToInt(
+                                                   data));
       }
       else {
         myForwardIndex.put(inputId, myForwardIndexAccessor.serializeIndexedData(data));
@@ -284,7 +291,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   protected @NotNull InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
     if (myForwardIndex != null) {
       if (myUseIntForwardIndex) {
-        return ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).getDiffBuilderFromInt(inputId, ((IntForwardIndex)myForwardIndex).getInt(inputId));
+        return ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).getDiffBuilderFromInt(inputId,
+                                                                                                   ((IntForwardIndex)myForwardIndex).getInt(
+                                                                                                     inputId));
       }
       else {
         return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndex.get(inputId));
@@ -297,7 +306,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     if (content == null) {
       return InputData.empty();
     }
-    Map<Key, Value> data = mapByIndexer(inputId,  content);
+    Map<Key, Value> data = mapByIndexer(inputId, content);
     if (myValueSerializationChecker != null) {
       myValueSerializationChecker.checkValueSerialization(data, content);
     }
@@ -367,7 +376,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     });
   }
 
-  @ApiStatus.Internal
   public final class IndexUpdateComputable implements Computable<Boolean> {
     private final UpdateData<Key, Value> myUpdateData;
     private final InputData<Key, Value> myInputData;

@@ -86,6 +86,7 @@ public final class MacroManager {
     registerMacro(new SelectionEndColumnMacro());
 
     registerMacro(new OsNameMacro());
+    registerMacro(new OsUserMacro());
     registerMacro(new TempDirMacro());
 
     if (File.separatorChar != '/') {

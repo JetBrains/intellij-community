@@ -481,7 +481,7 @@ public abstract class XmlTagDelegate {
     }
 
     if (nsDescriptor != null) {
-      if (!DumbService.getInstance(myTag.getProject()).isDumb() || DumbService.isDumbAware(nsDescriptor)) {
+      if (DumbService.getInstance(myTag.getProject()).isUsableInCurrentContext(nsDescriptor)) {
         elementDescriptor = nsDescriptor.getElementDescriptor(myTag);
       }
     }

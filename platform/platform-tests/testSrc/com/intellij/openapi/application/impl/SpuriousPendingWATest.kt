@@ -3,7 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.isNewLockEnabled
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,7 @@ class SpuriousPendingWATest {
     val start = Semaphore(1, 1)
     val finished = AtomicBoolean(false)
 
-    val job = GlobalScope.namedChildScope("Bad WAs", Dispatchers.IO).async {
+    val job = GlobalScope.childScope("Bad WAs", Dispatchers.IO).async {
       start.acquire()
       for (i in 1..repetitions) {
         try {

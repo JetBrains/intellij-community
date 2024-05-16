@@ -9,7 +9,6 @@ import com.intellij.find.impl.TextSearchRightActionAction.*
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.SearchEverywhereBaseAction
-import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.Companion.SE_TAB_TOPIC
@@ -60,7 +59,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
   private val model = FindManager.getInstance(project).findInProjectModel
 
-  private var everywhereScope = getEverywhereScope()
+  private var everywhereScope = GlobalSearchScope.everythingScope(project)
   private var projectScope: GlobalSearchScope?
   private var selectedScopeDescriptor: ScopeDescriptor
   private var psiContext = getPsiContext()
@@ -77,12 +76,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
     SmartPointerManager.getInstance(project).createSmartPsiElementPointer(it)
   }
 
-  private fun getEverywhereScope() =
-    SearchEverywhereClassifier.EP_Manager.getEverywhereScope(project) ?: GlobalSearchScope.everythingScope(project)
-
   private fun getProjectScope(descriptors: List<ScopeDescriptor>): GlobalSearchScope? {
-    SearchEverywhereClassifier.EP_Manager.getProjectScope(project)?.let { return it }
-
     GlobalSearchScope.projectScope(project).takeIf { it != everywhereScope }?.let { return it }
 
     val secondScope = JBIterable.from(descriptors).filter { !it.scopeEquals(everywhereScope) && !it.scopeEquals(null) }.first()

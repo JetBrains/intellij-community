@@ -1,2 +1,2 @@
-// KT-67647 (exception from K2 diagnostics)
+// ERROR: Modifier 'protected' is not applicable inside 'file'.
 protected enum class Test

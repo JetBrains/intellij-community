@@ -52,7 +52,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.ContentManager
@@ -61,7 +61,10 @@ import com.intellij.util.Alarm
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.AsyncPromise
@@ -69,7 +72,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.BorderLayout
 import java.io.OutputStream
-import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -142,7 +144,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
       }
 
       processHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, true)
-      GlobalScope.namedChildScope("Destroy " + processHandler.javaClass.name, Dispatchers.Default, true).launch {
+      GlobalScope.childScope("Destroy " + processHandler.javaClass.name, Dispatchers.Default, true).launch {
         if (processHandler is KillableProcess && processHandler.isProcessTerminating) {
           // process termination was requested, but it's still alive
           // in this case 'force quit' will be performed
@@ -457,6 +459,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
         EXECUTION_SESSION_ID_KEY.set(taskEnvironment, id)
         try {
           if (!provider.executeTask(projectContext, profile, taskEnvironment, task)) {
+            LOG.debug("Before launch task '$task' doesn't finish successfully, cancelling execution")
             if (onCancelRunnable != null) {
               SwingUtilities.invokeLater(onCancelRunnable)
             }
@@ -464,6 +467,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
           }
         }
         catch (e: ProcessCanceledException) {
+          LOG.debug("Before launch task '$task' cancelled, cancelling execution", e)
           if (onCancelRunnable != null) {
             SwingUtilities.invokeLater(onCancelRunnable)
           }
@@ -917,19 +921,24 @@ fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: 
 }
 
 private fun triggerUsage(environment: ExecutionEnvironment): StructuredIdeActivity? {
+  val isDumb = DumbService.isDumb(environment.project)
   val runConfiguration = environment.runnerAndConfigurationSettings?.configuration
   val configurationFactory = runConfiguration?.factory ?: return null
   val isRerun = environment.getUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN) == true
 
   // The 'Rerun' button in the Run tool window will reuse the same ExecutionEnvironment object again.
   // If there are no processes to stop, the REPORT_NEXT_START_AS_RERUN won't be set in restartRunProfile(), so need to set it here.
-  if (!isRerun) environment.putUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN, true)
+  if (!isRerun) {
+    environment.putUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN, true)
+  }
+
   return when(val parentIdeActivity = environment.getUserData(ExecutionManagerImpl.PARENT_PROFILE_IDE_ACTIVITY)) {
     null -> RunConfigurationUsageTriggerCollector
-      .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun, environment.isRunningCurrentFile)
+      .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun,
+               environment.isRunningCurrentFile, isDumb)
     else -> RunConfigurationUsageTriggerCollector
       .triggerWithParent(parentIdeActivity, environment.project, configurationFactory, environment.executor, runConfiguration, isRerun,
-                         environment.isRunningCurrentFile)
+                         environment.isRunningCurrentFile, isDumb)
   }
 }
 

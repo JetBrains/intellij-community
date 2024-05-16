@@ -4,7 +4,7 @@ val a = 1
 private val string = "ab$a:${a + 1}cd"
 
 fun foo(): String {
-    val x = "_ab$a:${a + 1}cd__"
+    val x = "_${string}__"
     val y = "_a$a:${a + 1}cd__"
     return "${string}ef"
 }

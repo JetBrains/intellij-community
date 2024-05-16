@@ -16,10 +16,12 @@ import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.exp.getDisposed
 import org.jetbrains.plugins.terminal.exp.invokeLater
 
-internal class CommandHistoryPresenter(private val project: Project,
-                                       private val editor: Editor,
-                                       private val promptModel: TerminalPromptModel,
-                                       private val commandExecutor: TerminalCommandExecutor) {
+internal class CommandHistoryPresenter(
+  private val project: Project,
+  private val editor: Editor,
+  private val promptModel: TerminalPromptModel,
+  private val commandExecutor: TerminalCommandExecutor
+) {
   private var initialCommand: String? = null
 
   fun showCommandHistory(history: List<String>) {

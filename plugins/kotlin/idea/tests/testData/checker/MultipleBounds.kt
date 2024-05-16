@@ -42,7 +42,7 @@ class Bar<T : <warning descr="[FINAL_UPPER_BOUND] 'Foo' is a final type, and thu
 class Buzz<T> where T : <warning descr="[FINAL_UPPER_BOUND] 'Bar<Int>' is a final type, and thus a value of the type parameter is predetermined">Bar<<error descr="[UPPER_BOUND_VIOLATED] Type argument is not within its bounds: should be subtype of 'Foo'">Int</error>></warning>, T : <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: nioho">nioho</error>
 
 class X<T : <warning descr="[FINAL_UPPER_BOUND] 'Foo' is a final type, and thus a value of the type parameter is predetermined">Foo</warning>>
-class Y<<error descr="[CONFLICTING_UPPER_BOUNDS] Upper bounds of T have empty intersection">T</error>> where T :  <warning descr="[FINAL_UPPER_BOUND] 'Foo' is a final type, and thus a value of the type parameter is predetermined">Foo</warning>, T : <error descr="[ONLY_ONE_CLASS_BOUND_ALLOWED] Only one of the upper bounds can be a class">Bar<Foo></error>
+class Y<<error descr="[CONFLICTING_UPPER_BOUNDS] Upper bounds of T have empty intersection">T</error>> where T :  <warning descr="[FINAL_UPPER_BOUND] 'Foo' is a final type, and thus a value of the type parameter is predetermined">Foo</warning>, T : <error descr="[ONLY_ONE_CLASS_BOUND_ALLOWED] Only one of the upper bounds can be a class"><warning descr="[FINAL_UPPER_BOUND] 'Bar<Foo>' is a final type, and thus a value of the type parameter is predetermined">Bar<Foo></warning></error>
 
 fun <T> test2(t : T)
   where

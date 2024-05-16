@@ -134,20 +134,20 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   // returns true if the car has been cleaned
-  private boolean orderVincentToCleanTheCar(@NotNull VirtualFile file, @NotNull ProgressIndicator progressIndicator) throws ProcessCanceledException {
-    if (!isToBeHighlighted(file)) {
-      clearProblems(file);
+  private boolean orderVincentToCleanTheCar(@NotNull VirtualFile virtualFile, @NotNull ProgressIndicator progressIndicator) throws ProcessCanceledException {
+    if (!isToBeHighlighted(virtualFile)) {
+      clearProblems(virtualFile);
       return true; // the file is going to be red waved no more
     }
-    if (hasSyntaxErrors(file)) {
+    if (hasSyntaxErrors(virtualFile)) {
       // optimization: it's no use anyway to try to clean the file with syntax errors, only changing the file itself can help
       return false;
     }
     if (myProject.isDisposed()) return false;
-    if (willBeHighlightedAnyway(file)) return false;
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+    if (willBeHighlightedAnyway(virtualFile)) return false;
+    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
     if (psiFile == null) return false;
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) return false;
 
     AtomicReference<HighlightInfo> error = new AtomicReference<>();
@@ -161,12 +161,12 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
     catch (ProcessCanceledException e) {
       if (error.get() != null) {
-        ProblemImpl problem = new ProblemImpl(file, error.get(), hasErrorElement);
-        reportProblems(file, Collections.singleton(problem));
+        ProblemImpl problem = new ProblemImpl(virtualFile, error.get(), hasErrorElement);
+        reportProblems(virtualFile, Collections.singleton(problem));
       }
       return false;
     }
-    clearProblems(file);
+    clearProblems(virtualFile);
     return true;
   }
 
@@ -417,7 +417,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
                                     @NotNull Document document,
                                     @NotNull ProperTextRange visibleRange,
                                     @NotNull AtomicReference<? super HighlightInfo> error) {
-      super(psiFile, document, 0, document.getTextLength(), false, visibleRange, null, HighlightInfoProcessor.getEmpty());
+      super(psiFile, document, 0, document.getTextLength(), false, visibleRange, null, true, true, true,
+            HighlightInfoUpdater.EMPTY);
       myError = error;
     }
 
@@ -433,6 +434,16 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
           return super.add(info);
         }
       };
+    }
+
+    @Override
+    protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
+      try {
+        super.collectInformationWithProgress(progress);
+      }
+      catch (Exception ignored) {
+        // could throw PCE now
+      }
     }
   }
 }

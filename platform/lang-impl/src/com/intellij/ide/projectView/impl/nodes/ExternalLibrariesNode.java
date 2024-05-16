@@ -36,6 +36,11 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   }
 
   @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
+
+  @Override
   public boolean isIncludedInExpandAll() {
     return false;
   }

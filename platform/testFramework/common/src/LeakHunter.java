@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.testFramework.common.DumpKt;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.common.ThreadLeakTracker;
@@ -20,6 +21,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.PersistentEnumeratorCache;
 import com.intellij.util.ref.DebugReflectionUtil;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Suppress;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -85,6 +87,7 @@ public final class LeakHunter {
       UIUtil.pump();
     }
     PersistentEnumeratorCache.clearCacheForTests();
+    flushTelemetry();
     //noinspection CallToSystemGC
     System.gc();
     Runnable runnable = () -> {
@@ -186,5 +189,16 @@ public final class LeakHunter {
     }
 
     return result;
+  }
+
+  // OTel traces may store references to cancellation exceptions.
+  // In the case of kotlin coroutines, a cancellation exception references `Job`, which may reference `CoroutineContext`,
+  // which may reference `ComponentManager`s (such as `Project` of `Application`).
+  // The traces are processed in batches, so we cannot predict when they get cleared,
+  // although we know that they be cleared after a certain finite period of time.
+  // Here we forcibly flush the batch and avoid a leak of component managers.
+  private static void flushTelemetry() {
+    //noinspection TestOnlyProblems
+    TelemetryManager.getInstance().forceFlushMetricsBlocking();
   }
 }

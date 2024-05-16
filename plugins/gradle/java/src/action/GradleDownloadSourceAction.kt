@@ -91,7 +91,7 @@ class GradleDownloadSourceAction(
       return ActionCallback.DONE
     }
     val executionResult = ActionCallback()
-    GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, Path(externalProjectPath))
+    GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, externalProjectPath)
       .whenComplete { path, error ->
         if (error != null) {
           executionResult.setRejected()

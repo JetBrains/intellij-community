@@ -88,7 +88,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  public @NotNull List<PsiFile> getAllFiles() {
+  public @NotNull List<@NotNull PsiFile> getAllFiles() {
     return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 

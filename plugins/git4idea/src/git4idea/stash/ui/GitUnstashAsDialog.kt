@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.openapi.project.Project
@@ -73,7 +73,7 @@ internal class GitUnstashAsDialog(private val project: Project, private val stas
       row {
         keepIndexCheckbox = checkBox(GitBundle.message("unstash.reinstate.index"))
           .applyToComponent { toolTipText = GitBundle.message("unstash.reinstate.index.tooltip") }
-          .bindSelected(::popStash)
+          .bindSelected(::keepIndex)
           .component
       }
     }

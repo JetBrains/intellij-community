@@ -56,7 +56,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     myDataPack = logData.getDataPack();
     myVcsLogFilterer = filterer;
     myLogId = logId;
-    myState = new State(filters, options);
+    myState = new State(filters, options, myVcsLogFilterer.getInitialCommitCount());
 
     myTaskController = new SingleTaskController<>("visible " + StringUtil.trimMiddle(logId, 40), this, state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
@@ -266,7 +266,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       }
 
       if (resetCommitCount) {
-        state = state.withCommitCount(CommitCountStage.INITIAL);
+        state = state.withCommitCount(myVcsLogFilterer.getInitialCommitCount());
       }
       else if (!moreCommitsRequests.isEmpty()) {
         state = state.withCommitCount(state.getCommitCount().next());
@@ -306,8 +306,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     private final @NotNull VisiblePack myVisiblePack;
     private final boolean myIsValid;
 
-    State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.Options graphOptions) {
-      this(filters, graphOptions, CommitCountStage.INITIAL, new ArrayList<>(), VisiblePack.EMPTY, true);
+    State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.Options graphOptions, @NotNull CommitCountStage initialCount) {
+      this(filters, graphOptions, initialCount, new ArrayList<>(), VisiblePack.EMPTY, true);
     }
 
     State(@NotNull VcsLogFilterCollection filters,

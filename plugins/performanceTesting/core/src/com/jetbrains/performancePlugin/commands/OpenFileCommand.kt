@@ -6,7 +6,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
-import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
+import com.intellij.openapi.fileEditor.impl.waitForFullyCompleted
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -43,18 +43,15 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       }
     }
 
-    public fun getOptions(arguments: String): OpenFileCommandOptions? {
+    fun getOptions(arguments: String): OpenFileCommandOptions? {
       val myOptions = runCatching {
         OpenFileCommandOptions().apply { Args.parse(this, arguments.split(" ").toTypedArray()) }
       }.getOrNull()
       return myOptions
     }
-
   }
   
-  override fun getName(): String {
-    return NAME
-  }
+  override fun getName(): String = NAME
 
   override suspend fun doExecute(context: PlaybackContext) {
     val myOptions = getOptions(extractCommandArgument(PREFIX))
@@ -82,7 +79,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     val fileEditor = (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
       .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
     if (myOptions != null && !myOptions.disableCodeAnalysis) {
-      fileEditor.waitForFullyLoaded()
+      waitForFullyCompleted(fileEditor)
     }
 
     job.onError {

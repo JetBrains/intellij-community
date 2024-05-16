@@ -36,7 +36,7 @@ import com.intellij.openapi.project.impl.P3SupportInstaller
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryKeyBean.Companion.addKeysFromPlugins
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.encoding.EncodingManager
@@ -171,7 +171,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     val task = suspend {
       initConfigurationStore(app, emptyList())
 
-      addKeysFromPlugins()
+      RegistryManager.getInstance() // to trigger RegistryKeyBean.addKeysFromPlugins exactly once per run
       Registry.markAsLoaded()
 
       preloadServicesAndCallAppInitializedListeners(app)

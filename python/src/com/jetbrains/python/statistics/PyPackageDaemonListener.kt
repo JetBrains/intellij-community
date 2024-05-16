@@ -22,9 +22,11 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.sdk.PythonSdkUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.time.Duration.Companion.days
 
 
@@ -41,14 +43,11 @@ private val VirtualFile.isUpToDate: Boolean
   }
 
 @Service
-internal class TaskExecutor(private val cs: CoroutineScope) {
-
-  fun shutdownService() {
-    cs.cancel() // this does not affect other services in the same plugin/container.
-  }
-
-  fun execute(vFile: VirtualFile, project: Project) {
-    cs.launch {
+@ApiStatus.Internal
+@VisibleForTesting
+class PackageDaemonTaskExecutor(private val cs: CoroutineScope) {
+  fun execute(vFile: VirtualFile, project: Project): Job {
+    return cs.launch {
       constrainedReadAction(ReadConstraint.inSmartMode(project)) readAction@{
         val fileIndex = ProjectFileIndex.getInstance(project)
         if (!fileIndex.isInProject(vFile) || fileIndex.isInLibrary(vFile)) {
@@ -62,6 +61,8 @@ internal class TaskExecutor(private val cs: CoroutineScope) {
         val interpreterType = sdk?.interpreterType ?: InterpreterType.REGULAR
         val interpreterTarget = sdk?.executionType ?: InterpreterTarget.LOCAL
         val packages2Versions = sdk?.let {
+          // it's mock sdk
+          if (sdk.sdkAdditionalData == null) return@let emptyMap()
           val packagesFromPackageManager = PythonPackageManager.forSdk(project, sdk).installedPackages
           packagesFromPackageManager.associate { it.name to it.version }
         } ?: emptyMap()
@@ -97,7 +98,7 @@ class PyPackageDaemonListener(private val project: Project) : DaemonCodeAnalyzer
     for (fileEditor in fileEditors) {
       val vFile = fileEditor.file
       if (vFile.isUpToDate) continue
-      service<TaskExecutor>().execute(vFile, project)
+      service<PackageDaemonTaskExecutor>().execute(vFile, project)
     }
   }
 

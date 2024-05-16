@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.NlsActions.ActionDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   public ToggleAction() {
   }
 
-  public ToggleAction(final @Nullable @ActionText String text) {
+  public ToggleAction(@Nullable @ActionText String text) {
     super(() -> text);
   }
 
@@ -26,27 +27,37 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text);
   }
 
-  public ToggleAction(final @Nullable @ActionText String text,
-                      final @Nullable @ActionDescription String description,
-                      final @Nullable Icon icon) {
+  public ToggleAction(@Nullable @ActionText String text,
+                      @Nullable @ActionDescription String description,
+                      @Nullable Icon icon) {
     super(text, description, icon);
   }
 
   public ToggleAction(@NotNull Supplier<@ActionText String> text,
                       @NotNull Supplier<@ActionDescription String> description,
-                      final @Nullable Icon icon) {
+                      @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public ToggleAction(@NotNull Supplier<@ActionText String> text, final @Nullable Icon icon) {
+  public ToggleAction(@NotNull Supplier<@ActionText String> text, @Nullable Icon icon) {
     super(text, Presentation.NULL_STRING, icon);
   }
 
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
-    final boolean state = !isSelected(e);
+  @NotNull
+  Presentation createTemplatePresentation() {
+    Presentation presentation = super.createTemplatePresentation();
+    if (ActionUtil.isMakeAllToggleActionsMultiChoice()) {
+      presentation.setMultiChoice(true);
+    }
+    return presentation;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    boolean state = !isSelected(e);
     setSelected(e, state);
-    final Presentation presentation = e.getPresentation();
+    Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, state);
   }
 
@@ -67,7 +78,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   public abstract void setSelected(@NotNull AnActionEvent e, boolean state);
 
   @Override
-  public void update(final @NotNull AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean selected = isSelected(e);
     Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, selected);

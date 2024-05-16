@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
@@ -228,10 +229,15 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
     ContainerUtil.removeDuplicates(modules);
 
-    for (Module module : modules) {
-      if (module.isDisposed()) continue;
-      unlinkModuleFromExternalSystem(module);
-    }
+    ProjectSystemId projectSystemId = projectData.getOwner();
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove external system options from workspace model", __ -> {
+      for (Module module : modules) {
+        if (module.isDisposed()) continue;
+        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove options for " + module.getName(), ___ -> {
+          unlinkModuleFromExternalSystem(module);
+        });
+      }
+    });
 
     ExternalSystemApiUtil.executeOnEdt(true, () -> {
       AtomicInteger counter = project.getUserData(ORPHAN_MODULE_HANDLERS_COUNTER);

@@ -22,9 +22,8 @@ import static com.jetbrains.python.PyElementTypes.*;
 import static com.jetbrains.python.PyTokenTypes.*;
 
 public final class PythonTokenSetContributor extends PythonDialectsTokenSetContributorBase {
-  @NotNull
   @Override
-  public TokenSet getStatementTokens() {
+  public @NotNull TokenSet getStatementTokens() {
     return TokenSet.create(EXPRESSION_STATEMENT, ASSIGNMENT_STATEMENT, TYPE_DECLARATION_STATEMENT, AUG_ASSIGNMENT_STATEMENT, 
                            ASSERT_STATEMENT, BREAK_STATEMENT, CONTINUE_STATEMENT, DEL_STATEMENT, EXEC_STATEMENT, FOR_STATEMENT,
                            FROM_IMPORT_STATEMENT, GLOBAL_STATEMENT, IMPORT_STATEMENT, IF_STATEMENT, PASS_STATEMENT,
@@ -33,9 +32,8 @@ public final class PythonTokenSetContributor extends PythonDialectsTokenSetContr
                            TYPE_ALIAS_STATEMENT);
   }
 
-  @NotNull
   @Override
-  public TokenSet getExpressionTokens() {
+  public @NotNull TokenSet getExpressionTokens() {
     return TokenSet.create(EMPTY_EXPRESSION, REFERENCE_EXPRESSION, INTEGER_LITERAL_EXPRESSION, FLOAT_LITERAL_EXPRESSION,
                            IMAGINARY_LITERAL_EXPRESSION, STRING_LITERAL_EXPRESSION, PARENTHESIZED_EXPRESSION,
                            SUBSCRIPTION_EXPRESSION, SLICE_EXPRESSION, BINARY_EXPRESSION, PREFIX_EXPRESSION, CALL_EXPRESSION,
@@ -47,9 +45,8 @@ public final class PythonTokenSetContributor extends PythonDialectsTokenSetContr
                            ASSIGNMENT_EXPRESSION);
   }
 
-  @NotNull
   @Override
-  public TokenSet getKeywordTokens() {
+  public @NotNull TokenSet getKeywordTokens() {
     return TokenSet.create(
       AND_KEYWORD, AS_KEYWORD, ASSERT_KEYWORD, BREAK_KEYWORD, CLASS_KEYWORD,
       CONTINUE_KEYWORD, DEF_KEYWORD, DEL_KEYWORD, ELIF_KEYWORD, ELSE_KEYWORD,
@@ -63,29 +60,25 @@ public final class PythonTokenSetContributor extends PythonDialectsTokenSetContr
       NONE_KEYWORD, TRUE_KEYWORD, FALSE_KEYWORD, NONLOCAL_KEYWORD, DEBUG_KEYWORD, ASYNC_KEYWORD, AWAIT_KEYWORD, TYPE_KEYWORD);
   }
 
-  @NotNull
   @Override
-  public TokenSet getParameterTokens() {
+  public @NotNull TokenSet getParameterTokens() {
     return TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER, SINGLE_STAR_PARAMETER, SLASH_PARAMETER);
   }
 
-  @NotNull
   @Override
-  public TokenSet getFunctionDeclarationTokens() {
+  public @NotNull TokenSet getFunctionDeclarationTokens() {
     return TokenSet.create(FUNCTION_DECLARATION);
   }
 
-  @NotNull
   @Override
-  public TokenSet getUnbalancedBracesRecoveryTokens() {
+  public @NotNull TokenSet getUnbalancedBracesRecoveryTokens() {
     // Sync these tokens with Python.flex under the <FSTRING_FRAGMENT> state
     return TokenSet.create(DEF_KEYWORD, CLASS_KEYWORD, RETURN_KEYWORD, WITH_KEYWORD, WHILE_KEYWORD, BREAK_KEYWORD, CONTINUE_KEYWORD,
                            RAISE_KEYWORD, TRY_KEYWORD, EXCEPT_KEYWORD, FINALLY_KEYWORD);
   }
 
-  @NotNull
   @Override
-  public TokenSet getReferenceExpressionTokens() {
+  public @NotNull TokenSet getReferenceExpressionTokens() {
     return TokenSet.create(REFERENCE_EXPRESSION);
   }
 }

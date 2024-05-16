@@ -5,9 +5,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
-import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.tree.IElementType
-import com.jetbrains.python.psi.PyElementType
 import java.util.function.Function
 
 abstract class PyElementTypesFacade {
@@ -33,6 +31,8 @@ abstract class PyElementTypesFacade {
   abstract val typeParameterList: IElementType
   abstract val typeAliasStatement: IElementType
 
+  // reparseable elements
+  abstract val statementList: IElementType
 
   // constructors for non-stub elements
   abstract val argumentListConstructor: Function<in ASTNode, out PsiElement>
@@ -57,7 +57,6 @@ abstract class PyElementTypesFacade {
   abstract val tryExceptStatementConstructor: Function<in ASTNode, out PsiElement>
   abstract val withStatementConstructor: Function<in ASTNode, out PsiElement>
   abstract val whileStatementConstructor: Function<in ASTNode, out PsiElement>
-  abstract val statementListConstructor: Function<in ASTNode, out PsiElement>
   abstract val nonlocalStatementConstructor: Function<in ASTNode, out PsiElement>
   abstract val withItemConstructor: Function<in ASTNode, out PsiElement>
   abstract val emptyExpressionConstructor: Function<in ASTNode, out PsiElement>

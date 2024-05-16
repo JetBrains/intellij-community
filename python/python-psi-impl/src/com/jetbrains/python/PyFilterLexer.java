@@ -9,8 +9,8 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
-public class PyFilterLexer extends BaseFilterLexer {
-  protected PyFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer) {
+public final class PyFilterLexer extends BaseFilterLexer {
+  public PyFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer) {
     super(originalLexer, occurrenceConsumer);
   }
 

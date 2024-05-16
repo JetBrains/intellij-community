@@ -11,4 +11,3 @@ class Delegate() {
 val p: String by Delegate()
 
 
-// IGNORE_K2_LOG

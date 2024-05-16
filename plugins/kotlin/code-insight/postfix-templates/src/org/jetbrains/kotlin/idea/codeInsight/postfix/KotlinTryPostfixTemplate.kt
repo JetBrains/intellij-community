@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
@@ -167,8 +168,17 @@ private class ExceptionClassCollector : KtTreeVisitor<Unit?>() {
     private fun processAnnotationValue(value: KtAnnotationValue) {
         when (value) {
             is KtArrayAnnotationValue -> value.values.forEach(::processAnnotationValue)
-            is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue -> mutableExceptionClasses.add(value.classId)
-            is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> hasLocalClasses = true
+            is KtKClassAnnotationValue -> {
+                val type = value.type
+                if (type is KtNonErrorClassType) {
+                    val classId = type.classId
+                    if (classId.isLocal) {
+                        hasLocalClasses = true
+                    } else {
+                        mutableExceptionClasses.add(classId)
+                    }
+                }
+            }
             else -> {}
         }
     }

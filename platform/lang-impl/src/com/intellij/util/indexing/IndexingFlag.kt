@@ -13,10 +13,8 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.util.application
 import com.intellij.util.asSafely
-import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
-import com.intellij.util.indexing.dependencies.FileIndexingStamp
-import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
-import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute
+import com.intellij.util.indexing.dependencies.*
+import com.intellij.util.indexing.impl.perFileVersion.LongFileAttribute
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import kotlin.concurrent.Volatile
@@ -53,10 +51,10 @@ object IndexingFlag {
     return indexedFlagDisabled!!
   }
 
-  private val attribute = FileAttribute("indexing.flag", 0, true)
+  private val attribute = FileAttribute("indexing.flag", 1, true)
 
   @Volatile
-  private var persistence = IntFileAttribute.overFastAttribute(attribute)
+  private var persistence = LongFileAttribute.overFastAttribute(attribute)
   private val hashes = StripedIndexingStampLock()
 
   @JvmStatic
@@ -106,7 +104,7 @@ object IndexingFlag {
   private fun setFileIndexed(fileId: Int, stamp: FileIndexingStamp) {
     if (!isIndexedFlagDisabled()) {
       stamp.store { s ->
-        persistence.writeInt(fileId, s)
+        persistence.writeLong(fileId, s)
       }
     }
   }
@@ -114,8 +112,15 @@ object IndexingFlag {
   @JvmStatic
   fun isFileIndexed(file: VirtualFile, stamp: FileIndexingStamp): Boolean {
     return file.asApplicable()?.let { fileWithId ->
-      stamp.isSame(persistence.readInt(fileWithId.id))
+      stamp.isSame(persistence.readLong(fileWithId.id))
     } ?: false
+  }
+
+  @JvmStatic
+  fun isFileChanged(file: VirtualFile, stamp: FileIndexingStamp): IsFileChangedResult {
+    return file.asApplicable()?.let { fileWithId ->
+      stamp.isFileChanged(persistence.readLong(fileWithId.id).toFileModCount())
+    } ?: IsFileChangedResult.UNKNOWN
   }
 
   @JvmStatic
@@ -149,7 +154,7 @@ object IndexingFlag {
   }
 
   fun reloadAttributes() {
-    persistence = IntFileAttribute.overFastAttribute(attribute)
+    persistence = LongFileAttribute.overFastAttribute(attribute)
   }
 
   @JvmStatic

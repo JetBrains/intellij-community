@@ -91,8 +91,16 @@ object KotlinUnusedSymbolUtil {
               return false
           }
       }
-
-      return !declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)
+      val owner:KtNamedDeclaration
+      if (declaration is KtTypeParameter) {
+          var parent = declaration.parent
+          if (parent != null && parent !is KtTypeParameterListOwner) parent = parent.parent
+          owner = if (parent is KtTypeParameterListOwner) parent else declaration
+      }
+      else {
+          owner = declaration
+      }
+      return !owner.hasModifier(KtTokens.OVERRIDE_KEYWORD)
   }
 
     private fun isEffectivelyAbstractFunction(ownerFunction: KtFunction): Boolean {
@@ -189,7 +197,7 @@ object KotlinUnusedSymbolUtil {
                   listOfNotNull(declaration.getClassNameForCompanionObject())
           for (name in list) {
               if (name == null) continue
-              when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null)) {
+              when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)) {
                   PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> {
                   } // go on, check other names
                   PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> zeroOccurrences = false

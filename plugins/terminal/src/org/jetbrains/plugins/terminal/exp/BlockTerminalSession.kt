@@ -20,9 +20,18 @@ import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 
-internal class BlockTerminalSession(val settings: JBTerminalSystemSettingsProviderBase,
-                                    val colorPalette: TerminalColorPalette,
-                                    val shellIntegration: ShellIntegration) : Disposable {
+/**
+ * Represents a shell session with injected command-block shell integration.
+ * It configures a terminal emulator and non-UI components depending on it, like [ShellCommandManager].
+ *
+ * Disposed on terminal UI component disposing, not on the shell session termination.
+ */
+internal class BlockTerminalSession(
+  val settings: JBTerminalSystemSettingsProviderBase,
+  val colorPalette: TerminalColorPalette,
+  val shellIntegration: ShellIntegration
+) : Disposable {
+
   val model: TerminalModel
   internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
 
@@ -123,4 +132,5 @@ internal class BlockTerminalSession(val settings: JBTerminalSystemSettingsProvid
     val KEY: Key<BlockTerminalSession> = Key.create("TerminalSession")
     val DATA_KEY: DataKey<BlockTerminalSession> = DataKey.create("TerminalSession")
   }
+
 }

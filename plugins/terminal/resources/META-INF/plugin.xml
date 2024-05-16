@@ -18,7 +18,6 @@
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>
   <xi:include href="/META-INF/terminal.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/completion-specs.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"

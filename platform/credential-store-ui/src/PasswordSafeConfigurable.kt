@@ -35,6 +35,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.chooseFile
 import com.intellij.ui.layout.selected
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Paths
 import javax.swing.JCheckBox
@@ -46,9 +47,13 @@ import kotlin.io.path.isDirectory
 private val LOG: Logger
   get() = logger<PasswordSafeConfigurable>()
 
+/**
+ * API note: use [CredentialStoreUiService] instead of using this `.class` to show settings dialog
+ */
+@ApiStatus.Internal
 class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
-                                                                                                             CredentialStoreBundle.message("password.safe.configurable"),
-                                                                                                             "reference.ide.settings.password.safe") {
+                                                                                                    CredentialStoreBundle.passwordSafeConfigurable,
+                                                                                                    "reference.ide.settings.password.safe") {
   private val settings = service<PasswordSafeSettings>()
 
   override fun getSettings() = settings
@@ -56,6 +61,7 @@ class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, Pa
   override fun createUi() = PasswordSafeConfigurableUi(settings)
 }
 
+@ApiStatus.Internal
 class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : ConfigurableUi<PasswordSafeSettings> {
   private lateinit var panel: DialogPanel
   private lateinit var usePgpKey: JCheckBox

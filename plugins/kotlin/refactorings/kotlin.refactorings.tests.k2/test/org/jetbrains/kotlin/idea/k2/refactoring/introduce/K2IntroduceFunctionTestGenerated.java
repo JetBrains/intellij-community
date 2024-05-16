@@ -306,6 +306,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/suspendCall.kt");
         }
 
+        @TestMetadata("suspendCallInsideSuspendContinuation.kt")
+        public void testSuspendCallInsideSuspendContinuation() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/suspendCallInsideSuspendContinuation.kt");
+        }
+
         @TestMetadata("suspendCallWithExtractedParameter.kt")
         public void testSuspendCallWithExtractedParameter() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/suspendCallWithExtractedParameter.kt");
@@ -1093,6 +1098,16 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         public void testSingleExpression() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/singleExpression.kt");
         }
+
+        @TestMetadata("syntheticJavaReference.kt")
+        public void testSyntheticJavaReference() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/syntheticJavaReference.kt");
+        }
+
+        @TestMetadata("unrelatedSignature.kt")
+        public void testUnrelatedSignature() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/unrelatedSignature.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -1324,6 +1339,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
         @TestMetadata("filterPropagatingMarkers.kt")
         public void testFilterPropagatingMarkers() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/optIn/filterPropagatingMarkers.kt");
+        }
+
+        @TestMetadata("filterPropagatingMarkersImplicitUsage.kt")
+        public void testFilterPropagatingMarkersImplicitUsage() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/optIn/filterPropagatingMarkersImplicitUsage.kt");
         }
 
         @TestMetadata("filterPropagatingMarkersWitArgs.kt")
@@ -1672,6 +1692,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/classObject.kt");
             }
 
+            @TestMetadata("differentReceivers.kt")
+            public void testDifferentReceivers() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/differentReceivers.kt");
+            }
+
             @TestMetadata("extensionLambda.kt")
             public void testExtensionLambda() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/extensionLambda.kt");
@@ -1680,6 +1705,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             @TestMetadata("extensionLambdaAsParameter.kt")
             public void testExtensionLambdaAsParameter() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/extensionLambdaAsParameter.kt");
+            }
+
+            @TestMetadata("functionalParameterTypeWithReceiver.kt")
+            public void testFunctionalParameterTypeWithReceiver() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/functionalParameterTypeWithReceiver.kt");
             }
 
             @TestMetadata("idWithBackticks.kt")
@@ -1770,6 +1800,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             @TestMetadata("qualifiedTypeRef.kt")
             public void testQualifiedTypeRef() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/qualifiedTypeRef.kt");
+            }
+
+            @TestMetadata("receiverWithFunctionalLiteral.kt")
+            public void testReceiverWithFunctionalLiteral() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/receiverWithFunctionalLiteral.kt");
             }
 
             @TestMetadata("reducedParameterList.kt")
@@ -2003,6 +2038,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     public static class TypeParameters extends AbstractK2IntroduceFunctionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("definitelyNotNullType.kt")
+        public void testDefinitelyNotNullType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/typeParameters/definitelyNotNullType.kt");
         }
 
         @TestMetadata("localClassInBound.kt")

@@ -10,10 +10,13 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.kotlin.KotlinTester
 import com.intellij.util.Alarm
 import com.intellij.util.PathUtil
+import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.idea.devkit.inspections.quickfix.DevKitInspectionFixTestBase
 
 abstract class ReadOrWriteActionInServiceInitializationInspectionTestBase : DevKitInspectionFixTestBase() {
@@ -27,6 +30,8 @@ abstract class ReadOrWriteActionInServiceInitializationInspectionTestBase : DevK
     moduleBuilder.addLibrary("platform-extensions", PathUtil.getJarPathForClass(ComponentManager::class.java))
     moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(ProcessCanceledException::class.java))
     moduleBuilder.addLibrary("util-rt", PathUtil.getJarPathForClass(ThrowableComputable::class.java))
+    // mock JDK is required for getting `CancellationException`, otherwise `ProcessCancelledException` does not inherit from `RuntimeException`
+    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().path)
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_17)
   }
 

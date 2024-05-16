@@ -28,6 +28,9 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
     val element: T?
         get() = elementPointer.element
 
+    /**
+     * @see [org.jetbrains.kotlin.idea.quickfix.KotlinCrossLanguageQuickFixAction]
+     */
     open val isCrossLanguageFix: Boolean = false
 
     protected open fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean = true

@@ -4,15 +4,19 @@ package com.intellij.java.propertyBased;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModShowConflicts;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class JavaIntentionPolicy extends IntentionPolicy {
   @Override
@@ -94,6 +98,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.equals("Remove 'while' statement") ||
                                       intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") ||//remove methods in batch
                                       intentionText.startsWith("Suppress with 'NON-NLS' comment") ||
+                                      intentionText.startsWith("Suppress for ") || // Suppressions often modify comments 
                                       intentionText.startsWith("Move comment to separate line") ||//merge comments on same line
                                       intentionText.startsWith("Remove redundant arguments to call") ||//removes arg with all comments inside
                                       intentionText.startsWith("Convert to 'enum'") ||//removes constructor with javadoc?
@@ -118,6 +123,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.matches(JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix")) ||
                                       intentionText.matches("Remove .+ suppression") ||
                                       familyName.equals("Fix typo") ||
+                                      familyName.equals("Remove annotation") || // may remove comment inside annotation
                                       familyName.equals("Reformat the whole file"); // may update @noinspection lines
     return !isCommentChangingAction;
   }
@@ -149,6 +155,15 @@ class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
   @Override
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return super.shouldSkipIntention(actionText) || mayBreakCompilation(actionText);
+  }
+
+  @Override
+  public @Nullable String validateCommand(@NotNull ModCommand modCommand) {
+    if (modCommand instanceof ModShowConflicts conflicts) {
+      return "Conflict; may break compilation: " +
+             conflicts.conflicts().values().stream().flatMap(c -> c.messages().stream()).distinct().collect(Collectors.joining("; "));
+    }
+    return super.validateCommand(modCommand);
   }
 }
 

@@ -8,11 +8,12 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLFile;
+import org.jetbrains.yaml.psi.YAMLPsiElement;
 
 public class YamlJsonLikePsiWalkerFactory implements JsonLikePsiWalkerFactory {
   @Override
   public boolean handles(@NotNull PsiElement element) {
-    return element.getContainingFile() instanceof YAMLFile;
+    return element.getContainingFile() instanceof YAMLFile || element instanceof YAMLPsiElement;
   }
 
   @Override

@@ -2,25 +2,28 @@
 
 package org.jetbrains.kotlin.idea.searching.usages
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Processor
-import com.intellij.util.Query
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
@@ -60,11 +63,9 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     context(KtAnalysisSession)
     private fun callReceiverRefersToCompanionObject(call: KtCall, companionObject: KtObjectDeclaration): Boolean {
         if (call !is KtCallableMemberCall<*, *>) return false
-        val dispatchReceiver = call.partiallyAppliedSymbol.dispatchReceiver
-        val extensionReceiver = call.partiallyAppliedSymbol.extensionReceiver
+        val implicitReceivers = call.getImplicitReceivers()
         val companionObjectSymbol = companionObject.getSymbol()
-        return (dispatchReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol ||
-                (extensionReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol
+        return companionObjectSymbol in implicitReceivers.map { it.symbol }
     }
 
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
@@ -82,10 +83,9 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
     }
 
-    override fun formatJavaOrLightMethod(method: PsiMethod): String {
-        val unwrapped = method.unwrapped as KtDeclaration
-        return KotlinPsiDeclarationRenderer.render(unwrapped) ?: analyzeInModalWindow(unwrapped, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            unwrapped.getSymbol().render(noAnnotationsShortNameRenderer())
+    override fun renderDeclaration(method: KtDeclaration): String {
+        return KotlinPsiDeclarationRenderer.render(method) ?: analyzeInModalWindow(method, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            method.getSymbol().render(noAnnotationsShortNameRenderer())
         }
     }
 
@@ -107,8 +107,13 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
                 is KtFunctionCall<*> -> {
                     val constructorSymbol = call.symbol as? KtConstructorSymbol ?: return@withResolvedCall false
                     val constructedClassSymbol =
-                        constructorSymbol.getContainingSymbol() as? KtClassifierSymbol ?: return@withResolvedCall false
-                    constructedClassSymbol == ktClassOrObject.getClassOrObjectSymbol()
+                        constructorSymbol.getContainingSymbol() as? KtClassLikeSymbol ?: return@withResolvedCall false
+                    val classOrObjectSymbol = ktClassOrObject.getClassOrObjectSymbol()
+
+                    fun KtClassLikeSymbol.getExpectsOrSelf(): List<KtDeclarationSymbol> = (listOf(this).takeIf { isExpect } ?: getExpectsForActual())
+
+                    constructedClassSymbol == classOrObjectSymbol ||
+                            constructedClassSymbol.getExpectsOrSelf() == classOrObjectSymbol?.getExpectsOrSelf()
                 }
 
                 else -> false
@@ -131,5 +136,14 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     override fun searchInheritors(
         element: PsiElement,
         searchScope: SearchScope,
-    ): Sequence<PsiElement> = (element as? KtClass)?.findAllInheritors(searchScope) ?: emptySequence()
+        searchDeeply: Boolean,
+    ): Sequence<PsiElement> = when (element) {
+        is KtClass -> if (searchDeeply) element.findAllInheritors(searchScope) else DirectKotlinClassInheritorsSearch.search(
+            element, searchScope
+        ).asSequence()
+
+        is PsiClass -> ClassInheritorsSearch.search(element, searchScope, searchDeeply).asSequence()
+
+        else -> emptySequence()
+    }
 }

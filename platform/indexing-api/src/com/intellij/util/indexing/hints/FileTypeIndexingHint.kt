@@ -65,8 +65,8 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * If a language for given file is substituted, IDE has two options how to index the file: either using original file type, or
  * default filetype of substituted language.
  * I.e. in the case when particular YAML is substituted with EERb language, [FileTypeIndexingHint] will
- * be invoked with `SubstitutedFileType{ERbFileType, YAMLFileType}` (because ERbFileType is the default filetype for EERbLanguage).
- * [com.intellij.util.indexing.hints.BaseFileTypeInputFilter] in its turn will resolve `SubstitutedFileType` to `ERbFileType`
+ * be invoked with `SubstitutedFileType{ErbFileType, YAMLFileType}` (because ERbFileType is the default filetype for EERbLanguage).
+ * [com.intellij.util.indexing.hints.BaseFileTypeInputFilter] in its turn will resolve `SubstitutedFileType` to `ErbFileType`
  * (this simplifies `BaseFileTypeInputFilter` subclasses implementation so that they don't need to care much about `SubstitutedFileType`)
  *
  *

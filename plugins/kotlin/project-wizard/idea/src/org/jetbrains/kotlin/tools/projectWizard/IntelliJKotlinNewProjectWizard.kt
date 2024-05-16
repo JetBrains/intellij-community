@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logUseCompactProjectStructureChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logUseCompactProjectStructureFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -69,6 +70,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 checkBox(KotlinNewProjectWizardUIBundle.message("label.project.wizard.new.project.use.compact.project.structure"))
                     .bindSelected(useCompactProjectStructureProperty)
                     .whenStateChangedFromUi { logUseCompactProjectStructureChanged(it) }
+                    .onApply { logUseCompactProjectStructureFinished(useCompactProjectStructure) }
                     .gap(RightGap.SMALL)
                 contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.use.compact.project.structure"))
             }

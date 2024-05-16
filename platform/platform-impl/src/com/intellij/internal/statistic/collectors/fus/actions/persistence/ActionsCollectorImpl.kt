@@ -34,6 +34,11 @@ class ActionsCollectorImpl : ActionsCollector() {
 
   private val myUpdateStats = Object2LongMaps.synchronize(Object2LongOpenHashMap<ActionUpdateStatsKey>())
 
+  init {
+    // preload classes
+    ActionsEventLogGroup.ACTION_UPDATED.hashCode()
+  }
+
   override fun record(actionId: String?, event: InputEvent?, context: Class<*>) {
     recordCustomActionInvoked(null, actionId, event, context)
   }

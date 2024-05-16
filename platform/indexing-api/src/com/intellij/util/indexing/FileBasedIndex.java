@@ -368,11 +368,14 @@ public abstract class FileBasedIndex {
   @ApiStatus.Internal
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", false);
 
+  /**
+   * @deprecated Is always true
+   */
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static boolean isIndexAccessDuringDumbModeEnabled() {
-    return !ourDisableIndexAccessDuringDumbMode;
+    return true;
   }
-  private static final boolean ourDisableIndexAccessDuringDumbMode = Boolean.getBoolean("idea.disable.index.access.during.dumb.mode");
 
   @ApiStatus.Internal
   public static final boolean USE_IN_MEMORY_INDEX = Boolean.getBoolean("idea.use.in.memory.file.based.index");

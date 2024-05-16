@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.testGenerator.model
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.UNCATEGORIZED
 import java.io.File
 
 interface TGroup {
@@ -67,7 +68,7 @@ fun MutableTWorkspace.testGroup(
     modulePath: String,
     testSourcesPath: String = "test",
     testDataPath: String = "testData",
-    category: GroupCategory = GroupCategory.UNCATEGORIZED,
+    category: GroupCategory = UNCATEGORIZED,
     block: MutableTGroup.() -> Unit
 ) {
     groups += TGroupImpl(

@@ -84,7 +84,9 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
         new TagNameSynchronizer((EditorImpl)editor, project, language).listenForDocumentChanges();
       }
       return null;
-    }).submit(AppExecutorUtil.getAppExecutorService());
+    })
+      .coalesceBy(Pair.create(editor, XmlTagNameSynchronizer.class))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private static void recreateSynchronizers() {

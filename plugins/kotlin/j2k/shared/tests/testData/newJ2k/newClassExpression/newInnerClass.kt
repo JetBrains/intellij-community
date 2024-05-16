@@ -1,3 +1,4 @@
+// KTIJ-29632
 package org.test
 
 internal class OuterClass {

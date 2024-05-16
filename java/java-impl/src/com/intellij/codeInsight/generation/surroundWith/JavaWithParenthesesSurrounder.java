@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -17,24 +16,24 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.IntroduceVariableUtil;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
+public class JavaWithParenthesesSurrounder extends JavaExpressionModCommandSurrounder{
   @Override
   public boolean isApplicable(PsiExpression expr) {
     return !PsiTypes.voidType().equals(expr.getType());
   }
 
   @Override
-  public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
-    PsiManager manager = expr.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+  protected void surroundExpression(@NotNull ActionContext context, @NotNull PsiExpression expr, @NotNull ModPsiUpdater updater) {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     PsiParenthesizedExpression parenthExpr = (PsiParenthesizedExpression)factory.createExpressionFromText("(a)", null);
@@ -42,7 +41,7 @@ public class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
     parenthExpr.getExpression().replace(expr);
     expr = (PsiExpression)IntroduceVariableUtil.replace(expr, parenthExpr, project);
     int offset = expr.getTextRange().getEndOffset();
-    return new TextRange(offset, offset);
+    updater.moveCaretTo(offset);
   }
 
   @Override

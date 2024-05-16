@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -70,4 +71,16 @@ object ApplicabilityRanges {
 
     fun declarationName(element: KtNamedDeclaration) =
         ApplicabilityRange.single(element) { it.nameIdentifier }
+
+    fun ifExpressionExcludingBranches(element: KtIfExpression): List<TextRange> {
+        val rightOffset = element.rightParenthesis?.endOffset
+
+        val textRange = if (rightOffset == null) {
+            element.ifKeyword.textRangeIn(element)
+        } else {
+            TextRange(element.ifKeyword.startOffset, rightOffset).shiftLeft(element.startOffset)
+        }
+
+        return listOf(textRange)
+    }
 }

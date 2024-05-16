@@ -49,17 +49,7 @@ public final class TextWithMnemonic {
    * @return plain text without mnemonic
    */
   public @NotNull @Nls String getText(boolean withMnemonicSuffix) {
-    if (mnemonicSuffix.isEmpty()) {
-      return text;
-    }
-    if (withMnemonicSuffix) {
-      return text + mnemonicSuffix;
-    }
-    int ellipsisLength = getEllipsisLength(mnemonicSuffix);
-    if (ellipsisLength == 0) {
-      return text;
-    }
-    return text + mnemonicSuffix.substring(mnemonicSuffix.length() - ellipsisLength);
+    return format(false, null, withMnemonicSuffix);
   }
 
   /**
@@ -317,12 +307,59 @@ public final class TextWithMnemonic {
    */
   @Override
   public @Nls String toString() {
-    if (mnemonicIndex > -1) {
-      String completeText = text + mnemonicSuffix;
-      String prefix = StringUtil.escapeMnemonics(completeText.substring(0, mnemonicIndex));
-      String suffix = completeText.substring(mnemonicIndex);
-      return prefix + "_" + suffix;
+    return format(true, '_', true);
+  }
+
+  /**
+   * The power version of {@code getText} and {@code toString}
+   * <p>
+   *   Just a utility function that covers various edge cases. Some quirks:
+   *   <ul>
+   *     <li>If {@code escapeMnemonics} is {@code true}, and there's an actual mnemonic character,
+   *     and {@code mnemonicPrefix} is not {@code null}, then only the part of the string up to the actual
+   *     mnemonic character is escaped. This is a legacy implementation detail. If the string does <em>not</em>
+   *     contain a mnemonic character, then everything will be escaped.</li>
+   *     <li>If {@code withSuffix} is false, but there's an actual suffix, then {@code mnemonicPrefix} is ignored and not used,
+   *     the resulting string will not contain the mnemonic (because it was in the suffix).</li>
+   *     <li>The combination of {@code escapeMnemonics == false} and {@code mnemonicPrefix != null} only makes sense
+   *     if you know in advance that the string doesn't actually contain {@code mnemonicPrefix} and you don't want other mnemonic
+   *     prefixes (e.g. {@code '_'} or {@code '&'}) to be escaped. Usually used with non-printable prefixes such as
+   *     {@link UIUtil#MNEMONIC}.</li>
+   *   </ul>
+   * </p>
+   * @param escapeMnemonics if true, then mnemonic characters up to the actual mnemonic will be escaped
+   * @param mnemonicPrefix if specified, will be inserted before the mnemonic character
+   * @param withSuffix      if true, then the returned text will include the mnemonic suffix, if any
+   * @see #getText(boolean)
+   * @see #toString()
+   * @return formatted string
+   */
+  @ApiStatus.Internal
+  public @NotNull @Nls String format(boolean escapeMnemonics, @Nullable Character mnemonicPrefix, boolean withSuffix) {
+    String completeText;
+    boolean completeTextIncludesMnemonics;
+    if (mnemonicSuffix.isEmpty()) {
+      completeText = text;
+      completeTextIncludesMnemonics = mnemonicIndex >= 0 && mnemonicIndex < text.length();
     }
-    return StringUtil.escapeMnemonics(text);
+    else if (withSuffix) {
+      completeText = text + mnemonicSuffix;
+      completeTextIncludesMnemonics = mnemonicIndex >= 0 && mnemonicIndex < completeText.length();
+    }
+    else {
+      int ellipsisLength = getEllipsisLength(mnemonicSuffix);
+      completeText = ellipsisLength == 0 ? text : text + mnemonicSuffix.substring(mnemonicSuffix.length() - ellipsisLength);
+      completeTextIncludesMnemonics = mnemonicIndex >= 0 && mnemonicIndex < text.length();
+    }
+    if (mnemonicPrefix != null && completeTextIncludesMnemonics) {
+      String firstPart = completeText.substring(0, mnemonicIndex);
+      String secondPart = completeText.substring(mnemonicIndex);
+      return escapeMnemonics // A legacy implementation quirk: we don't escape anything after the actual mnemonic.
+             ? StringUtil.escapeMnemonics(firstPart) + mnemonicPrefix + secondPart
+             : firstPart + mnemonicPrefix + secondPart;
+    }
+    else {
+      return escapeMnemonics ? StringUtil.escapeMnemonics(completeText) : completeText;
+    }
   }
 }

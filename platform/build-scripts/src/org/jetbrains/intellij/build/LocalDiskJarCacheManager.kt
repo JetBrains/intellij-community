@@ -32,8 +32,8 @@ fun createMarkFile(file: Path): Boolean {
 internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionClassOutDir: Path): List<SourceAndCacheStrategy> {
   return sources
     .map { source ->
-      when {
-        source is DirSource -> {
+      when (source) {
+        is DirSource -> {
           val dir = source.dir
           if (dir.startsWith(productionClassOutDir)) {
             ModuleOutputSourceAndCacheStrategy(source = source, path = productionClassOutDir.relativize(dir).toString())
@@ -42,17 +42,15 @@ internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionC
             throw UnsupportedOperationException("$source is not supported")
           }
         }
-        source is InMemoryContentSource -> {
-          InMemorySourceAndCacheStrategy(source)
-        }
-        source !is ZipSource -> {
-          throw UnsupportedOperationException("$source is not supported")
-        }
-        !source.file.startsWith(MAVEN_REPO) -> {
-          NonMavenJarSourceAndCacheStrategy(source)
-        }
-        else -> {
-          MavenJarSourceAndCacheStrategy(source)
+        is InMemoryContentSource -> InMemorySourceAndCacheStrategy(source)
+        is FileSource -> FileSourceCacheStrategy(source)
+        is ZipSource -> {
+          if (!source.file.startsWith(MAVEN_REPO)) {
+            NonMavenJarSourceAndCacheStrategy(source)
+          }
+          else {
+            MavenJarSourceAndCacheStrategy(source)
+          }
         }
       }
     }
@@ -124,5 +122,20 @@ private class InMemorySourceAndCacheStrategy(override val source: InMemoryConten
   override fun updateDigest(digest: HashStream64) {
     hash = Hashing.komihash5_0().hashBytesToLong(source.data)
     digest.putLong(hash).putInt(source.data.size)
+  }
+}
+
+private class FileSourceCacheStrategy(override val source: FileSource) : SourceAndCacheStrategy {
+  private var hash: Long = source.hash
+
+  override val path: String
+    get() = source.relativePath
+
+  override fun getHash() = hash
+
+  override fun getSize(): Long = source.size.toLong()
+
+  override fun updateDigest(digest: HashStream64) {
+    digest.putLong(hash)
   }
 }

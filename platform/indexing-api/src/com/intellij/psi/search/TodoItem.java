@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public interface TodoItem {
+  TodoItem[] EMPTY_ARRAY = new TodoItem[0];
   @NotNull
   PsiFile getFile();
 

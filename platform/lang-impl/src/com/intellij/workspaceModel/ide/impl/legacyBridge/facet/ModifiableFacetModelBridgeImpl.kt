@@ -87,7 +87,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
         }
       }
       val entity = ref.get()!!
-      diff.mutableFacetMapping().addMapping(entity, facet)
+      mutableFacetMapping(diff).addMapping(entity, facet)
       facet.externalSource = externalSource
     }
     facetsChanged()
@@ -115,7 +115,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     entity.childrenFacets.forEach {
       removeFacetEntityWithSubFacets(it)
     }
-    diff.mutableFacetMapping().removeMapping(entity)
+    mutableFacetMapping(diff).removeMapping(entity)
     diff.removeEntity(entity)
   }
 
@@ -127,8 +127,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       val newEntity = diff.modifyEntity(entity) {
         this.name = newName
       }
-      diff.mutableFacetMapping().removeMapping(entity)
-      diff.mutableFacetMapping().addMapping(newEntity, facet)
+      mutableFacetMapping(diff).removeMapping(entity)
+      mutableFacetMapping(diff).addMapping(newEntity, facet)
     }
     facetsChanged()
   }
@@ -166,8 +166,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       changes.add(Triple(facetEntity, newEntity, facet))
     }
     for ((facetEntity, newEntity, facet) in changes) {
-      diff.mutableFacetMapping().removeMapping(facetEntity)
-      diff.mutableFacetMapping().addMapping(newEntity, facet)
+      mutableFacetMapping(diff).removeMapping(facetEntity)
+      mutableFacetMapping(diff).addMapping(newEntity, facet)
     }
     val (facetBridges, commonFacets) = allFacets.partition { it is FacetBridge<*, *> }
       facetBridges.forEach { facet ->

@@ -76,16 +76,6 @@ internal fun VcsLogData.toggleIndexing() {
 }
 
 /**
- * Enables indexing in the registry and project settings if it was disabled. Resumes indexing for the provided repositories if it was paused.
- */
-fun enableAndResumeIndexing(project: Project, data: VcsLogData?, roots: Collection<VirtualFile>) {
-  if (enableIndexing(project, roots)) return
-
-  val index = data?.index as? VcsLogModifiableIndex ?: return
-  index.resumeIndexing(roots)
-}
-
-/**
  * Enables indexing in the registry and project settings if it was disabled. Returns true if indexing state changed.
  */
 private fun enableIndexing(project: Project, roots: Collection<VirtualFile>): Boolean {

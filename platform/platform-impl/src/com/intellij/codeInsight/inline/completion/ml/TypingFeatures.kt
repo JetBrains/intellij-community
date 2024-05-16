@@ -2,12 +2,15 @@
 package com.intellij.codeInsight.inline.completion.ml
 
 import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
-import com.intellij.platform.ml.*
+import com.intellij.platform.ml.DescriptionPolicy
+import com.intellij.platform.ml.TierDescriptor
+import com.intellij.platform.ml.environment.Environment
+import com.intellij.platform.ml.environment.get
+import com.intellij.platform.ml.feature.Feature
+import com.intellij.platform.ml.feature.FeatureDeclaration
+import com.intellij.platform.ml.feature.FeatureFilter
 
 internal class TypingFeatures : TierDescriptor.Default(TierTyping) {
-  companion object {
-    val TIME_SINCE_LAST_TYPING = FeatureDeclaration.long("time_since_last_typing").nullable()
-  }
 
   override val descriptionPolicy: DescriptionPolicy = DescriptionPolicy(false, true)
 
@@ -23,3 +26,5 @@ internal class TypingFeatures : TierDescriptor.Default(TierTyping) {
     }
   }
 }
+
+internal val TIME_SINCE_LAST_TYPING = FeatureDeclaration.long("time_since_last_typing").nullable()

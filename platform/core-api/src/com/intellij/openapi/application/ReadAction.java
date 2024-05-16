@@ -9,6 +9,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
@@ -117,11 +118,14 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   public static final class CannotReadException extends ProcessCanceledException {
 
     @Internal
-    public CannotReadException() { super(); }
+    public CannotReadException() {
+      // Still public constructor because it is used in asciidoc plugin
+      super();
+    }
 
     @Internal
-    public CannotReadException(@NotNull Throwable cause) {
-      super(cause);
+    public static @NotNull Runnable jobCancellation(@NotNull Job job) {
+      return () -> job.cancel(new CannotReadException());
     }
   }
 }

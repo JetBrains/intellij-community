@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
@@ -90,8 +91,8 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
     init()
   }
 
-  fun showError(notification: NotificationData) {
-    overlay.showError(notification, OnboardingBackgroundImageProvider.getInstance().hasBackgroundImage(this))
+  fun showOverlay(notification: NotificationData, lifetime: Lifetime) {
+    overlay.showOverlay(notification, lifetime, OnboardingBackgroundImageProvider.getInstance().hasBackgroundImage(this))
   }
 
   override fun createCenterPanel(): JComponent {

@@ -90,7 +90,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * Otherwise, the order is non-deterministic and should not be relied upon.
    */
   @NotNull
-  List<PsiFile> getAllFiles();
+  List<@NotNull PsiFile> getAllFiles();
 
   /**
    * @return whether PSI events are fired when changes occur inside PSI in this view provider. {@code true} for physical files and for some non-physical as well.

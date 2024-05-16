@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.util.Consumer
-import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitRevisionNumber
 import git4idea.test.*
@@ -44,12 +29,12 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     // initial
     afile = touch("a.txt", "initial content")
     var hash = repo.addCommit("initial commit")
-    revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime()), afile))
+    revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime())))
 
     // modify
     overwrite(afile, "second content")
     hash = repo.addCommit("simple commit")
-    revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime()), afile))
+    revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime())))
 
     // mv to dir
     val dir = mkdir("dir")
@@ -58,7 +43,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     repo.mv(afile, bfile)
     TestCase.assertTrue("File $bfile was not created by mv command", bfile.exists())
     hash = repo.commit("moved a.txt to dir/b.txt")
-    revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime()), bfile))
+    revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime())))
 
 
     val messages = listOf("simple commit after rename",
@@ -71,7 +56,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     for (i in messages.indices) {
       overwrite(bfile, contents[i])
       hash = repo.addCommit(messages[i])
-      revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime()), bfile))
+      revisions.add(GitTestRevision(hash, timeStampToDate(repo.lastAuthorTime())))
     }
 
     revisions.reverse()
@@ -146,19 +131,6 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     TestCase.assertEquals(revisionNumber.timestamp, timeStampToDate(hashAndDate[1]))
   }
 
-  @Throws(Exception::class)
-  fun testOnlyHashesHistory() {
-    val history = GitHistoryUtils.onlyHashesHistory(myProject, getFilePath(bfile), projectRoot)
-    val revisionsAfterRename = revisions.filter { it.file == bfile }
-    TestCase.assertEquals(history.size, revisionsAfterRename.size)
-    val itAfterRename = revisionsAfterRename.iterator()
-    for (pair in history) {
-      val revision = itAfterRename.next()
-      TestCase.assertEquals(pair.first.toString(), revision.hash)
-      TestCase.assertEquals(pair.second, revision.date)
-    }
-  }
-
   fun testHistoryWithMergeCommit() {
     repo.checkoutNew("newBranch", revisions.last().hash)
 
@@ -206,7 +178,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     return Date(java.lang.Long.parseLong(timestamp) * 1000)
   }
 
-  private class GitTestRevision(internal val hash: String, internal val date: Date, internal val file: File) {
+  private class GitTestRevision(val hash: String, val date: Date) {
     override fun toString(): String {
       return hash
     }

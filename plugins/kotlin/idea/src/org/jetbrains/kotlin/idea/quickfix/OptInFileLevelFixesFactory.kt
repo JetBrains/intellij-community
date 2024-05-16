@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 /**
  * [OptInFileLevelFixesFactory] is responsible for adding fixes
- * such as 'Opt in for 'API' in containing file '....kt' and low priority 'Add '-opt-in=API' to module ... compiler arguments'
+ * such as 'Opt in for 'API' in containing file '....kt' and low priority 'Opt in for 'API' in module '...''
  *
  * The logic for adding OptIn on code elements is in [OptInFixesFactory]
  */

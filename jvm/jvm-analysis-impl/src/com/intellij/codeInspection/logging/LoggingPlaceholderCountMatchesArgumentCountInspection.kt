@@ -56,7 +56,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
       var finalArgumentCount = context.placeholderParameters.size
 
-      val placeholderCountHolder = solvePlaceholderCount(context.loggerType, finalArgumentCount, context.partHolderList, PlaceholderCountIndexStrategy.UAST_STRING)
+      val placeholderCountHolder = solvePlaceholderCount(context.loggerType, finalArgumentCount, context.partHolderList, PlaceholderEscapeSymbolStrategy.UAST_STRING)
 
       if (placeholderCountHolder.status == PlaceholdersStatus.EMPTY) {
         return true

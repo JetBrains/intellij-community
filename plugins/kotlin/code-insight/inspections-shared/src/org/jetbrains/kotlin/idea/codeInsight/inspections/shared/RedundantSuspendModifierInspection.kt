@@ -38,7 +38,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 val functionSymbol = function.getFunctionLikeSymbol() as? KtFunctionSymbol ?: return
                 if (functionSymbol.modality == Modality.OPEN) return
 
-                if (function.hasSuspendOrUnresolvedCall(functionSymbol)) return
+                if (function.hasSuspendOrUnresolvedCall()) return
 
                 holder.registerProblem(
                     suspendModifier, KotlinBundle.message("redundant.suspend.modifier"), IntentionWrapper(
@@ -60,14 +60,13 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
         return this is KtFunctionSymbol && isSuspend
     }
 
-    context(KtAnalysisSession)
-    private fun KtNamedFunction.hasSuspendOrUnresolvedCall(functionSymbol: KtFunctionSymbol): Boolean {
+    private fun KtNamedFunction.hasSuspendOrUnresolvedCall(): Boolean {
         var hasSuspendOrUnresolvedCall = false
-        val selfCallableId = functionSymbol.callableIdIfNonLocal
+        val containingFunction = this
 
         KotlinCallProcessor.processExpressionsRecursively(this, object : KotlinCallTargetProcessor {
             override fun KtAnalysisSession.processCallTarget(target: CallTarget): Boolean {
-                if (target.symbol.isSuspendSymbol() && target.symbol.callableIdIfNonLocal != selfCallableId) {
+                if (target.symbol.isSuspendSymbol() && target.symbol.psi != containingFunction) {
                     hasSuspendOrUnresolvedCall = true
                     return false
                 }

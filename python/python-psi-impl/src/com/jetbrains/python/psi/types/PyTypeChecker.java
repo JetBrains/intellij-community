@@ -1447,7 +1447,7 @@ public final class PyTypeChecker {
   }
 
   @Nullable
-  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target,
+  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyExpression target,
                                                         @NotNull PySequenceExpression parentTupleOrList,
                                                         @NotNull PyTupleType assignedTupleType) {
     final int count = assignedTupleType.getElementCount();

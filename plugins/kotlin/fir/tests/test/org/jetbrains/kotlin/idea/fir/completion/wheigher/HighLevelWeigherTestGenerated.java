@@ -652,11 +652,6 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/ParametersBeforeKeywords.kt");
         }
 
-        @TestMetadata("PreferFromJdk.kt")
-        public void testPreferFromJdk() throws Exception {
-            runTest("../../completion/testData/weighers/basic/PreferFromJdk.kt");
-        }
-
         @TestMetadata("PreferGetMethodToProperty.kt")
         public void testPreferGetMethodToProperty() throws Exception {
             runTest("../../completion/testData/weighers/basic/PreferGetMethodToProperty.kt");

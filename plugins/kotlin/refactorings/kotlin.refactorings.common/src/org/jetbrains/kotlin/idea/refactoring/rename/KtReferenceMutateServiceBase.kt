@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.plugin.references.SimpleNameReferenceExtension
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
@@ -256,10 +257,10 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
     private fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression> =
         OperatorToFunctionConverter.convert(opExpression)
 
-    protected abstract fun canMoveLambdaOutsideParentheses(newExpression: KtDotQualifiedExpression): Boolean
+    abstract fun canMoveLambdaOutsideParentheses(callExpression: KtCallExpression?): Boolean
 
     protected fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? {
-        val canMoveLambda = canMoveLambdaOutsideParentheses(newExpression)
+        val canMoveLambda = canMoveLambdaOutsideParentheses(newExpression.getPossiblyQualifiedCallExpression())
         return OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
             newQualifiedExpression.getPossiblyQualifiedCallExpression()
                 ?.takeIf { canMoveLambda }

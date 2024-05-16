@@ -180,7 +180,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
 
   @Override
   public int compareTo(@NotNull HighlightSeverity highlightSeverity) {
-    return myVal - highlightSeverity.myVal;
+    return Integer.compare(myVal, highlightSeverity.myVal);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {

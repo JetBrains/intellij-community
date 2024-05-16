@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.storage;
 
 import com.intellij.AbstractBundle;
@@ -31,6 +31,10 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
   @RequiredElement
   @Attribute("id")
   public String id;
+
+  /** providers are queried in order defined by priority, desc -- i.e. provider with priority=MAX_INT is the first to examine */
+  @Attribute("priority")
+  public int priority = 0;
 
   /**
    * A property key which refers to storage presentable name
@@ -70,5 +74,12 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
+  }
+
+  @Override
+  public String toString() {
+    return "FileBasedIndexLayoutProviderBean[" + id + "]" +
+           "{priority: " + priority + ", version: " + version + "}" +
+           "{providerClass: " + providerClass + '}';
   }
 }

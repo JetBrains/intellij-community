@@ -11,9 +11,11 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class ImportTestsFromFileAction extends AbstractImportTestsAction {
   public ImportTestsFromFileAction() {
     super(SmRunnerBundle.message("sm.test.runner.import.test"),

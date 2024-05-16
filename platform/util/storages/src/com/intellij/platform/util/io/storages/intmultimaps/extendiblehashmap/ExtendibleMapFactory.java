@@ -16,6 +16,8 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.READ;
 
@@ -25,7 +27,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
 
   private final int pageSize;
   private final int segmentSize;
-  private final @NotNull NotClosedProperlyAction notClosedProperlyAction;
+  private final NotClosedProperlyAction notClosedProperlyAction;
   private final boolean eagerlyCheckFileCompatibility;
   /**
    * If eager check finds file is incompatible:
@@ -61,7 +63,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
     return new ExtendibleMapFactory(
       ExtendibleHashMap.DEFAULT_STORAGE_PAGE_SIZE,
       ExtendibleHashMap.DEFAULT_SEGMENT_SIZE,
-      NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST,
+      IGNORE_AND_HOPE_FOR_THE_BEST,
       /*eagerlyCheckFileCompatibility: */ true,
       /*cleanFileIfIncompatible:       */ false
     );
@@ -74,7 +76,7 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
     return new ExtendibleMapFactory(
       pageSize,
       segmentSize,
-      NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST,
+      IGNORE_AND_HOPE_FOR_THE_BEST,
       /*eagerlyCheckFileCompatibility: */ true,
       /*cleanFileIfIncompatible:       */ false
     );
@@ -123,29 +125,26 @@ public class ExtendibleMapFactory implements StorageFactory<ExtendibleHashMap> {
     MMappedFileStorageFactory mappedStorageFactory = MMappedFileStorageFactory.withDefaults()
       .pageSize(pageSize);
     try {
-      return mappedStorageFactory
-        .wrapStorageSafely(
-          storagePath,
-          mappedStorage -> {
-            ExtendibleHashMap map = new ExtendibleHashMap(mappedStorage, segmentSize);
-            if (!map.wasProperlyClosed()) {
-              if (notClosedProperlyAction != NotClosedProperlyAction.IGNORE_AND_HOPE_FOR_THE_BEST) {
-                throw new CorruptedException(
-                  "Storage [" + storagePath + "] was not closed properly, can't be trusted -- could be corrupted");
-              }
-            }
-            return map;
+      return mappedStorageFactory.wrapStorageSafely(
+        storagePath,
+        mappedStorage -> {
+          ExtendibleHashMap map = new ExtendibleHashMap(mappedStorage, segmentSize);
+          if (!map.wasProperlyClosed()
+              && notClosedProperlyAction != IGNORE_AND_HOPE_FOR_THE_BEST) {
+            throw new CorruptedException(
+              "Storage [" + storagePath + "] was not closed properly, can't be trusted -- could be corrupted");
           }
-        );
+          return map;
+        }
+      );
     }
     catch (CorruptedException e) {
-      if (notClosedProperlyAction == NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP) {
+      if (notClosedProperlyAction == DROP_AND_CREATE_EMPTY_MAP) {
         LOG.info("[" + storagePath + "]: map is not closed properly, factory strategy[" + notClosedProperlyAction + "]" +
                  " -> trying to drop & re-create map from 0");
-        //TODO RC: removing of mmapped file is tricky/unreliable on Windows.
-        //         It is better to implement MMappedFileStorage.truncate(), and reuse already opened and truncated mapped
-        //         storage for the new EHMap
+
         FileUtil.delete(storagePath);
+
         return mappedStorageFactory.wrapStorageSafely(
           storagePath,
           mappedStorage -> new ExtendibleHashMap(mappedStorage, segmentSize)

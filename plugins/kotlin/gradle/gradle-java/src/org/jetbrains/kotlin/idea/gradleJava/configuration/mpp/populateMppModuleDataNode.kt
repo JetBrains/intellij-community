@@ -316,6 +316,12 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 }
             }
 
+            if (compilation.platform == KotlinPlatform.WASM) {
+                compilation.wasmExtensions?.wasmTarget?.let { wasmTarget ->
+                    compilationData.wasmTargets = setOf(wasmTarget)
+                }
+            }
+
             for (sourceSet in compilation.declaredSourceSets) {
                 sourceSetToCompilationData.getOrPut(sourceSet.name) { LinkedHashSet() } += compilationData
                 for (dependentSourceSetName in sourceSet.allDependsOnSourceSets) {
@@ -387,6 +393,12 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 if (sourceSet.actualPlatforms.singleOrNull() == KotlinPlatform.NATIVE) {
                     it.konanTargets = compilationDataRecords
                         .flatMap { compilationData -> compilationData.konanTargets }
+                        .toSet()
+                }
+
+                if (sourceSet.actualPlatforms.singleOrNull() == KotlinPlatform.WASM) {
+                    it.wasmTargets = compilationDataRecords
+                        .flatMap { compilationData -> compilationData.wasmTargets }
                         .toSet()
                 }
             }

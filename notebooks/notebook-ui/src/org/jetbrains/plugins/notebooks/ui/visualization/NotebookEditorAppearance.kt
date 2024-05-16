@@ -61,7 +61,7 @@ interface NotebookEditorAppearanceSizes {
 
   val EXTRA_PADDING_EXECUTION_COUNT: Int
 
-  fun getCellLeftLineWidth(): Int
+  fun getCellLeftLineWidth(editor: Editor): Int
   fun getCellLeftLineHoverWidth(): Int
   fun getLeftBorderWidth(): Int
   val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT: Int
@@ -128,7 +128,7 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val EXTRA_PADDING_EXECUTION_COUNT = JBUI.scale(20)
   override val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT = JBUI.scale(0)
 
-  override fun getCellLeftLineWidth(): Int = EDIT_MODE_CELL_LEFT_LINE_WIDTH
+  override fun getCellLeftLineWidth(editor: Editor): Int = EDIT_MODE_CELL_LEFT_LINE_WIDTH
   override fun getCellLeftLineHoverWidth(): Int = COMMAND_MODE_CELL_LEFT_LINE_WIDTH
 
   override fun getLeftBorderWidth(): Int =

@@ -4,18 +4,21 @@
 package org.jetbrains.intellij.build.impl
 
 import com.dynatrace.hash4j.hashing.HashStream64
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
 import org.jetbrains.intellij.build.jarCache.SourceBuilder
+import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.productRunner.ModuleBasedProductRunner
+import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
@@ -24,7 +27,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
 
-class BuildContextImpl(
+class BuildContextImpl internal constructor(
   private val compilationContext: CompilationContextImpl,
   override val productProperties: ProductProperties,
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
@@ -36,6 +39,7 @@ class BuildContextImpl(
     productProperties = productProperties,
     buildOptions = compilationContext.options,
   ),
+  @JvmField internal val jarCacheManager: JarCacheManager,
 ) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
@@ -64,6 +68,10 @@ class BuildContextImpl(
     }
   }
 
+  override suspend fun cleanupJarCache() {
+    jarCacheManager.cleanup()
+  }
+
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames
 
@@ -79,12 +87,6 @@ class BuildContextImpl(
     get() = useModularLoader || isEmbeddedJetBrainsClientEnabled && options.generateRuntimeModuleRepository
 
   private var builtinModulesData: BuiltinModulesFileData? = null
-
-  internal val jarCacheManager: JarCacheManager by lazy {
-    options.jarCacheDir?.let {
-      LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = classesOutputDirectory.resolve("production"))
-    } ?: NonCachingJarCacheManager
-  }
 
   internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this) }
 
@@ -115,17 +117,10 @@ class BuildContextImpl(
       val compilationContext = CompilationContextImpl.createCompilationContext(
         projectHome = projectHome,
         setupTracer = setupTracer,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(
-          projectHome = projectHome,
-          productProperties = productProperties,
-          buildOptions = options
-        ),
+        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome, productProperties = productProperties, buildOptions = options),
         options = options,
       )
-      return createContext(compilationContext = compilationContext,
-                           projectHome = projectHome,
-                           productProperties = productProperties,
-                           proprietaryBuildTools = proprietaryBuildTools)
+      return createContext(compilationContext = compilationContext, projectHome = projectHome, productProperties = productProperties, proprietaryBuildTools = proprietaryBuildTools)
     }
 
     fun createContext(
@@ -134,22 +129,23 @@ class BuildContextImpl(
       productProperties: ProductProperties,
       proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
     ): BuildContextImpl {
-      val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
-      val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
-      val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
-      val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
+      val projectHomeAsString = projectHome.invariantSeparatorsPathString
+      val jarCacheManager = compilationContext.options.jarCacheDir?.let {
+        LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"))
+      } ?: NonCachingJarCacheManager
       return BuildContextImpl(
         compilationContext = compilationContext,
         productProperties = productProperties,
-        windowsDistributionCustomizer = windowsDistributionCustomizer,
-        linuxDistributionCustomizer = linuxDistributionCustomizer,
-        macDistributionCustomizer = macDistributionCustomizer,
+        windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString),
+        linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString),
+        macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString),
         proprietaryBuildTools = proprietaryBuildTools,
         applicationInfo = ApplicationInfoPropertiesImpl(
           project = compilationContext.project,
           productProperties = productProperties,
           buildOptions = compilationContext.options,
         ),
+        jarCacheManager = jarCacheManager,
       )
     }
   }
@@ -159,8 +155,7 @@ class BuildContextImpl(
       if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
         return null
       }
-      return builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. " +
-                                                               "Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
+      return builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
     }
     set(value) {
       check(builtinModulesData == null) { "builtinModulesData was already set" }
@@ -178,9 +173,7 @@ class BuildContextImpl(
   }
 
   override val bundledPluginModules: List<String>
-    get() {
-      return bundledPluginModulesForModularLoader ?: productProperties.productLayout.bundledPluginModules
-    }
+    get() = bundledPluginModulesForModularLoader ?: productProperties.productLayout.bundledPluginModules
   
   private val bundledPluginModulesForModularLoader by lazy {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
@@ -252,18 +245,15 @@ class BuildContextImpl(
       options = options,
       paths = computeBuildPaths(
         options = options,
-        project = project,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(
+        buildOut = options.outRootDir ?: createBuildOutputRootEvaluator(
           projectHome = paths.projectHome,
           productProperties = productProperties,
           buildOptions = options,
-        ),
+        )(project),
         projectHome = paths.projectHome,
-        artifactPathSupplier = if (prepareForBuild) {
-          {
+        artifactDir = if (prepareForBuild) {
             @Suppress("DEPRECATION")
             paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode)
-          }
         }
         else {
           null
@@ -278,6 +268,7 @@ class BuildContextImpl(
       macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
       proprietaryBuildTools = proprietaryBuildTools,
       applicationInfo = newAppInfo,
+      jarCacheManager = jarCacheManager,
     )
     if (prepareForBuild) {
       copy.compilationContext.prepareForBuild()
@@ -377,11 +368,22 @@ class BuildContextImpl(
   override val appInfoXml by lazy {
     return@lazy computeAppInfoXml(context = this, appInfo = applicationInfo)
   }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private val devModeProductRunner = GlobalScope.async(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+    createDevModeProductRunner(this@BuildContextImpl)
+  }
+
+  override suspend fun createProductRunner(additionalPluginModules: List<String>): IntellijProductRunner {
+    when {
+      useModularLoader -> return ModuleBasedProductRunner(productProperties.rootModuleForModularLoader!!, this)
+      additionalPluginModules.isEmpty() -> return devModeProductRunner.await()
+      else -> return createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this)
+    }
+  }
 }
 
-private fun createBuildOutputRootEvaluator(projectHome: Path,
-                                           productProperties: ProductProperties,
-                                           buildOptions: BuildOptions): (JpsProject) -> Path {
+private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path {
   return { project ->
     val appInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = buildOptions)
     projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")

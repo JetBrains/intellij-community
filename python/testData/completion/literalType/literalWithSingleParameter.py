@@ -1,7 +1,7 @@
 from typing import Literal
 
 
-def f(x: Literal[22]) -> None:
+def f(x: Literal["zzz"]) -> None:
     pass
 
 

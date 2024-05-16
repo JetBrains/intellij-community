@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
-import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
+import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -181,7 +181,7 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
                 ?.toList() ?: emptyList()
 
         val describeContentsFunctionToRemove = parcelableClass.findDescribeContentsOverride()?.takeIf {
-            val returnExpr = it.bodyExpression?.unwrapBlockOrParenthesis()
+            val returnExpr = it.bodyExpression?.getSingleUnwrappedStatementOrThis()
             return@takeIf (
                     returnExpr is KtReturnExpression
                             && returnExpr.getTargetLabel() == null

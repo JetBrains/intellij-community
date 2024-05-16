@@ -1,4 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
 @file:JvmName("Main")
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
@@ -27,6 +28,7 @@ import com.intellij.platform.impl.toolkit.IdeToolkit
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import sun.font.FontManagerFactory
 import java.awt.Toolkit
 import java.io.IOException

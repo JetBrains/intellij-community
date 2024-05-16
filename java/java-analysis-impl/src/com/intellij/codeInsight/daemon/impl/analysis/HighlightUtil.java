@@ -206,19 +206,30 @@ public final class HighlightUtil {
     PsiType checkType = typeElement.getType();
     PsiType operandType = operand.getType();
     if (operandType == null) return;
-    if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
-        || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
-        || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
+    boolean operandIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(operandType);
+    boolean checkIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(checkType);
+    boolean convertible = TypeConversionUtil.areTypesConvertible(operandType, checkType);
+    boolean primitiveInPatternsEnabled = PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, expression);
+    if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) || !convertible) {
+      if (!convertible && IncompleteModelUtil.isIncompleteModel(expression) &&
+          IncompleteModelUtil.isPotentiallyConvertible(checkType, operand)) {
+        return;
+      }
       String message = JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
         .formatType(checkType));
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      if (TypeConversionUtil.isPrimitiveAndNotNull(checkType)) {
+      if (checkIsPrimitive) {
         IntentionAction action = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(operandType, typeElement);
         if (action != null) {
           info.registerFix(action, null, null, null, null);
         }
       }
+
+      if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) && convertible) {
+        registerIncreaseLanguageLevelFixes(expression, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, info);
+      }
+
       errorSink.accept(info);
       return;
     }
@@ -321,6 +332,9 @@ public final class HighlightUtil {
     if (operandType != null &&
         !TypeConversionUtil.areTypesConvertible(operandType, castType, PsiUtil.getLanguageLevel(expression)) &&
         !RedundantCastUtil.isInPolymorphicCall(expression)) {
+      if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.isPotentiallyConvertible(castType, operand)) {
+        return null;
+      }
       String message = JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
         .formatType(castType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
@@ -339,13 +353,11 @@ public final class HighlightUtil {
     else {
       lValue = null;
     }
-    HighlightInfo.Builder errorResult = null;
-    if (lValue != null && !TypeConversionUtil.isLValue(lValue)) {
+    if (lValue != null && !TypeConversionUtil.isLValue(lValue) && !PsiTreeUtil.hasErrorElements(expression)) {
       String description = JavaErrorBundle.message("variable.expected");
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(lValue).descriptionAndTooltip(description);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(lValue).descriptionAndTooltip(description);
     }
-
-    return errorResult;
+    return null;
   }
 
   /**
@@ -423,6 +435,9 @@ public final class HighlightUtil {
       IElementType opSign = TypeConversionUtil.convertEQtoOperation(sign);
       PsiType type = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opSign, true);
       if (type == null || lType == null || TypeConversionUtil.areTypesConvertible(type, lType)) {
+        return null;
+      }
+      if (IncompleteModelUtil.isIncompleteModel(assignment) && IncompleteModelUtil.isPotentiallyConvertible(lType, rExpr)) {
         return null;
       }
       highlightInfo = createIncompatibleTypeHighlightInfo(lType, type, assignment.getTextRange(), 0);
@@ -567,21 +582,25 @@ public final class HighlightUtil {
   }
 
   private static HighlightInfo.Builder checkAssignability(@Nullable PsiType lType,
-                                                  @Nullable PsiType rType,
-                                                  @Nullable PsiExpression expression,
-                                                  @NotNull TextRange textRange,
-                                                  int navigationShift) {
+                                                          @Nullable PsiType rType,
+                                                          @Nullable PsiExpression expression,
+                                                          @NotNull TextRange textRange,
+                                                          int navigationShift) {
     if (lType == rType) return null;
     if (expression == null) {
       if (rType == null || lType == null || TypeConversionUtil.isAssignable(lType, rType)) return null;
     }
-    else if (TypeConversionUtil.areTypesAssignmentCompatible(lType, expression)) {
+    else if (TypeConversionUtil.areTypesAssignmentCompatible(lType, expression) || PsiTreeUtil.hasErrorElements(expression)) {
       return null;
     }
     if (rType == null) {
       rType = expression.getType();
     }
     if (lType == null || lType == PsiTypes.nullType()) {
+      return null;
+    }
+    if (expression != null && IncompleteModelUtil.isIncompleteModel(expression) &&
+        IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {
       return null;
     }
     HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift);
@@ -620,7 +639,7 @@ public final class HighlightUtil {
     }
     PsiMethod method = tryCast(parent, PsiMethod.class);
     String description;
-    HighlightInfo.Builder errorResult = null;
+    HighlightInfo.Builder errorResult;
     if (method == null && !(parent instanceof ServerPageFile)) {
       description = JavaErrorBundle.message("return.outside.method");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description);
@@ -661,12 +680,15 @@ public final class HighlightUtil {
           }
         }
       }
-      else if (!isMethodVoid) {
+      else if (!isMethodVoid && !PsiTreeUtil.hasErrorElements(statement)) {
         description = JavaErrorBundle.message("missing.return.value");
         errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description)
           .navigationShift(PsiKeyword.RETURN.length());
         IntentionAction action = getFixFactory().createMethodReturnFix(method, PsiTypes.voidType(), true);
         errorResult.registerFix(action, null, null, null, null);
+      }
+      else {
+        errorResult = null;
       }
     }
     return errorResult;
@@ -910,6 +932,11 @@ public final class HighlightUtil {
 
     HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element);
     if (highlightType == null) return null;
+
+    if (IncompleteModelUtil.isIncompleteModel(element)) {
+      unhandled = ContainerUtil.filter(unhandled, type -> !IncompleteModelUtil.isUnresolvedClassType(type));
+      if (unhandled.isEmpty()) return null;
+    }
 
     TextRange textRange = computeRange(element);
     String description = getUnhandledExceptionsDescriptor(unhandled);
@@ -1616,8 +1643,7 @@ public final class HighlightUtil {
                     ")[fd]?");
 
   private static HighlightInfo.Builder checkUnderscores(@NotNull PsiElement expression, @NotNull String text, boolean isInt) {
-    String[] parts = ArrayUtilRt.EMPTY_STRING_ARRAY;
-
+    String[] parts;
     if (isInt) {
       int start = 0;
       if (text.startsWith(PsiLiteralUtil.HEX_PREFIX) || text.startsWith(PsiLiteralUtil.BIN_PREFIX)) start += 2;
@@ -1632,6 +1658,9 @@ public final class HighlightUtil {
         for (int i = 0; i < matcher.groupCount(); i++) {
           parts[i] = matcher.group(i + 1);
         }
+      }
+      else {
+        parts = ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
     }
 
@@ -1651,15 +1680,18 @@ public final class HighlightUtil {
         parent instanceof PsiConditionalLoopStatement && expr.equals(((PsiConditionalLoopStatement)parent).getCondition())) {
       if (expr.getNextSibling() instanceof PsiErrorElement) return null;
 
-      if (!TypeConversionUtil.isBooleanType(type)) {
+      if (!TypeConversionUtil.isBooleanType(type) && !PsiTreeUtil.hasErrorElements(expr)) {
         return createMustBeBooleanInfo(expr, type);
       }
     }
     return null;
   }
 
-  @NotNull
+  @Nullable
   private static HighlightInfo.Builder createMustBeBooleanInfo(@NotNull PsiExpression expr, @Nullable PsiType type) {
+    if (type == null && IncompleteModelUtil.isIncompleteModel(expr) && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expr)) {
+      return null;
+    }
     HighlightInfo.Builder info = createIncompatibleTypeHighlightInfo(PsiTypes.booleanType(), type, expr.getTextRange(), 0);
     if (expr instanceof PsiMethodCallExpression methodCall) {
       PsiMethod method = methodCall.resolveMethod();
@@ -1816,39 +1848,39 @@ public final class HighlightUtil {
 
 
   static HighlightInfo.Builder checkNotAStatement(@NotNull PsiStatement statement) {
-    if (!PsiUtil.isStatement(statement)) {
-      PsiElement anchor = statement;
-      if (PsiUtilCore.hasErrorElementChild(statement)) {
-        boolean allowedError = false;
-        if (statement instanceof PsiExpressionStatement) {
-          PsiElement[] children = statement.getChildren();
-          if (children[0] instanceof PsiExpression && children[1] instanceof PsiErrorElement &&
-              ((PsiErrorElement)children[1]).getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) {
-            allowedError = true;
-            anchor = children[0];
-          }
-        }
-        if (!allowedError) return null;
-      }
-      boolean isDeclarationNotAllowed = false;
-      if (statement instanceof PsiDeclarationStatement) {
-        PsiElement parent = statement.getParent();
-        isDeclarationNotAllowed = parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
-      }
-      String description = JavaErrorBundle.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
-      HighlightInfo.Builder error =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(anchor).descriptionAndTooltip(description);
-      if (statement instanceof PsiExpressionStatement) {
-        List<IntentionAction> registrar = new ArrayList<>();
-        HighlightFixUtil.registerFixesForExpressionStatement(statement, registrar);
-        QuickFixAction.registerQuickFixActions(error, null, registrar);
-        IntentionAction action = PriorityIntentionActionWrapper
-          .lowPriority(getFixFactory().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement));
-        error.registerFix(action, null, null, null, null);
-      }
-      return error;
+    if (PsiUtil.isStatement(statement)) {
+      return null;
     }
-    return null;
+    PsiElement anchor = statement;
+    if (PsiUtilCore.hasErrorElementChild(statement)) {
+      boolean allowedError = false;
+      if (statement instanceof PsiExpressionStatement) {
+        PsiElement[] children = statement.getChildren();
+        if (children[0] instanceof PsiExpression && children[1] instanceof PsiErrorElement &&
+            ((PsiErrorElement)children[1]).getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) {
+          allowedError = true;
+          anchor = children[0];
+        }
+      }
+      if (!allowedError) return null;
+    }
+    boolean isDeclarationNotAllowed = false;
+    if (statement instanceof PsiDeclarationStatement) {
+      PsiElement parent = statement.getParent();
+      isDeclarationNotAllowed = parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
+    }
+    String description = JavaErrorBundle.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
+    HighlightInfo.Builder error =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(anchor).descriptionAndTooltip(description);
+    if (statement instanceof PsiExpressionStatement) {
+      List<IntentionAction> registrar = new ArrayList<>();
+      HighlightFixUtil.registerFixesForExpressionStatement(statement, registrar);
+      QuickFixAction.registerQuickFixActions(error, null, registrar);
+      IntentionAction action = PriorityIntentionActionWrapper
+        .lowPriority(getFixFactory().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement));
+      error.registerFix(action, null, null, null, null);
+    }
+    return error;
   }
 
   static void checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression,
@@ -2309,6 +2341,7 @@ public final class HighlightUtil {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(processor.getProject());
     PsiClassType processorType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, processor.getResolveScope());
     if (!TypeConversionUtil.isAssignable(processorType, type)) {
+      if (IncompleteModelUtil.isIncompleteModel(templateExpression) && IncompleteModelUtil.isPotentiallyConvertible(processorType, processor)) return null;
       return createIncompatibleTypeHighlightInfo(processorType, type, processor.getTextRange(), 0);
     }
 
@@ -2338,6 +2371,7 @@ public final class HighlightUtil {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(resource.getProject());
     PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
     if (TypeConversionUtil.isAssignable(autoCloseable, type)) return null;
+    if (IncompleteModelUtil.isIncompleteModel(resource) && IncompleteModelUtil.isPotentiallyConvertible(autoCloseable, type, resource)) return null;
 
     return createIncompatibleTypeHighlightInfo(autoCloseable, type, resource.getTextRange(), 0);
   }
@@ -2671,6 +2705,9 @@ public final class HighlightUtil {
             // The problem is already reported on the initializer
             return null;
           }
+        }
+        if (IncompleteModelUtil.isIncompleteModel(containingFile)) {
+          return null;
         }
         String canonicalText = componentType.getCanonicalText();
         String description = JavaErrorBundle.message("unknown.class", canonicalText);
@@ -3199,9 +3236,9 @@ public final class HighlightUtil {
 
   @NotNull
   static HighlightInfo.Builder createIncompatibleTypeHighlightInfo(@NotNull PsiType lType,
-                                                           @Nullable PsiType rType,
-                                                           @NotNull TextRange textRange,
-                                                           int navigationShift) {
+                                                                   @Nullable PsiType rType,
+                                                                   @NotNull TextRange textRange,
+                                                                   int navigationShift) {
     return createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift, getReasonForIncompatibleTypes(rType));
   }
 
@@ -3280,10 +3317,10 @@ public final class HighlightUtil {
   static @NlsContexts.Tooltip String createIncompatibleTypesTooltip(PsiType lType,
                                                                     PsiType rType,
                                                                     @NotNull IncompatibleTypesTooltipComposer consumer) {
-    Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> lTypeData = typeData(lType);
-    Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> rTypeData = typeData(rType);
-    PsiTypeParameter[] lTypeParams = lTypeData.second;
-    PsiTypeParameter[] rTypeParams = rTypeData.second;
+    TypeData lTypeData = typeData(lType);
+    TypeData rTypeData = typeData(rType);
+    PsiTypeParameter[] lTypeParams = lTypeData.typeParameters();
+    PsiTypeParameter[] rTypeParams = rTypeData.typeParameters();
 
     int typeParamColumns = Math.max(lTypeParams.length, rTypeParams.length);
     boolean skipColumns = consumer.skipTypeArgsColumns();
@@ -3292,8 +3329,8 @@ public final class HighlightUtil {
     for (int i = 0; i < typeParamColumns; i++) {
       PsiTypeParameter lTypeParameter = i >= lTypeParams.length ? null : lTypeParams[i];
       PsiTypeParameter rTypeParameter = i >= rTypeParams.length ? null : rTypeParams[i];
-      PsiType lSubstitutedType = lTypeParameter == null ? null : lTypeData.third.substitute(lTypeParameter);
-      PsiType rSubstitutedType = rTypeParameter == null ? null : rTypeData.third.substitute(rTypeParameter);
+      PsiType lSubstitutedType = lTypeParameter == null ? null : lTypeData.substitutor().substitute(lTypeParameter);
+      PsiType rSubstitutedType = rTypeParameter == null ? null : rTypeData.substitutor().substitute(rTypeParameter);
       boolean matches = lSubstitutedType == rSubstitutedType ||
                         lSubstitutedType != null &&
                         rSubstitutedType != null &&
@@ -3348,17 +3385,22 @@ public final class HighlightUtil {
     return "";
   }
 
+  private record TypeData(@NotNull PsiTypeParameter @NotNull [] typeParameters, @NotNull PsiSubstitutor substitutor) {}
   @NotNull
-  private static Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> typeData(PsiType type) {
-    PsiTypeParameter[] parameters = PsiTypeParameter.EMPTY_ARRAY;
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+  private static TypeData typeData(PsiType type) {
+    PsiTypeParameter[] parameters;
+    PsiSubstitutor substitutor;
     if (type instanceof PsiClassType) {
       PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       substitutor = resolveResult.getSubstitutor();
       PsiClass psiClass = resolveResult.getElement();
       parameters = psiClass == null || ((PsiClassType)type).isRaw() ? PsiTypeParameter.EMPTY_ARRAY : psiClass.getTypeParameters();
     }
-    return Trinity.create(type, parameters, substitutor);
+    else {
+      substitutor = PsiSubstitutor.EMPTY;
+      parameters = PsiTypeParameter.EMPTY_ARRAY;
+    }
+    return new TypeData(parameters, substitutor);
   }
 
   @NotNull
@@ -3403,6 +3445,7 @@ public final class HighlightUtil {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
     if (!TypeConversionUtil.isAssignable(throwable, type)) {
+      if (IncompleteModelUtil.isIncompleteModel(context) && IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context)) return null;
       HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange(), 0);
       if (addCastIntention && TypeConversionUtil.areTypesConvertible(type, throwable)) {
         if (context instanceof PsiExpression) {
@@ -3470,6 +3513,7 @@ public final class HighlightUtil {
       }
       else {
         description = JavaErrorBundle.message("cannot.resolve.symbol", refName.getText());
+        boolean definitelyIncorrect = false;
         if (ref instanceof PsiReferenceExpression expression) {
           PsiExpression qualifierExpression = expression.getQualifierExpression();
           if (qualifierExpression != null &&
@@ -3477,10 +3521,14 @@ public final class HighlightUtil {
               !primitiveType.equals(PsiTypes.nullType()) && !primitiveType.equals(PsiTypes.voidType())) {
             description = JavaErrorBundle.message("cannot.access.member.on.type", qualifierExpression.getText(),
                                                   primitiveType.getPresentableText(false));
+            definitelyIncorrect = true;
           }
-        }
-        if (!JavaImplicitClassIndex.getInstance().getElements(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).isEmpty()) {
+        } else if (!JavaImplicitClassIndex.getInstance().getElements(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).isEmpty()) {
           description = JavaErrorBundle.message("implicit.class.can.not.be.referenced", ref.getText());
+          definitelyIncorrect = true;
+        }
+        if (!definitelyIncorrect && IncompleteModelUtil.isIncompleteModel(containingFile) && IncompleteModelUtil.canBePendingReference(ref)) {
+          return IncompleteModelUtil.getPendingReferenceHighlightInfo(refName);
         }
       }
 

@@ -7,16 +7,9 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.introduce.mustBeParenthesizedInInitializerPosition
-import org.jetbrains.kotlin.psi.KtAnonymousInitializer
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import java.util.Collections
+import java.util.*
 
 data class IntroduceParameterDescriptor<Descriptor>(
   val originalRange: KotlinPsiRange,
@@ -42,7 +35,7 @@ data class IntroduceParameterDescriptor<Descriptor>(
     val originalOccurrence: KotlinPsiRange
         get() = occurrencesToReplace.first { it.textRange.intersects(originalRange.textRange) }
 
-    val valVar: KotlinValVar = if (callable is KtClass) {
+    var valVar: KotlinValVar = if (callable is KtClass) {
         val modifierIsUnnecessary: (PsiElement) -> Boolean = {
             when {
                 it.parent != callable.body -> false

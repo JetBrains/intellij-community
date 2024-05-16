@@ -2,9 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -26,25 +24,20 @@ import java.util.function.Consumer
 
 // This class is thread safe
 @Internal
-class IndexingProgressReporter(private val indicator: ProgressIndicator) {
+class IndexingProgressReporter {
   @Volatile
   internal var subTasksCount: Int = 0
+  internal val operationName = MutableStateFlow<@ProgressText String?>(null)
   internal val subTasksFinished = MutableStateFlow(0)
   internal val subTaskTexts = MutableStateFlow(persistentListOf<@NlsContexts.ProgressDetails String>())
 
   fun setSubTasksCount(value: Int) {
     thisLogger().assertTrue(subTasksCount == 0, "subTasksCount can be set only once. Previous value: $subTasksCount")
-    indicator.isIndeterminate = false
-    indicator.setFraction(0.0)
     subTasksCount = value
   }
 
-  fun setIndeterminate(value: Boolean) {
-    indicator.isIndeterminate = value
-  }
-
   fun setText(value: @ProgressText String) {
-    indicator.text = value
+    operationName.value = value
   }
 
   fun getSubTaskReporter(): IndexingSubTaskProgressReporter {
@@ -66,20 +59,20 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
 
           withBackgroundProgress(project, progressTitle, cancellable = false) {
             reportRawProgress { reporter ->
-              async(Dispatchers.EDT) {
-                pauseReason.collect { paused ->
-                  reporter.text(
+              async {
+                pauseReason
+                  .combine(progressReporter.operationName) { paused, operation ->
                     if (paused != null) IdeBundle.message("dumb.service.indexing.paused.due.to", paused)
-                    else progressTitle
-                  )
-                }
+                    else operation ?: progressTitle
+                  }
+                  .collect(reporter::text)
               }
-              async(Dispatchers.EDT) {
+              async {
                 progressReporter.subTaskTexts.collect {
                   reporter.details(it.firstOrNull())
                 }
               }
-              async(Dispatchers.EDT) {
+              async {
                 progressReporter.subTasksFinished.collect {
                   val subTasksCount = progressReporter.subTasksCount
                   if (subTasksCount > 0) {
@@ -87,7 +80,7 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
                     reporter.fraction(newValue)
                   }
                   else {
-                    reporter.fraction(0.0)
+                    reporter.fraction(null)
                   }
                 }
               }
@@ -136,6 +129,10 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
   ) : CheckPauseOnlyProgressIndicator {
     private var paused = getPauseReason().mapStateIn(taskScope) { it != null }
     internal fun getPauseReason(): StateFlow<@ProgressText String?> = pauseReason.mapStateIn(taskScope) { it.firstOrNull() }
+
+    internal fun launchListeners() {
+
+    }
 
     override fun onPausedStateChanged(action: Consumer<Boolean>) {
       taskScope.launch {

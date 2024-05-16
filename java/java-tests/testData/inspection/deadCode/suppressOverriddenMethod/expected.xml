@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
+  <problem>
+    <file>A.java</file>
+    <line>1</line>
+    <offset>22</offset>
+    <length>1</length>
+    <description>&amp;nbsp;Abstract&amp;nbsp;class has an implementation but &lt;ul&gt;&lt;li&gt;it is never instantiated OR&lt;/li&gt;&lt;li&gt;no instantiations are reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+  </problem>
+  <problem>
+    <file>B.java</file>
+    <line>1</line>
+    <offset>13</offset>
+    <length>1</length>
+    <description>Class has one instantiation, but it is not reachable from entry points.</description>
+  </problem>
 </problems>
 

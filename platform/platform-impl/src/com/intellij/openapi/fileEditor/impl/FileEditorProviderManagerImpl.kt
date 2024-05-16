@@ -60,7 +60,7 @@ class FileEditorProviderManagerImpl
       }
 
       val provider = item.instance ?: continue
-      if (!DumbService.isDumbAware(provider) && DumbService.isDumb(project)) {
+      if (!DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
         continue
       }
 
@@ -220,11 +220,9 @@ private suspend fun getProviderIfApplicable(
   suppressors: List<FileEditorProviderSuppressor>,
   pluginDescriptor: PluginDescriptor,
 ): FileEditorProvider? {
-  if (!DumbService.isDumbAware(provider)) {
+  if (!DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
     LOG.warn("Please make ${provider.javaClass} dumb-aware")
-    if (DumbService.isDumb(project)) {
-      return null
-    }
+    return null
   }
 
   try {

@@ -25,30 +25,25 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
   @Contract("null -> null")
   override fun getPersistentValue(virtualFile: VirtualFile?): T? {
     if (virtualFile == null) return null
-    val raw = getRaw(virtualFile, false)
+    val raw = getRaw(virtualFile)
     return raw?.let { fromRaw(it) }
   }
 
-  private fun getRaw(virtualFile: VirtualFile, forceReadPersistence: Boolean): RAW? {
+  private fun getRaw(virtualFile: VirtualFile): RAW? {
     @Suppress("UNCHECKED_CAST")
     val memValue = userDataKey[virtualFile] as RAW?
     if (memValue != null) {
       return if (memValue === NULL_MARKER) null else memValue
     }
 
-    if (forceReadPersistence || READ_PERSISTENT_VALUE) {
-      val persisted = readValue(virtualFile)
-      userDataKey[virtualFile] = persisted ?: NULL_MARKER
-      return persisted
-    }
-    else {
-      return null
-    }
+    val persisted = readValue(virtualFile)
+    userDataKey[virtualFile] = persisted ?: NULL_MARKER
+    return persisted
   }
 
   override fun setPersistentValue(virtualFile: VirtualFile?, newValue: T?): Boolean {
     if (virtualFile == null) return false
-    val oldValue = getRaw(virtualFile, true)
+    val oldValue = getRaw(virtualFile)
     val rawNewValue = newValue?.let { toRaw(it) }
     if (keysEqual(oldValue, rawNewValue)) {
       return false
@@ -107,11 +102,6 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
   protected abstract fun toRaw(value: T): RAW
 
   companion object {
-    @JvmStatic
-    @get:VisibleForTesting
-    val READ_PERSISTENT_VALUE: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      Registry.`is`("retrieve.pushed.properties.from.vfs", true) or true // FIXME: IJPL-2852, "scanning.in.smart.mode"
-    }
 
     @JvmStatic
     private val NULL_MARKER by lazy(LazyThreadSafetyMode.PUBLICATION) {

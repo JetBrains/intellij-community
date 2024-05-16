@@ -7,7 +7,11 @@ fun main() {
         for (i in 1 .. 100) {
             launch(Dispatchers.Default) {
                 aaa(i)
-                println("after a: $i")
+                val result1 = bar(true)
+                val result2 = bar(false)
+                if (i == 25) {
+                    println("after a: $i")
+                }
             }
         }
     }
@@ -24,14 +28,14 @@ fun beforeBBB(i: Int) {
 }
 
 suspend fun afterBBB(i: Int) {
-    delay(10)
+    delay(1)
     println("afterBBB: $i")
 }
 
 suspend fun bbb(i: Int) {
-    delay(10)
+    delay(1)
     ccc(i)
-    delay(10)
+    delay(1)
     println("End bbb")
 }
 
@@ -43,6 +47,11 @@ fun ccc(i: Int) {
     }
     val cStr = "hello $cInt"
     println("ccc: end $cInt, $cStr")
+}
+
+private suspend fun bar(willSuspend: Boolean): String {
+    if (willSuspend) delay(1)
+    return "Result"
 }
 
 // STEP_OVER: 12

@@ -128,6 +128,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
           editor?.updateCaretCursor()
           editor?.contentComponent?.repaint()
         }
+
+        if (propertyName == state::myStickyLinesShownForLanguage.name) {
+          editor?.stickyLinesForLangChanged(event)
+        }
       }
     })
   }
@@ -194,6 +198,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   override fun setLineNumbersShown(`val`: Boolean) {
     state.myAreLineNumbersShown = `val`
+  }
+
+  override fun isLineNumbersAfterIcons(): Boolean {
+    return state.myAreLineNumbersAfterIcons
+  }
+
+  override fun setLineNumbersAfterIcons(`val`: Boolean) {
+    state.myAreLineNumbersAfterIcons = `val`
   }
 
   override fun areGutterIconsShown(): Boolean {

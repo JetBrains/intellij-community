@@ -121,4 +121,14 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public boolean hasChildren(@NotNull VirtualFile file) {
     return list(file).length != 0;
   }
+
+  @ApiStatus.Internal
+  public static @Nullable String normalizePath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    return vfs.normalize(path);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull String extractRootPath(@NotNull NewVirtualFileSystem vfs, String normalizedPath) {
+    return vfs.extractRootPath(normalizedPath);
+  }
 }

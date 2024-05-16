@@ -663,6 +663,16 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                 )
         } withReplaceType REPLACE_WITH_QUALIFIER,
 
+        Method("java.lang.String.lines") convertTo CustomExpression { expression ->
+            if (expression !is JKCallExpression) error("Expression should be JKCallExpression")
+            val parent = expression.parent.cast<JKQualifiedExpression>()
+
+            parent::receiver.detached()
+                .callOn(symbolProvider.provideMethodSymbol("kotlin.text.lineSequence"))
+                .callOn(symbolProvider.provideMethodSymbol("kotlin.streams.asStream"))
+                .withFormattingFrom(parent)
+        } withReplaceType REPLACE_WITH_QUALIFIER,
+
         // It is the constructor of "kotlin.String" and not "java.lang.String" because
         // java.lang.String was already converted to kotlin.String in a previous TypeMappingConversion
         NewExpression("kotlin.String") convertTo CustomExpression { newExpression ->

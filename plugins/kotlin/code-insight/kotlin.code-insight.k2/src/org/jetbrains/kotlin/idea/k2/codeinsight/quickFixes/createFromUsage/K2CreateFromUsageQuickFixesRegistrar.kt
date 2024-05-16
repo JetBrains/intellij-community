@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
 
-    private val createFunctionFromArgumentTypeMismatch: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ArgumentTypeMismatch> =
+    private val createFunctionForArgumentTypeMismatch: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ArgumentTypeMismatch> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
             val psi = diagnostic.psi
             val callExpression = PsiTreeUtil.getParentOfType(psi, KtCallExpression::class.java)
@@ -22,7 +22,7 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
                 K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
-    private val createFunctionFromTooManyArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.TooManyArguments> =
+    private val createFunctionForTooManyArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.TooManyArguments> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.TooManyArguments ->
             val psi = diagnostic.psi
             val callExpression = PsiTreeUtil.getParentOfType(psi, KtCallExpression::class.java)
@@ -32,7 +32,7 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
                 K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
-    private val createFunctionFromMissingArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.NoValueForParameter> =
+    private val createFunctionForNoValueForParameter: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.NoValueForParameter> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NoValueForParameter ->
             val psi = diagnostic.psi
             val expression = if (psi is KtQualifiedExpression) psi.selectorExpression else psi
@@ -43,16 +43,26 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
                 K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
-    private val createVariableInsteadOfPackageReference: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ExpressionExpectedPackageFound> =
+    private val createVariableForExpressionExpectedPackageFound: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ExpressionExpectedPackageFound> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ExpressionExpectedPackageFound ->
-            val psi = diagnostic.psi
-            listOfNotNull(K2CreateLocalVariableFromUsageBuilder.generateCreateLocalVariableAction(psi))
+            listOfNotNull(K2CreateLocalVariableFromUsageBuilder.generateCreateLocalVariableAction(diagnostic.psi)) +
+            listOfNotNull(K2CreateParameterFromUsageBuilder.generateCreateParameterAction(diagnostic.psi))
+        }
+    private val createParameterForNamedParameterNotFound: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.NamedParameterNotFound> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NamedParameterNotFound ->
+            listOfNotNull(K2CreateParameterFromUsageBuilder.generateCreateParameterActionForNamedParameterNotFound(diagnostic.psi))
+        }
+    private val createParameterForComponentFunctionMissing: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ComponentFunctionMissing> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ComponentFunctionMissing ->
+            listOfNotNull(K2CreateParameterFromUsageBuilder.generateCreateParameterActionForComponentFunctionMissing(diagnostic.psi, diagnostic.destructingType))
         }
 
     override val list: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerFactory(createFunctionFromArgumentTypeMismatch)
-        registerFactory(createFunctionFromTooManyArguments)
-        registerFactory(createFunctionFromMissingArguments)
-        registerFactory(createVariableInsteadOfPackageReference)
+        registerFactory(createFunctionForArgumentTypeMismatch)
+        registerFactory(createFunctionForTooManyArguments)
+        registerFactory(createFunctionForNoValueForParameter)
+        registerFactory(createVariableForExpressionExpectedPackageFound)
+        registerFactory(createParameterForNamedParameterNotFound)
+        registerFactory(createParameterForComponentFunctionMissing)
     }
 }

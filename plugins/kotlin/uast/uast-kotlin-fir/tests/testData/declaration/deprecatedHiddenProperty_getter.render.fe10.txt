@@ -13,21 +13,21 @@ public final class Test {
     }
     public final fun setPNew_getter(@org.jetbrains.annotations.Nullable <set-?>: java.lang.String) : void = UastEmptyExpression
     public fun Test() = UastEmptyExpression
-    public fun getPOld_getter_deprecatedOnProperty() : java.lang.String {
+    public final fun getPOld_getter_deprecatedOnProperty() : java.lang.String {
         return elvis {
             var var8a4c2ed8: java.lang.String = field
             if (var8a4c2ed8 != null) var8a4c2ed8 else "null?"
         }
     }
     @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN)
-    public fun setPOld_getter_deprecatedOnProperty(@org.jetbrains.annotations.Nullable <set-?>: java.lang.String) : void = UastEmptyExpression
+    public final fun setPOld_getter_deprecatedOnProperty(@org.jetbrains.annotations.Nullable <set-?>: java.lang.String) : void = UastEmptyExpression
     @kotlin.Deprecated(message = "no more getter", level = DeprecationLevel.HIDDEN)
-    public fun getPOld_getter_deprecatedOnGetter() : java.lang.String {
+    public final fun getPOld_getter_deprecatedOnGetter() : java.lang.String {
         return elvis {
             var var8a4c4878: java.lang.String = field
             if (var8a4c4878 != null) var8a4c4878 else "null?"
         }
     }
     @kotlin.Deprecated(message = "no more setter", level = DeprecationLevel.HIDDEN)
-    public fun setPOld_getter_deprecatedOnSetter(@org.jetbrains.annotations.Nullable <set-?>: java.lang.String) : void = UastEmptyExpression
+    public final fun setPOld_getter_deprecatedOnSetter(@org.jetbrains.annotations.Nullable <set-?>: java.lang.String) : void = UastEmptyExpression
 }

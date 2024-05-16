@@ -47,7 +47,8 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    fun findDeclaration(element: KtElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
+    fun findDeclaration(element: PsiElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
+        if (element !is KtElement) return element
         val ktModule = ProjectStructureProvider.getInstance(project).getModule(context, null)
         return allowAnalysisOnEdt {
             analyze(ktModule) {
@@ -104,7 +105,8 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
 
         val superMethods = checkSuperMethods(callableDescriptor, emptyList(), RefactoringBundle.message("to.refactor"))
 
-        val callableToRefactor = superMethods.firstOrNull() ?: return
+        val callableToRefactor = findDeclaration(superMethods.firstOrNull() ?: return, callableDescriptor, project, editor) ?: return
+
         when {
             callableToRefactor !is KtNamedDeclaration -> {
                 ChangeSignatureAction.getChangeSignatureHandler(callableToRefactor)?.invoke(project, arrayOf(callableToRefactor), dataContext)

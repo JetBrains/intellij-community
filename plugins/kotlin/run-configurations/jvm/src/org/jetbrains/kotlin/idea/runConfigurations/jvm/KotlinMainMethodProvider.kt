@@ -15,14 +15,14 @@ import org.jetbrains.kotlin.idea.base.codeInsight.hasMain
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
-class KotlinMainMethodProvider: JavaMainMethodProvider {
+class KotlinMainMethodProvider : JavaMainMethodProvider {
     override fun isApplicable(clazz: PsiClass): Boolean {
         return clazz is KtLightClassBase
     }
 
     override fun hasMainMethod(clazz: PsiClass): Boolean {
         val lightClassBase = clazz as? KtLightClassBase
-        val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
+        val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
         if (lightClassBase is KtLightClassForFacadeBase) {
             return runReadAction { lightClassBase.files.any { mainFunctionDetector.hasMain(it) } }
         }
@@ -33,7 +33,7 @@ class KotlinMainMethodProvider: JavaMainMethodProvider {
     override fun findMainInClass(clazz: PsiClass): PsiMethod? =
         runReadAction {
             val lightClassBase = clazz as? KtLightClassBase
-            val mainFunctionDetector = KotlinMainFunctionDetector.getInstance()
+            val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
             if (lightClassBase is KtLightClassForFacadeBase) {
                 return@runReadAction lightClassBase.files
                     .asSequence()

@@ -6,9 +6,9 @@ internal object A {
         val result = s
             .replace("_", "/") + "=="
 
-        val result2 = (s
-            .replace("_", "/") // comment
-                + "==")
+        val result2 = s
+            .replace("_", "/") + "==" // comment
+
 
         val result3 = s
             .replace("_", "/") + "=="

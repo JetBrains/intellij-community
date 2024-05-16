@@ -9,6 +9,8 @@ import com.fasterxml.jackson.core.JsonToken
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.LazyExtension
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.*
@@ -21,7 +23,7 @@ class IconMapLoader {
   private val cachedResult = AtomicReference<Map<ClassLoader, Map<String, String>>>()
 
   internal suspend fun preloadIconMapping() {
-    if (!IconMapperBean.EP_NAME.hasAnyExtensions()) {
+    if (!IconMapperBean.EP_NAME.hasAnyExtensions() && !IconMapperBean.EP_NAME_REVERSE.hasAnyExtensions()) {
       cachedResult.compareAndSet(null, emptyMap())
       return
     }
@@ -39,29 +41,20 @@ class IconMapLoader {
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun doLoadIconMapping(): MutableMap<ClassLoader, MutableMap<String, String>> {
     val list = coroutineScope {
+      val reverseIterator = IconMapperBean.EP_NAME_REVERSE.filterableLazySequence().iterator()
+      if (reverseIterator.hasNext()) {
+        return@coroutineScope listOf(async {
+          loadFromExtension(reverseIterator.next()) { data, result ->
+            StringUtil.splitByLines(String(data)).forEach { result[it] = it }
+          }
+        })
+      }
+
       val jsonFactory = JsonFactory()
       IconMapperBean.EP_NAME.filterableLazySequence().map { extension ->
         async {
-          val classLoader = extension.pluginDescriptor.pluginClassLoader ?: return@async null
-          val mappingFile = extension.instance?.mappingFile ?: return@async null
-          val data = withContext(Dispatchers.IO) { ResourceUtil.getResourceAsBytes(mappingFile, classLoader) }
-          if (data == null) {
-            logger<IconMapLoader>().error(PluginException("Cannot find $mappingFile", extension.pluginDescriptor.pluginId))
-            null
-          }
-          else {
-            val result = HashMap<String, String>()
-            try {
-              readDataFromJson(jsonFactory.createParser(data), result)
-            }
-            catch (e: CancellationException) {
-              throw e
-            }
-            catch (e: Throwable) {
-              logger<IconMapLoader>().warn("Can't process ${extension.instance?.mappingFile}",
-                                           PluginException(e, extension.pluginDescriptor.pluginId))
-            }
-            classLoader to result
+          loadFromExtension(extension) { data, result ->
+            readDataFromJson(jsonFactory.createParser(data), result)
           }
         }
       }
@@ -74,6 +67,30 @@ class IconMapLoader {
       result.computeIfAbsent(pair.first) { HashMap() }.putAll(pair.second)
     }
     return result
+  }
+
+  private suspend fun loadFromExtension(extension: LazyExtension<IconMapperBean>,
+                                        dataLoader: (data: ByteArray, result: HashMap<String, String>) -> Unit): Pair<ClassLoader, HashMap<String, String>>? {
+    val classLoader = extension.pluginDescriptor.pluginClassLoader ?: return null
+    val mappingFile = extension.instance?.mappingFile ?: return null
+    val data = withContext(Dispatchers.IO) { ResourceUtil.getResourceAsBytes(mappingFile, classLoader) }
+    if (data == null) {
+      logger<IconMapLoader>().error(PluginException("Cannot find $mappingFile", extension.pluginDescriptor.pluginId))
+      return null
+    }
+
+    val result = HashMap<String, String>()
+    try {
+      dataLoader(data, result)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logger<IconMapLoader>().warn("Can't process ${extension.instance?.mappingFile}",
+                                   PluginException(e, extension.pluginDescriptor.pluginId))
+    }
+    return (classLoader to result)
   }
 
   fun loadIconMapping(): Map<ClassLoader, Map<String, String>>? {

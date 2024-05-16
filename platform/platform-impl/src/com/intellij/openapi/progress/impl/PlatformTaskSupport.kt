@@ -12,10 +12,7 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.CeProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.TaskInfo
-import com.intellij.openapi.progress.prepareThreadContext
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
@@ -118,6 +115,9 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     try {
       scope.runWithModalProgressBlockingInternal(dispatcher = null, descriptor, action)
     }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
     }
@@ -134,8 +134,12 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       val modalityContext = newModalityState.asContextElement()
       val pipe = cs.createProgressPipe()
       val taskJob = async(dispatcherCtx + modalityContext) {
-        progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
-        pipe.collectProgressUpdates(action)
+          progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
+          // an unhandled exception in `async` can kill the entire computation tree
+          // we need to propagate the exception to the caller, since they may have some way to handle it.
+          runCatching {
+            pipe.collectProgressUpdates(action)
+          }
       }
       val modalJob = cs.launch(modalityContext) {
         val showIndicatorJob = showModalIndicator(taskJob, descriptor, pipe.progressUpdates(), deferredDialog)
@@ -155,7 +159,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
         modalComponent = deferredDialog::modalComponent,
       )
       @OptIn(ExperimentalCoroutinesApi::class)
-      taskJob.getCompleted()
+      taskJob.getCompleted().getOrThrow()
     }
   }
 }

@@ -109,7 +109,15 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
 
     if (myMain == null) {
       myPanel.setBorder(JBUI.Borders.emptyLeft(5));
-      addLine(new JSeparator());
+      addLine(new JSeparator() {
+        @Override
+        public Dimension getMinimumSize() {
+          Dimension minimumSize = super.getMinimumSize();
+          Dimension preferredSize = getPreferredSize();
+          minimumSize.height = Math.max(minimumSize.height, preferredSize.height);
+          return minimumSize;
+        }
+      });
     }
 
     addBeforeRun(beforeRun);
@@ -199,7 +207,15 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   }
 
   protected void addTagPanel(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> tags) {
-    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, JBUI.scale(TAG_HGAP), JBUI.scale(TAG_VGAP)));
+    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, JBUI.scale(TAG_HGAP), JBUI.scale(TAG_VGAP))) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension minimumSize = super.getMinimumSize();
+        Dimension preferredSize = getPreferredSize();
+        minimumSize.height = Math.max(minimumSize.height, preferredSize.height);
+        return minimumSize;
+      }
+    };
     for (SettingsEditorFragment<Settings, ?> tag : tags) {
       tagsPanel.add(tag.getComponent());
     }

@@ -7,8 +7,13 @@ import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.KtCallCandidateInfo
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.KtReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.KtSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
@@ -68,7 +73,8 @@ fun filterCandidateByReceiverTypeAndVisibility(
     signature: KtFunctionLikeSignature<KtFunctionLikeSymbol>,
     callElement: KtElement,
     fileSymbol: KtFileSymbol,
-    explicitReceiver: KtExpression?
+    explicitReceiver: KtExpression?,
+    subtypingErrorTypePolicy: KaSubtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.STRICT,
 ): Boolean {
     val candidateSymbol = signature.symbol
     if (callElement is KtConstructorDelegationCall) {
@@ -95,7 +101,7 @@ fun filterCandidateByReceiverTypeAndVisibility(
     val receiverTypes = collectReceiverTypesForElement(callElement, explicitReceiver)
 
     val candidateReceiverType = signature.receiverType
-    if (candidateReceiverType != null && receiverTypes.none { it.isSubTypeOf(candidateReceiverType) }) return false
+    if (candidateReceiverType != null && receiverTypes.none { it.isSubTypeOf(candidateReceiverType, subtypingErrorTypePolicy) }) return false
 
     // Filter out candidates not visible from call site
     if (candidateSymbol is KtSymbolWithVisibility && !isVisible(candidateSymbol, fileSymbol, explicitReceiver, callElement)) return false
@@ -181,4 +187,17 @@ context(KtAnalysisSession)
 fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolveToSymbol()) {
     is KtTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
     else -> symbol
+}
+
+/**
+ * @return implicit receivers of [this], including implicit receivers with smart casts, which are unwrapped to [KtImplicitReceiverValue]
+ */
+fun KtCallableMemberCall<*, *>.getImplicitReceivers(): List<KtImplicitReceiverValue> = partiallyAppliedSymbol
+    .let { listOfNotNull(it.dispatchReceiver, it.extensionReceiver) }
+    .map { it.unwrapSmartCasts() }
+    .filterIsInstance<KtImplicitReceiverValue>()
+
+private tailrec fun KtReceiverValue.unwrapSmartCasts(): KtReceiverValue = when (this) {
+    is KtSmartCastedReceiverValue -> original.unwrapSmartCasts()
+    else -> this
 }

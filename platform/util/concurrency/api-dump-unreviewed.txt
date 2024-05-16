@@ -78,7 +78,6 @@ c:com.intellij.util.TimedReference
 - pf:poll():V
 - pf:remove():V
 - set(java.lang.Object):V
-f:com.intellij.util.concurrency.AppJavaExecutorUtil
 f:com.intellij.util.concurrency.AtomicFieldUpdater
 - compareAndSet(java.lang.Object,java.lang.Object,java.lang.Object):Z
 - compareAndSetInt(java.lang.Object,I,I):Z
@@ -225,7 +224,6 @@ a:org.jetbrains.concurrency.AsyncValueLoader
 - f:markDirty():V
 - f:reset():V
 - f:set(java.lang.Object):V
-f:org.jetbrains.concurrency.InternalPromiseUtilKt
 org.jetbrains.concurrency.Obsolescent
 - a:isObsolete():Z
 a:org.jetbrains.concurrency.ObsolescentConsumer

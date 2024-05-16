@@ -69,7 +69,7 @@ open class TextEditorComponent(
     editor.gutterComponentEx.setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW)
     editor.setFile(file)
     editor.contextMenuGroupId = IdeActions.GROUP_EDITOR_POPUP
-    editor.setDropHandler(FileDropHandler(editor))
+    editor.setDropHandler(FileEditorDropHandler(editor))
 
     super.add(editor.component, GridBagConstraints().also {
       it.gridx = 0

@@ -544,7 +544,10 @@ public class JavaDocInfoGenerator {
   }
 
   public boolean generateDocInfoCore(StringBuilder buffer, boolean generatePrologue) {
-    if (myElement instanceof PsiClass cls) {
+    if (myElement instanceof PsiTypeParameter parameter) {
+      generateTypeParameterJavaDoc(buffer, parameter, generatePrologue);
+    }
+    else if (myElement instanceof PsiClass cls) {
       generateClassJavaDoc(buffer, cls, generatePrologue);
     }
     else if (myElement instanceof PsiMethod method) {
@@ -834,6 +837,33 @@ public class JavaDocInfoGenerator {
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
+  private void generateTypeParameterJavaDoc(StringBuilder buffer, PsiTypeParameter parameter, boolean generatePrologue) {
+    if (parameter instanceof PsiAnonymousClass) return;
+
+    if (generatePrologue) generatePrologue(buffer);
+
+    if (!isRendered()) {
+      buffer.append(DocumentationMarkup.DEFINITION_START);
+      generateTypeParameterSignature(buffer, parameter, SignaturePlace.Javadoc);
+      buffer.append(DocumentationMarkup.DEFINITION_END);
+    }
+
+    if (parameter.getOwner() instanceof PsiJavaDocumentedElement documentedElement) {
+      final PsiDocComment docComment = getDocComment(documentedElement);
+      PsiDocTag[] localTags = docComment != null ? docComment.getTags() : PsiDocTag.EMPTY_ARRAY;
+      PsiDocTag tag = getTagByName(localTags, "<" + parameter.getName() + ">");
+      if (tag != null) {
+        buffer.append("<p>");
+        final PsiElement[] elements = Arrays.stream(tag.getChildren())
+          .skip(1)
+          .filter(e -> e.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS &&
+                       e.getNode().getElementType() != JavaDocElementType.DOC_PARAMETER_REF)
+          .toArray(PsiElement[]::new);
+        generateValue(buffer, elements, ourEmptyElementsProvider);
+      }
+    }
+  }
+
   private void generateRecordParametersSection(StringBuilder buffer, PsiClass recordClass, PsiDocComment comment) {
     if (!recordClass.isRecord() || comment == null) return;
     PsiDocTag[] localTags = comment.findTagsByName("param");
@@ -897,6 +927,19 @@ public class JavaDocInfoGenerator {
       buffer.setLength(buffer.length() - 1);
     }
     return false;
+  }
+
+  private void generateTypeParameterSignature(StringBuilder buffer, PsiTypeParameter parameter, SignaturePlace place) {
+    boolean generateLink = place == SignaturePlace.Javadoc;
+
+    appendPlainText(buffer, generateOneTypeParameterPresentableName(parameter));
+
+    buffer.append('\n');
+
+    PsiClassType[] refs = parameter.getExtendsListTypes();
+    if (refs.length > 0) {
+      generateRefList(buffer, parameter, generateLink, refs, "extends");
+    }
   }
 
   private void generateRefList(StringBuilder buffer, PsiClass aClass, boolean generateLink, PsiClassType[] refs, String keyword) {
@@ -2475,7 +2518,7 @@ public class JavaDocInfoGenerator {
       PsiTypeParameter typeParameter = typeParameters[i];
       String presentableName = generateOneTypeParameterPresentableName(typeParameter);
       DocTagLocator<PsiDocTag> tagLocator = typeParameterLocator(i);
-      ParamInfo parmTag = findDocTag(localTags, typeParameter.getName(), presentableName, method, tagLocator);
+      ParamInfo parmTag = findDocTag(localTags, "<" + typeParameter.getName() + ">", presentableName, method, tagLocator);
       if (parmTag != null) {
         collectedTags.add(parmTag);
       }

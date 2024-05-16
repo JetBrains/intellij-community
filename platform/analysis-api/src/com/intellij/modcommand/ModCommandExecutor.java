@@ -4,13 +4,19 @@ package com.intellij.modcommand;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * A support service to execute {@link ModCommand} in context of desktop IDE
@@ -60,6 +66,36 @@ public interface ModCommandExecutor {
    */
   static @NotNull ModCommandExecutor getInstance() {
     return ApplicationManager.getApplication().getService(ModCommandExecutor.class);
+  }
+
+  /**
+   * Fetch the command from supplier in the background and execute it interactively. The action is performed synchronously
+   * in EDT and can be cancelled by user if background computation takes a long time. The {@linkplain CommandProcessor command}
+   * will be created automatically, if necessary.
+   * 
+   * @param context action context
+   * @param title user-visible title to display if background computation takes a long time.
+   * @param editor context editor, if known
+   * @param commandSupplier a side-effect-free function to produce a {@link ModCommand}
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt
+  static void executeInteractively(@NotNull ActionContext context,
+                                   @Nls String title,
+                                   @Nullable Editor editor,
+                                   @NotNull Supplier<@NotNull ModCommand> commandSupplier) {
+    ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(commandSupplier::get).executeSynchronously(),
+      title, true, context.project());
+    if (command != null) {
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      if (commandProcessor.getCurrentCommand() == null) {
+        commandProcessor.executeCommand(context.project(), 
+                                        () -> getInstance().executeInteractively(context, command, editor), title, null);
+      } else {
+        getInstance().executeInteractively(context, command, editor);
+      }
+    }
   }
 
   /**

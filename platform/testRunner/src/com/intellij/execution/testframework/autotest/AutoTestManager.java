@@ -15,12 +15,12 @@ import java.util.function.Predicate;
 
 @Service(Service.Level.PROJECT)
 @State(name = "AutoTestManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
-public final class AutoTestManager extends AbstractAutoTestManager {
+final class AutoTestManager extends AbstractAutoTestManager {
   public static @NotNull AutoTestManager getInstance(Project project) {
     return project.getService(AutoTestManager.class);
   }
 
-  public AutoTestManager(@NotNull Project project) {
+  AutoTestManager(@NotNull Project project) {
     super(project);
   }
 

@@ -10,6 +10,7 @@
 [LibraryNestedClassUsages.1.java] New instance creation 12 A.T tt = new A.T(1);
 [LibraryNestedClassUsages.1.java] Unclassified 7 super(n);
 [LibraryNestedClassUsages.1.java] Usage in extends/implements clause 5 class J extends A.T {
+[library.kt] Constructor delegation reference 7 constructor() : this(1)
 [library.kt] New instance creation 63 val t = A.T(1)
 [library.kt] New instance creation 64 val tt = A.T()
 [library.kt] Supertype 22 class U : A.T {

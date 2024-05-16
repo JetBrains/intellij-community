@@ -30,6 +30,9 @@ public final class Cancellation {
       try {
         ensureActive(currentJob);
       }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
       catch (CancellationException e) {
         throw new CeProcessCanceledException(e);
       }
@@ -63,6 +66,13 @@ public final class Cancellation {
     catch (ProcessCanceledException e) {
       throw new RuntimeException("PCE is not expected in non-cancellable section execution", e);
     }
+  }
+
+  public static void executeInNonCancelableSection(@NotNull Runnable runnable) {
+    computeInNonCancelableSection(() -> {
+      runnable.run();
+      return null;
+    });
   }
 
   public static @NotNull AccessToken withNonCancelableSection() {

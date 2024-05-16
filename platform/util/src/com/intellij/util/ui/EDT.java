@@ -68,7 +68,8 @@ public final class EDT {
    */
   public static boolean isCurrentThreadEdt() {
     // actually, this `if` is not required, but it makes the class work correctly before `IdeEventQueue` initialization
-    return myEventDispatchThread == null ? EventQueue.isDispatchThread() : isEdt(Thread.currentThread());
+    Thread thread = myEventDispatchThread;
+    return thread == null ? EventQueue.isDispatchThread() : Thread.currentThread() == thread;
   }
 
   public static void assertIsEdt() {

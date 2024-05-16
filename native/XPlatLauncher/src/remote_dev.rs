@@ -92,8 +92,6 @@ impl RemoteDevLaunchConfiguration {
         if remote_dev_starter_command == "help" {
             print_help();
             std::process::exit(0)
-        } else if remote_dev_starter_command == "registerBackendLocationForGateway" {
-            bail!("registerBackendLocationForGateway is not implemented")
         }
 
         let should_parse_project_path = ij_starter_command.ij_command == "warmup";
@@ -270,7 +268,7 @@ impl RemoteDevLaunchConfiguration {
 
         // TODO: use IDE-specific properties file
         let dist_properties_path = self.default.ide_home.join("bin").join("idea.properties");
-        let dist_properties_file = File::open(&dist_properties_path).context("Failed to open IDE properties file")?;
+        let dist_properties_file = File::open(dist_properties_path).context("Failed to open IDE properties file")?;
 
         for l in BufReader::new(dist_properties_file).lines() {
             writeln!(&mut writer, "{}", l.context("Failed to read IDE properties file")?)?;
@@ -303,13 +301,13 @@ fn get_temp_system_like_path() -> Result<PathBuf> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn setup_font_config(_ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+fn setup_font_config(_ide_home_path: &Path) -> Result<Option<(String, String)>> {
     // fontconfig is Linux-specific
     Ok(None)
 }
 
 #[cfg(target_os = "linux")]
-fn setup_font_config(ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+fn setup_font_config(ide_home_path: &Path) -> Result<Option<(String, String)>> {
     use std::hash::{Hash, Hasher};
 
     let source_font_config_file = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts.conf");
@@ -378,7 +376,7 @@ impl std::fmt::Display for IjStarterCommand {
 }
 
 fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
-    std::collections::HashMap::from([
+    HashMap::from([
         ("run", IjStarterCommand {ij_command: "remoteDevHost".to_string(), is_project_path_required: false, is_arguments_required: true}),
         ("status", IjStarterCommand {ij_command: "remoteDevStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("cwmHostStatus", IjStarterCommand {ij_command: "cwmHostStatus".to_string(), is_project_path_required: false, is_arguments_required: false}),
@@ -390,8 +388,9 @@ fn get_known_intellij_commands() -> HashMap<&'static str, IjStarterCommand> {
         ("invalidate-caches", IjStarterCommand {ij_command: "invalidateCaches".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("installPlugins", IjStarterCommand {ij_command: "installPlugins".to_string(), is_project_path_required: false, is_arguments_required: true}),
         ("stop", IjStarterCommand {ij_command: "exit".to_string(), is_project_path_required: false, is_arguments_required: false}),
-        ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("registerBackendLocationForGateway", IjStarterCommand {ij_command: "registerBackendLocationForGateway".to_string(), is_project_path_required: false, is_arguments_required: false}),
         ("help", IjStarterCommand{ij_command: "".to_string(), is_project_path_required: false, is_arguments_required: false}),
+        ("serverMode", IjStarterCommand{ij_command: "serverMode".to_string(), is_project_path_required: false, is_arguments_required: false}),
     ])
 }
 
@@ -454,7 +453,7 @@ fn print_help() {
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
-fn init_env_vars(ide_home_path: &PathBuf) -> Result<()> {
+fn init_env_vars(ide_home_path: &Path) -> Result<()> {
     let mut remote_dev_env_var_values = Vec::new();
 
     if !std::io::stdout().is_terminal() {
@@ -465,7 +464,7 @@ fn init_env_vars(ide_home_path: &PathBuf) -> Result<()> {
         remote_dev_env_var_values.extend(os_spec);
     }
 
-    // required for the most basic launch (e.g. showing help)
+    // required for the most basic launch (e.g., showing help)
     // as there may be nothing on a user system and we'll crash
     let font_config_env = setup_font_config(ide_home_path).context("Preparing fontconfig override")?;
     if let Some(vars) = &font_config_env {
@@ -511,75 +510,104 @@ fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn preload_native_libs(_ide_home_dir: &PathBuf) -> Result<()> {
+fn preload_native_libs(_ide_home_dir: &Path) -> Result<()> {
     // We don't ship self-contained libraries outside of Linux
     Ok(())
 }
 
 #[cfg(target_os = "linux")]
 fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
-    use libc::{dlclose, dlerror, dlopen};
-    use std::ffi::{CStr, CString};
-    use std::collections::HashSet;
+    use libloading::os::unix::Library;
+    use std::collections::BTreeSet;
+    use std::mem;
 
     let use_libs = parse_bool_env_var("REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS", true)?;
     if !use_libs {
         return Ok(())
     }
 
-    let self_contained_dir = ide_home_dir.join("plugins/remote-dev-server/selfcontained/lib");
+    debug!("Loading self-contained libraries");
+
+    let self_contained_dir = &ide_home_dir.join("plugins/remote-dev-server/selfcontained/");
     if !self_contained_dir.is_dir() {
-        error!("Self-contained libraries not found at {}. Only OS-provided libraries will be used.", self_contained_dir.to_string_lossy());
+        error!("Self-contained dir not found at {self_contained_dir:?}. Only OS-provided libraries will be used.");
         return Ok(());
     }
-    let mut libs_to_try = HashSet::new();
-    for x in fs::read_dir(&self_contained_dir)? {
-        let _ = libs_to_try.insert(x?.path());
+
+    let libs_dir = &self_contained_dir.join("lib");
+    if !libs_dir.is_dir() {
+        bail!("Self-contained dir is present at {self_contained_dir:?}, but lib dir is missing at {libs_dir:?}")
     }
 
-    let mut try_loading_more = true;
+    let lib_load_order_file = &self_contained_dir.join("lib-load-order");
+    if !lib_load_order_file.is_file() {
+        bail!("Self-contained dir is present at {self_contained_dir:?}, but load order file is missing at {lib_load_order_file:?}")
+    }
 
-    let mut libs_to_remove = Vec::new();
-    // Try loading libraries until no new library is loaded on a given iterations
-    // This is the cheap solution to having to load libraries in correct order
-    while try_loading_more {
-        try_loading_more = false;
-        libs_to_remove.clear();
-        for child in &libs_to_try {
-            let child_path = child;
-            if let Some(name) = child_path.file_name() {
-                unsafe {
-                    // Try loading the library by (file) name first to see if it can be found in system
-                    let in_str = CString::new(name.to_string_lossy().to_string())?;
-                    let handle = dlopen(in_str.as_ptr(), libc::RTLD_LAZY | libc::RTLD_GLOBAL);
-                    if !handle.is_null() {
-                        let _ = dlclose(handle);
-                        libs_to_remove.push(child.clone());
-                        continue;
-                    }
-
-                    // Otherwise, load library by full path; this may fail if dependencies are not loaded yet
-                    let in_str = CString::new(child_path.to_string_lossy().to_string())?;
-                    let handle = dlopen(in_str.as_ptr(), libc::RTLD_LAZY | libc::RTLD_GLOBAL);
-                    if handle.is_null() {
-                        debug!("Can't load library from {}", child_path.to_string_lossy());
-                        let error = CStr::from_ptr(dlerror());
-                        debug!("Error reported: {}", error.to_string_lossy());
-                    } else {
-                        try_loading_more = true;
-                        libs_to_remove.push(child.clone());
-                    }
-                    // handle intentionally lost to keep library loaded; RTLD_NODELETE is non-POSIX
-                }
-            }
-        }
-        for x in &libs_to_remove {
-            let _ = libs_to_try.remove(x);
+    let mut provided_libs = BTreeSet::new();
+    for f in fs::read_dir(libs_dir)? {
+        let file_name = f?.file_name();
+        if !provided_libs.insert(file_name.clone()) {
+            bail!("Two files with the same name '{file_name:?}' in {libs_dir:?}")
         }
     }
 
-    for x in libs_to_try {
-        println!("Unable to load native library {}. This might affect the IDE process.", x.to_string_lossy());
+    let provided_libs_initial_len = provided_libs.len();
+    debug!("Provided libraries count: {provided_libs_initial_len}");
+
+    let file = File::open(lib_load_order_file)?;
+    let lines = BufReader::new(file).lines();
+
+    let mut ordered_libs_to_load = vec![];
+
+    for line in lines {
+        let soname = line?;
+        ordered_libs_to_load.insert(ordered_libs_to_load.len(), soname);
     }
+
+    debug!("Libraries to load: {}", ordered_libs_to_load.len());
+
+    for soname in &ordered_libs_to_load {
+        debug!("{soname}: trying to load");
+
+        let lib_file = &libs_dir.join(&soname);
+        if !lib_file.is_file() {
+            bail!("{soname} needs to be loaded as self-contained, but is missing at {lib_file:?}");
+        };
+
+        unsafe {
+            let lib = Library::open(lib_file.to_str(), libc::RTLD_LAZY | libc::RTLD_GLOBAL)?;
+
+            // handle intentionally lost to keep the library loaded; RTLD_NODELETE is non-POSIX
+            mem::forget(lib)
+        }
+
+        debug!("{soname}: loaded");
+
+        let file_name = lib_file.file_name()
+            .with_context(|| format!("Failed to get the filename from {lib_file:?}"))?;
+
+        if !provided_libs.remove(file_name) {
+            bail!("Loaded {soname} as {lib_file:?}, but failed to resolve it as a file in {libs_dir:?} previously")
+        }
+    }
+
+    if !provided_libs.is_empty() {
+        let error: Vec<String> = provided_libs
+            .iter()
+            .map(|os| os.to_string_lossy().to_string())
+            .collect();
+        let joined = error.join(", ");
+        bail!("Libs were provided but not loaded: {joined}")
+    }
+
+    // we should have more detailed logs in this count,
+    // but just to be safe we'll do this simple assertion
+    if ordered_libs_to_load.len() != provided_libs_initial_len {
+        bail!("Library count mismatch");
+    }
+
+    debug!("All self-contained libraries ({}) were loaded", ordered_libs_to_load.len());
+
     Ok(())
 }

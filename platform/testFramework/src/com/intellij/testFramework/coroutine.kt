@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
-import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -9,7 +8,8 @@ import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration
 import kotlin.time.toKotlinDuration
@@ -25,24 +25,10 @@ fun executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project: Project) {
   }
 }
 
+@Deprecated("use com.intellij.testFramework.common.waitUnti")
 @TestOnly
 suspend fun waitUntil(message: String? = null, timeout: Duration = DEFAULT_TEST_TIMEOUT, condition: suspend CoroutineScope.() -> Boolean) {
-  try {
-    withTimeout(timeout) {
-      while (!condition()) {
-        delay(50)
-      }
-    }
-  }
-  catch (e: TimeoutCancellationException) {
-    println(dumpCoroutines())
-    if (message != null) {
-      throw AssertionError(message, e)
-    }
-    else {
-      throw AssertionError(e)
-    }
-  }
+  return com.intellij.testFramework.common.waitUntil(message, timeout, condition)
 }
 
 @Deprecated("The method is supposed to be called from Java only as a test-in-coroutine launcher")

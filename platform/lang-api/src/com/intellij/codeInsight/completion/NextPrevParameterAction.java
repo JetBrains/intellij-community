@@ -8,6 +8,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.CodeInsightAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,11 @@ public abstract class NextPrevParameterAction extends CodeInsightAction implemen
 
   @Override
   public @NotNull CodeInsightActionHandler getHandler() {
+    return new Handler();
+  }
+
+  @Override
+  public @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
     return new Handler();
   }
 

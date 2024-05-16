@@ -71,6 +71,7 @@ fun <S> S.setupGroovySdkUI(builder: Panel) where S : NewProjectWizardStep, S : B
       .validationOnApply { validateGroovySdkWithDialog(groovySdk) }
       .columns(COLUMNS_MEDIUM)
       .whenItemSelectedFromUi { logGroovySdkChanged(groovySdk) }
+      .onApply { logGroovySdkFinished(groovySdk) }
   }.bottomGap(BottomGap.SMALL)
 }
 

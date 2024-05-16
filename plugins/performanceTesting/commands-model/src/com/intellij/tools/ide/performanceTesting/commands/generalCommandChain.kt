@@ -1074,6 +1074,10 @@ fun <T : CommandChain> T.disableKotlinNotification(): T = apply {
   addCommand("${CMD_PREFIX}disableKotlinNotification")
 }
 
+fun <T : CommandChain> T.scrollEditor(): T = apply {
+  addCommand("${CMD_PREFIX}scrollEditor")
+}
+
 
 /**
  * Assert that the caret is located at the specified position.
@@ -1088,4 +1092,19 @@ fun <T : CommandChain> T.assertCaretPosition(line: Int, column: Int): T = apply 
  */
 fun <T : CommandChain> T.assertCurrentFile(name: String): T = apply {
   addCommand("${CMD_PREFIX}assertCurrentFile $name")
+}
+
+/**
+ * Wait till project view is ready.
+ * Should be used with `context.executeRightAfterIdeOpened()`.
+ */
+fun <T : CommandChain> T.waitForProjectView(): T = apply {
+  addCommand("${CMD_PREFIX}waitForProjectView")
+}
+
+/**
+ * Expand relative path in project view
+ */
+fun <T : CommandChain> T.expandProjectView(relativePath: String): T = apply {
+  addCommand("${CMD_PREFIX}expandProjectView $relativePath")
 }

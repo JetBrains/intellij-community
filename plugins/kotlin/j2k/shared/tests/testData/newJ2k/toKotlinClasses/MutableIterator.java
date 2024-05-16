@@ -1,4 +1,3 @@
-// IGNORE_K2
 import java.util.Iterator;
 
 public class TestMutableIterator implements Iterator<String> {

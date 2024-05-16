@@ -27,7 +27,7 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
       ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
     int[] runAfterCompletionOf = serialized ? new int[]{Pass.UPDATE_ALL} : null;
     int[] runAfterStartingOf = serialized ? null : new int[]{Pass.UPDATE_ALL};
-    registrar.registerTextEditorHighlightingPass(this, runAfterCompletionOf, runAfterStartingOf, false, -1);
+    registrar.registerTextEditorHighlightingPass(this, runAfterCompletionOf, runAfterStartingOf, false, Pass.INJECTED_GENERAL_HIGHLIGHTINGS);
   }
 
   @Override
@@ -43,7 +43,8 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
                                                // makes sense if more than one
                                                (adjustedRanges != null && adjustedRanges.size() == 1) ? null : adjustedRanges,
                                                restrictRange.getStartOffset(), restrictRange.getEndOffset(),
-                                               updateAll, visibleRange, editor, new DefaultHighlightInfoProcessor());
+                                               updateAll, visibleRange, editor,
+                                               true, true, true, HighlightInfoUpdater.getInstance(file.getProject()));
   }
 
   private static boolean isUpdatingWholeFile(@NotNull TextRange fileRange, @Nullable List<? extends @NotNull TextRange> ranges) {
@@ -90,6 +91,6 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     return new InjectedGeneralHighlightingPass(file, document, null, 0, document.getTextLength(), true, new ProperTextRange(0,document.getTextLength()), null,
-                                               highlightInfoProcessor);
+                                               true, true, true, HighlightInfoUpdater.EMPTY);
   }
 }

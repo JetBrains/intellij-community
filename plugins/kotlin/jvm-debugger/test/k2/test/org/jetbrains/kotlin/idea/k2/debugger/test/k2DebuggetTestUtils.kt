@@ -43,7 +43,8 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
         val platformKindResolutions = listOf(
             JvmPlatformKindResolution(),
             JsPlatformKindResolution(),
-            WasmPlatformKindResolution(),
+            WasmJsPlatformKindResolution(),
+            WasmWasiPlatformKindResolution(),
             NativePlatformKindResolution(),
             CommonPlatformKindResolution(),
         )

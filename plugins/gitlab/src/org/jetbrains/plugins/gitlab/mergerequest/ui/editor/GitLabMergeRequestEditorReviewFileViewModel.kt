@@ -62,7 +62,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 ) : GitLabMergeRequestEditorReviewFileViewModel {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val headContent: StateFlow<ComputedResult<String>?> = flow {
     ComputedResult.compute {

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move
 import com.google.gson.JsonObject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDirectory
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -47,10 +48,11 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
             ).run()
         } else {
             val sourceDescriptor = K2MoveSourceDescriptor.ElementSource(elementsAtCaret.filterIsInstance<KtNamedDeclaration>().toSet())
+            val targetSourceRoot = config.getNullableString("targetSourceRoot") ?: ""
             val targetPackage = config.getNullableString("targetPackage")
             val targetDescriptor = if (targetPackage != null) {
                 val fileName = sourceDescriptor.elements.first().name?.capitalizeAsciiOnly() + ".kt"
-                K2MoveTargetDescriptor.File(fileName, FqName(targetPackage), rootDir.toPsiDirectory(project)!!)
+                K2MoveTargetDescriptor.File(fileName, FqName(targetPackage), rootDir.findDirectory(targetSourceRoot)?.toPsiDirectory(project)!!)
             } else {
                 val targetFile = PsiManager.getInstance(project).findFile(rootDir.findFileByRelativePath(config.getString("targetFile"))!!)
                 K2MoveTargetDescriptor.File(targetFile as KtFile)

@@ -39,6 +39,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jdom.Element;
@@ -56,8 +57,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -65,11 +64,12 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
-  private final Map<RefEntity, UnusedDeclarationHint> myFixedElements =
-    ConcurrentCollectionFactory.createConcurrentIdentityMap();
+  private static final String[] SUPPRESSIONS = {UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.ALTERNATIVE_ID};
+  private final Map<RefEntity, UnusedDeclarationHint> myFixedElements = ConcurrentCollectionFactory.createConcurrentIdentityMap();
   private final Set<RefEntity> myExcludedElements = ConcurrentCollectionFactory.createConcurrentIdentitySet();
 
   private final WeakUnreferencedFilter myFilter;
+  private final boolean myIsShallowAnalysis;
   private DeadHTMLComposer myComposer;
   private final Supplier<InspectionToolWrapper<?, ?>> myDummyWrapper = new SynchronizedClearableLazy<>(() -> {
     InspectionToolWrapper<?, ?> toolWrapper = new GlobalInspectionToolWrapper(new DummyEntryPointsEP());
@@ -100,6 +100,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     myQuickFixActions = createQuickFixes(toolWrapper);
     myFilter = new WeakUnreferencedFilter(getTool(), getContext());
     ((EntryPointsManagerBase)getEntryPointsManager()).setAddNonJavaEntries(getTool().ADD_NONJAVA_TO_ENTRIES);
+    RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
+    myIsShallowAnalysis = !refManager.isDeclarationsFound() && !refManager.isOfflineView();
   }
 
   public @NotNull RefFilter getFilter() {
@@ -118,7 +120,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefJavaElementImpl)refElement).isSuspiciousRecursive()) return 1;
 
       for (RefElement element : refElement.getInReferences()) {
-        if (refElement instanceof RefFile) return 1;
         if (((UnusedDeclarationInspectionBase)myTool).isEntryPoint(element)) return 1;
       }
 
@@ -130,9 +131,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return (UnusedDeclarationInspectionBase)getToolWrapper().getTool();
   }
 
-
   @Override
-  public @NotNull DeadHTMLComposer getComposer() {
+  public @NotNull HTMLComposerImpl getComposer() {
+    if (myIsShallowAnalysis) return super.getComposer();
     if (myComposer == null) {
       myComposer = new DeadHTMLComposer(this);
     }
@@ -143,7 +144,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   public boolean isExcluded(@NotNull RefEntity entity) {
     return myExcludedElements.contains(entity);
   }
-
 
   @Override
   public void amnesty(@NotNull RefEntity element) {
@@ -195,12 +195,13 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public QuickFixAction @NotNull [] getQuickFixes(RefEntity @NotNull ... refElements) {
-    for (RefEntity element : refElements) {
-      if (element instanceof RefJavaElement &&
-          getFilter().accepts((RefJavaElement)element) &&
-          !myFixedElements.containsKey(element) &&
-          element.isValid()) {
+  public QuickFixAction @NotNull [] getQuickFixes(RefEntity @NotNull ... refEntities) {
+    if (myIsShallowAnalysis) return QuickFixAction.EMPTY;
+    for (RefEntity entity : refEntities) {
+      if (entity instanceof RefJavaElement javaElement &&
+          getFilter().accepts(javaElement) &&
+          !myFixedElements.containsKey(entity) &&
+          entity.isValid()) {
         return myQuickFixActions;
       }
     }
@@ -354,6 +355,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       }
     }
   }
+
   private static void commentOutDead(PsiElement psiElement) {
     PsiFile psiFile = psiElement.getContainingFile();
 
@@ -361,7 +363,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       Document doc = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(psiFile);
       if (doc != null) {
         TextRange textRange = psiElement.getTextRange();
-        String date = DateTimeFormatter.ISO_DATE_TIME.format(LocalTime.now());
+        String date = DateFormatUtil.formatDateTime(new Date())
+          .replaceAll("\\P{Graph}", " "); // replace all non-visible characters (including space) with spaces, e.g. NNBSP
 
         int startOffset = textRange.getStartOffset();
         CharSequence chars = doc.getCharsSequence();
@@ -394,11 +397,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
+  /**
+   * Adds the Entry Points node to the Unused Declaration inspection's results.
+   */
   @Override
   public void patchToolNode(@NotNull InspectionTreeNode node,
                             @NotNull InspectionRVContentProvider provider,
                             boolean showStructure,
                             boolean groupByStructure) {
+    if (myIsShallowAnalysis) return;
     InspectionTreeModel model = myContext.getView().getTree().getInspectionTreeModel();
     EntryPointsNode epNode = model.createCustomNode(myDummyWrapper.get(), () -> new EntryPointsNode(myDummyWrapper.get(), myContext, node), node);
     InspectionToolPresentation presentation = myContext.getPresentation(myDummyWrapper.get());
@@ -407,7 +414,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public @NotNull RefElementNode createRefNode(@Nullable RefEntity entity, @NotNull InspectionTreeModel model, @NotNull InspectionTreeNode parent) {
+  public @NotNull RefElementNode createRefNode(@Nullable RefEntity entity,
+                                               @NotNull InspectionTreeModel model,
+                                               @NotNull InspectionTreeNode parent) {
+    if (myIsShallowAnalysis) return super.createRefNode(entity, model, parent);
     return new UnusedDeclarationRefElementNode(entity, this, parent);
   }
 
@@ -418,6 +428,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public synchronized void updateContent() {
+    if (myIsShallowAnalysis) {
+      super.updateContent();
+      return;
+    }
     clearContents();
     getContext().getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
@@ -430,14 +444,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   private @Nullable RefJavaElement refineElement(RefEntity refEntity) {
-    if (!(refEntity instanceof RefJavaElement refElement)) return null; //dead code doesn't work with refModule | refPackage
+    if (myIsShallowAnalysis) return null;
+    if (!(refEntity instanceof RefJavaElement refElement)) return null; // dead code doesn't work with refModule | refPackage
     RefFilter filter = getFilter();
     if (!filter.accepts(refElement)) return null;
     RefJavaElement refinedElement = (RefJavaElement)getRefManager().getRefinedElement(refEntity);
     if (refinedElement != refEntity && filter.accepts(refinedElement)) return null; // prevent duplicate reporting
     if (!refinedElement.isValid()) return null;
     if (!compareVisibilities(refinedElement, getTool().getSharedLocalInspectionTool())) return null;
-    if (isSuppressed(refinedElement)) return null;
+    if (isSuppressed(refinedElement) || refinedElement.isSuppressed(SUPPRESSIONS)) return null;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() & getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
         (myFixedElements.containsKey(refinedElement) || isExcluded(refinedElement))) {
       return null;
@@ -579,7 +594,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public @NotNull JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
+  public JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
+    if (myIsShallowAnalysis) return null;
     final Project project = entity.getRefManager().getProject();
     DescriptionEditorPane htmlView = new DescriptionEditorPane() {
       @Override
@@ -629,15 +645,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     css.addRule("ul {margin-left:" + JBUIScale.scale(10) + "px;text-indent: 0}");
     css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
     final @Nls StringBuilder buf = new StringBuilder();
-    getComposer().compose(buf, entity, false);
+    ((DeadHTMLComposer)getComposer()).compose(buf, entity, false);
     final String text = buf.toString();
     DescriptionEditorPaneKt.readHTML(htmlView, text);
     return ScrollPaneFactory.createScrollPane(htmlView, true);
-  }
-
-  @Override
-  public boolean showProblemCount() {
-    return false;
   }
 
   @ApiStatus.Internal

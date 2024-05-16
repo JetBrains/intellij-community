@@ -6,11 +6,9 @@ com.intellij.ide.plugins.cl.PluginAwareClassLoader
 - a:getFiles():java.util.Collection
 - a:getLoadedClassCount():J
 - a:getPackagePrefix():java.lang.String
-- a:getPluginCoroutineScope():kotlinx.coroutines.CoroutineScope
 - a:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - a:getPluginId():com.intellij.openapi.extensions.PluginId
 - a:getState():I
-- a:tryLoadingClass(java.lang.String,Z):java.lang.Class
 *e:com.intellij.openapi.client.ClientKind
 - java.lang.Enum
 - sf:ALL:com.intellij.openapi.client.ClientKind
@@ -156,7 +154,6 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - f:removeExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener):V
 f:com.intellij.openapi.extensions.ExtensionPointName$Companion
 - f:create(java.lang.String):com.intellij.openapi.extensions.ExtensionPointName
-f:com.intellij.openapi.extensions.ExtensionPointNameKt
 com.intellij.openapi.extensions.ExtensionPointPriorityListener
 f:com.intellij.openapi.extensions.ExtensionPointUtil
 - <init>():V
@@ -238,9 +235,6 @@ f:com.intellij.openapi.extensions.ProjectExtensionPointName
 f:com.intellij.openapi.extensions.SortingException
 - java.lang.RuntimeException
 - getConflictingElements():com.intellij.openapi.extensions.LoadingOrder$Orderable[]
-f:com.intellij.openapi.extensions.impl.ExtensionPointImplKt
-f:com.intellij.openapi.extensions.impl.ExtensionsAreaImplKt
-f:com.intellij.openapi.extensions.impl.XmlExtensionAdapterKt
 com.intellij.util.KeyedLazyInstance
 - a:getInstance():java.lang.Object
 - a:getKey():java.lang.String

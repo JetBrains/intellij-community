@@ -393,6 +393,10 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVersionHigher_15 && myVirtualMachine.canGetMethodReturnValues();
   }
 
+  public boolean canUseSourceNameFilters() {
+    return myVirtualMachine.canUseSourceNameFilters();
+  }
+
   public String description() {
     return myVirtualMachine.description();
   }

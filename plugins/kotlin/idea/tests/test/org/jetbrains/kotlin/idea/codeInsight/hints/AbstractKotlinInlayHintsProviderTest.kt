@@ -11,15 +11,22 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import com.intellij.util.ThrowableRunnable
 import junit.framework.ComparisonFailure
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
-abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
+abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase(),
+                                                      ExpectedPluginModeProvider {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
+
         customToStringProvider = { element ->
             val virtualFile = element.containingFile.virtualFile
             val jarFileSystem = virtualFile.fileSystem as? JarFileSystem
@@ -29,7 +36,6 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
             } ?: virtualFile.name
             "[$path:${if (jarFileSystem != null) "*" else element.startOffset.toString()}]"
         }
-        checkPluginIsCorrect(isK2Plugin())
     }
 
     override fun tearDown() {
@@ -39,23 +45,20 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
         )
     }
 
-    open fun isK2Plugin(): Boolean = false
-
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     fun doTest(testPath: String) {
         val defaultFile = File(testPath)
-        val file = if (isK2Plugin()) {
-            val file = File(testPath.replace(".kt", ".k2.kt"))
-            file.takeIf(File::exists) ?: defaultFile
-        } else {
-            defaultFile
+        val k2File = when (pluginMode) {
+            KotlinPluginMode.K1 -> null
+            KotlinPluginMode.K2 -> File(testPath.replace(".kt", ".k2.kt"))
+                .takeIf(File::exists)
         }
 
         configureDependencies(defaultFile)
-        doTestProviders(file = file)
+        doTestProviders(file = k2File ?: defaultFile)
     }
 
     private val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")

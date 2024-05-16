@@ -489,6 +489,459 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess")
+    public static class IfThenToSafeAccess extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("argumentInCallWithReceiver.kt")
+        public void testArgumentInCallWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/argumentInCallWithReceiver.kt");
+        }
+
+        @TestMetadata("blockHasMoreThanOneStatement.kt")
+        public void testBlockHasMoreThanOneStatement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/blockHasMoreThanOneStatement.kt");
+        }
+
+        @TestMetadata("blockUsesDifferentVar.kt")
+        public void testBlockUsesDifferentVar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/blockUsesDifferentVar.kt");
+        }
+
+        @TestMetadata("call.kt")
+        public void testCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/call.kt");
+        }
+
+        @TestMetadata("call2.kt")
+        public void testCall2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/call2.kt");
+        }
+
+        @TestMetadata("call3.kt")
+        public void testCall3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/call3.kt");
+        }
+
+        @TestMetadata("call4.kt")
+        public void testCall4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/call4.kt");
+        }
+
+        @TestMetadata("callChainWithImplicitReceiver.kt")
+        public void testCallChainWithImplicitReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/callChainWithImplicitReceiver.kt");
+        }
+
+        @TestMetadata("callChainWithVariableCalls.kt")
+        public void testCallChainWithVariableCalls() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/callChainWithVariableCalls.kt");
+        }
+
+        @TestMetadata("callInvokeOperator.kt")
+        public void testCallInvokeOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/callInvokeOperator.kt");
+        }
+
+        @TestMetadata("callInvokeOperator2.kt")
+        public void testCallInvokeOperator2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/callInvokeOperator2.kt");
+        }
+
+        @TestMetadata("callInvokeOperator3.kt")
+        public void testCallInvokeOperator3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/callInvokeOperator3.kt");
+        }
+
+        @TestMetadata("callInvokeOperator4.kt")
+        public void testCallInvokeOperator4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/callInvokeOperator4.kt");
+        }
+
+        @TestMetadata("callVariable.kt")
+        public void testCallVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/callVariable.kt");
+        }
+
+        @TestMetadata("callVariable2.kt")
+        public void testCallVariable2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/callVariable2.kt");
+        }
+
+        @TestMetadata("callWithNamedArgument.kt")
+        public void testCallWithNamedArgument() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/callWithNamedArgument.kt");
+        }
+
+        @TestMetadata("conditionComparesNullWithNull.kt")
+        public void testConditionComparesNullWithNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/conditionComparesNullWithNull.kt");
+        }
+
+        @TestMetadata("conditionInParentheses.kt")
+        public void testConditionInParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/conditionInParentheses.kt");
+        }
+
+        @TestMetadata("conditionInvalidBinaryExp.kt")
+        public void testConditionInvalidBinaryExp() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/conditionInvalidBinaryExp.kt");
+        }
+
+        @TestMetadata("conditionNotBinaryExpr.kt")
+        public void testConditionNotBinaryExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/conditionNotBinaryExpr.kt");
+        }
+
+        @TestMetadata("doesNotinlineValueIfUsedMoreThanOnce.kt")
+        public void testDoesNotinlineValueIfUsedMoreThanOnce() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/doesNotinlineValueIfUsedMoreThanOnce.kt");
+        }
+
+        @TestMetadata("doesNotinlineValueOutsideOfScope.kt")
+        public void testDoesNotinlineValueOutsideOfScope() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/doesNotinlineValueOutsideOfScope.kt");
+        }
+
+        @TestMetadata("emptyCondition.kt")
+        public void testEmptyCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/emptyCondition.kt");
+        }
+
+        @TestMetadata("emptyElseBlock.kt")
+        public void testEmptyElseBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/emptyElseBlock.kt");
+        }
+
+        @TestMetadata("emptyThenBlock.kt")
+        public void testEmptyThenBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/emptyThenBlock.kt");
+        }
+
+        @TestMetadata("ifAndElseBothInBlocks.kt")
+        public void testIfAndElseBothInBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/ifAndElseBothInBlocks.kt");
+        }
+
+        @TestMetadata("ifAndElseBothInBlocks2.kt")
+        public void testIfAndElseBothInBlocks2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/ifAndElseBothInBlocks2.kt");
+        }
+
+        @TestMetadata("ifAndElseNotInBlocks.kt")
+        public void testIfAndElseNotInBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/ifAndElseNotInBlocks.kt");
+        }
+
+        @TestMetadata("ifAndElseNotInBlocks2.kt")
+        public void testIfAndElseNotInBlocks2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/ifAndElseNotInBlocks2.kt");
+        }
+
+        @TestMetadata("ifAsExpression.kt")
+        public void testIfAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/ifAsExpression.kt");
+        }
+
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiver2.kt")
+        public void testImplicitReceiver2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiver2.kt");
+        }
+
+        @TestMetadata("implicitReceiver3.kt")
+        public void testImplicitReceiver3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiver3.kt");
+        }
+
+        @TestMetadata("implicitReceiverInApply.kt")
+        public void testImplicitReceiverInApply() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiverInApply.kt");
+        }
+
+        @TestMetadata("implicitReceiverIsNotLeftMostReceiver.kt")
+        public void testImplicitReceiverIsNotLeftMostReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiverIsNotLeftMostReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiverVariableCall.kt")
+        public void testImplicitReceiverVariableCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiverVariableCall.kt");
+        }
+
+        @TestMetadata("isCheckSimple.kt")
+        public void testIsCheckSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/isCheckSimple.kt");
+        }
+
+        @TestMetadata("isCheckWithSelectorChain.kt")
+        public void testIsCheckWithSelectorChain() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/isCheckWithSelectorChain.kt");
+        }
+
+        @TestMetadata("isCondition.kt")
+        public void testIsCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/isCondition.kt");
+        }
+
+        @TestMetadata("isNotCondition.kt")
+        public void testIsNotCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/isNotCondition.kt");
+        }
+
+        @TestMetadata("isNotNullable.kt")
+        public void testIsNotNullable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/isNotNullable.kt");
+        }
+
+        @TestMetadata("isNullable.kt")
+        public void testIsNullable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/isNullable.kt");
+        }
+
+        @TestMetadata("lhsEqualsNull.kt")
+        public void testLhsEqualsNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/lhsEqualsNull.kt");
+        }
+
+        @TestMetadata("lhsNotEqualsNull.kt")
+        public void testLhsNotEqualsNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/lhsNotEqualsNull.kt");
+        }
+
+        @TestMetadata("lhsNotEqualsNull2.kt")
+        public void testLhsNotEqualsNull2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/lhsNotEqualsNull2.kt");
+        }
+
+        @TestMetadata("localVar.kt")
+        public void testLocalVar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/localVar.kt");
+        }
+
+        @TestMetadata("missingNecessaryElseClause.kt")
+        public void testMissingNecessaryElseClause() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/missingNecessaryElseClause.kt");
+        }
+
+        @TestMetadata("missingNecessaryThenClause.kt")
+        public void testMissingNecessaryThenClause() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/missingNecessaryThenClause.kt");
+        }
+
+        @TestMetadata("multipleUsagesNullCheck.kt")
+        public void testMultipleUsagesNullCheck() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/multipleUsagesNullCheck.kt");
+        }
+
+        @TestMetadata("multipleUsagesThis.kt")
+        public void testMultipleUsagesThis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/multipleUsagesThis.kt");
+        }
+
+        @TestMetadata("multipleUsagesTypeCheck.kt")
+        public void testMultipleUsagesTypeCheck() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/multipleUsagesTypeCheck.kt");
+        }
+
+        @TestMetadata("multipleUsagesVariableCalls.kt")
+        public void testMultipleUsagesVariableCalls() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/multipleUsagesVariableCalls.kt");
+        }
+
+        @TestMetadata("noCondition.kt")
+        public void testNoCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/noCondition.kt");
+        }
+
+        @TestMetadata("noElseBlock.kt")
+        public void testNoElseBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/noElseBlock.kt");
+        }
+
+        @TestMetadata("noElseBlock2.kt")
+        public void testNoElseBlock2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/noElseBlock2.kt");
+        }
+
+        @TestMetadata("noElseBlockAsExpression.kt")
+        public void testNoElseBlockAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/noElseBlockAsExpression.kt");
+        }
+
+        @TestMetadata("noNullInCondition.kt")
+        public void testNoNullInCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/noNullInCondition.kt");
+        }
+
+        @TestMetadata("noNullInCondition2.kt")
+        public void testNoNullInCondition2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/noNullInCondition2.kt");
+        }
+
+        @TestMetadata("noStdResultInCallChain.kt")
+        public void testNoStdResultInCallChain() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/noStdResultInCallChain.kt");
+        }
+
+        @TestMetadata("noThenBlock.kt")
+        public void testNoThenBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/noThenBlock.kt");
+        }
+
+        @TestMetadata("noThenBlock2.kt")
+        public void testNoThenBlock2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/noThenBlock2.kt");
+        }
+
+        @TestMetadata("notApplicableForFunction.kt")
+        public void testNotApplicableForFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/notApplicableForFunction.kt");
+        }
+
+        @TestMetadata("notApplicableForNonLocalVar.kt")
+        public void testNotApplicableForNonLocalVar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/notApplicableForNonLocalVar.kt");
+        }
+
+        @TestMetadata("notApplicableResultInCallChain.kt")
+        public void testNotApplicableResultInCallChain() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/notApplicableResultInCallChain.kt");
+        }
+
+        @TestMetadata("nullCheckSimple.kt")
+        public void testNullCheckSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/nullCheckSimple.kt");
+        }
+
+        @TestMetadata("nullCheckWithSelectorCallChain.kt")
+        public void testNullCheckWithSelectorCallChain() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/nullCheckWithSelectorCallChain.kt");
+        }
+
+        @TestMetadata("otherBlockHasMoreThanOneStatement.kt")
+        public void testOtherBlockHasMoreThanOneStatement() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/otherBlockHasMoreThanOneStatement.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/property.kt");
+        }
+
+        @TestMetadata("propertyNotNull.kt")
+        public void testPropertyNotNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/propertyNotNull.kt");
+        }
+
+        @TestMetadata("propertyVariableCall.kt")
+        public void testPropertyVariableCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/propertyVariableCall.kt");
+        }
+
+        @TestMetadata("propertyWithProperty.kt")
+        public void testPropertyWithProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/propertyWithProperty.kt");
+        }
+
+        @TestMetadata("replaceWithLetInMember.kt")
+        public void testReplaceWithLetInMember() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/replaceWithLetInMember.kt");
+        }
+
+        @TestMetadata("replaceWithLetInMemberWithIs.kt")
+        public void testReplaceWithLetInMemberWithIs() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/replaceWithLetInMemberWithIs.kt");
+        }
+
+        @TestMetadata("resultCall.kt")
+        public void testResultCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/resultCall.kt");
+        }
+
+        @TestMetadata("rhsEqualsNull.kt")
+        public void testRhsEqualsNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/rhsEqualsNull.kt");
+        }
+
+        @TestMetadata("rhsEqualsNull2.kt")
+        public void testRhsEqualsNull2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/rhsEqualsNull2.kt");
+        }
+
+        @TestMetadata("rhsNotEqualsNull.kt")
+        public void testRhsNotEqualsNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/rhsNotEqualsNull.kt");
+        }
+
+        @TestMetadata("rhsNotEqualsNull2.kt")
+        public void testRhsNotEqualsNull2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/rhsNotEqualsNull2.kt");
+        }
+
+        @TestMetadata("senselessComparison.kt")
+        public void testSenselessComparison() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/senselessComparison.kt");
+        }
+
+        @TestMetadata("thenAndElseBothNull.kt")
+        public void testThenAndElseBothNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/thenAndElseBothNull.kt");
+        }
+
+        @TestMetadata("thenAndElseNotNull.kt")
+        public void testThenAndElseNotNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/thenAndElseNotNull.kt");
+        }
+
+        @TestMetadata("unacceptableEmptyElseBlock.kt")
+        public void testUnacceptableEmptyElseBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/unacceptableEmptyElseBlock.kt");
+        }
+
+        @TestMetadata("unacceptableEmptyThenBlock.kt")
+        public void testUnacceptableEmptyThenBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/unacceptableEmptyThenBlock.kt");
+        }
+
+        @TestMetadata("unacceptableNoElseBlock.kt")
+        public void testUnacceptableNoElseBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/unacceptableNoElseBlock.kt");
+        }
+
+        @TestMetadata("unacceptableNoThenBlock.kt")
+        public void testUnacceptableNoThenBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/unacceptableNoThenBlock.kt");
+        }
+
+        @TestMetadata("usageInBlock.kt")
+        public void testUsageInBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/usageInBlock.kt");
+        }
+
+        @TestMetadata("usageInBlock2.kt")
+        public void testUsageInBlock2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/usageInBlock2.kt");
+        }
+
+        @TestMetadata("uselessIsCheck.kt")
+        public void testUselessIsCheck() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/uselessIsCheck.kt");
+        }
+
+        @TestMetadata("willNotInlineClassProperty.kt")
+        public void testWillNotInlineClassProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/branched/ifThenToSafeAccess/willNotInlineClassProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
     public static class ReplaceGetOrSet extends AbstractK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

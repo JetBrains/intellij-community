@@ -3,8 +3,7 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -71,23 +70,18 @@ sealed class EnableUnsupportedFeatureFix(
             val projectFileIndex = ProjectFileIndex.getInstance(project)
             val forTests = file.originalFile.virtualFile?.let(projectFileIndex::getKotlinSourceRootType) == TestSourceKotlinRootType
 
-            ApplicationManager.getApplication().invokeLater {
-                WriteCommandAction.runWriteCommandAction(
-                    project,
-                    KotlinJvmBundle.message("command.name.update.kotlin.language.version"),
-                    null,
-                    Runnable {
-                        findApplicableConfigurator(module).updateLanguageVersion(
-                            module,
-                            if (apiVersionOnly) null else feature.sinceVersion!!.versionString,
-                            targetApiLevel,
-                            feature.sinceApiVersion,
-                            forTests
-                        )
-                        project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
-                    }
-                )
-            }
+            findApplicableConfigurator(module).updateLanguageVersion(
+                module = module,
+                languageVersion = if (apiVersionOnly) null else feature.sinceVersion!!.versionString,
+                apiVersion = targetApiLevel,
+                requiredStdlibVersion = feature.sinceApiVersion,
+                forTests = forTests,
+            )
+
+            // prevents the roots invalidation from being actually run from quickfix previews (e.g. in Fleet)
+            SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+            // re-highlights open files
+            project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
         }
     }
 

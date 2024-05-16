@@ -245,6 +245,16 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             runTest("../../idea/tests/testData/refactoring/introduceParameter/classUsedParameter.kt");
         }
 
+        @TestMetadata("conflictingName.kt")
+        public void testConflictingName() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/conflictingName.kt");
+        }
+
+        @TestMetadata("defaultParameter.kt")
+        public void testDefaultParameter() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/defaultParameter.kt");
+        }
+
         @TestMetadata("defaultValueInParens.kt")
         public void testDefaultValueInParens() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/defaultValueInParens.kt");
@@ -263,6 +273,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
         @TestMetadata("foreignParameterRef.kt")
         public void testForeignParameterRef() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/foreignParameterRef.kt");
+        }
+
+        @TestMetadata("fromComment.kt")
+        public void testFromComment() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/fromComment.kt");
         }
 
         @TestMetadata("fun.kt")
@@ -338,6 +353,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
         @TestMetadata("lastParameterHasEolCommentAndTrailingComma.kt")
         public void testLastParameterHasEolCommentAndTrailingComma() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/lastParameterHasEolCommentAndTrailingComma.kt");
+        }
+
+        @TestMetadata("overrideFunction.kt")
+        public void testOverrideFunction() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/overrideFunction.kt");
         }
 
         @TestMetadata("partialSubstitution.kt")

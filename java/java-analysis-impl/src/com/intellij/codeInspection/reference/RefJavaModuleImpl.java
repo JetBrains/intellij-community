@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -39,7 +39,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
   @Override
   public void accept(@NotNull RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor javaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> javaVisitor.visitJavaModule(this));
+      ReadAction.run(() -> javaVisitor.visitJavaModule(this));
     }
     else {
       super.accept(visitor);

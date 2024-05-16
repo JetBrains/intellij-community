@@ -22,6 +22,7 @@ interface EmbeddingSearchIndex {
 
   suspend fun saveToDisk()
   suspend fun loadFromDisk()
+  suspend fun offload()
 
   suspend fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double? = null): List<ScoredText>
   suspend fun streamFindClose(searchEmbedding: FloatTextEmbedding, similarityThreshold: Double? = null): Flow<ScoredText>

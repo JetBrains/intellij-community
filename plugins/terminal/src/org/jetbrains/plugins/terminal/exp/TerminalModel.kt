@@ -14,6 +14,11 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
+/**
+ * Used in the Block Terminal.
+ * Keeps the whole state of a single terminal session.
+ * TODO rename to BlockTerminalSessionModel?
+ */
 internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   val width: Int
     get() = textBuffer.width

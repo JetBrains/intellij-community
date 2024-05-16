@@ -2,7 +2,7 @@
 package com.intellij.analysis.logging.highlighting
 
 import com.intellij.analysis.customization.console.ClassFinderConsoleColorsPage
-import com.intellij.analysis.logging.resolve.getAlignedPlaceholderCount
+import com.intellij.analysis.logging.resolve.getAdjustedPlaceholderList
 import com.intellij.analysis.logging.resolve.getContext
 import com.intellij.analysis.logging.resolve.getPlaceholderRanges
 import com.intellij.lang.annotation.AnnotationHolder
@@ -43,6 +43,6 @@ class LoggingPlaceholderAnnotator : Annotator {
       ranges.filterNotNull()
     }
 
-    return getAlignedPlaceholderCount(textRangeList, context)
+    return getAdjustedPlaceholderList(textRangeList, context)
   }
 }

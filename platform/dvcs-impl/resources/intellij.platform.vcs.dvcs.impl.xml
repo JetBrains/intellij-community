@@ -84,6 +84,7 @@
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
+    <iconMapper mappingFile="DvcsIconMappings.json"/>
 
     <changesGroupingPolicy key="repository" id="repository" weight="30"
                            implementationClass="com.intellij.dvcs.ui.RepositoryChangesGroupingPolicy$Factory"/>

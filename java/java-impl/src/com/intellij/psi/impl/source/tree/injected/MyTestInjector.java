@@ -118,7 +118,7 @@ public class MyTestInjector {
 
   private static void injectVariousStuffEverywhere(@NotNull Disposable parent, final PsiManager psiManager) {
     final Language ql = Language.findLanguageByID("JPAQL");
-    final Language js = Language.findLanguageByID("JavaScript 1.8");
+    final Language js = Language.findLanguageByID("JavaScript");
     final Language html = Language.findLanguageByID("HTML");
     if (ql == null || js == null) return;
     final Language ecma4 = Language.findLanguageByID("ECMA Script Level 4");

@@ -51,9 +51,6 @@
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
-    <group id="Git.Reword.ToolbarActions">
-      <reference ref="Vcs.ShowMessageHistory" />
-    </group>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
@@ -392,7 +389,7 @@
       <add-to-group group-id="ChangesViewPopupMenu" anchor="first"/>
     </group>
 
-    <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.Stash"/>
+    <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons.Stash"/>
 
     <group id="Git.Stage.Configure" popup="true">
       <separator key="separator.Git.Stage.Configure.display.as"/>
@@ -454,6 +451,7 @@
     <action id="Git.Stash.Apply" class="git4idea.stash.ui.GitApplyStashAction"/>
     <action id="Git.Stash.UnstashAs" class="git4idea.stash.ui.GitUnstashAsAction"/>
     <action id="Git.Stash.Drop" class="git4idea.stash.ui.GitDropStashAction" use-shortcut-of="$Delete"/>
+    <action id="Git.Stash.Clear" class="git4idea.stash.ui.GitClearStashesAction"/>
     <action id="Git.Show.Stash" class="git4idea.stash.ui.GitShowStashToolWindowTabAction">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
       <add-to-group group-id="Git.MainMenu.LocalChanges" relative-to-action="Vcs.Show.Shelf" anchor="after"/>
@@ -465,6 +463,7 @@
       <reference id="Git.Stash.Apply"/>
       <reference id="Git.Stash.UnstashAs"/>
       <reference id="Git.Stash.Drop"/>
+      <reference id="Git.Stash.Clear"/>
       <add-to-group group-id="Vcs.SavedPatches.ContextMenu" anchor="first"/>
     </group>
 

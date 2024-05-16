@@ -89,6 +89,13 @@ public final class TerminalUtil {
     return ContainerUtil.getFirstItem(process.getCommand());
   }
 
+  /**
+   * Add the item to the list.
+   * When the `parentDisposable` is disposed,
+   * then the item will be removed from the list.
+   *
+   * Used to register an item (i.e. listener) which depends on the `parentDisposable`.
+   */
   public static <T> void addItem(@NotNull List<T> items, @NotNull T item, @NotNull Disposable parentDisposable) {
     items.add(item);
     boolean registered = Disposer.tryRegister(parentDisposable, () -> {
@@ -99,6 +106,11 @@ public final class TerminalUtil {
     }
   }
 
+  /**
+   * Sends command to TTY.
+   * Does not wait for running command to finish.
+   * Non-Blocking operation.
+   */
   public static void sendCommandToExecute(@NotNull String shellCommand, @NotNull TerminalStarter terminalStarter) {
     StringBuilder result = new StringBuilder();
     if (terminalStarter.isLastSentByteEscape()) {

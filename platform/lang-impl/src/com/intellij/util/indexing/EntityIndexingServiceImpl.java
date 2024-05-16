@@ -46,7 +46,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.invalidatePersistentIndexableFilesFilter;
+import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.invalidateProjectFilterIfFirstScanningNotRequested;
 
 final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   private static final Logger LOG = Logger.getInstance(EntityIndexingServiceImpl.class);
@@ -58,10 +58,7 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   public void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeRescanningInfo> changes) {
     if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) return;
     if (LightEdit.owns(project)) return;
-    if (!UnindexedFilesScanner.isFirstProjectScanningRequested(project)) {
-      invalidatePersistentIndexableFilesFilter(project);
-      return;
-    }
+    if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return;
     if (changes.isEmpty()) {
       runFullRescan(project, "Project roots have changed");
     }

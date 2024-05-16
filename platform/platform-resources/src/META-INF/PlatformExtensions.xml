@@ -120,6 +120,8 @@
     <persistentFsConnectionListener implementation="com.intellij.openapi.fileTypes.impl.IgnoredFileCacheCleaner"/>
 
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="true"/>
+    <applicationService serviceInterface="com.intellij.util.net.internal.ProxyNewUserService"
+                        serviceImplementation="com.intellij.util.net.internal.ProxyNewUserServiceImpl" preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.ClipboardSynchronizer" preload="true"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
@@ -295,6 +297,19 @@
       serviceImplementation="com.intellij.ui.messages.MessagesServiceImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ui.WinFocusStealer" os="windows" preload="notHeadless"/>
+
+    <applicationService serviceInterface="com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupport"
+                        serviceImplementation="com.intellij.execution.process.window.to.foreground.WinBringProcessWindowToForegroundSupport"
+                        os="windows"
+                        preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupport"
+                        serviceImplementation="com.intellij.execution.process.window.to.foreground.MacBringProcessWindowToForegroundSupport"
+                        os="mac"
+                        preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupport"
+                        serviceImplementation="com.intellij.execution.process.window.to.foreground.X11BringProcessWindowToForegroundSupport"
+                        os="linux"
+                        preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.diff.DiffManager"
                         serviceImplementation="com.intellij.diff.DiffManagerImpl"/>
@@ -492,6 +507,9 @@
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginInfoProvider"
                         serviceImplementation="com.intellij.ide.plugins.marketplace.MarketplaceRequests"
                         preload="true"/>
+    <applicationService serviceInterface="com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService"
+                        serviceImplementation="com.intellij.ide.plugins.marketplace.utils.ApplicationInfoMarketplaceCustomizationService"
+                        preload="true"/>
     <applicationService serviceInterface="com.intellij.ide.ConsentOptionsProvider"
                         serviceImplementation="com.intellij.ide.gdpr.ConsentOptionsProviderImpl"/>
     <applicationService serviceInterface="com.intellij.ide.StatisticsNotificationManager"
@@ -632,8 +650,6 @@
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
 
-    <startPagePromoter id="NewUiPromoter" implementation="com.intellij.openapi.wm.impl.welcomeScreen.NewUiPromoter"/>
-
     <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization" preload="notHeadless"/>
 
     <!-- General -->
@@ -657,14 +673,6 @@
     <applicationConfigurable groupId="appearance" groupWeight="130" instance="com.intellij.ide.ui.customization.CustomizationConfigurable"
                              id="preferences.customizations"
                              key="title.customizations" bundle="messages.IdeBundle"/>
-
-    <!-- New UI -->
-    <applicationConfigurable groupId="appearance"
-                             groupWeight="149"
-                             id="reference.settings.ide.settings.new.ui"
-                             instance="com.intellij.ui.ExperimentalUIConfigurable"
-                             bundle="messages.IdeBundle"
-                             key="configurable.new.ui.name"/>
 
     <!-- Notifications -->
     <applicationConfigurable groupId="appearance"
@@ -892,7 +900,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.UpdateManagerUsagesCollector"
                                            allowOnStartup="true"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.ProxyTypeCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.ProxySettingsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
     <applicationInitializedListener implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector
@@ -1003,6 +1011,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.ReadmeShownUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileChooser.impl.FileChooserUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.editor.markup.InspectionsFUS"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.documentation.DocumentationInteractionCollector"/>
 
     <applicationService
       serviceImplementation="com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence"
@@ -1044,6 +1053,10 @@
                              instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>
 
     <fileBreadcrumbsCollector implementation="com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector" order="last"/>
+
+    <applicationConfigurable parentId="preferences.editor" id="editor.stickyLines"
+                             key="configurable.sticky.lines" bundle="messages.ApplicationBundle"
+                             instance="com.intellij.openapi.editor.impl.stickyLines.configurable.StickyLinesConfigurable"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
     <registryKey key="ide.check.windows.defender.rules"
@@ -1783,6 +1796,10 @@
     <applicationService serviceImplementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationPreferences" />
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.KeymapFlagsStorage" />
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings" />
+    <applicationService serviceImplementation="com.intellij.openapi.wm.impl.WindowButtonsConfiguration" headlessImplementation=""
+                        preload="notHeadless" os="linux"/>
+    <applicationService serviceImplementation="com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration" headlessImplementation=""
+                        preload="notHeadless" os="linux"/>
   </extensions>
 
   <applicationListeners>

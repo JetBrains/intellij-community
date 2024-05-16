@@ -192,6 +192,7 @@ abstract class JKMethod :
 
     val leftParen = JKTokenElementImpl("(")
     val rightParen = JKTokenElementImpl(")")
+    var hasRedundantVisibility: Boolean = false
 }
 
 class JKMethodImpl(

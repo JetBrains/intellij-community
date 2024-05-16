@@ -229,7 +229,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
                 }
               }, modalityState, myProject.getDisposed());
             }
-            catch (Exception e) {
+            catch (Throwable e) {
               printError(terminalWidget, "Cannot open " + terminalWidget.getTerminalTitle().buildTitle(), e);
             }
           });
@@ -259,7 +259,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     openSessionInDirectory(terminalWidget.asNewWidget(), getStartupOptions(directory));
   }
 
-  private void printError(@NotNull TerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Exception e) {
+  private void printError(@NotNull TerminalWidget terminalWidget, @NotNull String errorMessage, @NotNull Throwable e) {
     LOG.info(errorMessage, e);
     @Nls StringBuilder message = new StringBuilder();
     message.append("\n");

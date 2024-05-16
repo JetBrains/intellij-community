@@ -1133,14 +1133,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       right = insets.right;
     }
     UiDecorator.UiDecoration decoration = myTabs.getDecoration();
-    if (decoration != null) {
-      Insets labelInsets = decoration.getLabelInsets();
-      Function<TabLabel.ActionsPosition, Insets> supplier = decoration.getContentInsetsSupplier();
-      if (labelInsets != null && supplier != null) {
-        int tabLeftInsect = labelInsets.left + supplier.apply(TabLabel.ActionsPosition.RIGHT).left;
-        if (tabLeftInsect > right) {
-          right = tabLeftInsect;
-        }
+    Insets labelInsets = decoration.getLabelInsets();
+    Function<TabLabel.ActionsPosition, Insets> supplier = decoration.getContentInsetsSupplier();
+    if (labelInsets != null && supplier != null) {
+      int tabLeftInsect = labelInsets.left + supplier.apply(TabLabel.ActionsPosition.RIGHT).left;
+      if (tabLeftInsect > right) {
+        right = tabLeftInsect;
       }
     }
     component.setBorder(JBUI.Borders.empty(0, left, 0, right));

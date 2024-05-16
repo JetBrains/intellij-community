@@ -19,6 +19,7 @@ private class PluginDescriptorEditorTabTitleProvider : EditorTabTitleProvider {
     }
 
     val pluginId = ReadAction.compute<String?, Throwable> {
+      if (!file.isValid) return@compute null
       val xmlFile = PsiManager.getInstance(project).findFile(file) as? XmlFile ?: return@compute null
 
       DescriptorUtil.getIdeaPluginFileElement(xmlFile) ?: return@compute null

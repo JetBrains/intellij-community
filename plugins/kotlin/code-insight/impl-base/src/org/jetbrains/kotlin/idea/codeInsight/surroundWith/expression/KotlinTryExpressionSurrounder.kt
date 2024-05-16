@@ -2,7 +2,8 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinTrySurrounderBase
@@ -27,10 +28,7 @@ sealed class KotlinTryExpressionSurrounder : KotlinControlFlowExpressionSurround
         @NlsSafe
         override fun getTemplateDescription() = "try { expr } finally {}"
         override fun getPattern() = "try { $0 } finally {\nb\n}"
-        override fun getRange(
-            editor: Editor,
-            replaced: KtExpression
-        ): TextRange? {
+        override fun getRange(context: ActionContext, replaced: KtExpression, updater: ModPsiUpdater): TextRange? {
             val blockExpression = (replaced as KtTryExpression).finallyBlock?.finalExpression ?: return null
             val stmt = blockExpression.statements[0]
             val range = stmt.textRange
@@ -40,9 +38,9 @@ sealed class KotlinTryExpressionSurrounder : KotlinControlFlowExpressionSurround
         }
     }
 
-    override fun getRange(editor: Editor, replaced: KtExpression): TextRange? {
+    override fun getRange(context: ActionContext, replaced: KtExpression, updater: ModPsiUpdater): TextRange? {
         val tryExpression = replaced as KtTryExpression
-        return KotlinTrySurrounderBase.getCatchTypeParameterTextRange(tryExpression)
+        return KotlinTrySurrounderBase.getCatchTypeParameter(tryExpression)?.textRange
     }
 }
 

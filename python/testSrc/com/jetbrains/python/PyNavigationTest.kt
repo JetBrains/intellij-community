@@ -80,6 +80,19 @@ class PyNavigationTest : PyTestCase() {
                                          "print(va<caret>r)")
   }
 
+  // PY-71972
+  fun testGotToDeclarationOrUsagesOnInstanceAttributeDefinitionShowsUsages() {
+    doTestGotoDeclarationOrUsagesOutcome(GTDUOutcome.SU, """
+          class C:
+              def __init__(self, val):
+                  self.va<caret>l = val
+          
+              def __str__(self):
+                  return f"{self.val} {self.val}"
+          """.trimIndent()
+    )
+  }
+
   fun testGotoDeclarationOnInitialization() {
     myFixture.configureByText(
       "a.py",

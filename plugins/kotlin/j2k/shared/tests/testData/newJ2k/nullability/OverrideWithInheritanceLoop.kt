@@ -1,5 +1,5 @@
-// ERROR: There's a cycle in the inheritance hierarchy for this type
-// ERROR: There's a cycle in the inheritance hierarchy for this type
+// ERROR: Cycle formed in the inheritance hierarchy of this type.
+// ERROR: Cycle formed in the inheritance hierarchy of this type.
 internal open class A : B() {
     open fun foo(s: String?) {}
 }

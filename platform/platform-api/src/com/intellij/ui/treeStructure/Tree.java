@@ -4,19 +4,19 @@ package com.intellij.ui.treeStructure;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.SmoothAutoScroller;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.treeView.CachedTreePresentation;
 import com.intellij.ide.util.treeView.CachedTreePresentationSupport;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.paint.RectanglePainter2D;
@@ -25,6 +25,7 @@ import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ThreeState;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -87,9 +88,16 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private transient boolean settingUI;
   private transient TreeExpansionListener uiTreeExpansionListener;
 
+  private final @NotNull MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
+
   @ApiStatus.Internal
   public static boolean isBulkExpandCollapseSupported() {
     return Registry.is("ide.tree.bulk.expand.api", true);
+  }
+
+  @ApiStatus.Internal
+  public static boolean isExpandWithSingleClickSettingEnabled() {
+    return Registry.is("ide.tree.show.expand.with.single.click.setting", true);
   }
 
   public Tree() {
@@ -166,6 +174,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         settingUI = false;
       }
     }
+  }
+
+  @Override
+  public void setToggleClickCount(int clickCount) {
+    super.setToggleClickCount(clickCount);
+    myUISettingsListener.setToggleClickCountCalled();
   }
 
   @Override
@@ -261,6 +275,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     firePropertyChange("font", null, null);
 
     updateBusy();
+    myUISettingsListener.connect();
   }
 
   @Override
@@ -272,6 +287,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       myBusyIcon.dispose();
       myBusyIcon = null;
     }
+    myUISettingsListener.disconnect();
   }
 
   @Override
@@ -701,6 +717,57 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
            e = new TreeBulkExpansionEvent(this, null, false);
         }
         bulkExpansionListener.treeBulkCollapseEnded(e);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void fireTreeStateRestoreStarted() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeStateListener stateListener
+      ) {
+        if (e == null) {
+           e = new TreeExpansionEvent(this, null);
+        }
+        stateListener.treeStateRestoreStarted(e);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void fireTreeStateCachedStateRestored() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeStateListener stateListener
+      ) {
+        if (e == null) {
+           e = new TreeExpansionEvent(this, null);
+        }
+        stateListener.treeStateCachedStateRestored(e);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void fireTreeStateRestoreFinished() {
+    Object[] listeners = listenerList.getListenerList();
+    TreeExpansionEvent e = null;
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (
+        listeners[i] == TreeExpansionListener.class
+        && listeners[i + 1] instanceof TreeStateListener stateListener
+      ) {
+        if (e == null) {
+           e = new TreeExpansionEvent(this, null);
+        }
+        stateListener.treeStateRestoreFinished(e);
       }
     }
   }
@@ -1808,6 +1875,51 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
             Tree.this.removeDescendantSelectedPaths(pPath.pathByAddingChild(oldChildren[counter]), true);
           }
         }
+      }
+    }
+  }
+
+  private class MyUISettingsListener implements UISettingsListener {
+
+    private boolean applyingUiSettings = false;
+    private boolean toggleClickCountOverridden;
+    private @Nullable MessageBusConnection connection;
+
+    @Override
+    public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+      if (applyingUiSettings) {
+        LOG.warn(new Throwable("Reentrant com.intellij.ui.treeStructure.Tree.MyUISettingsListener.uiSettingsChanged call"));
+        return;
+      }
+      applyingUiSettings = true;
+      try {
+        // Only set it if the client has never called setToggleClickCount() directly. And if the setting is enabled, of course.
+        if (!toggleClickCountOverridden && isExpandWithSingleClickSettingEnabled()) {
+          setToggleClickCount(uiSettings.getExpandNodesWithSingleClick() ? 1 : 2);
+        }
+      }
+      finally {
+        applyingUiSettings = false;
+      }
+    }
+
+    void setToggleClickCountCalled() {
+      if (!applyingUiSettings) {
+        toggleClickCountOverridden = true;
+      }
+    }
+
+    void connect() {
+      disconnect(); // not necessary, but just in case
+      connection = ApplicationManager.getApplication().getMessageBus().connect();
+      connection.subscribe(TOPIC, this);
+      uiSettingsChanged(UISettings.getInstance());
+    }
+
+    void disconnect() {
+      if (connection != null) {
+        Disposer.dispose(connection);
+        connection = null;
       }
     }
   }

@@ -96,6 +96,7 @@
     "build": {
       "build.svg": "actions/compile.svg",
       "dependencyAnalyzer.svg": "actions/dependencyAnalyzer.svg",
+      "rebuild.svg": "actions/rebuild.svg",
       "task.svg": "icons/task.svg",
       "taskGroup.svg": "nodes/configFolder.svg",
       "toggleOfflineMode.svg": "actions/offlineMode.svg"
@@ -125,11 +126,12 @@
       "cwmScreenInBrowserOn.svg": "codeWithMe/cwmScreenInBrowserOn.svg",
       "cwmScreenOff.svg": "codeWithMe/cwmScreenOff.svg",
       "cwmScreenOn.svg": "codeWithMe/cwmScreenOn.svg",
-      "cwmUsers.svg": "users.svg",
+      "cwmUsers.svg": "codeWithMe/users.svg",
       "cwmVerified.svg": "codeWithMe/cwmVerified.svg"
     },
     "debugger": {
       "addToWatch.svg": "debugger/addToWatch.svg",
+      "dbArray.svg": "debugger/db_array.svg",
       "dbPrimitive.svg": "debugger/db_primitive.svg",
       "frame.svg": "debugger/frame.svg",
       "selfReference.svg": "debugger/selfreference.svg",
@@ -209,6 +211,7 @@
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jfr.svg": "fileTypes/jfr.svg",
       "json.svg": "fileTypes/json.svg",
+      "jsonSchema.svg": "fileTypes/jsonSchema.svg",
       "jsp.svg": "fileTypes/jsp.svg",
       "jspx.svg": "fileTypes/jspx.svg",
       "less.svg": "icons/less.svg",
@@ -398,6 +401,7 @@
       "projectWideAnalysisOff.svg": "actions/projectWideAnalysisOff.svg",
       "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
       "softWrap.svg": "actions/toggleSoftWrap.svg",
+      "showToImplement.svg": "general/show_to_implement.svg",
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
       "scrollUp.svg": "runConfigurations/scroll_up.svg",
       "projectStructure.svg": "general/projectStructure.svg",
@@ -623,6 +627,7 @@
       ],
       "record.svg": "nodes/record.svg",
       "resourcesRoot.svg": "modules/resourcesRoot.svg",
+      "resourceBundle.svg": "nodes/resourceBundle.svg",
       "servlet.svg": "nodes/servlet.svg",
       "sourceRoot.svg": "modules/sourceRoot.svg",
       "star.svg": "nodes/favorite.svg",
@@ -834,34 +839,19 @@
       ]
     },
     "vcs": {
-      "branchLabel.svg": "icons/branchLabel.svg",
-      "changelist.svg": "vcs/changelist.svg",
-      "changes.svg": "actions/listChanges.svg",
-      "changesPush@12x12.svg": "icons/outgoing.svg",
-      "changesUpdate@12x12.svg": "icons/incoming.svg",
-      "cherryPick.svg": "icons/cherryPick.svg",
-      "commit.svg": "actions/commit.svg",
-      "currentBranchLabel.svg": "icons/currentBranchLabel.svg",
-      "currentBranchFavoriteLabel.svg": "icons/currentBranchFavoriteLabel.svg",
       "diff.svg": "actions/diff.svg",
+      "changes.svg": "actions/listChanges.svg",
+      "commit.svg": "actions/commit.svg",
+      "revert.svg": "actions/rollback.svg",
+      "update.svg": "actions/checkOut.svg",
       "fetch.svg": "vcs/fetch.svg",
       "merge.svg": "vcs/merge.svg",
       "patch.svg": "vcs/patch.svg",
       "push.svg": "vcs/push.svg",
-      "revert.svg": "actions/rollback.svg",
-      "stash.svg": [
-        "vcs/Shelve.svg",
-        "vcs/shelveSilent.svg",
-        "vcs/Stash.svg"
-      ],
+      "changelist.svg": "vcs/changelist.svg",
       "unshelve.svg": [
         "vcs/Unshelve.svg",
         "vcs/unshelveSilent.svg"
-      ],
-      "update.svg": "actions/checkOut.svg",
-      "vcs.svg": [
-        "vcs/branchNode.svg",
-        "vcs/branch.svg"
       ]
     },
     "webReferences": {

@@ -1480,6 +1480,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantSuspend/lambdaCall.kt");
         }
 
+        @TestMetadata("localFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/localFunction.kt");
+        }
+
+        @TestMetadata("localFunction_noSuspend.kt")
+        public void testLocalFunction_noSuspend() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/localFunction_noSuspend.kt");
+        }
+
         @TestMetadata("nonSuspendingLoop.kt")
         public void testNonSuspendingLoop() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSuspend/nonSuspendingLoop.kt");
@@ -1513,6 +1523,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("operatorAssignment.kt")
         public void testOperatorAssignment() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSuspend/operatorAssignment.kt");
+        }
+
+        @TestMetadata("overload_noSuspend.kt")
+        public void testOverload_noSuspend() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/overload_noSuspend.kt");
+        }
+
+        @TestMetadata("overloads.kt")
+        public void testOverloads() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/overloads.kt");
         }
 
         @TestMetadata("override.kt")

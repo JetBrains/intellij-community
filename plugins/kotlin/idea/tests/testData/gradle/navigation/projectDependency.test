@@ -1,0 +1,26 @@
+// FILE: build.gradle.kts
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(project(":<caret>module1"))
+}
+
+// FILE: settings.gradle.kts
+include("module1")
+
+// FILE: module1/build.gradle.kts
+// EXPECTED
+
+plugins {
+    java
+}
+
+repositories {
+    mavenCentral()
+}

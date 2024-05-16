@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtPureElement
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
@@ -78,14 +80,33 @@ private fun KtSymbolOrigin.toCallableDescriptorKind(): CallableMemberDescriptor.
     else -> CallableMemberDescriptor.Kind.DECLARATION
 }
 
-private fun KtAnnotationValue.toConstantValue(): ConstantValue<*> {
+private fun KtAnnotationValue.toConstantValue(context: Fe10WrapperContext): ConstantValue<*> {
     return when (this) {
-        KtUnsupportedAnnotationValue -> ErrorValue.create("Unsupported annotation value")
-        is KtArrayAnnotationValue -> ArrayValue(values.map { it.toConstantValue() }) { TODO() }
+        is KtUnsupportedAnnotationValue -> ErrorValue.create("Unsupported annotation value")
+        is KtArrayAnnotationValue -> ArrayValue(values.map { it.toConstantValue(context) }) { TODO() }
         is KtAnnotationApplicationValue -> TODO()
-        is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue -> KClassValue(classId, arrayDimensions = 0)
-        is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> TODO()
-        is KtKClassAnnotationValue.KtErrorClassAnnotationValue -> ErrorValue.create("Unresolved class")
+        is KtKClassAnnotationValue -> context.withAnalysisSession {
+            when (val type = type) {
+                is KtNonErrorClassType -> {
+                    val classId = type.classId
+                    if (classId.isLocal) {
+                        KClassValue(KClassValue.Value.LocalClass(type.toKotlinType(context)))
+                    } else {
+                        var unwrappedType: KtNonErrorClassType = type
+                        var arrayDimensions = 0
+                        while (unwrappedType.classId == StandardClassIds.Array) {
+                            val elementType = unwrappedType.getArrayElementType()?.lowerBoundIfFlexible() as? KtNonErrorClassType ?: break
+                            unwrappedType = elementType
+                            arrayDimensions += 1
+                        }
+                        KClassValue(unwrappedType.classId, arrayDimensions)
+                    }
+                }
+                else -> {
+                    ErrorValue.create("Unresolved class")
+                }
+            }
+        }
         is KtEnumEntryAnnotationValue -> {
             val callableId = callableId ?: return ErrorValue.create("Unresolved enum entry")
             val classId = callableId.classId ?: return ErrorValue.create("Unresolved enum entry")
@@ -181,7 +202,7 @@ class KtSymbolBasedAnnotationDescriptor(
         get() = ktAnnotationCall.classId?.asSingleFqName()
 
     override val allValueArguments: Map<Name, ConstantValue<*>> =
-        ktAnnotationCall.arguments.associate { it.name to it.expression.toConstantValue() }
+        ktAnnotationCall.arguments.associate { it.name to it.expression.toConstantValue(context) }
 
     override val source: SourceElement
         get() = ktAnnotationCall.psi.toSourceElement()

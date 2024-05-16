@@ -73,7 +73,8 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
                  @NotNull List<? extends ConfigurableGroup> groups,
                  @Nullable Configurable configurable,
                  final String filter,
-                 @NotNull ISettingsTreeViewFactory factory) {
+                 @NotNull ISettingsTreeViewFactory factory,
+                 @NotNull SpotlightPainterFactory spotlightPainterFactory) {
     super(parent);
 
     myProperties = PropertiesComponent.getInstance(project);
@@ -122,17 +123,17 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     searchPanel.add(VerticalLayout.CENTER, mySearch);
     myFilter = new SettingsFilter(project, groups, mySearch) {
       @Override
-      Configurable getConfigurable(SimpleNode node) {
+      protected Configurable getConfigurable(SimpleNode node) {
         return SettingsTreeView.getConfigurable(node);
       }
 
       @Override
-      SimpleNode findNode(Configurable configurable) {
+      protected SimpleNode findNode(Configurable configurable) {
         return myTreeView.findNode(configurable);
       }
 
       @Override
-      void updateSpotlight(boolean now) {
+      protected void updateSpotlight(boolean now) {
         if (!myDisposed && mySpotlightPainter != null) {
           if (!now) {
             mySpotlightPainter.updateLater();
@@ -258,15 +259,12 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
       mySplitter.getDivider().setOpaque(false);
     }
 
-    mySpotlightPainter = new SpotlightPainter(myEditor, this) {
-      @Override
-      void updateNow() {
-        Configurable configurable = myFilter.myContext.getCurrentConfigurable();
-        if (myTreeView.getTree().hasFocus() || mySearch.getTextEditor().hasFocus()) {
-          update(myFilter, configurable, myEditor.getContent(configurable));
-        }
+    mySpotlightPainter = spotlightPainterFactory.createSpotlightPainter(project, myEditor, this, (painter) -> {
+      Configurable currentConfigurable = myFilter.myContext.getCurrentConfigurable();
+      if (myTreeView.getTree().hasFocus() || mySearch.getTextEditor().hasFocus()) {
+        painter.update(myFilter, currentConfigurable, myEditor.getContent(currentConfigurable));
       }
-    };
+    });
     add(BorderLayout.CENTER, mySplitter);
 
     if (configurable == null) {

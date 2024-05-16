@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.opentelemetry
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.currentClassLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.diagnostic.telemetry.JVM
@@ -51,6 +52,11 @@ private class JVMStatsToOTelReporter : ProjectActivity {
 
       val totalCpuTimeCounterMs = otelMeter.counterBuilder("JVM.totalCpuTimeMs").buildObserver()
 
+      val totalSafepointCounter = otelMeter.counterBuilder("JVM.totalSafepointCount").buildObserver()
+      val totalTimeAtSafepointsCounterMs = otelMeter.counterBuilder("JVM.totalTimeAtSafepointsMs").buildObserver()
+      val totalTimeToSafepointsCounterMs = otelMeter.counterBuilder("JVM.totalTimeToSafepointsMs").buildObserver()
+
+
       val memoryMXBean = ManagementFactory.getMemoryMXBean()
       val threadMXBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
       val allocatedMemoryProvider = AllocatedMemoryProvider(threadMXBean)
@@ -59,9 +65,12 @@ private class JVMStatsToOTelReporter : ProjectActivity {
 
       val osMXBean = ManagementFactory.getOperatingSystemMXBean() as com.sun.management.OperatingSystemMXBean
 
+      val safepointBean = SafepointBean()
+
 
       batchCallback = otelMeter.batchCallback(
         {
+          //Memory (heap/off-heap):
           val heapUsage = memoryMXBean.heapMemoryUsage
           //It seems like nonHeapMemoryUsage is unrelated to DirectByteBuffers usage -- that we're mostly interested in:
           val nonHeapUsage = memoryMXBean.nonHeapMemoryUsage
@@ -72,12 +81,12 @@ private class JVMStatsToOTelReporter : ProjectActivity {
           usedNativeMemoryGauge.record(nonHeapUsage.used)
           totalDirectByteBuffersGauge.record(IOUtil.directBuffersTotalAllocatedSize())
 
+          //Threads:
           threadCountGauge.record(threadMXBean.threadCount.toLong())
           threadCountMaxGauge.record(threadMXBean.peakThreadCount.toLong())
           newThreadsCounter.record(threadMXBean.totalStartedThreadCount)
 
-          osLoadAverageGauge.record(osMXBean.systemLoadAverage)
-
+          //GC:
           var gcCount: Long = 0
           var gcTimeMs: Long = 0
           for (gcBean in gcBeans) {
@@ -91,6 +100,14 @@ private class JVMStatsToOTelReporter : ProjectActivity {
             totalBytesAllocatedCounter.record(allocatedMemoryProvider.totalBytesAllocatedSinceStartup())
           }
 
+          //JVM safepoints:
+          totalSafepointCounter.record(safepointBean.safepointCount() ?: -1)
+          totalTimeToSafepointsCounterMs.record(safepointBean.totalTimeToSafepointMs() ?: -1)
+          totalTimeAtSafepointsCounterMs.record(safepointBean.totalTimeAtSafepointsMs() ?: -1)
+
+          //OS/process load:
+          osLoadAverageGauge.record(osMXBean.systemLoadAverage)
+
           val processCpuTimeNs = osMXBean.processCpuTime
           if (processCpuTimeNs != -1L) {
             totalCpuTimeCounterMs.record(NANOSECONDS.toMillis(processCpuTimeNs))
@@ -99,11 +116,15 @@ private class JVMStatsToOTelReporter : ProjectActivity {
 
         usedHeapMemoryGauge, maxHeapMemoryGauge,
         usedNativeMemoryGauge, totalDirectByteBuffersGauge,
+
         threadCountGauge, threadCountMaxGauge, newThreadsCounter,
-        osLoadAverageGauge,
+
         gcCollectionsCounter, gcCollectionTimesCounterMs,
         totalBytesAllocatedCounter,
-        totalCpuTimeCounterMs
+
+        totalCpuTimeCounterMs, osLoadAverageGauge,
+
+        totalSafepointCounter, totalTimeToSafepointsCounterMs, totalTimeAtSafepointsCounterMs
       )
 
       //We intentionally don't unregister batchCallback registered above -- because we register OTel.shutdown()
@@ -172,5 +193,62 @@ private class JVMStatsToOTelReporter : ProjectActivity {
 
       return totalBytesAllocatedByAllThreads
     }
+  }
+
+  /**
+   * Uses [sun.management.HotspotRuntimeMBean] got from [sun.management.ManagementFactoryHelper].
+   * Thanks to Vadim Salavatov
+   *
+   * Requires
+   * ```
+   * --add-exports=java.management/sun.management=ALL-UNNAMED
+   * --add-opens=java.management/sun.management=ALL-UNNAMED
+   * ```
+   */
+  private class SafepointBean {
+    private val getSafepointCountHandle: () -> Long?
+    private val getTotalSafepointTimeHandle: () -> Long?
+    private val getSafepointSyncTimeHandle: () -> Long?
+
+    init {
+      //type: sun.management.HotspotRuntimeMBean
+      val hotspotRuntimeMBean: Any? = try {
+        val clazz = Class.forName("sun.management.ManagementFactoryHelper")
+        clazz.getMethod("getHotspotRuntimeMBean").invoke(null)!!
+      }
+      catch (t: Throwable) {
+        currentClassLogger().warn("Can't get HotspotRuntimeMBean", t)
+        null
+      }
+
+      /** @return method call wrapped in lambda. Lambda return null if method call fails*/
+      fun wrapMethodCall(methodName: String): () -> Long? {
+        try {
+          val method = hotspotRuntimeMBean!!.javaClass.getMethod(methodName)
+          method.isAccessible = true
+          method.invoke(hotspotRuntimeMBean) // test if works (=if supported at all)
+
+          return { method.invoke(hotspotRuntimeMBean) as Long }
+        }
+        catch (_: Throwable) {
+          //if method call fails right away => likely, method/bean is not supported
+          //   => don't call it again, reduce an overhead:
+          return { null }
+        }
+      }
+
+      getSafepointCountHandle = wrapMethodCall("getSafepointCount")
+      getTotalSafepointTimeHandle = wrapMethodCall("getTotalSafepointTime")
+      getSafepointSyncTimeHandle = wrapMethodCall("getSafepointSyncTime")
+    }
+
+    /** @return the number of safepoints taken place since the JVM start. */
+    fun safepointCount(): Long? = getSafepointCountHandle()
+
+    /** @return the accumulated time spent _at_ safepoints (milliseconds), since JVM start */
+    fun totalTimeAtSafepointsMs(): Long? = getTotalSafepointTimeHandle()
+
+    /** @return the accumulated time spent _getting to_ safepoints (milliseconds), since JVM start */
+    fun totalTimeToSafepointMs(): Long? = getSafepointSyncTimeHandle()
   }
 }

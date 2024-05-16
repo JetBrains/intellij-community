@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.course
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -50,5 +51,5 @@ abstract class KLesson(@NonNls id: String, @Nls name: String) : Lesson(id, name)
 
   private fun isDumb(project: Project) = DumbService.getInstance(project).isDumb
 
-  open fun beforeCaretApplied() { }
+  open fun beforeCaretApplied(editor: Editor) { }
 }

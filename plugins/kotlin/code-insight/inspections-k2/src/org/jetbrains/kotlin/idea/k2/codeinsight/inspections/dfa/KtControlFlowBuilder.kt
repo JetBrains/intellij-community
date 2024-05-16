@@ -27,12 +27,15 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
@@ -154,6 +157,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KtAnalysisSession)
     private fun processConstant(expr: KtExpression?): Boolean {
         val constantValue = expr?.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) ?: return false
+        if (constantValue is KtConstantValue.KtErrorConstantValue) return false
         val value = constantValue.value
         val ktType = when(value) {
             is Boolean -> builtinTypes.BOOLEAN
@@ -792,29 +796,59 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processReturnExpression(expr: KtReturnExpression) {
         val returnedExpression = expr.returnedExpression
         processExpression(returnedExpression)
-        if (expr.labeledExpression != null) {
-            val targetFunction = expr.getReturnTargetSymbol()?.psi
-            if (targetFunction != null && PsiTreeUtil.isAncestor(context, targetFunction, true)) {
-                val transfer: InstructionTransfer
-                if (returnedExpression != null) {
-                    val retVar = flow.createTempVariable(returnedExpression.getKotlinType().toDfType())
-                    addInstruction(JvmAssignmentInstruction(null, retVar))
-                    transfer = createTransfer(targetFunction, targetFunction, retVar)
-                } else {
-                    transfer = createTransfer(targetFunction, targetFunction, factory.unknown)
-                }
-                addInstruction(
-                    ControlTransferInstruction(
-                        factory.controlTransfer(
-                            transfer,
-                            trapTracker.getTrapsInsideElement(targetFunction)
-                        )
+        val targetFunction = when {
+          expr.labeledExpression != null -> expr.getReturnTargetSymbol()?.psi as? KtFunctionLiteral
+          else -> findEffectiveTargetSymbol(expr)
+        }
+        if (targetFunction != null && PsiTreeUtil.isAncestor(context, targetFunction, true)) {
+            val transfer: InstructionTransfer
+            if (returnedExpression != null) {
+                val retVar = flow.createTempVariable(returnedExpression.getKotlinType().toDfType())
+                addInstruction(JvmAssignmentInstruction(null, retVar))
+                transfer = createTransfer(targetFunction, targetFunction, retVar)
+            } else {
+                transfer = createTransfer(targetFunction, targetFunction, factory.unknown)
+            }
+            addInstruction(
+                ControlTransferInstruction(
+                    factory.controlTransfer(
+                        transfer,
+                        trapTracker.getTrapsInsideElement(targetFunction)
                     )
                 )
-                return
-            }
+            )
+            return
         }
         addInstruction(ReturnInstruction(factory, trapTracker.trapStack(), expr))
+    }
+
+    /**
+     * For code like `return x.let { return y }`, we assume that `return y` returns from
+     * the `let`, rather than from the parent method instead.
+     * This is semantically equivalent and allows to get rid of some noise warnings.
+     */
+    context(KtAnalysisSession)
+    private fun findEffectiveTargetSymbol(expression: KtReturnExpression): KtFunctionLiteral? {
+        val parentFunctionLiteral = expression.parentOfType<KtFunctionLiteral>()
+        if (parentFunctionLiteral == null || !context.isAncestor(parentFunctionLiteral)) return null
+        val lambda = parentFunctionLiteral.parent as? KtLambdaExpression ?: return null
+        val lambdaArg = lambda.parent as? KtValueArgument ?: return null
+        val call = lambdaArg.parent as? KtCallExpression ?: return null
+        val functionCall: KtFunctionCall<*> = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val target: KtFunctionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+        val functionName = target.name.asString()
+        if (functionName != LET && functionName != RUN) return null
+        if (StandardNames.BUILT_INS_PACKAGE_FQ_NAME != target.callableIdIfNonLocal?.packageName) return null
+        var outerExpr: KtExpression = call.parent as? KtQualifiedExpression ?: return null
+        var outerExprParent = outerExpr.parent
+        while (outerExprParent is KtBinaryExpression && AND_OR_ELVIS_TOKENS.contains(outerExprParent.operationToken) && 
+            outerExprParent.right == outerExpr) {
+            outerExpr = outerExprParent
+            outerExprParent = outerExpr.parent
+        }
+        if (outerExprParent is KtNamedFunction) return parentFunctionLiteral
+        if (outerExprParent is KtReturnExpression && outerExprParent.labeledExpression == null) return parentFunctionLiteral
+        return null
     }
 
     context(KtAnalysisSession)
@@ -907,22 +941,18 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
 
             is KtWhenConditionIsPattern -> {
-                if (dfVar != null) {
-                    addInstruction(JvmPushInstruction(dfVar, null))
-                    val type = getTypeCheckDfType(condition.typeReference)
-                    if (type == DfType.TOP) {
-                        pushUnknown()
-                    } else {
-                        addInstruction(PushValueInstruction(type))
-                        if (condition.isNegated) {
-                            addInstruction(InstanceofInstruction(null, false))
-                            addInstruction(NotInstruction(KotlinWhenConditionAnchor(condition)))
-                        } else {
-                            addInstruction(InstanceofInstruction(KotlinWhenConditionAnchor(condition), false))
-                        }
-                    }
-                } else {
+                val type = getTypeCheckDfType(condition.typeReference)
+                if (dfVar == null || type == DfType.TOP) {
                     pushUnknown()
+                } else {
+                    addInstruction(JvmPushInstruction(dfVar, null))
+                    addInstruction(PushValueInstruction(type))
+                    if (condition.isNegated) {
+                        addInstruction(InstanceofInstruction(null, false))
+                        addInstruction(NotInstruction(KotlinWhenConditionAnchor(condition)))
+                    } else {
+                        addInstruction(InstanceofInstruction(KotlinWhenConditionAnchor(condition), false))
+                    }
                 }
             }
 
@@ -1499,8 +1529,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val receiver = (expr.parent as? KtQualifiedExpression)?.receiverExpression
         if (packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME && resolvedCall.argumentMapping.size == 1) {
             val name = symbol.name.asString()
-            if (name == "let" || name == "also" || name == "takeIf" || name == "takeUnless" || name == "apply" || name == "run") {
-                val parameter = (if (name == "apply" || name == "run")
+            if (name == LET || name == ALSO || name == TAKE_IF || name == TAKE_UNLESS || name == APPLY || name == RUN) {
+                val parameter = (if (name == APPLY || name == RUN)
                     KtVariableDescriptor.getLambdaReceiver(factory, lambda)
                 else
                     KtVariableDescriptor.getSingleLambdaParameter(factory, lambda)) ?: return false
@@ -1512,7 +1542,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 addInstruction(JvmAssignmentInstruction(null, parameter))
                 val functionLiteral = lambda.functionLiteral
                 when (name) {
-                    "let", "run" -> {
+                    LET, RUN -> {
                         addInstruction(PopInstruction())
                         val lambdaResultType = (functionLiteral.getFunctionalType() as? KtFunctionalType)?.returnType
                         val result = flow.createTempVariable(lambdaResultType.toDfType())
@@ -1526,7 +1556,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addImplicitConversion(lambdaResultType, expr.getKotlinType())
                     }
 
-                    "also", "apply" -> {
+                    ALSO, APPLY -> {
                         inlinedBlock(lambda) {
                             processExpression(bodyExpression)
                             flow.finishElement(functionLiteral)
@@ -1536,7 +1566,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
                     }
 
-                    "takeIf", "takeUnless" -> {
+                    TAKE_IF, TAKE_UNLESS -> {
                         val result = flow.createTempVariable(DfTypes.BOOLEAN)
                         inlinedBlock(lambda) {
                             processExpression(bodyExpression)
@@ -1546,7 +1576,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         }
                         addInstruction(JvmPushInstruction(result, null))
                         val offset = DeferredOffset()
-                        addInstruction(ConditionalGotoInstruction(offset, DfTypes.booleanValue(name == "takeIf")))
+                        addInstruction(ConditionalGotoInstruction(offset, DfTypes.booleanValue(name == TAKE_IF)))
                         addInstruction(PopInstruction())
                         addInstruction(PushValueInstruction(DfTypes.NULL))
                         val endOffset = DeferredOffset()
@@ -1774,8 +1804,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val descriptor =
             ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol() as? KtReceiverParameterSymbol
         if (descriptor != null && exprType != null) {
-            val function =
-                (descriptor as? KtReceiverParameterSymbol)?.psi as? KtFunctionLiteral //(descriptor.toSourceElement as? KotlinSourceElement)?.psi as? KtFunctionLiteral
+            val function = descriptor.psi as? KtFunctionLiteral
             val declType = descriptor.type
             val varDesc = if (function != null) {
                 KtLambdaThisVariableDescriptor(function, declType.toDfType())
@@ -1876,6 +1905,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         private val LOG = logger<KtControlFlowBuilder>()
         private val ASSIGNMENT_TOKENS =
             TokenSet.create(KtTokens.EQ, KtTokens.PLUSEQ, KtTokens.MINUSEQ, KtTokens.MULTEQ, KtTokens.DIVEQ, KtTokens.PERCEQ)
+        private val AND_OR_ELVIS_TOKENS = TokenSet.create(KtTokens.ANDAND, KtTokens.OROR, KtTokens.ELVIS)
         private val unsupported = ConcurrentHashMap.newKeySet<String>()
+        private const val LET = "let"
+        private const val RUN = "run"
+        private const val ALSO = "also"
+        private const val APPLY = "apply"
+        private const val TAKE_IF = "takeIf"
+        private const val TAKE_UNLESS = "takeUnless"
     }
 }

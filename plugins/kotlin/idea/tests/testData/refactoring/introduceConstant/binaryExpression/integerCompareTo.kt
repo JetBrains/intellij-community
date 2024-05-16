@@ -5,3 +5,5 @@ val a = 1
 fun foo(): Boolean {
     return <selection>1>1</selection>
 }
+
+// IGNORE_K2

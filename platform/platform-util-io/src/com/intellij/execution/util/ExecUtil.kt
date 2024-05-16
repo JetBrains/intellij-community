@@ -155,7 +155,10 @@ object ExecUtil {
     val command = mutableListOf(commandLine.exePath)
     command += commandLine.parametersList.list
 
-    val providedCommand = SudoCommandProvider.EXTENSION_POINT_NAME.extensionList.firstNotNullOfOrNull { it.sudoCommand(commandLine) }
+    val providedCommand = runCatching {
+      SudoCommandProvider.EXTENSION_POINT_NAME.extensionList.firstNotNullOfOrNull { it.sudoCommand(commandLine) }
+    }.getOrNull()
+
     val sudoCommandLine = when {
       providedCommand != null -> providedCommand
       SystemInfoRt.isWindows -> {

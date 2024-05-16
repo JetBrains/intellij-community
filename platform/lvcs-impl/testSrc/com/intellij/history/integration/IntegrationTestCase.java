@@ -2,6 +2,7 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.LocalHistoryFacadeKt;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.ChangeSet;
@@ -35,8 +36,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
   protected static final int TIMESTAMP_INCREMENT = 3000;
@@ -112,6 +115,14 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     setContent(f, content, f.getTimeStamp() + TIMESTAMP_INCREMENT);
   }
 
+  protected final void setContent(@NotNull VirtualFile f, int content) {
+    setContent(f, (byte)content);
+  }
+
+  protected final void setContent(@NotNull VirtualFile f, byte content) {
+    setBinaryContent(f, new byte[]{content}, -1, f.getTimeStamp() + TIMESTAMP_INCREMENT, this);
+  }
+
   protected final void setContent(VirtualFile f, String content, long timestamp) {
     setBinaryContent(f, content.getBytes(StandardCharsets.UTF_8), -1, timestamp, this);
   }
@@ -140,8 +151,12 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> document.setText(text));
   }
 
-  protected LocalHistoryFacade getVcs() {
+  public @NotNull LocalHistoryFacade getVcs() {
     return LocalHistoryImpl.getInstanceImpl().getFacade();
+  }
+
+  public @NotNull IdeaGateway getGateway() {
+    return myGateway;
   }
 
   /**
@@ -172,8 +187,8 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     return LocalHistoryTestCase.getEntryFor(getVcs(), getRootEntry(), revisionId, f.getPath());
   }
 
-  protected RootEntry getRootEntry() {
-    return myGateway.createTransientRootEntry();
+  public @NotNull RootEntry getRootEntry() {
+    return myGateway.createTransientRootEntryForPath(myGateway.getPathOrUrl(myRoot), true);
   }
 
   protected void addContentRoot(@NotNull String path) {
@@ -195,6 +210,15 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
       }
       m.commit();
     });
+  }
+
+  protected @NotNull List<String> getContentFor(@NotNull VirtualFile file, @NotNull Set<Long> changeSets) {
+    List<String> result = new ArrayList<>();
+    LocalHistoryFacadeKt.processContents(getVcs(), myGateway, getRootEntry(), myGateway.getPathOrUrl(file), changeSets, true, (changeSet, content) -> {
+      if (content != null) result.add(content);
+      return Boolean.TRUE;
+    });
+    return result;
   }
 
   protected static void addFileListenerDuring(VirtualFileListener l, Runnable r) {

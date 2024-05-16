@@ -2,29 +2,24 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.dependents
 
 import com.google.gson.JsonObject
-import java.io.File
 import org.jetbrains.kotlin.analysis.project.structure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getAsStringList
-import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
-import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectEntityReference
-import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectEntityReferenceParser
-import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
-import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibraryReference
-import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModule
-import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModuleReference
-import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
-import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructureParser
+import org.jetbrains.kotlin.idea.test.projectStructureTest.*
+import java.io.File
 
 abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<ModuleDependentsTestProjectStructure>(
     ModuleDependentsTestProjectStructureParser,
 ) {
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("moduleDependents")

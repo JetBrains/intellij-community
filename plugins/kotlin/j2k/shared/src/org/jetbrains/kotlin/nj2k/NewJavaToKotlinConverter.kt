@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
@@ -118,12 +117,12 @@ class NewJavaToKotlinConverter(
         symbolProvider.typeFactory = typeFactory
         symbolProvider.preBuildTree(inputElements)
 
-        val languageVersion = when {
+        val languageVersionSettings = when {
             contextElement.isPhysical -> contextElement.languageVersionSettings
             else -> LanguageVersionSettingsImpl.DEFAULT
         }
 
-        val importStorage = JKImportStorage(languageVersion)
+        val importStorage = JKImportStorage(languageVersionSettings)
         val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, referenceSearcher, importStorage, bodyFilter, forInlining)
 
         // we want to leave all imports as is in the case when user is converting only imports
@@ -150,7 +149,7 @@ class NewJavaToKotlinConverter(
             importStorage,
             JKElementInfoStorage(),
             externalCodeProcessing,
-            languageVersion.supportsFeature(LanguageFeature.FunctionalInterfaceConversion),
+            languageVersionSettings,
             settings
         )
 

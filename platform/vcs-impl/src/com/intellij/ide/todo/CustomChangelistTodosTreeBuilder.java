@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
-  public static final TodoItem[] EMPTY_ITEMS = new TodoItem[0];
+  public static final TodoItem[] EMPTY_ITEMS = TodoItem.EMPTY_ARRAY;
 
   private final PsiTodoSearchHelper myCustomPsiTodoSearchHelper;
 
@@ -42,6 +42,10 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
 
   @NotNull
   protected abstract Set<TodoItem> doFindTodoForFile(@NotNull PsiFile file, @Nullable TodoFilter todoFilter);
+
+  private boolean isFileDirty(@NotNull PsiFile file) {
+    return myDirtyFileSet.contains(file.getVirtualFile());
+  }
 
   private class MyPsiTodoSearchHelper implements PsiTodoSearchHelper {
     private final MultiMap<PsiFile, TodoItem> myMap = new MultiMap<>();
@@ -106,7 +110,7 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
           result.add(todoItem);
         }
       }
-      return result.isEmpty() ? EMPTY_ITEMS : result.toArray(new TodoItem[0]);
+      return result.isEmpty() ? EMPTY_ITEMS : result.toArray(TodoItem.EMPTY_ARRAY);
     }
 
     @Override
@@ -122,7 +126,7 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     }
 
     private TodoItem[] findPatternedTodoItems(PsiFile file, final TodoFilter todoFilter) {
-      if (myDirtyFileSet.contains(file.getVirtualFile())) {
+      if (isFileDirty(file)) {
         Set<TodoItem> todoItems = doFindTodoForFile(file, todoFilter);
         synchronized (myMap) {
           myMap.remove(file);
@@ -134,7 +138,7 @@ public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
 
       synchronized (myMap) {
         final Collection<TodoItem> todoItems = myMap.get(file);
-        return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
+        return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(TodoItem.EMPTY_ARRAY);
       }
     }
   }

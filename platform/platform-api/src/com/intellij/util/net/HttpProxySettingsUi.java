@@ -15,13 +15,14 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PortField;
 import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
 class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JPanel myMainPanel;
@@ -62,6 +66,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JCheckBox myPacUrlCheckBox;
   private JTextField myPacUrlTextField;
   private ActionLink mySystemProxySettingsLink;
+  private JLabel myTunnelingAuthSchemeDisabledWarning;
 
   @Override
   public boolean isModified(@NotNull HttpConfigurable settings) {
@@ -93,10 +98,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
     Boolean property = Boolean.getBoolean(JavaProxyProperty.USE_SYSTEM_PROXY);
     mySystemProxyDefined.setVisible(Boolean.TRUE.equals(property));
-    if (Boolean.TRUE.equals(property)) {
-      mySystemProxyDefined.setIcon(Messages.getWarningIcon());
-      RelativeFont.BOLD.install(mySystemProxyDefined);
-    }
+    mySystemProxyDefined.setIcon(Messages.getWarningIcon());
 
     myProxyAuthCheckBox.addActionListener(e -> enableProxyAuthentication(myProxyAuthCheckBox.isSelected()));
     myPacUrlCheckBox.addActionListener(e -> myPacUrlTextField.setEnabled(myPacUrlCheckBox.isSelected()));
@@ -123,6 +125,11 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         Logger.getInstance(HttpProxySettingsUi.class).error("failed to open system proxy settings", e);
       }
     });
+
+    myTunnelingAuthSchemeDisabledWarning.setIcon(Messages.getWarningIcon());
+    myTunnelingAuthSchemeDisabledWarning.setVisible(JavaNetworkUtils.isTunnelingAuthSchemeDisabled(JavaNetworkUtils.BASIC_AUTH_SCHEME));
+
+    myErrorLabel.setIcon(Messages.getErrorIcon());
 
     configureCheckButton();
   }
@@ -232,7 +239,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   }
 
   private static @NotNull @NlsContexts.DialogMessage String errorText(@NotNull String s) {
-    return IdeBundle.message("dialog.message.problem.with.connection", s);
+    return IdeBundle.message("dialog.message.problem.with.connection", StringUtil.escapeXmlEntities(s));
   }
 
   private @Nullable @NlsContexts.DialogMessage String isValid() {
@@ -333,6 +340,9 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
   @Override
   public @NotNull JComponent getComponent() {
-    return myMainPanel;
+    myMainPanel.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
+    JBScrollPane scrollPane = new JBScrollPane(myMainPanel, VERTICAL_SCROLLBAR_ALWAYS, HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(null);
+    return scrollPane;
   }
 }

@@ -143,7 +143,7 @@ final class AsyncFilterRunner {
 
     while (!myQueue.isEmpty()) {
       HighlighterJob highlighter = myQueue.peek();
-      if (!DumbService.isDumbAware(highlighter.filter) && DumbService.isDumb(highlighter.myProject)) return;
+      if (!DumbService.getInstance(highlighter.myProject).isUsableInCurrentContext(highlighter.filter)) return;
       while (highlighter.hasUnprocessedLines()) {
         ProgressManager.checkCanceled();
         addLineResult(highlighter.analyzeNextLine());

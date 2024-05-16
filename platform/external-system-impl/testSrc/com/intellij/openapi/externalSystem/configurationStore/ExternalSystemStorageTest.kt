@@ -892,7 +892,6 @@ class ExternalSystemStorageTest {
     get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("platform/external-system-impl/testData/jpsSerialization")
 
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: (Project) -> Unit) {
-    @Suppress("RedundantSuspendModifier")
     fun copyProjectFiles(dir: VirtualFile): Path {
       val projectDir = dir.toNioPath()
       FileUtil.copyDir(testDataRoot.resolve("common/project").toFile(), projectDir.toFile())

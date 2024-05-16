@@ -181,7 +181,7 @@ object ComponentListPanelFactory {
       items.collect { items ->
         var revalidate = firstCollect
         if (firstCollect) {
-          panel.removeAll()
+          if (panel.componentCount > 0) panel.removeAll()
           firstCollect = false
         }
 

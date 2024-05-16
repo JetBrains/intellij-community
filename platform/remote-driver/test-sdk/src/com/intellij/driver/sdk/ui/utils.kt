@@ -10,3 +10,4 @@ fun Driver.hasFocus(c: Component) = utility(IJSwingUtilities::class).hasFocus(c)
 interface IJSwingUtilities {
   fun hasFocus(c: Component): Boolean
 }
+

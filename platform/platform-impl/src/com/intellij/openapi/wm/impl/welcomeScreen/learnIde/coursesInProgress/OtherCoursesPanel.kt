@@ -22,10 +22,7 @@ class OtherCoursesPanel(private val courseFactory: InteractiveCourseFactory) : W
       row {
         cell(createMainPanel(courseFactory))
         if (!courseFactory.isEnabled) {
-          rowComment(
-            courseFactory.disabledText,
-            action = HyperlinkEventAction { ExperimentalUI.setNewUI(true) }
-          )
+          rowComment(courseFactory.disabledText)
         }
       }
     }

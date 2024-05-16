@@ -47,6 +47,6 @@ UFile (package = )
                                         UReturnExpression
                                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                                                 UIdentifier (Identifier (Used))
-                                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Used)
+                                                USimpleNameReferenceExpression (identifier = Used, resolvesTo = PsiClass: Used)
                                                 UThisExpression (label = null)
                                 UMethod (name = Companion)

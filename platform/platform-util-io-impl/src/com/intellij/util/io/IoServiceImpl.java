@@ -13,7 +13,10 @@ public class IoServiceImpl implements IoService {
   public ProxySelector getProxySelector(String pacUrlForUse) {
     ProxySelector newProxySelector;
     if (pacUrlForUse == null) {
-      ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
+      ProxySearch proxySearch = new ProxySearch();
+      proxySearch.addStrategy(ProxySearch.Strategy.JAVA);
+      proxySearch.addStrategy(ProxySearch.Strategy.OS_DEFAULT);
+      proxySearch.addStrategy(ProxySearch.Strategy.ENV_VAR);
       // cache 32 urls for up to 10 min
       proxySearch.setPacCacheSettings(32, 10 * 60 * 1000, BufferedProxySelector.CacheScope.CACHE_SCOPE_HOST);
       newProxySelector = proxySearch.getProxySelector();

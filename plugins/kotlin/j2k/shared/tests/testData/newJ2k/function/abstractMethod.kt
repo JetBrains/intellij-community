@@ -1,1 +1,1 @@
-abstract val noofGears: Int
+abstract fun noofGears(): Int

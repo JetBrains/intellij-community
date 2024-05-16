@@ -130,11 +130,6 @@ public final class TestsUIUtil {
     return new TestResultPresentation(proxy).getPresentation().getBalloonText();
   }
 
-  @NlsContexts.SystemNotificationText
-  public static String getTestShortSummary(AbstractTestProxy proxy) {
-    return new TestResultPresentation(proxy).getPresentation().getText();
-  }
-
   public static void showIconProgress(Project project, int n, final int maximum, final int problemsCounter, boolean updateWithAttention) {
     AppIcon icon = AppIcon.getInstance();
     if (n < maximum || !updateWithAttention) {

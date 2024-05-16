@@ -1,11 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
+import com.intellij.psi.util.parentOfType
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
@@ -22,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.getContainer
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -84,6 +90,8 @@ internal fun findAllMoveConflicts(
     MultiMap<PsiElement, String>().apply {
         putAllValues(checkVisibilityConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))
         putAllValues(checkVisibilityConflictForNonMovedUsages(allDeclarationsToMove, oldToNewMap, usages))
+        putAllValues(checkModuleDependencyConflictsForInternalUsages(allDeclarationsToMove, fakeTarget))
+        putAllValues(checkModuleDependencyConflictsForNonMovedUsages(allDeclarationsToMove, oldToNewMap, usages))
     }
 }
 
@@ -91,7 +99,7 @@ internal fun findAllMoveConflicts(
  * Creates a non-physical file that contains the moved elements with all references retargeted.
  * This non-physical file can be used to analyze for conflicts without modifying the file on the disk.
  */
-private fun createCopyTarget(
+fun createCopyTarget(
     declarationsToMove: Set<KtNamedDeclaration>,
     targetDir: PsiDirectory,
     targetPkg: FqName,
@@ -108,8 +116,7 @@ private fun createCopyTarget(
         }
     }
 
-    val fakeTargetFile = KtPsiFactory.contextual(targetDir)
-        .createFile(targetFileName, "package ${targetPkg.quoteIfNeeded()}\n")
+    val fakeTargetFile = KtPsiFactory.contextual(targetDir).createFile(targetFileName, "package ${targetPkg.quoteIfNeeded()}\n")
     val oldToNewMap = declarationsToMove.moveInto(fakeTargetFile)
     val usageInfos = fakeTargetFile.collectOldToNewUsageInfos(oldToNewMap)
     usageInfos.forEach { (originalUsageInfo, copyUsageInfo) ->
@@ -139,6 +146,19 @@ private fun PsiElement.createVisibilityConflict(referencedDeclaration: PsiElemen
         RefactoringUIUtil.getDescription(getContainer(), false),
         RefactoringUIUtil.getDescription(referencedDeclaration, false)
     ).capitalizeAsciiOnly()
+}
+
+/**
+ * Gets containing module of a [PsiElement] even if this [PsiElement] lives inside a copy target.
+ */
+private fun PsiElement.containingModule(): Module? {
+    val containingFile = containingFile
+    return if (containingFile is KtFile) {
+        val targetDir = containingFile.analysisContext // target dir of copy file created
+        if (targetDir != null) {
+            ModuleUtilCore.findModuleForPsiElement(targetDir) // copy usage
+        } else ModuleUtilCore.findModuleForPsiElement(this) // real usage
+    } else ModuleUtilCore.findModuleForPsiElement(this) // real usage
 }
 
 /**
@@ -192,7 +212,7 @@ private fun checkVisibilityConflictForNonMovedUsages(
         .mapNotNull { usage ->
             val usageElement = usage.element ?: return@mapNotNull null
             val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
-            val declarationCopy = oldToNewMap[referencedDeclaration] ?: return@mapNotNull null
+            val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@mapNotNull null
             val isVisible = declarationCopy.isVisibleTo(usageElement)
             if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
         }.toMultiMap()
@@ -201,7 +221,7 @@ private fun checkVisibilityConflictForNonMovedUsages(
 /**
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
-private fun checkVisibilityConflictsForInternalUsages(
+fun checkVisibilityConflictsForInternalUsages(
     allDeclarationsToMove: Set<KtNamedDeclaration>,
     fakeTarget: KtFile
 ): MultiMap<PsiElement, String> {
@@ -210,10 +230,79 @@ private fun checkVisibilityConflictsForInternalUsages(
         .mapNotNull { refExprCopy -> (refExprCopy.internalUsageInfo ?: return@mapNotNull null) to refExprCopy }
         .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
         .mapNotNull { (usageInfo, refExprCopy) ->
-            val usageElement = usageInfo.element as? KtElement ?: return@mapNotNull null
             val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@mapNotNull null
             val isVisible = referencedDeclaration.isVisibleTo(refExprCopy)
-            if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
+            if (!isVisible) {
+                val usageElement = usageInfo.element as? KtElement ?: return@mapNotNull null
+                usageElement.createVisibilityConflict(referencedDeclaration)
+            } else null
         }.toMultiMap()
 }
 
+
+private fun PsiElement.createAccessibilityConflictInternal(
+    referencedDeclaration: PsiElement,
+    targetModule: Module
+): Pair<PsiElement, String> {
+    return this to RefactoringBundle.message(
+        "0.referenced.in.1.will.not.be.accessible.in.module.2",
+        RefactoringUIUtil.getDescription(referencedDeclaration, true),
+        RefactoringUIUtil.getDescription(getContainer(), true),
+        CommonRefactoringUtil.htmlEmphasize(targetModule.name)
+    ).capitalizeAsciiOnly()
+}
+
+private fun PsiElement.createAccessibilityConflictUnMoved(referencedDeclaration: PsiElement): Pair<PsiElement, String>? {
+    val module = containingModule() ?: return null
+    return this to RefactoringBundle.message(
+        "0.referenced.in.1.will.not.be.accessible.from.module.2",
+        RefactoringUIUtil.getDescription(referencedDeclaration, true),
+        RefactoringUIUtil.getDescription(getContainer(), true),
+        CommonRefactoringUtil.htmlEmphasize(module.name)
+    ).capitalizeAsciiOnly()
+}
+
+private fun containingCopyDecl(
+    declaration: KtNamedDeclaration,
+    oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>
+): KtNamedDeclaration? {
+    return oldToNewMap[declaration] ?: containingCopyDecl(declaration.parentOfType<KtNamedDeclaration>() ?: return null, oldToNewMap)
+}
+
+private fun checkModuleDependencyConflictsForNonMovedUsages(
+    allDeclarationsToMove: Set<KtNamedDeclaration>,
+    oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>,
+    usages: List<MoveRenameUsageInfo>
+): MultiMap<PsiElement, String> {
+    return usages
+        .filter { usage -> usage.willNotBeMoved(allDeclarationsToMove) }
+        .mapNotNull { usage ->
+            val usageElement = usage.element ?: return@mapNotNull null
+            val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
+            val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@mapNotNull null
+            val targetModule = declarationCopy.containingModule() ?: return@mapNotNull null
+            val resolveScope = usageElement.resolveScope
+            if (resolveScope.isSearchInModuleContent(targetModule, false)) return@mapNotNull null
+            usageElement.createAccessibilityConflictUnMoved(referencedDeclaration)
+        }.toMultiMap()
+}
+
+fun checkModuleDependencyConflictsForInternalUsages(
+    allDeclarationsToMove: Set<KtNamedDeclaration>,
+    fakeTarget: KtFile
+): MultiMap<PsiElement, String> {
+    return fakeTarget
+        .collectDescendantsOfType<KtSimpleNameExpression>()
+        .mapNotNull { refExprCopy -> (refExprCopy.internalUsageInfo ?: return@mapNotNull null) to refExprCopy }
+        .filter { (usageInfo, _) -> !usageInfo.referencedElement.willBeMoved(allDeclarationsToMove) }
+        .mapNotNull { (usageInfo, refExprCopy) ->
+            val usageElement = usageInfo.element ?: return@mapNotNull null
+            val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@mapNotNull null
+            analyzeCopy(refExprCopy, DanglingFileResolutionMode.PREFER_SELF) {
+                if (refExprCopy.mainReference.resolveToSymbol() == null) {
+                    val module = refExprCopy.containingModule() ?: return@analyzeCopy null
+                    usageElement.createAccessibilityConflictInternal(referencedDeclaration, module)
+                } else null
+            }
+        }.toMultiMap()
+}

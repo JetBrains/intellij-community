@@ -130,7 +130,9 @@ class ProjectObject(
 
   internal fun createProject(): ProjectEx {
     val projectFile = TemporaryDirectory.generateTemporaryPath("project_${testClassName}${ProjectFileType.DOT_DEFAULT_EXTENSION}")
-    val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities).copy(preloadServices = preloadServices)
+    val options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities)
+      .copy(preloadServices = preloadServices)
+      .copy(projectName = testClassName)
     val project = (ProjectManager.getInstance() as TestProjectManager).openProject(projectFile, options) as ProjectEx
     virtualFilePointerTracker = VirtualFilePointerTracker()
     libraryTracker = LibraryTableTracker()

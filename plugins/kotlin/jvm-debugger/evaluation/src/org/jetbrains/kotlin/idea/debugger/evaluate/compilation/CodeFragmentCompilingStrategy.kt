@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
+import java.util.concurrent.ExecutionException
 
 abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
 
@@ -29,6 +31,13 @@ abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
     abstract fun beforeRunningFallback()
     abstract fun beforeAnalyzingCodeFragment()
+
+    protected fun unwrapException(e: Throwable?): Throwable? = when (e) {
+        is CodeFragmentCodegenException -> e.reason
+        is ExecutionException -> unwrapException(e.cause)
+        is ProcessCanceledException -> null
+        else -> e
+    }
 }
 
 class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
@@ -53,13 +62,14 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
     }
 
     override fun processError(e: Throwable, codeFragment: KtCodeFragment, otherFiles: List<KtFile>, executionContext: ExecutionContext) {
+        val exceptionToThrow = unwrapException(e) ?: throw e
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
             StatisticsEvaluationResult.FAILURE,
             stats,
         )
-        throw e
+        throw exceptionToThrow
     }
 
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? = null
@@ -121,6 +131,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
     }
 
     override fun processError(e: Throwable, codeFragment: KtCodeFragment, otherFiles: List<KtFile>, executionContext: ExecutionContext) {
+        val exceptionToReport = unwrapException(e) ?: throw e
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,
@@ -128,10 +139,10 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
             stats
         )
         if (isFallbackDisabled()) {
-            throw e
+            throw exceptionToReport
         }
         if (isApplicationInternalMode()) {
-            reportErrorWithAttachments(executionContext, codeFragment, e, prepareFilesToCompile(otherFiles))
+            reportErrorWithAttachments(executionContext, codeFragment, exceptionToReport, prepareFilesToCompile(otherFiles))
         }
     }
 

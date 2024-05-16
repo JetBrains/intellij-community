@@ -13,6 +13,6 @@ class ExternalReportImportAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    ExternalReportImportManager.getInstance(project).chooseAndOpenSuites()
+    ExternalReportImportManager.getInstance(project).chooseAndOpenSuites(ExternalReportImportManager.Source.ACTION)
   }
 }

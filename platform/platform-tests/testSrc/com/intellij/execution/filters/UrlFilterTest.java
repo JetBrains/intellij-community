@@ -20,13 +20,13 @@ public class UrlFilterTest extends BasePlatformTestCase {
 
 
   public void testSingleFileHyperlink() {
-    assertFileHyperlink(" at file:///home/file.txt", 4, 25, "/home/file.txt", 1, 1);
-    assertFileHyperlink("file:///home/file.txt", 0, 21, "/home/file.txt", 1, 1);
-    assertFileHyperlink("text before file:///home/file.txt:3 some test after", 12, 35, "/home/file.txt", 3, 1);
+    assertFileHyperlink(" at file:///home/file.txt", 4, 25, "/home/file.txt", -1, -1);
+    assertFileHyperlink("file:///home/file.txt", 0, 21, "/home/file.txt", -1, -1);
+    assertFileHyperlink("text before file:///home/file.txt:3 some test after", 12, 35, "/home/file.txt", 3, -1);
     assertFileHyperlink("text before file:///home/file.txt:3:30 some test after", 12, 38, "/home/file.txt", 3, 30);
     assertFileHyperlink("Click file:///C:/Users/user/file.js:12:40", 6, 41, "C:/Users/user/file.js", 12, 40);
     assertFileHyperlink("See file:////wsl$/Ubuntu-20.04/projects/report.txt:4",
-                        4, 52, "//wsl$/Ubuntu-20.04/projects/report.txt", 4, 1);
+                        4, 52, "//wsl$/Ubuntu-20.04/projects/report.txt", 4, -1);
   }
 
   public void testSingleBrowserHyperlink() {
@@ -37,12 +37,13 @@ public class UrlFilterTest extends BasePlatformTestCase {
 
   public void testMultipleHyperlinks() {
     assertHyperlinks(applyFilter("file:///home/file1.txt -> file:///home/file2.txt"), List.of(
-      new FileLinkInfo(0, 22, "/home/file1.txt", 1, 1), new FileLinkInfo(26, 48, "/home/file2.txt", 1, 1)
+      new FileLinkInfo(0, 22, "/home/file1.txt", -1, -1),
+      new FileLinkInfo(26, 48, "/home/file2.txt", -1, -1)
     ));
   }
 
   public void testPerformanceSimple() {
-    List<LinkInfo> expected = List.of(new FileLinkInfo(7, 30, "/home/file.txt", 3, 1),
+    List<LinkInfo> expected = List.of(new FileLinkInfo(7, 30, "/home/file.txt", 3, -1),
                                       new FileLinkInfo(34, 62, "/home/result.txt", 3, 30));
     PlatformTestUtil.newPerformanceTest("Find file hyperlinks", () -> {
       for (int i = 0; i < 100_000; i++) {
@@ -54,7 +55,7 @@ public class UrlFilterTest extends BasePlatformTestCase {
 
   public void testUrlEncodedFileLinks() {
     assertFileHyperlink("e file:///home/path%20with%20space/file.kt:3 Expecting an expression", 2, 44,
-                        "/home/path with space/file.kt", 3, 1);
+                        "/home/path with space/file.kt", 3, -1);
     assertFileHyperlink("w file:///home/wrongly%EncodedPath/file.kt:3:10 Variable 'q' is never used", 2, 47,
                         "/home/wrongly%EncodedPath/file.kt", 3, 10);
     assertFileHyperlink("Click file:////wsl$/Ubuntu-20.04/path-test-gradle%206/src/main/kotlin/base/Starter.kt:4:10",
@@ -97,8 +98,8 @@ public class UrlFilterTest extends BasePlatformTestCase {
 
   private static void assertFileLink(@NotNull FileLinkInfo expected, @NotNull UrlFilter.FileUrlHyperlinkInfo actual) {
     assertEquals(expected.myFilePath, actual.myFilePath);
-    assertEquals(expected.myLine, actual.myDocumentLine + 1);
-    assertEquals(expected.myColumn, actual.myDocumentColumn + 1);
+    assertEquals(expected.myLine, actual.myDocumentLine == -1 ? -1 : actual.myDocumentLine + 1);
+    assertEquals(expected.myColumn, actual.myDocumentColumn == -1 ? -1 : actual.myDocumentColumn + 1);
   }
 
   private static final class FileLinkInfo extends LinkInfo {

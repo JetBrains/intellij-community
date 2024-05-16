@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -49,6 +50,8 @@ class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
                         }
                     }
                     .map { it.first }
+                    // Error types cannot be printed by `printKtType`, so we shouldn't include them in the chain.
+                    .filter { it.type !is KtErrorType }
                     .toList()
             if (someTypeIsUnknown) return
             //if (isChainUnacceptable(reversedChain)) return

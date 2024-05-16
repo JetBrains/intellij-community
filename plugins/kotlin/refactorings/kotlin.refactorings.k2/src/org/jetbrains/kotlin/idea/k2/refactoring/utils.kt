@@ -51,27 +51,6 @@ fun <T> modifyPsiWithOptimizedImports(file: KtFile, block: () -> T): T {
     return result
 }
 
-@JvmOverloads
-fun getOrCreateKotlinFile(
-    fileName: String,
-    targetDir: PsiDirectory,
-    packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
-): KtFile =
-    (targetDir.findFile(fileName) ?: createKotlinFile(fileName, targetDir, packageName)) as KtFile
-
-fun createKotlinFile(
-    fileName: String,
-    targetDir: PsiDirectory,
-    packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
-): KtFile {
-    targetDir.checkCreateFile(fileName)
-    val packageFqName = packageName?.let(::FqName) ?: FqName.ROOT
-    val file = PsiFileFactory.getInstance(targetDir.project).createFileFromText(
-        fileName, KotlinFileType.INSTANCE, if (!packageFqName.isRoot) "package ${packageFqName.quoteIfNeeded()} \n\n" else ""
-    )
-    return targetDir.add(file) as KtFile
-}
-
 fun PsiElement?.canDeleteElement(): Boolean {
     if (this is KtObjectDeclaration && isObjectLiteral()) return false
 

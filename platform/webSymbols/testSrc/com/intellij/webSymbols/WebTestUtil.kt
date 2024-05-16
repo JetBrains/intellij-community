@@ -50,6 +50,7 @@ import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
+import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import junit.framework.TestCase.*

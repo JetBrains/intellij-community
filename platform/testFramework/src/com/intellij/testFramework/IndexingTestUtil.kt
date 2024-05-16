@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
@@ -11,7 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl
 import kotlinx.coroutines.*
 import org.junit.Assert
 import kotlin.time.Duration.Companion.seconds
@@ -83,7 +85,7 @@ class IndexingTestUtil(private val project: Project) {
     }
 
     if (ApplicationManager.getApplication().isDispatchThread) {
-      val scope = GlobalScope.namedChildScope("Indexing waiter", Dispatchers.IO)
+      val scope = GlobalScope.childScope("Indexing waiter", Dispatchers.IO)
       val waiting = scope.launch { suspendUntilIndexesAreReady() }
       try {
         PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !waiting.isActive }, 600)
@@ -103,20 +105,35 @@ class IndexingTestUtil(private val project: Project) {
   private fun shouldWait(): Boolean {
     val dumbService = DumbServiceImpl.getInstance(project)
 
-    dumbService.ensureInitialDumbTaskRequiredForSmartModeSubmitted()
+    dumbService.ensureInitialDumbTaskRequiredForSmartModeSubmitted() // TODO IJPL-578: don't submit
 
-    if (UnindexedFilesScannerExecutor.getInstance(project).isRunning.value || dumbService.isRunning()) {
-      // order is important. DUMB_FULL_INDEX should wait until all the scheduled tasks are finished, but should not wait for smart mode
+    val scannerExecutor = UnindexedFilesScannerExecutorImpl.getInstance(project)
+
+    // Scheduled tasks will become a running tasks soon. To avoid a race, we check scheduled tasks first
+    if (scannerExecutor.hasQueuedTasks) {
+      return if (scannerExecutor.scanningWaitsForNonDumbMode() && dumbService.isDumb) {
+        val isEternal = DumbModeTestUtils.isEternalDumbTaskRunning(project)
+        if (isEternal) {
+          thisLogger().debug("Do not wait for queued scanning task, because eternal dumb task is running in the project [$project]")
+        }
+        !isEternal;
+      }
+      else {
+        true // wait for queued scanning tasks to complete
+      }
+    }
+    // Scheduled tasks will become a running tasks soon. To avoid a race, we check scheduled tasks first
+    else if (dumbService.hasScheduledTasks()) {
       return true
     }
-    else if (dumbService.hasScheduledTasks()) {
-      // scheduled tasks will become running tasks (DumbServiceImpl.isRunning == true) after EDT queue is flushed
+    else if (scannerExecutor.isRunning.value || dumbService.isRunning()) {
       return true
     }
     else if (dumbService.isDumb) {
+      // DUMB_FULL_INDEX should wait until all the scheduled tasks are finished, but should not wait for smart mode
       val isEternal = DumbModeTestUtils.isEternalDumbTaskRunning(project)
       if (isEternal) {
-        thisLogger().debug("Not waiting, because eternal dumb task is running in the project [$project]")
+        thisLogger().debug("Do not wait for smart mode, because eternal dumb task is running in the project [$project]")
       }
       return !isEternal
     }
@@ -130,10 +147,16 @@ class IndexingTestUtil(private val project: Project) {
       thisLogger().debug("suspendUntilIndexesAreReady will be waiting, thread=${Thread.currentThread()}")
     }
 
-    withTimeout(600.seconds) {
-      while (shouldWait()) {
-        delay(1)
+    try {
+      withTimeout(600.seconds) {
+        while (shouldWait()) {
+          delay(1)
+        }
       }
+    }
+    catch (e: TimeoutCancellationException) {
+      thisLogger().warn(ThreadDumper.dumpThreadsToString(), e)
+      throw e
     }
   }
 
@@ -160,15 +183,6 @@ class IndexingTestUtil(private val project: Project) {
     @JvmStatic
     fun waitUntilIndexesAreReady(project: Project) {
       IndexingTestUtil(project).waitUntilFinished()
-    }
-
-    @Suppress("unused") // invoked from prod code via reflection
-    @JvmStatic
-    fun workaroundForEverSmartIdeInUnitTestsIDEA347619(project: Project) {
-      // we don't need this workaround when SynchronousTaskQueue is not enabled
-      if (DumbServiceImpl.useSynchronousTaskQueue) {
-        IndexingTestUtil(project).waitUntilFinished()
-      }
     }
 
     suspend fun suspendUntilIndexesAreReady(project: Project) {

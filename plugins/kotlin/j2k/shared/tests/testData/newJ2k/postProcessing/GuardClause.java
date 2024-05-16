@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class Test {
     void testRequire(String s1, boolean b1, boolean b2) {
         if (s1 == null) {

@@ -8,11 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.util.paths.RootDirtySet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitRefreshUsageCollector;
 import git4idea.GitVcsDirtyScope;
 import git4idea.commands.GitHandler;
@@ -21,11 +21,13 @@ import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.GitSubmodule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,6 +59,12 @@ public class GitStagingAreaHolder {
   public @Nullable GitFileStatus findRecord(@NotNull FilePath path) {
     synchronized (LOCK) {
       return ContainerUtil.find(myRecords, it -> it.getPath().equals(path));
+    }
+  }
+
+  public boolean isEmpty() {
+    synchronized (LOCK) {
+      return myRecords.isEmpty();
     }
   }
 
@@ -149,9 +157,12 @@ public class GitStagingAreaHolder {
    * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
   @ApiStatus.Internal
-  public static @NotNull Map<VirtualFile, RootDirtySet> collectDirtyPathsPerRoot(@NotNull VcsDirtyScope dirtyScope) {
+  public static @NotNull Map<VirtualFile, RootDirtySet> collectDirtyPathsPerRoot(
+    @NotNull GitVcsDirtyScope dirtyScope,
+    @NotNull Map<GitRepository, GitSubmodule> knownSubmodules
+  ) {
     Project project = dirtyScope.getProject();
-    Map<VirtualFile, RootDirtySet> dirtySetPerRoot = ((GitVcsDirtyScope)dirtyScope).getDirtySetsPerRoot();
+    Map<VirtualFile, RootDirtySet> dirtySetPerRoot = new HashMap<>(dirtyScope.getDirtySetsPerRoot());
 
     // Git will not detect renames unless both affected paths are passed to the 'git status' command.
     // Thus, we are forced to pass all deleted/added files in a repository to ensure all renames are detected.
@@ -174,6 +185,20 @@ public class GitStagingAreaHolder {
                  isStatusCodeForPotentialRename(record.getWorkTree())) {
           rootPaths.markDirty(filePath);
         }
+      }
+    }
+
+    // Make sure submodule status in parent repository is being properly reported,
+    // as 'dirtyScope.belongsTo' will return true for its Change (and it will be removed from ChangeListWorker).
+    for (GitSubmodule submodule : knownSubmodules.values()) {
+      VirtualFile submoduleRoot = submodule.getRepository().getRoot();
+      VirtualFile parentRoot = submodule.getParent().getRoot();
+
+      RootDirtySet dirtySet = dirtySetPerRoot.get(submoduleRoot);
+      if (dirtySet != null && dirtySet.isEverythingDirty()) { // faster check for 'dirtySet.belongsTo(submoduleRoot)'
+        RootDirtySet rootPaths = dirtySetPerRoot.computeIfAbsent(parentRoot,
+                                                                 root -> GitVcsDirtyScope.createDirtySetForRoot(root));
+        rootPaths.markDirty(VcsUtil.getFilePath(submoduleRoot));
       }
     }
 

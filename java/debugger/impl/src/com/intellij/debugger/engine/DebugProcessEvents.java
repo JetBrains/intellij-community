@@ -2,8 +2,10 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
+import com.intellij.debugger.engine.evaluation.DebuggerImplicitEvaluationContextUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.CustomProcessingLocatableEventRequestor;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
@@ -635,13 +637,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         final SuspendManager suspendManager = getSuspendManager();
-        SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getEventThread());
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
-        if (evaluatingContext != null &&
+        ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
+        boolean isEvaluationOnCurrentThread = threadProxy != null && threadProxy.isEvaluating();
+        if ((isEvaluationOnCurrentThread || mySuspendAllInvocation.get() > 0) &&
             !(requestor instanceof InstrumentationTracker.InstrumentationMethodBreakpoint) &&
             !DebuggerSession.enableBreakpointsDuringEvaluation()) {
-          notifySkippedBreakpointInEvaluation(event, evaluatingContext);
+          notifySkippedBreakpointInEvaluation(event, suspendContext);
           // is inside evaluation, so ignore any breakpoints
           suspendManager.voteResume(suspendContext);
           return;
@@ -657,7 +660,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
           LightOrRealThreadInfo filter = getRequestsManager().getFilterThread();
           if (filter != null) {
             if (myPreparingToSuspendAll || !filter.checkSameThread(thread, suspendContext)) {
-              notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
+              // notify only if the current session is not one with evaluations hidden from the user
+              if (!checkContextIsFromImplicitThread(suspendContext)) {
+                notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
+              }
               suspendManager.voteResume(suspendContext);
               return;
             }
@@ -835,12 +841,39 @@ public class DebugProcessEvents extends DebugProcessImpl {
     STEPPING, // Suspend-all stepping ignores breakpoints in other threads for the sake of ease-of-debug.
   }
 
-  private void notifySkippedBreakpointInEvaluation(@Nullable LocatableEvent event, @NotNull SuspendContextImpl existingContext) {
-    ThreadReferenceProxyImpl contextThread = existingContext.getThread();
-    SkippedBreakpointReason reason =
-      event != null && contextThread != null && contextThread.getThreadReference().equals(event.thread()) ?
-      SkippedBreakpointReason.EVALUATION_IN_THE_SAME_THREAD : SkippedBreakpointReason.EVALUATION_IN_ANOTHER_THREAD;
+  private void notifySkippedBreakpointInEvaluation(@Nullable LocatableEvent event, @NotNull SuspendContextImpl suspendContext) {
+    // notify only if the current session is not one with evaluations hidden from the user
+    if (checkContextIsFromImplicitThread(suspendContext)) {
+      return;
+    }
+
+    SkippedBreakpointReason reason = SkippedBreakpointReason.EVALUATION_IN_ANOTHER_THREAD;
+    if (event != null) {
+      ThreadReferenceProxyImpl proxy = getVirtualMachineProxy().getThreadReferenceProxy(event.thread());
+      if (proxy != null && proxy.isEvaluating()) {
+        reason = SkippedBreakpointReason.EVALUATION_IN_THE_SAME_THREAD;
+      }
+    }
     notifySkippedBreakpoints(event, reason);
+  }
+
+  private boolean checkContextIsFromImplicitThread(@NotNull SuspendContextImpl eventContext) {
+    DebugProcess debugProcess = eventContext.getDebugProcess();
+    LightOrRealThreadInfo implicitThread = DebuggerImplicitEvaluationContextUtil.getImplicitEvaluationThread(debugProcess);
+    LightOrRealThreadInfo filterThread = getRequestsManager().getFilterThread();
+    ThreadReferenceProxy eventThread = eventContext.getThread();
+
+    if (implicitThread == null || eventThread == null) {
+      return false;
+    }
+
+    // Case 1: We have filter and implicit threads provided, they are different, hence, this skipped breakpoint is no use for the user
+    if (filterThread != null && !implicitThread.checkSameThread(eventThread.getThreadReference(), eventContext)) {
+      return true;
+    }
+
+    // Case 2: Implicit thread is provided, no filter thread, check correct hit
+    return implicitThread.checkSameThread(eventThread.getThreadReference(), eventContext);
   }
 
   private void notifySkippedBreakpoints(@Nullable LocatableEvent event, SkippedBreakpointReason reason) {

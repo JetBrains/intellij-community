@@ -58,7 +58,6 @@ f:org.jetbrains.builtInWebServer.ConsoleManager
 - getConsole(org.jetbrains.builtInWebServer.NetService):com.intellij.execution.ui.ConsoleView
 f:org.jetbrains.builtInWebServer.DefaultWebServerPathHandlerKt
 - sf:getChromeVersionFromUserAgent():java.util.regex.Pattern
-f:org.jetbrains.builtInWebServer.DefaultWebServerRootsProviderKt
 org.jetbrains.builtInWebServer.FileResolver
 - a:resolve(java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,org.jetbrains.builtInWebServer.PathQuery):org.jetbrains.builtInWebServer.PathInfo
 - bs:resolve$default(org.jetbrains.builtInWebServer.FileResolver,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,org.jetbrains.builtInWebServer.PathQuery,I,java.lang.Object):org.jetbrains.builtInWebServer.PathInfo
@@ -114,7 +113,6 @@ a:org.jetbrains.builtInWebServer.WebServerPathHandlerAdapter
 - <init>():V
 - pa:process(java.lang.String,com.intellij.openapi.project.Project,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):Z
 - process(java.lang.String,com.intellij.openapi.project.Project,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext,java.lang.String,java.lang.String,Z):Z
-f:org.jetbrains.builtInWebServer.WebServerPathHandlerKt
 f:org.jetbrains.builtInWebServer.WebServerPathToFileManager
 - sf:Companion:org.jetbrains.builtInWebServer.WebServerPathToFileManager$Companion
 - <init>(com.intellij.openapi.project.Project):V
@@ -132,7 +130,6 @@ f:org.jetbrains.builtInWebServer.WebServerPathToFileManager
 - f:getResolver(java.lang.String):org.jetbrains.builtInWebServer.FileResolver
 f:org.jetbrains.builtInWebServer.WebServerPathToFileManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):org.jetbrains.builtInWebServer.WebServerPathToFileManager
-f:org.jetbrains.builtInWebServer.WebServerPathToFileManagerKt
 f:org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService
 - sf:Companion:org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService$Companion
 - sf:RELOAD_URL_PARAM:java.lang.String
@@ -168,7 +165,6 @@ c:org.jetbrains.builtInWebServer.ssi.SsiConditional
 - org.jetbrains.builtInWebServer.ssi.SsiCommand
 - <init>():V
 - process(org.jetbrains.builtInWebServer.ssi.SsiProcessingState,java.lang.String,java.util.List,java.lang.String[],io.netty.buffer.ByteBufUtf8Writer):J
-f:org.jetbrains.builtInWebServer.ssi.SsiExternalResolverKt
 c:org.jetbrains.builtInWebServer.ssi.SsiProcessingState
 - psf:DEFAULT_CONFIG_ERR_MSG:java.lang.String
 - psf:DEFAULT_CONFIG_SIZE_FMT:java.lang.String
@@ -189,7 +185,6 @@ c:org.jetbrains.builtInWebServer.ssi.SsiProcessingState
 - setConfigTimeFormat(java.lang.String,Z):V
 - p:setDateVariables(Z):V
 - substituteVariables(java.lang.String):java.lang.String
-f:org.jetbrains.builtInWebServer.ssi.SsiProcessorKt
 f:org.jetbrains.builtInWebServer.ssi.Strftime
 - <init>(java.lang.String,java.util.Locale):V
 - format(java.util.Date):java.lang.String
@@ -214,8 +209,6 @@ f:org.jetbrains.ide.BuiltInServerManagerImpl
 - waitForStart():org.jetbrains.ide.BuiltInServerManager
 f:org.jetbrains.ide.BuiltInServerManagerImpl$Companion
 - f:isOnBuiltInWebServerByAuthority(java.lang.String):Z
-f:org.jetbrains.ide.BuiltInServerManagerImplKt
-f:org.jetbrains.ide.OpenSettingsJbProtocolServiceKt
 a:org.jetbrains.ide.RestService
 - org.jetbrains.ide.HttpRequestHandler
 - sf:Companion:org.jetbrains.ide.RestService$Companion
@@ -318,7 +311,6 @@ f:org.jetbrains.ide.ToolboxUpdateAction
 - f:perform():V
 - f:setRegistry(org.jetbrains.ide.ToolboxSettingsActionRegistry):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:org.jetbrains.ide.ToolboxUpdateNotificationHandlerKt
 org.jetbrains.ide.UpdateActionsListener
 - java.util.EventListener
 - sf:Companion:org.jetbrains.ide.UpdateActionsListener$Companion
@@ -329,7 +321,6 @@ f:org.jetbrains.ide.UploadLogsService
 - org.jetbrains.ide.RestService
 - <init>():V
 - execute(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.String
-f:org.jetbrains.ide.UploadLogsServiceKt
 a:org.jetbrains.io.CustomPortServerManagerBase
 - org.jetbrains.ide.CustomPortServerManager
 - p:manager:org.jetbrains.ide.CustomPortServerManager$CustomPortService
@@ -337,14 +328,12 @@ a:org.jetbrains.io.CustomPortServerManagerBase
 - isBound():Z
 - portChanged():V
 - setManager(org.jetbrains.ide.CustomPortServerManager$CustomPortService):V
-f:org.jetbrains.io.fastCgi.FastCgiDecoderKt
 f:org.jetbrains.io.fastCgi.FastCgiRequest
 - <init>(I,io.netty.buffer.ByteBufAllocator):V
 - f:getRequestId():I
 - f:writeFileHeaders(org.jetbrains.builtInWebServer.PathInfo,java.lang.CharSequence):V
 - f:writeHeaders(io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.Channel):V
 - f:writeToServerChannel(io.netty.buffer.ByteBuf,io.netty.channel.Channel):V
-f:org.jetbrains.io.fastCgi.FastCgiRequestKt
 a:org.jetbrains.io.fastCgi.FastCgiService
 - org.jetbrains.builtInWebServer.SingleConnectionNetService
 - <init>(com.intellij.openapi.project.Project):V
@@ -353,7 +342,6 @@ a:org.jetbrains.io.fastCgi.FastCgiService
 - p:configureBootstrap(io.netty.bootstrap.Bootstrap,com.intellij.util.Consumer):V
 - f:responseReceived(I,io.netty.buffer.ByteBuf):V
 - f:send(org.jetbrains.io.fastCgi.FastCgiRequest,io.netty.buffer.ByteBuf):V
-f:org.jetbrains.io.fastCgi.FastCgiServiceKt
 a:org.jetbrains.io.jsonRpc.Client
 - com.intellij.openapi.util.UserDataHolderBase
 - pf:channel:io.netty.channel.Channel
@@ -383,7 +371,6 @@ f:org.jetbrains.io.jsonRpc.ClientManager
 - f:hasClients():Z
 - f:send(I,io.netty.buffer.ByteBuf,java.util.List):V
 - bs:send$default(org.jetbrains.io.jsonRpc.ClientManager,I,io.netty.buffer.ByteBuf,java.util.List,I,java.lang.Object):V
-f:org.jetbrains.io.jsonRpc.ClientManagerKt
 org.jetbrains.io.jsonRpc.ExceptionHandler
 - a:exceptionCaught(java.lang.Throwable):V
 c:org.jetbrains.io.jsonRpc.ExceptionHandlerImpl
@@ -402,7 +389,6 @@ f:org.jetbrains.io.jsonRpc.JsonRpcServer
 - f:sendResponse(org.jetbrains.io.jsonRpc.Client,I,io.netty.buffer.ByteBuf):V
 - bs:sendResponse$default(org.jetbrains.io.jsonRpc.JsonRpcServer,org.jetbrains.io.jsonRpc.Client,I,io.netty.buffer.ByteBuf,I,java.lang.Object):V
 - f:sendWithRawPart(org.jetbrains.io.jsonRpc.Client,java.lang.String,java.lang.String,io.netty.buffer.ByteBuf,java.lang.Object[]):Z
-f:org.jetbrains.io.jsonRpc.JsonRpcServerKt
 org.jetbrains.io.jsonRpc.JsonServiceInvocator
 - a:invoke(java.lang.String,org.jetbrains.io.jsonRpc.Client,org.jetbrains.io.JsonReaderEx,I,java.lang.CharSequence):V
 org.jetbrains.io.jsonRpc.MessageServer

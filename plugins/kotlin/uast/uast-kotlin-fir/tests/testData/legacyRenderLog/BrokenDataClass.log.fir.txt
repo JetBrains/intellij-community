@@ -11,7 +11,6 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))
                     UIdentifier (Identifier (this))
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                     USimpleNameReferenceExpression (identifier = a)
                     USimpleNameReferenceExpression (identifier = a)
                     USimpleNameReferenceExpression (identifier = a)

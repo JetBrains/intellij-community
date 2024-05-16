@@ -10,16 +10,15 @@ UFile (package = ) [public abstract interface Callback {...]
             UParameter (name = factory) [@org.jetbrains.annotations.NotNull var factory: kotlin.jvm.functions.Function0<? extends T>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                UThrowExpression [throw <init>()] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : @org.jetbrains.annotations.NotNull() java.lang.UnsupportedOperationException
+                UThrowExpression [throw UnsupportedOperationException()] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [UnsupportedOperationException()] : @org.jetbrains.annotations.NotNull() java.lang.UnsupportedOperationException
                         UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] : @org.jetbrains.annotations.NotNull() java.lang.UnsupportedOperationException
+                        USimpleNameReferenceExpression (identifier = UnsupportedOperationException, resolvesTo = PsiClass: UnsupportedOperationException) [UnsupportedOperationException]
         UMethod (name = Model) [public fun Model() {...}]
             UBlockExpression [{...}]
                 UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [crashMe(Callback.java, { ...})] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UIdentifier (Identifier (crashMe)) [UIdentifier (Identifier (crashMe))]
-                        USimpleNameReferenceExpression (identifier = crashMe, resolvesTo = null) [crashMe] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UQualifiedReferenceExpression [Callback.java] : @org.jetbrains.annotations.NotNull() java.lang.Class<@org.jetbrains.annotations.NotNull() Callback>
                             UClassLiteralExpression [Callback] : @org.jetbrains.annotations.NotNull() kotlin.reflect.KClass<@org.jetbrains.annotations.NotNull() Callback>
                                 USimpleNameReferenceExpression (identifier = Callback) [Callback] : @org.jetbrains.annotations.NotNull() Callback
@@ -33,10 +32,10 @@ UFile (package = ) [public abstract interface Callback {...]
                                                 UParameter (name = throwable) [@org.jetbrains.annotations.NotNull var throwable: java.lang.Throwable]
                                                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                                 UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                                                    UThrowExpression [throw <init>("")] : @org.jetbrains.annotations.NotNull() java.lang.Void
-                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("")] : @org.jetbrains.annotations.NotNull() java.lang.UnsupportedOperationException
+                                                    UThrowExpression [throw UnsupportedOperationException("")] : @org.jetbrains.annotations.NotNull() java.lang.Void
+                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [UnsupportedOperationException("")] : @org.jetbrains.annotations.NotNull() java.lang.UnsupportedOperationException
                                                             UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] : @org.jetbrains.annotations.NotNull() java.lang.UnsupportedOperationException
+                                                            USimpleNameReferenceExpression (identifier = UnsupportedOperationException, resolvesTo = PsiClass: UnsupportedOperationException) [UnsupportedOperationException]
                                                             UPolyadicExpression (operator = +) [""] : java.lang.String
                                                                 ULiteralExpression (value = "") [""] : java.lang.String
                                             UMethod (name = ) [private fun () = UastEmptyExpression]

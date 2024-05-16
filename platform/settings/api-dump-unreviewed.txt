@@ -40,13 +40,10 @@
 - a:objectSerializer(java.lang.Class):com.intellij.platform.settings.SettingSerializerDescriptor
 - a:settingDescriptor(java.lang.String,com.intellij.platform.settings.SettingSerializerDescriptor,kotlin.jvm.functions.Function1):com.intellij.platform.settings.SettingDescriptor
 - a:settingDescriptor(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.platform.settings.SettingDescriptor
-*f:com.intellij.platform.settings.SettingDescriptorFactoryKt
-*f:com.intellij.platform.settings.SettingDescriptorImplKt
 *:com.intellij.platform.settings.SettingDescriptorTemplateFactory
 - setting(java.lang.String):com.intellij.platform.settings.Setting
 - a:setting(java.lang.String,com.intellij.platform.settings.SettingSerializerDescriptor):com.intellij.platform.settings.Setting
 *:com.intellij.platform.settings.SettingSerializerDescriptor
-*f:com.intellij.platform.settings.SettingSerializerDescriptorKt
 *:com.intellij.platform.settings.SettingTag
 *:com.intellij.platform.settings.SettingsController
 - a:getItem(com.intellij.platform.settings.SettingDescriptor):java.lang.Object

@@ -14,10 +14,10 @@ import org.jetbrains.kotlin.onboarding.FeedbackBundle
 class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override val surveyId: String = "k2_feedback"
-    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 3, 18)
+    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 7, 27)
     override val requireIdeEAP: Boolean = true
 
-    private val suitableIdeVersion = "2024.1"
+    private val suitableIdeVersion = "2024.2"
 
     override fun checkIdeIsSuitable(): Boolean {
         return PlatformUtils.isIdeaUltimate() || PlatformUtils.isIdeaCommunity()

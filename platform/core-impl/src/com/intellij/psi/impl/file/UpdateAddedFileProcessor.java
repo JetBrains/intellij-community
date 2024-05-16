@@ -11,6 +11,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Iterator;
+
 /**
  * @author Maxim.Mossienko
  */
@@ -30,15 +32,17 @@ public abstract class UpdateAddedFileProcessor {
     return null;
   }
 
-  public static void updateAddedFiles(@NotNull Iterable<? extends PsiFile> copyPsis) throws IncorrectOperationException {
+  public static void updateAddedFiles(@NotNull Iterable<? extends PsiFile> copyPsis, @Nullable Iterable<? extends PsiFile> originals) throws IncorrectOperationException {
+    Iterator<? extends PsiFile> iterator = originals != null ? originals.iterator() : null;
     for (PsiFile copyPsi : copyPsis) {
+      PsiFile original = iterator != null ? (iterator.hasNext() ? iterator.next() : null) : null;
       UpdateAddedFileProcessor processor = forElement(copyPsi);
       if (processor != null) {
         TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);
         if (tree != null) {
           ChangeUtil.encodeInformation(tree);
         }
-        processor.update(copyPsi, null);
+        processor.update(copyPsi, original);
         if (tree != null) {
           ChangeUtil.decodeInformation(tree);
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.StorageLockContext;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -39,12 +40,14 @@ public abstract class AbstractRecordsTable implements IRecordsTable {
 
   protected static final int DEFAULT_RECORD_SIZE = CAPACITY_OFFSET + 4;
 
+  @Internal
   protected final PagedFileStorage myStorage;
 
   private IntList myFreeRecordsList = null;
   private boolean myIsDirty = false;
   protected static final int SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD = -1;
 
+  @Internal
   public AbstractRecordsTable(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
     myStorage = new PagedFileStorage(storageFilePath, context, getPageSize(), areDataAlignedToPage(), false);
     myStorage.lockWrite();

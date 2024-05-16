@@ -70,6 +70,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     pyVisitor.visitPyTargetExpression(this);
   }
 
+  @Override
+  public int getTextOffset() {
+    return PyTargetExpression.super.getTextOffset();
+  }
+
   @Nullable
   @Override
   public String getName() {

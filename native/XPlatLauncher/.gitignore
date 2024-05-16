@@ -1,5 +1,5 @@
 # IDEA/CLion
-.idea/
+/.idea/
 
 # Cargo
 /target/
@@ -12,6 +12,3 @@
 
 # external dependencies
 /deps/
-
-# CEF FFI
-*_generated.rs

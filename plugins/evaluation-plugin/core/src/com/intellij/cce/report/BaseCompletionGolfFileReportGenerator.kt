@@ -104,7 +104,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
               span(statsClass) {
                 button(classes = "stats-value") {
                   onClick = "invertRows(event, '$statsClass')"
-                  +((it.value * 100).format() + "%")
+                  +(formatDouble((it.value * 100)) + "%")
                 }
               }
             }
@@ -277,7 +277,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
   ): Int {
     val text = expectedText[offset].toString()
 
-    span("code-span completion ${getKindClass(lookup, expectedText)} ${getFilterCheckClass(lookup, expectedText)} " +
+    span("code-span session ${getKindClass(lookup, expectedText)} ${getFilterCheckClass(lookup, expectedText)} " +
          "${getSkippedByModelClass(lookup, expectedText)} $delimiter") {
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid

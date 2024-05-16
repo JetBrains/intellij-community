@@ -5,7 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import kotlinx.metadata.*;
+import kotlinx.metadata.Attributes;
+import kotlinx.metadata.KmDeclarationContainer;
+import kotlinx.metadata.KmFunction;
+import kotlinx.metadata.KmProperty;
 import kotlinx.metadata.jvm.JvmExtensionsKt;
 import kotlinx.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
@@ -491,27 +494,6 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
     }
     
-    // remove own members lookups
-    KmDeclarationContainer container = findKotlinDeclarationContainer();
-    if (container != null) {
-      JvmNodeReferenceID owner = null;
-      if (container instanceof KmPackage) {
-        owner = new JvmNodeReferenceID(JvmClass.getPackageName(myName));
-      }
-      else if (container instanceof KmClass) {
-        owner = new JvmNodeReferenceID(((KmClass)container).getName());
-        String nodeName = owner.getNodeName();
-        String scopeName = JvmClass.getPackageName(nodeName);
-        String symbolName = scopeName.isEmpty()? nodeName : nodeName.substring(scopeName.length() + 1);
-        myUsages.remove(new LookupNameUsage(scopeName, symbolName));
-      }
-      if (owner != null) {
-        for (String name : Iterators.unique(Iterators.flat(Iterators.map(container.getFunctions(), KmFunction::getName), Iterators.map(container.getProperties(), KmProperty::getName)))) {
-          myUsages.remove(new LookupNameUsage(owner, name));
-        }
-      }
-    }
-
     return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages, myMetadata);
   }
 

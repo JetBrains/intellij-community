@@ -238,11 +238,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     ThreadingAssertions.assertEventDispatchThread();
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     runToolsSpan.end();
-    LOG.info("Code inspection finished. Took " + elapsed + " ms; Files in scope: " + scope.getFileCount());
+    LOG.info("Code inspection finished. Took " + elapsed + " ms");
     if (getProject().isDisposed()) return;
 
     InspectionResultsView oldView = myView;
     InspectionResultsView newView = oldView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
+    if (newView != null) Disposer.register(getProject(), newView);
     ReadAction
       .nonBlocking(() -> (oldView == null ? newView : oldView).hasProblems())
       .finishOnUiThread(ModalityState.any(), hasProblems -> {
@@ -315,8 +316,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     Set<VirtualFile> localScopeFiles = searchScope instanceof LocalSearchScope ? new HashSet<>() : null;
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
-      GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
-      tool.inspectionStarted(inspectionManager, this, getPresentation(toolWrapper));
+      if (toolWrapper.getTool() instanceof  GlobalSimpleInspectionTool tool) {
+        tool.inspectionStarted(inspectionManager, this, getPresentation(toolWrapper));
+      }
     }
 
     boolean headlessEnvironment = ApplicationManager.getApplication().isHeadlessEnvironment();
@@ -377,9 +379,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
-      GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
-      ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
-      tool.inspectionFinished(inspectionManager, this, problemDescriptionProcessor);
+      if (toolWrapper.getTool() instanceof GlobalSimpleInspectionTool tool) {
+        ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
+        tool.inspectionFinished(inspectionManager, this, problemDescriptionProcessor);
+      }
     }
 
     addProblemsToView(globalSimpleTools);
@@ -554,7 +557,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
         JobLauncher.getInstance()
           .invokeConcurrentlyUnderProgress(globalSimpleTools, progressIndicator, toolWrapper -> {
-            GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
+            GlobalInspectionTool tool = toolWrapper.getTool();
             ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
             ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
             InspectionEventsKt.reportToQodanaWhenInspectionFinished(
@@ -903,11 +906,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           if (batchTool instanceof LocalInspectionTool) {
             localTools.add(newTool);
           }
-          else if (batchTool instanceof GlobalSimpleInspectionTool) {
-            globalSimpleTools.add(newTool);
-          }
-          else if (batchTool instanceof GlobalInspectionTool) {
-            globalTools.add(newTool);
+          else if (batchTool instanceof GlobalInspectionTool globalTool) {
+            if (globalTool.isGlobalSimpleInspectionTool()) {
+              globalSimpleTools.add(newTool);
+            }
+            else {
+              globalTools.add(newTool);
+            }
           }
           else {
             throw new AssertionError(batchTool);
@@ -1043,18 +1048,46 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Starting code cleanup");
     }
+    Runnable retryRunnable = () -> codeCleanup(scope, profile, commandName, postRunnable, modal, shouldApplyFix);
 
+    class TaskDelegate {
+      CleanupProblems problems;
+      @NlsContexts.NotificationContent String noProblemsMessage;
+
+      void run(@NotNull ProgressIndicator indicator) {
+        problems = findProblems(scope, profile, indicator, shouldApplyFix);
+        if (problems.files().isEmpty()) {
+          noProblemsMessage =
+            commandName == null ? null :
+            InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName());
+        }
+      }
+
+      void onSuccess() {
+        boolean isFinished;
+        if (problems.files().isEmpty()) {
+          isFinished = reportNoProblemsFound(scope, noProblemsMessage, retryRunnable);
+        }
+        else {
+          isFinished = applyFixes(problems);
+        }
+        if (isFinished && postRunnable != null) {
+          postRunnable.run();
+        }
+      }
+    }
+
+    TaskDelegate delegate = new TaskDelegate();
     Task task = modal ? new Task.Modal(getProject(), title, true) {
-      private CleanupProblems problems;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        problems = findProblems(scope, profile, indicator, shouldApplyFix);
+        delegate.run(indicator);
       }
 
       @Override
       public void onSuccess() {
-        applyFixes(scope, problems, commandName, postRunnable, profile, true, shouldApplyFix);
+        delegate.onSuccess();
       }
 
       @Override
@@ -1079,16 +1112,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         }
       }
     } : new Task.Backgroundable(getProject(), title, true) {
-      private CleanupProblems problems;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        problems = findProblems(scope, profile, indicator, shouldApplyFix);
+        delegate.run(indicator);
       }
 
       @Override
       public void onSuccess() {
-        applyFixes(scope, problems, commandName, postRunnable, profile, false, shouldApplyFix);
+        delegate.onSuccess();
       }
 
       @Override
@@ -1260,44 +1292,34 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  private void applyFixes(@NotNull AnalysisScope scope,
-                          @NotNull CleanupProblems problems,
-                          @Nullable String commandName,
-                          @Nullable Runnable postRunnable,
-                          @NotNull InspectionProfile profile,
-                          boolean modal,
-                          @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    if (problems.files().isEmpty()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("No problems found during code inspection, nothing to cleanup");
-      }
-
-      if (commandName != null) {
-        var notification = new Notification(
-          NOTIFICATION_GROUP,
-          InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()),
-          NotificationType.INFORMATION);
-        if (!scope.isIncludeTestSource()) {
-          addRepeatWithTestsAction(scope, notification, () -> codeCleanup(scope, profile, commandName, postRunnable, modal, shouldApplyFix));
-        }
-        notification.notify(getProject());
-      }
-      if (postRunnable != null) {
-        postRunnable.run();
-      }
-      return;
+  private boolean reportNoProblemsFound(@NotNull AnalysisScope scope,
+                                        @Nullable @NlsContexts.NotificationContent String message,
+                                        @NotNull Runnable retryRunnable) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("No problems found during code inspection, nothing to cleanup");
     }
+    if (message != null) {
+      var notification = new Notification(
+        NOTIFICATION_GROUP,
+        message,
+        NotificationType.INFORMATION);
+      if (!scope.isIncludeTestSource()) {
+        addRepeatWithTestsAction(scope, notification, retryRunnable);
+      }
+      notification.notify(getProject());
+    }
+    return true;
+  }
 
+  private boolean applyFixes(@NotNull CleanupProblems problems) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Applying fixes");
     }
 
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.files())) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.files())) return false;
     CleanupInspectionUtil.getInstance().applyFixesNoSort(
       getProject(), LangBundle.message("code.cleanup"), problems.problemDescriptors(), null, false, problems.isGlobalScope());
-    if (postRunnable != null) {
-      postRunnable.run();
-    }
+    return true;
   }
 
   @SuppressWarnings("IdentifierGrammar")

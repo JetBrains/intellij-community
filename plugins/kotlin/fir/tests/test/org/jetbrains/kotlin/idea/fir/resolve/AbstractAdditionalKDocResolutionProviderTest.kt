@@ -2,11 +2,9 @@
 package org.jetbrains.kotlin.idea.fir.resolve
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.AdditionalKDocResolutionProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -17,9 +15,17 @@ abstract class AbstractAdditionalKDocResolutionProviderTest : AbstractFirReferen
          * in the file where [contextElement] is located. Note that the symbols does not have FqNames that matches
          * FqName of [contextElement]. Therefore, this can show AdditionalKDocResolutionProvider works as we intended.
          */
-        context(KtAnalysisSession)
-        override fun resolveKdocFqName(fqName: FqName, contextElement: KtElement): Collection<KtSymbol> =
-            contextElement.containingKtFile.declarations.filter { it.name == fqName.shortName().asString() }.map { it.getSymbol() }
+        override fun resolveKdocFqName(
+            analysisSession: KtAnalysisSession,
+            fqName: FqName,
+            contextElement: KtElement
+        ): Collection<KtSymbol> {
+            with(analysisSession) {
+                return contextElement.containingKtFile.declarations
+                    .filter { it.name == fqName.shortName().asString() }
+                    .map { it.getSymbol() }
+            }
+        }
     }
 
     override fun setUp() {

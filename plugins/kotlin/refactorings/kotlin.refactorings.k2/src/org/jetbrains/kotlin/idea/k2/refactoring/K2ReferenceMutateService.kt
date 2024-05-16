@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
@@ -203,13 +202,14 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return ReplaceResult(newNameExpr.replaceWithQualified(fqName, newNameExpr), false)
     }
 
-    private fun KtSimpleNameExpression.replaceShortName(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
+    private fun KtSimpleNameExpression.replaceShortName(fqName: FqName, targetElement: PsiElement? ): ReplaceResult {
         val psiFactory = KtPsiFactory(project)
         val shortName = fqName.shortName().asString()
-        val isInfixFun = targetElement is KtNamedFunction && targetElement.modifierList?.hasModifier(KtTokens.INFIX_KEYWORD) == true
-        val newNameExpression = if (isInfixFun) psiFactory.createOperationName(shortName) else psiFactory.createSimpleName(shortName)
+        val isOperator = targetElement is KtNamedFunction && targetElement.hasModifier(KtTokens.OPERATOR_KEYWORD)
+        val isInfixFun = targetElement is KtNamedFunction && targetElement.hasModifier(KtTokens.INFIX_KEYWORD) == true
+        val newNameExpression = if (isInfixFun || isOperator) psiFactory.createOperationName(shortName) else psiFactory.createSimpleName(shortName)
         val newSimpleName = replaced(newNameExpression)
-        val isUnQualifiable = targetElement?.isCallableAsExtensionFunction() == true
+        val isUnQualifiable = targetElement?.isCallableAsExtensionFunction() == true || isOperator || isInfixFun
         return if (isUnQualifiable || fqName.parent() == FqName.ROOT) {
             newSimpleName.containingKtFile.addImport(fqName)
             ReplaceResult(newSimpleName, isUnQualifiable)
@@ -252,8 +252,8 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         }
     }
 
-    override fun canMoveLambdaOutsideParentheses(newExpression: KtDotQualifiedExpression): Boolean {
-        return newExpression.getPossiblyQualifiedCallExpression()?.canMoveLambdaOutsideParentheses() == true
+    override fun canMoveLambdaOutsideParentheses(callExpression: KtCallExpression?): Boolean {
+        return callExpression?.canMoveLambdaOutsideParentheses() == true
     }
 
 }

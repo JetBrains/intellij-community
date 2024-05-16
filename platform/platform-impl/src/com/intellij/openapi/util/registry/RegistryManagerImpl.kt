@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ArrayUtilRt
+import kotlinx.coroutines.future.await
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -101,5 +102,9 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
 
   fun getAll(): List<RegistryValue> {
     return Registry.getAll()
+  }
+
+  override suspend fun awaitRegistryLoad() {
+    Registry.awaitLoad().await()
   }
 }

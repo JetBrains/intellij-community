@@ -1129,6 +1129,7 @@ a:com.intellij.codeInspection.GlobalInspectionTool
 - <init>():V
 - checkElement(com.intellij.codeInspection.reference.RefEntity,com.intellij.analysis.AnalysisScope,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext):com.intellij.codeInspection.CommonProblemDescriptor[]
 - checkElement(com.intellij.codeInspection.reference.RefEntity,com.intellij.analysis.AnalysisScope,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):com.intellij.codeInspection.CommonProblemDescriptor[]
+- checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.ProblemsHolder,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
 - compose(java.lang.StringBuilder,com.intellij.codeInspection.reference.RefEntity,com.intellij.codeInspection.HTMLComposer):V
 - getAdditionalJobs():com.intellij.codeInspection.ex.JobDescriptor[]
 - getAdditionalJobs(com.intellij.codeInspection.GlobalInspectionContext):com.intellij.codeInspection.ex.JobDescriptor[]
@@ -1138,6 +1139,7 @@ a:com.intellij.codeInspection.GlobalInspectionTool
 - getSharedLocalInspectionTool():com.intellij.codeInspection.LocalInspectionTool
 - f:getSuppressId():java.lang.String
 - isEnabledByDefault():Z
+- isGlobalSimpleInspectionTool():Z
 - isGraphNeeded():Z
 - isReadActionNeeded():Z
 - queryExternalUsagesRequests(com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):Z
@@ -1149,6 +1151,7 @@ a:com.intellij.codeInspection.GlobalSimpleInspectionTool
 - a:checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.ProblemsHolder,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
 - inspectionFinished(com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
 - inspectionStarted(com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
+- f:isGlobalSimpleInspectionTool():Z
 - f:isGraphNeeded():Z
 - isReadActionNeeded():Z
 - f:runInspection(com.intellij.analysis.AnalysisScope,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
@@ -2101,6 +2104,7 @@ com.intellij.codeInspection.reference.RefElement
 - a:isPermanentEntry():Z
 - a:isReachable():Z
 - a:isReferenced():Z
+- isSuppressed(java.lang.String[]):Z
 com.intellij.codeInspection.reference.RefEntity
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ELEMENTS_ARRAY:com.intellij.codeInspection.reference.RefEntity[]
@@ -2199,6 +2203,12 @@ f:com.intellij.codeInspection.util.RefEntityAlphabeticalComparator
 - <init>():V
 - compare(com.intellij.codeInspection.reference.RefEntity,com.intellij.codeInspection.reference.RefEntity):I
 - s:getInstance():com.intellij.codeInspection.util.RefEntityAlphabeticalComparator
+*:com.intellij.formatting.CaretRestorationDecider
+- *sf:Companion:com.intellij.formatting.CaretRestorationDecider$Companion
+- s:forLanguage(com.intellij.lang.Language):com.intellij.formatting.CaretRestorationDecider
+- a:shouldRestoreCaret(com.intellij.openapi.editor.Document,com.intellij.openapi.editor.Editor,I):Z
+*f:com.intellij.formatting.CaretRestorationDecider$Companion
+- f:forLanguage(com.intellij.lang.Language):com.intellij.formatting.CaretRestorationDecider
 a:com.intellij.ide.PlatformIdeService
 - <init>():V
 - createHyperlinkConsumer():java.util.function.BiConsumer
@@ -2657,6 +2667,7 @@ com.intellij.modcommand.ModCommandExecutor
 - a:executeForFileCopy(com.intellij.modcommand.ModCommand,com.intellij.psi.PsiFile):V
 - a:executeInBatch(com.intellij.modcommand.ActionContext,com.intellij.modcommand.ModCommand):com.intellij.modcommand.ModCommandExecutor$BatchExecutionResult
 - a:executeInteractively(com.intellij.modcommand.ActionContext,com.intellij.modcommand.ModCommand,com.intellij.openapi.editor.Editor):V
+- *s:executeInteractively(com.intellij.modcommand.ActionContext,java.lang.String,com.intellij.openapi.editor.Editor,java.util.function.Supplier):V
 - s:getInstance():com.intellij.modcommand.ModCommandExecutor
 - a:getPreview(com.intellij.modcommand.ModCommand,com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 com.intellij.modcommand.ModCommandExecutor$BatchExecutionResult
@@ -3014,20 +3025,19 @@ com.intellij.openapi.actionSystem.ShortcutProvider
 - a:getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
 com.intellij.openapi.application.WriteActionAware
 - startInWriteAction():Z
-com.intellij.openapi.command.undo.ActionChangeRange
+*:com.intellij.openapi.command.undo.ActionChangeRange
 - a:asInverted():com.intellij.openapi.command.undo.ActionChangeRange
-- a:createIndependentCopy(Z):com.intellij.openapi.command.undo.ActionChangeRange
 - a:getId():I
+- a:getNewDocumentLength():I
 - a:getNewLength():I
 - a:getOffset():I
+- a:getOldDocumentLength():I
 - a:getOldLength():I
-- a:getOriginatorId():I
-- a:isValid():Z
-- a:moveAfter(com.intellij.openapi.command.undo.ActionChangeRange,Z):Z
-com.intellij.openapi.command.undo.AdjustableUndoableAction
+- a:getTimestamp():I
+- a:toImmutable(Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+*:com.intellij.openapi.command.undo.AdjustableUndoableAction
 - com.intellij.openapi.command.undo.UndoableAction
 - a:getChangeRanges(com.intellij.openapi.command.undo.DocumentReference):java.util.List
-- a:invalidateChangeRanges():V
 a:com.intellij.openapi.command.undo.BasicUndoableAction
 - com.intellij.openapi.command.undo.UndoableAction
 - <init>():V
@@ -3056,6 +3066,48 @@ a:com.intellij.openapi.command.undo.GlobalUndoableAction
 - <init>(com.intellij.openapi.editor.Document[]):V
 - <init>(com.intellij.openapi.vfs.VirtualFile[]):V
 - isGlobal():Z
+*f:com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- com.intellij.openapi.command.undo.ActionChangeRange
+- *sf:Companion:com.intellij.openapi.command.undo.ImmutableActionChangeRange$Companion
+- asInverted():com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- f:getActionReference():java.lang.ref.WeakReference
+- getId():I
+- getNewDocumentLength():I
+- getNewLength():I
+- getOffset():I
+- getOldDocumentLength():I
+- getOldLength():I
+- getTimestamp():I
+- f:hasTheSameOrigin(com.intellij.openapi.command.undo.ImmutableActionChangeRange):Z
+- f:isSymmetricTo(com.intellij.openapi.command.undo.ImmutableActionChangeRange):Z
+- f:moveAfter(com.intellij.openapi.command.undo.ImmutableActionChangeRange,Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- toImmutable(Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- toString():java.lang.String
+*f:com.intellij.openapi.command.undo.ImmutableActionChangeRange$Companion
+- f:createNew(I,I,I,I,I,com.intellij.openapi.command.undo.AdjustableUndoableAction):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+*:com.intellij.openapi.command.undo.MutableActionChangeRange
+- com.intellij.openapi.command.undo.ActionChangeRange
+- a:asInverted():com.intellij.openapi.command.undo.MutableActionChangeRange
+- a:getOriginalTimestamp():I
+- a:getState():com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- isMoved():Z
+- a:setState(com.intellij.openapi.command.undo.ImmutableActionChangeRange):V
+*f:com.intellij.openapi.command.undo.MutableActionChangeRangeImpl
+- com.intellij.openapi.command.undo.MutableActionChangeRange
+- <init>(com.intellij.openapi.command.undo.ImmutableActionChangeRange):V
+- asInverted():com.intellij.openapi.command.undo.MutableActionChangeRange
+- getId():I
+- getNewDocumentLength():I
+- getNewLength():I
+- getOffset():I
+- getOldDocumentLength():I
+- getOldLength():I
+- getOriginalTimestamp():I
+- getState():com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- getTimestamp():I
+- setState(com.intellij.openapi.command.undo.ImmutableActionChangeRange):V
+- toImmutable(Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- toString():java.lang.String
 a:com.intellij.openapi.command.undo.UndoManager
 - sf:ORIGINAL_DOCUMENT:com.intellij.openapi.util.Key
 - <init>():V

@@ -18,6 +18,7 @@ import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.ConnectException
 import java.nio.ByteBuffer
 import java.time.ZoneOffset
@@ -179,6 +180,7 @@ internal class OtlpService private constructor() {
   }
 }
 
+@Internal
 fun computeTraceId(span: ActivityImpl): ByteArray {
   val otlpService = OtlpService.getInstance()
   val traceIdSalt = otlpService.traceIdSalt
@@ -197,6 +199,7 @@ fun computeTraceId(span: ActivityImpl): ByteArray {
   return byteBuffer.array()
 }
 
+@Internal
 fun computeSpanId(span: ActivityImpl): ByteArray {
   val byteBuffer = ByteBuffer.allocate(8)
   byteBuffer.putInt((span.start / 1_000_000).toInt())

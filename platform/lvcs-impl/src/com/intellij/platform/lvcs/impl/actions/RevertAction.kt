@@ -11,7 +11,7 @@ import com.intellij.platform.lvcs.impl.USE_OLD_CONTENT
 import com.intellij.platform.lvcs.impl.operations.createReverter
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 
-class RevertAction : ChangeSetSelectionAction() {
+internal class RevertAction : ChangeSetSelectionAction() {
 
   override fun actionPerformed(project: Project,
                                facade: LocalHistoryFacade,

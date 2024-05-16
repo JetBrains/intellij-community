@@ -172,8 +172,7 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
 
   @Override
   public boolean isSelf() {
-    final PyParameter parameter = PyUtil.as(myElement, PyParameter.class);
-    return parameter != null && parameter.isSelf();
+    return myElement != null && myElement.isSelf();
   }
 
   @NotNull

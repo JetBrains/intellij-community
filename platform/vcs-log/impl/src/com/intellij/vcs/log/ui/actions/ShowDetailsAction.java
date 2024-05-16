@@ -18,7 +18,9 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {

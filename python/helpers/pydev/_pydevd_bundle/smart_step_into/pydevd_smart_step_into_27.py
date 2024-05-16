@@ -32,7 +32,15 @@ def get_stepping_variants(code):
                 stk.pop()
             if not stk:
                 continue
-            yield stk.pop()
+            tos = stk.pop()
+            yield Instruction(
+                tos.opname,
+                tos.opcode,
+                tos.arg,
+                tos.argval,
+                instruction.offset,
+                tos.lineno
+            )
         else:
             stk.append(instruction)
 

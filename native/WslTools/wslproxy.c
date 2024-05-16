@@ -8,6 +8,7 @@
 #include <strings.h>
 #include <errno.h>
 #include <netinet/tcp.h>
+#include <signal.h>
 
 
 // See svg file and wslproxy_test_client.py
@@ -129,13 +130,20 @@ static void *jb_connect_pair(jb_sockpair *sockpair) {
         while (sent < bytes) {
             if ((write_result = write(dest, buf + sent, bytes - sent)) < 0) {
                 if (errno != EINTR || errno != EAGAIN) {
-                    break; //socket closed
+                    goto end; //socket closed
                 }
             }
             sent += write_result;
         }
     }
+    end:
+
+    shutdown(source, SHUT_WR);
     close(source);
+
+    shutdown(dest, SHUT_WR);
+    close(dest);
+
     return NULL;
 }
 
@@ -189,6 +197,10 @@ _Noreturn static void *jb_listen_ingress(const int *p_ingress_srv_sock_fd) {
 static int g_ingress_srv_sock_fd;
 
 int main(int argc, char **argv) {
+    // We expect write failures to occur but we want to handle them where
+    // the error occurs rather than in a SIGPIPE handler.
+    signal(SIGPIPE, SIG_IGN);
+
     // '--loopback' means use 127.0.0.1 as egress IP
     g_egress_ip = (argc > 1 && strcmp(&argv[1][0], "--loopback") == 0) ? htonl(INADDR_LOOPBACK)
                                                                        : jb_get_wsl_public_ip();

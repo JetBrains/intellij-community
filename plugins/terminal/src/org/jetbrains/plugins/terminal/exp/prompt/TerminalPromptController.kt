@@ -4,24 +4,25 @@ package org.jetbrains.plugins.terminal.exp.prompt
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
-import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryManager
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
 internal class TerminalPromptController(
+  project: Project,
   private val editor: EditorEx,
   session: BlockTerminalSession,
   private val commandExecutor: TerminalCommandExecutor
@@ -47,10 +48,10 @@ internal class TerminalPromptController(
     editor.virtualFile.putUserData(TerminalPromptModel.KEY, model)
     editor.virtualFile.putUserData(ShellType.KEY, session.shellIntegration.shellType)
 
-    val shellCommandExecutor = ShellCommandExecutorImpl(session)
-    editor.putUserData(ShellCommandExecutor.KEY, shellCommandExecutor)
-    val runtimeDataProvider = IJShellRuntimeDataProvider(session, shellCommandExecutor)
-    editor.putUserData(IJShellRuntimeDataProvider.KEY, runtimeDataProvider)
+    val shellRuntimeContextProvider = IJShellRuntimeContextProvider(project, session)
+    editor.putUserData(IJShellRuntimeContextProvider.KEY, shellRuntimeContextProvider)
+    val shellGeneratorsExecutor = IJShellGeneratorsExecutor(session)
+    editor.putUserData(IJShellGeneratorsExecutor.KEY, shellGeneratorsExecutor)
 
     commandHistoryManager = CommandHistoryManager(session)
 
@@ -60,6 +61,8 @@ internal class TerminalPromptController(
         model.updatePrompt(newState)
       }
     })
+
+    session.addCommandListener(ShellEditorBufferReportShellCommandListener(session, model, editor), session)
   }
 
   fun addListener(listener: PromptStateListener) {

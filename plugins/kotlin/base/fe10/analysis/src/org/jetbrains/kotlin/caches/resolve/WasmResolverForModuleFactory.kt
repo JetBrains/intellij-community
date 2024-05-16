@@ -15,12 +15,14 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.WasmKlibLibrar
 import org.jetbrains.kotlin.idea.project.IdeaAbsentDescriptorHandler
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
+import org.jetbrains.kotlin.platform.wasm.isWasmWasi
 import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.SealedClassInheritorsProvider
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
-import org.jetbrains.kotlin.wasm.resolve.WasmPlatformAnalyzerServices
+import org.jetbrains.kotlin.wasm.resolve.WasmJsPlatformAnalyzerServices
+import org.jetbrains.kotlin.wasm.resolve.WasmWasiPlatformAnalyzerServices
 
 class WasmResolverForModuleFactory(
     private val targetEnvironment: TargetEnvironment
@@ -43,12 +45,18 @@ class WasmResolverForModuleFactory(
             moduleInfo
         )
 
+        val platform = moduleDescriptor.platform
+
         val container = createContainerForLazyResolve(
             moduleContext,
             declarationProviderFactory,
             BindingTraceContext(/* allowSliceRewrite = */ true, project),
-            moduleDescriptor.platform!!,
-            WasmPlatformAnalyzerServices,
+            platform!!,
+            if (platform.isWasmWasi()) {
+                WasmWasiPlatformAnalyzerServices
+            } else {
+                WasmJsPlatformAnalyzerServices
+            },
             targetEnvironment,
             languageVersionSettings,
             IdeaAbsentDescriptorHandler::class.java
@@ -76,7 +84,7 @@ internal fun <M : ModuleInfo> createWasmPackageFragmentProvider(
 ): List<PackageFragmentProvider> = when (moduleInfo) {
     is WasmKlibLibraryInfo -> {
         listOfNotNull(
-            WasmPlatforms.Default.idePlatformKind.resolution.createKlibPackageFragmentProvider(
+            WasmPlatforms.unspecifiedWasmPlatform.idePlatformKind.resolution.createKlibPackageFragmentProvider(
                 moduleInfo,
                 moduleContext.storageManager,
                 container.get(),

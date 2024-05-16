@@ -9,7 +9,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
+
+private val LOG = logger<NonModalCommitWorkflow>()
 
 abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   internal fun launchAsyncSession(scope: CoroutineScope,
@@ -30,9 +33,13 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
           endExecution()
         }
       }
-      catch (e: Throwable) {
+      catch (e: CancellationException) {
+        LOG.debug("commit process was cancelled", Throwable(e))
         endExecution()
-        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+        endExecution()
       }
     }
   }

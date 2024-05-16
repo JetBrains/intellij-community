@@ -254,7 +254,7 @@ internal class PhmVcsLogStorageBackend(
       val commit = iterator.nextInt()
       if (candidates == null || candidates.contains(commit)) {
         val message = messages.get(commit)
-        if (filter.matches(message)) {
+        if (message != null && filter.matches(message)) {
           consumer.accept(commit)
         }
       }

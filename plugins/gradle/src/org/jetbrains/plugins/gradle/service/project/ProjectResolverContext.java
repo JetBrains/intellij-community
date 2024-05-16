@@ -15,7 +15,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.Build;
+import org.jetbrains.plugins.gradle.model.GradleLightBuild;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.util.Collection;
@@ -55,7 +55,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   BuildEnvironment getBuildEnvironment();
 
   @NotNull
-  Build getRootBuild();
+  GradleLightBuild getRootBuild();
 
   /**
    * Returns the list of the nested builds.
@@ -66,10 +66,10 @@ public interface ProjectResolverContext extends UserDataHolderEx {
    * </ul>
    */
   @NotNull
-  Collection<? extends Build> getNestedBuilds();
+  Collection<? extends GradleLightBuild> getNestedBuilds();
 
   @NotNull
-  Collection<? extends Build> getAllBuilds();
+  Collection<? extends GradleLightBuild> getAllBuilds();
 
   @Nullable
   <T> T getRootModel(@NotNull Class<T> modelClass);

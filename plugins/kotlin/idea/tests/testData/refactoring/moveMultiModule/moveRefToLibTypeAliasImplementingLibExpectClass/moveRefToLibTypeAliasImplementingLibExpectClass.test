@@ -7,5 +7,5 @@
   "modulesWithRuntime": ["B"],
   "modulesWithCommonRuntime": ["A"],
   "enabledInK1": "true",
-  "enabledInK2": "true"
+  "enabledInK2": "false"
 }

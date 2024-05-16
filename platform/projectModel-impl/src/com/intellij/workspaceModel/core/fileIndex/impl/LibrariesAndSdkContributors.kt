@@ -1,17 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.roots.impl.RootFileSupplier
+import com.intellij.openapi.roots.impl.RootFileValidityChecker
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -28,9 +31,9 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import java.util.*
 
 internal class LibrariesAndSdkContributors(private val project: Project,
-                                           private val rootFileSupplier: RootFileSupplier,
                                            private val fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
-                                           private val fileSetsByPackagePrefix: PackagePrefixStorage
+                                           private val fileSetsByPackagePrefix: PackagePrefixStorage,
+                                           parentDisposable: Disposable,
 ) : ModuleDependencyListener, ProjectRootManagerEx.ProjectJdkListener {
   private val sdkRoots = MultiMap.create<Sdk, VirtualFile>()
   private val libraryRoots = MultiMap<Library, VirtualFile>(IdentityHashMap())
@@ -39,9 +42,11 @@ internal class LibrariesAndSdkContributors(private val project: Project,
   private var includeProjectSdk = false
   
   init {
-    if (rootFileSupplier == RootFileSupplier.INSTANCE) {
-      moduleDependencyIndex.addListener(this)
-      ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener(this)
+    moduleDependencyIndex.addListener(this)
+    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener(this)
+    Disposer.register(parentDisposable) {
+      moduleDependencyIndex.removeListener(this)
+      ProjectRootManagerEx.getInstanceEx(project).removeProjectJdkListener(this)
     }
   }
   
@@ -80,8 +85,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
                              kind: WorkspaceFileKind,
                              pointer: GlobalLibraryPointer,
                              data: WorkspaceFileSetData) {
-      rootFileSupplier.getLibraryRoots(library, rootType).forEach { root ->
-        if (RootFileSupplier.ensureValid(root, library, null)) {
+      library.getFiles(rootType).forEach { root ->
+        if (RootFileValidityChecker.ensureValid(root, library, null)) {
           val fileSet = WorkspaceFileSetImpl(root, kind, pointer, EntityStorageKind.MAIN, data)
           fileSets.putValue(root, fileSet)
           fileSetsByPackagePrefix.addFileSet("", fileSet)
@@ -93,8 +98,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     val pointer = GlobalLibraryPointer(library)
     registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null, ""))
     registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null, ""))
-    (library as? LibraryEx)?.let { rootFileSupplier.getExcludedRoots(it) }?.forEach {
-      if (RootFileSupplier.ensureValid(it, library, null)) {
+    (library as? LibraryEx)?.excludedRoots?.forEach {
+      if (RootFileValidityChecker.ensureValid(it, library, null)) {
         fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, pointer))
         libraryRoots.putValue(library, it)
       }
@@ -104,8 +109,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
   private fun registerSdkRoots(sdk: Sdk) {
     fun registerSdkRoots(rootType: OrderRootType, kind: WorkspaceFileKind, pointer: SdkPointer, data: WorkspaceFileSetData) {
       sdk.rootProvider.getUrls(rootType).forEach { url ->
-        val root = rootFileSupplier.findFileByUrl(url)
-        if (root != null && RootFileSupplier.ensureValid(root, sdk, null)) {
+        val root = VirtualFileManager.getInstance().findFileByUrl(url)
+        if (root != null && RootFileValidityChecker.ensureValid(root, sdk, null)) {
           val fileSet = WorkspaceFileSetImpl(root, kind, pointer, EntityStorageKind.MAIN, data)
           fileSets.putValue(root, fileSet)
           fileSetsByPackagePrefix.addFileSet("", fileSet)

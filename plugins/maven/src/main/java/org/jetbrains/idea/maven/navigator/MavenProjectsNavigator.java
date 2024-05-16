@@ -252,7 +252,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
       MavenSystemIndicesManager.TOPIC, new IndexChangeProgressListener() {
         @Override
         public void indexStatusChanged(@NotNull MavenIndexUpdateState state) {
-          myStructure.updateRepositoryStatus(state);
+          doScheduleStructureRequest(() -> {
+            myStructure.updateRepositoryStatus(state);
+          });
         }
       });
 

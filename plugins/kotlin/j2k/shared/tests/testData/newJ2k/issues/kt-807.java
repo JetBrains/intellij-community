@@ -1,4 +1,3 @@
-// IGNORE_K2
 import java.io.*;
 
 class FileRead {

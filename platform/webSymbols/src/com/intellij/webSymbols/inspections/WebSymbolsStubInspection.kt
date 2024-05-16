@@ -4,8 +4,10 @@ package com.intellij.webSymbols.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.annotations.ApiStatus
 
 @Suppress("InspectionDescriptionNotFoundInspection")
+@ApiStatus.Internal
 abstract class WebSymbolsStubInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

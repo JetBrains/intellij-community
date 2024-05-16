@@ -7,10 +7,13 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.ui.VcsBookmarkRef;
 import com.intellij.vcs.log.ui.frame.WrappedFlowLayout;
+import com.intellij.vcs.log.ui.render.BookmarkIcon;
 import com.intellij.vcs.log.ui.render.LabelIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +33,7 @@ public class ReferencesPanel extends JPanel {
   private final int myRefsLimit;
   private @NotNull List<VcsRef> myReferences;
   protected @NotNull MultiMap<VcsRefType, VcsRef> myGroupedVisibleReferences;
+  protected @NotNull List<VcsBookmarkRef> myBookmarks;
 
   public ReferencesPanel(int limit) {
     this(new WrappedFlowLayout(JBUIScale.scale(H_GAP), JBUIScale.scale(V_GAP)), limit);
@@ -40,13 +44,19 @@ public class ReferencesPanel extends JPanel {
     myRefsLimit = limit;
     myReferences = Collections.emptyList();
     myGroupedVisibleReferences = MultiMap.create();
+    myBookmarks = Collections.emptyList();
     setOpaque(false);
   }
 
   public void setReferences(@NotNull List<VcsRef> references) {
-    if (myReferences.equals(references)) return;
+    setReferences(references, Collections.emptyList());
+  }
+
+  public void setReferences(@NotNull List<VcsRef> references, @NotNull List<VcsBookmarkRef> bookmarks) {
+    if (myReferences.equals(references) && myBookmarks.equals(bookmarks)) return;
 
     myReferences = references;
+    myBookmarks = bookmarks;
 
     List<VcsRef> visibleReferences = (myRefsLimit > 0) ? ContainerUtil.getFirstItems(myReferences, myRefsLimit) : myReferences;
     myGroupedVisibleReferences = ContainerUtil.groupBy(visibleReferences, VcsRef::getType);
@@ -59,6 +69,14 @@ public class ReferencesPanel extends JPanel {
     int height = getIconHeight();
     JBLabel firstLabel = null;
 
+    for (VcsBookmarkRef bookmark : myBookmarks) {
+      Icon icon = new BookmarkIcon(this, height, getBackground(), bookmark);
+      JBLabel label = createLabel(bookmark.getText(), icon);
+      label.setIconTextGap(JBUI.scale(2));
+      addWrapped(label, firstLabel);
+      if (firstLabel == null) firstLabel = label;
+    }
+
     for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
       VcsRefType type = typeAndRefs.getKey();
       Collection<VcsRef> refs = typeAndRefs.getValue();
@@ -68,13 +86,8 @@ public class ReferencesPanel extends JPanel {
         String ending = (refIndex != refs.size() - 1) ? "," : "";
         String text = reference.getName() + ending;
         JBLabel label = createLabel(text, icon);
-        if (firstLabel == null) {
-          firstLabel = label;
-          add(label);
-        }
-        else {
-          addWrapped(label, firstLabel);
-        }
+        addWrapped(label, firstLabel);
+        if (firstLabel == null) firstLabel = label;
         refIndex++;
       }
     }
@@ -82,7 +95,8 @@ public class ReferencesPanel extends JPanel {
       JBLabel label = createRestLabel(getHiddenReferencesSize());
       addWrapped(label, Objects.requireNonNull(firstLabel));
     }
-    setVisible(!myGroupedVisibleReferences.isEmpty());
+
+    setVisible(!myGroupedVisibleReferences.isEmpty() || !myBookmarks.isEmpty());
     revalidate();
     repaint();
   }
@@ -110,10 +124,15 @@ public class ReferencesPanel extends JPanel {
     return null;
   }
 
-  private void addWrapped(@NotNull JBLabel label, @NotNull JBLabel referent) {
-    Wrapper wrapper = new Wrapper(label);
-    wrapper.setVerticalSizeReferent(referent);
-    add(wrapper);
+  private void addWrapped(@NotNull JBLabel label, @Nullable JBLabel referent) {
+    if (referent == null) {
+      add(label);
+    }
+    else {
+      Wrapper wrapper = new Wrapper(label);
+      wrapper.setVerticalSizeReferent(referent);
+      add(wrapper);
+    }
   }
 
   protected @NotNull JBLabel createLabel(@Nls @NotNull String text, @Nullable Icon icon) {

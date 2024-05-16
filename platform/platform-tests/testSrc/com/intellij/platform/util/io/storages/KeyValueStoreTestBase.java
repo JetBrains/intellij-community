@@ -60,7 +60,7 @@ public abstract class KeyValueStoreTestBase<K, V, S extends KeyValueStore<K, V>>
    * Converts int (substrate) into a Entry(key, value).
    * Property: for different input substrate (int) function must return both Key and Value different
    */
-  private final IntFunction<Entry<K, V>> keyValueSubstrateDecoder;
+  private final IntFunction<? extends Entry<K, V>> keyValueSubstrateDecoder;
 
   @BeforeAll
   static void beforeAll() {
@@ -68,7 +68,7 @@ public abstract class KeyValueStoreTestBase<K, V, S extends KeyValueStore<K, V>>
   }
 
 
-  protected KeyValueStoreTestBase(@NotNull IntFunction<Entry<K, V>> decoder) { keyValueSubstrateDecoder = decoder; }
+  protected KeyValueStoreTestBase(@NotNull IntFunction<? extends Entry<K, V>> decoder) { keyValueSubstrateDecoder = decoder; }
 
   @BeforeEach
   void setUp(@TempDir Path tempDir) throws IOException {
@@ -193,5 +193,9 @@ public abstract class KeyValueStoreTestBase<K, V, S extends KeyValueStore<K, V>>
     }
     storage = factory().open(storagePath);
     return storage;
+  }
+
+  protected Path storagePath() {
+    return storagePath;
   }
 }

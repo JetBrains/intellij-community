@@ -4,7 +4,6 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
@@ -21,12 +20,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.uast.UastMetaLanguage;
 import com.intellij.util.containers.Stack;
 import org.jdom.Element;
@@ -164,6 +163,40 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   @Override
+  public boolean isGlobalSimpleInspectionTool() {
+    return Registry.is("java.unused.declaration.inspection.use.shallow.local.anaysis.as.global");
+  }
+
+  @Override
+  public void checkFile(@NotNull PsiFile file,
+                        @NotNull InspectionManager manager,
+                        @NotNull ProblemsHolder ignored,
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    if (!file.getLanguage().isKindOf("JAVA")) return;
+    // don't use supplied problems holder to get nice warnings attached to members instead of anchored at the file level
+    ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, false);
+    PsiElementVisitor visitor = myLocalInspectionBase.buildVisitor(problemsHolder, false);
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        element.accept(visitor);
+        super.visitElement(element);
+      }
+    });
+    for (ProblemDescriptor problemDescriptor : problemsHolder.getResults()) {
+      PsiElement psiElement = problemDescriptor.getPsiElement();
+      if (psiElement != null) {
+        PsiElement member = globalContext.getRefManager().getContainerElement(psiElement);
+        RefElement reference = globalContext.getRefManager().getReference(member);
+        if (reference != null) {
+          problemDescriptionsProcessor.addProblemElement(reference, problemDescriptor);
+        }
+      }
+    }
+  }
+
+  @Override
   public void runInspection(@NotNull AnalysisScope scope,
                             @NotNull InspectionManager manager,
                             @NotNull GlobalInspectionContext globalContext,
@@ -175,10 +208,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
           if (!refElement.isSuspicious()) return;
 
           PsiFile file = refElement.getContainingFile();
-
           if (file == null) return;
-          boolean isSuppressed = refElement.isSuppressed(getShortName(), ALTERNATIVE_ID);
-          if (isSuppressed || !((GlobalInspectionContextBase)globalContext).isToCheckFile(file, UnusedDeclarationInspectionBase.this) && !scope.contains(file)) {
+          if (!((GlobalInspectionContextBase)globalContext).isToCheckFile(file, UnusedDeclarationInspectionBase.this) && !scope.contains(file)) {
             getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
           }
         }
@@ -301,15 +332,17 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                                              @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     checkForReachableRefs(globalContext);
     int phase = Objects.requireNonNull(globalContext.getUserData(PHASE_KEY));
+    if (phase == 2) {
+      globalContext.putUserData(PROCESSED_SUSPICIOUS_ELEMENTS_KEY, null);
+      return false;
+    }
     Set<RefElement> processedSuspicious = globalContext.getUserData(PROCESSED_SUSPICIOUS_ELEMENTS_KEY);
 
     boolean firstPhase = phase == 1;
-    RefFilter filter = firstPhase ? new StrictUnreferencedFilter(this, globalContext) :
-                             new RefUnreachableFilter(this, globalContext);
+    RefFilter filter = firstPhase ? new StrictUnreferencedFilter(this, globalContext) : new RefUnreachableFilter(this, globalContext);
     LOG.assertTrue(processedSuspicious != null, "phase: " + phase);
 
     Collection<Language> uastLanguages = Language.findInstance(UastMetaLanguage.class).getMatchingLanguages();
-    boolean[] requestAdded = {false};
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitField(@NotNull RefField refField) {
@@ -326,7 +359,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             getEntryPointsManager(globalContext).addEntryPoint(refField, false);
             return false;
           });
-          requestAdded[0] = true;
         }
       }
 
@@ -348,15 +380,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
           }
         }
         UMethod uMethod = refMethod.getUastElement();
-        if (uMethod != null && (RefSerializationUtil.isSerializationMethod(uMethod, refMethod.getOwnerClass()) ||
-                                // todo this method potentially leads to INRE. Perhaps, it should be reconsidered/deleted (IJ-CR-5556)
-                                belongsToRepeatableAnnotationContainer(uMethod, refMethod.getOwnerClass()))) {
+        if (uMethod != null && (RefSerializationUtil.isSerializationMethod(uMethod, refMethod.getOwnerClass()))) {
           getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
         }
         else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
           processedSuspicious.addAll(refMethod.getDerivedMethods());
           enqueueMethodUsages(globalContext, refMethod);
-          requestAdded[0] = true;
         }
       }
 
@@ -383,7 +412,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
           });
 
           queryQualifiedNameUsages(refClass);
-          requestAdded[0] = true;
         }
       }
 
@@ -404,38 +432,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
               getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
             }
           }
-          requestAdded[0] = true;
         }
       }
     });
-
-    if (!requestAdded[0]) {
-      if (phase == 2) {
-        globalContext.putUserData(PROCESSED_SUSPICIOUS_ELEMENTS_KEY, null);
-        return false;
-      }
-      else {
-        globalContext.putUserData(PHASE_KEY, 2);
-      }
-    }
+    globalContext.putUserData(PHASE_KEY, 2);
 
     return true;
-  }
-
-  private static boolean belongsToRepeatableAnnotationContainer(@NotNull UMethod uMethod, @Nullable RefClass ownerRefClass) {
-    if (ownerRefClass == null) return false;
-    if (!PsiUtil.isLanguageLevel8OrHigher(uMethod.getJavaPsi())) return false;
-    if (!"value".equals(uMethod.getName())) return false;
-    if (!ownerRefClass.isAnnotationType()) return false;
-    PsiType returnType = uMethod.getReturnType();
-    if (!(returnType instanceof PsiArrayType)) return false;
-    PsiClass returnTypeClass = PsiUtil.resolveClassInType(returnType);
-    if (returnTypeClass == null || !returnTypeClass.isAnnotationType()) return false;
-    RefElement repeatableAnn = ownerRefClass.getRefManager().getReference(returnTypeClass);
-    if (repeatableAnn == null || !repeatableAnn.isReferenced()) return false;
-    PsiAnnotation repeatableAnnContainer = returnTypeClass.getAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE);
-    if (repeatableAnnContainer == null) return false;
-    return AnnotationsHighlightUtil.doCheckRepeatableAnnotation(repeatableAnnContainer) == null;
   }
 
   private static void enqueueMethodUsages(@NotNull GlobalInspectionContext globalContext, @NotNull RefMethod refMethod) {
@@ -459,18 +461,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   void checkForReachableRefs(@NotNull GlobalInspectionContext context) {
     CodeScanner codeScanner = new CodeScanner();
-
-    // Cleanup previous reachability information.
     RefManager refManager = context.getRefManager();
-    refManager.iterate(new RefJavaVisitor() {
-      @Override
-      public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefJavaElementImpl refElement) {
-          if (!((GlobalInspectionContextBase)context).isToCheckMember(refElement, UnusedDeclarationInspectionBase.this)) return;
-          refElement.setReachable(false);
-        }
-      }
-    });
 
     for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
       entry.accept(codeScanner);

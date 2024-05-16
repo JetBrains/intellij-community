@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -30,9 +31,6 @@ import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
 abstract class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
     override val language: Language
         get() = KotlinLanguage.INSTANCE
-
-    override fun getElementFactory(project: Project): UastElementFactory =
-        KotlinUastElementFactory(project)
 
     override fun <T : UElement> replace(oldElement: UElement, newElement: T, elementType: Class<T>): T? {
         val oldPsi = oldElement.toSourcePsiFakeAware().singleOrNull() ?: return null
@@ -144,7 +142,7 @@ abstract class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
 
 private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != null && oldPsi.rBrace != null
 
-open class KotlinUastElementFactory(project: Project) : UastElementFactory {
+abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
     private val contextlessPsiFactory = KtPsiFactory(project)
 
     private fun psiFactory(context: PsiElement?): KtPsiFactory {
@@ -177,9 +175,8 @@ open class KotlinUastElementFactory(project: Project) : UastElementFactory {
         }
     }
 
-    protected open fun moveLambdaOutsideParenthesis(methodCall: KtCallExpression) {
-        TODO("Not implemented")
-    }
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    protected abstract fun moveLambdaOutsideParenthesis(methodCall: KtCallExpression)
 
     override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
         return psiFactory(context).createExpression(qualifiedName).let {

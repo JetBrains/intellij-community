@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CustomMaven36ArtifactResolver implements ArtifactResolver {
+public class CustomMaven36ArtifactResolver implements ArtifactResolver, Resetable {
   private final ArtifactResolver myWrapee;
   private final Map<ArtifactRequestData, ArtifactResultData> artifactCache = new ConcurrentHashMap<>();
 
@@ -90,6 +90,7 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
     return results;
   }
 
+  @Override
   public void reset() {
     artifactCache.clear();
   }

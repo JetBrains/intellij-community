@@ -4,14 +4,12 @@ package com.intellij.warmup.util
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.project.Project
-import com.intellij.util.awaitCompleteProjectConfiguration
+import com.intellij.openapi.project.configuration.HeadlessLogging
+import com.intellij.openapi.project.configuration.awaitCompleteProjectConfiguration
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.selects.select
 
 suspend fun configureProjectByActivities(args: OpenProjectArgs) : Project {
@@ -39,24 +37,15 @@ suspend fun configureProjectByActivities(args: OpenProjectArgs) : Project {
   return project
 }
 
-
-internal val abortFlow : MutableStateFlow<String?> = MutableStateFlow(null)
-
 private fun CoroutineScope.getFailureDeferred() : Deferred<String> {
   return async {
-    while (coroutineContext.job.isActive) {
-      val message = abortFlow.value
-      if (message != null) {
-        return@async message
-      }
-      delay(500)
-    }
-    error("unreachable")
+    val firstFatal = HeadlessLogging.loggingFlow().first { (level, _) -> level == HeadlessLogging.SeverityKind.Fatal }
+    firstFatal.message.representation()
   }
 }
 
 private fun CoroutineScope.getConfigurationDeferred(project : Project) : Deferred<Unit> {
-  return async(start = CoroutineStart.UNDISPATCHED) {
+  return async {
     withLoggingProgressReporter {
       project.awaitCompleteProjectConfiguration(WarmupLogger::logInfo)
     }

@@ -8,7 +8,6 @@ import com.intellij.util.ui.JBInsets
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -23,7 +22,7 @@ object CodeReviewReactionComponent {
       font = JBFont.create(font.deriveFont(CodeReviewReactionsUIUtil.COUNTER_FONT_SIZE))
 
       cs.launchNow {
-        presentation.distinctUntilChanged().collectLatest {
+        presentation.distinctUntilChanged().collect {
           icon = it.getIcon(CodeReviewReactionsUIUtil.ICON_SIZE)
           text = it.reactors.size.toString()
           if (it.isOwnReaction) {

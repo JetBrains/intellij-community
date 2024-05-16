@@ -7,6 +7,7 @@ import com.intellij.psi.impl.light.LightParameterListBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -36,7 +37,12 @@ abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
         }
     }
 
-    private val returnTypePart = UastLazyPart<PsiType?>()
+    private val modalityPart = UastLazyPart<Modality?>()
+
+    private val _modality: Modality?
+        get() = modalityPart.getOrBuild {
+            baseResolveProviderService.modality(original)
+        }
 
     override fun hasModifierProperty(name: String): Boolean {
         return when (name) {
@@ -54,16 +60,19 @@ abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
             }
 
             PsiModifier.ABSTRACT -> {
-                original.hasModifier(KtTokens.ABSTRACT_KEYWORD) || containingClass?.isInterface == true
+                original.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
+                        _modality == Modality.ABSTRACT ||
+                        containingClass?.isInterface == true
             }
 
             PsiModifier.OPEN -> {
-                original.hasModifier(KtTokens.OPEN_KEYWORD)
+                original.hasModifier(KtTokens.OPEN_KEYWORD) ||
+                        _modality == Modality.OPEN
             }
 
             PsiModifier.FINAL -> {
-                // TODO: top-level / unspecified declaration / inside final containingClass?
-                original.hasModifier(KtTokens.FINAL_KEYWORD)
+                original.hasModifier(KtTokens.FINAL_KEYWORD) ||
+                        _modality == Modality.FINAL
             }
             // TODO: special keywords, such as strictfp, synchronized, external, native, etc.
             else -> super.hasModifierProperty(name)
@@ -106,6 +115,8 @@ abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
     override fun isConstructor(): Boolean {
         return original is KtConstructor<*>
     }
+
+    private val returnTypePart = UastLazyPart<PsiType?>()
 
     private val _returnType: PsiType?
         get() = returnTypePart.getOrBuild {

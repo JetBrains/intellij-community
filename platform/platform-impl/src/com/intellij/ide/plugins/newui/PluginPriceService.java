@@ -2,10 +2,9 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
@@ -106,8 +105,7 @@ public final class PluginPriceService {
   }
 
   private static @Nullable Object getPluginPricesJsonObject() throws IOException {
-    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
-    Url url = Urls.newFromEncoded(instance.getPluginManagerUrl() + "/geo/files/prices");
+    Url url = Urls.newFromEncoded(MarketplaceUrls.getPluginManagerUrl() + "/geo/files/prices");
     return HttpRequests.request(url).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
       URLConnection connection = request.getConnection();
 

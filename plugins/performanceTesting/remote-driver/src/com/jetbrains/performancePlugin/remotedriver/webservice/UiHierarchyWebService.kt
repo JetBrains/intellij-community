@@ -37,7 +37,7 @@ internal class UiHierarchyWebService : RestService() {
   }
 
   private fun hierarchy(): String {
-    val doc = XpathDataModelCreator.create(null)
+    val doc = XpathDataModelCreator().create(null)
     return doc.convertToHtml()
   }
 

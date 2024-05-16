@@ -1,4 +1,3 @@
-f:com.intellij.warmup.ProjectCachesWarmupKt
 com.intellij.warmup.WarmupBuildStatus
 - sf:Companion:com.intellij.warmup.WarmupBuildStatus$Companion
 f:com.intellij.warmup.WarmupBuildStatus$Companion
@@ -18,7 +17,6 @@ f:com.intellij.warmup.WarmupBuildStatus$Success
 f:com.intellij.warmup.WarmupUtilsKt
 - sf:waitIndexInitialization(kotlin.coroutines.Continuation):java.lang.Object
 - sf:waitUntilProgressTasksAreFinishedOrFail(kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfiguratorsKt
 f:com.intellij.warmup.util.ActivityBasedWarmupKt
 - sf:configureProjectByActivities(com.intellij.warmup.util.OpenProjectArgs,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.warmup.util.ConsoleLog
@@ -27,12 +25,6 @@ f:com.intellij.warmup.util.ConsoleLog
 - bs:error$default(com.intellij.warmup.util.ConsoleLog,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
 - f:info(java.lang.String):V
 - f:warn(java.lang.String):V
-f:com.intellij.warmup.util.DefaultWarmupLogger
-- com.intellij.ide.warmup.WarmupLogger
-- <init>():V
-- logError(java.lang.String,java.lang.Throwable):V
-- logFatalError(java.lang.String,java.lang.Throwable):V
-- logInfo(java.lang.String):V
 com.intellij.warmup.util.HeadlessConfigurableArgs
 - a:getPathToConfigurationFile():java.nio.file.Path
 c:com.intellij.warmup.util.HeadlessConfigurableArgsImpl
@@ -76,10 +68,6 @@ f:com.intellij.warmup.util.WarmupLogger
 - f:logError(java.lang.String,java.lang.Throwable):V
 - bs:logError$default(com.intellij.warmup.util.WarmupLogger,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
 - f:logInfo(java.lang.String):V
-f:com.intellij.warmup.util.WarmupProgressListener
-- <init>():V
-- afterTaskFinished(com.intellij.openapi.progress.Task):V
-- beforeTaskStart(com.intellij.openapi.progress.Task,com.intellij.openapi.progress.ProgressIndicator):V
 com.intellij.warmup.util.WarmupProjectArgs
 - com.intellij.warmup.util.OpenProjectArgs
 - a:getBuild():Z

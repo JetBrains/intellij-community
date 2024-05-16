@@ -27,6 +27,10 @@ interface TokenProperties {
       if (simpleTokenProperties.tokenType == TypeProperty.LINE) {
         return context.deserialize(json, LineProperties::class.java)
       }
+      else if (json.asJsonObject.has("docComment")) {
+        return context.deserialize<DocumentationProperties>(json, DocumentationProperties::class.java)
+
+      }
       return simpleTokenProperties
     }
 
@@ -130,6 +134,15 @@ class SimpleTokenProperties private constructor(
 
   override fun withFeatures(features: Set<String>): TokenProperties =
     SimpleTokenProperties(tokenType, location, this.features.apply { addAll(features) }, additional)
+}
+
+class DocumentationProperties(val docComment: String, val startOffset: Int, val endOffset: Int, val docStartOffset: Int, val docEndOffset: Int, val nameIdentifierOffset: Int) : TokenProperties {
+  override val tokenType: TypeProperty = TypeProperty.UNKNOWN
+  override val location: SymbolLocation = SymbolLocation.UNKNOWN
+  override fun additionalProperty(name: String): String? = null
+  override fun describe(): String = ""
+  override fun hasFeature(feature: String): Boolean = false
+  override fun withFeatures(features: Set<String>): TokenProperties = this
 }
 
 enum class SymbolLocation {

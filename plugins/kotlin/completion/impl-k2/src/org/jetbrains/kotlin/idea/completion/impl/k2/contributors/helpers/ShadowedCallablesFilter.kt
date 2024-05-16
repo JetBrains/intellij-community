@@ -247,6 +247,7 @@ private sealed class SimplifiedSignature {
                     requiredTypeArgumentsCount = if (typeArgumentsAreRequired) callableSignature.symbol.typeParameters.size else 0,
                     lazy(LazyThreadSafetyMode.NONE) { callableSignature.valueParameters.map { it.returnType } },
                     callableSignature.valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
+                    this@KtAnalysisSession,
                 )
             }
         }
@@ -266,7 +267,8 @@ private sealed class SimplifiedSignature {
                         val functionalType = signature.returnType as? KtFunctionalType ?: error("Unexpected ${signature.returnType::class}")
                         functionalType.parameterTypes
                     },
-                    varargValueParameterIndices = emptyList()
+                    varargValueParameterIndices = emptyList(),
+                    this@KtAnalysisSession,
                 )
             }
 
@@ -303,6 +305,7 @@ private class FunctionLikeSimplifiedSignature(
     private val requiredTypeArgumentsCount: Int,
     private val valueParameterTypes: Lazy<List<KtType>>,
     private val varargValueParameterIndices: List<Int>,
+    private val analysisSession: KtAnalysisSession,
 ) : SimplifiedSignature() {
     override fun hashCode(): Int {
         var result = name.hashCode()
@@ -318,5 +321,21 @@ private class FunctionLikeSimplifiedSignature(
             other.containerFqName == containerFqName &&
             other.requiredTypeArgumentsCount == requiredTypeArgumentsCount &&
             other.varargValueParameterIndices == varargValueParameterIndices &&
-            other.valueParameterTypes.value == valueParameterTypes.value
+            areValueParameterTypesEqualTo(other)
+
+    /**
+     * We need to use semantic type equality instead of the default structural equality of [KtType] to check if two signatures overlap.
+     */
+    private fun areValueParameterTypesEqualTo(other: FunctionLikeSimplifiedSignature): Boolean {
+        val types1 = other.valueParameterTypes.value
+        val types2 = valueParameterTypes.value
+        if (types1.size != types2.size) return false
+
+        with(analysisSession) {
+            for (i in types1.indices) {
+                if (!types1[i].isEqualTo(types2[i])) return false
+            }
+            return true
+        }
+    }
 }

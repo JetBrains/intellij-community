@@ -171,4 +171,57 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testImportedFunctionDecoratedWithAsyncContextManager() {
     doMultiFileTest();
   }
+
+  // PY-55044
+  public void testTypedDictKwargsArgumentWithNonexistentKey() {
+    doTestByText("""
+                   from typing import TypedDict, Unpack
+                                      
+                   class Movie(TypedDict):
+                       pass
+
+                   def foo(**x: Unpack[Movie]):
+                       pass
+                       
+                   foo(<warning descr="Unexpected argument">nonexistent_key=1</warning>)
+                   """);
+  }
+
+  // PY-55044
+  public void testTypedDictWithRequiredKeyKwargsArgument() {
+    doTestByText("""
+                   from typing import Required, TypedDict, Unpack
+                                      
+                   class Movie(TypedDict, total=False):
+                       title: Required[str]
+                       year: int
+
+                   def foo(**x: Unpack[Movie]):
+                       pass
+                       
+                   foo(<warning descr="Parameter 'title' unfilled">)</warning>
+                   foo(year=1982<warning descr="Parameter 'title' unfilled">)</warning>
+                   foo(title='Blade Runner')
+                   foo(title='Blade Runner', year=1982)
+                   """);
+  }
+
+  // PY-55044
+  public void testTypedDictWithNotRequiredKeyKwargsArgument() {
+    doTestByText("""
+                   from typing import NotRequired, TypedDict, Unpack
+                                      
+                   class Movie(TypedDict):
+                       title: str
+                       year: NotRequired[int]
+
+                   def foo(**x: Unpack[Movie]):
+                       pass
+                       
+                   foo(<warning descr="Parameter 'title' unfilled">)</warning>
+                   foo(year=1982<warning descr="Parameter 'title' unfilled">)</warning>
+                   foo(title='Blade Runner')
+                   foo(title='Blade Runner', year=1982)
+                   """);
+  }
 }

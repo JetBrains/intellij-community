@@ -5,6 +5,7 @@ import com.intellij.maven.server.telemetry.MavenServerTelemetryClasspathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
@@ -28,6 +29,8 @@ import java.util.List;
 import java.util.function.Predicate;
 
 final class Maven3Support implements MavenVersionAwareSupportExtension {
+  private static final @NonNls String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
+
   @Override
   public boolean isSupportedByExtension(@Nullable File mavenHome) {
     String version = MavenUtil.getMavenVersion(mavenHome);
@@ -126,5 +129,15 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
         classpath.add(jar);
       }
     }
+  }
+
+  @Override
+  public String getMainClass(MavenDistribution distribution) {
+    if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3.6") >= 0) {
+      return MAIN_CLASS36;
+    } else {
+      return DEFAULT_MAIN_CLASS;
+    }
+
   }
 }

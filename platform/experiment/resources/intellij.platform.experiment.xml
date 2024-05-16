@@ -1,8 +1,11 @@
 <idea-plugin package="com.intellij.platform.experiment">
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.experiment.abExperimentOption"
-                    interface="com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption"
-                    dynamic="true"/>
+                    beanClass="com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBean"
+                    dynamic="true">
+      <with attribute="implementation"
+            implements="com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

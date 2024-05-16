@@ -16,28 +16,34 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaWithBlockSurrounder extends JavaStatementsSurrounder{
+public class JavaWithBlockSurrounder extends JavaStatementsModCommandSurrounder {
   @Override
   public String getTemplateDescription() {
     return "{ }";
   }
 
   @Override
-  public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
+  protected void surroundStatements(@NotNull ActionContext context,
+                                    @NotNull PsiElement container,
+                                    @NotNull PsiElement @NotNull [] statements,
+                                    @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+    Project project = context.project();
     PsiManager manager = PsiManager.getInstance(project);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, false);
-    if (statements.length == 0){
-      return null;
+    if (statements.length == 0) {
+      return;
     }
 
     String text = "{\n}";
@@ -52,10 +58,9 @@ public class JavaWithBlockSurrounder extends JavaStatementsSurrounder{
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiElement firstChild = blockStatement.getFirstChild();
-    if (firstChild == null) {
-      return null;
+    if (firstChild != null) {
+      TextRange range = firstChild.getTextRange();
+      updater.moveCaretTo(range.getEndOffset());
     }
-    TextRange range = firstChild.getTextRange();
-    return new TextRange(range.getEndOffset(), range.getEndOffset());
   }
 }

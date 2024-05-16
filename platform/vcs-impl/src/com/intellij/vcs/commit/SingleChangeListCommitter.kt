@@ -2,7 +2,10 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitResultHandler
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import org.jetbrains.annotations.Nls
 
 class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String) {
@@ -26,33 +29,13 @@ constructor(
     addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
   }
 
-  init {
-    addResultHandler(EmptyChangeListDeleter(this))
-  }
-
   companion object {
     @JvmStatic
     fun create(project: Project,
                commitState: ChangeListCommitState,
                commitContext: CommitContext,
                localHistoryActionName: @Nls String): LocalChangesCommitter {
-      val committer = LocalChangesCommitter(project, commitState, commitContext, localHistoryActionName)
-      committer.addResultHandler(EmptyChangeListDeleter(committer))
-      return committer
-    }
-  }
-}
-
-private class EmptyChangeListDeleter(val committer: LocalChangesCommitter) : CommitterResultHandler {
-  override fun onAfterRefresh() {
-    if (committer.isSuccess) {
-      val changeListManager = ChangeListManagerImpl.getInstanceImpl(committer.project)
-      val listName = committer.commitState.changeList.name
-      val localList = changeListManager.findChangeList(listName) ?: return
-
-      if (!localList.isDefault) {
-        changeListManager.scheduleAutomaticEmptyChangeListDeletion(localList)
-      }
+      return LocalChangesCommitter(project, commitState, commitContext, localHistoryActionName)
     }
   }
 }

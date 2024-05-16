@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -152,8 +152,8 @@ abstract class ChangeFunctionSignatureFix(
                         }
                     }
 
-                    override fun performSilently(affectedFunctions: Collection<PsiElement>) = true
-                    override fun forcePerformForSelectedFunctionOnly() = false
+                    override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = true
+                    override fun isForcePerformForSelectedFunctionOnly() = false
                 },
                 context,
                 KotlinBundle.message("fix.change.signature.remove.parameter.command", parameterDescriptor.name.asString())

@@ -242,7 +242,10 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
     withContext(Dispatchers.EDT) {
-      result.showError()
+      if (!ApplicationManagerEx.isInIntegrationTest() ||
+          !java.lang.Boolean.parseBoolean(System.getProperty("closeIDESilentlyOnStartupErrorInTests"))) {
+        result.showError()
+      }
       ApplicationManager.getApplication().exit(true, true, false)
     }
   }

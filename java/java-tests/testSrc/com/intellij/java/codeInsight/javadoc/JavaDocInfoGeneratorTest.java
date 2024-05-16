@@ -77,11 +77,13 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testEscapingStringValue() { doTestMethod(); }
   public void testIdeadev2326() { doTestMethod(); }
   public void testMethodTypeParameter() { doTestMethod(); }
+  public void testMethodTypeParameter2() { doTestAtCaret(); }
   public void testInheritedDocInThrows() { doTestMethod(); }
   public void testInheritedDocInThrows1() { doTestMethod(); }
   public void testEscapeValues() { doTestClass(); }
   public void testClassTypeParameter() { doTestClass(); }
   public void testClassTypeParameter1() { doTestClass(); }
+  public void testClassTypeParameter2() { doTestAtCaret(); }
   public void testUnicodeEscapes() { doTestClass(); }
   public void testEnumValueOf() { doTestMethod(); }
   public void testMethodFormatting() { doTestMethod(); }
@@ -119,6 +121,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testDocumentationForUncheckedExceptionsInSupers() { doTestAtCaret(); }
   public void testDocumentationForGetterByField() { doTestAtCaret(); }
   public void testParamInJavadoc() { doTestAtCaret(); }
+  public void testParamInMethod() { doTestAtCaret(); }
   public void testExternalLinksInJavadoc() { doTestAtCaret(); }
   public void testLiteralInsideCode() { useJava8(); doTestClass(); }
   public void testSuperJavadocExactResolve() { doTestAtCaret(); }

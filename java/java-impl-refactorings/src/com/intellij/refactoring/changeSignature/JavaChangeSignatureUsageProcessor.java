@@ -3,6 +3,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
@@ -827,6 +828,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
       if (method.getName().equals(changeInfo.getNewName())) {
         final PsiTypeElement typeElement = method.getReturnTypeElement();
         if (typeElement != null) {
+          ensureNullabilityAnnotationsDoNotRepeat(typeElement, returnType);
           PsiTypeElement replacementType = factory.createTypeElement(returnType);
           javaCodeStyleManager.shortenClassReferences(typeElement.replace(replacementType));
           if (replacementType.getText().startsWith("@")) {
@@ -929,6 +931,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
         String oldType = myOldParameterTypes[oldIndex];
         if (!oldType.equals(info.getTypeText())) {
           PsiType newType = info.createType(myChangeInfo.getMethod().getParameterList(), myChangeInfo.getMethod().getManager());
+          ensureNullabilityAnnotationsDoNotRepeat(typeElement, newType);
           PsiSubstitutor mySubstitutor = getSubstitutor();
           if (mySubstitutor != null) {
             newType = mySubstitutor.substitute(newType);
@@ -948,6 +951,17 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
 
     protected PsiSubstitutor getSubstitutor() {
       return null;
+    }
+  }
+
+  private static void ensureNullabilityAnnotationsDoNotRepeat(@NotNull PsiTypeElement element, PsiType newType) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiModifierListOwner owner &&
+        newType != null &&
+        ContainerUtil.exists(newType.getAnnotations(), annotation -> NullableNotNullManager.isNullabilityAnnotation(annotation))) {
+      Arrays.stream(owner.getAnnotations())
+        .filter(NullableNotNullManager::isNullabilityAnnotation)
+        .forEach(PsiElement::delete);
     }
   }
 

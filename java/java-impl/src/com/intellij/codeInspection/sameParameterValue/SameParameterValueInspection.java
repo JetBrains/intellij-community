@@ -281,7 +281,9 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
         }
         paramsToInline.put(psiParameter, refsToInline);
       }
-      if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
+      if (!preview) {
+        if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
+      }
 
       if (preview) {
         inlineParameters(defToInline, paramsToInline);

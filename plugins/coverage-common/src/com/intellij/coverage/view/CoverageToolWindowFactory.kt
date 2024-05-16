@@ -28,7 +28,7 @@ class CoverageToolWindowFactory : ToolWindowFactory, DumbAware {
     val toolWindowEx = toolWindow as? ToolWindowEx ?: return
     toolWindowEx.emptyText
       ?.appendLine(CoverageBundle.message("coverage.import.report.toolwindow.empty.text"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-        ExternalReportImportManager.getInstance(toolWindow.project).chooseAndOpenSuites()
+        ExternalReportImportManager.getInstance(toolWindow.project).chooseAndOpenSuites(ExternalReportImportManager.Source.EMPTY_TOOLWINDOW)
       }
   }
 

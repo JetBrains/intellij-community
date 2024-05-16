@@ -9,6 +9,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderEx
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * This service caches code vision entries in the editor userdata.
+ * For the daemon bound version, see [DaemonBoundCodeVisionCacheService].
+ */
 @Service(Service.Level.PROJECT)
 internal class CodeVisionCacheService {
   companion object {

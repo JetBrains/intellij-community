@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtilRt.DeleteFileVisitor;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -57,6 +58,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.FileSystemException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -392,11 +394,20 @@ public final class DeleteHandler {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      indicator.setIndeterminate(true);
-
       try {
+        indicator.setText(IdeBundle.message("progress.counting.files"));
+        Ref<Integer> curFileCount = new Ref<>(0);
         for (PsiElement element : myFileElements) {
+          VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+          Files.walkFileTree(file.toNioPath(), new DeleteFileVisitor(e -> curFileCount.set(curFileCount.get() + 1)));
+        }
+        final int totalFileCount = curFileCount.get();
+        curFileCount.set(0);
+        indicator.setIndeterminate(totalFileCount <= 1); // don't show progression when deleting single file
+        for (int i = 0; i < myFileElements.length; i++) {
+          PsiElement element = myFileElements[i];
           if (indicator.isCanceled()) break;
+          indicator.setFraction((double) i / myFileElements.length);
 
           VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
           aborted = file;
@@ -405,7 +416,9 @@ public final class DeleteHandler {
 
           try {
             NioFiles.deleteRecursively(path, p -> {
+              curFileCount.set(curFileCount.get() + 1);
               indicator.checkCanceled();
+              indicator.setFraction((double)curFileCount.get() / totalFileCount);
               indicator.setText2(path.relativize(p).toString());
             });
             processed.add(element);

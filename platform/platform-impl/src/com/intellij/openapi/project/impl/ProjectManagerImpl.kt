@@ -198,6 +198,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun loadProject(path: Path): Project {
+    return loadProject(path, true, true)
+  }
+
+  fun loadProject(path: Path, refreshNeeded: Boolean, preloadServices: Boolean): ProjectImpl {
     ThreadingAssertions.assertBackgroundThread()
 
     val project = ProjectImpl(filePath = path, projectName = null, parent = ApplicationManager.getApplication() as ComponentManagerImpl)
@@ -207,8 +211,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       initProject(
         file = path,
         project = project,
-        isRefreshVfsNeeded = true,
-        preloadServices = true,
+        isRefreshVfsNeeded = refreshNeeded,
+        preloadServices = preloadServices,
         template = null,
         isTrustCheckNeeded = false,
       )
@@ -734,14 +738,14 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project = result!!
     if (!app.isUnitTestMode) {
       val openTimestamp = System.currentTimeMillis()
-      (project as ComponentManagerEx).getCoroutineScope().launch {
+      (project as ProjectImpl).getCoroutineScope().launch {
         (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
         dispatchEarlyNotifications()
       }
     }
 
     if (isRunStartUpActivitiesEnabled(project)) {
-      (StartupManager.getInstance(project) as StartupManagerImpl).runPostStartupActivities()
+      (project.serviceAsync<StartupManager>() as StartupManagerImpl).runPostStartupActivities()
     }
     blockingContext {
       LifecycleUsageTriggerCollector.onProjectOpened(project)
@@ -897,11 +901,15 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
 
   private suspend fun checkExistingProjectOnOpen(projectToClose: Project, options: OpenProjectTask, projectDir: Path): Boolean {
+    if (options.forceReuseFrame) {
+      return !closeAndDisposeKeepingFrame(projectToClose)
+    }
+
     val isValidProject = ProjectUtilCore.isValidProjectPath(projectDir)
-    if (ProjectAttachProcessor.canAttachToProject() &&
+    if (ProjectAttachProcessor.getProcessor(projectToClose) != null &&
         !isDataSpell() &&
         (!isValidProject || GeneralSettings.getInstance().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
-      when (withContext(Dispatchers.EDT) { ProjectUtil.confirmOpenOrAttachProject() }) {
+      when (withContext(Dispatchers.EDT) { ProjectUtil.confirmOpenOrAttachProject(projectToClose) }) {
         -1 -> {
           return true
         }

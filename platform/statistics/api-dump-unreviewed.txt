@@ -87,6 +87,7 @@ f:com.intellij.internal.statistic.eventLog.EventLogGroup
 - f:registerVarargEvent(java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.eventLog.events.VarargEventId
 - f:registerVarargEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.eventLog.events.VarargEventId
 - bs:registerVarargEvent$default(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[],I,java.lang.Object):com.intellij.internal.statistic.eventLog.events.VarargEventId
+- toString():java.lang.String
 a:com.intellij.internal.statistic.eventLog.EventLogRecorderConfigOptionsListener
 - com.intellij.internal.statistic.eventLog.EventLogConfigOptionsListener
 - p:<init>(java.lang.String):V
@@ -106,7 +107,6 @@ f:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration
 - f:getMaxFilesToSend():I
 - f:getSessionId():java.lang.String
 f:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration$Companion
-f:com.intellij.internal.statistic.eventLog.FeatureUsageDataKt
 f:com.intellij.internal.statistic.eventLog.FilteredEventMergeStrategy
 - com.intellij.internal.statistic.eventLog.StatisticsEventMergeStrategy
 - <init>(java.util.Set):V
@@ -256,7 +256,6 @@ f:com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder$Fea
 - f:getPlugin():com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
 - hashCode():I
 - toString():java.lang.String
-f:com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarterKt
 e:com.intellij.internal.statistic.eventLog.events.scheme.FieldDataType
 - java.lang.Enum
 - sf:ARRAY:com.intellij.internal.statistic.eventLog.events.scheme.FieldDataType

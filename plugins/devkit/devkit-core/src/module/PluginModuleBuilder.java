@@ -35,7 +35,7 @@ import static java.awt.GridBagConstraints.CENTER;
 import static java.awt.GridBagConstraints.HORIZONTAL;
 
 /**
- * @deprecated Completely replaced with @{link {@link IdePluginModuleBuilder}.
+ * @deprecated Completely replaced with {@link IdePluginModuleBuilder}.
  */
 @Deprecated(forRemoval = true)
 public class PluginModuleBuilder extends JavaModuleBuilder {

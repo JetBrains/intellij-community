@@ -1,9 +1,9 @@
 // "Opt in for 'Library' on 'bar'" "true"
-// ACTION: Add '-opt-in=FunWithTypeParameter.Library' to module light_idea_test_case compiler arguments
 // ACTION: Add full qualifier
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce import alias
 // ACTION: Opt in for 'Library' in containing file 'funWithTypeParameter.kts'
+// ACTION: Opt in for 'Library' in module 'light_idea_test_case'
 // ACTION: Opt in for 'Library' on 'bar'
 // RUNTIME_WITH_SCRIPT_RUNTIME
 @RequiresOptIn

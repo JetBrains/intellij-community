@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -165,9 +166,9 @@ public final class UpdateHighlightersUtil {
     }
     if (psiFile != null) {
       DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(group, psiFile);
-      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session -> {
-        setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
-      });
+      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session ->
+        setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session)
+      );
     }
   }
 
@@ -231,16 +232,13 @@ public final class UpdateHighlightersUtil {
     // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
     for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
       boolean shouldRemove = shouldRemoveHighlighter(highlighter, session);
-      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
       if (LOG.isDebugEnabled()) {
         LOG.debug("incinerateObsoleteHighlighters "+highlighter+"; shouldRemove:"+shouldRemove);
       }
       if (shouldRemove) {
-        highlighter.dispose();
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        disposeWithFileLevelIgnoreErrors(highlighter, info, session);
         changed = true;
-        if (info != null && info.isFileLevelAnnotation()) {
-          session.removeFileLevelHighlight(info);
-        }
       }
     }
     return changed;
@@ -458,8 +456,9 @@ public final class UpdateHighlightersUtil {
     });
 
     for (HighlightInfo info : toRemove) {
-      if (!info.getHighlighter().isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
-        info.getHighlighter().dispose();
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (!highlighter.isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
+        disposeWithFileLevelIgnoreErrors(highlighter, project, info);
       }
     }
 
@@ -468,8 +467,45 @@ public final class UpdateHighlightersUtil {
     }
   }
 
+  @RequiresEdt
+  static void disposeWithFileLevelIgnoreErrors(@NotNull RangeHighlighter highlighter,
+                                               @NotNull Project project,
+                                               @NotNull HighlightInfo info) {
+    if (info.isFileLevelAnnotation()) {
+      DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(highlighter.getDocument());
+      if (psiFile != null) {
+        codeAnalyzer.removeFileLevelHighlight(psiFile, info);
+      }
+    }
+    try {
+      highlighter.dispose();
+    }
+    catch (Exception e) {
+      // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,
+      // but in highlighting, range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
+      LOG.warn(e);
+    }
+  }
+  // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
+  static void disposeWithFileLevelIgnoreErrors(@NotNull RangeHighlighter highlighter,
+                                               @Nullable HighlightInfo info,
+                                               @NotNull HighlightingSession highlightingSession) {
+    if (info != null && info.isFileLevelAnnotation()) {
+      ((HighlightingSessionImpl)highlightingSession).removeFileLevelHighlight(info);
+    }
+    try {
+      highlighter.dispose();
+    }
+    catch (Exception e) {
+      // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,
+      // but in highlighting, range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
+      LOG.warn(e);
+    }
+  }
+
   /**
-   * Do not use, this method might break highlighting, left for binary compatibility only
+   * Do not use. This method might break highlighting, left for binary compatibility only
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal

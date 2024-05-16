@@ -611,6 +611,9 @@ internal class ActionUpdater @JvmOverloads constructor(
       try {
         return deferred.getCompleted()
       }
+      catch (pce : ProcessCanceledException) {
+        throw pce
+      }
       catch (ex: CancellationException) {
         throw CeProcessCanceledException(ex)
       }

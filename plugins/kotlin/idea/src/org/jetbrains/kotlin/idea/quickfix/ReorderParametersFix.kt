@@ -52,7 +52,7 @@ class ReorderParametersFix(
                         }
                     }
 
-                override fun performSilently(affectedFunctions: Collection<PsiElement>) = true
+                override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = true
             },
             function,
             KotlinBundle.message("reorder.parameters.command")

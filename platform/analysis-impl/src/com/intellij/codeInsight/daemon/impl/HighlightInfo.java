@@ -75,8 +75,7 @@ public class HighlightInfo implements Segment {
   // this HighlightInfo was created during visiting PsiElement with this range
   private RangeMarker visitingRange;
 
-  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK,
-    UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
+  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK, UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
   private @interface FlagConstant {
   }
 
@@ -346,6 +345,8 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
+  // todo remove along with DefaultHighlightInfoProcessor
+  @Deprecated
   void setVisitingTextRange(@NotNull PsiFile psiFile, @NotNull Document document, long range) {
     if (document instanceof DocumentWindow window) {
       range = TextRangeScalarUtil.toScalarRange(window.injectedToHost(TextRangeScalarUtil.create(range)));
@@ -355,6 +356,8 @@ public class HighlightInfo implements Segment {
     visitingRange = HighlightingSessionImpl.getOrCreateVisitingRangeMarker(psiFile, document, range);
   }
 
+  // todo remove along with DefaultHighlightInfoProcessor
+  @Deprecated
   @NotNull
   Segment getVisitingTextRange() {
     RangeMarker visitingRange = this.visitingRange;
@@ -465,23 +468,21 @@ public class HighlightInfo implements Segment {
     if (obj == this) return true;
     if (!(obj instanceof HighlightInfo info)) return false;
 
-    return info.getSeverity() == getSeverity() &&
-           info.startOffset == startOffset &&
+    return info.startOffset == startOffset &&
            info.endOffset == endOffset &&
-           Comparing.equal(info.type, type) &&
-           Comparing.equal(info.toolId, toolId) &&
-           Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
-           Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
-           Comparing.equal(info.forcedTextAttributesKey, forcedTextAttributesKey) &&
-           Comparing.strEqual(info.getDescription(), getDescription());
+           attributesEqual(info);
   }
 
   protected boolean equalsByActualOffset(@NotNull HighlightInfo info) {
     if (info == this) return true;
 
-    return info.getSeverity() == getSeverity() &&
-           info.getActualStartOffset() == getActualStartOffset() &&
+    return info.getActualStartOffset() == getActualStartOffset() &&
            info.getActualEndOffset() == getActualEndOffset() &&
+           attributesEqual(info);
+  }
+
+  boolean attributesEqual(@NotNull HighlightInfo info) {
+    return info.getSeverity() == getSeverity() &&
            Comparing.equal(info.type, type) &&
            Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
            Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
@@ -512,7 +513,12 @@ public class HighlightInfo implements Segment {
     if (gutterIconRenderer != null) {
       s += "; gutter: " + gutterIconRenderer;
     }
-    s += "; toolId: " + toolId;
+    if (toolId != null) {
+      s += "; toolId: " + toolId;
+    }
+    if (forcedTextAttributesKey != null) {
+      s += "; forcedTextAttributesKey: " + forcedTextAttributesKey;
+    }
     return s;
   }
 
@@ -623,20 +629,18 @@ public class HighlightInfo implements Segment {
     TextAttributesKey key = annotation.getTextAttributes();
     TextAttributesKey forcedAttributesKey = forcedAttributes == null && key != HighlighterColors.NO_HIGHLIGHTING ? key : null;
 
-    PsiReference unresolvedReference = annotation.getUnresolvedReference();
     HighlightInfo info = new HighlightInfo(
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
       annotation.needsUpdateOnTyping(),
       annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotatorClass, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL,
-      unresolvedReference);
+      annotation.getUnresolvedReference());
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {
       for (Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = quickFixInfo.textRange;
-        HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key
-                                                         : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
+        HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
         info.registerFix(quickFixInfo.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(k), range, k);
       }
     }
@@ -1083,5 +1087,8 @@ public class HighlightInfo implements Segment {
   }
   boolean isFromInspection() {
     return toolId instanceof String;
+  }
+  boolean isFromHighlightVisitor() {
+    return toolId instanceof Class<?> c && HighlightVisitor.class.isAssignableFrom(c);
   }
 }

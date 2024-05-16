@@ -453,6 +453,7 @@ f:com.intellij.psi.search.TodoAttributes
 - writeExternal(org.jdom.Element):V
 com.intellij.psi.search.TodoItem
 - sf:BY_START_OFFSET:java.util.Comparator
+- sf:EMPTY_ARRAY:com.intellij.psi.search.TodoItem[]
 - getAdditionalTextRanges():java.util.List
 - a:getFile():com.intellij.psi.PsiFile
 - a:getPattern():com.intellij.psi.search.TodoPattern
@@ -610,7 +611,6 @@ a:com.intellij.util.gist.GistManager
 - a:newVirtualFileGist(java.lang.String,I,com.intellij.util.io.DataExternalizer,com.intellij.util.gist.VirtualFileGist$GistCalculator):com.intellij.util.gist.VirtualFileGist
 com.intellij.util.gist.PsiFileGist
 - a:getFileData(com.intellij.psi.PsiFile):java.lang.Object
-- a:getUpToDateOrNull(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):java.util.function.Supplier
 com.intellij.util.gist.VirtualFileGist
 - a:getFileData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Object
 - a:getUpToDateOrNull(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Supplier
@@ -656,7 +656,7 @@ c:com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 - <init>(com.intellij.openapi.fileTypes.FileType[]):V
 - acceptInput(com.intellij.util.indexing.IndexedFile):Z
 - registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
-*e:com.intellij.util.indexing.DumbModeAccessType
+e:com.intellij.util.indexing.DumbModeAccessType
 - java.lang.Enum
 - sf:RAW_INDEX_DATA_ACCEPTABLE:com.intellij.util.indexing.DumbModeAccessType
 - sf:RELIABLE_DATA_ONLY:com.intellij.util.indexing.DumbModeAccessType

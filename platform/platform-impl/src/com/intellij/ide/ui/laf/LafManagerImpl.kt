@@ -47,6 +47,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.*
+import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.popup.HeavyWeightPopup
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.scale.JBUIScale.getFontScale
@@ -609,6 +610,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     updateUI()
     uiSettings.currentIdeScale = ideScale
     uiSettings.fireUISettingsChanged()
+
+    if (SystemInfo.isMac) {
+      MacFullScreenControlsManager.updateForCompactMode()
+    }
   }
 
   private fun updateEditorSchemeIfNecessary(oldLaf: UIThemeLookAndFeelInfo?) {

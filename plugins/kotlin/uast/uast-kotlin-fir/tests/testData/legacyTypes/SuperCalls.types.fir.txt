@@ -10,31 +10,30 @@ UFile (package = ) [public final class SuperCallsKt {...]
                         UBlockExpression [{...}] : void
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [cons(anonymous object : A("inner literal") { })] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UIdentifier (Identifier (cons)) [UIdentifier (Identifier (cons))]
-                                USimpleNameReferenceExpression (identifier = cons, resolvesTo = null) [cons] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UObjectLiteralExpression [anonymous object : A("inner literal") { }] : A
                                     UPolyadicExpression (operator = +) ["inner literal"] : java.lang.String
                                         ULiteralExpression (value = "inner literal") ["inner literal"] : java.lang.String
                                     UClass (name = null) [final class null : A {...}]
                                         UMethod (name = ) [private fun () {...}]
                                             UBlockExpression [{...}]
-                                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("inner literal")]
+                                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A("inner literal")]
                                                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                                                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                                     UPolyadicExpression (operator = +) ["inner literal"] : java.lang.String
                                                         ULiteralExpression (value = "inner literal") ["inner literal"] : java.lang.String
                     UMethod (name = ) [private fun () {...}]
                         UBlockExpression [{...}]
-                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("textForAnon")]
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A("textForAnon")]
                                 UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                                USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                 UPolyadicExpression (operator = +) ["textForAnon"] : java.lang.String
                                     ULiteralExpression (value = "textForAnon") ["textForAnon"] : java.lang.String
                     UClass (name = InnerClass) [public final class InnerClass : A {...}]
                         UMethod (name = InnerClass) [public fun InnerClass() {...}]
                             UBlockExpression [{...}]
-                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("inner class")]
+                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A("inner class")]
                                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                     UPolyadicExpression (operator = +) ["inner class"] : java.lang.String
                                         ULiteralExpression (value = "inner class") ["inner class"] : java.lang.String
         UMethod (name = getAnon) [public static final fun getAnon() : A = UastEmptyExpression]
@@ -57,22 +56,21 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(i.toString())]
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UQualifiedReferenceExpression [i.toString()] : java.lang.String
                         USimpleNameReferenceExpression (identifier = i) [i] : int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : java.lang.String
                             UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : java.lang.String
     UClass (name = B) [public final class B : A {...}]
         UMethod (name = B) [public fun B(@org.jetbrains.annotations.NotNull param: java.lang.String) {...}]
             UParameter (name = param) [@org.jetbrains.annotations.NotNull var param: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(param)]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(param)]
                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     USimpleNameReferenceExpression (identifier = param) [param] : java.lang.String
     UClass (name = C) [public final class C : A {...}]
         UMethod (name = foo) [public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {...}]
@@ -83,34 +81,32 @@ UFile (package = ) [public final class SuperCallsKt {...]
                     USuperExpression (label = null) [super] : @org.jetbrains.annotations.NotNull() A
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo(a)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                        USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         USimpleNameReferenceExpression (identifier = a) [a] : long
         UMethod (name = C) [public fun C(@org.jetbrains.annotations.NotNull p: java.lang.String) {...}]
             UParameter (name = p) [@org.jetbrains.annotations.NotNull var p: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(p)]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(p)]
                     UIdentifier (Identifier (super)) [UIdentifier (Identifier (super))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     USimpleNameReferenceExpression (identifier = p) [p] : java.lang.String
         UMethod (name = C) [public fun C(@org.jetbrains.annotations.NotNull i: int) {...}]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i)]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(i)]
                     UIdentifier (Identifier (super)) [UIdentifier (Identifier (super))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     USimpleNameReferenceExpression (identifier = i) [i] : int
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : @org.jetbrains.annotations.NotNull() kotlin.Unit
     UClass (name = O) [public final class O : A {...}]
         UField (name = INSTANCE) [@null public static final var INSTANCE: O]
             UAnnotation (fqName = null) [@null]
         UMethod (name = O) [private fun O() {...}]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("text")]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A("text")]
                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UPolyadicExpression (operator = +) ["text"] : java.lang.String
                         ULiteralExpression (value = "text") ["text"] : java.lang.String

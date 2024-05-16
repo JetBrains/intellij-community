@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
@@ -52,14 +52,53 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        @Override
+                       public boolean visitNamedExpression(@NotNull UNamedExpression node) {
+                         PsiElement source = node.getSourcePsi();
+                         if (source instanceof PsiNameValuePair pair) {
+                           PsiReference reference = pair.getReference();
+                           if (reference != null) {
+                             PsiElement target = reference.resolve();
+                             final RefElement refElement = refManager.getReference(target);
+                             if (refElement != null) {
+                               refElement.initializeIfNeeded();
+                               refFrom.addReference(refElement, target, decl, false, true, node);
+                             }
+                           }
+                         }
+                         return false;
+                       }
+
+                       @Override
                        public boolean visitAnnotation(@NotNull UAnnotation node) {
                          PsiClass javaClass = node.resolve();
                          if (javaClass != null) {
                            final RefElement refClass = refManager.getReference(javaClass.getOriginalElement());
                            if (refClass != null) refClass.initializeIfNeeded();
                            refFrom.addReference(refClass, javaClass.getOriginalElement(), decl, false, true, null);
+                           checkRepeatableAnnotation(javaClass, node);
                          }
                          return false;
+                       }
+
+                       private void checkRepeatableAnnotation(PsiClass annotationClass, UAnnotation annotation) {
+                         if (!CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE.equals(annotationClass.getQualifiedName())) return;
+                         UExpression value = annotation.findAttributeValue("value");
+                         while (value instanceof UParenthesizedExpression parenth) {
+                           value = parenth.getExpression();
+                         }
+                         if (!(value instanceof UClassLiteralExpression classLiteralExpression)) return;
+                         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(classLiteralExpression.getType());
+                         if (aClass == null) return;
+                         RefClassImpl refClass =
+                           ObjectUtils.tryCast(refManager.getReference(aClass.getOriginalElement()), RefClassImpl.class);
+                         if (refClass == null) return;
+                         refClass.initializeIfNeeded();
+                         for (RefEntity child : refClass.getChildren()) {
+                           if (child instanceof RefMethod method && "value()".equals(method.getName())) {
+                             refFrom.addReference(method, null, decl, false, true, null);
+                             break;
+                           }
+                         }
                        }
 
                        @Override
@@ -215,7 +254,6 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                          boolean writing = isAccessedForWriting(node);
                          boolean reading = isAccessedForReading(node);
                          if (refResolved != null) refResolved.initializeIfNeeded();
-                         refFrom.initializeIfNeeded();
                          refFrom.addReference(refResolved, psiResolved, decl, writing, reading, node);
 
                          if (refResolved instanceof RefMethodImpl refMethod) {
@@ -678,26 +716,22 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
 
   @Override
   public void addTypeReference(UElement uElement, PsiType psiType, RefManager refManager, @Nullable RefJavaElement refMethod) {
-    if (psiType != null) {
-      final RefClass ownerClass = getOwnerClass(refManager, uElement);
-      if (ownerClass != null) {
-        psiType = psiType.getDeepComponentType();
-        if (psiType instanceof PsiClassType) {
-          PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-          if (psiClass != null && refManager.belongsToScope(psiClass)) {
-            RefClassImpl refClass = (RefClassImpl)refManager.getReference(psiClass);
-            if (refClass != null) {
-              refClass.addTypeReference(ownerClass);
-              if (refMethod != null) {
-                refClass.addClassExporter(refMethod);
-              }
-            }
-          }
-          else {
-            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, uElement.getSourcePsi());
-          }
+    if (!(psiType instanceof PsiClassType)) return;
+    final RefClass ownerClass = getOwnerClass(refManager, uElement);
+    if (ownerClass == null) return;
+    psiType = psiType.getDeepComponentType();
+    PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+    if (psiClass != null && refManager.belongsToScope(psiClass)) {
+      RefClassImpl refClass = (RefClassImpl)refManager.getReference(psiClass);
+      if (refClass != null) {
+        refClass.addTypeReference(ownerClass);
+        if (refMethod != null) {
+          refClass.addClassExporter(refMethod);
         }
       }
+    }
+    else {
+      ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, uElement.getSourcePsi());
     }
   }
 

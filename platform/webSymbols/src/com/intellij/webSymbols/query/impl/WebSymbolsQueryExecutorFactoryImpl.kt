@@ -11,8 +11,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.ContextKind
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolsPrioritizedScope
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
@@ -57,6 +60,8 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
           }
         }
     })
+
+    scopeList.sortBy { (it.asSafely<WebSymbolsPrioritizedScope>()?.priority ?: WebSymbol.Priority.NORMAL).value }
 
     return WebSymbolsQueryExecutorImpl(scopeList,
                                        createNamesProvider(project, originalLocation, context),

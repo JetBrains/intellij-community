@@ -31,7 +31,7 @@ internal object GitLogIndexDataUtils {
 
     val logIndexDirName = PersistentUtil.getProjectLogDataDirectoryName(project.name, logId)
 
-    VcsProjectLog.getInstance(project).childScope().launch {
+    VcsProjectLog.getInstance(project).coroutineScope.launch {
       val tempLogDataPath = withBackgroundProgress(project, GitBundle.message("vcs.log.status.bar.extracting.log.index.data")) {
         withContext(Dispatchers.IO) {
           try {
@@ -76,7 +76,7 @@ internal object GitLogIndexDataUtils {
   }
 
   internal fun createArchiveWithLogData(project: Project, outputArchiveDir: Path) {
-    VcsProjectLog.getInstance(project).childScope().launch {
+    VcsProjectLog.getInstance(project).coroutineScope.launch {
       VcsProjectLog.getInstance(project).runOnDisposedLog {
         withBackgroundProgress(project = project,
                                title = GitBundle.message("vcs.log.archiving.log.index.data"),

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
+import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
@@ -42,7 +43,7 @@ class KotlinMethodSmartStepTarget(
     declaration: KtDeclaration?,
     val ordinal: Int,
     val methodInfo: CallableMemberInfo
-) : KotlinSmartStepTarget(label, highlightElement, false, lines) {
+) : KotlinSmartStepTarget(label, highlightElement, false, lines), ForceSmartStepIntoSource {
     companion object {
         private val renderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
             annotationRenderer = annotationRenderer.with {
@@ -79,6 +80,8 @@ class KotlinMethodSmartStepTarget(
     override fun getIcon(): Icon = if (methodInfo.isExtension) KotlinIcons.EXTENSION_FUNCTION else KotlinIcons.FUNCTION
     override fun getClassName(): String? = runReadAction { declarationPtr?.element?.getClassName() }
 
+    override fun needForceSmartStepInto() = methodInfo.isInvoke && methodInfo.isSuspend
+
     fun getDeclaration(): KtDeclaration? =
         declarationPtr.getElementInReadAction()
 
@@ -113,20 +116,25 @@ internal fun <T : PsiElement> SmartPsiElementPointer<T>?.getElementInReadAction(
 
 
 private val NO_RETURN_TYPE = object : KtCallableReturnTypeFilter {
-    context(KtAnalysisSession)
-    override fun shouldRenderReturnType(type: KtType, symbol: KtCallableSymbol): Boolean = false
+    override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KtCallableSymbol): Boolean = false
 }
 
 private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    override fun renderReceiver(symbol: KtReceiverParameterSymbol, printer: PrettyPrinter) {
-    }
+    override fun renderReceiver(
+        analysisSession: KtAnalysisSession,
+        symbol: KtReceiverParameterSymbol,
+        declarationRenderer: KtDeclarationRenderer,
+        printer: PrettyPrinter
+    ) {}
 }
 
 private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
-    context(KtAnalysisSession, KtDeclarationModifiersRenderer)
-    override fun renderModifiers(symbol: KtDeclarationSymbol, printer: PrettyPrinter) {
-    }
+    override fun renderModifiers(
+        analysisSession: KtAnalysisSession,
+        symbol: KtDeclarationSymbol,
+        declarationModifiersRenderer: KtDeclarationModifiersRenderer,
+        printer: PrettyPrinter
+    ) {}
 
 }
 

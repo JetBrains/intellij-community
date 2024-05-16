@@ -8,7 +8,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityChange
@@ -45,7 +45,7 @@ class WorkspaceModelAsyncTest {
   val projectModel = ProjectModelRule()
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val cs = GlobalScope.namedChildScope("TestScope")
+  private val cs = GlobalScope.childScope("TestScope")
 
   @After
   fun tearDown() {

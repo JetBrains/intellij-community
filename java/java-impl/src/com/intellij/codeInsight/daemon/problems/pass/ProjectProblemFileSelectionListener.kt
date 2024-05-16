@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -260,11 +261,13 @@ private fun getSelectedFile(project: Project): VirtualFile? {
 }
 
 private fun getJavaFile(project: Project, file: VirtualFile?): PsiJavaFile? {
-  if (file == null || file is VirtualFileWindow || !file.isValid) {
+  if (file == null || file is VirtualFileWindow || !file.isValid ||
+    !ProjectProblemUtils.containsJvmLanguage(file)) {
     return null
   }
-
-  return if (ProjectProblemUtils.containsJvmLanguage(file)) PsiManager.getInstance(project).findFile(file) as? PsiJavaFile else null
+  SlowOperations.knownIssue("IDEA-334994, EA-852866").use {
+    return PsiManager.getInstance(project).findFile(file) as? PsiJavaFile
+  }
 }
 
 private fun getEditor(fileEditor: FileEditor?): Editor? = (fileEditor as? TextEditor)?.editor

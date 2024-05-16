@@ -26,7 +26,7 @@ import java.util.*
 @TestMetadata("testData/simple")
 @RunWith(JUnit38ClassRunner::class)
 class LiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginMode
+    override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K1
 
     override fun setUp() {

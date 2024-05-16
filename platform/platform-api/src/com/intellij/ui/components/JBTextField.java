@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextAccessor;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -123,7 +124,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
     @Override
     public String getAccessibleDescription() {
       String description = super.getAccessibleDescription();
-      if (description == null) {
+      if (description == null && StringUtil.isEmpty(getText())) {
         //noinspection HardCodedStringLiteral
         String emptyText = myEmptyText.toString();
         if (!emptyText.isEmpty()) {

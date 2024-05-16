@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
@@ -23,8 +24,9 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.readProjectDirtyFilesQueue
-import it.unimi.dsi.fastutil.ints.IntArrayList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 class FileBasedIndexTumbler(private val reason: @NonNls String) {
@@ -34,6 +36,13 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
   private var nestedLevelCount = 0
   private var snapshot: FbiSnapshot? = null
   private var fileTypeTracker: FileTypeTracker? = null
+  private var allowSkippingFullScanning: Boolean = false
+
+  @ApiStatus.Internal
+  @TestOnly
+  fun allowSkippingFullScanning() {
+    allowSkippingFullScanning = true
+  }
 
   fun turnOff() {
     val app = ApplicationManager.getApplication()
@@ -92,7 +101,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           fileBasedIndex.waitUntilIndicesAreInitialized()
         }
         for (project in ProjectUtil.getOpenProjects()) {
-          UnindexedFilesScannerExecutor.getInstance(project).resumeQueue(onFinish = {})
+          UnindexedFilesScannerExecutor.getInstance(project).resumeQueue()
           project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
           FileBasedIndexInfrastructureExtension.attachAllExtensionsData(project)
         }
@@ -102,23 +111,27 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
                             snapshot is FbiSnapshot.RebuildRequired ||
                             FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {
-          fileBasedIndex.waitUntilIndicesAreInitialized()
+          val registeredIndexes = fileBasedIndex.registeredIndexes
           beforeIndexTasksStarted?.run()
-          cleanupProcessedFlag(reason)
+          if (!allowSkippingFullScanning) {
+            cleanupProcessedFlag(reason)
+          }
           for (project in ProjectUtil.getOpenProjects()) {
-            val orphanQueue = fileBasedIndex.orphanDirtyFileIdsFromLastSession.let {
-              if (it != null) it
-              else {
-                LOG.error("Orphan dirty files queue is not yet initialized")
-                OrphanDirtyFilesQueue(IntArrayList(), 0L)
-              }
-            }
             val projectQueueFile = project.getQueueFile()
-            val projectDirtyFilesQueue = readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().creationTimestamp)
+            val projectDirtyFilesQueue = readProjectDirtyFilesQueue(projectQueueFile, registeredIndexes.wasCorrupted, ManagingFS.getInstance().creationTimestamp)
             fileBasedIndex.dirtyFiles.getProjectDirtyFiles(project)?.addFiles(projectDirtyFilesQueue.fileIds)
             fileBasedIndex.setLastSeenIndexInOrphanQueue(project, projectDirtyFilesQueue.lastSeenIndexInOrphanQueue)
-            val indexesCleanupJob = scanAndIndexProjectAfterOpen(project, orphanQueue, projectDirtyFilesQueue, startSuspended = false, allowSkippingScanning = false, project.coroutineScope, "On FileBasedIndexTumbler.turnOn (reason=$reason)")
-            indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.untrimmedSize)
+            val indexesCleanupJob = scanAndIndexProjectAfterOpen(
+              project = project,
+              orphanQueue = registeredIndexes.orphanDirtyFilesQueue,
+              projectDirtyFilesQueue = projectDirtyFilesQueue,
+
+              allowSkippingFullScanning = allowSkippingFullScanning && !registeredIndexes.wasCorrupted,
+              requireReadingIndexableFilesIndexFromDisk = !allowSkippingFullScanning,
+              coroutineScope = (project as ComponentManagerEx).getCoroutineScope(),
+              indexingReason = "On FileBasedIndexTumbler.turnOn (reason=$reason)",
+            )
+            indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, registeredIndexes.orphanDirtyFilesQueue.untrimmedSize)
           }
           LOG.info("Index rescanning has been started after `$reason`")
         }

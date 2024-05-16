@@ -1,0 +1,1 @@
+fun <caret>m(i: Int) {}

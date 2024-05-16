@@ -9,10 +9,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.TraceManager
-import org.jetbrains.intellij.build.closeKtorClient
+import org.jetbrains.intellij.build.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -31,7 +28,7 @@ private const val PRODUCTS_PROPERTIES_PATH = "build/dev-build.json"
 private const val CUSTOM_PRODUCT_PROPERTIES_PATH = "idea.product.properties.path"
 
 @Suppress("SpellCheckingInspection")
-fun getIdeSystemProperties(runDir: Path): Map<String, String> {
+fun getIdeSystemProperties(runDir: Path): VmProperties {
   val result = LinkedHashMap<String, String>()
 
   val properties = Properties()
@@ -52,7 +49,7 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
       "jb.vmOptionsFile" to "${Files.newDirectoryStream(runDir.parent, "*.vmoptions").use { it.singleOrNull() }}"
     )
   )
-  return result
+  return VmProperties(result)
 }
 
 /** Returns IDE installation directory */

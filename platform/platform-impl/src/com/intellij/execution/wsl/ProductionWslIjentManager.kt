@@ -2,7 +2,7 @@
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CoroutineName
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 @VisibleForTesting
 class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentManager {
-  private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = ConcurrentHashMap()
+  private val myCache: MutableMap<String, SuspendingLazy<IjentPosixApi>> = ConcurrentHashMap()
 
   override val isIjentAvailable: Boolean
     get() = WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()
@@ -23,7 +23,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
   @DelicateCoroutinesApi
   override val processAdapterScope: CoroutineScope = scope
 
-  override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
+  override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
     return myCache.compute(wslDistribution.id + if (rootUser) ":root" else "") { _, oldHolder ->
       val validOldHolder = when (oldHolder?.isInitialized()) {
         true -> {

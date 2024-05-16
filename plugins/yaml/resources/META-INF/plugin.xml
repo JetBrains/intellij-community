@@ -12,39 +12,50 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!--Shared extensions: frontend and backend-->
+    <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.settingsSync.YAMLLanguageCodeStyleSettingsProvider"/>
+
+    <colorSettingsPage implementation="org.jetbrains.yaml.YAMLColorsPage"/>
+    <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
+    <fileType name="YAML" implementationClass="org.jetbrains.yaml.YAMLFileType" fieldName="YML" language="yaml"
+              extensions="yaml;yml"/>
+    <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
+    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
+                             implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
+    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.YAMLKeyValue"
+                             implementationClass="org.jetbrains.yaml.psi.impl.YAMLKeyValueKeyManipulator"/>
+    <elementDescriptionProvider implementation="org.jetbrains.yaml.psi.impl.YAMLElementDescriptionProvider"/>
+    <inspection.basicVisitor class="org.jetbrains.yaml.psi.YamlPsiElementVisitor"/>
+
+    <!--The following extensions must work only on the frontend side in remdev mode-->
+    <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>
+    <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
+    <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
+    <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
+    <lang.whiteSpaceFormattingStrategy language="yaml" implementationClass="org.jetbrains.yaml.formatter.YamlWhiteSpaceFormattingStrategy"/>
+    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.yaml.formatter.YamlStripTrailingSpacesFilterFactory"/>
+    <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLEnterAtIndentHandler" order="first"/>
+    <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
+    <quoteHandler fileType="YAML" className="org.jetbrains.yaml.smart.YamlQuoteHandler"/>
+    <statementUpDownMover implementation="org.jetbrains.yaml.smart.YAMLStatementMover" id="yamlStatementMover" order="before line"/>
+    <lang.foldingBuilder language="yaml" id="YAMLFoldingBuilder" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
+
+    <!--Remdev backend only-->
+    <virtualFileCustomDataProvider implementation="org.jetbrains.yaml.editing.YamlCodeStyleSettingsCustomDataSynchronizer"/>
     <!-- YAML -->
     <additionalTextAttributes scheme="Default" file="colorSchemes/YAMLDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/YAMLDarcula.xml"/>
 
-    <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
-    <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLEnterAtIndentHandler" order="first"/>
-    <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLInjectedElementEnterHandler" order="last"/>
     <registryKey key="yaml.injection.async.indent" defaultValue="true"
                  description="Performs asynchronous indent when typing 'enter' in code injected into YAML"/>
-    <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
-    <quoteHandler fileType="YAML" className="org.jetbrains.yaml.smart.YamlQuoteHandler"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
-    <statementUpDownMover implementation="org.jetbrains.yaml.smart.YAMLStatementMover" id="yamlStatementMover"
-                          order="before line"/>
-    <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
-    <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
-    <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>
-    <colorSettingsPage implementation="org.jetbrains.yaml.YAMLColorsPage"/>
-    <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
     <lang.findUsagesProvider language="yaml" id="yamlFindUsagesProvider" implementationClass="org.jetbrains.yaml.YAMLFindUsagesProvider"/>
-    <lang.foldingBuilder language="yaml" id="YAMLFoldingBuilder" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
-    <fileType name="YAML" implementationClass="org.jetbrains.yaml.YAMLFileType" fieldName="YML" language="yaml" extensions="yaml;yml"/>
     <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
-    <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLLanguageCodeStyleSettingsProvider"/>
-    <lang.whiteSpaceFormattingStrategy language="yaml"
-                                       implementationClass="org.jetbrains.yaml.formatter.YamlWhiteSpaceFormattingStrategy"/>
-    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.yaml.formatter.YamlStripTrailingSpacesFilterFactory"/>
     <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
     <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
-
-    <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
+    <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLInjectedElementEnterHandler" order="last"/>
 
     <completion.contributor language="yaml"
                             implementationClass="org.jetbrains.yaml.completion.YamlStructuralKeysCompletionContributor"/>
@@ -54,12 +65,7 @@
     <lang.documentationProvider language="yaml" implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDocumentationProvider"
                                 id="YamlJsonSchemaDocumentationProvider"/>
     <gotoDeclarationHandler implementation="org.jetbrains.yaml.schema.YamlJsonSchemaGotoDeclarationHandler" order="last"/>
-    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
-                             implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
-    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.YAMLKeyValue"
-                             implementationClass="org.jetbrains.yaml.psi.impl.YAMLKeyValueKeyManipulator"/>
     <breadcrumbsInfoProvider implementation="org.jetbrains.yaml.breadcrumbs.YAMLBreadcrumbsInfoProvider"/>
-    <elementDescriptionProvider implementation="org.jetbrains.yaml.psi.impl.YAMLElementDescriptionProvider"/>
     <readWriteAccessDetector implementation="org.jetbrains.yaml.resolve.YAMLAnchorReadWriteAccessDetector"/>
     <renameInputValidator implementation="org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator" order="first"/>
     <renameInputValidator implementation="org.jetbrains.yaml.resolve.YAMLAnchorRenameInputValidator" order="first"/>
@@ -74,8 +80,6 @@
                                  id="editor.preferences.yamlOptions"
                                  bundle="messages.YAMLBundle"
                                  key="yaml.smartkeys.option.title"/>
-
-    <inspection.basicVisitor class="org.jetbrains.yaml.psi.YamlPsiElementVisitor"/>
 
     <localInspection language="yaml" bundle="messages.YAMLBundle"
                      shortName="YAMLUnresolvedAlias"

@@ -1,22 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
-import com.intellij.collaboration.api.page.SequentialListLoader
-import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel.ListDataUpdate
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 internal interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
   val filterVm: GitLabMergeRequestsFiltersViewModel
@@ -24,7 +25,7 @@ internal interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
 
   val repository: String
 
-  val listDataFlow: Flow<ListDataUpdate>
+  val listDataFlow: Flow<List<GitLabMergeRequestDetails>>
 
   val loading: Flow<Boolean>
   val error: Flow<Throwable?>
@@ -32,11 +33,6 @@ internal interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
   fun requestMore()
 
   override fun refresh()
-
-  sealed interface ListDataUpdate {
-    class NewBatch(val newList: List<GitLabMergeRequestDetails>, val batch: List<GitLabMergeRequestDetails>) : ListDataUpdate
-    object Clear : ListDataUpdate
-  }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -45,101 +41,37 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override val filterVm: GitLabMergeRequestsFiltersViewModel,
   override val repository: String,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-  private val tokenRefreshFlow: Flow<Unit>,
-  private val loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestDetails>)
-  : GitLabMergeRequestsListViewModel {
+  tokenRefreshFlow: Flow<Unit>,
+  private val loaderSupplier: (CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>
+) : GitLabMergeRequestsListViewModel {
 
   private val scope = parentCs.childScope()
 
-  private val loaderInitFlow = MutableSharedFlow<Unit>()
+  private val loaderFlow: Flow<ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>> =
+    filterVm.searchState
+      .combine(tokenRefreshFlow.withInitial(Unit)) { search, _ -> search }
+      .mapScoped { search -> loaderSupplier(this, search) }
+      .shareIn(scope, SharingStarted.Lazily, 1)
 
-  private var loaderFlow: Flow<Loader> = flow {
-    emit(Unit)
-    loaderInitFlow.collect {
-      emit(Unit)
-    }
-  }.combine(filterVm.searchState) { startNow, search ->
-    startNow to search
-  }.mapScoped { (_, search) ->
-    Loader(this, loaderSupplier(search)).apply {
-      requestMore()
-    }
-  }.shareIn(scope, SharingStarted.Lazily, 1)
-
-  override val listDataFlow: Flow<ListDataUpdate> = loaderFlow.transformLatest {
-    try {
-      emitAll(it.listDataFlow)
-    }
-    catch (e: Exception) {
-      emit(ListDataUpdate.Clear)
-    }
-  }
-  override val loading: Flow<Boolean> = loaderFlow.flatMapLatest { it.loadingState }
-  override val error: Flow<Throwable?> = loaderFlow.flatMapLatest { it.errorState }
-
-  init {
-    scope.launchNow {
-      tokenRefreshFlow.collect {
-        loaderInitFlow.emit(Unit)
-      }
-    }
-  }
+  override val listDataFlow: Flow<List<GitLabMergeRequestDetails>> =
+    loaderFlow.flatMapLatest { loader -> loader.stateFlow.mapNotNull { it.list?.map(GitLabMergeRequestDetails::fromRestDTO) } }
+      .modelFlow(scope, LOG)
+  override val loading: Flow<Boolean> = loaderFlow.flatMapLatest { it.isBusyFlow }.modelFlow(scope, LOG)
+  override val error: Flow<Throwable?> = loaderFlow.flatMapLatest { loader -> loader.stateFlow.map { it.error } }.modelFlow(scope, LOG)
 
   override fun requestMore() {
     scope.launch {
-      loaderFlow.first().requestMore()
+      loaderFlow.first().loadMore()
     }
   }
 
   override fun refresh() {
     scope.launch {
-      loaderInitFlow.emit(Unit)
+      loaderFlow.first().refresh()
     }
   }
 
-  private class Loader(parentCs: CoroutineScope, private val loader: SequentialListLoader<GitLabMergeRequestDetails>) {
-    private val cs = parentCs.childScope()
-
-    private val lock = ReentrantLock()
-    private val listState = CopyOnWriteArrayList<GitLabMergeRequestDetails>()
-
-    val listDataFlow: MutableSharedFlow<ListDataUpdate> = MutableSharedFlow(1)
-    val loadingState: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val errorState: MutableStateFlow<Throwable?> = MutableStateFlow(null)
-
-    @Volatile
-    private var hasMoreBatches = true
-
-    init {
-      // Hack to make sure the loader scope is alive
-      cs.launchNow { awaitCancellation() }
-    }
-
-    fun requestMore() {
-      lock.withLock {
-        if (loadingState.value || errorState.value != null || !hasMoreBatches) return
-        loadingState.value = true
-
-        // Make sure the try-catch-finally is entered by launching now
-        cs.launch {
-          try {
-            val (data, hasMore) = loader.loadNext()
-            listState.addAll(data)
-            hasMoreBatches = hasMore
-
-            listDataFlow.emit(ListDataUpdate.NewBatch(listState.toList(), data))
-          }
-          catch (ce: CancellationException) {
-            throw ce
-          }
-          catch (e: Throwable) {
-            errorState.value = e
-          }
-          finally {
-            loadingState.value = false
-          }
-        }
-      }
-    }
+  companion object {
+    private val LOG = Logger.getInstance(GitLabMergeRequestsListViewModel::class.java)
   }
 }

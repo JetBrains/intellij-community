@@ -29,6 +29,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
@@ -60,6 +61,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   // should only be accessed from EDT. This is to order synchronous and asynchronous publishing
   private var lastPublishedState: DumbState = myState.value
+
+  @Volatile
+  private var isDisposed = false
 
   // Not thread safe. Should only be accessed from EDT. Launches myGuiDumbTaskRunner at most once.
   // DumbService can invoke `launch` from completeJustSubmittedTasks or from queueTaskOnEdt
@@ -194,6 +198,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun dispose() {
+    isDisposed = true
     ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     myBalloon.dispose()
     scheduledTasksScope.cancel("On dispose of DumbService", ProcessCanceledException())
@@ -218,6 +223,17 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
       return myState.value.isDumb
     }
+
+  /**
+   * Same as [isDumb], but if form of a flow with the following properties:
+   *   * This flow never completes
+   *   * Last emitted value is always immediately available
+   *   * Conflation and other properties of the flow are not specified
+   *
+   * In most cases you don't need this method, because neither checking `isDumb` outside a read action, nor suspending inside a read action
+   *  have little sense except a few very special use cases.
+   */
+  val isDumbAsFlow: Flow<Boolean> = myState.map { it.isDumb }
 
   /**
    * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
@@ -360,6 +376,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun queueTask(task: DumbModeTask) {
+    if (isDisposed) {
+      throw AlreadyDisposedException("Cannot queue task $task after disposal")
+    }
+
     LOG.debug { "Scheduling task $task" }
     if (myProject.isDefault) {
       LOG.error("No indexing tasks should be created for default project: $task")

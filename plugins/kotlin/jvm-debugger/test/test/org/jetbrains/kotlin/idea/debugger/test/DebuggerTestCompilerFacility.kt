@@ -34,6 +34,7 @@ data class TestCompileConfiguration(
     val lambdasGenerationScheme: JvmClosureGenerationScheme,
     val languageVersion: LanguageVersion?,
     val enabledLanguageFeatures: Collection<LanguageFeature>,
+    val useInlineScopes: Boolean,
 )
 
 open class DebuggerTestCompilerFacility(
@@ -193,6 +194,9 @@ open class DebuggerTestCompilerFacility(
         )
         if (compileConfig.languageVersion != null) {
             options.add("-language-version=${compileConfig.languageVersion}")
+        }
+        if (compileConfig.useInlineScopes) {
+            options.add("-Xuse-inline-scopes-numbers")
         }
         options.addAll(compileConfig.enabledLanguageFeatures.map { "-XXLanguage:+$it" })
         return options

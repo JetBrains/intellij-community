@@ -82,7 +82,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
                                                                                    boolean quick) {
     SlowOperations.assertSlowOperationsAreAllowed();
     try {
-      if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
+      if (builder != null && !DumbService.getInstance(root.getProject()).isUsableInCurrentContext(builder)) {
         return FoldingDescriptor.EMPTY_ARRAY;
       }
 

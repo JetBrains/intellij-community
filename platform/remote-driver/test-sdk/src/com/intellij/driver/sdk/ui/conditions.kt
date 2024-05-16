@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.button
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -8,6 +9,11 @@ import kotlin.time.Duration.Companion.seconds
 // should
 infix fun <T : UiComponent> T.should(condition: T.() -> Boolean): T {
   return should(timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = condition)
+}
+
+// should not
+infix fun <T : UiComponent> T.shouldNot(condition: T.() -> Boolean): T {
+  return shouldNot(timeout = DEFAULT_FIND_TIMEOUT_SECONDS.seconds, condition = condition)
 }
 
 // should
@@ -68,6 +74,20 @@ fun <T : UiComponent> T.should(message: String = "",
   return this
 }
 
+fun <T : UiComponent> T.shouldNot(message: String = "",
+                               timeout: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
+                               condition: T.() -> Boolean): T {
+  waitFor(timeout, errorMessage = message) {
+    try {
+      !this.condition()
+    }
+    catch (e: Throwable) {
+      false
+    }
+  }
+  return this
+}
+
 val visible: UiComponent.() -> Boolean = { isVisible() }
 
 val enabled: UiComponent.() -> Boolean = { isEnabled() }
@@ -78,4 +98,7 @@ val present: UiComponent.() -> Boolean = { present() }
 
 val notPresent: UiComponent.() -> Boolean = { notPresent() }
 
-fun text(value: String): UiComponent.() -> Boolean = { hasText(value) }
+fun haveText(value: String): UiComponent.() -> Boolean = { hasText(value) }
+
+fun haveButton(value: String): UiComponent.() -> Boolean = { button(value).present() }
+

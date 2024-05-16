@@ -390,7 +390,7 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
   @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
     ThreadingAssertions.assertEventDispatchThread();
-    myIterationState = IterationState.NONE;
+    myIterationState = DiffIterationState.NONE;
 
     force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
     myQueuedApplyRequest = new ApplyData(request, force, scrollToChangePolicy);
@@ -1022,9 +1022,9 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
   // Navigation
   //
 
-  private enum IterationState {NEXT, PREV, NONE}
+  private enum DiffIterationState {NEXT, PREV, NONE}
 
-  private @NotNull IterationState myIterationState = IterationState.NONE;
+  private @NotNull DiffRequestProcessor.DiffIterationState myIterationState = DiffIterationState.NONE;
 
   @RequiresEdt
   protected boolean hasNextChange(boolean fromUpdate) {
@@ -1124,20 +1124,20 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
       PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoNext()) {
         iterable.goNext();
-        myIterationState = IterationState.NONE;
+        myIterationState = DiffIterationState.NONE;
         return;
       }
 
       if (!isNavigationEnabled() || !hasNextChange(false) || !getSettings().isGoToNextFileOnNextDifference()) return;
 
-      if (myIterationState != IterationState.NEXT) {
+      if (myIterationState != DiffIterationState.NEXT) {
         notifyMessage(e, true);
-        myIterationState = IterationState.NEXT;
+        myIterationState = DiffIterationState.NEXT;
         return;
       }
 
       goToNextChange(true);
-      myIterationState = IterationState.NONE;
+      myIterationState = DiffIterationState.NONE;
     }
   }
 
@@ -1177,20 +1177,20 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
       PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoPrev()) {
         iterable.goPrev();
-        myIterationState = IterationState.NONE;
+        myIterationState = DiffIterationState.NONE;
         return;
       }
 
       if (!isNavigationEnabled() || !hasPrevChange(false) || !getSettings().isGoToNextFileOnNextDifference()) return;
 
-      if (myIterationState != IterationState.PREV) {
+      if (myIterationState != DiffIterationState.PREV) {
         notifyMessage(e, false);
-        myIterationState = IterationState.PREV;
+        myIterationState = DiffIterationState.PREV;
         return;
       }
 
       goToPrevChange(true);
-      myIterationState = IterationState.NONE;
+      myIterationState = DiffIterationState.NONE;
     }
   }
 

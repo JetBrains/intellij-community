@@ -13,12 +13,15 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
+import java.beans.PropertyChangeListenerProxy;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -57,8 +60,14 @@ public final class Presentation implements Cloneable {
   @Deprecated(forRemoval = true)
   public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("SECONDARY_TEXT");
 
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double DEFAULT_WEIGHT = 0;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double HIGHER_WEIGHT = 42;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
   private static final int IS_ENABLED = 0x1;
@@ -82,14 +91,13 @@ public final class Presentation implements Cloneable {
   private Icon hoveredIcon;
   private Icon selectedIcon;
 
-  private PropertyChangeSupport changeSupport;
-  private double myWeight = DEFAULT_WEIGHT;
+  private @NotNull FList<PropertyChangeListener> myListeners = FList.emptyList();
 
-  private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics = NotNullLazyValue.createValue(() -> {
+  private static final @NotNull NotNullLazyValue<Boolean> outRemoveMnemonics = NotNullLazyValue.createValue(() -> {
     return SystemInfoRt.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions();
   });
 
-  public static Presentation newTemplatePresentation() {
+  public static @NotNull Presentation newTemplatePresentation() {
     Presentation presentation = new Presentation();
     presentation.myFlags = BitUtil.set(presentation.myFlags, IS_TEMPLATE, true);
     return presentation;
@@ -108,18 +116,11 @@ public final class Presentation implements Cloneable {
   }
 
   public void addPropertyChangeListener(@NotNull PropertyChangeListener l) {
-    PropertyChangeSupport support = changeSupport;
-    if (support == null) {
-      changeSupport = support = new PropertyChangeSupport(this);
-    }
-    support.addPropertyChangeListener(l);
+    myListeners = myListeners.prepend(l);
   }
 
   public void removePropertyChangeListener(@NotNull PropertyChangeListener l) {
-    PropertyChangeSupport support = changeSupport;
-    if (support != null) {
-      support.removePropertyChangeListener(l);
-    }
+    myListeners = myListeners.without(l);
   }
 
   /**
@@ -184,7 +185,7 @@ public final class Presentation implements Cloneable {
         TextWithMnemonic parsed = TextWithMnemonic.parse(s);
         UISettings uiSettings = UISettings.getInstanceOrNull();
         boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
-        return mnemonicsDisabled ? parsed.dropMnemonic(removeMnemonics.getValue()) : parsed;
+        return mnemonicsDisabled ? parsed.dropMnemonic(outRemoveMnemonics.getValue()) : parsed;
       };
     }
     else {
@@ -201,7 +202,7 @@ public final class Presentation implements Cloneable {
    * @param textWithMnemonicSupplier text with mnemonic to set
    */
   public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
-    if (changeSupport == null) {
+    if (myListeners.isEmpty()) {
       this.textWithMnemonicSupplier = textWithMnemonicSupplier;
       return;
     }
@@ -265,22 +266,26 @@ public final class Presentation implements Cloneable {
   }
 
   public void setDescription(@NotNull Supplier<@ActionDescription String> dynamicDescription) {
+    if (myListeners.isEmpty()) {
+      descriptionSupplier = dynamicDescription;
+      return;
+    }
     Supplier<String> oldDescription = descriptionSupplier;
     descriptionSupplier = dynamicDescription;
-    if (changeSupport != null) {
-      fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), descriptionSupplier.get());
-    }
+    fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), descriptionSupplier.get());
   }
 
   public void setDescription(@ActionDescription String description) {
+    if (myListeners.isEmpty()) {
+      descriptionSupplier = () -> description;
+      return;
+    }
     Supplier<String> oldDescriptionSupplier = descriptionSupplier;
     descriptionSupplier = () -> description;
-    if (changeSupport != null) {
-      fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
-    }
+    fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
   }
 
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     Supplier<? extends Icon> icon = this.icon;
     return icon == null ? null : icon.get();
   }
@@ -304,31 +309,29 @@ public final class Presentation implements Cloneable {
   }
 
   public void setIcon(@Nullable Icon icon) {
-    if (changeSupport == null) {
+    if (myListeners.isEmpty()) {
       this.icon = icon == null ? null : () -> icon;
       return;
     }
 
-    Icon oldIcon = getIcon();
+    Icon oldIcon = this.icon == null ? null : this.icon.get();
     this.icon = () -> icon;
-    fireObjectPropertyChange(PROP_ICON, oldIcon, this.icon.get());
+    fireObjectPropertyChange(PROP_ICON, oldIcon, icon);
   }
 
   public void setIconSupplier(@Nullable Supplier<? extends @Nullable Icon> icon) {
-    Supplier<? extends @Nullable Icon> oldIcon = this.icon;
-    this.icon = icon;
-
-    PropertyChangeSupport support = changeSupport;
-    if (support != null) {
-      Icon icon1 = oldIcon == null ? null : oldIcon.get();
-      Icon icon2 = icon == null ? null : icon.get();
-      if (!Objects.equals(icon1, icon2)) {
-        support.firePropertyChange(PROP_ICON, icon1, icon2);
-      }
+    if (myListeners.isEmpty()) {
+      this.icon = icon;
+      return;
     }
+
+    Icon oldIcon = this.icon == null ? null : this.icon.get();
+    this.icon = icon;
+    Icon newIcon = icon == null ? null : icon.get();
+    fireObjectPropertyChange(PROP_ICON, oldIcon, newIcon);
   }
 
-  public Icon getDisabledIcon() {
+  public @Nullable Icon getDisabledIcon() {
     return disabledIcon;
   }
 
@@ -338,21 +341,21 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, disabledIcon);
   }
 
-  public Icon getHoveredIcon() {
+  public @Nullable Icon getHoveredIcon() {
     return hoveredIcon;
   }
 
-  public void setHoveredIcon(final @Nullable Icon hoveredIcon) {
+  public void setHoveredIcon(@Nullable Icon hoveredIcon) {
     Icon old = this.hoveredIcon;
     this.hoveredIcon = hoveredIcon;
     fireObjectPropertyChange(PROP_HOVERED_ICON, old, this.hoveredIcon);
   }
 
-  public Icon getSelectedIcon() {
+  public @Nullable Icon getSelectedIcon() {
     return selectedIcon;
   }
 
-  public void setSelectedIcon(Icon selectedIcon) {
+  public void setSelectedIcon(@Nullable Icon selectedIcon) {
     Icon old = this.selectedIcon;
     this.selectedIcon = selectedIcon;
     fireObjectPropertyChange(PROP_SELECTED_ICON, old, this.selectedIcon);
@@ -505,17 +508,26 @@ public final class Presentation implements Cloneable {
     setVisible(enabled);
   }
 
-  private void fireBooleanPropertyChange(String propertyName, boolean oldValue, boolean newValue) {
-    PropertyChangeSupport support = changeSupport;
-    if (oldValue != newValue && support != null) {
-      support.firePropertyChange(propertyName, oldValue, newValue);
-    }
+  private void fireBooleanPropertyChange(@NotNull String propertyName, boolean oldValue, boolean newValue) {
+    if (myListeners.isEmpty() || oldValue == newValue) return;
+    PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, oldValue, newValue);
+    doFirePropertyChange(event, myListeners);
   }
 
-  private void fireObjectPropertyChange(String propertyName, Object oldValue, Object newValue) {
-    PropertyChangeSupport support = changeSupport;
-    if (support != null && !Objects.equals(oldValue, newValue)) {
-      support.firePropertyChange(propertyName, oldValue, newValue);
+  private void fireObjectPropertyChange(@NotNull String propertyName, Object oldValue, Object newValue) {
+    if (myListeners.isEmpty() || Objects.equals(oldValue, newValue)) return;
+    PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, oldValue, newValue);
+    doFirePropertyChange(event, myListeners);
+  }
+
+  private static void doFirePropertyChange(@NotNull PropertyChangeEvent event,
+                                           @NotNull FList<PropertyChangeListener> listeners) {
+    for (PropertyChangeListener listener : listeners.size() == 1 ? listeners : ContainerUtil.reverse(listeners)) {
+      if (listener instanceof PropertyChangeListenerProxy p &&
+          !event.getPropertyName().equals(p.getPropertyName())) {
+        continue;
+      }
+      listener.propertyChange(event);
     }
   }
 
@@ -530,7 +542,7 @@ public final class Presentation implements Cloneable {
     try {
       Presentation clone = (Presentation)super.clone();
       clone.myFlags = BitUtil.set(clone.myFlags, IS_TEMPLATE, false);
-      clone.changeSupport = null;
+      clone.myListeners = FList.emptyList();
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -577,7 +589,6 @@ public final class Presentation implements Cloneable {
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
     setHoveredIcon(presentation.getHoveredIcon());
-    setWeight(presentation.getWeight());
 
     if (!myUserMap.equals(presentation.myUserMap)) {
       Set<String> allKeys = new HashSet<>(presentation.myUserMap.keySet());
@@ -625,17 +636,15 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(key, oldValue, value);
   }
 
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public double getWeight() {
-    return myWeight;
+    return DEFAULT_WEIGHT;
   }
 
-  /**
-   * Some action groups (like 'New...') may filter out actions with non-highest priority.
-   *
-   * @param weight please use {@link #HIGHER_WEIGHT} or {@link #EVEN_HIGHER_WEIGHT}
-   */
-  public void setWeight(double weight) {
-    myWeight = weight;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
+  public void setWeight(double ignore) {
   }
 
   public boolean isEnabledAndVisible() {

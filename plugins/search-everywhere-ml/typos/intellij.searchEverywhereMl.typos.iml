@@ -15,42 +15,7 @@
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.grazie.core" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module-library">
-      <library name="ai.grazie.spell.gec.engine.local" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:gec-spell-engine-local-jvm:0.3.66">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.3.66/gec-spell-engine-local-jvm-0.3.66.jar">
-              <sha256sum>4c1060e0a004e2c8909c47b07b6627e08d53cad5b5e32d16264659af44a8d90b</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.3.66/gec-spell-engine-local-jvm-0.3.66.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0.3.66/gec-spell-engine-local-jvm-0.3.66-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="ai.grazie.nlp.similarity" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-similarity-jvm:0.3.66">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.3.66/nlp-similarity-jvm-0.3.66.jar">
-              <sha256sum>7d21779a19dc3ccb037a1a5b85543162e358dbc656bea4926703315fdc125315</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.3.66/nlp-similarity-jvm-0.3.66.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0.3.66/nlp-similarity-jvm-0.3.66-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="ai.grazie.spell.gec.engine.local" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" />
     <orderEntry type="library" name="fastutil-min" level="project" />

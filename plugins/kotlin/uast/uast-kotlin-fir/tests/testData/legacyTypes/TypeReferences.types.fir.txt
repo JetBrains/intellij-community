@@ -42,7 +42,6 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                     ULocalVariable (name = tl) [var tl: java.util.List<? extends T> = listOf(at)]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(at)] : @org.jetbrains.annotations.NotNull() java.util.List<? extends T>
                             UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : @org.jetbrains.annotations.NotNull() java.util.List<? extends T>
                             USimpleNameReferenceExpression (identifier = at) [at] : T
                 UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: T ->...})]
                     ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: T ->...})]
@@ -50,7 +49,6 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                             USimpleNameReferenceExpression (identifier = tl) [tl] : @org.jetbrains.annotations.NotNull() java.util.List<? extends T>
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [map({ var it: T ->...})] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                 UIdentifier (Identifier (map)) [UIdentifier (Identifier (map))]
-                                USimpleNameReferenceExpression (identifier = map, resolvesTo = null) [map] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                 ULambdaExpression [{ var it: T ->...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super T, ? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                     UParameter (name = it) [var it: T]
                                     UBlockExpression [{...}] : java.lang.String
@@ -59,7 +57,6 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                                                 USimpleNameReferenceExpression (identifier = it) [it] : T
                                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : java.lang.String
                                                     UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                                                    USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : java.lang.String
                 UDeclarationsExpression [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                     ULocalVariable (name = lls) [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                 UDeclarationsExpression [var llsAliased: java.util.List<? extends java.util.List<? extends java.lang.String>>]
@@ -68,7 +65,5 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                     ULocalVariable (name = llt) [var llt: java.util.List<? extends java.util.List<? extends T>>]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [parameterizedFoo(emptyList())] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (parameterizedFoo)) [UIdentifier (Identifier (parameterizedFoo))]
-                    USimpleNameReferenceExpression (identifier = parameterizedFoo, resolvesTo = null) [parameterizedFoo] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [emptyList()] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                         UIdentifier (Identifier (emptyList)) [UIdentifier (Identifier (emptyList))]
-                        USimpleNameReferenceExpression (identifier = emptyList, resolvesTo = null) [emptyList] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>

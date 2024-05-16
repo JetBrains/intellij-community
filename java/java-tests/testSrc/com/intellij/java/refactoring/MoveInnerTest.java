@@ -115,6 +115,10 @@ public class MoveInnerTest extends LightMultiFileTestCase {
     doTest(createAction("p.A.E", "E", false, null, false, false, "p2"));
   }
 
+  public void testEnumStaticImport() {
+    doTest(createAction("pack1.Outer.Inner", "Inner", false, null, false, false, "pack1"));
+  }
+
   public void testQualifyThisHierarchy() {
     final String innerClassName = "pack1.DImpl.MyRunnable";
     doTest(new MyPerformAction(innerClassName, "MyRunnable", false, "d",

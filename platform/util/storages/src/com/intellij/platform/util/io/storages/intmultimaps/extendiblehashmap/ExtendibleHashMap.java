@@ -79,7 +79,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   //        0) remove 'synchronized' and put synchronization on clients to decide?
   //        1) prune tombstones (see comment in a .split() method for details)
   //        2) .size() is now O(N), make it O(1)
-  //        3) Half-utilized segmentTable room (see HeaderLayout)
+  //        3) Half-utilized segmentTable room (see HeaderLayout comments)
 
   private final MMappedFileStorage storage;
   private transient BufferSource bufferSource;
@@ -110,12 +110,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       this.storage = storage;
       boolean fileIsEmpty = (storage.actualFileSize() == 0);
 
-      bufferSource = (offsetInFile, length) -> {
-        ByteBuffer buffer = storage.pageByOffset(offsetInFile).rawPageBuffer();
-        int offsetInPage = storage.toOffsetInPage(offsetInFile);
-        return buffer.slice(offsetInPage, length)
-          .order(buffer.order());
-      };
+      bufferSource = new BufferSourceOverMMappedFileStorage(storage);
 
       header = new HeaderLayout(bufferSource, segmentSize);
 
@@ -245,8 +240,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     int segmentsCount = header.actualSegmentsCount();
     int totalEntries = 0;
     for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
-      HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize);
-      totalEntries += segment.aliveEntriesCount();
+      totalEntries += HashMapSegmentLayout.aliveEntriesCount(bufferSource, segmentIndex, segmentSize);
     }
     return totalEntries;
   }
@@ -257,8 +251,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     int segmentSize = header.segmentSize();
     int segmentsCount = header.actualSegmentsCount();
     for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
-      HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize);
-      if (segment.aliveEntriesCount() > 0) {
+      int aliveEntriesCount = HashMapSegmentLayout.aliveEntriesCount(bufferSource, segmentIndex, segmentSize);
+      if (aliveEntriesCount > 0) {
         return false;
       }
     }
@@ -732,7 +726,9 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   }
 
   @VisibleForTesting
-  static final class HashMapSegmentLayout implements HashTableData {
+  record HashMapSegmentLayout(int segmentIndex,
+                              int segmentSize,
+                              @NotNull ByteBuffer segmentBuffer) implements HashTableData {
     //@formatter:off
     private static final int LIVE_ENTRIES_COUNT_OFFSET  =  0; //int32
     private static final int HASH_SUFFIX_OFFSET         =  4; //int32
@@ -743,32 +739,37 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     private static final int HASHTABLE_SLOTS_OFFSET     = STATIC_HEADER_SIZE; //int32[N]
     //@formatter:on
 
-    private final int segmentSize;
-    private final int segmentIndex;
-
-    private final ByteBuffer segmentBuffer;
+    HashMapSegmentLayout {
+      if (segmentIndex < 1) {
+        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
+      }
+    }
 
     HashMapSegmentLayout(@NotNull BufferSource bufferSource,
                          int segmentIndex,
                          int segmentSize) throws IOException {
-      if (segmentIndex < 1) {
-        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
-      }
-      this.segmentIndex = segmentIndex;
-      this.segmentSize = segmentSize;
-
-      long offsetInFile = segmentIndex * (long)segmentSize;
-
-      this.segmentBuffer = bufferSource.slice(offsetInFile, segmentSize);
+      this(segmentIndex, segmentSize,
+           bufferSource.slice(segmentIndex * (long)segmentSize, segmentSize)
+      );
     }
-
-    public int segmentIndex() { return segmentIndex; }
-
-    public int segmentSize() { return segmentSize; }
 
     @Override
     public int aliveEntriesCount() {
       return segmentBuffer.getInt(LIVE_ENTRIES_COUNT_OFFSET);
+    }
+
+    /**
+     * 'Inlined' version of {@code new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize).aliveEntriesCount()}
+     * with reduced allocations and slicing
+     */
+    public static int aliveEntriesCount(@NotNull BufferSource bufferSource,
+                                        int segmentIndex,
+                                        int segmentSize) throws IOException {
+      if (segmentIndex < 1) {
+        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
+      }
+      long offsetInFile = segmentIndex * (long)segmentSize;
+      return bufferSource.getInt(offsetInFile + LIVE_ENTRIES_COUNT_OFFSET);
     }
 
     @Override
@@ -868,11 +869,13 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
   }
 
-  @FunctionalInterface
   public interface BufferSource {
     @NotNull
     ByteBuffer slice(long offsetInFile,
                      int length) throws IOException;
+
+    /** == {@code slice(offsetInFile, 4).getInt()} */
+    int getInt(long offsetInFile) throws IOException;
   }
 
   /** Abstracts data storage for open-addressing hash-table implementation */
@@ -893,15 +896,16 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
                      int value);
   }
 
-  public static final class HashMapAlgo {
+  private static final class HashMapAlgo {
     public static final int NO_VALUE = 0;
 
     private final float loadFactor;
 
-    //MAYBE RC: in-memory open-addressing hashtables usually employ loadFactor=0.5 -- to prevent excessive
-    // clustering and probe sequence length increasing. But for on-disk hash table it may worth to actually
-    // increase loadFactor up to 0.6-0.7 -- because less IO due to more compact representation may easily
-    // outweigh more probing.
+    //MAYBE RC: load factor and probing algorithm choice: in-memory open-addressing hash tables usually employ
+    // loadFactor=0.5 -- to prevent excessive clustering and probe sequence length increasing. For multi-valued
+    // maps this may be even down to 0.4 due to more excessive clustering (see comments in Int2IntMultimap).
+    // But for on-disk hash table it may worth to actually increase loadFactor up to 0.6-0.7 -- because less
+    // IO due to more compact representation may easily outweigh more probing.
     // Tuning probing sequence could be also a thing: currently we use linear probing, since it is the
     // fastest, and also has spatial locality -- consequent probes are one-after-another, which is beneficial
     // given probing is done over IO-backed storage. But linear probing is also more susceptible to clustering,
@@ -919,7 +923,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     //  (key: NO_VALUE, value != NO_VALUE)   = 'tombstone', i.e. deleted slot (key-value pair was inserted and removed)
 
 
-    public HashMapAlgo(float loadFactor) {
+    private HashMapAlgo(float loadFactor) {
       this.loadFactor = loadFactor;
     }
 
@@ -1010,16 +1014,23 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         }
       }
 
-      //MAYBE RC: it could be there are not-so-many alive entries, but a lot of tombstones, and no free slots remain.
-      // This is because in the current design we never clear tombstones: during segment split we copy half of alive
-      // entries to a new segment, leaving tombstones in old one -- but we never clean the tombstones in the old segment.
-      // Tombstones are somewhat 'cleaned' by reusing their slots for new records, but this is stochastic, and could be
-      // not very effective
+      //probing sequence went through all the table: i.e. table is full -- but maybe there are tombstones to replace?
+
+      //TODO RC: In the current design we never clear tombstones: during segment split we copy half of alive entries
+      // to a new segment, but we leave the tombstones in old one -- hence, we never clean the tombstones in the old
+      // segment. Tombstones are somewhat 'cleaned' by reusing their slots for new records, but this is stochastic,
+      // and could be not very effective.
+      // Hence, in the current design it could be there are not-so-many alive entries, but a lot of tombstones -- which
+      // deteriorates performance.
+      // The simplest solution would be to prune the tombstones on segment split in old segment also: currently we copy
+      // ~1/2 alive entries in the new segment -- instead we should copy _all_ alive entries into memory buffer first,
+      // clean the old segment entirely, and copy the entries from in-memory buffer into old/new segments afterwards.
+
       if (aliveValues(table) == 0) {
         //If there is 0 alive records => it is OK to clear all the tombstones.
-        // We can't clear all tombstones while there alive entries because such cleaning breaks lookup: we treat
+        // We can't clear all tombstones while alive entries exist because such a cleaning breaks lookup: we treat
         // free slots and tombstones differently during the probing -- continue to probe over tombstones, but stop
-        // on free slots. Converting tombstone to free slot could stop probing earlier than it should stop, thus
+        // on free slots. Converting tombstone to free slot could stop the probing earlier than it should stop, thus
         // making some existing entries unreachable.
         // But if there are no alive entries anymore -- we finally _can_ clear everything without breaking anything!
 
@@ -1033,11 +1044,22 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         return put(table, key, value);
       }
 
+      if (firstTombstoneIndex != -1) {
+        //Probing sequence is terminated if:
+        // 1) key is found
+        // 2) free slot is found
+        // 3) no more slots to look for key -- all slots was visited (=key is definitely absent in the map)
+        // So, if we scan all the entries and not found a key, but we have found a tombstone along the way
+        //  => we can replace it with the entry at hand:
+        table.updateEntry(firstTombstoneIndex, key, value);
+        incrementAliveValues(table);
+        return true;
+      }
 
       //Table must be resized well before such a condition occurs!
       throw new AssertionError(
-        "Table is full: all " + capacity + " items were traversed, but no free slot found" +
-        "table.aliveEntries: " + table.aliveEntriesCount() + ", table: " + table
+        "Table is full: all " + capacity + " items were traversed, but no free slot found, " +
+        "table: " + table
       );
     }
 
@@ -1178,6 +1200,29 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
       if (value == NO_VALUE) {
         throw new IllegalArgumentException(paramName + " can't be = " + NO_VALUE + " -- it is special value used as NO_VALUE");
       }
+    }
+  }
+
+  private record BufferSourceOverMMappedFileStorage(@NotNull MMappedFileStorage storage) implements BufferSource {
+    @Override
+    public @NotNull ByteBuffer slice(long offsetInFile,
+                                     int length) throws IOException {
+      ByteBuffer buffer = storage.pageByOffset(offsetInFile).rawPageBuffer();
+      int offsetInPage = storage.toOffsetInPage(offsetInFile);
+      return buffer.slice(offsetInPage, length)
+        .order(buffer.order());
+    }
+
+    @Override
+    public int getInt(long offsetInFile) throws IOException {
+      ByteBuffer buffer = storage.pageByOffset(offsetInFile).rawPageBuffer();
+      int offsetInPage = storage.toOffsetInPage(offsetInFile);
+      return buffer.getInt(offsetInPage);
+    }
+
+    @Override
+    public String toString() {
+      return "BufferSourceOverMMappedFileStorage{" + storage + '}';
     }
   }
 }

@@ -2,10 +2,7 @@
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
-import com.intellij.coverage.CoverageBundle;
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageLogger;
-import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.*;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -53,8 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
+import javax.swing.event.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -172,6 +168,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         enterSelected(true);
       }
     });
+    addLoggingListeners();
   }
 
   private void resetIfAllFiltered(AbstractTreeNode<?> root, ActionToolbar actionToolbar) {
@@ -235,6 +232,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
               called = true;
               setWidth(nodeRoot);
               resetIfAllFiltered(nodeRoot, actionToolbar);
+              logTotalCoverage(nodeRoot);
             }
           }
         }
@@ -438,6 +436,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (element == null) return;
     if (myModel.isLeaf(path.getLastPathComponent())) {
       if (element.canNavigate()) {
+        CoverageLogger.logNavigation(myProject);
         element.navigate(true);
       }
       return;
@@ -486,6 +485,44 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private void resetView() {
     myTreeStructure.reset();
     ApplicationManager.getApplication().executeOnPooledThread(() -> myModel.reset(true));
+  }
+
+  private void addLoggingListeners() {
+    myTable.getTree().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        CoverageLogger.logTreeNodeSelected(myProject);
+      }
+    });
+    myTable.getTree().addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        logToggle(event, true);
+      }
+
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+        logToggle(event, false);
+      }
+
+      private void logToggle(TreeExpansionEvent event, boolean expanded) {
+        AbstractTreeNode<?> treeNode = getLast(event.getPath());
+        if (treeNode == null) return;
+        boolean isRoot = myModel.getRoot() == treeNode;
+        CoverageLogger.logTreeNodeExpansionToggle(myProject, isRoot, expanded);
+      }
+    });
+  }
+
+  private void logTotalCoverage(AbstractTreeNode<?> root) {
+    for (int column = 1; column < myModel.getColumnCount(); column++) {
+      String columnName = myModel.getColumnName(column);
+      Object valueAt = myModel.getValueAt(root, column);
+      if (valueAt instanceof String s) {
+        PercentageRecord percentage = PercentageParser.parse(s);
+        CoverageLogger.logCoverageMetrics(myProject, columnName, percentage.getPercentage(), percentage.getTotal());
+      }
+    }
   }
 
   private final class FlattenPackagesAction extends ToggleAction {

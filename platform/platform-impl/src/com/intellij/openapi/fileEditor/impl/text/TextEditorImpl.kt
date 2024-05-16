@@ -34,7 +34,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -45,7 +44,6 @@ import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import java.util.function.Consumer
 import javax.swing.JComponent
-import kotlin.coroutines.EmptyCoroutineContext
 
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
 private val TEXT_EDITOR_CUSTOMIZER_EP: ExtensionPointName<TextEditorCustomizer> = ExtensionPointName("com.intellij.textEditorCustomizer")
@@ -98,7 +96,7 @@ open class TextEditorImpl @Internal constructor(
       for (extension in TEXT_EDITOR_CUSTOMIZER_EP.filterableLazySequence()) {
         try {
           val customizer = extension.instance ?: continue
-          val scope = asyncLoader.coroutineScope.namedChildScope(extension.implementationClassName)
+          val scope = asyncLoader.coroutineScope.childScope(extension.implementationClassName)
           scope.attachAsChildTo((project as ComponentManagerImpl).pluginCoroutineScope(customizer::class.java.classLoader))
           scope.launch {
             customizer.execute(textEditor = this@TextEditorImpl)

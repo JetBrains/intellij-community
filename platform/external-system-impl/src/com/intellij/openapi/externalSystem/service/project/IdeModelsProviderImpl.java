@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,11 +21,13 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalRootProjectPath;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isRelated;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 import static com.intellij.openapi.util.text.StringUtil.*;
 
@@ -87,10 +88,10 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   }
 
   protected Iterable<String> suggestModuleNameCandidates(@NotNull ModuleData module) {
-    ExternalProjectSettings settings = getSettings(myProject,
-                                                   module.getOwner()).getLinkedProjectSettings(module.getLinkedExternalProjectPath());
-    char delimiter = settings != null && !settings.isUseQualifiedModuleNames() ? '-' : '.';
-    return new ModuleNameGenerator(module, delimiter).generate();
+    var settings = ExternalSystemApiUtil.getSettings(myProject, module.getOwner());
+    var projectSettings = settings.getLinkedProjectSettings(module.getLinkedExternalProjectPath());
+    var delimiter = projectSettings != null && !projectSettings.isUseQualifiedModuleNames() ? "-" : ".";
+    return ModuleNameGenerator.generate(module, delimiter);
   }
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
@@ -269,89 +270,5 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @NotNull
   public List<Module> getAllDependentModules(@NotNull Module module) {
     return ModuleUtilCore.getAllDependentModules(module);
-  }
-
-  private static class ModuleNameGenerator {
-    private static final int MAX_FILE_DEPTH = 3;
-    private static final int MAX_NUMBER_SEQ = 2;
-    private final ModuleData myModule;
-    private final char myDelimiter;
-
-    ModuleNameGenerator(@NotNull ModuleData module, char delimiter) {
-      myModule = module;
-      myDelimiter = delimiter;
-    }
-
-    Iterable<String> generate() {
-      List<String> names = new ArrayList<>();
-      String prefix = myModule.getGroup();
-      File modulePath = new File(myModule.getLinkedExternalProjectPath());
-      if (modulePath.isFile()) {
-        modulePath = modulePath.getParentFile();
-      }
-
-      if (prefix == null || startsWith(myModule.getInternalName(), prefix)) {
-        names.add(myModule.getInternalName());
-      }
-      else {
-        names.add(myModule.getInternalName());
-        names.add(prefix + myDelimiter + myModule.getInternalName());
-      }
-
-      String name = names.get(0);
-      List<String> pathParts = FileUtil.splitPath(FileUtil.toSystemDependentName(modulePath.getPath()));
-      StringBuilder nameBuilder = new StringBuilder();
-      String duplicateCandidate = name;
-      for (int i = pathParts.size() - 1, j = 0; i >= 0 && j < MAX_FILE_DEPTH; i--, j++) {
-        String part = pathParts.get(i);
-
-        // do not add prefix which was already included into the name (e.g. as a result of deduplication on the external system side)
-        boolean isAlreadyIncluded = false;
-        if (!duplicateCandidate.isEmpty()) {
-          if (duplicateCandidate.equals(part) ||
-              duplicateCandidate.endsWith(myDelimiter + part) ||
-              duplicateCandidate.endsWith('_' + part)) {
-            j--;
-            duplicateCandidate = trimEnd(trimEnd(trimEnd(duplicateCandidate, part), myDelimiter), '_');
-            isAlreadyIncluded = true;
-          }
-          else {
-            if ((name.startsWith(part) || i > 1 && name.startsWith(pathParts.get(i - 1) + myDelimiter + part))) {
-              j--;
-              isAlreadyIncluded = true;
-            }
-            else {
-              duplicateCandidate = "";
-            }
-          }
-        }
-        if (isAlreadyIncluded) continue;
-
-        nameBuilder.insert(0, part + myDelimiter);
-        names.add(nameBuilder + name);
-      }
-
-      String namePrefix = ContainerUtil.getLastItem(names);
-      return new Iterable<>() {
-        @NotNull
-        @Override
-        public Iterator<String> iterator() {
-          return ContainerUtil.concatIterators(names.iterator(), new Iterator<>() {
-            int current = 0;
-
-            @Override
-            public boolean hasNext() {
-              return current < MAX_NUMBER_SEQ;
-            }
-
-            @Override
-            public String next() {
-              current++;
-              return namePrefix + '~' + current;
-            }
-          });
-        }
-      };
-    }
   }
 }

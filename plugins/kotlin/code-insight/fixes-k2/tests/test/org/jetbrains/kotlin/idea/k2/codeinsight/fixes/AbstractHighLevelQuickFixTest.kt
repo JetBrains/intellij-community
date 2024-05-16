@@ -52,10 +52,6 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
         }
     }
 
-    override val shouldCheckIntentionActionType: Boolean
-        // All quickfixes from the FIR plugin are guaranteed to be of type QuickFixActionBase (see HLDiagnosticFixFactory)
-        get() = true
-
     // TODO: Enable these as more actions/inspections are enabled, and/or add more FIR-specific directives
     override fun checkForUnexpectedErrors() {}
 

@@ -10,16 +10,15 @@ UFile (package = ) [public abstract interface Callback {...]
             UParameter (name = factory) [@org.jetbrains.annotations.NotNull var factory: kotlin.jvm.functions.Function0<? extends T>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Void
-                UThrowExpression [throw <init>()] : PsiType:Void
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:UnsupportedOperationException
+                UThrowExpression [throw UnsupportedOperationException()] : PsiType:Void
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [UnsupportedOperationException()] : PsiType:UnsupportedOperationException
                         UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] : PsiType:UnsupportedOperationException
+                        USimpleNameReferenceExpression (identifier = UnsupportedOperationException, resolvesTo = PsiClass: UnsupportedOperationException) [UnsupportedOperationException]
         UMethod (name = Model) [public fun Model() {...}]
             UBlockExpression [{...}]
                 UBlockExpression [{...}] : PsiType:Unit
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [crashMe(Callback.java, { ...})] : PsiType:Unit
                         UIdentifier (Identifier (crashMe)) [UIdentifier (Identifier (crashMe))]
-                        USimpleNameReferenceExpression (identifier = crashMe, resolvesTo = null) [crashMe] : PsiType:Unit
                         UQualifiedReferenceExpression [Callback.java] : PsiType:Class<Callback>
                             UClassLiteralExpression [Callback] : PsiType:KClass<Callback>
                                 USimpleNameReferenceExpression (identifier = Callback) [Callback]
@@ -33,10 +32,10 @@ UFile (package = ) [public abstract interface Callback {...]
                                                 UParameter (name = throwable) [@org.jetbrains.annotations.NotNull var throwable: java.lang.Throwable]
                                                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                                 UBlockExpression [{...}] : PsiType:Void
-                                                    UThrowExpression [throw <init>("")] : PsiType:Void
-                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("")] : PsiType:UnsupportedOperationException
+                                                    UThrowExpression [throw UnsupportedOperationException("")] : PsiType:Void
+                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [UnsupportedOperationException("")] : PsiType:UnsupportedOperationException
                                                             UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsupportedOperationException) [<init>] : PsiType:UnsupportedOperationException
+                                                            USimpleNameReferenceExpression (identifier = UnsupportedOperationException, resolvesTo = PsiClass: UnsupportedOperationException) [UnsupportedOperationException]
                                                             UPolyadicExpression (operator = +) [""] : PsiType:String
                                                                 ULiteralExpression (value = "") [""] : PsiType:String
                                             UMethod (name = ) [private fun () = UastEmptyExpression]

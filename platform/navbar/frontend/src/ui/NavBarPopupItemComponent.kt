@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend.ui
 
-import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarItemPresentationData
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.SimpleColoredComponent
@@ -13,13 +13,13 @@ import java.awt.Dimension
 import java.awt.Font
 
 internal class NavBarPopupItemComponent(
-  presentation: NavBarItemPresentation,
+  presentation: NavBarItemPresentationData,
   selected: Boolean,
   floating: Boolean,
 ) : SimpleColoredComponent() {
 
   init {
-    val attributes = presentation.textAttributes
+    val attributes = presentation.textAttributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES
     val bg = navBarItemBackground(selected, true)
     val fg: Color? = if (ExperimentalUI.isNewUI()) {
       when {

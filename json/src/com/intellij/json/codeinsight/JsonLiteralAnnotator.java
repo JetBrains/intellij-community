@@ -29,6 +29,11 @@ public class JsonLiteralAnnotator implements Annotator {
   }
 
   @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
+  @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     List<JsonLiteralChecker> extensions = JsonLiteralChecker.EP_NAME.getExtensionList();
     if (element instanceof JsonReferenceExpression) {
@@ -59,7 +64,7 @@ public class JsonLiteralAnnotator implements Annotator {
     }
     else if (element instanceof JsonNumberLiteral) {
       String text = null;
-      for (JsonLiteralChecker checker: extensions) {
+      for (JsonLiteralChecker checker : extensions) {
         if (!checker.isApplicable(element)) continue;
         if (text == null) {
           text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);

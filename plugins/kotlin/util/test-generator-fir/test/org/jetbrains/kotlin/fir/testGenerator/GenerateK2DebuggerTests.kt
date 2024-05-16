@@ -4,9 +4,10 @@ package org.jetbrains.kotlin.fir.testGenerator
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 
 internal fun MutableTWorkspace.generateK2DebuggerTests() {
-    testGroup("jvm-debugger/test/k2", testDataPath = "../testData") {
+    testGroup("jvm-debugger/test/k2", testDataPath = "../testData", category = DEBUGGER) {
 
         listOf(
             AbstractK2IdeK1CodeKotlinSteppingTest::class,
@@ -27,6 +28,11 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             // TODO support "evaluation/multiplatform"
+        }
+
+        testClass<AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest> {
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
         testClass<AbstractK2SelectExpressionForDebuggerTest> {

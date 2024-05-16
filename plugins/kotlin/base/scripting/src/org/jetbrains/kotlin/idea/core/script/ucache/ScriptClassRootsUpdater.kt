@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -18,18 +19,14 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.psi.PsiManager
-import com.intellij.psi.createSmartPointer
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.k2ScriptingEnabled
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -39,6 +36,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
+
+val LOG = logger<ScriptClassRootsUpdater>()
 
 /**
  * Holder for [ScriptClassRootsCache].
@@ -53,7 +54,6 @@ import java.util.concurrent.atomic.AtomicReference
  * This will start indexing.
  * Also analysis cache will be cleared and changed opened script files will be reanalyzed.
  */
-
 abstract class ScriptClassRootsUpdater(
     val project: Project,
     val manager: CompositeScriptConfigurationManager,
@@ -63,7 +63,19 @@ abstract class ScriptClassRootsUpdater(
     private var invalidated: Boolean = false
     private var syncUpdateRequired: Boolean = false
     private val concurrentUpdates = AtomicInteger()
-    private val lock = CheckCanceledLock()
+    private val invalidationLock = ReentrantLock()
+    private val updateState = AtomicReference(UpdateState.NONE)
+
+    /**
+     * Represents the state of the [cache] update process.
+     */
+    private enum class UpdateState {
+        // nothing runs or is scheduled
+        NONE,
+        // update process is scheduled for the future
+        SCHEDULED,
+        // update process runs right now
+        RUNNING }
 
     abstract fun gatherRoots(builder: ScriptClassRootsBuilder)
 
@@ -90,7 +102,7 @@ abstract class ScriptClassRootsUpdater(
             }
         })
 
-        if (!k2ScriptingEnabled()) {
+        if (KotlinPluginModeProvider.isK1Mode()) {
             performUpdate(synchronous = false)
         }
     }
@@ -103,7 +115,7 @@ abstract class ScriptClassRootsUpdater(
      */
     @Suppress("UNUSED_PARAMETER")
     fun invalidate(file: VirtualFile, synchronous: Boolean = false) {
-        lock.withLock {
+        invalidationLock.withLock {
             // todo: record invalided files for some optimisations in update
             invalidate(synchronous)
         }
@@ -113,7 +125,7 @@ abstract class ScriptClassRootsUpdater(
      * @param synchronous Used from legacy FS cache only, don't use
      */
     fun invalidate(synchronous: Boolean = false) {
-        lock.withLock {
+        invalidationLock.withLock {
             checkHasTransactionToHappen()
             invalidated = true
             if (synchronous) {
@@ -123,7 +135,7 @@ abstract class ScriptClassRootsUpdater(
     }
 
     fun invalidateAndCommit() {
-        if (!k2ScriptingEnabled()) {
+        if (KotlinPluginModeProvider.isK1Mode()) {
             update { invalidate() }
         }
     }
@@ -174,20 +186,21 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun scheduleUpdateIfInvalid() {
-        lock.withLock {
+        val isSync = invalidationLock.withLock {
             invalidated.ifFalse { return }
             invalidated = false
 
-            val isSync = (syncUpdateRequired || isUnitTestMode()).also {
+            return@withLock (syncUpdateRequired || isUnitTestMode()).also {
                 it.ifTrue { syncUpdateRequired = false }
             }
-            performUpdate(synchronous = isSync)
         }
+        performUpdate(synchronous = isSync)
     }
 
     private var scheduledUpdate: BackgroundTaskUtil.BackgroundTask<*>? = null
 
     private fun performUpdate(synchronous: Boolean = false) {
+        if (KotlinPluginModeProvider.isK2Mode()) return
         val disposable = KotlinPluginDisposable.getInstance(project)
         if (disposable.disposed) return
 
@@ -200,20 +213,21 @@ abstract class ScriptClassRootsUpdater(
 
 
     private fun ensureUpdateScheduled(parentDisposable: Disposable) {
-        lock.withLock {
-            scheduledUpdate?.cancel()
-
+        if (updateState.compareAndSet(UpdateState.NONE, UpdateState.SCHEDULED)) {
             scheduledUpdate = BackgroundTaskUtil.submitTask(parentDisposable) {
-                doUpdate()
+                if (updateState.compareAndSet(UpdateState.SCHEDULED, UpdateState.RUNNING)) {
+                    doUpdate()
+                }
             }
         }
     }
 
     private fun updateSynchronously() {
-        lock.withLock {
+        val previousState = updateState.getAndSet(UpdateState.RUNNING)
+        if (previousState == UpdateState.SCHEDULED) {
             scheduledUpdate?.cancel()
-            doUpdate(false)
         }
+        doUpdate()
     }
 
     private fun doUpdate(underProgressManager: Boolean = true) {
@@ -276,6 +290,7 @@ abstract class ScriptClassRootsUpdater(
             }
         } finally {
             scheduledUpdate = null
+            updateState.set(UpdateState.NONE)
             concurrentUpdates.decrementAndGet()
         }
     }
@@ -299,8 +314,6 @@ abstract class ScriptClassRootsUpdater(
         filesToRemove: List<VirtualFile>
     ) {
         if (project.isDisposed) return
-
-        if (k2ScriptingEnabled()) return
 
         val builderSnapshot = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).getBuilderSnapshot()
         builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
@@ -351,36 +364,24 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun updateHighlighting(project: Project, filter: (VirtualFile) -> Boolean) {
-        if (!project.isOpen) return
-
-        val openFiles = FileEditorManager.getInstance(project).allEditors.mapNotNull { it.file }
-        val openedScripts = openFiles.filter(filter)
-
-        if (openedScripts.isEmpty()) return
-
         /**
          * Scripts guts are everywhere in the plugin code, without them some functionality does not work,
          * And with them some other fir plugin related is broken
          * As FIR plugin does not have scripts support yet, just disabling not working one for now
          */
         @Suppress("DEPRECATION")
-        if (project.isDisposed || project.service<FirPluginOracleService>().isFirPlugin()) return
+        if (!project.isOpen || project.service<FirPluginOracleService>().isFirPlugin()) return
+        // tests do not like sudden daemon restarts
+        if (ApplicationManager.getApplication().isUnitTestMode) return
 
-        val ktFiles = openedScripts.mapNotNull {
-            if (!it.isValid) return@mapNotNull null
+        val openFiles = FileEditorManager.getInstance(project).allEditors.mapNotNull { it.file }
+        val openedScripts = openFiles.filter(filter) 
 
-            val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile
-            ktFile?.createSmartPointer()
-        }
-        if (ktFiles.isNotEmpty()) {
-            scope.launch {
-                readAction {
-                    val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
-                    for (it in ktFiles) {
-                        val ktFile = it.element ?: continue
-                        daemonCodeAnalyzer.restart(ktFile) // only requires read action, do not move to EDT
-                    }
-                }
+        if (openedScripts.isEmpty()) return
+
+        openedScripts.forEach {
+            if (it.isValid) {
+                (PsiManager.getInstance(project).findFile(it) as? KtFile)?.let { ktFile -> DaemonCodeAnalyzer.getInstance(project).restart(ktFile) }
             }
         }
     }

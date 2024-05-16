@@ -1,21 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
 
-open class GetFromVersionControlAction : DumbAwareAction() {
+internal open class GetFromVersionControlAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val isEnabled = CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions()
     val presentation = e.presentation
@@ -35,7 +36,7 @@ open class GetFromVersionControlAction : DumbAwareAction() {
       }
     }
     else {
-      presentation.icon = if (ExperimentalUI.isNewUI() && (ActionPlaces.PROJECT_WIDGET_POPUP == e.place)) ExpUiIcons.Vcs.Vcs else null
+      presentation.icon = if (ExperimentalUI.isNewUI() && (ActionPlaces.PROJECT_WIDGET_POPUP == e.place)) PlatformVcsImplIcons.New.Vcs else null
     }
   }
 
@@ -50,6 +51,5 @@ open class GetFromVersionControlAction : DumbAwareAction() {
   }
 }
 
-class ProjectFromVersionControlAction : GetFromVersionControlAction() {}
-
-
+@InternalIgnoreDependencyViolation
+private class ProjectFromVersionControlAction : GetFromVersionControlAction()

@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.ui.ExperimentalUI
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
@@ -49,9 +50,9 @@ internal suspend fun importConfigIfNeeded(isHeadless: Boolean,
     euaDocumentDeferred = euaDocumentDeferred,
   )
 
-  if (ConfigImportHelper.isNewUser()) {
-    enableNewUi(logDeferred)
-
+  val isNewUser = ConfigImportHelper.isNewUser()
+  enableNewUi(logDeferred, isNewUser)
+  if (isNewUser) {
     if (isIdeStartupDialogEnabled) {
       log.info("Will enter initial app wizard flow.")
       val result = CompletableDeferred<Boolean>()
@@ -91,17 +92,21 @@ private suspend fun importConfig(args: List<String>,
   }
 }
 
-private suspend fun enableNewUi(logDeferred: Deferred<Logger>) {
-  if (System.getProperty("ide.experimental.ui") == null) {
-    try {
-      EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
+private suspend fun enableNewUi(logDeferred: Deferred<Logger>, isBackgroundSwitch: Boolean = false) {
+  try {
+    val shouldEnableNewUi = !EarlyAccessRegistryManager.getBoolean("ide.experimental.ui") && !EarlyAccessRegistryManager.getBoolean("moved.to.new.ui")
+    if (shouldEnableNewUi) {
+      EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true", "moved.to.new.ui" to "true"))
+      if (!isBackgroundSwitch) {
+        ExperimentalUI.forcedSwitchedUi = true
+      }
     }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      logDeferred.await().error(e)
-    }
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    logDeferred.await().error(e)
   }
 }
 
@@ -113,5 +118,5 @@ private suspend fun importConfigHeadless(configImportNeededDeferred: Deferred<Bo
   }
   // make sure we lock the dir before writing
   lockSystemDirsJob.join()
-  enableNewUi(logDeferred)
+  enableNewUi(logDeferred, true)
 }

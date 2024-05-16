@@ -9,7 +9,7 @@ public final class Test {
     public final fun setPNew(<set-?>: int) : void = UastEmptyExpression
     public fun Test(@org.jetbrains.annotations.NotNull @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN) pOld_deprecatedOnProperty: int, @org.jetbrains.annotations.NotNull pOld_deprecatedOnGetter: int, @org.jetbrains.annotations.NotNull pNew: int) = UastEmptyExpression
     @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN)
-    public fun getPOld_deprecatedOnProperty() : int = UastEmptyExpression
+    public final fun getPOld_deprecatedOnProperty() : int = UastEmptyExpression
     @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN)
-    public fun setPOld_deprecatedOnProperty(@org.jetbrains.annotations.NotNull <set-?>: int) : void = UastEmptyExpression
+    public final fun setPOld_deprecatedOnProperty(@org.jetbrains.annotations.NotNull <set-?>: int) : void = UastEmptyExpression
 }

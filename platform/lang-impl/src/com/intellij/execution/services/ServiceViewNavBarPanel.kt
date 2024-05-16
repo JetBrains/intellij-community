@@ -11,7 +11,6 @@ import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.frontend.ui.StaticNavBarPanel
 import com.intellij.platform.navbar.frontend.vm.NavBarVm
 import com.intellij.platform.navbar.frontend.vm.impl.NavBarVmImpl
-import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -126,9 +125,7 @@ internal class ServiceViewRootNavBarItem(
   }
 
   override val presentation: NavBarItemPresentation = NavBarItemPresentation(
-    AllIcons.Nodes.Services, "", null,
-    REGULAR_ATTRIBUTES,
-    false
+    icon = AllIcons.Nodes.Services, text = "",
   )
 
   override suspend fun children(): List<NavBarVmItem> {
@@ -154,7 +151,7 @@ private class ServiceViewNavBarItem(
   override val presentation: NavBarItemPresentation = run {
     val icon = item.getViewDescriptor().getPresentation().getIcon(false)
     val text = ServiceViewDragHelper.getDisplayName(item.getViewDescriptor().getPresentation())
-    NavBarItemPresentation(icon, text, null, REGULAR_ATTRIBUTES, false)
+    NavBarItemPresentation(icon, text)
   }
 
   override suspend fun children(): List<NavBarVmItem> {

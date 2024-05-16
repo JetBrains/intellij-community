@@ -4,6 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -20,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class JavaPsiPatternUtil {
+
+  private static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
+
   /**
    * @param expression expression to search pattern variables in
    * @return list of pattern variables declared within an expression that could be visible outside of given expression.
@@ -201,14 +205,117 @@ public final class JavaPsiPatternUtil {
   }
 
   @Contract("null,_,_ -> false")
-  public static boolean isUnconditionalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean forDomination) {
+  public static boolean isUnconditionalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean forDominationOfDeconstructionPatternType) {
     PsiPrimaryPattern unconditionalPattern = findUnconditionalPattern(pattern);
     if (unconditionalPattern == null) return false;
+    PsiType patternType = getPatternType(unconditionalPattern);
     if (unconditionalPattern instanceof PsiDeconstructionPattern) {
-      return forDomination && dominates(getPatternType(unconditionalPattern), type);
+      return forDominationOfDeconstructionPatternType && dominates(patternType, type);
     }
-    else if (unconditionalPattern instanceof PsiTypeTestPattern || unconditionalPattern instanceof PsiUnnamedPattern) {
-      return dominates(getPatternType(unconditionalPattern), type);
+    else if ((unconditionalPattern instanceof PsiTypeTestPattern ||
+              unconditionalPattern instanceof PsiUnnamedPattern)) {
+      return isUnconditionallyExactForType(pattern, type, patternType);
+    }
+    return false;
+  }
+
+  public static boolean isUnconditionallyExactForType(@NotNull PsiElement context, @NotNull PsiType type, PsiType patternType) {
+    type = TypeConversionUtil.erasure(type);
+    if ((type instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
+        PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context)) {
+      if (type.equals(patternType)) return true;
+      if (type instanceof PsiPrimitiveType && patternType instanceof PsiPrimitiveType) {
+        return isExactPrimitiveWideningConversion(type, patternType);
+      }
+      else if (!(type instanceof PsiPrimitiveType)) {
+        return false;
+      }
+      else {
+        PsiClassType boxedType = ((PsiPrimitiveType)type).getBoxedType(context);
+        return dominates(patternType, boxedType);
+      }
+    }
+    else {
+      return dominates(patternType, type);
+    }
+  }
+
+  /**
+   * Returns the promoted type for a given context, type, and pattern type, according to 5.7.1
+   *
+   * @param context     the context element
+   * @param type        the type to be promoted
+   * @param patternType the pattern type to compare with
+   * @return the promoted type, or the original type if no promotion is necessary
+   */
+  @NotNull
+  public static PsiType getExactlyPromotedType(@NotNull PsiElement context, @NotNull PsiType type, @NotNull PsiType patternType) {
+    if (type.equals(patternType)) return type;
+    if ((type.equals(PsiTypes.byteType()) ||
+         type.equals(PsiTypes.shortType())) &&
+        patternType.equals(PsiTypes.charType())) {
+      return PsiTypes.intType();
+    }
+    else if ((patternType.equals(PsiTypes.byteType()) ||
+              patternType.equals(PsiTypes.shortType())) &&
+             type.equals(PsiTypes.charType())) {
+      return PsiTypes.intType();
+    }
+    else if ((type.equals(PsiTypes.intType()) &&
+              patternType.equals(PsiTypes.floatType())) ||
+             (type.equals(PsiTypes.floatType()) &&
+              patternType.equals(PsiTypes.intType()))) {
+      return PsiTypes.doubleType();
+    }
+    else if ((type.equals(PsiTypes.longType()) &&
+              patternType.equals(PsiTypes.floatType())) ||
+             (type.equals(PsiTypes.floatType()) &&
+              patternType.equals(PsiTypes.longType())) ||
+
+             (type.equals(PsiTypes.longType()) &&
+              patternType.equals(PsiTypes.doubleType())) ||
+             (type.equals(PsiTypes.doubleType()) &&
+              patternType.equals(PsiTypes.longType()))) {
+      return PsiType.getTypeByName(JAVA_MATH_BIG_DECIMAL, context.getProject(), context.getResolveScope());
+    }
+    else {
+      return TypeConversionUtil.isAssignable(patternType, type) ? patternType : type;
+    }
+  }
+
+  /**
+   * Checks if the given type is an exact primitive widening conversion of the pattern type according to 5.1.2
+   *
+   * @param type         the type to check
+   * @param patternType  the pattern type to compare with
+   * @return true if the given type is an exact primitive widening conversion of the pattern type, false otherwise
+   */
+  public static boolean isExactPrimitiveWideningConversion(@NotNull PsiType type, @NotNull PsiType patternType) {
+    if (type.equals(PsiTypes.byteType())) {
+      return patternType.equals(PsiTypes.shortType()) ||
+             patternType.equals(PsiTypes.intType()) ||
+             patternType.equals(PsiTypes.longType()) ||
+             patternType.equals(PsiTypes.floatType()) ||
+             patternType.equals(PsiTypes.doubleType());
+    }
+    if (type.equals(PsiTypes.shortType())) {
+      return patternType.equals(PsiTypes.intType()) ||
+             patternType.equals(PsiTypes.longType()) ||
+             patternType.equals(PsiTypes.floatType()) ||
+             patternType.equals(PsiTypes.doubleType());
+    }
+    if (type.equals(PsiTypes.charType())) {
+      return patternType.equals(PsiTypes.intType()) ||
+             patternType.equals(PsiTypes.longType()) ||
+             patternType.equals(PsiTypes.floatType()) ||
+             patternType.equals(PsiTypes.doubleType());
+    }
+    if (type.equals(PsiTypes.intType())) {
+      return patternType.equals(PsiTypes.longType()) ||
+             patternType.equals(PsiTypes.doubleType());
+    }
+    if (type.equals(PsiTypes.floatType())) {
+      return patternType.equals(PsiTypes.doubleType());
     }
     return false;
   }
@@ -234,7 +341,7 @@ public final class JavaPsiPatternUtil {
     return true;
   }
 
-  public static boolean dominates(@Nullable PsiType who, @Nullable PsiType overWhom) {
+  private static boolean dominates(@Nullable PsiType who, @Nullable PsiType overWhom) {
     if (who == null || overWhom == null) return false;
     if (who.getCanonicalText().equals(overWhom.getCanonicalText())) return true;
     overWhom = TypeConversionUtil.erasure(overWhom);

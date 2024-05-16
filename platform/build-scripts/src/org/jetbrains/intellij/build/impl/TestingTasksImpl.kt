@@ -1055,7 +1055,8 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
   val serverUrl = System.getProperty("intellij.test.discovery.url")
   val token = System.getProperty("intellij.test.discovery.token")
   messages.info("Trying to upload ${file} into ${serverUrl}.")
-  if (file != null && File(file).exists()) {
+  val path = file?.let { Path.of(it) }
+  if (path != null && Files.exists(path)) {
     if (serverUrl == null) {
       messages.warning("""
         Test discovery server url is not defined, but test discovery capturing enabled. 
@@ -1074,8 +1075,8 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
       map["teamcity-build-project-name"] = System.getenv("TEAMCITY_PROJECT_NAME")
       map["branch"] = System.getProperty("teamcity.build.branch")?.takeIf(String::isNotEmpty) ?: "master"
       map["project"] = System.getProperty("intellij.test.discovery.project")?.takeIf(String::isNotEmpty) ?: "intellij"
-      map["checkout-root-prefix"] = System.getProperty("intellij.build.test.discovery.checkout.root.prefix")
-      uploader.upload(Path.of(file), map)
+      map["checkout-root-prefix"] = System.getProperty("intellij.build.test.discovery.checkout.root.prefix") ?: ""
+      uploader.upload(path, map)
     }
     catch (e: Exception) {
       messages.error(e.message!!, e)

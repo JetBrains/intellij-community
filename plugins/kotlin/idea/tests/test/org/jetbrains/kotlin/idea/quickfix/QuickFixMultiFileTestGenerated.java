@@ -2156,6 +2156,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
             }
 
+            @TestMetadata("extendsFromJava.before.Main.java")
+            public void testExtendsFromJava() throws Exception {
+                runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/extendsFromJava.before.Main.java");
+            }
+
             @TestMetadata("finalJavaSupertype.before.Main.kt")
             public void testFinalJavaSupertype() throws Exception {
                 runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/finalJavaSupertype.before.Main.kt");

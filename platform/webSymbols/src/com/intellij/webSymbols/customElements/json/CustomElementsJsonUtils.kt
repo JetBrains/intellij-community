@@ -68,7 +68,7 @@ fun ClassMethod.buildFunctionType(): List<WebSymbolTypeSupport.TypeReference> =
   if (parameters.isEmpty() && `return` == null)
     emptyList()
   else
-    listOf(WebSymbolTypeSupport.TypeReference(
+    listOf(WebSymbolTypeSupport.TypeReference.create(
       null,
       "(" + parameters.asSequence()
         .mapIndexed { index, parameter ->
@@ -79,5 +79,5 @@ fun ClassMethod.buildFunctionType(): List<WebSymbolTypeSupport.TypeReference> =
 
 fun Type.mapToReferenceList(): List<WebSymbolTypeSupport.TypeReference> =
   this.text?.let {
-    listOf(WebSymbolTypeSupport.TypeReference(null, it))
+    listOf(WebSymbolTypeSupport.TypeReference.create(null, it))
   } ?: emptyList()

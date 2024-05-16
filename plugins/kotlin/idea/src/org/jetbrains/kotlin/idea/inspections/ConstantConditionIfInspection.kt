@@ -11,7 +11,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
+import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -66,7 +66,7 @@ private class SimplifyFix(
 
     override fun applyFix(ifExpression: KtIfExpression) {
         val branch = ifExpression.branch(conditionValue)?.let {
-            if (keepBraces) it else it.unwrapBlockOrParenthesis()
+            if (keepBraces) it else it.getSingleUnwrappedStatementOrThis()
         } ?: return
         ifExpression.replaceWithBranch(branch, isUsedAsExpression, keepBraces)
     }

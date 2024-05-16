@@ -98,8 +98,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   @Override
   public @Nullable ObjectStubTree<?> readFromVFile(@NotNull Project project, final @NotNull VirtualFile vFile) {
     if ((DumbService.getInstance(project).isDumb() &&
-         (!FileBasedIndex.isIndexAccessDuringDumbModeEnabled() ||
-          FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != DumbModeAccessType.RELIABLE_DATA_ONLY)) ||
+         FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != DumbModeAccessType.RELIABLE_DATA_ONLY) ||
         NoAccessDuringPsiEvents.isInsideEventProcessing()) {
       return null;
     }

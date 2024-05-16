@@ -13,30 +13,28 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.JvmPsiTypeConverterImpl;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
-
-  public PsiTypeControl(final DomWrapper<String> domWrapper, final boolean commitOnEveryChange) {
+public class PsiTypeControl extends JavaControlBase<PsiTypePanel> {
+  public PsiTypeControl(DomWrapper<String> domWrapper, boolean commitOnEveryChange) {
     super(domWrapper, commitOnEveryChange);
   }
 
   @Override
   protected @NotNull String getValue() {
-    final String rawValue = super.getValue();
+    String rawValue = super.getValue();
     try {
-      final PsiType psiType = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(rawValue, null);
-      final String s = JvmPsiTypeConverterImpl.convertToString(psiType);
+      PsiType psiType = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(rawValue, null);
+      String s = JvmPsiTypeConverterImpl.convertToString(psiType);
       if (s != null) {
         return s;
       }
     }
-    catch (IncorrectOperationException ignored) {
-    }
+    catch (IncorrectOperationException ignored) { }
     return rawValue;
   }
 
   @Override
   protected void setValue(String value) {
-    final PsiType type = JvmPsiTypeConverterImpl.convertFromString(value, new AbstractConvertContext() {
+    PsiType type = JvmPsiTypeConverterImpl.convertFromString(value, new AbstractConvertContext() {
       @Override
       public @NotNull DomElement getInvocationElement() {
         return getDomElement();
@@ -49,19 +47,17 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
   }
 
   @Override
-  protected EditorTextField getEditorTextField(final @NotNull PsiTypePanel component) {
+  protected EditorTextField getEditorTextField(@NotNull PsiTypePanel component) {
     return ((ReferenceEditorWithBrowseButton)component.getComponent(0)).getEditorTextField();
   }
 
   @Override
-  protected PsiTypePanel createMainComponent(PsiTypePanel boundedComponent, final Project project) {
+  protected PsiTypePanel createMainComponent(PsiTypePanel boundedComponent, Project project) {
     if (boundedComponent == null) {
       boundedComponent = new PsiTypePanel();
     }
-    return PsiClassControl.initReferenceEditorWithBrowseButton(boundedComponent,
-                                                               new ReferenceEditorWithBrowseButton(null, project,
-                                                                                                   s -> JavaReferenceEditorUtil.createTypeDocument(s, project), ""), this);
+    return initReferenceEditorWithBrowseButton(
+      boundedComponent,
+      new ReferenceEditorWithBrowseButton(null, project, s -> JavaReferenceEditorUtil.createTypeDocument(s, project), ""), this);
   }
-
-
 }

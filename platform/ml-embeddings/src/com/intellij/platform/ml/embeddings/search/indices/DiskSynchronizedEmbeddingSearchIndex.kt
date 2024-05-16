@@ -104,6 +104,11 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, override var limit: I
     }
   }
 
+  override suspend fun offload() = lock.write {
+    indexToId = CollectionFactory.createSmallMemoryFootprintMap()
+    idToEntry = CollectionFactory.createSmallMemoryFootprintMap()
+  }
+
   override suspend fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredText> = lock.read {
     return@read idToEntry.mapValues { it.value.embedding }.findClosest(searchEmbedding, topK, similarityThreshold)
   }

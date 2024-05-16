@@ -3,6 +3,7 @@ package com.intellij.openapi.progress
 
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.testFramework.common.timeoutRunBlocking
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -28,16 +29,14 @@ class BlockingContextTest : CancellationTest() {
   fun cancellation(): Unit = timeoutRunBlocking {
     launch {
       val t = object : Throwable() {}
-      val ce = assertThrows<PceCancellationException> {
+      val ce = assertThrows<CancellationException> {
         blockingContext {
           testNoExceptions()
           this@launch.cancel("", t)
           testExceptionsAndNonCancellableSection()
         }
       }
-      //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
-      @Suppress("AssertBetweenInconvertibleTypes")
-      assertSame(t, ce.cause.cause?.cause)
+      assertSame(t, ce.cause?.cause)
     }
   }
 

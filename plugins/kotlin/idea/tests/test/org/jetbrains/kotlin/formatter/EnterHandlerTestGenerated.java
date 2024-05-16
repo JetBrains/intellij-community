@@ -653,6 +653,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/controlFlowConstructions/Try2.after.kt");
             }
 
+            @TestMetadata("WhenEntryArrow.after.kt")
+            public void testWhenEntryArrow() throws Exception {
+                runTest("testData/editor/enterHandler/controlFlowConstructions/WhenEntryArrow.after.kt");
+            }
+
             @TestMetadata("WhenWithCondition.after.kt")
             public void testWhenWithCondition() throws Exception {
                 runTest("testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition.after.kt");

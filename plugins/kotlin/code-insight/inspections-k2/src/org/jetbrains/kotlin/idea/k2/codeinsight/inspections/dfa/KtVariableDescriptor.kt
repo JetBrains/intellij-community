@@ -11,6 +11,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
+import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -150,10 +152,19 @@ class KtVariableDescriptor(
                     // top-level declaration
                     return varFactory.createVariableValue(symbol.variableDescriptor(), null)
                 }
-                val classOrObject = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
-                if (classOrObject != null) {
-                    val dfType = TypeConstraints.exactClass(classOrObject.classDef()).instanceOf().asDfType()
-                    qualifier = varFactory.createVariableValue(KtThisDescriptor(dfType))
+                val receiverParameter = (expr.resolveCall()?.singleVariableAccessCall()
+                    ?.partiallyAppliedSymbol?.dispatchReceiver as? KtImplicitReceiverValue)?.symbol
+                        as? KtReceiverParameterSymbol
+                val functionLiteral = receiverParameter?.psi as? KtFunctionLiteral
+                val type = receiverParameter?.type
+                if (functionLiteral != null && type != null) {
+                    qualifier = varFactory.createVariableValue(KtLambdaThisVariableDescriptor(functionLiteral, type.toDfType()))
+                } else {
+                    val classOrObject = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
+                    if (classOrObject != null) {
+                        val dfType = TypeConstraints.exactClass(classOrObject.classDef()).instanceOf().asDfType()
+                        qualifier = varFactory.createVariableValue(KtThisDescriptor(dfType))
+                    }
                 }
             }
             if (qualifier != null) {

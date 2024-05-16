@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages;
+
 import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +10,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * Analog of {@link com.intellij.util.io.DataExternalizer}, but with {@link ByteBuffer} instead of
+ * Analog of {@link DataExternalizer}, but with {@link ByteBuffer} instead of
  * {@link java.io.InputStream} and {@link java.io.OutputStream}
  */
 public interface DataExternalizerEx<T> {
@@ -17,6 +18,20 @@ public interface DataExternalizerEx<T> {
   T read(@NotNull ByteBuffer input) throws IOException;
 
   KnownSizeRecordWriter writerFor(@NotNull T value) throws IOException;
+
+  /** @return true if all the values are serialized into the same number of bytes */
+  default boolean isRecordSizeConstant() {
+    return recordSizeIfConstant() > 0;
+  }
+
+  /**
+   * if positive => all the values are serialized into the same number of bytes.
+   * Apt {@link KnownSizeRecordWriter} must always return the same record size, regardless of the value
+   */
+  default int recordSizeIfConstant() {
+    return -1;
+  }
+
 
   /**
    * Adapts old-school {@link KeyDescriptor} to new {@link KeyDescriptorEx}.
@@ -28,6 +43,11 @@ public interface DataExternalizerEx<T> {
    * Still, one could do better by using more 'idiomatic' API -- but it takes more effort.
    */
   static <K> DataExternalizerEx<K> adapt(@NotNull DataExternalizer<K> oldSchoolDescriptor) {
+
+    if (oldSchoolDescriptor instanceof @NotNull KeyDescriptor<K>) {
+      return KeyDescriptorEx.adapt((KeyDescriptor<K>)oldSchoolDescriptor);
+    }
+
     //Do not wrap, if oldSchoolDescriptor already implements new interface
     // -> allows for 'bilingual' implementation (that implements both old&new
     // ifaces) to work efficiently
@@ -83,6 +103,7 @@ public interface DataExternalizerEx<T> {
   //MAYBE RC: append marker-interface, like ByteArrayExposingWriter,
   //          so implementation could use appendOnlyLog.append(byte[])
   //          method for such writers, which is slightly faster/cheaper
+
   /** Simplest implementation: writer over the record already serialized into a byte[] */
   class ByteArrayWriter implements KnownSizeRecordWriter {
     private final byte[] bytes;
@@ -102,7 +123,7 @@ public interface DataExternalizerEx<T> {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
       return "ByteArrayWriter[" + IOUtil.toHexString(bytes) + "]";
     }
   }

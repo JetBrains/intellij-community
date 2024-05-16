@@ -11,4 +11,3 @@ public class JavaClass {
     }
 }
 
-// IGNORE_K2_LOG

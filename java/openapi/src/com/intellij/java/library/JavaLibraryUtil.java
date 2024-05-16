@@ -37,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.jar.Attributes;
 
+import static com.intellij.java.library.JavaLibraryUtil.matchLibraryName;
 import static com.intellij.openapi.util.text.StringUtil.isDecimalDigit;
 import static com.intellij.psi.search.GlobalSearchScope.allScope;
 import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
@@ -53,13 +54,7 @@ public final class JavaLibraryUtil {
 
   private static final Key<CachedValue<Map<String, Boolean>>> LIBRARY_CLASSES_PRESENCE_KEY = Key.create("LIBRARY_CLASSES_PRESENCE");
 
-  private static final Key<ParameterizedCachedValue<Libraries, Project>> MAVEN_LIBRARIES_PROJECT_KEY = Key.create("MAVEN_LIBRARY_PRESENCE");
   private static final Key<ParameterizedCachedValue<Libraries, Module>> MAVEN_LIBRARIES_MODULE_KEY = Key.create("MAVEN_LIBRARY_PRESENCE");
-
-  private static final ParameterizedCachedValueProvider<Libraries, Project> MAVEN_LIBRARIES_PROJECT_PROVIDER = project -> {
-    return Result.create(fillLibraries(OrderEnumerator.orderEntries(project), true),
-                         ProjectRootManager.getInstance(project));
-  };
 
   private static final ParameterizedCachedValueProvider<Libraries, Module> MAVEN_LIBRARIES_MODULE_PROVIDER = module -> {
     String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
@@ -256,8 +251,7 @@ public final class JavaLibraryUtil {
   }
 
   private static @NotNull Libraries getProjectLibraries(@NotNull Project project) {
-    return CachedValuesManager.getManager(project)
-      .getParameterizedCachedValue(project, MAVEN_LIBRARIES_PROJECT_KEY, MAVEN_LIBRARIES_PROJECT_PROVIDER, false, project);
+    return JavaLibraryHolder.getInstance(project).getLibraries();
   }
 
   private static @NotNull Libraries getModuleLibraries(@NotNull Module module) {
@@ -269,7 +263,7 @@ public final class JavaLibraryUtil {
     return externalSystemId == null || "Blaze".equals(externalSystemId);
   }
 
-  private static @NotNull Libraries fillLibraries(OrderEnumerator orderEnumerator, boolean collectFiles) {
+  static @NotNull Libraries fillLibraries(OrderEnumerator orderEnumerator, boolean collectFiles) {
     Set<String> allMavenCoords = new HashSet<>();
     Map<String, String> jarLibrariesIndex = new HashMap<>();
 
@@ -348,27 +342,7 @@ public final class JavaLibraryUtil {
     return name; // omit this prefix for Bazel
   }
 
-  private record Libraries(Set<String> mavenLibraries,
-                           Map<String, String> jpsNameIndex) {
-    boolean contains(@NotNull String mavenCoords) {
-      if (mavenLibraries.contains(mavenCoords)) return true;
-      if (jpsNameIndex.isEmpty()) return false;
-
-      String libraryName = getLibraryName(mavenCoords);
-      if (libraryName == null) return false;
-
-      String existingJpsLibraryName = jpsNameIndex.get(libraryName);
-      if (existingJpsLibraryName == null) return false;
-
-      return matchLibraryName(existingJpsLibraryName, libraryName);
-    }
-
-    private static @Nullable String getLibraryName(@NotNull String mavenCoords) {
-      return StringUtil.substringAfter(mavenCoords, ":");
-    }
-  }
-
-  private static boolean matchLibraryName(@NotNull String fileName, @NotNull String libraryName) {
+  static boolean matchLibraryName(@NotNull String fileName, @NotNull String libraryName) {
     if (fileName.equals(libraryName)) return true;
 
     String prefix = libraryName + "-";
@@ -378,5 +352,25 @@ public final class JavaLibraryUtil {
 
     char versionStart = fileName.charAt(prefix.length());
     return isDecimalDigit(versionStart);
+  }
+}
+
+record Libraries(Set<String> mavenLibraries,
+                 Map<String, String> jpsNameIndex) {
+  boolean contains(@NotNull String mavenCoords) {
+    if (mavenLibraries.contains(mavenCoords)) return true;
+    if (jpsNameIndex.isEmpty()) return false;
+
+    String libraryName = getLibraryName(mavenCoords);
+    if (libraryName == null) return false;
+
+    String existingJpsLibraryName = jpsNameIndex.get(libraryName);
+    if (existingJpsLibraryName == null) return false;
+
+    return matchLibraryName(existingJpsLibraryName, libraryName);
+  }
+
+  private static @Nullable String getLibraryName(@NotNull String mavenCoords) {
+    return StringUtil.substringAfter(mavenCoords, ":");
   }
 }

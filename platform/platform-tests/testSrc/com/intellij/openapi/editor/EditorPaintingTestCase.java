@@ -24,6 +24,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
@@ -63,6 +64,10 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   protected void checkResult() throws IOException {
     checkResult(getFileName(), false);
+  }
+
+  protected void checkResultWithGutterForNewUI() throws IOException {
+    checkResult((ExperimentalUI.isNewUI() ? "new.ui/" : "") + getFileName(), true);
   }
 
   protected void checkResultWithGutter() throws IOException {

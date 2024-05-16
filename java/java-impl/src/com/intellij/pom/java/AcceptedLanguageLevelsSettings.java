@@ -41,8 +41,9 @@ import java.util.TreeSet;
   category = SettingsCategory.CODE
 )
 public final class AcceptedLanguageLevelsSettings implements PersistentStateComponent<AcceptedLanguageLevelsSettings> {
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroupManager.getInstance().getNotificationGroup("Accepted language levels");
+  private static NotificationGroup getAcceptedLanguageNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Accepted language levels");
+  }
 
   private static NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup("Java Preview Features");
@@ -125,7 +126,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
   }
 
   private static void showNotificationToAccept(@NotNull Project project, MultiMap<LanguageLevel, Module> unacceptedLevels, LanguageLevel level) {
-    NOTIFICATION_GROUP.createNotification(
+    getAcceptedLanguageNotificationGroup().createNotification(
         JavaBundle.message("java.preview.features.alert.title"),
         JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "<br/><br/><a href='accept'>" +
                                                                                              JavaBundle.message(

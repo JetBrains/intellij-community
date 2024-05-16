@@ -29,7 +29,7 @@ class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName
     if (owner?.nameMatches(params.name.substring(start, end), params.queryExecutor) == true)
       params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList())
         .asSingleSymbol()
-        ?.let { listOf(MatchResult(WebSymbolNameSegment(start, end, it))) }
+        ?.let { listOf(MatchResult(WebSymbolNameSegment.create(start, end, it))) }
       ?: emptyList()
     else
       emptyList()
@@ -41,7 +41,7 @@ class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName
     if (owner != null) {
       params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList())
         .asSingleSymbol()
-        ?.let { listOf(ListResult(owner.name, WebSymbolNameSegment(0, owner.name.length, it))) }
+        ?.let { listOf(ListResult(owner.name, WebSymbolNameSegment.create(0, owner.name.length, it))) }
       ?: emptyList()
     }
     else emptyList()

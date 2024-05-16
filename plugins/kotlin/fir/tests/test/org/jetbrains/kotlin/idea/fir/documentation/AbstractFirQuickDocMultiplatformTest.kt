@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.documentation
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -23,7 +22,7 @@ abstract class AbstractFirQuickDocMultiplatformTest: KotlinLightMultiplatformCod
     }
 
     fun doTest(path: String) {
-        val virtualFile = configureModuleStructure(path)
+        val virtualFile = configureModuleStructure(path).second
         require(virtualFile != null)
 
         myFixture.configureFromExistingVirtualFile(virtualFile)

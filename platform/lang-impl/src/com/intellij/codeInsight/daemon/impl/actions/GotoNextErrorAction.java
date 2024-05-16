@@ -5,18 +5,16 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler;
+import com.intellij.codeInsight.daemon.impl.GotoNextErrorUtilsKt;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.inspector.InspectionsGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoNextErrorAction extends BaseCodeInsightAction implements DumbAware {
-
-  private static final Logger LOGGER = Logger.getInstance(GotoNextErrorAction.class);
 
   public GotoNextErrorAction() {
     super(false);
@@ -29,12 +27,17 @@ public class GotoNextErrorAction extends BaseCodeInsightAction implements DumbAw
 
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {
-    return new GotoNextErrorHandler(true);
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
+    return new GotoNextErrorHandler(true, GotoNextErrorUtilsKt.getTrafficHighlightSeverity(dataContext));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    LOGGER.debug("GotoNextErrorAction: "+ e.getData(InspectionsGroup.Companion.getINSPECTION_TYPED_ERROR()));
+    GotoNextErrorUtilsKt.reportTrafficHighlightStatistic(e, true);
     super.actionPerformed(e);
   }
 

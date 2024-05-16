@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -40,8 +41,13 @@ internal object WasExperimentalOptInsNecessityChecker {
         return annotation.argumentByName(OptInNames.WAS_EXPERIMENTAL_ANNOTATION_CLASS)
             ?.asSafely<KtArrayAnnotationValue>()
             ?.values
-            ?.mapNotNull { (it as? KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue)?.classId }
+            ?.mapNotNull { computeAnnotationMarkerClassId(it) }
             ?: emptyList()
+    }
+
+    private fun computeAnnotationMarkerClassId(value: KtAnnotationValue): ClassId? {
+        val type = (value as? KtKClassAnnotationValue)?.type as? KtNonErrorClassType ?: return null
+        return type.classId.takeIf { !it.isLocal }
     }
 
     private fun KtAnnotationsList.findAnnotation(classId: ClassId): KtAnnotationApplicationWithArgumentsInfo? =

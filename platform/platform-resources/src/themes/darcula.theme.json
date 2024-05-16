@@ -541,6 +541,10 @@
       "UI": "com.intellij.ui.components.JBScrollBar"
     },
 
+    "ScrollPane": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder"
+    },
+
     "SearchEverywhere": {
       "Advertiser.background": "#45494a",
       "Advertiser.foreground": "#808080",
@@ -633,7 +637,8 @@
       "focusCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
       "focusSelectedCellHighlightBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableSelectedCellHighlightBorder",
       "gridColor": "#4F5152",
-      "rowHeight": 20
+      "rowHeight": 20,
+      "scrollPaneBorder": "com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder"
     },
 
     "TableHeader": {

@@ -277,12 +277,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         Value trace = invokeExceptionGetStackTrace(exceptionObj, evaluationContext);
 
         // print to console as well
-        if (printToConsole && trace instanceof ArrayReference traceArray) {
-          DebugProcessImpl process = evaluationContext.getDebugProcess();
-          process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
-          for (Value stackElement : traceArray.getValues()) {
-            process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
-          }
+        if (printToConsole && trace instanceof ArrayReference) {
+          evaluationContext.getDebugProcess().printToConsole(DebuggerUtilsImpl.getExceptionText(evaluationContext, exceptionObj));
         }
       }
       catch (EvaluateException ignored) {

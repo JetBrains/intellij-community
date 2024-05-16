@@ -12,7 +12,7 @@ import kotlin.math.max
 @ApiStatus.Internal
 object DarculaNewUIUtil {
   /**
-   * Paints rounded border for focusable component. Non focused border rect is inside [rect], focused/outlined border can come outside
+   * Paints rounded border for a focusable component. Non focused border rect is inside [rect], focused/outlined border can come outside
    */
   fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Outline?, focused: Boolean, enabled: Boolean,
                            bw: Int = DarculaUIUtil.BW.get()) {

@@ -18,6 +18,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -36,6 +37,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
@@ -129,7 +131,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   @ApiStatus.Internal
   public static final String CLOSE_REASON_RESET_FILTERS = "ResetFilters";
 
-  private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
   private static final String PREVIEW_PROPERTY_KEY = "ShowUsagesActions.previewPropertyKey";
 
@@ -479,10 +480,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       }
 
       @Override
-      public void beforeClose(String reason) {
-      }
-
-      @Override
       public boolean navigateToSingleUsageImmediately() {
         return true;
       }
@@ -502,7 +499,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                                                        @NotNull ShowUsagesActionHandler actionHandler) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = parameters.project;
-    UsageViewImpl usageView = createUsageView(project, actionHandler.getTargetLanguage());
+    UsageViewImpl usageView = actionHandler.createUsageView(project);
     return ShowUsagesManager.getInstance(project).showElementUsagesWithResult(parameters, actionHandler, usageView);
   }
 
@@ -533,9 +530,12 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Set<Usage> visibleUsages = new LinkedHashSet<>();
     table.setTableModel(new SmartList<>(new StringNode(UsageViewBundle.message("progress.searching"))));
 
+    ShowUsagesPopupData showUsagesPopupData = new ShowUsagesPopupData(parameters, table, actionHandler, usageView);
+
     Runnable itemChosenCallback = table.prepareTable(
       showMoreUsagesRunnable(parameters, actionHandler),
-      showUsagesInMaximalScopeRunnable(parameters, actionHandler), actionHandler
+      showUsagesInMaximalScopeRunnable(parameters, actionHandler, showUsagesPopupData),
+      actionHandler
     );
 
     Consumer<AbstractPopup> tableResizer = popup -> {
@@ -546,9 +546,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       }
     };
 
-    ShowUsagesPopupData showUsagesPopupData = new ShowUsagesPopupData(parameters, table, actionHandler, usageView);
     AbstractPopup popup = createUsagePopup(usageView, showUsagesPopupData, itemChosenCallback, tableResizer);
-
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
     Ref<Long> popupShownTimeRef = new Ref<>();
     popup.addListener(new JBPopupListener() {
@@ -659,8 +657,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     AtomicLong firstUsageAddedTS = new AtomicLong();
     AtomicBoolean tooManyResults = new AtomicBoolean();
+    GlobalSearchScope everythingScope = GlobalSearchScope.everythingScope(project);
     Processor<Usage> collect = usage -> {
-      if (!UsageViewManagerImpl.isInScope(usage, searchScope)) {
+      if (!UsageViewManagerImpl.isInScope(usage, searchScope, everythingScope)) {
         if (outOfScopeUsages.getAndIncrement() == 0) {
           visibleUsages.add(USAGES_OUTSIDE_SCOPE_NODE.getUsage());
           usages.add(table.USAGES_OUTSIDE_SCOPE_SEPARATOR);
@@ -733,7 +732,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
               if (areAllUsagesInOneLine(visibleUsage, usages)) {
                 String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScope.getDisplayName());
                 navigateAndHint(project, visibleUsage, hint, parameters, actionHandler, () -> cancel(popup));
-                cancel(popup);
               }
             }
           }
@@ -753,6 +751,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       project.getDisposed()
     ));
     opentelemetryScope.close();
+    actionHandler.afterOpen(popup);
     return result;
   }
 
@@ -767,10 +766,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       null, DataContext.EMPTY_CONTEXT, "",
       action.getTemplatePresentation().clone(), ActionManager.getInstance(), 0
     );
-  }
-
-  private static @NotNull UsageViewImpl createUsageView(@NotNull Project project, @Nullable Language targetLanguage) {
-    return project.getService(UsageViewPopupManager.class).createUsageViewPopup(targetLanguage);
   }
 
   private static @NotNull Predicate<? super Usage> originUsageCheck(@Nullable Editor editor) {
@@ -925,8 +920,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       setAdvertiser(advertiserComponent).
       setMovable(true).
       setResizable(true).
-      setCancelKeyEnabled(true).
-      setDimensionServiceKey(DIMENSION_SERVICE_KEY);
+      setCancelKeyEnabled(true);
 
     PropertiesComponent properties = PropertiesComponent.getInstance(project);
     boolean addCodePreview = properties.isValueSet(PREVIEW_PROPERTY_KEY);
@@ -956,8 +950,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          cancel(popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
-          showUsagesInMaximalScope(parameters, actionHandler);
+          showUsagesInMaximalScope(parameters, actionHandler, showUsagesPopupData);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
@@ -983,7 +976,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           properties.setValue(PREVIEW_PROPERTY_KEY, state);
           cancel(popupRef.get(), actionHandler, CLOSE_REASON_PREVIEW);
 
-          WindowStateService.getInstance().putSize(DIMENSION_SERVICE_KEY, null);
           showElementUsages(parameters, actionHandler);
         }
       }
@@ -1122,6 +1114,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
               })
             .expireWith(contentDisposable)
             .submit(AppExecutorUtil.getAppExecutorService());
+        }).exceptionally(throwable -> {
+          Logger.getInstance(ShowUsagesAction.class).error(throwable);
+          return null;
         });
       };
 
@@ -1327,7 +1322,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       totalWidth += width;
       column.setMinWidth(Math.min(ShowUsagesTable.MIN_COLUMN_WIDTH, width));
       column.setMaxWidth(width);
-      column.setWidth(Math.min(ShowUsagesTable.MAX_COLUMN_WIDTH, width));
+      column.setWidth(width);
       column.setPreferredWidth(width);
     }
     table.getColumnModel().getColumn(colsNum - 1).setMaxWidth(Integer.MAX_VALUE); //last column should grow for the rest of the table width
@@ -1348,7 +1343,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
       width = Math.max(width, rendererWidth + table.getIntercellSpacing().width);
     }
-    return width;
+    return Math.min(ShowUsagesTable.MAX_COLUMN_WIDTH, width);
   }
 
   private static void rebuildTable(@NotNull Project project,
@@ -1438,21 +1433,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     table.setSize(rectangle.width, rectangle.height - minHeight);
     if (dataSize > 0) ScrollingUtil.ensureSelectionExists(table);
 
-    Dimension savedSize = WindowStateService.getInstance().getSize(DIMENSION_SERVICE_KEY);
     JBSplitter splitter = popup.getUserData(JBSplitter.class);
 
-    if (savedSize != null) {
-      rectangle.width = Math.min(savedSize.width, rectangle.width);
-    }
-
     if (splitter != null) {
-      int newHeight = rectangle.height + splitter.getDividerWidth() + splitter.getSecondComponent().getMinimumSize().height;
-      if (savedSize != null) {
-        savedSize.height -= popup.getAdComponentHeight();
-        newHeight = Math.max(newHeight, savedSize.height);
-      }
-
-      rectangle.height = newHeight;
+      rectangle.height += splitter.getDividerWidth() + splitter.getSecondComponent().getMinimumSize().height;
     }
 
     popup.setSize(rectangle.getSize());
@@ -1527,7 +1511,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         );
 
         ShowUsagesActionState state = getState(project);
-        state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler);
+        state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler, null);
         Runnable clearContinuation = () -> state.continuation = null;
 
         if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
@@ -1649,12 +1633,15 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   }
 
   private static @NotNull Runnable showUsagesInMaximalScopeRunnable(@NotNull ShowUsagesParameters parameters,
-                                                                    @NotNull ShowUsagesActionHandler actionHandler) {
-    return () -> showUsagesInMaximalScope(parameters, actionHandler);
+                                                                    @NotNull ShowUsagesActionHandler actionHandler,
+                                                                    @Nullable ShowUsagesPopupData showUsagesPopupData) {
+    return () -> showUsagesInMaximalScope(parameters, actionHandler, showUsagesPopupData);
   }
 
   private static void showUsagesInMaximalScope(@NotNull ShowUsagesParameters parameters,
-                                               @NotNull ShowUsagesActionHandler actionHandler) {
+                                               @NotNull ShowUsagesActionHandler actionHandler,
+                                               @Nullable ShowUsagesPopupData showUsagesPopupData) {
+    cancel(showUsagesPopupData.popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
     ShowUsagesActionHandler handler = actionHandler.withScope(actionHandler.getMaximalScope());
     if (handler != null) {
       showElementUsages(parameters, handler);

@@ -67,52 +67,52 @@ button:focus {
   white-space: pre;
 }
 
-.completion {
+.session {
   position: relative;
   font-weight: bold;
 }
 
-.completion.cg-empty {
+.session.cg-empty {
   color: #70AAFF
 }
 
-.completion.cg-none {
+.session.cg-none {
   color: #ff3b30
 }
 
-.completion.cg-token {
+.session.cg-token {
   color: #ff9500
 }
 
-.completion.cg-line {
+.session.cg-line {
   color: #34c759
 }
 
-.completion.bg-filters-skipped {
+.session.bg-filters-skipped {
   background-color: #ff3b305b
 }
 
-.completion.bg-model-skipped {
+.session.bg-model-skipped {
   background-color: #0d1abb75
 }
 
-.completion.perfect {
+.session.perfect {
   color: #008800
 }
 
-.completion.good {
+.session.good {
   color: #C9C800
 }
 
-.completion.bad {
+.session.bad {
   color: #EB7400
 }
 
-.completion.not-found {
+.session.not-found {
   color: #BB0066
 }
 
-.completion.absent {
+.session.absent {
   color: #70AAFF
 }
 

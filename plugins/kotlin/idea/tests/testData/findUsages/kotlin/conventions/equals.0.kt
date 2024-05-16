@@ -13,3 +13,5 @@ fun test() {
     A(0) === A(1)
     A(0) !== A(1)
 }
+
+// IGNORE_PLATFORM_JS: attached sources vs no sources in jvm case

@@ -5,10 +5,11 @@ import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SmartList
-import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.indexing.UnindexedFilesUpdater
+import com.intellij.util.indexing.isFirstProjectScanningPerformed
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -85,7 +86,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun getProjectIndexableFiles(project: Project): ProjectIndexableFilesFilter? {
-    if (!UnindexedFilesScanner.isProjectContentFullyScanned(project) || UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
+    if (!isFirstProjectScanningPerformed(project) || UnindexedFilesScannerExecutor.getInstance(project).isRunning.value) {
       return null
     }
     return getFilter(project)

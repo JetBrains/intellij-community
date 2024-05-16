@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -216,10 +216,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
       boolean longTimeOut = !ApplicationManager.getApplication().isDispatchThread() ||
                             ApplicationManager.getApplication().isUnitTestMode();
       try {
-        int timeout;
-        if (longTimeOut) timeout = disposeLongTimeout();
-        else timeout = 20;
-
+        int timeout = longTimeOut ? 1000 : 20;
         task.waitFor(timeout, TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException | ExecutionException e) {
@@ -231,10 +228,6 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         if (longTimeOut) LOG.warn(formMessage("Wait time out "), e);
       }
     }
-  }
-
-  protected int disposeLongTimeout() {
-    return 1000;
   }
 
   public interface SingleTask {

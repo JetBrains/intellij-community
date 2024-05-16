@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModelImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCache;
@@ -176,6 +177,9 @@ public class HighlightingMarkupGrave {
       }
       else {
         highlighter = markupModel.addRangeHighlighter(key, state.start(), state.end(), state.layer(), state.targetArea());
+        if (StickyLinesModelImpl.isStickyLine(highlighter)) {
+          StickyLinesModelImpl.skipInAllEditors(highlighter);
+        }
       }
       if (state.gutterIcon() != null) {
         GutterIconRenderer fakeIcon = new GutterIconRenderer() {
@@ -266,7 +270,7 @@ public class HighlightingMarkupGrave {
   }
 
   protected boolean shouldSaveHighlighter(@NotNull RangeHighlighter highlighter) {
-    if (highlighter.getTextAttributesKey() != null && highlighter.getTextAttributesKey().getExternalName().equals("STICKY_LINE_MARKER")) {
+    if (StickyLinesModelImpl.isStickyLine(highlighter)) {
       return true;
     }
     HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.plugins.groovy.wizard
 
 import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
@@ -55,6 +56,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
           .bindItem(groovySdkProperty)
           .validationOnInput { validateGroovySdk(groovySdk) }
           .whenItemSelectedFromUi { logGroovySdkChanged(groovySdk) }
+          .onApply { logGroovySdkFinished(groovySdk) }
       }.bottomGap(BottomGap.SMALL)
     }
 
@@ -63,6 +65,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
           .bindSelected(addSampleCodeProperty)
           .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
+          .onApply { logAddSampleCodeFinished(addSampleCode) }
       }
     }
 

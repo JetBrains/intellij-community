@@ -15,7 +15,10 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -26,7 +29,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,15 +112,16 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
   public void testGetProjectPerformance() {
     configureByFile("/psi/resolve/ThinletBig.java");
+    ProjectManager.getInstance().getDefaultProject();
     // wait for default project to dispose, otherwise it will be very slow
+    // in the process, test that "the only open project" optimization is not broken
     while (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) {
+      LOG.debug("waiting for default project dispose...");
+      ((ProjectManagerImpl)ProjectManager.getInstance()).disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests();
       UIUtil.dispatchAllInvocationEvents();
-      if (System.currentTimeMillis() % 10_000 < 100) {
-        System.out.println("waiting for default project dispose...");
-        TimeoutUtil.sleep(100);
-      }
     }
-    assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
+    String message = ContainerUtil.map(ProjectManagerEx.getInstance().getOpenProjects(), p -> p + "; creation trace:"+((ProjectEx)p).getCreationTrace()+"\n").toString();
+    assertNotNull(message, ProjectCoreUtil.theOnlyOpenProject());
     getFile().accept(new PsiRecursiveElementVisitor() {});
     Project myProject = getProject();
     PlatformTestUtil.newPerformanceTest("getProject() for nested elements", () -> {

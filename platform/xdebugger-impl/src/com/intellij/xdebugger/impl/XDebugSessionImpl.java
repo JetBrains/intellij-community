@@ -51,6 +51,7 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.util.BringDebuggeeInForegroundUtilsKt;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import kotlinx.coroutines.flow.FlowKt;
@@ -311,6 +312,11 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (myDebugProcess.checkCanInitBreakpoints()) {
       initBreakpoints();
     }
+    if (myDebugProcess instanceof XDebugProcessDebuggeeInForeground debuggeeInForeground &&
+        debuggeeInForeground.isBringingToForegroundApplicable()) {
+      BringDebuggeeInForegroundUtilsKt.start(debuggeeInForeground, this, 1000);
+    }
+
 
     myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override

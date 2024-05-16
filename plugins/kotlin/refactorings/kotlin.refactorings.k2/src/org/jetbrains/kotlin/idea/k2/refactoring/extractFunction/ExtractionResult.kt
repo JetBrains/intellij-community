@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 data class ExtractionResult(
     override val config: ExtractionGeneratorConfiguration,
-    override val declaration: KtNamedDeclaration,
+    override var declaration: KtNamedDeclaration,
     override val duplicateReplacers: Map<KotlinPsiRange, () -> Unit>
 ) : IExtractionResult<KtType> {
     override fun dispose() = unmarkReferencesInside(declaration)

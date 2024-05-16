@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("LiftReturnOrAssignment")
-
 package org.jetbrains.intellij.build.io
 
 import com.intellij.openapi.util.text.Formats
@@ -43,12 +41,9 @@ private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
 
 fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
   Files.createDirectories(targetDir)
-  Files.walkFileTree(sourceDir, CopyDirectoryVisitor(
-    sourceDir = sourceDir,
-    targetDir = targetDir,
-    dirFilter = dirFilter ?: Predicate { true },
-    fileFilter = fileFilter ?: Predicate { true },
-  ))
+  val dirFilter = dirFilter ?: Predicate { true }
+  val fileFilter = fileFilter ?: Predicate { true }
+  Files.walkFileTree(sourceDir, CopyDirectoryVisitor(sourceDir, targetDir, dirFilter, fileFilter))
 }
 
 inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
@@ -58,10 +53,12 @@ inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
   }
 }
 
-private class CopyDirectoryVisitor(private val sourceDir: Path,
-                                   private val targetDir: Path,
-                                   private val dirFilter: Predicate<Path>,
-                                   private val fileFilter: Predicate<Path>) : SimpleFileVisitor<Path>() {
+private class CopyDirectoryVisitor(
+  private val sourceDir: Path,
+  private val targetDir: Path,
+  private val dirFilter: Predicate<Path>,
+  private val fileFilter: Predicate<Path>
+) : SimpleFileVisitor<Path>() {
   private val sourceToTargetFile: (Path) -> Path
 
   init {
@@ -83,8 +80,7 @@ private class CopyDirectoryVisitor(private val sourceDir: Path,
     try {
       Files.createDirectory(sourceToTargetFile(directory))
     }
-    catch (ignore: FileAlreadyExistsException) {
-    }
+    catch (_: FileAlreadyExistsException) { }
     return FileVisitResult.CONTINUE
   }
 
@@ -138,7 +134,7 @@ private fun deleteFile(file: Path) {
       try {
         Thread.sleep(10)
       }
-      catch (ignored: InterruptedException) {
+      catch (_: InterruptedException) {
         throw e
       }
     }
@@ -146,12 +142,14 @@ private fun deleteFile(file: Path) {
 }
 
 @JvmOverloads
-fun substituteTemplatePlaceholders(inputFile: Path,
-                                   outputFile: Path,
-                                   placeholder: String,
-                                   values: List<Pair<String, String>>,
-                                   mustUseAllPlaceholders: Boolean = true,
-                                   convertToUnixLineEndings: Boolean = false) {
+fun substituteTemplatePlaceholders(
+  inputFile: Path,
+  outputFile: Path,
+  placeholder: String,
+  values: List<Pair<String, String>>,
+  mustUseAllPlaceholders: Boolean = true,
+  convertToUnixLineEndings: Boolean = false
+) {
   var result = Files.readString(inputFile)
 
   if (convertToUnixLineEndings) {

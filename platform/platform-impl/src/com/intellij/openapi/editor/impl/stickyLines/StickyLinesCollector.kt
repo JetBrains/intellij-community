@@ -4,9 +4,12 @@ package com.intellij.openapi.editor.impl.stickyLines
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.CachedValue
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -18,7 +21,17 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 class StickyLinesCollector(private val project: Project, private val document: Document) {
 
-  fun collectLines(vFile: VirtualFile): MutableSet<StickyLineInfo> {
+  companion object {
+    val CACHED_LINES_KEY: Key<CachedValue<Runnable>> = Key.create("editor.sticky.lines.cached")
+  }
+
+  fun invalidateCachedValue() {
+    PsiDocumentManager.getInstance(project)
+      .getCachedPsiFile(document)
+      ?.putUserData(CACHED_LINES_KEY, null)
+  }
+
+  fun collectLines(vFile: VirtualFile): Set<StickyLineInfo> {
     ThreadingAssertions.assertReadAccess()
     ThreadingAssertions.assertBackgroundThread()
     val psiCollector = PsiFileBreadcrumbsCollector(project)
@@ -39,17 +52,18 @@ class StickyLinesCollector(private val project: Project, private val document: D
     return infos
   }
 
-  fun applyLines(linesToAdd: MutableSet<StickyLineInfo>) {
+  fun applyLines(lines: Set<StickyLineInfo>) {
     ThreadingAssertions.assertEventDispatchThread()
     val stickyModel: StickyLinesModel = StickyLinesModel.getModel(project, document) ?: return
     // markup model could contain raised zombies on the first pass.
     // we should burn them all here, otherwise an empty panel will appear
+    val linesToAdd: MutableSet<StickyLineInfo> = HashSet(lines)
     val outdatedLines: List<StickyLine> = mergeWithExistingLines(stickyModel, linesToAdd) // mutates linesToAdd
     for (toRemove: StickyLine in outdatedLines) {
       stickyModel.removeStickyLine(toRemove)
     }
     for (toAdd: StickyLineInfo in linesToAdd) {
-      stickyModel.addStickyLine(STICKY_LINE_SOURCE, toAdd.textOffset, toAdd.endOffset, toAdd.debugText)
+      stickyModel.addStickyLine(toAdd.textOffset, toAdd.endOffset, toAdd.debugText)
     }
     stickyModel.notifyListeners()
   }
@@ -59,7 +73,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
     linesToAdd: MutableSet<StickyLineInfo>,
   ): List<StickyLine> {
     val outdatedLines: MutableList<StickyLine> = mutableListOf()
-    stickyModel.processStickyLines(STICKY_LINE_SOURCE) { existingLine: StickyLine ->
+    stickyModel.processStickyLines(StickyLinesModel.SourceID.IJ) { existingLine: StickyLine ->
       val existing = StickyLineInfo(existingLine.textRange())
       val keepExisting = linesToAdd.remove(existing)
       if (!keepExisting) {
@@ -76,9 +90,5 @@ class StickyLinesCollector(private val project: Project, private val document: D
     } else {
       null
     }
-  }
-
-  companion object {
-    private const val STICKY_LINE_SOURCE = "StickyLinesCollectorSource"
   }
 }

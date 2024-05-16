@@ -19,6 +19,11 @@ private val ignoreDirectives: Set<String> = setOf(IGNORE_K1, IGNORE_K2)
 abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = J2K_PROJECT_DESCRIPTOR
 
+    override fun setUp() {
+        super.setUp()
+        addJavaLangRecordClass()
+    }
+
     protected fun addFile(fileName: String, dirName: String? = null) {
         addFile(File(KotlinRoot.DIR, "j2k/shared/tests/testData/$fileName"), dirName)
     }
@@ -47,6 +52,17 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
 
     protected fun KtFile.getFileTextWithErrors(): String =
         if (isFirPlugin) getK2FileTextWithErrors(this) else dumpTextWithErrors()
+
+    // Needed to make the Kotlin compiler think it is running on JDK 16+
+    // see org.jetbrains.kotlin.resolve.jvm.checkers.JvmRecordApplicabilityChecker
+    private fun addJavaLangRecordClass() {
+        myFixture.addClass(
+            """
+            package java.lang;
+            public abstract class Record {}
+            """.trimIndent()
+        )
+    }
 
     protected fun addJpaColumnAnnotations() {
         myFixture.addClass(

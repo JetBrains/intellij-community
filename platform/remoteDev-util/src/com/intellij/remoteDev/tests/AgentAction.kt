@@ -11,4 +11,4 @@ import kotlin.time.Duration
 class AgentAction(val timeout: Duration,
                   val coroutineContext: CoroutineContext,
                   val requestFocusBeforeStart: Boolean? = null,
-                  val action: suspend (AgentContext) -> String?)
+                  val action: suspend (AgentContext).(List<String>?) -> String?)

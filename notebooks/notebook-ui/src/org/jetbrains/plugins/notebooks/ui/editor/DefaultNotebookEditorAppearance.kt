@@ -80,7 +80,7 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
   override fun getCellStripeColor(editor: EditorImpl, lines: IntRange): Color? {
     val isSelected = isCellSelected(editor, lines)
     val color = when {
-      isSelected && currentMode() == NotebookEditorMode.COMMAND -> CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR
+      isSelected && editor.currentMode == NotebookEditorMode.COMMAND -> CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR
       isSelected -> CELL_UNDER_CARET_EDITOR_MODE_STRIPE_COLOR
       else -> null
     }
@@ -103,8 +103,8 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
     return editor.colorsScheme.getColor(CELL_STRIPE_COLOR) ?: JBColor.GRAY
   }
 
-  override fun getCellLeftLineWidth(): Int =
-    when (currentMode()) {
+  override fun getCellLeftLineWidth(editor: Editor): Int =
+    when (editor.currentMode) {
       NotebookEditorMode.EDIT -> EDIT_MODE_CELL_LEFT_LINE_WIDTH
       NotebookEditorMode.COMMAND -> COMMAND_MODE_CELL_LEFT_LINE_WIDTH
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.icons.ExpUiIcons;
@@ -12,8 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class GitRebaseAbort extends GitAbstractRebaseAction {
-
+final class GitRebaseAbort extends GitAbstractRebaseAction {
   @Override
   protected @NlsContexts.ProgressTitle @NotNull String getProgressTitle() {
     return GitBundle.message("rebase.progress.indicator.aborting.title");

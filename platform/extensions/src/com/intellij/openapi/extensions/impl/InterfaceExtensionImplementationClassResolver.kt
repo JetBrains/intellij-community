@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl
 
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
@@ -18,10 +19,12 @@ internal object InterfaceExtensionImplementationClassResolver : ImplementationCl
 
     val pluginDescriptor = adapter.pluginDescriptor
     val result = componentManager.loadClass<Any>(className, pluginDescriptor)
+    val pluginClassLoader = pluginDescriptor.pluginClassLoader
     @Suppress("SpellCheckingInspection")
-    if (result.classLoader !== pluginDescriptor.pluginClassLoader && pluginDescriptor.pluginClassLoader != null &&
+    if (result.classLoader !== pluginClassLoader && pluginClassLoader != null &&
         !className.startsWith("com.intellij.webcore.resourceRoots.") &&
         !className.startsWith("com.intellij.tasks.impl.") &&
+        (pluginClassLoader !is PluginAwareClassLoader || pluginClassLoader.packagePrefix != null) &&
         !result.isAnnotationPresent(InternalIgnoreDependencyViolation::class.java)) {
       val idString = pluginDescriptor.pluginId.idString
       if (idString != "com.intellij.java" &&
@@ -36,7 +39,7 @@ See https://youtrack.jetbrains.com/articles/IDEA-A-65/Plugin-Model#internalignor
 (
   className=$className,
   extensionInstanceClassloader=${result.classLoader},
-  pluginClassloader=${pluginDescriptor.pluginClassLoader}
+  pluginClassloader=$pluginClassLoader
 )""", pluginDescriptor.pluginId))
       }
     }

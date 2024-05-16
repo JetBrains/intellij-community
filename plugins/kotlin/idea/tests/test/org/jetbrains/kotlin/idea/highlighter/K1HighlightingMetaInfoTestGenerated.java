@@ -109,6 +109,64 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/highlighterMetaInfo/jvm")
+    public static class Jvm extends AbstractK1HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaFields.kt")
+        public void testJavaFields() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/javaFields.kt");
+        }
+
+        @TestMetadata("JavaRecord.kt")
+        public void testJavaRecord() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/JavaRecord.kt");
+        }
+
+        @TestMetadata("javaStaticFields.kt")
+        public void testJavaStaticFields() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/javaStaticFields.kt");
+        }
+
+        @TestMetadata("JavaTypes.kt")
+        public void testJavaTypes() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/JavaTypes.kt");
+        }
+
+        @TestMetadata("KotlinAnnotationsInJava.kt")
+        public void testKotlinAnnotationsInJava() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinAnnotationsInJava.kt");
+        }
+
+        @TestMetadata("KotlinInjection.kt")
+        public void testKotlinInjection() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
+        }
+
+        @TestMetadata("NonExistingKotlinMethodFromJava.kt")
+        public void testNonExistingKotlinMethodFromJava() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/NonExistingKotlinMethodFromJava.kt");
+        }
+
+        @TestMetadata("RepeatableAnnotation.kt")
+        public void testRepeatableAnnotation() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/RepeatableAnnotation.kt");
+        }
+
+        @TestMetadata("RepeatableAsAliasAnnotation.kt")
+        public void testRepeatableAsAliasAnnotation() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/RepeatableAsAliasAnnotation.kt");
+        }
+
+        @TestMetadata("SyntheticExtensionProperty.kt")
+        public void testSyntheticExtensionProperty() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/SyntheticExtensionProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/smartCasts")
     public static class SmartCasts extends AbstractK1HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -223,39 +281,9 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/InvokeCall.kt");
         }
 
-        @TestMetadata("javaFields.kt")
-        public void testJavaFields() throws Exception {
-            runTest("testData/highlighterMetaInfo/javaFields.kt");
-        }
-
-        @TestMetadata("JavaRecord.kt")
-        public void testJavaRecord() throws Exception {
-            runTest("testData/highlighterMetaInfo/JavaRecord.kt");
-        }
-
-        @TestMetadata("javaStaticFields.kt")
-        public void testJavaStaticFields() throws Exception {
-            runTest("testData/highlighterMetaInfo/javaStaticFields.kt");
-        }
-
-        @TestMetadata("JavaTypes.kt")
-        public void testJavaTypes() throws Exception {
-            runTest("testData/highlighterMetaInfo/JavaTypes.kt");
-        }
-
         @TestMetadata("KDoc.kt")
         public void testKDoc() throws Exception {
             runTest("testData/highlighterMetaInfo/KDoc.kt");
-        }
-
-        @TestMetadata("KotlinAnnotationsInJava.kt")
-        public void testKotlinAnnotationsInJava() throws Exception {
-            runTest("testData/highlighterMetaInfo/KotlinAnnotationsInJava.kt");
-        }
-
-        @TestMetadata("KotlinInjection.kt")
-        public void testKotlinInjection() throws Exception {
-            runTest("testData/highlighterMetaInfo/KotlinInjection.kt");
         }
 
         @TestMetadata("Labels.kt")
@@ -266,11 +294,6 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("NamedArguments.kt")
         public void testNamedArguments() throws Exception {
             runTest("testData/highlighterMetaInfo/NamedArguments.kt");
-        }
-
-        @TestMetadata("NonExistingKotlinMethodFromJava.kt")
-        public void testNonExistingKotlinMethodFromJava() throws Exception {
-            runTest("testData/highlighterMetaInfo/NonExistingKotlinMethodFromJava.kt");
         }
 
         @TestMetadata("NonNullAssertion.kt")
@@ -293,16 +316,6 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/PropertiesWithPropertyDeclarationsInDumbMode.kt");
         }
 
-        @TestMetadata("RepeatableAnnotation.kt")
-        public void testRepeatableAnnotation() throws Exception {
-            runTest("testData/highlighterMetaInfo/RepeatableAnnotation.kt");
-        }
-
-        @TestMetadata("RepeatableAsAliasAnnotation.kt")
-        public void testRepeatableAsAliasAnnotation() throws Exception {
-            runTest("testData/highlighterMetaInfo/RepeatableAsAliasAnnotation.kt");
-        }
-
         @TestMetadata("script.kts")
         public void testScript() throws Exception {
             runTest("testData/highlighterMetaInfo/script.kts");
@@ -311,11 +324,6 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("Suspend.kt")
         public void testSuspend() throws Exception {
             runTest("testData/highlighterMetaInfo/Suspend.kt");
-        }
-
-        @TestMetadata("SyntheticExtensionProperty.kt")
-        public void testSyntheticExtensionProperty() throws Exception {
-            runTest("testData/highlighterMetaInfo/SyntheticExtensionProperty.kt");
         }
 
         @TestMetadata("Todo.kt")

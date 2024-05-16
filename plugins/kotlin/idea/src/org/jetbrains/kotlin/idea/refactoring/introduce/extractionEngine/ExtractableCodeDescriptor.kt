@@ -180,7 +180,7 @@ data class ExtractionGeneratorConfiguration(
 
 data class ExtractionResult(
     override val config: ExtractionGeneratorConfiguration,
-    override val declaration: KtNamedDeclaration,
+    override var declaration: KtNamedDeclaration,
     override val duplicateReplacers: Map<KotlinPsiRange, () -> Unit>
 ) : IExtractionResult<KotlinType> {
     override fun dispose() = unmarkReferencesInside(declaration)

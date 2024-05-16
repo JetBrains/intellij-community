@@ -383,7 +383,6 @@ c:com.intellij.remote.RemoteSdkPropertiesHolder
 com.intellij.remote.RemoteSdkPropertiesPaths
 - a:getHelpersPath():java.lang.String
 - a:getInterpreterPath():java.lang.String
-f:com.intellij.remote.RemoteSdks
 a:com.intellij.remote.RemoteSshProcess
 - com.intellij.remote.RemoteProcess
 - com.intellij.execution.process.PtyBasedProcess

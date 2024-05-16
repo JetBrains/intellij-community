@@ -30,7 +30,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Suitable for moderately big enumerators that are used very intensively, so
  * increased heap consumption pays off. For general cases use {@link DurableEnumerator}
  *
- * TODO RC: move it to platform.util.storages as soon, as VFSAsyncTaskExecutor will be moved to some shared util package/moduel
+ * TODO RC: move it to platform.util.storages as soon, as VFSAsyncTaskExecutor will be moved to some shared util package/module
  */
 @ApiStatus.Internal
 public final class DurableStringEnumerator implements DurableDataEnumerator<String>,

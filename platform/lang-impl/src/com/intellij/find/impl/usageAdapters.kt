@@ -3,7 +3,6 @@ package com.intellij.find.impl
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.impl.UsageViewCoroutineScopeProvider
@@ -15,7 +14,7 @@ import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 fun getUsageInfo(adapters: List<UsageInfoAdapter>, project: Project): CompletableFuture<List<UsageInfo>> {
-  return UsageViewCoroutineScopeProvider.getInstance(project).coroutineScope.childScope().async {
+  return UsageViewCoroutineScopeProvider.getInstance(project).coroutineScope.async {
     val futures: Array<CompletableFuture<Array<UsageInfo>>> = readAction {
       adapters.filter { it.isValid }.map { it.mergedInfosAsync }.toTypedArray()
     }

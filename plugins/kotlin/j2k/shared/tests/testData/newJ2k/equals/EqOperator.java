@@ -1,4 +1,3 @@
-// IGNORE_K2
 interface I{}
 
 final class C{}

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
+import org.jetbrains.idea.devkit.requestHandlers.BuiltInServerConnectionData;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
@@ -52,6 +53,8 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     ParametersList vm = javaParameters.getVMParametersList();
 
     if (PsiUtil.isIdeaProject(project)) {
+      BuiltInServerConnectionData.passDataAboutBuiltInServer(javaParameters, project);
+      
       if (!vm.hasProperty(SYSTEM_CL_PROPERTY) && !vm.getList().contains("--add-modules")) {
         // check that UrlClassLoader is available in the test module classpath
         // if module-path is used, skip custom loader

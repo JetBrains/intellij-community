@@ -28,30 +28,33 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   protected final PsiFile myFile;
   private final @Nullable Editor myEditor;
   final @NotNull TextRange myRestrictRange;
-  final @NotNull HighlightInfoProcessor myHighlightInfoProcessor;
-  HighlightingSession myHighlightingSession;
+  private final HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
                                                    @NotNull Document document,
                                                    @NotNull @Nls String presentableName,
-                                                   @Nullable PsiFile file,
+                                                   @Nullable PsiFile psiFile,
                                                    @Nullable Editor editor,
                                                    @NotNull TextRange restrictRange,
                                                    boolean runIntentionPassAfter,
-                                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+                                                   @Deprecated
+                                                   @Nullable("do not use") HighlightInfoProcessor highlightInfoProcessor) {
     super(project, document, runIntentionPassAfter);
     myPresentableName = presentableName;
-    myFile = file;
+    myFile = psiFile;
     myEditor = editor;
     myRestrictRange = restrictRange;
-    myHighlightInfoProcessor = highlightInfoProcessor;
-    if (file != null) {
-      if (file.getProject() != project) {
-        throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is from an alien project (" + file.getProject()+") but expected: "+project);
+    if (psiFile != null) {
+      if (psiFile.getProject() != project) {
+        throw new IllegalArgumentException("File '" + psiFile +"' ("+psiFile.getClass()+") is from an alien project (" + psiFile.getProject()+") but expected: "+project);
       }
-      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
-        throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is an injected fragment but expected top-level");
+      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(psiFile)) {
+        throw new IllegalArgumentException("File '" + psiFile +"' ("+psiFile.getClass()+") is an injected fragment but expected top-level");
       }
+      myHighlightingSession = HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
+    }
+    else {
+      myHighlightingSession = null;
     }
     if (document instanceof DocumentWindow) {
       throw new IllegalArgumentException("Document '" + document +" is an injected fragment but expected top-level");
@@ -77,9 +80,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   public final void doCollectInformation(@NotNull ProgressIndicator progress) {
     GlobalInspectionContextBase.assertUnderDaemonProgress();
     myFinished = false;
-    if (myFile != null) {
-      myHighlightingSession = HighlightingSessionImpl.getFromCurrentIndicator(myFile);
-    }
     try {
       collectInformationWithProgress(progress);
     }
@@ -142,7 +142,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       long current = myProgressCount.addAndGet(delta);
       if (current >= myNextChunkThreshold.get() &&
           current >= myNextChunkThreshold.updateAndGet(old -> current >= old ? old+Math.max(1, myProgressLimit / 100) : old)) {
-        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), getProgress());
+        DaemonCodeAnalyzerEx.getInstanceEx(myProject).progressIsAdvanced(myHighlightingSession, getEditor(), getProgress());
       }
     }
   }
@@ -159,5 +159,10 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     @Override
     public void doApplyInformationToEditor() {
     }
+  }
+
+  @NotNull
+  protected HighlightingSession getHighlightingSession() {
+    return myHighlightingSession;
   }
 }

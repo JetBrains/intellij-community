@@ -193,8 +193,6 @@
             use-shortcut-of="Find" />
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
-    <action id="EnableNewUi" class="com.intellij.ide.actions.EnableNewUiAction" icon="AllIcons.Actions.EnableNewUi"/>
-    <action id="DisableNewUi" class="com.intellij.ide.actions.DisableNewUiAction"/>
 
     <action id="SmartSelect" class="com.intellij.ide.actions.SmartSelect" use-shortcut-of="EditorSelectWord"/>
     <action id="SmartUnSelect" class="com.intellij.ide.actions.SmartUnSelect" use-shortcut-of="EditorUnSelectWord"/>
@@ -398,6 +396,8 @@
               icon="AllIcons.Diff.ApplyNotConflictsRight"/>
       <action id="Diff.MagicResolveConflicts" class="com.intellij.openapi.actionSystem.EmptyAction"
               icon="AllIcons.Diff.MagicResolveToolbar"/>
+
+      <group id="Diff.Conflicts.Additional.Actions"/>
 
       <group id="compare.contents" icon="AllIcons.Actions.Diff" popup="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup">
         <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction"
@@ -1234,6 +1234,9 @@
         <synonym text="Exit Dumb Mode"/>
         <synonym text="Enter Dumb Mode"/>
       </action>
+      <action id="ToggleIncompleteMode" internal="true" class="com.intellij.internal.ToggleIncompleteDependenciesModeAction">
+        <synonym text="Exit Incomplete Dependencies Mode"/>
+      </action>
       <action id="DumbModeTremble" class="com.intellij.internal.DumbModeTrembleAction">
         <synonym text="Exit Tremble Dumb Mode"/>
         <synonym text="Enter Tremble Dumb Mode"/>
@@ -1324,6 +1327,7 @@
           <abbreviation value="metal"/>
         </action>
         <action id="RulerGuide" internal="true" class="com.intellij.internal.rulerguide.RulerGuideAction"/>
+        <action id="ShowHideDebugInfoInUi" internal="true" class="com.intellij.ide.actions.ShowHideDebugInfoInUiAction"/>
         <separator/>
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"/>
         <action id="AddRandomNamesTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddRandomNamesTestProcessAction"/>
@@ -1599,6 +1603,8 @@
     </group>
 
     <group id="EditorStickyLinesSettings" popup="true" searchable="false">
+      <action id="EditorStickyConfigure" class="com.intellij.openapi.editor.impl.stickyLines.StickyLinesConfigureAction"/>
+      <action id="EditorStickyLinesDisableForLang" class="com.intellij.openapi.editor.impl.stickyLines.StickyLinesDisableForLangAction"/>
       <action id="EditorStickyLinesDisable" class="com.intellij.openapi.editor.impl.stickyLines.StickyLinesSettingsDisableAction"/>
     </group>
 
@@ -1631,9 +1637,6 @@
       <reference id="ChangeLaf"/>
       <reference id="ChangeKeymap"/>
       <reference id="ChangeView"/>
-      <separator/>
-      <reference id="EnableNewUi"/>
-      <reference id="DisableNewUi"/>
     </group>
 
     <action id="CheckSuggestedPlugins" class="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.CheckSuggestedPluginsAction"/>

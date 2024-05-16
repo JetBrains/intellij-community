@@ -266,11 +266,11 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myVotesToVote = 1000000000;
   }
 
-  public boolean isExplicitlyResumed(@Nullable ThreadReferenceProxyImpl thread) {
+  public boolean isExplicitlyResumed(@NotNull ThreadReferenceProxyImpl thread) {
     return myResumedThreads != null && myResumedThreads.contains(thread);
   }
 
-  public boolean suspends(ThreadReferenceProxyImpl thread) {
+  public boolean suspends(@NotNull ThreadReferenceProxyImpl thread) {
     assertNotResumed();
     if (isEvaluating()) {
       return false;

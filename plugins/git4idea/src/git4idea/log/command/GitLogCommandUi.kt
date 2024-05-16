@@ -32,7 +32,7 @@ class GitLogCommandUiFactory(private val logId: String,
                              private val uiProperties: VcsLogTabsProperties,
                              private val colorManager: VcsLogColorManager) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
   override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
-    val vcsLogFilterer = GitLogCommandFilterer(project, logData.storage)
+    val vcsLogFilterer = GitLogCommandFilterer(project, logData.storage, logData.progress)
     val properties = uiProperties.createProperties(logId)
     val initialGraphOptions = properties[MainVcsLogUiProperties.GRAPH_OPTIONS]
     val initialFilters = filters ?: VcsLogFilterObject.collection()

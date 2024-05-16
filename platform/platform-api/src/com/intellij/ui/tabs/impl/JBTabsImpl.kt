@@ -3,6 +3,7 @@
 
 package com.intellij.ui.tabs.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.getInstance
@@ -402,7 +403,7 @@ open class JBTabsImpl(
   private fun setRecentlyActive() {
     relayoutAlarm.cancelAllRequests()
     isRecentlyActive = true
-    relayoutAlarm.addRequest({
+    relayoutAlarm.addRequest(ContextAwareRunnable {
                                isRecentlyActive = false
                                relayout(false, false)
                              }, RELAYOUT_DELAY)
@@ -1154,7 +1155,7 @@ open class JBTabsImpl(
 
     if (isRequestFocusOnLastFocusedComponent) {
       val lastFocusOwner = info.lastFocusOwner
-      if (lastFocusOwner != null && !isMyChildIsFocusedNow) {
+      if (lastFocusOwner != null && lastFocusOwner.isShowing && !isMyChildIsFocusedNow) {
         LOG.debug { "last focus owner: $lastFocusOwner" }
         return lastFocusOwner
       }
@@ -2437,7 +2438,8 @@ open class JBTabsImpl(
     relayout(forced, layoutNow)
   }
 
-  private fun updateEntryPointToolbar() {
+  @Internal
+  fun updateEntryPointToolbar() {
     entryPointToolbar?.let {
       remove(it.component)
     }
@@ -3097,7 +3099,7 @@ open class JBTabsImpl(
   val tabHGap: Int
     get() = -myBorder.thickness
 
-  fun getDecoration(): UiDecoration? = uiDecorator?.getDecoration() ?: defaultDecorator.getDecoration()
+  fun getDecoration(): UiDecoration = uiDecorator?.getDecoration() ?: defaultDecorator.getDecoration()
 
   override fun toString(): String = "JBTabs visible=$visibleInfos selected=$mySelectedInfo"
 

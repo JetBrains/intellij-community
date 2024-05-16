@@ -290,8 +290,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return UsageViewBundle.message("find.file.size.megabytes", Long.toString(megabytes));
   }
 
-  public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope) {
-    if (searchScope instanceof AcceptEveryUsageScope) return true;
+  public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope, @NotNull SearchScope everythingScope) {
+    if (searchScope.equals(everythingScope)) return true;
     return ReadAction.compute(() -> {
       VirtualFile file;
       if (usage instanceof PsiElementUsage psiElementUsage) {
@@ -323,9 +323,4 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public static @Nls(capitalization = Sentence) @NotNull String outOfScopeMessage(int nUsages, @NotNull SearchScope searchScope) {
     return UsageViewBundle.message("0.usages.are.out.of.scope", nUsages, searchScope.getDisplayName());
   }
-
-  /**
-   * There are usages which have not virtual files, so we do not want to filter them out in some scopes
-   */
-  public interface AcceptEveryUsageScope { }
 }

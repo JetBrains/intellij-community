@@ -1,4 +1,3 @@
-// IGNORE_K2
 class A {
     private final int field1 = 0;
     private int field2 = 0;

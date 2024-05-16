@@ -6,7 +6,9 @@ import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object WebSymbolsPatternFactory {
 
   fun createComplexPattern(optionsProvider: (queryExecutor: WebSymbolsQueryExecutor, contextStack: Stack<WebSymbolsScope>) -> ComplexPatternOptions,

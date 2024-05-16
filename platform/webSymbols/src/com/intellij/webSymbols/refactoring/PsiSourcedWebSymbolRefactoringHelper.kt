@@ -9,7 +9,9 @@ import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference
 import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference.RenameHandler
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PsiSourcedWebSymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
   override fun prepareOperation(usages: Array<out UsageInfo>, elements: List<PsiElement>): List<RenameHandler> =
     usages.mapNotNull { (it.reference as? PsiSourcedWebSymbolReference)?.createRenameHandler() }

@@ -24,7 +24,7 @@ document.addEventListener("click", function (e) {
       }
     }
   }
-  else if (e.target.classList.contains("completion")) {
+  else if (e.target.classList.contains("session")) {
     updatePopup(e.target)
   }
   else if (suggestionDiv != null) {
@@ -122,12 +122,21 @@ function updatePopup(sessionDiv) {
   popup.setAttribute("class", "autocomplete-items")
   const prefixDiv = document.createElement("DIV")
   prefixDiv.setAttribute("style", "background-color: lightgrey;")
-  prefixDiv.innerHTML = `prefix: &quot;${lookup["prefix"]}&quot;; latency: ${lookup["latency"]}`
+  if ("aia_user_prompt" in lookup["additionalInfo"]) {
+    prefixDiv.innerHTML = `user prompt: &quot;${lookup["additionalInfo"]["aia_user_prompt"]}&quot;; latency: ${lookup["latency"]}`
+  } else {
+    prefixDiv.innerHTML = `prefix: &quot;${lookup["prefix"]}&quot;; latency: ${lookup["latency"]}`
+  }
   popup.appendChild(prefixDiv)
+  // order: () -> suggestions -> features -> contexts
   const needAddFeatures = sessionDiv.classList.contains("suggestions")
+  const needAddContext = sessionDiv.classList.contains("features")
   closeAllLists()
   if (needAddFeatures) {
     addCommonFeatures(sessionDiv, popup, lookup)
+  }
+  else if (needAddContext) {
+    addContexts(sessionDiv, popup, lookup)
   }
   else {
     addSuggestions(sessionDiv, popup, lookup)
@@ -137,6 +146,7 @@ function updatePopup(sessionDiv) {
 
 function addCommonFeatures(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("features")
+  sessionDiv.classList.remove("contexts", "suggestions")
   const parts = sessionDiv.id.split(" ")
   const sessionId = parts[0]
   const lookupOrder = parts[1]
@@ -158,7 +168,7 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   }
   addRelevanceModelBlock(popup, lookup, "trigger")
   addRelevanceModelBlock(popup, lookup, "filter")
-  addContextBlock(popup, lookup)
+  addAssistantContextBlock(popup, lookup)
   addDiagnosticsBlock("RAW SUGGESTIONS", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED SUGGESTIONS", "analyzed_proposals", popup, lookup)
@@ -166,9 +176,24 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   addDiagnosticsBlock("RESULT SUGGESTIONS", "result_proposals", popup, lookup)
 }
 
+function addContexts(sessionDiv, popup, lookup) {
+  sessionDiv.classList.add("contexts")
+  sessionDiv.classList.remove("features", "suggestions")
+
+  if (!("cc_context" in lookup["additionalInfo"])) return
+  let addInfo = lookup["additionalInfo"]
+  let contextBlock = document.createElement("DIV")
+  contextBlock.style.whiteSpace = "inherit"
+  let code = document.createElement("code")
+  code.innerHTML = addInfo["cc_context"]
+  contextBlock.appendChild(code)
+  code.style.whiteSpace = "inherit"
+  popup.appendChild(contextBlock)
+}
+
 function addSuggestions(sessionDiv, popup, lookup) {
   sessionDiv.classList.add("suggestions")
-  sessionDiv.classList.remove("features")
+  sessionDiv.classList.remove("features", "contexts")
   const sessionId = sessionDiv.id.split(" ")[0]
   const suggestions = lookup["suggestions"]
   for (let i = 0; i < suggestions.length; i++) {
@@ -195,7 +220,7 @@ function addRelevanceModelBlock(popup, lookup, relevanceMode) {
   popup.appendChild(relevanceModelResults)
 }
 
-function addContextBlock(popup, lookup) {
+function addAssistantContextBlock(popup, lookup) {
   if (!("aia_context" in lookup["additionalInfo"])) return
   let addInfo = lookup["additionalInfo"]
   let contextBlock = document.createElement("DIV")
@@ -399,14 +424,14 @@ function updateMultilinePopup(event) {
   }
   const suggestionDiv = target.closest(".suggestion")
   const attachmentsDiv = target.closest(".attachments")
-  const showSuggestion =  attachmentsDiv != null || target.classList.contains("completion")
+  const showSuggestion =  attachmentsDiv != null || target.classList.contains("session")
   if (suggestionDiv == null && !showSuggestion) {
     if (target.closest(".autocomplete-items") == null) {
       closeAllLists();
     }
     return
   }
-  const sessionDiv = target.closest(".completion")
+  const sessionDiv = target.closest(".session")
   closeAllLists()
   const lookup = getLookup(sessionDiv)
   const popup = document.createElement("DIV")
@@ -497,7 +522,7 @@ function addMultilineExpectedText(popup, expectedText) {
 }
 
 function showMultilinePrefixAndSuffix(event) {
-  if (event.target.classList.contains("completion")) {
+  if (event.target.classList.contains("session")) {
     const sessionDiv = event.target
     sessionDiv.parentNode.style.display = "none"
     const newCode = document.createElement("pre")

@@ -119,12 +119,6 @@ class MarkdownPreviewFileEditor(private val project: Project, private val file: 
     return true
   }
 
-  override fun selectNotify() {
-    if (panel != null) {
-      coroutineScope.launch(Dispatchers.EDT) { updateHtml() }
-    }
-  }
-
   override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
 
   override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
@@ -169,12 +163,10 @@ class MarkdownPreviewFileEditor(private val project: Project, private val file: 
     val html = readAction { generateMarkdownHtml(file, document.text, project) }
 
     val currentHtml = "<html><head></head>$html</html>"
-    if (currentHtml != lastRenderedHtml) {
-      lastRenderedHtml = currentHtml
-      val editor = mainEditor.firstOrNull() ?: return
-      val offset = editor.caretModel.offset
-      panel.setHtml(lastRenderedHtml, offset, file)
-    }
+    lastRenderedHtml = currentHtml
+    val editor = mainEditor.firstOrNull() ?: return
+    val offset = editor.caretModel.offset
+    panel.setHtml(lastRenderedHtml, offset, file)
   }
 
   @RequiresEdt

@@ -8,6 +8,7 @@ package com.jetbrains.python.lexer;
 public enum PythonLexerKind {
   REGULAR,  // Regular Python files
   CONSOLE,  // Code fragments for the Python Console
+  LAZY      // Lazy-parseable elements
 
   // We can add Cython or other dialects here if we ever need to customize the lexer extensively
   // If there are many cases like this, we might consider turning it into an extension point

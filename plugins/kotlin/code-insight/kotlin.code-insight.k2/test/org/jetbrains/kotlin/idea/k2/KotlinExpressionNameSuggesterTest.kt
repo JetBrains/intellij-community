@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 class KotlinExpressionNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginMode
+    override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
     fun testNumericLiteral() = test("5", "i", "n", "message")

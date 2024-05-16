@@ -30,9 +30,11 @@ internal class ArrayListIjentRelativePath private constructor(
   override fun resolve(other: IjentPath.Relative): IjentPathResult<ArrayListIjentRelativePath> {
     val result = SmartList<String>()
     result += parts
-    for (i in 0..<other.nameCount) {
-      val fileName = other.getName(i).fileName
-      result += fileName
+    if (other != EMPTY) {
+      for (i in 0..<other.nameCount) {
+        val fileName = other.getName(i).fileName
+        result += fileName
+      }
     }
     return IjentPathResult.Ok(ArrayListIjentRelativePath(result))
   }
@@ -106,6 +108,8 @@ internal class ArrayListIjentRelativePath private constructor(
     parts.hashCode()
 
   companion object {
+    val EMPTY = ArrayListIjentRelativePath(listOf())
+
     fun parse(raw: String): IjentPathResult<ArrayListIjentRelativePath> =
       build(raw.splitToSequence(Regex("""[/\\]""")).filter(String::isNotEmpty).iterator())
 

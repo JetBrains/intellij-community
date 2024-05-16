@@ -4,10 +4,9 @@ package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.debugger.actions.AsyncStacksToggleAction
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
-import com.intellij.debugger.impl.ClassLoadingUtils
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
@@ -16,7 +15,7 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.rt.debugger.coroutines.ContinuationExtractorHelper
+import com.intellij.rt.debugger.ExceptionDebugHelper
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -117,10 +116,10 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     ): CoroutineFilter? {
         // if continuation cannot be extracted, fall to CoroutineIdFilter
         val currentContinuation = extractContinuation(frameProxy) ?: return null
-        val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
         // First try to get a ContinuationFilter from helper
-        getContinuationFilterFromHelper(currentContinuation, debugProbesImpl, defaultExecutionContext)?.let { return it }
+        getContinuationFilterFromHelper(currentContinuation, defaultExecutionContext)?.let { return it }
         // If helper class failed
+        val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
         if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
             extractContinuationId(currentContinuation, defaultExecutionContext)?.let { return it }
         }
@@ -174,17 +173,11 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         }
     }
 
-    private fun getContinuationFilterFromHelper(
-        currentContinuation: ObjectReference,
-        debugProbesImpl: DebugProbesImpl?,
-        context: DefaultExecutionContext
-    ): CoroutineFilter? {
-        if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
-            val continuationIdValue = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "tryGetContinuationId", listOf(currentContinuation))
-            (continuationIdValue as? LongValue)?.value()?.let { if (it != -1L) return CoroutineIdFilter(setOf(it)) }
-            thisLogger().warn("[coroutine filter]: Could not extract continuation ID, location = ${context.frameProxy?.location()}")
-        }
-        val rootContinuation = callMethodFromHelper(ContinuationExtractorHelper::class.java, context, "getRootContinuation", listOf(currentContinuation))
+    private fun getContinuationFilterFromHelper(currentContinuation: ObjectReference, context: DefaultExecutionContext): CoroutineFilter? {
+        val continuationIdValue = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "tryGetContinuationId", listOf(currentContinuation))
+        (continuationIdValue as? LongValue)?.value()?.let { if (it != -1L) return CoroutineIdFilter(setOf(it)) }
+        thisLogger().warn("[coroutine filter]: Could not extract continuation ID, location = ${context.frameProxy?.location()}")
+        val rootContinuation = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getRootContinuation", listOf(currentContinuation))
         if (rootContinuation == null) thisLogger().warn("[coroutine filter]: Could not extract continuation instance")
         return rootContinuation?.let { ContinuationObjectFilter(it as ObjectReference) }
     }
@@ -202,16 +195,26 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
     private fun callMethodFromHelper(helperClass: Class<*>, context: DefaultExecutionContext, methodName: String, args: List<Value?>): Value? {
         try {
-            val helper = ClassLoadingUtils.getHelperClass(helperClass, context.evaluationContext)
-            if (helper != null) {
-                val method = DebuggerUtils.findMethod(helper, methodName, null)
-                if (method != null) {
-                    return context.evaluationContext.computeAndKeep {
-                        context.invokeMethod(helper, method, args)
+            return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args)
+        } catch (e: Exception) {
+            if (e is EvaluateException && e.exceptionFromTargetVM != null) {
+                var exceptionStack = DebuggerUtilsImpl.getExceptionText(context.evaluationContext, e.exceptionFromTargetVM!!)
+                if (exceptionStack != null) {
+                    // drop user frames
+                    val currentStackDepth = (DebuggerUtilsImpl.invokeHelperMethod(
+                        context.evaluationContext,
+                        ExceptionDebugHelper::class.java,
+                        "getCurrentThreadStackDepth",
+                        emptyList()
+                    ) as IntegerValue).value()
+                    val lines = exceptionStack.lines()
+                    if (lines.size > currentStackDepth) {
+                        exceptionStack = lines.subList(0, lines.size - currentStackDepth + 1).joinToString(separator = "\n")
                     }
+                    DebuggerUtilsImpl.logError(e.message, e, exceptionStack)
+                    return null
                 }
             }
-        } catch (e: Exception) {
             DebuggerUtilsImpl.logError(e) // for now log everything
         }
         return null

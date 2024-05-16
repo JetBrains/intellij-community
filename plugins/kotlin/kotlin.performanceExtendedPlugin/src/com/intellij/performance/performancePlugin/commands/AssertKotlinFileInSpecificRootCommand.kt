@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 
-class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+internal class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
     companion object {
         const val PREFIX: @NonNls String = CMD_PREFIX + "assertOpenedKotlinFileInRoot"
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
 import com.intellij.DynamicBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +48,15 @@ public abstract class SearchableOptionsRegistrar{
 
   public abstract Set<String> getProcessedWords(@NotNull String text);
 
+  @ApiStatus.Internal
   public static String getSearchableOptionsXmlName() {
-    DynamicBundle.LanguageBundleEP bundle = DynamicBundle.findLanguageBundle();
-    return SEARCHABLE_OPTIONS_XML_NAME + (bundle != null ? "_" + bundle.locale : "") + ".xml";
+    return getSearchableOptionsName() + ".xml";
+  }
+
+  @ApiStatus.Internal
+  public static String getSearchableOptionsName() {
+    String langTag = DynamicBundle.getLocale().toLanguageTag();
+    return SEARCHABLE_OPTIONS_XML_NAME + (langTag.equals("en") ? "" : "_" + langTag);
   }
 
   public interface AdditionalLocationProvider {

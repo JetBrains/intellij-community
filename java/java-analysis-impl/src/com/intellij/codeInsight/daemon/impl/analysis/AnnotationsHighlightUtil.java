@@ -540,7 +540,7 @@ public final class AnnotationsHighlightUtil {
     PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
     if (nameReferenceElement != null) {
       PsiElement resolved = nameReferenceElement.resolve();
-      if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) {
+      if (resolved != null && (!(resolved instanceof PsiClass psiClass) || !psiClass.isAnnotationType())) {
         String description = JavaErrorBundle.message("annotation.annotation.type.expected");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameReferenceElement).descriptionAndTooltip(description);
       }

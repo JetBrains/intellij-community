@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
+import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAutoWithDeprecatedCustomDirName
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
@@ -16,7 +17,6 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -25,6 +25,9 @@ object CommunityRepositoryModules {
    * Specifies non-trivial layout for all plugins that sources are located in 'community' and 'contrib' repositories
    */
   val COMMUNITY_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
+    pluginAuto("intellij.yaml") { spec ->
+      spec.withModule("intellij.yaml.editing", "yaml-editing.jar")
+    },
     plugin("intellij.ant") { spec ->
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
@@ -63,19 +66,15 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.xpath")) { spec ->
       spec.withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },
-    pluginAuto(listOf("intellij.platform.langInjection")) { spec ->
-      spec.withModule("intellij.java.langInjection", "IntelliLang.jar")
-      spec.withModule("intellij.xml.langInjection", "IntelliLang.jar")
+    pluginAuto(listOf("intellij.platform.langInjection", "intellij.java.langInjection", "intellij.xml.langInjection")) { spec ->
       spec.withModule("intellij.java.langInjection.jps")
     },
-    plugin("intellij.tasks.core") { spec ->
+    pluginAutoWithDeprecatedCustomDirName("intellij.tasks.core") { spec ->
       spec.directoryName = "tasks"
       spec.withModule("intellij.tasks")
       spec.withModule("intellij.tasks.compatibility")
       spec.withModule("intellij.tasks.jira")
       spec.withModule("intellij.tasks.java")
-      spec.withProjectLibrary("XmlRPC")
-      spec.withProjectLibrary("jsonpath")
     },
     pluginAuto(listOf("intellij.xslt.debugger")) { spec ->
       spec.withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
@@ -144,33 +143,22 @@ object CommunityRepositoryModules {
     pluginAuto(listOf(
       "intellij.packageSearch",
       "intellij.packageSearch.gradle",
-      "intellij.packageSearch.maven",
-      "intellij.packageSearch.kotlin",
     )) { spec ->
       spec.withModule("intellij.packageSearch.gradle.tooling", "pkgs-tooling-extension.jar")
-    },
-    plugin("intellij.android.gradle.dsl") { spec ->
-      spec.withModule("intellij.android.gradle.dsl.kotlin")
-      spec.withModule("intellij.android.gradle.dsl.toml")
     },
     pluginAuto(listOf("intellij.gradle.java", "intellij.gradle.jps")) {
       it.excludeProjectLibrary("Ant")
       it.excludeProjectLibrary("Gradle")
     },
-    plugin("intellij.junit") { spec ->
-      spec.mainJarName = "idea-junit.jar"
+    pluginAuto("intellij.junit") { spec ->
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
       spec.withModule("intellij.junit.v5.rt", "junit5-rt.jar")
-    },
-    plugin("intellij.java.byteCodeViewer") { spec ->
-      spec.mainJarName = "byteCodeViewer.jar"
     },
     plugin("intellij.testng") { spec ->
       spec.mainJarName = "testng-plugin.jar"
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
       spec.withProjectLibrary("TestNG")
     },
-    pluginAuto(listOf("intellij.dev", "intellij.platform.statistics.devkit")),
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.withModule("intellij.devkit.jps")
       spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
@@ -192,16 +180,14 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
     },
     javaFXPlugin("intellij.javaFX.community"),
-    plugin("intellij.terminal") { spec ->
+    pluginAuto("intellij.terminal") { spec ->
       spec.withModule("intellij.terminal.completion")
-      spec.withModule("intellij.terminal.sh")
       spec.withResource("resources/shell-integrations", "shell-integrations")
     },
     pluginAuto("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
     },
-    pluginAuto("intellij.textmate") { spec ->
-      spec.withModule("intellij.textmate.core")
+    pluginAuto(listOf("intellij.textmate")) { spec ->
       spec.withResource("lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
@@ -221,7 +207,7 @@ object CommunityRepositoryModules {
     pluginAuto(
       listOf(
         "intellij.performanceTesting",
-        "intellij.performanceTesting.remoteDriver",
+        "intellij.tools.ide.starter.bus",
         "intellij.driver.model",
         "intellij.driver.impl",
         "intellij.driver.client"
@@ -244,7 +230,7 @@ object CommunityRepositoryModules {
   )
 
   private fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin.descriptor"): PluginLayout {
-    return plugin (mainModuleName, auto = true) { spec ->
+    return pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "design-tools"
       spec.mainJarName = "design-tools.jar"
 
@@ -294,27 +280,27 @@ object CommunityRepositoryModules {
                                         additionalModulesToJars: Map<String, String> = emptyMap(),
                                         allPlatforms: Boolean,
                                         addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?): PluginLayout =
-    plugin(mainModuleName, auto = true) { spec ->
+    pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
-      spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
-        override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
-          val text = Files.readString(pluginXml)
-          if (text.indexOf("<version>") != -1) {
-            val declaredVersion = text.substring(text.indexOf("<version>") + "<version>".length, text.indexOf("</version>"))
-            return "$declaredVersion.$ideBuildVersion"
-          }
-          else {
-            return ideBuildVersion
-          }
+      spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
+        val pluginXml = pluginXmlSupplier()
+        if (pluginXml.indexOf("<version>") != -1) {
+          val declaredVersion = pluginXml.substring(pluginXml.indexOf("<version>") + "<version>".length, pluginXml.indexOf("</version>"))
+          PluginVersionEvaluatorResult(pluginVersion = "$declaredVersion.$ideBuildVersion")
         }
-      })
+        else {
+          PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion)
+        }
+      }
 
       spec.excludeProjectLibrary("Gradle")
 
       // modules:
       // adt-ui.jar
-      //spec.withModule("intellij.android.adt.ui.compose", "adt-ui.jar")
+      spec.withModule("intellij.android.adt.ui.compose", "adt-ui.jar")
+      spec.withModuleLibrary("jetbrains-jewel-int-ui-standalone", "intellij.android.adt.ui.compose", "jewel-int-ui-standalone.jar")
+      spec.withModuleLibrary("jetbrains-jewel-ide-laf-bridge", "intellij.android.adt.ui.compose", "jewel-ide-laf-bridge.jar")
       spec.withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       spec.withModule("intellij.android.adt.ui", "adt-ui.jar")
 
@@ -339,6 +325,9 @@ object CommunityRepositoryModules {
       // android-kotlin.jar
       spec.withModule("intellij.android.kotlin.extensions", "android-kotlin.jar")
       spec.withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
+      spec.withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar")
+      spec.withModule("intellij.android.kotlin.idea.k1", "android-kotlin.jar")
+      spec.withModule("intellij.android.kotlin.idea.k2", "android-kotlin.jar")
       spec.withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
 
       // android-profilers.jar
@@ -366,6 +355,7 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("precompiled-profgen", "android.sdktools.profgen", "android.jar")
       spec.withModule("intellij.android.app-inspection.api", "android.jar")
       spec.withModule("intellij.android.app-inspection.ide", "android.jar")
+      spec.withModule("intellij.android.app-inspection.ide.gradle", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspector.api", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspector.ide", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.backgroundtask.ide", "android.jar")
@@ -395,8 +385,11 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.device-explorer-common", "android.jar")
       spec.withModule("intellij.android.device-manager", "android.jar")
       spec.withModule("intellij.android.device-manager-v2", "android.jar")
+      //spec.withModule("intellij.android.ml-api", "android.jar")
+      // Packaged as a gradle-dsl plugin
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
       //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
+      //spec.withModule("intellij.android.gradle.dsl.toml", "android.jar")
       spec.withModule("intellij.android.lang-databinding", "android.jar")
       spec.withModule("intellij.android.lang", "android.jar")
       spec.withModule("intellij.android.layout-inspector", "android.jar")
@@ -405,6 +398,9 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.logcat", "android.jar")
       spec.withModule("intellij.android.mlkit", "android.jar")
       spec.withModule("intellij.android.nav.safeargs", "android.jar")
+      spec.withModule("intellij.android.nav.safeargs.common", "android.jar")
+      spec.withModule("intellij.android.nav.safeargs.common.gradle", "android.jar")
+      spec.withModule("intellij.android.nav.safeargs.k1", "android.jar")
       spec.withModule("intellij.android.newProjectWizard", "android.jar")
       spec.withModule("intellij.android.android-material", "android.jar")
       spec.withModule("intellij.android.observable.ui", "android.jar")
@@ -412,7 +408,9 @@ object CommunityRepositoryModules {
       if (mainModuleName != "intellij.android.plugin.descriptor") {
         spec.withModule("intellij.android.plugin.descriptor", "android.jar")
       }
+      spec.withModule("intellij.android.preview-elements", "android.jar")
       spec.withModule("intellij.android.profilersAndroid", "android.jar")
+      spec.withModule("intellij.android.profilersAndroid.gradle", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.psd", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.repositorySearch", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.upgrade", "android.jar")
@@ -422,13 +420,15 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.rendering", "android.jar")
       spec.withModule("intellij.android.room", "android.jar")
       spec.withModule("intellij.android.sdkUpdates", "android.jar")
-      spec.withModule("intellij.android.testRetention", "android.jar")
       spec.withModule("intellij.android.threading-checker", "android.jar")
+      spec.withModule("intellij.android.testRetention", "android.jar")
       spec.withModule("intellij.android.transport", "android.jar")
       spec.withModule("intellij.android.wear-pairing", "android.jar")
+      spec.withModule("intellij.android.wear-whs", "android.jar")
       spec.withModule("intellij.android.wizard.model", "android.jar")
       spec.withModule("intellij.android.wizard", "android.jar")
       spec.withModule("intellij.android.native-symbolizer", "android.jar")
+      spec.withModule("intellij.android.native-symbolizer.gradle", "android.jar")
       //tools/adt/idea/whats-new-assistant:whats-new-assistant <= REMOVED
       spec.withModuleLibrary("precompiled-dynamic-layout-inspector.common", "android.sdktools.dynamic-layout-inspector.common", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.network.ide", "android.jar")
@@ -438,8 +438,9 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.codenavigation", "android.jar")
       spec.withModule("intellij.android.execution.common", "android.jar")
       spec.withModule("intellij.android.explainer", "android.jar")
+      spec.withModuleLibrary("precompiled-environment-services", "android.sdktools.environment-services", "android.jar")
       spec.withModuleLibrary("precompiled-kotlin-multiplatform-models", "android.sdktools.android.kotlin-multiplatform-models", "android.jar")
-
+      spec.withModule("intellij.android.safemode", "android.jar")
 
       // artwork.jar
       spec.withModule("intellij.android.artwork", "artwork.jar")
@@ -541,7 +542,7 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("precompiled-wizardTemplate.plugin", "android.sdktools.wizardTemplate.plugin", "wizard-template.jar")
 
       // libs:
-      spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea", "")
+      spec.withModuleLibrary("jb-r8", "intellij.android.kotlin.idea.common", "")
       spec.withModuleLibrary("explainer", "android.sdktools.analyzer", "")
       spec.withModuleLibrary("generator", "android.sdktools.analyzer", "")
       spec.withModuleLibrary("shared", "android.sdktools.analyzer", "")
@@ -627,6 +628,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("kxml2")
       spec.withProjectLibrary("layoutinspector-skia-proto")
       spec.withProjectLibrary("layoutinspector-view-proto")
+      //spec.withProjectLibrary("libadb-server-proto")
       spec.withProjectLibrary("libam-instrumentation-data-proto")
       spec.withProjectLibrary("libapp-processes-proto")
       spec.withProjectLibrary("network_inspector_java_proto")
@@ -639,7 +641,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("transport-proto")
       spec.withProjectLibrary("utp-core-proto-jarjar")
       spec.withModuleLibrary("libandroid-core-proto", "intellij.android.core", "")
-      spec.withModuleLibrary("libandroid-core-proto", "intellij.android.projectSystem.gradle", "")
+      //spec.withModuleLibrary("libandroid-core-proto", "intellij.android.projectSystem.gradle", "")
       spec.withModuleLibrary("libstudio.android-test-plugin-host-retention-proto", "intellij.android.core", "")
       //tools/adt/idea/android/lib:android-sdk-tools-jps <= this is jarutils.jar
       spec.withModuleLibrary("instantapps-api", "intellij.android.core", "")
@@ -649,9 +651,9 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.view", "")
       //spec.withModuleLibrary("play_vitals_java_proto", "intellij.android.app-quality-insights.play-vitals.model", "")
       //tools/adt/idea/compose-designer:ui-animation-tooling-internal <= not recognized
+      spec.withModuleLibrary("logcat-proto", "intellij.android.logcat", "")
       spec.withModuleLibrary("traceprocessor-protos", "intellij.android.profilersAndroid", "")
       spec.withModuleLibrary("traceprocessor-protos", "intellij.android.profilers", "")
-      spec.withModuleLibrary("pepk", "intellij.android.projectSystem.gradle", "")
       spec.withModuleLibrary("libstudio.android-test-plugin-result-listener-gradle-proto", "intellij.android.utp", "")
       spec.withModuleLibrary("deploy_java_proto", "android.sdktools.deployer", "")
       spec.withModuleLibrary("libjava_sites", "android.sdktools.deployer", "")
@@ -718,13 +720,11 @@ object CommunityRepositoryModules {
     }
 
   fun javaFXPlugin(mainModuleName: String): PluginLayout {
-    return plugin(mainModuleName) { spec ->
+    return pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "javaFX"
       spec.mainJarName = "javaFX.jar"
-      spec.withModule("intellij.javaFX")
       spec.withModule("intellij.javaFX.jps")
       spec.withModule("intellij.javaFX.common", "javaFX-common.jar")
-      spec.withModule("intellij.javaFX.properties")
       spec.withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
     }
   }

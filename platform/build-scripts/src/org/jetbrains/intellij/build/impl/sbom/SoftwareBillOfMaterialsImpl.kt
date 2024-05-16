@@ -2,6 +2,11 @@
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.DigestUtil.sha1Hex
+import com.intellij.util.io.DigestUtil.updateContentHash
+import com.intellij.util.io.bytesToHex
+import com.intellij.util.io.sha256Hex
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.outputStream
 import io.opentelemetry.api.common.AttributeKey
@@ -12,7 +17,6 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import org.apache.commons.codec.digest.DigestUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.jetbrains.intellij.build.*
@@ -176,9 +180,22 @@ internal class SoftwareBillOfMaterialsImpl(
     checkNtiaConformance(documents, context)
   }
 
-  private class Checksums(val path: Path) {
-    val sha1sum: String = Files.newInputStream(path).use(DigestUtils::sha1Hex)
-    val sha256sum: String = Files.newInputStream(path).use(DigestUtils::sha256Hex)
+  private class Checksums(@JvmField val path: Path) {
+    val sha1sum: String
+    val sha256sum: String
+
+    init {
+      val buffer = ByteArray(512 * 1024)
+      val digests = Files.newInputStream(path).use {
+        val sha1 = DigestUtil.sha1()
+        val sha256 = DigestUtil.sha256()
+        updateContentHash(digest = sha1, inputStream = it, buffer = buffer)
+        updateContentHash(digest = sha256, inputStream = it, buffer = buffer)
+        bytesToHex(sha1.digest()) to bytesToHex(sha256.digest())
+      }
+      sha1sum = digests.first
+      sha256sum = digests.second
+    }
   }
 
   private suspend fun generateFromDistributions(): List<Path> {
@@ -536,7 +553,7 @@ internal class SoftwareBillOfMaterialsImpl(
       coordinates = coordinates ?: return null,
       license = libraryLicense,
       entry = libraryEntry,
-      sha256Checksum = Files.newInputStream(libraryFile).use(DigestUtils::sha256Hex),
+      sha256Checksum = sha256Hex(libraryFile),
       pomXmlModel = pomXmlModel
     )
   }
@@ -571,15 +588,16 @@ internal class SoftwareBillOfMaterialsImpl(
     val license: LibraryLicense,
     val entry: LibraryFileEntry,
     val pomXmlUrl: String? = null,
-    pomXmlModel: Model?
+    val pomXmlModel: Model?
   ) {
-    val organizations = (pomXmlModel?.organization?.name ?: pomXmlModel
-      ?.developers?.asSequence()
-      ?.mapNotNull { it.organization }
+    val organizations = (pomXmlModel?.organization?.name?.let { sequenceOf(it) }
+                         ?: pomXmlModel?.developers?.asSequence()?.mapNotNull { it.organization })
       ?.filter { it.isNotBlank() }
-      ?.map(::translateSupplier)
-      ?.distinct()
-      ?.joinToString())
+      ?.mapNotNull {
+        @Suppress("HardCodedStringLiteral")
+        Jsoup.parse(it).wholeText().takeIf { it.isNotBlank() } ?: it
+      }?.distinct()
+      ?.joinToString(transform = ::translateSupplier)
       ?.takeIf { it.isNotBlank() }
       ?.let { "Organization: $it" }
 
@@ -598,13 +616,15 @@ internal class SoftwareBillOfMaterialsImpl(
 
     val supplier: String? = license.supplier ?: organizations ?: developers
 
-    val copyrightText: String?
-      get() = if (license.copyrightText == null && isSupplierJetBrains) {
-        jetBrainsOwnLicense.copyrightText
+    val copyrightText: String? by lazy {
+      license.copyrightText ?: when {
+        isSupplierJetBrains -> jetBrainsOwnLicense.copyrightText
+        pomXmlModel?.inceptionYear == null || supplier == null -> null
+        else -> "Copyright (C) ${pomXmlModel.inceptionYear} " + supplier
+          .removePrefix("Organization: ")
+          .removePrefix("Person: ")
       }
-      else {
-        license.copyrightText
-      }
+    }
 
     val isSupplierJetBrains: Boolean by lazy {
       license.license == LibraryLicense.JETBRAINS_OWN || JETBRAINS_GITHUB_ORGANIZATIONS.any {
@@ -822,7 +842,7 @@ internal class SoftwareBillOfMaterialsImpl(
     return files.asSequence()
       .map { it.sha1 }.sorted()
       .joinToString(separator = "")
-      .let(DigestUtils::sha1Hex)
+      .let(::sha1Hex)
   }
 
   /**

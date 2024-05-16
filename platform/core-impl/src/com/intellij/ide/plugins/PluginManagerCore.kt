@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplacePutWithAssignment", "ReplaceGetOrSet", "LoggingSimilarMessage")
 
 package com.intellij.ide.plugins
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.HtmlChunk
@@ -130,7 +131,7 @@ object PluginManagerCore {
   private var ourBuildNumber: BuildNumber? = null
 
 
-  private val findLoadedClassHandle : MethodHandle by lazy {
+  private val findLoadedClassHandle: MethodHandle by lazy(LazyThreadSafetyMode.NONE) {
     val method = ClassLoader::class.java.getDeclaredMethod("findLoadedClass", String::class.java)
     method.isAccessible = true
     MethodHandles.lookup().unreflect(method)
@@ -237,11 +238,12 @@ object PluginManagerCore {
           break
         }
       }
-      else if (findLoadedClassHandle.invoke(classLoader, className) != null) {
+      else if (classLoader != null && findLoadedClassHandle.invoke(classLoader, className) != null) {
         result = descriptor
         break
       }
     }
+
     if (result == null) {
       return null
     }
@@ -307,7 +309,6 @@ object PluginManagerCore {
     shadowedBundledPlugins = Collections.emptySet()
   }
 
-  @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableList()")
   private fun preparePluginErrors(globalErrorsSuppliers: List<Supplier<String>>): List<Supplier<HtmlChunk>> {
     val pluginLoadingErrors = pluginLoadingErrors ?: emptyMap()
     if (pluginLoadingErrors.isEmpty() && globalErrorsSuppliers.isEmpty()) {
@@ -315,11 +316,7 @@ object PluginManagerCore {
     }
 
     // the log includes all messages, not only those which need to be reported to the user
-    val loadingErrors = pluginLoadingErrors.entries
-      .asSequence()
-      .sortedBy { it.key }
-      .map { it.value }
-      .toList()
+    val loadingErrors = pluginLoadingErrors.entries.map { it.value }
     val logMessage = "Problems found loading plugins:\n  " +
                      (globalErrorsSuppliers.asSequence().map { it.get() } + loadingErrors.asSequence().map { it.internalMessage })
                        .joinToString(separator = "\n  ")
@@ -334,10 +331,13 @@ object PluginManagerCore {
         .map { Supplier { HtmlChunk.text(it!!.get()) } }
         .toList()
     }
+    else if (PlatformUtils.isFleetBackend() && !SystemInfoRt.isMac) {
+      logger.warn(logMessage) // some Mercury backend plugins cannot be loaded on Windows and Linux
+    }
     else {
       logger.error(logMessage)
-      return emptyList()
     }
+    return emptyList()
   }
 
   fun getLoadingError(pluginId: PluginId): PluginLoadingError? = pluginLoadingErrors!!.get(pluginId)
@@ -535,7 +535,13 @@ object PluginManagerCore {
       val sinceBuild = descriptor.getSinceBuild()
       if (sinceBuild != null) {
         val pluginName = descriptor.getName()
-        val sinceBuildNumber = BuildNumber.fromString(sinceBuild, pluginName, null)
+        val sinceBuildNumber = try {
+          BuildNumber.fromString(sinceBuild, pluginName, null)
+        }
+        catch (e: RuntimeException) {
+          logger.error(e)
+          null
+        }
         if (sinceBuildNumber != null && sinceBuildNumber > ideBuildNumber) {
           return PluginLoadingError(
             plugin = descriptor,

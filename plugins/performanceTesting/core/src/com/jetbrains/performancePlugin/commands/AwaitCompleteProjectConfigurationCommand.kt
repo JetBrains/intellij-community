@@ -2,8 +2,8 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.configuration.awaitCompleteProjectConfiguration
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.util.awaitCompleteProjectConfiguration
 
 
 private val LOG: Logger

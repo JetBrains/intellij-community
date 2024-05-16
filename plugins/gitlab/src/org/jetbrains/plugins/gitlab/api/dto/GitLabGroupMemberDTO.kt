@@ -7,9 +7,9 @@ import org.jetbrains.plugins.gitlab.api.SinceGitLab
 @SinceGitLab("13.1")
 @GraphQLFragment("/graphql/fragment/groupMember.graphql")
 data class GitLabGroupMemberDTO(
-  val group: GroupDTO
+  val group: GroupDTO?
 ) {
-  val projectMemberships: List<GitLabProjectDTO> = group.projects.nodes
+  val projectMemberships: List<GitLabProjectDTO> = group?.projects?.nodes ?: listOf()
 
   data class GroupDTO(val projects: GitLabProjectsDTO)
 }

@@ -70,12 +70,12 @@ class CoroutineToIndicatorTest : CancellationTest() {
   }
 
   private suspend inline fun testRunUnderIndicatorRethrow(t: ProcessCanceledException) {
-    val thrown = assertThrows<PceCancellationException> {
+    val thrown = assertThrows<ProcessCanceledException> {
       coroutineToIndicator {
         throw t
       }
     }
-    assertSame(t, thrown.cause)
+    assertSame(t, thrown)
   }
 
   @Test

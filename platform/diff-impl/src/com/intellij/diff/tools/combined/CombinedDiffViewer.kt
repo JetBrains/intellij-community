@@ -29,7 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.JBColor
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBLayeredPane
@@ -71,7 +71,7 @@ class CombinedDiffViewer(
   private val project = context.project!! // CombinedDiffContext expected
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val cs = GlobalScope.namedChildScope("CombinedDiffViewer", Dispatchers.EDT)
+  private val cs = GlobalScope.childScope("CombinedDiffViewer", Dispatchers.EDT)
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
   private val diffBlocks: MutableMap<CombinedBlockId, CombinedCollapsibleDiffBlock<*>> = hashMapOf()

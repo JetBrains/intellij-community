@@ -3,6 +3,8 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
+import com.intellij.driver.sdk.remoteDev.BeControlAdapter
+import com.intellij.driver.sdk.remoteDev.JTreeFixtureAdapter
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.Locators
 import com.intellij.driver.sdk.ui.remote.Component
@@ -17,7 +19,7 @@ fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: Locators.
                                                               JTreeUiComponent::class.java)
 
 open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
-  protected val fixture: JTreeFixtureRef
+  val fixture: JTreeFixtureRef
     get() = driver.new(JTreeFixtureRef::class, robotService.robot, component)
 
   fun clickRow(row: Int) = fixture.clickRow(row)
@@ -96,6 +98,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JTreeTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
+@BeControlAdapter(JTreeFixtureAdapter::class)
 interface JTreeFixtureRef : Component {
   fun clickRow(row: Int): JTreeFixtureRef
   fun clickPath(path: String): JTreeFixtureRef

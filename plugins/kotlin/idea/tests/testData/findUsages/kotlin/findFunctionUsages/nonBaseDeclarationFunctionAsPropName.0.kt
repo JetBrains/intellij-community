@@ -8,3 +8,6 @@ class SomeXImpl : SomeX {
 }
 
 fun foo(x: SomeXImpl) = x.smth
+
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code

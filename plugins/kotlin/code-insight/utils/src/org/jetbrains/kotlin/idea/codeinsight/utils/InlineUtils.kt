@@ -19,8 +19,8 @@ fun isInlinedArgument(argument: KtFunction): Boolean = getInlineArgumentSymbol(a
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
-    if (argument !is KtFunctionLiteral && argument !is KtNamedFunction) return null
+fun getInlineArgumentSymbol(argument: KtExpression): KtValueParameterSymbol? {
+    if (argument !is KtFunctionLiteral && argument !is KtNamedFunction && argument !is KtCallableReferenceExpression) return null
 
     val (symbol, argumentSymbol) = getCallExpressionSymbol(argument)
         ?: getDefaultArgumentSymbol(argument)
@@ -41,11 +41,12 @@ fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun getFunctionSymbol(argument: KtFunction): KtFunctionLikeSymbol? = getCallExpressionSymbol(argument)?.first
+fun getFunctionSymbol(argument: KtExpression): KtFunctionLikeSymbol? = getCallExpressionSymbol(argument)?.first
     ?: getDefaultArgumentSymbol(argument)?.first
 
 context(KtAnalysisSession)
-private fun getDefaultArgumentSymbol(argument: KtFunction): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+    if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parameter = argument.parentOfType<KtParameter>() ?: return null
     val lambdaExpression = argument.parent as? KtLambdaExpression ?: return null
     if (parameter.defaultValue != lambdaExpression) return null
@@ -57,7 +58,8 @@ private fun getDefaultArgumentSymbol(argument: KtFunction): Pair<KtFunctionLikeS
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun getCallExpressionSymbol(argument: KtFunction): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+fun getCallExpressionSymbol(argument: KtExpression): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+    if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
     val parentCall = parentCallExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
     val symbol = parentCall.partiallyAppliedSymbol.symbol

@@ -13,7 +13,8 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class HighlightingAfterTypingTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginMode
+
+    override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
   override fun getProjectDescriptor() = KotlinJvmLightProjectDescriptor.DEFAULT

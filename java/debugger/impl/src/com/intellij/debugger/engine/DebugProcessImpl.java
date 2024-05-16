@@ -2364,6 +2364,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                 boolean terminated =
                   processHandler != null && (processHandler.isProcessTerminating() || processHandler.isProcessTerminated());
 
+                try {
+                  myDebugProcessDispatcher.getMulticaster().attachException(null, e, myConnection);
+                }
+                catch (Exception ex) {
+                  LOG.debug(ex);
+                }
                 fail();
                 DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
                   // propagate exception only in case we succeeded to obtain execution result,
@@ -2598,7 +2604,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public boolean isEvaluationPossible() {
-    return getSuspendManager().getPausedContext() != null;
+    return getSuspendManager().getPausedContext() != null
+           || DebuggerImplicitEvaluationContextUtil.getImplicitEvaluationThread(this) != null;
   }
 
   public boolean isEvaluationPossible(SuspendContextImpl suspendContext) {

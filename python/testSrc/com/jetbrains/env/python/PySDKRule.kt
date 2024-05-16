@@ -39,7 +39,7 @@ class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfig
       // Local
       val flavor = if (SystemInfo.isWindows) WinPythonSdkFlavor() else UnixPythonSdkFlavor.getInstance()
       val pythonPath = flavor.suggestLocalHomePaths(null, null).firstOrNull()
-                       ?: PyEnvTestSettings().pythons.firstOrNull()?.toPath()?.let { PythonSdkUtil.getPythonExecutable(it.toString()); }
+                       ?: PyEnvTestSettings.fromEnvVariables().pythons.firstOrNull()?.toPath()?.let { PythonSdkUtil.getPythonExecutable(it.toString()); }
       Assume.assumeNotNull("No python found on local installation", pythonPath)
       Pair(pythonPath!!.toString(), PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, flavor)))
     }

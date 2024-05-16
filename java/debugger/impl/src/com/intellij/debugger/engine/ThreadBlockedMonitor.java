@@ -177,11 +177,16 @@ public class ThreadBlockedMonitor {
     void invocationFinished() {
       myObsolete.set(true);
       if (myTask.isDone() && myAllResumed.get()) {
-        myProcess.mySuspendAllInvocation.decrementAndGet();
-        // suspend all threads but the current one (which should be suspended already
-        LOG.warn("Long invocation on " + myThread + " has been finished");
-        myThread.getVirtualMachine().getVirtualMachine().suspend();
-        DebuggerUtilsAsync.resume(myThread.getThreadReference());
+        myProcess.getManagerThread().pushBack(new DebuggerCommandImpl() {
+          @Override
+          protected void action() {
+            // suspend all threads but the current one (which should be suspended already
+            myThread.getVirtualMachine().getVirtualMachine().suspend();
+            LOG.warn("Long invocation on " + myThread + " has been finished");
+            myProcess.mySuspendAllInvocation.decrementAndGet();
+            DebuggerUtilsAsync.resume(myThread.getThreadReference());
+          }
+        });
       }
       else {
         myTask.cancel(true);

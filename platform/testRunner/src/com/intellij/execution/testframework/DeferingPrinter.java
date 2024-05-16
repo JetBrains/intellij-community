@@ -49,7 +49,7 @@ public class DeferingPrinter implements Printer {
 
   @Override
   public void mark() {
-    myCompositePrintable.addLast(new PrinterMark());
+    myCompositePrintable.addLast(printer -> printer.mark());
   }
 
   public void printAndForget(final Printer printer) {

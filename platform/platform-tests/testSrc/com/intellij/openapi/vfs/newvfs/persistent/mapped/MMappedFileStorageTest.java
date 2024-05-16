@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.*;
 
+import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.*;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -260,7 +261,7 @@ public class MMappedFileStorageTest {
     try {
       var storage = MMappedFileStorageFactory.withDefaults()
         .pageSize(PAGE_SIZE)
-        .expandFileIfNotPageAligned(false)
+        .ifFileIsNotPageAligned(THROW_EXCEPTION)
         .open(storagePath);
       storage.closeAndClean();
       fail("Storage must fail to open file with size != N*pageSize");
@@ -271,17 +272,35 @@ public class MMappedFileStorageTest {
   }
 
   @Test
-  public void mappedStorage_Factory_CanExpandStorageFileIfAskedTo_IfFileSize_IsNotPageAligned(@TempDir Path tempDir) throws IOException {
+  public void mappedStorage_Factory_CanExpandStorageFile_IfAskedTo_IfFileSize_IsNotPageAligned(@TempDir Path tempDir) throws IOException {
     Path storagePath = tempDir.resolve("storage.file").toAbsolutePath();
     //page un-aligned size:
     Files.write(storagePath, new byte[3 * PAGE_SIZE + 1]);
     try (var storage = MMappedFileStorageFactory.withDefaults()
       .pageSize(PAGE_SIZE)
-      .expandFileIfNotPageAligned(true)
+      .ifFileIsNotPageAligned(EXPAND_FILE)
       .open(storagePath)) {
       assertEquals(Files.size(storagePath),
                    4 * PAGE_SIZE,
                    "Storage file should be expanded to page-aligned size");
+    }
+    finally {
+      storage.closeAndClean();
+    }
+  }
+
+  @Test
+  public void mappedStorage_Factory_CanCleanStorageFile_IfAskedTo_IfFileSize_IsNotPageAligned(@TempDir Path tempDir) throws IOException {
+    Path storagePath = tempDir.resolve("storage.file").toAbsolutePath();
+    //page un-aligned size:
+    Files.write(storagePath, new byte[3 * PAGE_SIZE + 1]);
+    try (var storage = MMappedFileStorageFactory.withDefaults()
+      .pageSize(PAGE_SIZE)
+      .ifFileIsNotPageAligned(CLEAN)
+      .open(storagePath)) {
+      assertEquals(Files.size(storagePath),
+                   0,
+                   "Storage file should be truncated");
     }
     finally {
       storage.closeAndClean();
@@ -302,7 +321,7 @@ public class MMappedFileStorageTest {
 
     var storage = MMappedFileStorageFactory.withDefaults()
       .pageSize(PAGE_SIZE)
-      .expandFileIfNotPageAligned(false)
+      .ifFileIsNotPageAligned(THROW_EXCEPTION)
       .open(storagePath);
     storage.closeAndClean();
   }

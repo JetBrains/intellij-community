@@ -36,6 +36,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
@@ -1182,7 +1183,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                    @NotNull DfaVariableValue patternDfaVar,
                                    @Nullable DfaAnchor instanceofAnchor) {
     if (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
-      addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar);
+      addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar, checkType);
     }
     else {
       addInstruction(new SimpleAssignmentInstruction(null, patternDfaVar));
@@ -1192,13 +1193,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void addPatternTypeTest(@NotNull PsiPattern pattern,
                                   @Nullable DfaAnchor instanceofAnchor,
                                   @NotNull DeferredOffset endPatternOffset,
-                                  @NotNull DfaVariableValue patternDfaVar) {
+                                  @NotNull DfaVariableValue patternDfaVar,
+                                  @NotNull PsiType checkType) {
     DeferredOffset condGotoOffset;
     addInstruction(new DupInstruction());
-    addInstruction(
-      new PushValueInstruction(DfTypes.typedObject(JavaPsiPatternUtil.getPatternType(pattern), Nullability.NOT_NULL)));
-
-    addInstruction(new InstanceofInstruction(instanceofAnchor, false));
+    PsiType patternType = JavaPsiPatternUtil.getPatternType(pattern);
+    generateInstanceOfInstructions(pattern, instanceofAnchor, checkType, patternType);
 
     condGotoOffset = new DeferredOffset();
     addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
@@ -1209,6 +1209,158 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     SimpleAssignmentInstruction assignmentInstr = new SimpleAssignmentInstruction(null, patternDfaVar);
     addInstruction(assignmentInstr);
     condGotoOffset.setOffset(assignmentInstr.getIndex());
+  }
+
+  private void generateInstanceOfInstructions(@NotNull PsiElement context,
+                         @Nullable DfaAnchor instanceofAnchor,
+                         @NotNull PsiType checkType,
+                         @Nullable PsiType patternType) {
+    checkType = TypeConversionUtil.erasure(checkType);
+    if (patternType == null ||
+        ((checkType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
+         (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context) || !TypeConversionUtil.areTypesConvertible(checkType, patternType)))) {
+      addInstruction(new PopInstruction());
+      pushUnknown();
+      return;
+    }
+    if (checkType instanceof PsiPrimitiveType && patternType instanceof PsiPrimitiveType) {
+      if (checkType.equals(patternType) || JavaPsiPatternUtil.isExactPrimitiveWideningConversion(checkType, patternType)) {
+        addInstruction(new PopInstruction());
+        addInstruction(new PushValueInstruction(DfTypes.booleanValue(true)));
+        if (instanceofAnchor != null) {
+          addInstruction(new ResultOfInstruction(instanceofAnchor));
+        }
+      }
+      else {
+        generateExactTestingConversion(context, checkType, patternType, instanceofAnchor);
+      }
+    }
+    else if (patternType instanceof PsiPrimitiveType patternPrimitiveType) {
+      PsiPrimitiveType unboxedCheckedType = PsiPrimitiveType.getUnboxedType(checkType);
+      if (unboxedCheckedType != null) {
+        boolean isWideningConversion = JavaPsiPatternUtil.isExactPrimitiveWideningConversion(unboxedCheckedType, patternPrimitiveType) ||
+                                       unboxedCheckedType.equals(patternPrimitiveType);
+        if (!isWideningConversion) {
+          addInstruction(new DupInstruction());
+        }
+        addInstruction(new PushValueInstruction(DfTypes.NULL));
+        addInstruction(new BooleanBinaryInstruction(RelationType.NE, false,
+                                                    isWideningConversion ? instanceofAnchor : null));
+        if (!isWideningConversion) {
+          CFGBuilder builder = new CFGBuilder(this) //checkValue resultNotNull
+            .push(DfTypes.booleanValue(false)) //checkValue resultNotNull false
+            .ifCondition(RelationType.EQ) //checkValue
+            .pop() //
+            .push(DfTypes.booleanValue(false)) //false
+            .elseBranch(); //checkValue
+          generateBoxingUnboxingInstructionFor(context, checkType, unboxedCheckedType, false);
+          generateInstanceOfInstructions(context, null, unboxedCheckedType, patternPrimitiveType);
+          builder
+            .end();
+          if (instanceofAnchor != null) {
+            addInstruction(new ResultOfInstruction(instanceofAnchor));
+          }
+        }
+      }
+      else {
+        PsiClassType boxedType = patternPrimitiveType.getBoxedType(context);
+        addInstruction(new PushValueInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL)));
+        addInstruction(new InstanceofInstruction(instanceofAnchor, false));
+      }
+    }
+    else {
+      if (checkType instanceof PsiPrimitiveType checkPrimitiveType) {
+        PsiClassType boxedType = checkPrimitiveType.getBoxedType(context);
+        generateBoxingUnboxingInstructionFor(context, checkType, boxedType, false);
+      }
+      addInstruction(new PushValueInstruction(DfTypes.typedObject(patternType, Nullability.NOT_NULL)));
+      addInstruction(new InstanceofInstruction(instanceofAnchor, false));
+    }
+  }
+
+  private void generateExactTestingConversion(@NotNull PsiElement context,
+                                              @NotNull PsiType checkType,
+                                              @NotNull PsiType patternType,
+                                              @Nullable DfaAnchor instanceofAnchor) {
+    PsiType exactlyPromotedType = JavaPsiPatternUtil.getExactlyPromotedType(context, checkType, patternType);
+    boolean checkTypeIsDouble = checkType.equals(PsiTypes.doubleType());
+    boolean checkTypeIsFloat = checkType.equals(PsiTypes.floatType());
+    boolean checkTypeIsLong = checkType.equals(PsiTypes.longType());
+    if (exactlyPromotedType.equalsToText("java.math.BigDecimal")) {
+      //there is no need to use BigDecimal explicitly, because
+      //there is some further simplification (see java.lang.runtime.ExactConversionsSupport)
+      if (checkTypeIsLong) {
+        exactlyPromotedType = PsiTypes.longType();
+      }
+      else if (checkTypeIsFloat) {
+        exactlyPromotedType = PsiTypes.floatType();
+      }
+      else {
+        exactlyPromotedType = PsiTypes.doubleType();
+      }
+    }
+    CFGBuilder builder = new CFGBuilder(this);
+    boolean generateOr = false;
+    boolean generateAnd = false;
+    if (checkTypeIsFloat || checkTypeIsDouble) {
+      if (patternType.equals(PsiTypes.floatType()) ||
+          patternType.equals(PsiTypes.doubleType())) {
+        generateOr = true;
+        builder //stack: checkValue
+          .dup() //checkValue checkValue
+          .dup() //checkValue checkValue checkValue
+          .compare(RelationType.EQ); //checkValue isNotNan
+        addInstruction(new NotInstruction(null)); //checkValue isNan
+        builder.swap(); //isNan checkValue
+      }
+      else {
+        generateAnd = true;
+        PsiClassType boxedType = checkTypeIsFloat
+                                 ? PsiTypes.floatType().getBoxedType(context)
+                                 : PsiTypes.doubleType().getBoxedType(context);
+        builder //stack: checkValue
+          .dup(); // checkValue checkValue
+        generateBoxingUnboxingInstructionFor(context, checkType, boxedType, false); //checkValue ReferenceOfCheckValue
+        builder.push(checkTypeIsFloat
+                     ? DfTypes.floatValue(-0.0f)
+                     : DfTypes.doubleValue(-0.0f)) ;// checkValue ReferenceOfCheckValue -0.0
+        generateBoxingUnboxingInstructionFor(context, PsiTypes.doubleType(), boxedType, false); //checkValue ReferenceOfCheckValue ReferenceNegativeZero
+        addInstruction(new BooleanBinaryInstruction(RelationType.NE, true, null)); //checkValue IsNotMinusZero
+        builder.swap(); //IsNotMinusZero checkValue
+        if (patternType.equals(PsiTypes.longType())) {
+          builder.dup()//IsNotMinusZero checkValue checkValue
+            //see com.google.common.math.DoubleMath.MAX_LONG_AS_DOUBLE_PLUS_ONE for explanation
+            .push(checkTypeIsFloat
+                  ? DfTypes.floatValue(0x1p63F)
+                  : DfTypes.doubleValue(0x1p63)) //IsNotMinusZero checkValue checkValue maxLong
+            .compare(RelationType.NE) //IsNotMinusZero checkValue notMax
+            .splice(3, 1, 0, 2);  //checkValue IsNotMinusZero  notMax
+          addInstruction(new BooleanAndOrInstruction(false, null));//checkValue result
+          builder.swap(); //result checkValue
+        }
+      }
+    } else if(checkTypeIsLong &&
+              (patternType.equals(PsiTypes.floatType()) ||
+               patternType.equals(PsiTypes.doubleType()))){
+      generateAnd = true;
+        builder //checkValue
+          .dup() //checkValue checkValue
+          .push(DfTypes.longValue(Long.MAX_VALUE)) //checkValue checkValue Max_long
+          .compare(RelationType.NE) //checkValue NotMaxLong
+          .swap(); //NotMaxLong checkValue
+    }
+    builder.dup(); //something checkValue checkValue
+    generateBoxingUnboxingInstructionFor(context, checkType, exactlyPromotedType, false); //something checkValue casted
+    builder.swap(); //something casted checkValue
+    generateBoxingUnboxingInstructionFor(context, checkType, patternType, false);
+    generateBoxingUnboxingInstructionFor(context, patternType, exactlyPromotedType, false);
+    addInstruction(new BooleanBinaryInstruction(RelationType.EQ, false, generateOr || generateAnd ? null : instanceofAnchor));
+    if (generateOr) {
+      addInstruction(new BooleanAndOrInstruction(true, instanceofAnchor));
+    }
+    if (generateAnd) {
+      addInstruction(new BooleanAndOrInstruction(false, instanceofAnchor));
+    }
   }
 
   @Override
@@ -1757,7 +1909,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     generateBoxingUnboxingInstructionFor(expression, expression.getType(), expectedType, false);
   }
 
-  void generateBoxingUnboxingInstructionFor(@NotNull PsiExpression context, PsiType actualType, PsiType expectedType, boolean explicit) {
+  void generateBoxingUnboxingInstructionFor(@NotNull PsiElement context, PsiType actualType, PsiType expectedType, boolean explicit) {
     if (PsiTypes.voidType().equals(expectedType)) return;
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
@@ -1782,7 +1934,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
              TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
              TypeConversionUtil.isNumericType(actualType) &&
              TypeConversionUtil.isNumericType(expectedType)) {
-      DfaAnchor anchor = explicit ? new JavaExpressionAnchor(context) : null;
+      DfaAnchor anchor = (explicit && context instanceof PsiExpression psiExpression) ? new JavaExpressionAnchor(psiExpression) : null;
       addInstruction(new PrimitiveConversionInstruction((PsiPrimitiveType)expectedType, anchor));
     }
   }
@@ -1874,11 +2026,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiTypeElement checkType = InstanceOfUtils.findCheckTypeElement(expression);
     CFGBuilder builder = new CFGBuilder(this);
     if (pattern == null) {
-      if (checkType == null) {
+      if (checkType == null || operandType == null) {
         pushUnknown();
       }
       else {
-        buildSimpleInstanceof(builder, expression, operand, checkType);
+        buildSimpleInstanceof(builder, expression, operand, operandType, checkType);
       }
     }
     else if (operandType != null) {
@@ -1895,15 +2047,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  private static void buildSimpleInstanceof(CFGBuilder builder,
-                                            PsiInstanceOfExpression expression,
-                                            PsiExpression operand,
-                                            PsiTypeElement checkType) {
+  private void buildSimpleInstanceof(@NotNull CFGBuilder builder,
+                                     @NotNull PsiInstanceOfExpression expression,
+                                     @NotNull PsiExpression operand,
+                                     @NotNull PsiType operandType,
+                                     @NotNull PsiTypeElement checkType) {
     PsiType type = checkType.getType();
     builder
-      .pushExpression(operand)
-      .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
-      .isInstance(expression);
+      .pushExpression(operand);
+    generateInstanceOfInstructions(expression, new JavaExpressionAnchor(expression), operandType, type);
   }
 
   void addMethodThrows(@Nullable PsiMember methodOrClass) {

@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
-import org.jetbrains.kotlin.idea.fir.fe10.binding.Fe10BindingSpecialConstructionsWrappers
 import org.jetbrains.kotlin.idea.fir.fe10.binding.KtSymbolBasedBindingContext
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -33,7 +33,6 @@ interface Fe10WrapperContext {
     val moduleDescriptor: ModuleDescriptor
     val languageVersionSettings: LanguageVersionSettings
     val bindingContext: BindingContext
-    val fe10BindingSpecialConstructionFunctions: Fe10BindingSpecialConstructionsWrappers
 
     // This property used to disable some logic used locally for debug purposes
     val enableLogging: Boolean get() = false
@@ -112,7 +111,7 @@ fun KtVariableLikeSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): V
 fun KtTypeAliasSymbol.toDeclarationDescriptor(context: Fe10WrapperContext) = KtSymbolBasedTypeAliasDescriptor(this, context)
 
 class Fe10WrapperContextImpl(
-    private val project: Project,
+    project: Project,
     private val ktElement: KtElement
 ) : Fe10WrapperContext {
     private val module: KtModule = ProjectStructureProvider.getModule(project, ktElement, null)
@@ -135,8 +134,6 @@ class Fe10WrapperContextImpl(
         get() = withAnalysisSession { (useSiteModule as KtSourceModule).languageVersionSettings  }
 
     override val bindingContext: BindingContext = KtSymbolBasedBindingContext(this)
-
-    override val fe10BindingSpecialConstructionFunctions = Fe10BindingSpecialConstructionsWrappers(this)
 
     override fun noImplementation(additionalInfo: String): Nothing =
         error("This method should not be called for wrappers. $additionalInfo")
@@ -181,7 +178,7 @@ internal class KtLifetimeTokenForKtSymbolBasedWrappersFactory(
 ) : KtLifetimeTokenFactory() {
     override val identifier = KtLifetimeTokenForKtSymbolBasedWrappers::class
 
-    override fun create(project: Project): KtLifetimeTokenForKtSymbolBasedWrappers = token
+    override fun create(project: Project, modificationTracker: ModificationTracker): KtLifetimeTokenForKtSymbolBasedWrappers = token
 }
 
 private class KtSymbolBasedModuleDescriptorImpl(

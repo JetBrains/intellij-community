@@ -4,13 +4,11 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (buildString))
-                    USimpleNameReferenceExpression (identifier = buildString, resolvesTo = null)
                     ULambdaExpression
                         UBlockExpression
                             UReturnExpression
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                     UIdentifier (Identifier (append))
-                                    USimpleNameReferenceExpression (identifier = append, resolvesTo = null)
                                     UPolyadicExpression (operator = +)
                                         ULiteralExpression (value = "a")
         UMethod (name = itParameter)
@@ -19,7 +17,6 @@ UFile (package = )
                     ULiteralExpression (value = 10)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (let))
-                        USimpleNameReferenceExpression (identifier = let, resolvesTo = null)
                         ULambdaExpression
                             UParameter (name = it)
                             UBlockExpression

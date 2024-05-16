@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import java.util.Map;
 
 final class StubUpdatingForwardIndexAccessor extends SingleEntryIndexForwardIndexAccessor<SerializedStubTree> {
   StubUpdatingForwardIndexAccessor(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension) {
-    super(extension);
+    super((SingleEntryFileBasedIndexExtension<SerializedStubTree>)extension);
   }
 
   @Override

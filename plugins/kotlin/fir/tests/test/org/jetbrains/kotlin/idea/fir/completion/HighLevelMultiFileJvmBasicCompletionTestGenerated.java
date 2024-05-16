@@ -388,6 +388,16 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/ParameterNameAndTypeNestedClasses/");
     }
 
+    @TestMetadata("PreferKotlinClasses")
+    public void testPreferKotlinClasses() throws Exception {
+        runTest("../../completion/testData/basic/multifile/PreferKotlinClasses/");
+    }
+
+    @TestMetadata("PreferKotlinx")
+    public void testPreferKotlinx() throws Exception {
+        runTest("../../completion/testData/basic/multifile/PreferKotlinx/");
+    }
+
     @TestMetadata("PreferMemberToExtension")
     public void testPreferMemberToExtension() throws Exception {
         runTest("../../completion/testData/basic/multifile/PreferMemberToExtension/");

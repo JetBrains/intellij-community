@@ -7,44 +7,36 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
+import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import java.awt.Dimension
 import java.awt.Point
 
 class TextEditorCellViewComponent(
   private val editor: EditorEx,
-  private val intervalPointer: NotebookIntervalPointer
+  private val cell: EditorCell
 ) : EditorCellViewComponent {
 
   private var highlighters: List<RangeHighlighter>? = null
 
+  private val interval: NotebookCellLines.Interval
+    get() = cell.intervalPointer.get() ?: error("Invalid interval")
+
   private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
   override val location: Point
     get() {
-      val interval = intervalPointer.get()
-      return if (interval != null) {
-        val startOffset = editor.document.getLineStartOffset(interval.lines.first)
-        editor.offsetToXY(startOffset)
-      }
-      else {
-        Point(0, 0)
-      }
+      val startOffset = editor.document.getLineStartOffset(interval.lines.first)
+      return editor.offsetToXY(startOffset)
     }
 
   override val size: Dimension
     get() {
-      val interval = intervalPointer.get()
-      return if (interval != null) {
-        val startOffset = editor.document.getLineStartOffset(interval.lines.first)
-        val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-        val location = editor.offsetToXY(startOffset)
-        val height = editor.offsetToXY(endOffset).y + editor.lineHeight - location.y
-        val width = editor.offsetToXY(endOffset).x - location.x
-        Dimension(width, height)
-      }
-      else {
-        Dimension(0, 0)
-      }
+      val interval = interval
+      val startOffset = editor.document.getLineStartOffset(interval.lines.first)
+      val endOffset = editor.document.getLineEndOffset(interval.lines.last)
+      val location = editor.offsetToXY(startOffset)
+      val height = editor.offsetToXY(endOffset).y + editor.lineHeight - location.y
+      val width = editor.offsetToXY(endOffset).x - location.x
+      return Dimension(width, height)
     }
 
   override fun updateGutterIcons(gutterAction: AnAction?) {
@@ -52,7 +44,7 @@ class TextEditorCellViewComponent(
     val action = gutterAction
     if (action != null) {
       val markupModel = editor.markupModel
-      val interval = intervalPointer.get()!!
+      val interval = interval
       val startOffset = editor.document.getLineStartOffset(interval.lines.first)
       val endOffset = editor.document.getLineEndOffset(interval.lines.last)
       val highlighter = markupModel.addRangeHighlighter(

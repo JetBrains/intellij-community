@@ -9,12 +9,14 @@ e:com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
 - sf:DASHED:com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
 - sf:DOTTED:com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
 - sf:SOLID:com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
 - s:values():com.intellij.vcs.log.graph.EdgePrintElement$LineStyle[]
 e:com.intellij.vcs.log.graph.EdgePrintElement$Type
 - java.lang.Enum
 - sf:DOWN:com.intellij.vcs.log.graph.EdgePrintElement$Type
 - sf:UP:com.intellij.vcs.log.graph.EdgePrintElement$Type
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.vcs.log.graph.EdgePrintElement$Type
 - s:values():com.intellij.vcs.log.graph.EdgePrintElement$Type[]
 com.intellij.vcs.log.graph.GraphColorManager

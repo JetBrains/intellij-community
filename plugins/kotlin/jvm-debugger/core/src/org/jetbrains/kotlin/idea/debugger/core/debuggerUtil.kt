@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.codegen.topLevelClassAsmType
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
@@ -32,7 +33,9 @@ import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.org.objectweb.asm.MethodVisitor
@@ -73,7 +76,7 @@ fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STR
 fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
     DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
-fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean =
+fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location, debugProcess: DebugProcessImpl): Boolean =
   isInlinedArgument(location.visibleVariables(debugProcess), inlineArgument)
 
 /**
@@ -82,14 +85,15 @@ fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debug
  *
  * For crossinline lambdas inlining depends on whether the lambda is passed further to a non-inline context.
  */
-fun isInlinedArgument(inlineArgument: KtFunction, location: Location): Boolean =
+fun isInlinedArgument(inlineArgument: KtExpression, location: Location): Boolean =
   isInlinedArgument(location.method().safeVariables() ?: emptyList(), inlineArgument)
 
-private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtFunction): Boolean {
+private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtExpression): Boolean {
+    if (inlineArgument !is KtFunction && inlineArgument !is KtCallableReferenceExpression) return false
     val markerLocalVariables = localVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
 
     return runReadAction {
-        val lambdaOrdinal = lambdaOrdinalByArgument(inlineArgument)
+        val lambdaOrdinal = (inlineArgument as? KtFunction)?.let { lambdaOrdinalByArgument(it) }
         val functionName = functionNameByArgument(inlineArgument) ?: "unknown"
 
         markerLocalVariables
@@ -97,7 +101,7 @@ private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgumen
             .any { variableName ->
                 if (variableName.startsWith("-")) {
                     val lambdaClassName = ClassNameCalculator.getClassName(inlineArgument)?.substringAfterLast('.') ?: return@any false
-                    dropInlineSuffix(variableName) == "-$functionName-$lambdaClassName"
+                    dropInlineSuffix(variableName).dropInlineScopeInfo() == "-$functionName-$lambdaClassName"
                 } else {
                     // For Kotlin up to 1.3.10
                     lambdaOrdinalByLocalVariable(variableName) == lambdaOrdinal
@@ -131,7 +135,7 @@ private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
     return className.substringAfterLast("$").toIntOrNull() ?: 0
 }
 
-private fun functionNameByArgument(argument: KtFunction): String? =
+private fun functionNameByArgument(argument: KtExpression): String? =
     analyze(argument) {
         val function = getFunctionSymbol(argument) as? KtFunctionSymbol ?: return null
         return function.name.asString()
@@ -263,6 +267,25 @@ private fun doesMethodHaveSwitcher(location: Location): Boolean {
     return result
 }
 
+fun isOneLineMethod(location: Location): Boolean {
+    val method = location.safeMethod() ?: return false
+    val allLineLocations = method.safeAllLineLocations()
+    if (allLineLocations.isEmpty()) return false
+    if (allLineLocations.size == 1) return true
+
+    val inlineFunctionBorders = method.getInlineFunctionAndArgumentVariablesToBordersMap().values
+    return allLineLocations
+        .mapNotNull { loc ->
+            if (!isKotlinFakeLineNumber(loc) &&
+                !inlineFunctionBorders.any { loc in it })
+                loc.lineNumber()
+            else
+                null
+        }
+        .toHashSet()
+        .size == 1
+}
+
 fun findElementAtLine(file: KtFile, line: Int): PsiElement? {
     val lineStartOffset = file.getLineStartOffset(line) ?: return null
     val lineEndOffset = file.getLineEndOffset(line) ?: return null
@@ -326,3 +349,9 @@ fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
 
 val DebugProcessImpl.canRunEvaluation: Boolean
     get() = suspendManager.pausedContext != null
+
+val String.isInlineFunctionMarkerVariableName: Boolean
+    get() = startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
+
+val String.isInlineLambdaMarkerVariableName: Boolean
+    get() = startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)

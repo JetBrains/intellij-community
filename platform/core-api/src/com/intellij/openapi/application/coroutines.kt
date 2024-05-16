@@ -150,7 +150,7 @@ sealed interface ReadAndWriteScope {
 
 /**
  * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
- * **without** preventing write actions. If given [action] returns [write action][ReadAndWriteScope#writeAction]
+ * **without** preventing write actions. If given [action] returns [write action][ReadAndWriteScope.writeAction]
  * as result, this write action will be run under [write lock][com.intellij.openapi.application.Application.runWriteAction]
  * if no other write actions intertwines between read action and returned write action. Read action will be re-run if a concurrent
  * write action happens after the read completion but before the returned write action was able to run.
@@ -228,6 +228,8 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
  * The implementation will change once running write actions would be allowed on other threads.
  * This function exists to make it possible to use it in suspending contexts
  * before the platform is ready to handle write actions differently.
+ *
+ * @see readAndWriteAction
  */
 @Experimental
 suspend fun <T> writeAction(action: () -> T): T {

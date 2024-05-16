@@ -2,7 +2,7 @@
 package com.intellij.platform.instanceContainer.internal
 
 import com.intellij.platform.util.coroutines.attachAsChildTo
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.CoroutineName
@@ -18,7 +18,7 @@ class ScopeHolder(
   private val containerName: String,
 ) {
 
-  val containerScope: CoroutineScope = parentScope.namedChildScope("$containerName container", additionalContext)
+  val containerScope: CoroutineScope = parentScope.childScope("$containerName container", additionalContext)
 
   /**
    * Key: plugin coroutine scope.
@@ -35,7 +35,7 @@ class ScopeHolder(
       return it
     }
     val intersectionName = "($containerName x ${pluginScope.coroutineContext[CoroutineName]?.name})"
-    val intersectionScope = containerScope.namedChildScope(intersectionName).also {
+    val intersectionScope = containerScope.childScope(intersectionName).also {
       it.attachAsChildTo(pluginScope)
     }
     while (true) {

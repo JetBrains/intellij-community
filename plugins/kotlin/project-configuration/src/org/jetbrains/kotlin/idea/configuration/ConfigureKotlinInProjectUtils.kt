@@ -31,7 +31,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
@@ -150,13 +149,6 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
 
     val projectScope = project.projectScope()
     // nothing to configure if there is no Kotlin files in entire project
-
-    // TODO (IDEA-347619): workaround for the fact that smartReadAction doesn't wait for scanning
-    if (application.isUnitTestMode) {
-        Class.forName("com.intellij.testFramework.IndexingTestUtil")
-            .getMethod("workaroundForEverSmartIdeInUnitTestsIDEA347619", Project::class.java)
-            .invoke(null, project)
-    }
 
     val anyKotlinFileInProject = smartReadAction(project) {
         FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
@@ -373,6 +365,8 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
                     || hasKotlinCommonLegacyRuntimeInScope(scope)
                     || hasKotlinJsRuntimeInScope(module)
                     || hasKotlinWasmRuntimeInScope(module)
+                    || hasKotlinWasmJsRuntimeInScope(module)
+                    || hasKotlinWasmWasiRuntimeInScope(module)
                     || hasKotlinNativeRuntimeInScope(module)
         })
     }
@@ -441,15 +435,15 @@ fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
 }
 
 fun hasKotlinWasmRuntimeInScope(module: Module): Boolean {
-    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinWasmLibraryKind)
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinWasmJsLibraryKind)
 }
 
 fun hasKotlinWasmJsRuntimeInScope(module: Module): Boolean {
-    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_JS_FQ_NAME, KotlinWasmLibraryKind)
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_JS_FQ_NAME, KotlinWasmJsLibraryKind)
 }
 
 fun hasKotlinWasmWasiRuntimeInScope(module: Module): Boolean {
-    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_WASI_FQ_NAME, KotlinWasmLibraryKind)
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_WASI_FQ_NAME, KotlinWasmWasiLibraryKind)
 }
 
 fun hasKotlinNativeRuntimeInScope(module: Module): Boolean {

@@ -32,7 +32,7 @@ interface FacetBridge<T : ModuleSettingsBase, M : ModuleSettingsBase.Builder<T>>
     config.init(moduleEntity, entitySource)
     mutableStorage.modifyEntity(moduleEntity) module@{
       val settingsEntity = mutableStorage addEntity  config.getEntityBuilder(this@module)
-      mutableStorage.mutableFacetMapping().addMapping(settingsEntity, this@FacetBridge as Facet<*>)
+      mutableFacetMapping(mutableStorage).addMapping(settingsEntity, this@FacetBridge as Facet<*>)
     }
   }
 

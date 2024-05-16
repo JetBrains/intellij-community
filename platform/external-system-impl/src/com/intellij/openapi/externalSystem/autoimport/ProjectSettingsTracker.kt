@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -7,9 +7,10 @@ import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.C
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.*
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalInvalidate
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalModify
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Revert
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Synchronize
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
@@ -250,8 +251,8 @@ class ProjectSettingsTracker(
 
   @Serializable
   data class State(
-    val isDirty: Boolean = true,
-    val settingsFiles: Map<String, Long> = emptyMap()
+    @JvmField val isDirty: Boolean = true,
+    @JvmField val settingsFiles: Map<String, Long> = emptyMap()
   )
 
   private class SettingsFilesStatus(

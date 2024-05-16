@@ -20,9 +20,16 @@ import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class TerminalWidgetImpl(private val project: Project,
-                                  private val settings: JBTerminalSystemSettingsProvider,
-                                  parent: Disposable) : TerminalWidget {
+/**
+ * Default implementation of the [TerminalWidget] interface.
+ * When the New Terminal is enabled, it attempts to display the Block Terminal
+ * if shell integration permits; otherwise, it falls back to the Classic Terminal.
+ */
+internal class TerminalWidgetImpl(
+  private val project: Project,
+  private val settings: JBTerminalSystemSettingsProvider,
+  parent: Disposable
+) : TerminalWidget {
   private val wrapper: Wrapper = Wrapper()
 
   override val terminalTitle: TerminalTitle = TerminalTitle()

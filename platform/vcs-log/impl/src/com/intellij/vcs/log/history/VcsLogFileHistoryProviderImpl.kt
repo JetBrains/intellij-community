@@ -53,6 +53,7 @@ interface FileHistoryLogUiProvider {
 
 object VcsLogDirectoryHistoryProvider : FileHistoryLogUiProvider {
   override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
+    if (paths.isEmpty()) return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
     return createPathsFilter(project, dataManager.logProviders, paths) != null
   }
@@ -132,7 +133,7 @@ private object VcsLogSingleFileHistoryProvider : FileHistoryLogUiProvider {
     if (correctedPath.isDirectory) return false
 
     val logProvider = VcsProjectLog.getInstance(project).dataManager?.logProviders?.get(root)
-    return logProvider?.diffHandler != null && logProvider.getFileHistoryHandler(project) != null
+    return isNewFileHistoryAvailable(project, logProvider)
   }
 
   override fun showFileHistoryUi(project: Project, paths: Collection<FilePath>, revisionNumber: String?, selectRow: Boolean): VcsLogUiEx? {
@@ -161,6 +162,9 @@ private object VcsLogSingleFileHistoryProvider : FileHistoryLogUiProvider {
 }
 
 fun isNewHistoryEnabled() = Registry.`is`("vcs.new.history")
+fun isNewFileHistoryAvailable(project: Project, logProvider: VcsLogProvider?): Boolean {
+  return logProvider?.diffHandler != null && logProvider.getFileHistoryHandler(project) != null
+}
 
 private fun selectRowWhenOpen(logManager: VcsLogManager, hash: Hash?, root: VirtualFile, ui: VcsLogUiEx, firstTime: Boolean) {
   if (hash != null) {

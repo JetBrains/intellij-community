@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -702,6 +703,11 @@ private class ClassConverter(
         val ktSetter = psiFactory.createSetter(setter.body, setter.parameterName, modifiers)
         for (modifier in redundantSetterModifiers) {
             ktSetter.removeModifier(modifier)
+        }
+
+        val classVisibility = ktProperty.parentOfType<KtClassOrObject>()?.visibilityModifierTypeOrDefault()
+        if (classVisibility == INTERNAL_KEYWORD || classVisibility == PUBLIC_KEYWORD) {
+            ktSetter.removeModifier(PUBLIC_KEYWORD)
         }
 
         if (setter is RealSetter) {

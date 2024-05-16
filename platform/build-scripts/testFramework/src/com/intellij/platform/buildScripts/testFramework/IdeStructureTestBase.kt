@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.platform.buildScripts.testFramework
@@ -33,10 +33,7 @@ abstract class IdeStructureTestBase {
   private fun createBuildContext(): BuildContext {
     val productProperties = createProductProperties(projectHome)
     return runBlocking(Dispatchers.Default) {
-      createBuildContext(homePath = projectHome,
-                         productProperties = productProperties,
-                         buildTools = createBuildTools())
-
+      createBuildContext(homeDir = projectHome, productProperties = productProperties, buildTools = createBuildTools())
     }
   }
 

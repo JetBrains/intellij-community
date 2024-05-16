@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.openapi.util.Disposer
@@ -9,6 +9,7 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.graph.DefaultColorGenerator
 import com.intellij.vcs.log.history.FileHistoryPaths.filePathOrDefault
 import com.intellij.vcs.log.history.FileHistoryPaths.hasPathsInformation
@@ -16,6 +17,7 @@ import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.onPropertyChange
 import com.intellij.vcs.log.paint.GraphCellPainter
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter
+import com.intellij.vcs.log.ui.VcsLogBookmarkReferenceProvider.Companion.getBookmarkRefs
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.ui.render.GraphCommitCell
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer
@@ -43,7 +45,7 @@ internal sealed class VcsLogDefaultColumn<T>(
     get() = id.toLowerCase(Locale.ROOT)
 }
 
-internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) {
+internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) {
   override val isResizable = false
 
   override fun getValue(model: GraphTableModel, row: Int): FilePath? {
@@ -77,9 +79,11 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
     val printElements = if (VisiblePack.NO_GRAPH_INFORMATION.get(model.visiblePack, false)) emptyList()
     else model.visiblePack.visibleGraph.getRowInfo(row).printElements
 
+    val metadata = model.getCommitMetadata(row, true)
     return GraphCommitCell(
-      getValue(model, model.getCommitMetadata(row, true)),
+      getValue(model, metadata),
       model.getRefsAtRow(row),
+      if (metadata !is LoadingDetails) getBookmarkRefs(model.logData.project, metadata.id, metadata.root) else emptyList(),
       printElements
     )
   }
@@ -117,7 +121,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
     return commitCellRenderer
   }
 
-  override fun getStubValue(model: GraphTableModel): GraphCommitCell = GraphCommitCell("", emptyList(), emptyList())
+  override fun getStubValue(model: GraphTableModel): GraphCommitCell = GraphCommitCell("", emptyList(), emptyList(), emptyList())
 
 }
 

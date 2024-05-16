@@ -1,6 +1,6 @@
 // "Opt in for 'B' on containing class 'C'" "true"
-// ACTION: Add '-opt-in=HasOptInAnnotationForClass.B' to module light_idea_test_case compiler arguments
 // ACTION: Opt in for 'B' in containing file 'hasOptInAnnotationForClass.kts'
+// ACTION: Opt in for 'B' in module 'light_idea_test_case'
 // ACTION: Opt in for 'B' on 'someFun'
 // ACTION: Opt in for 'B' on containing class 'C'
 // ACTION: Opt in for 'B' on statement

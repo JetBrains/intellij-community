@@ -8,7 +8,6 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                     ULocalVariable (name = arr) [var arr: java.util.List<? extends java.lang.String> = listOf("1", "2")]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf("1", "2")] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             UPolyadicExpression (operator = +) ["1"] : java.lang.String
                                 ULiteralExpression (value = "1") ["1"] : java.lang.String
                             UPolyadicExpression (operator = +) ["2"] : java.lang.String
@@ -30,24 +29,22 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                             UExpressionList (when_entry) [{...]
                         USwitchClauseExpressionWithBody [ -> {...]
                             UExpressionList (when_entry) [{...]
-                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var var837f2350: java.util.List<? extends java.lang.String> = arr...@org.jetbrains.annotations.NotNull var statementFilter: java.lang.String = var837f2350.<anonymous class>()]
+                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var var837f2350: java.util.List<? extends java.lang.String> = arr...@org.jetbrains.annotations.NotNull var statementFilter: java.lang.String = var837f2350.UIdentifier (Identifier (component2))()]
                                     ULocalVariable (name = var837f2350) [@org.jetbrains.annotations.NotNull var var837f2350: java.util.List<? extends java.lang.String> = arr]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                         USimpleNameReferenceExpression (identifier = arr) [arr] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
-                                    ULocalVariable (name = bindingContext) [@org.jetbrains.annotations.NotNull var bindingContext: java.lang.String = var837f2350.<anonymous class>()]
+                                    ULocalVariable (name = bindingContext) [@org.jetbrains.annotations.NotNull var bindingContext: java.lang.String = var837f2350.UIdentifier (Identifier (component1))()]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : <ErrorType>
+                                        UQualifiedReferenceExpression [var837f2350.UIdentifier (Identifier (component1))()] : <ErrorType>
                                             USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : <ErrorType>
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] : <ErrorType>
                                                 UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
-                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
-                                    ULocalVariable (name = statementFilter) [@org.jetbrains.annotations.NotNull var statementFilter: java.lang.String = var837f2350.<anonymous class>()]
+                                    ULocalVariable (name = statementFilter) [@org.jetbrains.annotations.NotNull var statementFilter: java.lang.String = var837f2350.UIdentifier (Identifier (component2))()]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        UQualifiedReferenceExpression [var837f2350.<anonymous class>()] : <ErrorType>
+                                        UQualifiedReferenceExpression [var837f2350.UIdentifier (Identifier (component2))()] : <ErrorType>
                                             USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : <ErrorType>
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] : <ErrorType>
                                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
-                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
                                 UYieldExpression [yield return bindingContext]
                                     UReturnExpression [return bindingContext] : @org.jetbrains.annotations.NotNull() java.lang.Void
                                         USimpleNameReferenceExpression (identifier = bindingContext) [bindingContext] : java.lang.String

@@ -16,8 +16,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import java.util.concurrent.atomic.AtomicBoolean
 
-private val CACHED_LINES_KEY: Key<CachedValue<Runnable>> = Key.create("editor.sticky.lines.cached")
-
 internal class StickyLinesPass(
   project: Project,
   document: Document,
@@ -30,7 +28,7 @@ internal class StickyLinesPass(
   override fun doCollectInformation(progress: ProgressIndicator) {
     updater = CachedValuesManager.getCachedValue(
       psiFile,
-      CACHED_LINES_KEY,
+      StickyLinesCollector.CACHED_LINES_KEY,
       getValueProvider(myProject, myDocument, vFile, dependency = psiFile)
     )
   }
@@ -49,7 +47,7 @@ internal class StickyLinesPass(
     ): CachedValueProvider<Runnable> {
       return CachedValueProvider {
         val collector = StickyLinesCollector(project, document)
-        val infos: MutableSet<StickyLineInfo> = collector.collectLines(vFile)
+        val infos: Set<StickyLineInfo> = collector.collectLines(vFile)
         val alreadyApplied = AtomicBoolean()
         val applier = Runnable {
           if (alreadyApplied.compareAndSet(false, true)) {

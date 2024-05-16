@@ -59,7 +59,7 @@ private val LOG = logger<RunTestsCheckinHandlerFactory>()
 
 @Service(Service.Level.PROJECT)
 @State(name = "TestsVcsConfig", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyState> {
+private class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyState> {
   class MyState {
     var enabled = false
     var configuration: ConfigurationBean? = null
@@ -73,7 +73,7 @@ class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyS
   }
 }
 
-class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
+private class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     if (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler) {
       return RunTestsBeforeCheckinHandler(panel.project)
@@ -82,7 +82,7 @@ class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
   }
 }
 
-class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitProblemWithDetails {
+private class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitProblemWithDetails {
   override val text: String
     get() {
       var str = ""
@@ -116,16 +116,17 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
     get() = ExecutionBundle.message("commit.checks.run.configuration.failed.show.details.action")
 }
 
-data class FailureDescription(val historyFileName: String,
+private data class FailureDescription(val historyFileName: String,
                               val failed: Int,
                               val ignored: Int,
                               val configuration: RunnerAndConfigurationSettings?,
                               val configName: String?)
 
-private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
-  if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
+private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? {
+  return if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
+}
 
-class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck {
+private class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck {
   private val settings: TestsVcsConfiguration get() = project.getService(TestsVcsConfiguration::class.java)
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.POST_COMMIT
@@ -307,8 +308,9 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
   }
 
   private fun createConfigurationChooser(linkContext: BooleanCommitOption.LinkContext): ActionGroup {
-    fun testConfiguration(it: RunConfiguration) =
-      it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
+    fun testConfiguration(it: RunConfiguration): Boolean {
+      return it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
+    }
 
     val result = DefaultActionGroup()
     val runManager = RunManagerImpl.getInstanceImpl(project)
@@ -368,5 +370,4 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
       Disposer.dispose(executionConsole)
     }
   }
-
 }

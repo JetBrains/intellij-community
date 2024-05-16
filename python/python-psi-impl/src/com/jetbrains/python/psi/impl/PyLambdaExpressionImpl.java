@@ -36,7 +36,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
         return type;
       }
     }
-    return new PyFunctionTypeImpl(this);
+    return PyFunctionTypeImpl.create(this, context);
   }
 
 

@@ -81,7 +81,7 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
   abstract fun collectRevisions(consumer: (T) -> Unit)
 
   @Throws(VcsException::class)
-  abstract fun collectRevisionsFast(consumer: (T) -> Unit)
+  open fun collectRevisionsFast(consumer: (T) -> Unit) = Unit
 
   /**
    * Waits for task to complete in a loop.

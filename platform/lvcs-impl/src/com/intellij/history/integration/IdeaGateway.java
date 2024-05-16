@@ -11,6 +11,7 @@ import com.intellij.history.core.tree.RootEntry;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -40,12 +41,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class IdeaGateway {
+  private static final Logger LOG = Logger.getInstance(IdeaGateway.class);
   private static final Key<ContentAndTimestamps> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
     = Key.create("LocalHistory.SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY");
 
@@ -98,8 +97,14 @@ public class IdeaGateway {
     return true;
   }
 
-  public String getPathOrUrl(@NotNull VirtualFile file) {
+  public @NotNull String getPathOrUrl(@NotNull VirtualFile file) {
     return file.isInLocalFileSystem() ? file.getPath() : file.getUrl();
+  }
+
+  public static @NotNull String getNameOrUrlPart(@NotNull VirtualFile file) {
+    String name = file.getName();
+    if (file.isInLocalFileSystem() || file.getParent() != null) return name;
+    return VirtualFileManager.constructUrl(file.getFileSystem().getProtocol(), StringUtil.trimStart(name, "/"));
   }
 
   protected static @NotNull VersionedFilterData getVersionedFilterData() {
@@ -235,14 +240,29 @@ public class IdeaGateway {
   @RequiresReadLock
   public @NotNull RootEntry createTransientRootEntry() {
     RootEntry root = new RootEntry();
-    doCreateChildren(root, getLocalRoots(), false);
+    doCreateChildren(root, getLocalRoots(), false, null);
     return root;
   }
 
   @RequiresReadLock
-  public @NotNull RootEntry createTransientRootEntryForPathOnly(@NotNull String path) {
+  public @NotNull RootEntry createTransientRootEntryForPath(@NotNull String path, boolean includeChildren) {
     RootEntry root = new RootEntry();
-    doCreateChildrenForPathOnly(root, path, getLocalRoots());
+    doCreateChildren(root, getLocalRoots(), false, new SinglePathVisitor(path, includeChildren));
+    return root;
+  }
+
+  @RequiresReadLock
+  public @NotNull RootEntry createTransientRootEntryForPaths(@NotNull Collection<String> paths, boolean includeChildren) {
+    if (paths.isEmpty()) return new RootEntry();
+
+    String singlePath = ContainerUtil.getOnlyItem(paths);
+    if (singlePath != null) {
+      return createTransientRootEntryForPath(singlePath, includeChildren);
+    }
+
+    RootEntry root = new RootEntry();
+    List<SinglePathVisitor> visitors = ContainerUtil.map(paths, s -> new SinglePathVisitor(s, includeChildren));
+    doCreateChildren(root, getLocalRoots(), false, new MergingPathVisitor(visitors));
     return root;
   }
 
@@ -258,107 +278,200 @@ public class IdeaGateway {
     return roots;
   }
 
-  private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
-                                           @NotNull String path,
-                                           @NotNull Iterable<? extends VirtualFile> children) {
-    for (VirtualFile child : children) {
-      String name = StringUtil.trimStart(child.getName(), "/"); // on Mac FS root name is "/"
-      if (!path.startsWith(name)) continue;
-      String rest = path.substring(name.length());
-      if (!rest.isEmpty() && rest.charAt(0) != '/') continue;
-      if (!rest.isEmpty() && rest.charAt(0) == '/') {
-        rest = rest.substring(1);
-      }
-      Entry e = doCreateEntryForPathOnly(child, rest);
-      if (e == null) continue;
-      parent.addChild(e);
-    }
-  }
-
-  private @Nullable Entry doCreateEntryForPathOnly(@NotNull VirtualFile file, @NotNull String path) {
-    if (!file.isDirectory()) {
-      if (!isVersioned(file)) return null;
-
-      return doCreateFileEntry(file, getActualContentNoAcquire(file));
-    }
-    DirectoryEntry newDir = new DirectoryEntry(file.getName());
-    doCreateChildrenForPathOnly(newDir, path, iterateDBChildren(file));
-    if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
-    return newDir;
-  }
-
   @RequiresReadLock
   public @Nullable Entry createTransientEntry(@NotNull VirtualFile file) {
-    return doCreateEntry(file, false);
+    return doCreateEntry(file, false, null);
   }
 
   @RequiresReadLock
   public @Nullable Entry createEntryForDeletion(@NotNull VirtualFile file) {
-    return doCreateEntry(file, true);
+    return doCreateEntry(file, true, null);
   }
 
-  private @Nullable Entry doCreateEntry(@NotNull VirtualFile file, boolean forDeletion) {
+  private @Nullable Entry doCreateEntry(@NotNull VirtualFile file, boolean forDeletion, @Nullable FileTreeVisitor visitor) {
     if (!file.isDirectory()) {
       if (!isVersioned(file)) return null;
 
-      Pair<StoredContent, Long> contentAndStamps;
-      if (forDeletion) {
-        FileDocumentManager m = FileDocumentManager.getInstance();
-        Document d = m.isFileModified(file) ? m.getCachedDocument(file) : null; // should not try to load document
-        contentAndStamps = acquireAndClearCurrentContent(file, d);
-      }
-      else {
-        contentAndStamps = getActualContentNoAcquire(file);
-      }
-
-      return doCreateFileEntry(file, contentAndStamps);
+      return doCreateFileEntry(file, forDeletion);
     }
 
-    DirectoryEntry newDir = null;
-    boolean nonLocalRoot = !file.isInLocalFileSystem() && file.getParent() == null;
-    if (file instanceof VirtualFileSystemEntry && !nonLocalRoot) {
-      int nameId = ((VirtualFileSystemEntry)file).getNameId();
-      if (nameId > 0) {
-        newDir = new DirectoryEntry(nameId);
-      }
-    }
+    DirectoryEntries entries = doCreateDirectoryEntries(file);
+    if (entries == null) return null;
 
-    DirectoryEntry res;
-    if (newDir == null) {
-      if (nonLocalRoot) {
-        DirectoryEntry first = null;
-        for (String item : Paths.split(file.getUrl())) {
-          DirectoryEntry cur = new DirectoryEntry(item);
-          if (first == null) first = cur;
-          if (newDir != null) newDir.addChild(cur);
-          newDir = cur;
-        }
-        res = first;
-      }
-      else {
-        newDir = new DirectoryEntry(file.getName());
-        res = newDir;
-      }
+    doCreateChildren(entries.last, iterateDBChildren(file), forDeletion, visitor);
+    if (!isVersioned(file) && entries.last.getChildren().isEmpty()) return null;
+    return entries.first;
+  }
+
+  private @NotNull Entry doCreateFileEntry(@NotNull VirtualFile file, boolean forDeletion) {
+    Pair<StoredContent, Long> contentAndStamps;
+    if (forDeletion) {
+      FileDocumentManager m = FileDocumentManager.getInstance();
+      Document d = m.isFileModified(file) ? m.getCachedDocument(file) : null; // should not try to load document
+      contentAndStamps = acquireAndClearCurrentContent(file, d);
     }
     else {
-      res = newDir;
+      contentAndStamps = getActualContentNoAcquire(file);
     }
 
-    doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
-    if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
-    return res;
-  }
+    StoredContent content = contentAndStamps.first;
+    Long timestamp = contentAndStamps.second;
 
-  private static @NotNull Entry doCreateFileEntry(@NotNull VirtualFile file, Pair<StoredContent, Long> contentAndStamps) {
     if (file instanceof VirtualFileSystemEntry) {
-      return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+      return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), content, timestamp, !file.isWritable());
     }
-    return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+    return new FileEntry(file.getName(), content, timestamp, !file.isWritable());
   }
 
-  private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<? extends VirtualFile> children, final boolean forDeletion) {
-    List<Entry> entries = ContainerUtil.mapNotNull(children, each -> doCreateEntry(each, forDeletion));
+  private record DirectoryEntries(@NotNull DirectoryEntry first, @NotNull DirectoryEntry last) {
+  }
+
+  private static @Nullable DirectoryEntries doCreateDirectoryEntries(@NotNull VirtualFile file) {
+    if (file.isInLocalFileSystem() || file.getParent() != null) {
+      if (file instanceof VirtualFileSystemEntry) {
+        int nameId = ((VirtualFileSystemEntry)file).getNameId();
+        if (nameId > 0) {
+          DirectoryEntry newDir = new DirectoryEntry(nameId);
+          return new DirectoryEntries(newDir, newDir);
+        }
+      }
+      DirectoryEntry newDir = new DirectoryEntry(file.getName());
+      return new DirectoryEntries(newDir, newDir);
+    }
+
+    DirectoryEntry first = null;
+    DirectoryEntry last = null;
+    for (String item : Paths.split(file.getUrl())) {
+      DirectoryEntry current = new DirectoryEntry(item);
+      if (first == null) first = current;
+      if (last != null) last.addChild(current);
+      last = current;
+    }
+
+    if (first == null) return null;
+    return new DirectoryEntries(first, last);
+  }
+
+  private void doCreateChildren(@NotNull DirectoryEntry parent, @NotNull Iterable<? extends VirtualFile> children, boolean forDeletion,
+                                @Nullable FileTreeVisitor visitor) {
+    List<Entry> entries = ContainerUtil.mapNotNull(children, each -> {
+      if (visitor != null && !visitor.before(each)) return null;
+
+      Entry newEntry = null;
+      Entry existingEntry = parent.findEntry(each.getName());
+      if (existingEntry != null) {
+        if (existingEntry instanceof DirectoryEntry existingDirectoryEntry) {
+          doCreateChildren(existingDirectoryEntry, iterateDBChildren(each), forDeletion, visitor);
+        }
+      }
+      else {
+        newEntry = doCreateEntry(each, forDeletion, visitor);
+      }
+
+      if (visitor != null) visitor.after(each);
+
+      return newEntry;
+    });
     parent.addChildren(entries);
+  }
+
+  private interface FileTreeVisitor {
+    boolean before(@NotNull VirtualFile file);
+
+    void after(@NotNull VirtualFile file);
+  }
+
+  private static class SinglePathVisitor implements FileTreeVisitor {
+    private final @NotNull List<String> myPathsStack = new ArrayList<>();
+    private final boolean myIncludeChildren;
+
+    private SinglePathVisitor(@NotNull String path, boolean includeChildren) {
+      myIncludeChildren = includeChildren;
+      myPathsStack.add(path);
+    }
+
+    @Override
+    public boolean before(@NotNull VirtualFile child) {
+      String targetPath = ContainerUtil.getLastItem(myPathsStack);
+      if (targetPath == null) return false;
+      if (myIncludeChildren && targetPath.isEmpty()) {
+        myPathsStack.add("");
+        return true;
+      }
+
+      String childName = StringUtil.trimStart(getNameOrUrlPart(child), "/"); // on Mac FS root name is "/"
+      if (!targetPath.startsWith(childName)) return false;
+      String targetPathRest = targetPath.substring(childName.length());
+      if (!targetPathRest.isEmpty() && targetPathRest.charAt(0) != '/') return false;
+      if (!targetPathRest.isEmpty() && targetPathRest.charAt(0) == '/') {
+        targetPathRest = targetPathRest.substring(1);
+      }
+
+      myPathsStack.add(targetPathRest);
+      return true;
+    }
+
+    @Override
+    public void after(@NotNull VirtualFile file) {
+      myPathsStack.remove(myPathsStack.size() - 1);
+    }
+  }
+
+  private static class MergingPathVisitor implements FileTreeVisitor {
+    private final List<? extends FileTreeVisitor> myVisitors;
+
+    private final int[] myTerminatedAtDepth;
+    private int myDepth = 1; // not 0 to simplify array initialization
+
+    private MergingPathVisitor(@NotNull List<? extends FileTreeVisitor> visitors) {
+      myVisitors = visitors;
+      myTerminatedAtDepth = new int[visitors.size()];
+    }
+
+    @Override
+    public boolean before(@NotNull VirtualFile file) {
+      boolean result = false;
+      for (int i = 0; i < myVisitors.size(); i++) {
+        int terminatedAt = myTerminatedAtDepth[i];
+        if (terminatedAt != 0) continue;
+
+        if (myVisitors.get(i).before(file)) {
+          result = true;
+        }
+        else {
+          myTerminatedAtDepth[i] = myDepth;
+        }
+      }
+      if (result) {
+        myDepth++;
+        return true;
+      }
+      else {
+        for (int i = 0; i < myVisitors.size(); i++) {
+          int terminatedAt = myTerminatedAtDepth[i];
+          if (terminatedAt == myDepth) {
+            myTerminatedAtDepth[i] = 0; // rollback because 'after' won't be called
+          }
+        }
+        return false;
+      }
+    }
+
+    @Override
+    public void after(@NotNull VirtualFile file) {
+      myDepth--;
+      LOG.assertTrue(myDepth >= 1);
+
+      for (int i = 0; i < myVisitors.size(); i++) {
+        int terminatedAt = myTerminatedAtDepth[i];
+        if (terminatedAt == myDepth) {
+          myTerminatedAtDepth[i] = 0;
+        }
+        else if (terminatedAt == 0) {
+          myVisitors.get(i).after(file);
+        }
+      }
+    }
   }
 
   public void registerUnsavedDocuments(final @NotNull LocalHistoryFacade vcs) {

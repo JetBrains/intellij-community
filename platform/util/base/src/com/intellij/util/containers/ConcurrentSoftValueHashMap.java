@@ -8,7 +8,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * Concurrent strong key:K -> soft value:V map
@@ -18,7 +17,7 @@ import java.util.function.Consumer;
  */
 final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
 
-  ConcurrentSoftValueHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
+  ConcurrentSoftValueHashMap(@Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
     super(evictionListener);
   }
 

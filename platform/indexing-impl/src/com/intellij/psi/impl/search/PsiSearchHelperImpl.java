@@ -1247,16 +1247,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       LOG.trace("searching for words " + words + " in " + scope);
     }
 
-    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
-      if (ApplicationManager.getApplication().isReadAccessAllowed() &&
-          (!DumbService.isDumb(project) ||
-          FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null)) {
-        return computeQueries(scope, processor, textIndexQueries);
-      }
-
-      return ReadAction.compute(() -> DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> computeQueries(scope, processor, textIndexQueries)));
+    if (ApplicationManager.getApplication().isReadAccessAllowed() &&
+        (!DumbService.isDumb(project) ||
+         FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null)) {
+      return computeQueries(scope, processor, textIndexQueries);
     }
-    return DumbService.getInstance(project).runReadActionInSmartMode(() -> computeQueries(scope, processor, textIndexQueries));
+
+    return ReadAction.compute(() -> DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> computeQueries(scope, processor, textIndexQueries)));
   }
 
   private static boolean computeQueries(@NotNull GlobalSearchScope scope,

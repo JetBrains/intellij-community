@@ -14,11 +14,14 @@ import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEve
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
 import java.util.Objects;
+
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+@ApiStatus.Internal
 public class ImportedTestContentHandler extends DefaultHandler {
   private final GeneralTestEventsProcessor myProcessor;
   private final Stack<String> mySuites = new Stack<>();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.util.text.StringUtil
@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_JAR_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
 
@@ -166,12 +167,11 @@ class RuntimeModuleRepositoryChecker private constructor(
         continue
       }
       val module = context.findModule(rawModuleId)
-      if (module != null && (context.getModuleOutputDir(module) / "${module.name}.xml").exists()) {
-        /* such descriptor indicates that it's a module in plugin model V2, and its ClassLoader ignores classes from irrelevant packages,
-           so including its JAR to classpath should not cause problems */
+      if (module != null && Files.exists(context.getModuleOutputDir(module).resolve("${module.name}.xml"))) {
+        // such a descriptor indicates that it's a module in plugin model V2, and its ClassLoader ignores classes from irrelevant packages,
+        // so including its JAR to classpath should not cause problems
         continue
       }
-      
       
       val resourceRoots = repository.getModuleResourcePaths(moduleId)/*.filterNot {
         //ClassLoader used for classes in modules.jar ignores classes from irrelevant packages, so it's ok to have it in classpath
@@ -187,13 +187,15 @@ class RuntimeModuleRepositoryChecker private constructor(
         val rest = includedModules.size - displayedModulesCount
         val more = if (rest > 0) " and $rest more ${StringUtil.pluralize("module", rest)}" else ""
         softly.collectAssertionError(AssertionError("""
-          |Module '${moduleId.stringId}' is not part of '$productModulesModule', but it's packed in ${included.pathString},
-          |which is included in classpath because:
-          |$firstIncludedModuleData$more are also packed in it, so '${moduleId.stringId}' will be
-          |included in the classpath as well. Unnecessary code and resources in the classpath may cause performance problems, also, they
-          |may cause '$productModulesModule' to behave differently in a standalone installation and when invoked from '${context.applicationInfo.fullProductName}'
-          |so it's better to fix the problem. Usually, to do that you need to change build scripts to put '${moduleId.stringId}' in a 
-          |separate JAR.
+          |Module '${moduleId.stringId}' is not part of '$productModulesModule' product included in ${context.applicationInfo.fullProductName} distribution, but it's packed in ${included.pathString},
+          |which is included in the classpath of '$productModulesModule' because:
+          |$firstIncludedModuleData$more are also packed in it.
+          |This means that '${moduleId.stringId}' will be included in the classpath of '$productModulesModule' as well. 
+          |Unnecessary code and resources in the classpath may cause performance problems, also, they may cause '$productModulesModule' to behave differently in a standalone 
+          |installation and when invoked from ${context.applicationInfo.fullProductName}. To fix the problem, you should do one of the following:
+          |* if other modules packed in '${included.pathString}' shouldn't be part of '$productModulesModule', remove incorrect dependencies shown above; this may require extracting additional modules;
+          |* if '${moduleId.stringId}' actually should be included in '$productModulesModule', make sure that it's included either by adding it as a content module in plugin.xml, or by adding it in the main module group in product-modules.xml;
+          |* otherwise, change the build scripts to put '${moduleId.stringId}' in a separate JAR.
         """.trimMargin()))
       }
     }

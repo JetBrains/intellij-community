@@ -12,14 +12,16 @@ import org.gradle.tooling.events.OperationResult
 import org.gradle.tooling.events.ProgressEvent
 import org.gradle.tooling.events.StatusEvent
 import org.gradle.tooling.events.download.FileDownloadProgressEvent
+import org.jetbrains.plugins.gradle.util.GradleBundle
 
 class GradleDownloadProgressMapper {
 
   private companion object {
     private const val BYTES = "bytes"
+    private const val DOWNLOAD_SPACE = "Download "
   }
 
-  private val inFlightDownloads: MutableMap<String /*event.descriptor.name - file uri*/, StatusEvent> = HashMap()
+  private val inFlightDownloads: MutableMap<String /*event.descriptor.name - Operation name*/, StatusEvent> = HashMap()
 
   fun canMap(event: ProgressEvent): Boolean = event is FileDownloadProgressEvent
                                               || (event is StatusEvent && event.unit == BYTES)
@@ -40,9 +42,15 @@ class GradleDownloadProgressMapper {
     val oldEvent = inFlightDownloads[operationName]
     inFlightDownloads[operationName] = newEvent
     if (oldEvent == null || oldEvent.progress <= newEvent.progress) {
+      val path = getPath(operationName) ?: return null
       val progress = if (newEvent.progress > 0) newEvent.progress else 0
       val total = if (newEvent.total > 0) newEvent.total else 0
-      return FileDownloadEventImpl(taskId, null, newEvent.eventTime, operationName, total, progress, BYTES, oldEvent == null)
+      val message = GradleBundle.message("progress.title.download", path)
+      return FileDownloadEventImpl(
+        taskId, null, newEvent.eventTime,
+        message, total, progress,
+        BYTES, oldEvent == null, path
+      )
     }
     return null
   }
@@ -51,11 +59,21 @@ class GradleDownloadProgressMapper {
                                      operationName: @NlsSafe String,
                                      event: FinishEvent): BuildEvent? {
     inFlightDownloads.remove(operationName) ?: return null
-    return FileDownloadedEventImpl(taskId, null, event.eventTime, operationName, event.result.duration())
+    val path = getPath(operationName) ?: return null
+    return FileDownloadedEventImpl(taskId, null, event.eventTime, operationName, event.result.duration(), path)
   }
 
   private fun OperationResult.duration(): Long {
     val duration = endTime - startTime
     return if (duration > 0) duration else 0L
+  }
+
+  private fun getPath(operation: String): @NlsSafe String? {
+    return if (operation.startsWith(DOWNLOAD_SPACE)) {
+      operation.substring(DOWNLOAD_SPACE.length).trim()
+    }
+    else {
+      null
+    }
   }
 }

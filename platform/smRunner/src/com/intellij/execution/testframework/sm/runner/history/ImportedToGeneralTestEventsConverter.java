@@ -8,6 +8,7 @@ import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -19,6 +20,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
 
   @NotNull private final TestConsoleProperties myConsoleProperties;

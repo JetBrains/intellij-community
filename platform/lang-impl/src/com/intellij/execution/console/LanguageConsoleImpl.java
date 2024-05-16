@@ -90,10 +90,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     this(new Helper(project, new LightVirtualFile(title, language, "")));
   }
 
-  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull VirtualFile virtualFile) {
-    this(new Helper(project, virtualFile).setTitle(title));
-  }
-
   public LanguageConsoleImpl(@NotNull Helper helper) {
     super(helper.project, GlobalSearchScope.allScope(helper.project), true, true);
     myHelper = helper;

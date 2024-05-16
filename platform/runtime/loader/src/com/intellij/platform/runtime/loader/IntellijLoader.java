@@ -3,6 +3,7 @@ package com.intellij.platform.runtime.loader;
 
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.util.lang.PathClassLoader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 
 import java.lang.invoke.MethodHandle;
@@ -15,10 +16,11 @@ import java.util.List;
 /**
  * Initiates loading of a product based on IntelliJ platform. It loads information about the product modules from {@link RuntimeModuleRepository}
  * and configures the classloader accordingly.
- * <p>It's an experimental way, and it isn't used in production yet.</p>
+ * <p>It's an experimental way, it's currently used for frontend variants of IDEs only.</p>
  */
 public final class IntellijLoader {
-  private static final String RUNTIME_REPOSITORY_PATH_PROPERTY = "intellij.platform.runtime.repository.path";
+  @ApiStatus.Internal
+  public static final String RUNTIME_REPOSITORY_PATH_PROPERTY = "intellij.platform.runtime.repository.path";
 
   public static void main(String[] args) throws Throwable {
     long startTimeNano = System.nanoTime();
@@ -33,10 +35,16 @@ public final class IntellijLoader {
     }
     
     RuntimeModuleRepository repository = RuntimeModuleRepository.create(Path.of(repositoryPathString).toAbsolutePath());
+    launch(args, repository, startupTimings, startTimeUnixNano);
+  }
+
+  @ApiStatus.Internal
+  public static void launch(String[] args, RuntimeModuleRepository repository, ArrayList<Object> startupTimings, long startTimeUnixNano)
+    throws Throwable {
     List<Path> bootstrapClasspath = repository.getBootstrapClasspath("intellij.platform.bootstrap");
     startupTimings.add("calculating bootstrap classpath");
     startupTimings.add(System.nanoTime());
-    
+
     ClassLoader appClassLoader = IntellijLoader.class.getClassLoader();
     if (!(appClassLoader instanceof PathClassLoader)) {
       reportError("JVM for IntelliJ must be started with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader parameter");
@@ -50,7 +58,7 @@ public final class IntellijLoader {
                   MethodType.methodType(void.class, RuntimeModuleRepository.class, String[].class, ArrayList.class, long.class));
     startupTimings.add("obtaining main method handle");
     startupTimings.add(System.nanoTime());
-    
+
     methodHandle.invokeExact(repository, args, startupTimings, startTimeUnixNano);
   }
 

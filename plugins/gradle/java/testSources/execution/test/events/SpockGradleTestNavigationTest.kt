@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
@@ -15,6 +17,14 @@ class SpockGradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/groovy/org/example/SpockTestCase.groovy", GROOVY_CLASS_WITH_SPOCK_TESTS)
 
       executeTasks(":test", isRunAsTest = true)
+      val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries
+      val logger = project.thisLogger()
+      logger.warn(
+        """
+          Dump of libraries configured for the project: 
+          ${libraries.joinToString(separator = "\n") { it.toString() }}
+        """.trimIndent())
+
       assertTestViewTree {
         assertNode("SpockTestCase") {
           assertPsiLocation("SpockTestCase")

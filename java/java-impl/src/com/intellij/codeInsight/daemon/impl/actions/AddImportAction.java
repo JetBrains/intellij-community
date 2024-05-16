@@ -11,6 +11,7 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -26,12 +27,14 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -106,13 +109,29 @@ public class AddImportAction implements QuestionAction {
   private void chooseClassAndImport() {
     CodeInsightUtil.sortIdenticalShortNamedMembers(myTargetClasses, myReference);
 
+    class Maps {
+      final Map<PsiClass, String> names;
+      final Map<PsiClass, Icon> icons;
+
+      Maps(Map<PsiClass, String> names, Map<PsiClass, Icon> icons) {
+        this.names = names;
+        this.icons = icons;
+      }
+    }
+
+    Maps maps = ReadAction.compute(() -> {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346760, EA-1028089")) {
+        return new Maps(
+          Arrays.stream(myTargetClasses)
+            .collect(Collectors.toMap(o -> o, t -> StringUtil.notNullize(t.getQualifiedName()))),
+          Arrays.stream(myTargetClasses)
+            .collect(Collectors.toMap(o -> o, t -> t.getIcon(0)))
+        );
+      }
+    });
+
     final BaseListPopupStep<PsiClass> step =
       new BaseListPopupStep<>(QuickFixBundle.message("class.to.import.chooser.title"), myTargetClasses) {
-        private final Map<PsiClass, String> names = Arrays.stream(myTargetClasses)
-          .collect(Collectors.toMap(t -> t, t -> {
-            String name = t.getQualifiedName();
-            return name != null ? name : "";
-          }));
 
         @Override
         public boolean isAutoSelectionEnabled() {
@@ -147,12 +166,12 @@ public class AddImportAction implements QuestionAction {
 
         @Override
         public @NotNull String getTextFor(PsiClass value) {
-          return names.getOrDefault(value, "");
+          return maps.names.getOrDefault(value, "");
         }
 
         @Override
-        public Icon getIconFor(PsiClass aValue) {
-          return ReadAction.compute(() -> aValue.getIcon(0));
+        public Icon getIconFor(PsiClass value) {
+          return maps.icons.get(value);
         }
       };
     JBPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, superRenderer -> {

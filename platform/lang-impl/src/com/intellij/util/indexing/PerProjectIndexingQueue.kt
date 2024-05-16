@@ -15,6 +15,7 @@ import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.longs.LongSets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
@@ -120,6 +121,7 @@ private class PerProviderSinkFactory(private val uncommittedListener: Uncommitte
   }
 }
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class PerProjectIndexingQueue(private val project: Project) {
   /**
@@ -161,6 +163,9 @@ class PerProjectIndexingQueue(private val project: Project) {
   // count of files in [filesSoFar])
   private val lock = ReentrantReadWriteLock()
 
+  @Volatile
+  private var allowFlushing: Boolean = true
+
   // `private` because we want clients to use [PerProviderSink] which forces them to report files one by one.
   // Accepting `List<VirtualFile>` delays the moment when we know that many files have changed, and we need a dumb mode.
   // Accepting [VirtualFile] without intermediate buffering ([PerProviderSink] is essentially a non-thread safe buffer) and adding
@@ -181,6 +186,10 @@ class PerProjectIndexingQueue(private val project: Project) {
   }
 
   fun flushNow(reason: String) {
+    if (!allowFlushing) {
+      LOG.info("Flushing is not allowed at the moment")
+      return
+    }
     val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
     if (totalFiles > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
@@ -196,7 +205,18 @@ class PerProjectIndexingQueue(private val project: Project) {
   }
 
   @VisibleForTesting
-  fun getFilesAndClear(): Map<IndexableFilesIterator, Collection<VirtualFile>> {
+  fun <T> getFilesSubmittedDuring(block: () -> T): Pair<T, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
+    allowFlushing = false
+    try {
+      val result: T = block()
+      return Pair(result, getFilesAndClear())
+    }
+    finally {
+      allowFlushing = true
+    }
+  }
+
+  private fun getFilesAndClear(): Map<IndexableFilesIterator, Collection<VirtualFile>> {
     val (files, _) = getAndResetQueuedFiles()
     return files
   }

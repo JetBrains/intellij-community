@@ -8,4 +8,3 @@ fun m(d: D) {
     d.a
 }
 
-// IGNORE_K2_LOG

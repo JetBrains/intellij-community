@@ -117,6 +117,39 @@ fun resetThreadContext(): AccessToken {
 }
 
 /**
+ * Runs [action] with the cancellation guarantees of [job].
+ *
+ * Consider the following example:
+ * ```kotlin
+ * fun computeSomethingUseful() {
+ *    preComputation()
+ *    application.executeOnPooledThread(::executeInLoop)
+ *    postComputation()
+ * }
+ *
+ * fun executeInLoop() {
+ *   doSomething()
+ *   ProgressManager.checkCancelled()
+ *   Thread.sleep(1000)
+ *   executeInLoop()
+ * }
+ * ```
+ *
+ * If someone wants to track the execution of `computeSomethingUseful`, most likely they are not interested in `executeInLoop`,
+ * as it is a daemon computation that can be only canceled.
+ * It can be a launch of an external process, or some periodic diagnostic check.
+ *
+ * In this case, the platform offers to weaken the cancellation guarantees for the computation:
+ * it still would be cancellable on project closing or component unloading, but it would not be bound to the context cancellation.
+ */
+@Experimental
+fun <T> escapeCancellation(job: Job, action: () -> T): T {
+  return installThreadContext(currentThreadContext() + job + BlockingJob(job), true).use {
+    action()
+  }
+}
+
+/**
  * Installs [coroutineContext] as the current thread context.
  * If [replace] is `false` (default) and the current thread already has context, then this function logs an error.
  *
@@ -243,6 +276,17 @@ fun <T, U> captureThreadContext(f : Function<T, U>) : Function<T, U> {
 }
 
 /**
+ * We do not want to mark any custom context elements as internal at all.
+ * However, currently it is required until the platform team fixes context invariants.
+ * In this doc comment, we shall list all elements that are currently internal. If you want to add something here,
+ * please consult with the platform team.
+ *
+ * - `ComponentManagerElement`, because not all entry points to coroutine come from containers at the moment.
+ */
+@Internal
+interface InternalCoroutineContextKey<T : CoroutineContext.Element> : CoroutineContext.Key<T>
+
+/**
  * Strips off internal elements from thread contexts.
  * If you need to compare contexts by equality, most likely you need to use this method.
  */
@@ -256,6 +300,7 @@ fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element>
       // An ideal solution would be to provide a way to merge several thread contexts under one, but there is no real need in it yet.
       BlockingJob -> Unit
       CoroutineName -> Unit
+      is InternalCoroutineContextKey<*> -> Unit
       @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") kotlinx.coroutines.CoroutineId -> Unit
       else -> acc.add(element)
     }

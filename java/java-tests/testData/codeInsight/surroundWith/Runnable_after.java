@@ -17,7 +17,7 @@ class External {
             int innerLocal4 = 7;
             String incorrect;
 
-            <caret>Runnable runnable = new Runnable() {
+            Runnable <caret>runnable = new Runnable() {
                 public void run() {
                     int insideRunnable1 = param1 + ((++innerLocal2) << param2);
                     param2 = local1 * insideRunnable1;

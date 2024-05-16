@@ -36,7 +36,7 @@ public final class StringFormatUsageSearcher implements UsageSearcher {
       .flatMap(function)
       .filter(ref -> ref.resolvesTo(symbol))
       .<Usage>map(PsiUsage::textUsage)
-      .append(List.of(new DefUsage(arg)))
+      .append(List.of(new PsiElementUsage(arg)))
       .toList();
   }
 }

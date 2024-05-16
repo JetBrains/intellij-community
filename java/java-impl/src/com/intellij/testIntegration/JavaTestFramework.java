@@ -6,6 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -84,7 +85,19 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   protected static <T> T callWithAlternateResolver(Project project, Callable<? extends T> callable, T defaultValue) {
     try {
-      return DumbService.getInstance(project)
+      DumbService dumbService = DumbService.getInstance(project);
+      if (dumbService.isAlternativeResolveEnabled()) {
+        try {
+          return callable.call();
+        }
+        catch (Exception e) {
+          if (e instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+          }
+          throw new RuntimeException(e);
+        }
+      }
+      return dumbService
         .computeWithAlternativeResolveEnabled((ThrowableComputable<T, Throwable>)() -> callable.call());
     }
     catch (IndexNotReadyException e) {
@@ -95,11 +108,19 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   @Override
   public boolean isTestClass(@NotNull PsiElement clazz) {
+    //other languages are not ready for dumb-mode
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return false;
     return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, false);
+  }
+
+  private static boolean supportDumbMode(@NotNull PsiElement psiElement) {
+    return psiElement.getLanguage() == JavaLanguage.INSTANCE || JavaTestFrameworkInDumbMode.isSupported(psiElement);
   }
 
   @Override
   public boolean isPotentialTestClass(@NotNull PsiElement clazz) {
+    //other languages are not ready for dumb-mode
+    if (DumbService.isDumb(clazz.getProject()) && !supportDumbMode(clazz)) return false;
     return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, true);
   }
 

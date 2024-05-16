@@ -54,23 +54,20 @@ object K2CreateFunctionFromUsageBuilder {
     private fun KtSimpleNameExpression.referenceNameOfElement(): Boolean = getReferencedNameElementType() == KtTokens.IDENTIFIER
 
     internal fun buildRequestsAndActions(callExpression: KtCallExpression): List<IntentionAction> {
-        analyze(callExpression) {
-            val methodRequests = buildRequests(callExpression)
-            val extensions = EP_NAME.extensions
-            return methodRequests.flatMap { (targetClass, request) ->
-                extensions.flatMap { ext ->
-                    ext.createAddMethodActions(targetClass, request)
-                }
-            }.groupActionsByType(KotlinLanguage.INSTANCE)
-        }
+        val methodRequests = buildRequests(callExpression)
+        val extensions = EP_NAME.extensions
+        return methodRequests.flatMap { (targetClass, request) ->
+            extensions.flatMap { ext ->
+                ext.createAddMethodActions(targetClass, request)
+            }
+        }.groupActionsByType(KotlinLanguage.INSTANCE)
     }
 
-    context(KtAnalysisSession)
-    internal fun buildRequests(callExpression: KtCallExpression): List<Pair<JvmClass, CreateMethodRequest>> {
+    private fun buildRequests(callExpression: KtCallExpression): List<Pair<JvmClass, CreateMethodRequest>> {
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return emptyList()
         val requests = mutableListOf<Pair<JvmClass, CreateMethodRequest>>()
         val receiverExpression = calleeExpression.getReceiverExpression()
-
+        analyze(callExpression) {
         // Register default create-from-usage request.
         // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
         val defaultContainerPsi = calleeExpression.getReceiverOrContainerPsiElement()
@@ -128,11 +125,12 @@ object K2CreateFunctionFromUsageBuilder {
                 isForCompanion = shouldCreateCompanionClass,
             ))
         }
+        }
         return requests
     }
 
     context (KtAnalysisSession)
-    fun shouldCreateCompanionClass(calleeExpression: KtSimpleNameExpression): Boolean {
+    private fun shouldCreateCompanionClass(calleeExpression: KtSimpleNameExpression): Boolean {
         val receiverExpression = calleeExpression.getReceiverExpression()
         val receiverResolved =
             (receiverExpression as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KtClassOrObjectSymbol
@@ -140,7 +138,7 @@ object K2CreateFunctionFromUsageBuilder {
     }
 
     // assume the map is linked, because we require order
-    val allModifiers: Map<KtModifierKeywordToken, JvmModifier> = mapOf(
+    private val allModifiers: Map<KtModifierKeywordToken, JvmModifier> = mapOf(
         KtTokens.PRIVATE_KEYWORD to JvmModifier.PRIVATE,
         KtTokens.INTERNAL_KEYWORD to JvmModifier.PRIVATE, // create private from internal
         KtTokens.PROTECTED_KEYWORD to JvmModifier.PROTECTED,
@@ -214,7 +212,7 @@ object K2CreateFunctionFromUsageBuilder {
         if (containingClass.modifierList.hasAbstractModifier() || classSymbol.classKind == KtClassKind.INTERFACE) return classType
 
         // KtType.getAbstractSuperType() does not guarantee it's the closest abstract super type. We can implement it as a
-        // breadth first search, but it can cost a lot in terms of the memory usage.
+        // breadth-first search, but it can cost a lot in terms of the memory usage.
         return classType.getAbstractSuperType()
     }
 
@@ -225,7 +223,7 @@ object K2CreateFunctionFromUsageBuilder {
     }
 
     /**
-     * Returns class or super class of the express's type if the class or the super class is abstract. Otherwise, returns null.
+     * Returns class or superclass of the express's type if the class or the super class is abstract. Otherwise, returns null.
      */
     context (KtAnalysisSession)
     private fun KtExpression.getTypeOfAbstractSuperClass(): KtType? {
@@ -235,7 +233,7 @@ object K2CreateFunctionFromUsageBuilder {
     }
 
     /**
-     * Returns the receiver's type if it is abstract, or it has an abstract super class. Otherwise, returns null.
+     * Returns the receiver's type if it is abstract, or it has an abstract superclass. Otherwise, returns null.
      */
     context (KtAnalysisSession)
     private fun KtSimpleNameExpression.getAbstractTypeOfReceiver(): KtType? {
@@ -249,7 +247,7 @@ object K2CreateFunctionFromUsageBuilder {
         return computeImplicitReceiverType(calleeExpression)?.convertToClass()
     }
     context (KtAnalysisSession)
-    fun computeImplicitReceiverType(calleeExpression: KtSimpleNameExpression): KtType? {
+    private fun computeImplicitReceiverType(calleeExpression: KtSimpleNameExpression): KtType? {
         val implicitReceiver = calleeExpression.containingKtFile.getScopeContextForPosition(calleeExpression).implicitReceivers.firstOrNull()
         if (implicitReceiver != null) {
             val callable = (calleeExpression.getParentOfTypeAndBranch<KtFunction> { bodyExpression }

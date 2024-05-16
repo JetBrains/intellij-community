@@ -48,9 +48,6 @@ public abstract class TwoStepCompletionProvider<T> extends ValuesCompletionProvi
           break;
         }
       }
-      catch (InterruptedException | CancellationException e) {
-        break;
-      }
       catch (TimeoutException ignored) {
       }
       catch (ExecutionException e) {
@@ -60,6 +57,9 @@ public abstract class TwoStepCompletionProvider<T> extends ValuesCompletionProvi
       catch (ProcessCanceledException e) {
         future.cancel(true);
         throw e;
+      }
+      catch (InterruptedException | CancellationException e) {
+        break;
       }
     }
     result.stopHere();

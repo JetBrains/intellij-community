@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
 import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageEngine;
+import com.intellij.coverage.CoverageLogger;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
@@ -24,6 +25,7 @@ import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,11 +51,15 @@ public class ShowCoveringTestsAction extends AnAction {
     myBundle = bundle;
     myClassFQName = classFQName;
     myLineData = lineData;
-    boolean enabled = false;
-    if (myLineData != null && myLineData.getStatus() != LineCoverage.NONE && project != null) {
-      enabled = bundle != null && bundle.isCoverageByTestEnabled() && bundle.getCoverageEngine().wasTestDataCollected(project, bundle);
+    myTestsAvailable = isEnabled(project, bundle, lineData);
+  }
+
+  @ApiStatus.Internal
+  public static boolean isEnabled(Project project, CoverageSuitesBundle bundle, LineData lineData) {
+    if (lineData != null && lineData.getStatus() != LineCoverage.NONE && project != null) {
+      return bundle != null && bundle.isCoverageByTestEnabled() && bundle.getCoverageEngine().wasTestDataCollected(project, bundle);
     }
-    myTestsAvailable = enabled;
+    return false;
   }
 
   @Override
@@ -71,6 +77,7 @@ public class ShowCoveringTestsAction extends AnAction {
                                                                           CoverageBundle.message("extract.information.about.tests"), false, project)) { //todo cache them? show nothing found message
       final String[] testNames = ArrayUtilRt.toStringArray(tests);
       Arrays.sort(testNames);
+      CoverageLogger.logShowCoveringTests(project, testNames.length);
       if (testNames.length == 0) {
         HintManager.getInstance().showErrorHint(editor, CoverageBundle.message("hint.text.failed.to.load.covered.tests"));
         return;

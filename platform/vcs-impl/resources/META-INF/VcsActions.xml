@@ -106,7 +106,7 @@
             <add-to-group group-id="NavbarPopupMenu" relative-to-action="EditSource" anchor="after"/>
           </action>
           <action id="ChangesView.ApplyPatchFromClipboard" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchFromClipboardAction"/>
-          <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction" icon="AllIcons.Vcs.Shelve"/>
+          <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction" icon="com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons.Shelve"/>
         </group>
 
         <separator/>

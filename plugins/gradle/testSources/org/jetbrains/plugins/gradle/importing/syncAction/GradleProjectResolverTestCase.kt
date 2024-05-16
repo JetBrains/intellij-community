@@ -3,12 +3,8 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.Project
-import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.registerOrReplaceServiceInstance
-import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
@@ -19,6 +15,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.jupiter.api.Assertions
 import org.opentest4j.AssertionFailedError
+import org.opentest4j.MultipleFailuresError
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
@@ -27,24 +24,31 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
   fun whenPhaseCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override suspend fun onModelFetchPhaseCompleted(resolverContext: ProjectResolverContext, phase: GradleModelFetchPhase) {
-        action(resolverContext, phase)
+      override suspend fun onModelFetchPhaseCompleted(
+        context: ProjectResolverContext,
+        phase: GradleModelFetchPhase
+      ) {
+        action(context, phase)
       }
     }, parentDisposable)
   }
 
   fun whenModelFetchCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override suspend fun onModelFetchCompleted(resolverContext: ProjectResolverContext) {
-        action(resolverContext)
+      override suspend fun onModelFetchCompleted(
+        context: ProjectResolverContext
+      ) {
+        action(context)
       }
     }, parentDisposable)
   }
 
   fun whenProjectLoaded(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override suspend fun onProjectLoadedActionCompleted(resolverContext: ProjectResolverContext) {
-        action(resolverContext)
+      override suspend fun onProjectLoadedActionCompleted(
+        context: ProjectResolverContext
+      ) {
+        action(context)
       }
     }, parentDisposable)
   }
@@ -57,7 +61,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
   fun addProjectResolverExtension(
     projectResolverExtensionClass: Class<out AbstractTestProjectResolverExtension>,
     parentDisposable: Disposable,
-    configure: AbstractTestProjectResolverService.() -> Unit = {}
+    configure: AbstractTestProjectResolverService.() -> Unit
   ) {
     val projectResolverExtension = registerProjectResolverExtension(projectResolverExtensionClass, parentDisposable)
     val projectResolverService = registerProjectResolverService(projectResolverExtension.serviceClass, parentDisposable)
@@ -140,13 +144,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     override val serviceClass = TestProjectResolverService::class.java
   }
 
-  class TestProjectResolverService : AbstractTestProjectResolverService() {
-    companion object {
-      fun getInstance(project: Project): TestProjectResolverService {
-        return project.service<TestProjectResolverService>()
-      }
-    }
-  }
+  class TestProjectResolverService : AbstractTestProjectResolverService()
 
   abstract class AbstractTestProjectResolverExtension : AbstractProjectResolverExtension() {
 
@@ -157,10 +155,6 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       return project.getService(serviceClass)
     }
 
-    override fun getToolingExtensionsClasses(): Set<Class<*>> {
-      return getService().getToolingExtensionsClasses()
-    }
-
     override fun getModelProviders(): List<ProjectImportModelProvider> {
       return getService().getModelProviders()
     }
@@ -168,35 +162,18 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
   abstract class AbstractTestProjectResolverService {
 
-    private val toolingExtensionClasses = DisposableWrapperList<Class<*>>()
-    private val modelProviders = DisposableWrapperList<ProjectImportModelProvider>()
-
-    fun getToolingExtensionsClasses(): Set<Class<*>> {
-      return toolingExtensionClasses.toSet()
-    }
-
-    fun addToolingExtensionClasses(parentDisposable: Disposable, vararg toolingExtensionClasses: Class<*>) {
-      addToolingExtensionClasses(parentDisposable, toolingExtensionClasses.toList())
-    }
-
-    fun addToolingExtensionClasses(parentDisposable: Disposable, toolingExtensionClasses: List<Class<*>>) {
-      for (toolingExtensionClass in toolingExtensionClasses) {
-        this.toolingExtensionClasses.add(toolingExtensionClass, parentDisposable)
-      }
-    }
+    private val modelProviders = CopyOnWriteArrayList<ProjectImportModelProvider>()
 
     fun getModelProviders(): List<ProjectImportModelProvider> {
       return modelProviders
     }
 
-    fun addModelProviders(parentDisposable: Disposable, vararg modelProviders: ProjectImportModelProvider) {
-      addModelProviders(parentDisposable, modelProviders.toList())
+    fun addModelProviders(vararg modelProviders: ProjectImportModelProvider) {
+      addModelProviders(modelProviders.toList())
     }
 
-    fun addModelProviders(parentDisposable: Disposable, modelProviders: Collection<ProjectImportModelProvider>) {
-      for (modelProvider in modelProviders) {
-        this.modelProviders.add(modelProvider, parentDisposable)
-      }
+    fun addModelProviders(modelProviders: Collection<ProjectImportModelProvider>) {
+      this.modelProviders.addAll(modelProviders)
     }
   }
 
@@ -232,7 +209,14 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     }
 
     fun assertListenerFailures() {
-      runAll(failures) { throw it }
+      when {
+        failures.size == 1 -> {
+          throw AssertionError("", failures.single())
+        }
+        failures.size > 1 -> {
+          throw MultipleFailuresError("", failures)
+        }
+      }
     }
 
     fun assertListenerState(expectedCount: Int, messageSupplier: () -> String) {

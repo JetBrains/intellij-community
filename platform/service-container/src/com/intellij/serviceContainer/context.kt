@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
+import com.intellij.concurrency.InternalCoroutineContextKey
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +45,7 @@ private class ComponentManagerElement(
   override fun toString(): String = "ComponentManager(${componentManager.debugString()})"
 }
 
-private object ComponentManagerElementKey : CoroutineContext.Key<ComponentManagerElement>
+private object ComponentManagerElementKey : CoroutineContext.Key<ComponentManagerElement>, InternalCoroutineContextKey<ComponentManagerElement>
 
 /**
  * Runs [action] in an intersection scope of the current coroutine and the [container] scope:

@@ -87,9 +87,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
         is UpdateResult.Changed -> {
           val newSnapshot = updated.snapshot
           if (newSnapshot.elements.isNotEmpty() || index == currentVariant.index) {
-            val oldText = state.elements.joinToString("") { it.text }
-            val newText = newSnapshot.elements.joinToString("") { it.text }
-            variantChanged(index, oldText, newText)
+            variantChanged(index, state.elements, newSnapshot.elements)
 
             state.elements.clear()
             state.elements.addAll(newSnapshot.elements)
@@ -130,7 +128,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
 
   @RequiresEdt
   @RequiresBlockingContext
-  protected abstract fun variantChanged(variantIndex: Int, oldText: String, newText: String)
+  protected abstract fun variantChanged(variantIndex: Int, old: List<InlineCompletionElement>, new: List<InlineCompletionElement>)
 
   @RequiresEdt
   @RequiresBlockingContext

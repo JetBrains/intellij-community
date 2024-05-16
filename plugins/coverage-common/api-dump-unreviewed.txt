@@ -160,7 +160,6 @@ f:com.intellij.coverage.CoverageDataSuitesManager
 - f:removeSuite(com.intellij.coverage.CoverageSuite):V
 f:com.intellij.coverage.CoverageDataSuitesManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.CoverageDataSuitesManager
-f:com.intellij.coverage.CoverageDataSuitesManagerKt
 *:com.intellij.coverage.CoverageEditorAnnotator
 - com.intellij.openapi.Disposable
 - a:hideCoverage():V
@@ -265,15 +264,6 @@ c:com.intellij.coverage.CoverageLineMarkerRenderer
 - s:getReport(com.intellij.rt.coverage.data.LineData,I,com.intellij.openapi.editor.Editor,com.intellij.coverage.CoverageSuitesBundle):java.lang.String
 - getTextAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
 - moveToLine(I,com.intellij.openapi.editor.Editor):V
-f:com.intellij.coverage.CoverageLogger
-- sf:INSTANCE:com.intellij.coverage.CoverageLogger
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- sf:logHTMLReport(com.intellij.openapi.project.Project,J,J):V
-- sf:logReportBuilding(com.intellij.openapi.project.Project,J,I,I):V
-- sf:logReportLoading(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageRunner,J,I):V
-- sf:logStarted(com.intellij.coverage.CoverageRunner,Z,Z,I,I):V
-- sf:logSuiteImport(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle):V
-- sf:logViewOpen(com.intellij.openapi.project.Project,Z,Z,Z,Z):V
 a:com.intellij.coverage.CoverageOptions
 - com.intellij.openapi.options.UnnamedConfigurable
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -471,12 +461,20 @@ f:com.intellij.coverage.actions.ExternalReportImportManager
 - sf:Companion:com.intellij.coverage.actions.ExternalReportImportManager$Companion
 - <init>(com.intellij.openapi.project.Project):V
 - f:chooseAndImportCoverageReportsFromDisc():java.util.List
-- f:chooseAndOpenSuites():V
+- f:chooseAndOpenSuites(com.intellij.coverage.actions.ExternalReportImportManager$Source):V
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.actions.ExternalReportImportManager
-- f:openSuites(java.util.List,Z):V
+- f:openSuites(java.util.List,Z,com.intellij.coverage.actions.ExternalReportImportManager$Source):V
 f:com.intellij.coverage.actions.ExternalReportImportManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.actions.ExternalReportImportManager
-f:com.intellij.coverage.actions.ExternalReportImportManagerKt
+e:com.intellij.coverage.actions.ExternalReportImportManager$Source
+- java.lang.Enum
+- sf:ACTION:com.intellij.coverage.actions.ExternalReportImportManager$Source
+- sf:DIALOG:com.intellij.coverage.actions.ExternalReportImportManager$Source
+- sf:EMPTY_TOOLWINDOW:com.intellij.coverage.actions.ExternalReportImportManager$Source
+- sf:UNKNOWN:com.intellij.coverage.actions.ExternalReportImportManager$Source
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.coverage.actions.ExternalReportImportManager$Source
+- s:values():com.intellij.coverage.actions.ExternalReportImportManager$Source[]
 c:com.intellij.coverage.actions.GenerateCoverageReportAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V

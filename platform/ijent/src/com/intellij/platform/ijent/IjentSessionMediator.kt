@@ -3,7 +3,7 @@ package com.intellij.platform.ijent
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.*
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.awaitExit
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
@@ -87,7 +87,7 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
       )
 
-      val connectionScope = IjentApplicationScope.instance().namedChildScope("ijent $ijentId > connection scope", supervisor = false)
+      val connectionScope = IjentApplicationScope.instance().childScope("ijent $ijentId > connection scope", supervisor = false)
 
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with

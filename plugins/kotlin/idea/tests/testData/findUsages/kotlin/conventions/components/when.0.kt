@@ -28,4 +28,4 @@ fun when2(o: Any) {
     }
 }
 
-// IGNORE_K2_LOG
+

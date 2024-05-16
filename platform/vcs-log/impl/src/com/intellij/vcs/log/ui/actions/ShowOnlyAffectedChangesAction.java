@@ -7,8 +7,10 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ShowOnlyAffectedChangesAction extends BooleanPropertyToggleAction {
 
   public ShowOnlyAffectedChangesAction() {

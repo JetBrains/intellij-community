@@ -11,9 +11,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.extensions.getSdk
 import com.intellij.util.asSafely
 import com.jetbrains.python.PythonLanguage
+import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -52,6 +52,11 @@ fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   return data
 }
 
+@Deprecated("""
+  It makes no sense to add a Python version or something similar to the event.
+  If you need to get an event with a specific execution type, interpreter type, or whatsoever, please use the corresponding segment in the analytics platform.
+  Thank you very much!
+  """)
 fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
   return group.registerVarargEvent(eventId,
                                    EventFields.Language,

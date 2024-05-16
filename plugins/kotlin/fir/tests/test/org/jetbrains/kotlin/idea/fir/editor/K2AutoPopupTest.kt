@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.idea.fir.invalidateCaches
 
 // TODO: rewrite this test to make it generated
 internal class K2AutoPopupTest : KotlinAutoPopupTest() {
-    override val pluginKind: KotlinPluginMode = KotlinPluginMode.K2
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun tearDown() {
         runAll(

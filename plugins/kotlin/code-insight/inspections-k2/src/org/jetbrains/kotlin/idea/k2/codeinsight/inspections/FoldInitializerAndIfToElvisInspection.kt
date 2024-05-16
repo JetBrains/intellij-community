@@ -9,19 +9,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
-import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.FoldInitializerAndIfExpressionData
 import org.jetbrains.kotlin.idea.codeInsight.joinLines
 import org.jetbrains.kotlin.idea.codeInsight.prepareData
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 internal class FoldInitializerAndIfToElvisInspection :
@@ -79,17 +77,7 @@ internal class FoldInitializerAndIfToElvisInspection :
         }
     }
 
-    override fun getApplicableRanges(element: KtIfExpression): List<TextRange> {
-        val rightOffset = element.rightParenthesis?.endOffset
-
-        val textRange = if (rightOffset == null) {
-            element.ifKeyword.textRangeIn(element)
-        } else {
-            TextRange(element.ifKeyword.startOffset, rightOffset).shiftLeft(element.startOffset)
-        }
-
-        return listOf(textRange)
-    }
+    override fun getApplicableRanges(element: KtIfExpression): List<TextRange> = ApplicabilityRanges.ifExpressionExcludingBranches(element)
 
     override fun isApplicableByPsi(element: KtIfExpression): Boolean {
         fun KtExpression.isElvisExpression(): Boolean = this is KtBinaryExpression && operationToken == KtTokens.ELVIS

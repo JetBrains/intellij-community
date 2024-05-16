@@ -4,7 +4,7 @@ val a = 1
 private val string = "cd$a:${a + 1}ef"
 
 fun foo(): String {
-    val x = "+cd$a:${a + 1}efg"
+    val x = "+${string}g"
     val y = "+cd$a${a + 1}efg"
     return "ab$string"
 }

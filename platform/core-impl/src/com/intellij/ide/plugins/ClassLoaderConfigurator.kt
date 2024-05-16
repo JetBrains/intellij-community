@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.cl.ResolveScopeManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.SmartList
 import com.intellij.util.lang.ClassPath
 import com.intellij.util.lang.ResourceFile
 import com.intellij.util.lang.UrlClassLoader
@@ -38,8 +37,7 @@ class ClassLoaderConfigurator(
   init {
     resourceFileFactory = try {
       @Suppress("UNCHECKED_CAST")
-      MethodHandles.lookup().findStatic(coreLoader.loadClass("com.intellij.util.lang.PathClassLoader"), "getResourceFileFactory",
-                                        MethodType.methodType(Function::class.java))
+      MethodHandles.lookup().findStatic(coreLoader.loadClass("com.intellij.util.lang.PathClassLoader"), "getResourceFileFactory", MethodType.methodType(Function::class.java))
         .invokeExact() as Function<Path, ResourceFile>
     }
     catch (ignore: ClassNotFoundException) {
@@ -57,9 +55,9 @@ class ClassLoaderConfigurator(
     val pluginId = mainDescriptor.pluginId
     assert(pluginId == moduleDescriptor.pluginId) { "pluginId '$pluginId' != moduleDescriptor.pluginId '${moduleDescriptor.pluginId}'"}
 
-    if (mainDescriptor.pluginClassLoader is PluginClassLoader) { // TODO: class cast fails in case IU is running from sources, IDEA-318252
-      val mainClassLoader = mainDescriptor.pluginClassLoader as PluginClassLoader
-      mainToClassPath.put(pluginId, MainInfo(mainClassLoader))
+    // class cast fails in case IU is running from sources, IDEA-318252
+    (mainDescriptor.pluginClassLoader as? PluginClassLoader)?.let {
+      mainToClassPath.put(pluginId, MainInfo(classLoader = it))
     }
 
     if (mainDescriptor.pluginDependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
@@ -105,10 +103,10 @@ class ClassLoaderConfigurator(
         files = emptyList()
       }
 
-      val libDirectories = SmartList<String>()
+      var libDirectories = Collections.emptyList<Path>()
       val libDir = module.path.resolve("lib")
       if (Files.exists(libDir)) {
-        libDirectories.add(libDir.toAbsolutePath().toString())
+        libDirectories = Collections.singletonList(libDir)
       }
 
       val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
@@ -119,8 +117,7 @@ class ClassLoaderConfigurator(
       val mainInfo = MainInfo(classPath = pluginClassPath, files = files, libDirectories = libDirectories)
       val existing = mainToClassPath.put(module.pluginId, mainInfo)
       if (existing != null) {
-        log.error(PluginException("Main module with ${module.pluginId} is already added (existingClassPath=${existing.files}",
-                                  module.pluginId))
+        log.error(PluginException("Main module with ${module.pluginId} is already added (existingClassPath=${existing.files}", module.pluginId))
       }
 
       val mainDependentClassLoader = if (module.isUseIdeaClassLoader) {
@@ -158,16 +155,29 @@ class ClassLoaderConfigurator(
         }
       }
       else {
-        module.pluginClassLoader = PluginClassLoader(
-          classPath = module.jarFiles?.let { ClassPath(it, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false) }
-                      ?: mainInfo.classPath,
-          parents = dependencies,
-          pluginDescriptor = module,
-          coreLoader = coreLoader,
-          resolveScopeManager = createModuleResolveScopeManager(),
-          packagePrefix = module.packagePrefix,
-          libDirectories = mainInfo.libDirectories,
-        )
+        val customJarFiles = module.jarFiles
+        if (customJarFiles == null) {
+          module.pluginClassLoader = PluginClassLoader(
+            classPath = mainInfo.classPath,
+            parents = dependencies,
+            pluginDescriptor = module,
+            coreLoader = coreLoader,
+            resolveScopeManager = createModuleResolveScopeManager(),
+            packagePrefix = module.packagePrefix,
+            libDirectories = mainInfo.libDirectories,
+          )
+        }
+        else {
+          module.pluginClassLoader = PluginClassLoader(
+            classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false),
+            parents = dependencies,
+            pluginDescriptor = module,
+            coreLoader = coreLoader,
+            resolveScopeManager = null,
+            packagePrefix = null,
+            libDirectories = mainInfo.libDirectories,
+          )
+        }
       }
     }
 
@@ -370,14 +380,18 @@ private fun getContentPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): Lis
   val result = ArrayList<Pair<String, String?>>(modules.size)
   for (item in modules) {
     val module = item.requireDescriptor()
+    if (!module.jarFiles.isNullOrEmpty()) {
+      continue
+    }
+
     val packagePrefix = module.packagePrefix
     if (packagePrefix == null) {
-      if (module.jarFiles.isNullOrEmpty()) {
-        // If jarFiles is not set for a module, the only way to separate it is by package prefix. Therefore, we require the package prefix.
-        throw PluginException("Package is not specified (module=$module)", module.pluginId)
+      if (module.pluginClassLoader == null) {
+        continue
       }
       else {
-        continue
+        // If jarFiles is not set for a module, the only way to separate it is by package prefix. Therefore, we require the package prefix.
+        throw PluginException("Package is not specified (module=$module)", module.pluginId)
       }
     }
     result.add("$packagePrefix." to module.moduleName)
@@ -466,11 +480,7 @@ fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
 private class MainInfo(
   @JvmField val classPath: ClassPath,
   @JvmField val files: List<Path>,
-  @JvmField val libDirectories: MutableList<String>,
+  @JvmField val libDirectories: List<Path>,
 ) {
-  constructor(classLoader: PluginClassLoader) : this(
-    classPath = classLoader.classPath,
-    files = classLoader.files,
-    libDirectories = classLoader.getLibDirectories(),
-  )
+  constructor(classLoader: PluginClassLoader) : this(classPath = classLoader.classPath, files = classLoader.files, libDirectories = classLoader.getLibDirectories())
 }

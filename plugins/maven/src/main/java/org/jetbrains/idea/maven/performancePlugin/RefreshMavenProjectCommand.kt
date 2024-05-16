@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSyncListener
 
 /**
- * The command refreshes project (like click 'Load Maven changes'
+ * The command refreshes project (like click 'Load Maven changes')
  * Syntax: %refreshMavenProject
  */
 class RefreshMavenProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {

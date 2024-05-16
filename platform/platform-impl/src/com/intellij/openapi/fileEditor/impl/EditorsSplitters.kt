@@ -26,7 +26,7 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
-import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
+import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
@@ -500,6 +500,16 @@ open class EditorsSplitters internal constructor(
     }
   }
 
+  internal fun updateTabPaneActions(file: VirtualFile) {
+    for (window in windows) {
+      val (composite, index) = window.findCompositeAndIndex(file) ?: continue
+      val tabs = window.tabbedPane.tabs as JBTabsImpl
+      val tab = tabs.getTabAt(index)
+      tab.setTabPaneActions(composite.selectedEditor?.tabActions)
+      tabs.updateEntryPointToolbar()
+    }
+  }
+
   internal val splitCount: Int
     get() = if (componentCount > 0) getSplitCount(getComponent(0) as JComponent) else 0
 
@@ -617,7 +627,7 @@ open class EditorsSplitters internal constructor(
 
   internal fun createCurrentWindow() {
     LOG.assertTrue(currentWindow == null)
-    val window = EditorWindow(owner = this, coroutineScope.childScope(CoroutineName("EditorWindow")))
+    val window = EditorWindow(owner = this, coroutineScope.childScope("EditorWindow"))
     add(window.component, BorderLayout.CENTER)
     windows.add(window)
     currentWindowFlow.value = window
@@ -790,7 +800,7 @@ private class MyFocusTraversalPolicy(private val splitters: EditorsSplitters) : 
 }
 
 private class MyTransferHandler(private val splitters: EditorsSplitters) : TransferHandler() {
-  private val fileDropHandler = FileDropHandler(null)
+  private val fileDropHandler = FileEditorDropHandler(null)
 
   override fun importData(comp: JComponent, t: Transferable): Boolean {
     if (fileDropHandler.canHandleDrop(t.transferDataFlavors)) {
@@ -907,7 +917,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
       val windowDeferred = async(Dispatchers.EDT) {
         splitters.insideChange++
         try {
-          val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
+          val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope("EditorWindow"))
           splitters.addWindow(editorWindow)
           editorWindow.component.isFocusable = false
           if (tabSizeLimit != 1) {

@@ -103,7 +103,7 @@ object MavenJDOMUtil {
       }
 
       override fun error(message: String, startOffset: Int, endOffset: Int) {
-        handler?.onSyntaxError()
+        handler?.onSyntaxError(message, startOffset, endOffset)
       }
     }
 
@@ -183,6 +183,6 @@ object MavenJDOMUtil {
   interface ErrorHandler {
     fun onReadError(e: IOException?)
 
-    fun onSyntaxError()
+    fun onSyntaxError(message: String, startOffset: Int, endOffset: Int)
   }
 }

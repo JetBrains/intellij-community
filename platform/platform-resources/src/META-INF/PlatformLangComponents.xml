@@ -109,6 +109,10 @@
 
     <ideEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService"
+                        serviceImplementation="com.intellij.openapi.project.configuration.EmptyLoggingService"
+                        headlessImplementation="com.intellij.openapi.project.configuration.HeadlessLoggingServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
                         serviceImplementation="com.intellij.openapi.client.ClientAppSessionsManager"/>
     <projectService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
@@ -199,6 +203,10 @@
               topic="com.intellij.ide.ui.LafManagerListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.ui.html.GlobalStyleSheetUpdateListener"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener" activeInHeadlessMode="false"/>
+
+    <listener class="com.intellij.openapi.project.configuration.HeadlessProgressListener"
+              topic="com.intellij.openapi.progress.ProgressManagerListener"
+              activeInHeadlessMode="true"/>
 
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeEditorActionHandler"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>

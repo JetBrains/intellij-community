@@ -1,4 +1,4 @@
-// ERROR: Class 'A' is not abstract and does not implement abstract member public abstract fun run(): Unit defined in java.lang.Runnable
+// ERROR: Class 'A' is not abstract and does not implement abstract member 'run'.
 package foo // we use package 'foo'
 // imports:
 

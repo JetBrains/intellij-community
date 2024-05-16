@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionsArea
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
@@ -204,6 +205,12 @@ private class DefaultProjectImpl(
     projectAndScopeMethodType,
     coroutineScopeMethodType,
   )
+
+  override fun dispose() {
+    super.dispose()
+    // possibly re-enable "the only project" optimization since we have closed the extra project.
+    (ProjectManager.getInstance() as ProjectManagerImpl).updateTheOnlyProjectField();
+  }
 
   override fun isParentLazyListenersIgnored(): Boolean = true
 

@@ -206,7 +206,6 @@ f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 - f:reshowInlayRunToCursor(com.intellij.openapi.editor.Editor):V
 f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListener$Companion
 - f:isInlayRunToCursorEnabled():Z
-f:com.intellij.xdebugger.impl.InlayRunToCursorEditorListenerKt
 f:com.intellij.xdebugger.impl.InlineTextValuePopupProvider
 - com.intellij.xdebugger.impl.inline.InlineValuePopupProvider
 - <init>():V
@@ -336,8 +335,6 @@ f:com.intellij.xdebugger.impl.XDebuggerActionsCollector
 - sf:threadSelected:com.intellij.internal.statistic.eventLog.events.EventId1
 - getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 - sf:logFramesUpdated(J,java.util.List):V
-f:com.intellij.xdebugger.impl.XDebuggerActionsCollectorKt
-f:com.intellij.xdebugger.impl.XDebuggerExecutionPointManagerKt
 f:com.intellij.xdebugger.impl.XDebuggerHistoryManager
 - com.intellij.openapi.components.PersistentStateComponent
 - <init>():V
@@ -2107,14 +2104,14 @@ com.intellij.xdebugger.impl.inline.InlineValuePopupProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
 - a:showPopup(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.editor.Editor,java.awt.Point,java.lang.Runnable):V
-c:com.intellij.xdebugger.impl.inline.InlineWatch
+f:com.intellij.xdebugger.impl.inline.InlineWatch
 - <init>(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition):V
-- getExpression():com.intellij.xdebugger.XExpression
-- getLine():I
-- getPosition():com.intellij.xdebugger.XSourcePosition
-- isValid():Z
-- setMarker():Z
-- updatePosition():V
+- f:getExpression():com.intellij.xdebugger.XExpression
+- f:getLine():I
+- f:getPosition():com.intellij.xdebugger.XSourcePosition
+- f:setMarker():Z
+- f:setPosition(com.intellij.xdebugger.XSourcePosition):V
+- f:updatePosition():Z
 c:com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor
 - com.intellij.xdebugger.impl.ui.InplaceEditor
 - <init>(com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XDebugSession,com.intellij.openapi.editor.Editor):V
@@ -2256,7 +2253,6 @@ f:com.intellij.xdebugger.impl.runToolbar.InlineXDebuggerResumeAction
 - com.intellij.xdebugger.impl.runToolbar.XDebuggerResumeAction
 - <init>(com.intellij.execution.RunnerAndConfigurationSettings):V
 - getResumeHandler():com.intellij.xdebugger.impl.actions.handlers.InlineXDebuggerResumeHandler
-f:com.intellij.xdebugger.impl.runToolbar.RunToolbarDebugProcessKt
 c:com.intellij.xdebugger.impl.runToolbar.RunToolbarPauseAction
 - com.intellij.xdebugger.impl.runToolbar.RunToolbarXDebuggerAction
 - <init>():V
@@ -2476,7 +2472,6 @@ c:com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 - updateGutterIcon(com.intellij.openapi.editor.markup.GutterIconRenderer):V
 com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter$HighlighterProvider
 - a:getHighlightRange():com.intellij.openapi.util.TextRange
-f:com.intellij.xdebugger.impl.ui.ExecutionPositionUiKt
 a:com.intellij.xdebugger.impl.ui.FramesAndThreadsLayoutOptionBase
 - com.intellij.ui.content.custom.options.PersistentContentCustomLayoutOption
 - <init>(com.intellij.xdebugger.impl.ui.XDebugTabLayoutSettings$XDebugFramesAndThreadsLayoutOptions):V
@@ -2836,7 +2831,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState$Companion
 - f:getDEFAULT_ROW_HEIGHT():I
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogUtilKt
 - sf:attachToProcessWithDebugger(com.intellij.xdebugger.attach.XAttachDebugger,com.intellij.xdebugger.impl.actions.AttachToProcessActionBase$AttachToProcessItem,com.intellij.openapi.project.Project):V
-f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogUtilsKt
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostAndProvider
 - com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
 - <init>(com.intellij.xdebugger.attach.XAttachHost,com.intellij.xdebugger.attach.XAttachHostProvider,com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder):V
@@ -3039,7 +3033,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsPro
 - f:setEP(com.intellij.openapi.extensions.ExtensionPointName):V
 *:com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachTreeDebuggersPresentationProvider
 - a:getDebuggersShortName():java.lang.String
-f:com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachComponentsFocusUtilKt
 f:com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachDialogEmptyText
 - com.intellij.util.ui.StatusText
 - <init>(com.intellij.ui.table.JBTable,com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters):V
@@ -3081,7 +3074,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessTableSelecti
 - setSelectionInterval(I,I):V
 - setSelectionMode(I):V
 - setValueIsAdjusting(Z):V
-f:com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessTableSelectionModelKt
 a:com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.AttachTableCell
 - sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.AttachTableCell$Companion
 - <init>(java.lang.String,com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout):V
@@ -3129,7 +3121,6 @@ a:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumns
 f:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
 - <init>():V
 - f:getColumnsLayout():com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
-f:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsUtilKt
 f:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogDefaultColumnsLayout
 - com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout
 - sf:COMMAND_LINE_CELL_KEY:java.lang.String
@@ -3142,7 +3133,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogDefault
 - createCell(I,com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode,com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters,Z):com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.AttachTableCell
 - getColumnInfos():java.util.List
 f:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogDefaultColumnsLayout$Companion
-f:com.intellij.xdebugger.impl.ui.attach.dialog.items.list.AttachToProcessItemsListKt
 f:com.intellij.xdebugger.impl.ui.attach.dialog.items.list.AttachToProcessListColumnModel
 - javax.swing.table.DefaultTableColumnModel
 - <init>(com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout):V
@@ -3180,8 +3170,6 @@ a:com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.TableGroupHeader
 - p:paintComponent(java.awt.Graphics):V
 f:com.intellij.xdebugger.impl.ui.attach.dialog.items.separators.TableGroupHeaderSeparator$Companion
 - f:getExpectedHeight(Z,Z):I
-f:com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.AttachToProcessItemsTreeKt
-f:com.intellij.xdebugger.impl.ui.attach.dialog.items.tree.FilteringTreeTableModelKt
 f:com.intellij.xdebugger.impl.ui.tree.SetValueInplaceEditor
 - com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeValueNodeInplaceEditor
 - doOKAction():V
@@ -3651,7 +3639,6 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl
 - renderSpecialSymbol(java.lang.String):V
 - renderStringValue(java.lang.String,java.lang.String,I):V
 - renderValue(java.lang.String):V
-f:com.intellij.xdebugger.impl.util.DisposableUtilKt
 c:com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - <init>():V
@@ -3838,17 +3825,3 @@ c:com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay
 - setDelay(I):V
 com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay$Task
 - a:run(com.intellij.xdebugger.frame.XSuspendContext):V
-f:icons.PlatformDebuggerImplIcons
-- <init>():V
-f:icons.PlatformDebuggerImplIcons$Actions
-- sf:Force_run_to_cursor:javax.swing.Icon
-- sf:Force_step_into:javax.swing.Icon
-- sf:Force_step_over:javax.swing.Icon
-- <init>():V
-f:icons.PlatformDebuggerImplIcons$MemoryView
-- sf:Active:javax.swing.Icon
-- <init>():V
-f:icons.PlatformDebuggerImplIcons$PinToTop
-- sf:PinnedItem:javax.swing.Icon
-- sf:UnpinnedItem:javax.swing.Icon
-- <init>():V

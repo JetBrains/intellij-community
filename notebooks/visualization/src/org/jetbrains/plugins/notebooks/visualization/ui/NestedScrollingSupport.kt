@@ -1,12 +1,14 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ComponentUtil
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import javax.swing.JComponent
 import javax.swing.JLayer
+import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 import javax.swing.plaf.LayerUI
 import kotlin.time.Duration
@@ -20,11 +22,18 @@ import kotlin.time.DurationUnit
 fun addNestedScrollingSupport(view: JComponent): JLayer<JComponent> {
   return JLayer(view, object : LayerUI<JComponent>() {
 
-    private var currentMouseWheelOwner: Component? = null
+    private var _currentMouseWheelOwner: Component? = null
+    private var currentMouseWheelOwner: Component?
+      get() {
+        return resetOwnerIfTimeoutExceeded()
+      }
+      set(value) {
+        _currentMouseWheelOwner = value
+      }
 
     private var timestamp = 0L
 
-    private var redispatchingInProgress = false
+    private var dispatchingEvent: MouseEvent? = null
 
     override fun installUI(c: JComponent) {
       super.installUI(c)
@@ -37,58 +46,95 @@ fun addNestedScrollingSupport(view: JComponent): JLayer<JComponent> {
     }
 
     override fun processMouseWheelEvent(e: MouseWheelEvent, l: JLayer<out JComponent>) {
-      if (redispatchingInProgress) {
-        // Prevents [JBScrollPane] from propagating wheel events to the parent component
-        e.consume()
-        return
-      }
-      val owner = getValidOwner(e)
-      if (currentMouseWheelOwner != owner) {
-        updateOwner(owner)
-      }
-      else {
-        timestamp = System.nanoTime()
-      }
-      if (owner != null) {
-        val component = e.component
-        if (owner != component) {
+      val component = e.component
+      if (isDispatchingInProgress()) {
+        if (!isNewEventCreated(e)) {
+          return
+        }
+        else if (_currentMouseWheelOwner != null) {
+          // Prevents [JBScrollPane] from propagating wheel events to the parent component if there is an active scroll
           e.consume()
-          redispatchingInProgress = true
-          try {
-            owner.dispatchEvent(SwingUtilities.convertMouseEvent(component, e, owner))
-          }
-          finally {
-            redispatchingInProgress = false
-          }
+          return
+        }
+      }
+      resetOwnerIfTimeoutExceeded()
+      val owner = resetOwnerIfEventIsOutside(e)
+      if (owner != null) {
+        if (component != owner) {
+          redispatchEvent(SwingUtilities.convertMouseEvent(component, e, owner))
+          e.consume()
+        }
+        else {
+          dispatchEvent(e)
         }
       }
     }
 
-    private fun getValidOwner(e: MouseWheelEvent): Component? {
-      val component = e.component
-      return if (component == null) {
+    private fun isNewEventCreated(e: MouseWheelEvent) = dispatchingEvent != e
+
+    private fun isDispatchingInProgress() = dispatchingEvent != null
+
+    private fun dispatchEvent(event: MouseEvent): Boolean {
+      val oldDispatchingEvent = dispatchingEvent
+      dispatchingEvent = event
+      try {
+        val owner = event.component
+        owner.dispatchEvent(event)
+        if (event.isConsumed && _currentMouseWheelOwner == null) {
+          updateOwner(owner)
+        }
+        else {
+          updateOwner(_currentMouseWheelOwner)
+        }
+        return event.isConsumed
+      }
+      finally {
+        dispatchingEvent = oldDispatchingEvent
+      }
+    }
+
+    private fun redispatchEvent(event: MouseEvent): Boolean {
+      val oldDispatchingEvent = dispatchingEvent
+      dispatchingEvent = null
+      try {
+        val owner = event.component
+        owner.dispatchEvent(event)
+        return event.isConsumed
+      }
+      finally {
+        dispatchingEvent = oldDispatchingEvent
+      }
+    }
+
+    private fun resetOwnerIfTimeoutExceeded(): Component? {
+      val currentOwner = _currentMouseWheelOwner
+      if (currentOwner == null) {
+        return null
+      }
+      val scrollOwnerTimeout = Registry.intValue("jupyter.editor.scroll.mousewheel.timeout", 250).milliseconds
+      return if (isTimeoutExceeded(scrollOwnerTimeout)) {
+        resetOwner()
         null
       }
       else {
-        val scrollOwnerTimeout = Registry.intValue("jupyter.editor.scroll.mousewheel.timeout", 250).milliseconds
-        if (isTimeoutExceeded(scrollOwnerTimeout)) {
-          component
-        }
-        else {
-          if (isEventInsideOwner(e)) {
-            currentMouseWheelOwner
-          }
-          else {
-            component
-          }
-        }
+        currentOwner
       }
     }
 
-    private fun isEventInsideOwner(e: MouseEvent): Boolean {
-      val owner = currentMouseWheelOwner
+    private fun resetOwnerIfEventIsOutside(e: MouseWheelEvent): Component? {
+      val currentOwner = _currentMouseWheelOwner
+      return if (currentOwner != null && isEventInsideOwner(currentOwner, e)) {
+        currentOwner
+      }
+      else {
+        resetOwner()
+        e.component
+      }
+    }
+
+    private fun isEventInsideOwner(owner: Component, e: MouseEvent): Boolean {
       val component = e.component
-      return if (owner == null || component == null) {
+      return if (component == null) {
         false
       }
       else {
@@ -122,14 +168,14 @@ fun addNestedScrollingSupport(view: JComponent): JLayer<JComponent> {
 
     override fun processMouseEvent(e: MouseEvent, l: JLayer<out JComponent>) {
       if (e.id == MouseEvent.MOUSE_CLICKED || e.id == MouseEvent.MOUSE_RELEASED || e.id == MouseEvent.MOUSE_PRESSED) {
-        if (isEventInsideOwner(e)) {
-          resetOwner()
-        }
+        val scrollPane = ComponentUtil.getParentOfType(JScrollPane::class.java, l.findComponentAt(e.point))
+        updateOwner(scrollPane)
       }
     }
 
     override fun processMouseMotionEvent(e: MouseEvent, l: JLayer<out JComponent>) {
-      if (isTimeoutExceeded(100.milliseconds) && !isEventInsideOwner(e)) {
+      val owner = currentMouseWheelOwner
+      if (owner != null && isTimeoutExceeded(100.milliseconds) && !isEventInsideOwner(owner, e)) {
         resetOwner()
       }
     }

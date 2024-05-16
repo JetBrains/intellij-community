@@ -63,6 +63,9 @@ interface KotlinSearchUsagesSupport {
         fun PsiReference.isUsageInContainingDeclaration(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isUsageInContainingDeclaration(this, declaration)
 
+        fun PsiReference.isUsageOfActual(declaration: KtNamedDeclaration): Boolean =
+            getInstance(declaration.project).isUsageOfActual(this, declaration)
+
         fun PsiReference.isExtensionOfDeclarationClassUsage(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isExtensionOfDeclarationClassUsage(this, declaration)
 
@@ -108,6 +111,8 @@ interface KotlinSearchUsagesSupport {
         fun createConstructorHandle(psiMethod: PsiMethod): ConstructorCallHandle =
             getInstance(psiMethod.project).createConstructorHandle(psiMethod)
     }
+
+    fun isUsageOfActual(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
     fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
 

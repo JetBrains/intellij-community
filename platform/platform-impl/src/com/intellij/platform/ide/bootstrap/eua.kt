@@ -72,12 +72,9 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
       false
     }
   }
-  if (SystemLanguage.getInstance().needInstallPlugin()) {
-    return {
-      prepareAndExecuteInEdt {
-      }
-      false
+  return {
+    prepareAndExecuteInEdt {
     }
+    false
   }
-  return null
 }

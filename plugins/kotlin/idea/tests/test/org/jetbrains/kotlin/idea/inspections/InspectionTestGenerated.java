@@ -411,11 +411,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspectionsLocal/branched/ifThenToElvis/inspectionData/inspections.test");
         }
 
-        @TestMetadata("branched/ifThenToSafeAccess/inspectionData/inspections.test")
-        public void testBranched_ifThenToSafeAccess_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/inspectionData/inspections.test");
-        }
-
         @TestMetadata("conventionNameCalls/replaceGetOrSet/inspectionData/inspections.test")
         public void testConventionNameCalls_replaceGetOrSet_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/inspectionData/inspections.test");

@@ -1,3 +1,6 @@
+// IGNORE_K2
+// KTIJ-29632
+
 package org.test;
 
 class OuterClass {

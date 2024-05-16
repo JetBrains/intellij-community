@@ -11,6 +11,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.containers.Interner
 import com.intellij.util.ui.JBUI
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
@@ -83,9 +84,30 @@ internal fun List<WebSymbol>.sortSymbolsByPriority(extensionsLast: Boolean = tru
 
 internal fun <T : WebSymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsQueryParams): Sequence<T> =
   this.filter { symbol ->
-    symbol.origin.framework.let { it == null || it == params.framework }
+    symbol.matchContext(params.queryExecutor.context)
     && ((params as? WebSymbolsNameMatchQueryParams)?.abstractSymbols == true
         || (params as? WebSymbolsListSymbolsQueryParams)?.abstractSymbols == true
         || !symbol.abstract)
     && ((params as? WebSymbolsQueryParams)?.virtualSymbols != false || !symbol.virtual)
   }
+
+internal fun WebSymbolNameSegment.withOffset(offset: Int): WebSymbolNameSegmentImpl =
+  (this as WebSymbolNameSegmentImpl).withOffset(offset)
+
+internal fun WebSymbolNameSegment.withDisplayName(displayName: String?) =
+  (this as WebSymbolNameSegmentImpl).withDisplayName(displayName)
+
+internal fun WebSymbolNameSegment.withRange(start: Int, end: Int) =
+  (this as WebSymbolNameSegmentImpl).withRange(start, end)
+
+internal fun WebSymbolNameSegment.copy(
+  apiStatus: WebSymbolApiStatus? = null,
+  priority: WebSymbol.Priority? = null,
+  proximity: Int? = null,
+  problem: WebSymbolNameSegment.MatchProblem? = null,
+  symbols: List<WebSymbol> = emptyList(),
+): WebSymbolNameSegmentImpl =
+  (this as WebSymbolNameSegmentImpl).copy(apiStatus, priority, proximity, problem, symbols)
+
+internal fun WebSymbolNameSegment.canUnwrapSymbols(): Boolean =
+  (this as WebSymbolNameSegmentImpl).canUnwrapSymbols()

@@ -19,7 +19,7 @@ suspend fun third() : Int? {
 
 // One line suspend with doResume
 suspend fun second(): Int {
-    delay(20)
+    delay(1)
     return third()?.let { return it } ?: 0
 }      
 

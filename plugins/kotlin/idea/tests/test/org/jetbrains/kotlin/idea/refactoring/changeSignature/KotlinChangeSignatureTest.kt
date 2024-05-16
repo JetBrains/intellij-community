@@ -68,6 +68,7 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
             configuration.callableDescriptor,
             KotlinChangeSignatureConfiguration.Empty,
             configuration.context,
+            !file.name.contains("OverriderOnly")
         )!!
     }
 
@@ -185,10 +186,11 @@ fun createChangeInfo(
     editor: Editor?,
     callableDescriptor: CallableDescriptor,
     configuration: KotlinChangeSignatureConfiguration,
-    defaultValueContext: PsiElement
+    defaultValueContext: PsiElement,
+    refactorSupers: Boolean = true
 ): KotlinChangeInfo? {
     val kotlinChangeSignature = KotlinChangeSignature(project, editor, callableDescriptor, configuration, defaultValueContext, null)
-    val declarations = callableDescriptor.safeAs<CallableMemberDescriptor>()?.getDeepestSuperDeclarations() ?: listOf(callableDescriptor)
+    val declarations = callableDescriptor.safeAs<CallableMemberDescriptor>()?.getDeepestSuperDeclarations()?.takeIf { refactorSupers } ?: listOf(callableDescriptor)
     val adjustedDescriptor = kotlinChangeSignature.adjustDescriptor(declarations) ?: return null
     val processor = kotlinChangeSignature.createSilentRefactoringProcessor(adjustedDescriptor) as KotlinChangeSignatureProcessor
     return processor.changeInfo.also { it.checkUsedParameters = true }

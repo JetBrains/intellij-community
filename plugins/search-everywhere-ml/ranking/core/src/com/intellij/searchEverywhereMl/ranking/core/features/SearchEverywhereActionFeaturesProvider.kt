@@ -47,7 +47,6 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereAct
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_MINUTE_SE
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_MONTH
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.WAS_USED_IN_LAST_MONTH_SE
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.WEIGHT_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
 import com.intellij.util.Time
 
@@ -64,7 +63,6 @@ internal class SearchEverywhereActionFeaturesProvider :
     internal val IS_GROUP_KEY = EventFields.Boolean("isGroup")
     internal val GROUP_LENGTH_KEY = EventFields.Int("groupLength")
     internal val HAS_ICON_KEY = EventFields.Boolean("withIcon")
-    internal val WEIGHT_KEY = EventFields.Double("weight")
     internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("pluginType", "plugin_type")
     internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", PluginIdRuleValidator::class.java)
 
@@ -92,7 +90,7 @@ internal class SearchEverywhereActionFeaturesProvider :
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     val fields = arrayListOf<EventField<*>>(
       IS_ACTION_DATA_KEY, IS_TOGGLE_ACTION_DATA_KEY, IS_EDITOR_ACTION, IS_SEARCH_ACTION,
-      MATCH_MODE_KEY, TEXT_LENGTH_KEY, IS_GROUP_KEY, GROUP_LENGTH_KEY, HAS_ICON_KEY, WEIGHT_KEY,
+      MATCH_MODE_KEY, TEXT_LENGTH_KEY, IS_GROUP_KEY, GROUP_LENGTH_KEY, HAS_ICON_KEY,
       PLUGIN_TYPE, PLUGIN_ID,
       USAGE, USAGE_SE, USAGE_TO_MAX, USAGE_TO_MAX_SE,
       TIME_SINCE_LAST_USAGE, TIME_SINCE_LAST_USAGE_SE,
@@ -135,7 +133,6 @@ internal class SearchEverywhereActionFeaturesProvider :
     val presentation = (value as? ActionWrapper)?.presentation ?: action.templatePresentation
     data.add(HAS_ICON_KEY.with(presentation.icon != null))
     data.add(IS_ENABLED.with(presentation.isEnabled))
-    data.add(WEIGHT_KEY.with(presentation.weight))
 
     data.addAll(getLocalUsageStatistics(action, currentTime))
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl
 
-import com.intellij.platform.ml.FeatureDeclaration
+import com.intellij.platform.ml.feature.FeatureDeclaration
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties

@@ -1,5 +1,5 @@
-// ERROR: A 'return' expression required in a function with a block body ('{...}')
-// ERROR: A 'return' expression required in a function with a block body ('{...}')
+// ERROR: Missing return statement.
+// ERROR: Missing return statement.
 package foo
 
 internal class A {

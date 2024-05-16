@@ -33,7 +33,7 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.ui.EditorTextField
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
@@ -237,20 +237,26 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
   }
 
   companion object {
+    @Deprecated("Use a suspending function", ReplaceWith("cs.launch { render(model, editor) }"))
     fun setupIn(cs: CoroutineScope, model: CodeReviewEditorGutterActionableChangesModel, editor: Editor) {
-      val disposable = Disposer.newDisposable("Editor code review changes renderer disposable")
-      val renderer = CodeReviewEditorGutterChangesRenderer(model, editor, disposable)
+      cs.launchNow { render(model, editor) }
+    }
 
-      cs.launchNow {
+    suspend fun render(model: CodeReviewEditorGutterActionableChangesModel, editor: Editor) : Nothing {
+      withContext(Dispatchers.Main + CoroutineName("Editor gutter code review changes renderer")) {
+        val disposable = Disposer.newDisposable("Editor code review changes renderer disposable")
         editor.putUserData(CodeReviewEditorGutterActionableChangesModel.KEY, model)
         try {
+          val renderer = CodeReviewEditorGutterChangesRenderer(model, editor, disposable)
           model.reviewRanges.collect {
             renderer.scheduleUpdate()
           }
         }
         finally {
-          Disposer.dispose(disposable)
-          editor.putUserData(CodeReviewEditorGutterActionableChangesModel.KEY, null)
+          withContext(NonCancellable) {
+            Disposer.dispose(disposable)
+            editor.putUserData(CodeReviewEditorGutterActionableChangesModel.KEY, null)
+          }
         }
       }
     }

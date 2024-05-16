@@ -49,7 +49,7 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
                                                                      @NotNull Consumer<T> consumer) {
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (provider == null ||
-        (checkDumbAwareness && project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider))) {
+        (checkDumbAwareness && project != null && !DumbService.getInstance(project).isUsableInCurrentContext(provider))) {
       event.getPresentation().setEnabled(false);
       event.getPresentation().setVisible(true);
       return;

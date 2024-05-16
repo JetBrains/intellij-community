@@ -3,7 +3,7 @@
     <!--suppress PluginXmlI18n -->
     <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: ONE" internal="true"/>
     <action id="StartWizardAction" class="com.intellij.ide.startup.importSettings.testActions.StartWizardAction" text="[INTERNAL] 5 Transfer: StartWizardAction" internal="true"/>
-    <action id="ErrorTestDialogAction" class="com.intellij.ide.startup.importSettings.testActions.ErrorTestDialogAction" text="[INTERNAL] 4 Transfer: Error Dispatcher Dialog Single" internal="true"/>
+    <action id="OnboardingTestDialogAction" class="com.intellij.ide.startup.importSettings.testActions.OnboardingTestDialogAction" text="[INTERNAL] 4 Transfer: Onboarding Test Dialog Action" internal="true"/>
     <!--suppress PluginXmlCapitalization -->
     <action id="TransferSettingsDemoAction" class="com.intellij.ide.startup.importSettings.transfer.backend.TransferSettingsDemoAction"
             internal="true" text="Test transfer settings"/>

@@ -14,9 +14,9 @@ import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiClass;
@@ -153,10 +153,10 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     ActionGroup group = mark.getPopupMenuActions();
     assertNotNull(group);
     AnActionEvent event = TestActionEvent.createTestEvent();
-    List<AnAction> list = ContainerUtil.findAll(group.getChildren(event), action -> {
-      AnActionEvent actionEvent = TestActionEvent.createTestEvent();
-      action.update(actionEvent);
-      String text = actionEvent.getPresentation().getText();
+    PresentationFactory factory = new PresentationFactory();
+    List<AnAction> list = ContainerUtil.findAll(Utils.expandActionGroup(
+      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN), action -> {
+      String text = factory.getPresentation(action).getText();
       return text != null && text.startsWith("Run '") && text.endsWith("'");
     });
     assertEquals(list.toString(), 2, list.size());

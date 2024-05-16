@@ -60,7 +60,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
   protected fun unresolvedSymbol(qualifiedKind: WebSymbolQualifiedKind, name: String) =
     WebSymbolMatchImpl.create(
       name,
-      listOf(WebSymbolNameSegment(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)),
+      listOf(WebSymbolNameSegment.create(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)),
       qualifiedKind.namespace, qualifiedKind.kind, WebSymbolOrigin.empty(),
       null, null
     )
@@ -108,7 +108,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
           .takeWhile { it.nameSegments.size == 1 }
 
         if (unwrappedSymbols.isNotEmpty()) {
-          result.putValue(range, WebSymbolNameSegment(0, nameSegment.end, unwrappedSymbols))
+          result.putValue(range, WebSymbolNameSegment.create(0, nameSegment.end, unwrappedSymbols))
           problemOnlyRanges[range] = false
         }
         else {
@@ -190,7 +190,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
           val toolMapping = segment.symbolKinds.map {
             WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
           }.firstOrNull()
-          WebSymbolReferenceProblem(
+          WebSymbolReferenceProblem.create(
             segment.symbolKinds,
             problemKind,
             inspectionManager.createProblemDescriptor(
@@ -230,7 +230,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
                      ?: WebSymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.message"
                                                  else "web.inspection.message.obsolete.symbol.message")
 
-        WebSymbolReferenceProblem(
+        WebSymbolReferenceProblem.create(
           symbolTypes,
           if (isDeprecated) ProblemKind.DeprecatedSymbol else ProblemKind.ObsoleteSymbol,
           inspectionManager.createProblemDescriptor(

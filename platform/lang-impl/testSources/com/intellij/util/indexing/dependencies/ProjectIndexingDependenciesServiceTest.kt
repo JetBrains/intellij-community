@@ -18,7 +18,7 @@ import kotlin.math.min
 
 @RunWith(JUnit4::class)
 class ProjectIndexingDependenciesServiceTest {
-  private val DEFAULT_VFS_INDEXING_STAMP_VALUE: Int = 0
+  private val DEFAULT_VFS_INDEXING_STAMP_VALUE: Long = 0
 
   @JvmField
   @Rule
@@ -104,12 +104,12 @@ class ProjectIndexingDependenciesServiceTest {
     val file = factory.nonExistingFile()
     val inst = factory.newProjectIndexingDependenciesService(file)
 
-    val oldStamp = inst.newScanningTokenOnProjectOpen()
+    val oldStamp = inst.newScanningTokenOnProjectOpen(true)
     assertTrue(oldStamp.toString(), oldStamp is ReadWriteScanningRequestTokenImpl)
 
     inst.requestHeavyScanningOnProjectOpen("test requestHeavyScanningOnProjectOpen in project")
 
-    val newStamp = inst.newScanningTokenOnProjectOpen()
+    val newStamp = inst.newScanningTokenOnProjectOpen(true)
     assertTrue(oldStamp.toString(), newStamp is WriteOnlyScanningRequestTokenImpl)
   }
 

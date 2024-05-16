@@ -15,8 +15,7 @@ public class PyParser extends PythonParser implements PsiParser {
   }
 
   @Override
-  @NotNull
-  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+  public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     long start = System.currentTimeMillis();
     parseRoot(root, builder);
     ASTNode ast = builder.getTreeBuilt();

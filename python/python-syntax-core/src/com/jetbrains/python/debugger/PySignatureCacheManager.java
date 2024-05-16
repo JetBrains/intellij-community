@@ -4,6 +4,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.ast.PyAstFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,8 +14,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class PySignatureCacheManager {
+  @ApiStatus.Internal
   @NonNls
-  static final String RETURN_TYPE = "<RETURN_TYPE>";
+  public static final String RETURN_TYPE = "<RETURN_TYPE>";
 
   public static PySignatureCacheManager getInstance(Project project) {
     return project.getService(PySignatureCacheManager.class);

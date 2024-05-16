@@ -2,6 +2,7 @@
 package com.intellij.platform.navbar.backend.compatibility
 
 import com.intellij.ide.impl.dataRules.GetDataRule
+import com.intellij.model.Pointer
 import com.intellij.openapi.actionSystem.CommonDataKeys.*
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
@@ -15,7 +16,11 @@ import com.intellij.psi.util.PsiUtilCore
 
 internal class DefaultNavBarItemDataRule : GetDataRule {
 
-  override fun getData(dataProvider: DataProvider): NavBarItem? {
+  override fun getData(dataProvider: DataProvider): Pointer<out NavBarItem>? {
+    return getNavBarItem(dataProvider)?.createPointer()
+  }
+
+  private fun getNavBarItem(dataProvider: DataProvider): NavBarItem? {
     val ctx = DataContext { dataId -> dataProvider.getData(dataId) }
 
     // leaf element -- either from old EP impls or default one

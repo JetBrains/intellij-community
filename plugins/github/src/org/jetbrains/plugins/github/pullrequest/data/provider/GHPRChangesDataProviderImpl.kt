@@ -28,7 +28,7 @@ internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
                                            private val loadReferences: suspend () -> GHPRBranchesRefs,
                                            private val pullRequestId: GHPRIdentifier)
   : GHPRChangesDataProvider {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   private var requests: ChangesDataLoader? = null
   private val requestsGuard = Mutex()

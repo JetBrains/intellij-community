@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -39,15 +40,16 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
                                                                            @NotNull List<String> annotationFQNs,
                                                                            @NotNull Processor<? super XmlTag> annotationTagProcessor) {
     if (listOwners.isEmpty()) return ModCommand.nop();
-    return ModCommand.psiUpdate(listOwners.get(0), (lo, updater) -> {
-      List<XmlTag> tags = StreamEx.of(listOwners)
-        .mapToEntry(this::findExternalAnnotationsXmlFiles)
-        .removeValues(f -> f == null || f.isEmpty())
-        .flatMapKeyValue((owner, fileList) -> StreamEx.of(fileList)
-          .cross(annotationFQNs)
-          .flatMapKeyValue((file, annotationFQN) -> getTagsToProcess(file, owner, annotationFQN).stream()))
-        .map(updater::getWritable)
-        .toList();
+    List<XmlTag> origTags = StreamEx.of(listOwners)
+      .mapToEntry(this::findExternalAnnotationsXmlFiles)
+      .removeValues(f -> f == null || f.isEmpty())
+      .flatMapKeyValue((owner, fileList) -> StreamEx.of(fileList)
+        .cross(annotationFQNs)
+        .flatMapKeyValue((file, annotationFQN) -> getTagsToProcess(file, owner, annotationFQN).stream()))
+      .toList();
+    if (origTags.isEmpty()) return ModCommand.nop();
+    return ModCommand.psiUpdate(origTags.get(0), (tg, updater) -> {
+      List<XmlTag> tags = ContainerUtil.map(origTags, updater::getWritable);
       Set<XmlFile> files = StreamEx.of(tags).map(t -> (XmlFile)t.getContainingFile()).toSet();
       for (XmlTag tag : tags) {
         if (tag.isValid()) {

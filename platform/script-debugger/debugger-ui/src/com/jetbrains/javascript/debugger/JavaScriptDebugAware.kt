@@ -11,8 +11,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.evaluation.ExpressionInfo
+import com.intellij.xdebugger.frame.XValueNode
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.MemberFilter
+import org.jetbrains.debugger.values.Value
+import javax.swing.Icon
 
 /**
  * @see com.intellij.javascript.debugger.JavaScriptDebugAwareBase
@@ -50,6 +54,9 @@ abstract class JavaScriptDebugAware {
   open fun getEvaluationInfo(element: PsiElement, document: Document, expressionInfoFactory: ExpressionInfoFactory): Promise<ExpressionInfo?>? = null
 
   open fun createMemberFilter(nameMapper: NameMapper?, element: PsiElement, end: Int): MemberFilter? = null
+
+  @ApiStatus.Experimental
+  open fun computeAlternativeValuePresentation(value: Value, node: XValueNode, icon: Icon): Boolean = false
 
   open fun getNavigationElementForSourcemapInspector(file: PsiFile): PsiElement? = null
 

@@ -730,7 +730,8 @@
 
     "TitlePane": {
       "Button": {
-        "preferredSize": "44,40",
+        "preferredSize": "40,40",
+        "preferredSize.compact": "40,30",
         "hoverBackground": "#FFFFFF10"
       }
     },
@@ -897,6 +898,21 @@
           "StopFollowingLinkForeground": "Blue1",
           "FollowingBorderTextForeground": "Gray1"
         }
+      },
+      "Buttons": {
+        "LinkCopied": {
+          "Background": "Green7",
+          "Foreground": "Green3"
+        },
+        "RedButton": {
+          "Background": "Gray2",
+          "Foreground": "Red7",
+          "Hovered": {
+            "Background": "Red7",
+            "Foreground": "Gray14"
+          }
+        },
+        "BadgeBackground": "Gray5"
       },
       "EndSessionPopup": {
         "EndButton": {

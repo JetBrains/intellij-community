@@ -6,8 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.jetbrains.TestEnv;
-import com.jetbrains.env.EnvTestTagsRequired;
+import com.jetbrains.env.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.settings.PySteppingFilter;
@@ -203,7 +202,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoVariants() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into.py") {
@@ -253,7 +251,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoWithStepInto() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into.py") {
@@ -353,7 +350,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoChain() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_chain.py") {
@@ -408,7 +404,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoGenExpr() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_genexpr.py") {
@@ -535,7 +530,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoNativeFunction() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_native_function.py") {
@@ -567,7 +561,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoNativeFunctionInReturn() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_native_function_in_return.py") {
@@ -600,7 +593,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoAnotherModule() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_another_module.py") {
@@ -628,7 +620,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoMultiline1() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_multiline1.py") {
@@ -706,7 +697,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoBinaryOperator1() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_binary_operator1.py") {
@@ -728,7 +718,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoBinaryOperator2() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_binary_operator2.py") {
@@ -783,7 +772,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoComparisonOperator() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_comparison_operator.py") {
@@ -810,7 +798,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoUnaryOperator() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_unary_operator.py") {
@@ -854,7 +841,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
   @Test
   public void testSmartStepIntoInheritancePython3() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_inheritance.py") {

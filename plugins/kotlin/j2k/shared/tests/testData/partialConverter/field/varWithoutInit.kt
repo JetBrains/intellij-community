@@ -1,3 +1,3 @@
 internal class C {
-    var f: String = TODO()
+    var f: String? = TODO()
 }

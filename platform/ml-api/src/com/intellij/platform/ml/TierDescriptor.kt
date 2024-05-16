@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml
 
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.ml.environment.Environment
+import com.intellij.platform.ml.feature.Feature
+import com.intellij.platform.ml.feature.FeatureDeclaration
+import com.intellij.platform.ml.feature.FeatureFilter
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -9,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * It is also a [TierRequester], which implies that [additionallyRequiredTiers] could be defined, in
  * case additional objects are required to describe the [tier]'s instance.
- * If so, an attempt will be made to create an [com.intellij.platform.ml.impl.environment.ExtendedEnvironment],
+ * If so, an attempt will be made to create an [com.intellij.platform.ml.environment.ExtendedEnvironment],
  * and the extended environment that contains the described [tier] and [additionallyRequiredTiers]
  * will be passed to the [describe] function.
  *
@@ -44,7 +47,7 @@ interface TierDescriptor : TierRequester {
    * @param usefulFeaturesFilter Accepts features, that could make any difference to compute this time.
    * A feature is considered to be useful if an ML model is aware of the feature,
    * or it is explicitly said that "ML model is not aware of this feature, but it must be logged"
-   * (@see [com.intellij.platform.ml.impl.LogDrivenModelInference]).
+   * (@see [com.intellij.platform.ml.LogDrivenModelInference]).
    *
    * @throws IllegalArgumentException If a feature is missing: it is accepted by [usefulFeaturesFilter]
    * and it is declared, but not present in the result.
@@ -63,7 +66,7 @@ interface TierDescriptor : TierRequester {
    * Tiers that are required additionally to perform description.
    *
    * Such tiers' instances could be created via existing or additionally
-   * created [EnvironmentExtender]s.
+   * created [com.intellij.platform.ml.environment.EnvironmentExtender]s.
    */
   val additionallyRequiredTiers: Set<Tier<*>>
     get() = emptySet()
@@ -76,7 +79,6 @@ interface TierDescriptor : TierRequester {
   fun couldBeUseful(usefulFeaturesFilter: FeatureFilter): Boolean
 
   companion object {
-    val EP_NAME: ExtensionPointName<TierDescriptor> = ExtensionPointName.create("com.intellij.platform.ml.descriptor")
   }
 
   abstract class Default(final override val tier: Tier<*>) : TierDescriptor {
@@ -93,7 +95,7 @@ interface TierDescriptor : TierRequester {
 }
 
 @ApiStatus.Internal
-data class DescriptionPolicy(
+class DescriptionPolicy(
   /**
    * Tolerate redundant computations, because the computations are "light-weight".
    * When an ML model is not aware of the feature, it's still allowing computing it in [TierDescriptor.describe].
@@ -105,4 +107,24 @@ data class DescriptionPolicy(
    * When the feature is nullable, allow not putting the 'null' explicitly to the result set of [TierDescriptor.describe].
    */
   val putNullImplicitly: Boolean
-)
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is DescriptionPolicy) return false
+
+    if (tolerateRedundantDescription != other.tolerateRedundantDescription) return false
+    if (putNullImplicitly != other.putNullImplicitly) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = tolerateRedundantDescription.hashCode()
+    result = 31 * result + putNullImplicitly.hashCode()
+    return result
+  }
+
+  override fun toString(): String {
+    return "DescriptionPolicy(tolerateRedundantDescription=$tolerateRedundantDescription, putNullImplicitly=$putNullImplicitly)"
+  }
+}

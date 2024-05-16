@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.IconLoader
@@ -116,12 +115,6 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           compactDensity = density(ExpUiIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), UnscaledGaps.EMPTY, true)
 
           cell() // Deny right component to shrink
-        }.customize(UnscaledGapsY(bottom = 20))
-        row {
-          comment(IdeBundle.message("meetnewui.toolwindow.description"), maxLineLength = MAX_LINE_LENGTH_NO_WRAP) {
-            ExperimentalUiCollector.logMeetNewUiAction(ExperimentalUiCollector.MeetNewUiAction.NEW_UI_LINK)
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, IdeBundle.message("configurable.new.ui.name"))
-          }
         }.customize(UnscaledGapsY(bottom = 20))
         row {
           button(IdeBundle.message("meetnewui.toolwindow.button.finishSetup")) {

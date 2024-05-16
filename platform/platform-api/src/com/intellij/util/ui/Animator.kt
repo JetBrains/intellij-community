@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -24,7 +25,7 @@ abstract class Animator @JvmOverloads constructor(private val name: @NonNls Stri
   private var startTime: Long = 0
   private var startDeltaTime: Long = 0
   private var initialStep = false
-  private val coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  private val coroutineScope = coroutineScope ?: CoroutineScope(SupervisorJob() + Dispatchers.Default + ClientId.coroutineContext())
 
   @Obsolete
   fun isForward(): Boolean = isForward

@@ -1459,6 +1459,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
+            public static class TestPrimaryConstructorOfEnum extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("primaryConstructorOfEnum.0.kt")
+                public void testPrimaryConstructorOfEnum() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/primaryConstructorOfEnum.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestPrimaryConstructorWithDefaultParams extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -2687,6 +2700,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @TestMetadata("primaryConstructorNoKeyword.0.kt")
                 public void testPrimaryConstructorNoKeyword() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorNoKeyword.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
+            public static class TestPrimaryConstructorOfEnum extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("primaryConstructorOfEnum.0.kt")
+                public void testPrimaryConstructorOfEnum() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorOfEnum.0.kt");
                 }
             }
 

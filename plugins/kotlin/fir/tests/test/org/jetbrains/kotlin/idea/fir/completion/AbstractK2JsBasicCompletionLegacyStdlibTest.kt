@@ -3,9 +3,33 @@
 package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.k2FileName
+import org.jetbrains.kotlin.idea.completion.test.AbstractJSBasicCompletionTestBase
 import org.jetbrains.kotlin.idea.test.KotlinStdJSLegacyCombinedJarProjectDescriptor
+import org.jetbrains.kotlin.idea.test.runAll
 
-abstract class AbstractK2JsBasicCompletionLegacyStdlibTest : AbstractK2JsBasicCompletionTest() {
+abstract class AbstractK2JsBasicCompletionLegacyStdlibTest : AbstractJSBasicCompletionTestBase() {
+    override val captureExceptions: Boolean = false
+
+    override fun isFirPlugin(): Boolean = true
+
+    override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, k2Extension = IgnoreTests.FileExtension.FIR)
+
+    override fun executeTest(test: () -> Unit) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
+            super.executeTest(test)
+            IgnoreTests.cleanUpIdenticalK2TestFile(dataFile(), k2Extension = IgnoreTests.FileExtension.FIR)
+        }
+    }
+
+    override fun tearDown() {
+        runAll(
+            { project.invalidateCaches() },
+            { super.tearDown() }
+        )
+    }
+
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinStdJSLegacyCombinedJarProjectDescriptor
     }

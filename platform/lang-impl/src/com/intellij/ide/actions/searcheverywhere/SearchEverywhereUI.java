@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
+import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.SearchEverywhereItem;
@@ -37,6 +38,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -86,6 +88,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -408,17 +411,22 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @Nls
+  @RequiresReadLock
   @Nullable
   private String getWarning(List<SearchEverywhereContributor<?>> contributors) {
-    if (myProject != null && DumbService.isDumb(myProject)) {
-      boolean containsPSIContributors = ContainerUtil.exists(contributors, c -> c instanceof AbstractGotoSEContributor ||
-                                                                                c instanceof PSIPresentationBgRendererWrapper);
-      if (containsPSIContributors) {
-        return IdeBundle.message("dumb.mode.results.might.be.incomplete");
-      }
-    }
+    if (myProject == null) return null;
 
-    return null;
+    boolean isDumb = DumbService.isDumb(myProject);
+    boolean isIncomplete = !myProject.getService(IncompleteDependenciesService.class).getState().isComplete();
+    if (!isDumb && !isIncomplete) return null;
+
+    boolean containsPSIContributors = ContainerUtil.exists(contributors, c -> c instanceof AbstractGotoSEContributor ||
+                                                                              c instanceof PSIPresentationBgRendererWrapper);
+    if (!containsPSIContributors) return null;
+
+    return isDumb
+           ? IdeBundle.message("dumb.mode.results.might.be.incomplete")
+           : IdeBundle.message("incomplete.mode.results.might.be.incomplete");
   }
 
   @Nls
@@ -1035,6 +1043,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
               })
               .coalesceBy(this)
               .submit(AppExecutorUtil.getAppExecutorService());
+          }).exceptionally(throwable -> {
+            Logger.getInstance(SearchEverywhereUI.class).error(throwable);
+            return null;
           });
         }
       }

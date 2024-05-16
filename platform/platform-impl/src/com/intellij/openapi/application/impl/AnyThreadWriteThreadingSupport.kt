@@ -494,7 +494,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   private fun measureWriteLock(acquisitor: () -> WritePermit) : WritePermit {
     val delay = ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting
-    val reportSlowWrite: Future<*>? = if (delay <= 0) null
+    val reportSlowWrite: Future<*>? = if (delay <= 0 || PerformanceWatcher.getInstanceIfCreated() == null) null
     else AppExecutorUtil.getAppScheduledExecutorService()
       .scheduleWithFixedDelay({ PerformanceWatcher.getInstance().dumpThreads("waiting", true, true) },
                               delay.toLong(), delay.toLong(), TimeUnit.MILLISECONDS)

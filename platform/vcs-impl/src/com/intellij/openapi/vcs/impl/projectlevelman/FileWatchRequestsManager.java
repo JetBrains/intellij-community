@@ -4,9 +4,11 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+@ApiStatus.Internal
 public class FileWatchRequestsManager {
   private final FileWatchRequestModifier myModifier;
   private final Alarm myAlarm;

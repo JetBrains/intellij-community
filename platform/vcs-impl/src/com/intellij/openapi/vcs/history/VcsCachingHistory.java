@@ -150,7 +150,7 @@ public final class VcsCachingHistory {
 
     VcsRevisionNumber currentRevision = null;
     if (VcsType.distributed.equals(myType)) {
-      currentRevision = cached.calcCurrentRevisionNumber();
+      currentRevision = cached.calcCurrentRevisionNumberForCache();
     }
     else {
       ItemLatestState lastRevision = myDiffProvider.getLastRevision(path);

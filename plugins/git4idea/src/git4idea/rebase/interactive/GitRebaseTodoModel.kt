@@ -32,7 +32,7 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
   fun canDrop(indices: List<Int>) = anyOfType(indices) { it !is Type.NonUnite.Drop && it !is Type.NonUnite.UpdateRef }
 
   fun drop(indices: List<Int>) {
-    val elements = indices.map { rows[it] }
+    val elements = indices.map { rows[it] }.filter { it.type != Type.NonUnite.UpdateRef }
     elements.filterIsInstance<Element.Simple<T>>().forEach { element ->
       element.type = Type.NonUnite.Drop
     }
@@ -54,6 +54,7 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
     if (indices.size < 2) {
       return false
     }
+    if (indices.any { rows[it].type == Type.NonUnite.UpdateRef }) return false
     val root = when (val element = rows[indices.first()]) {
       is Element.Simple -> return true
       is Element.UniteRoot -> element

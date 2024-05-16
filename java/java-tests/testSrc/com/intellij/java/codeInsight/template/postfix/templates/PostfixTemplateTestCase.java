@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.template.postfix.templates;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,7 @@ abstract public class PostfixTemplateTestCase extends LightJavaCodeInsightFixtur
   protected void doTest() {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.type('\t');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(true) + "_after.java", true);
   }
 

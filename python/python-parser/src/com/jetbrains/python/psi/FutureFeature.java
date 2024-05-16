@@ -31,14 +31,11 @@ public enum FutureFeature {
   // NOTE: only add new features to the end unless you want to break existing stubs that rely on ordinal
   ;
 
-  @NotNull
-  private final String myName;
+  private final @NotNull String myName;
 
-  @NotNull
-  private final LanguageLevel myOptionalVersion;
+  private final @NotNull LanguageLevel myOptionalVersion;
 
-  @NotNull
-  private final LanguageLevel myRequiredVersion;
+  private final @NotNull LanguageLevel myRequiredVersion;
 
   /**
    * @param name     what is imported from __future__

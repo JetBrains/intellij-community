@@ -1,4 +1,3 @@
-// IGNORE_K2
 class X {
     @Override
     public int hashCode() {

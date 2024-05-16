@@ -26,9 +26,9 @@ class CompletionGolfFileReportGenerator(
     val totalLatency = TotalLatencyMetric().evaluate(listOf(session))
 
     val info = mutableListOf<String>().apply {
-      add("${(movesCountNormalised * 100).format()}%".padEnd(4, ' '))
+      add("${formatDouble((movesCountNormalised * 100))}%".padEnd(4, ' '))
       add("$movesCount act")
-      add("${(totalLatency / 1000).format()}s".padEnd(4, ' '))
+      add("${formatDouble((totalLatency / 1000))}s".padEnd(4, ' '))
     }
 
     return info

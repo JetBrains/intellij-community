@@ -12,9 +12,10 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentUtil
 import org.jetbrains.plugins.terminal.TerminalIcons
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.io.File
@@ -24,11 +25,14 @@ import kotlin.math.min
 internal class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
-    val shellCommandExecutor = parameters.editor.getUserData(ShellCommandExecutor.KEY)
+    val runtimeContextProvider = parameters.editor.getUserData(IJShellRuntimeContextProvider.KEY)
+    val generatorsExecutor = parameters.editor.getUserData(IJShellGeneratorsExecutor.KEY)
     val promptModel = parameters.editor.terminalPromptModel
     if (session == null ||
         session.model.isCommandRunning ||
-        shellCommandExecutor == null || promptModel == null ||
+        runtimeContextProvider == null ||
+        generatorsExecutor == null ||
+        promptModel == null ||
         parameters.completionType != CompletionType.BASIC) {
       return
     }
@@ -39,11 +43,13 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
     }
 
     val command = promptModel.commandText
-    val caretPosition = parameters.editor.caretModel.offset - promptModel.commandStartOffset
-    val completionResult: CompletionResult? = runBlockingCancellable {
-      shellCommandExecutor.executeCommand(GetShellCompletionsCommand(command, caretPosition))
+    val caretPosition = parameters.editor.caretModel.offset - promptModel.commandStartOffset  // relative to command start
+    // PowerShell's completion generator receives typed prefix directly, so we can create dummy context
+    val runtimeContext = runtimeContextProvider.getContext("")
+    val completionResult: CompletionResult = runBlockingCancellable {
+      generatorsExecutor.execute(runtimeContext, powerShellCompletionGenerator(command, caretPosition))
     }
-    if (completionResult?.matches?.isNotEmpty() != true) {
+    if (completionResult.matches.isEmpty()) {
       return
     }
     val replacementIndex = completionResult.replacementIndex
@@ -58,6 +64,7 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
 
     val endIndex = min(caretPosition, replacementIndex + replacementLength)
     val initialPrefix = command.substring(replacementIndex, endIndex)
+    val actualReplaceIndex = promptModel.commandStartOffset + replacementIndex  // relative to document start
     // Heuristic: if the initial prefix contains file separator, then we're probably completing the file names.
     // And since powershell provides an absolute file path as the completion item,
     // we need to shorten the prefix to show completion popup near the last file path part.
@@ -67,12 +74,12 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
       val shortenedPrefix = initialPrefix.substringAfterLast(File.separatorChar)
       shortenedPrefix to completionResult.matches.map {
         val lookupString = it.value.removeSurrounding("'").removeSurrounding("\"").substringAfterLast(File.separatorChar)
-        CompletionItemInfo(lookupString, it.presentableText, it.type, replacementIndex, replacementString = it.value)
+        CompletionItemInfo(lookupString, it.presentableText, it.type, actualReplaceIndex, replacementString = it.value)
       }
     }
     else {
       initialPrefix to completionResult.matches.map {
-        CompletionItemInfo(lookupString = it.value, it.presentableText, it.type, replacementIndex, replacementString = it.value)
+        CompletionItemInfo(lookupString = it.value, it.presentableText, it.type, actualReplaceIndex, replacementString = it.value)
       }
     }
 

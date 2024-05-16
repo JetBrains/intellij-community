@@ -24,18 +24,18 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 
-class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBase<XmlElement>() {
+class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBase<XmlAttribute>() {
 
-  override fun getContext(position: PsiElement): XmlElement? =
-    PsiTreeUtil.getParentOfType(position, XmlAttribute::class.java, HtmlTag::class.java)
+  override fun getContext(position: PsiElement): XmlAttribute? =
+    PsiTreeUtil.getParentOfType(position, XmlAttribute::class.java)
 
   override fun addCompletions(parameters: CompletionParameters,
                               result: CompletionResultSet,
                               position: Int,
                               name: String,
                               queryExecutor: WebSymbolsQueryExecutor,
-                              context: XmlElement) {
-    val tag = (context as? XmlAttribute)?.parent ?: context as XmlTag
+                              context: XmlAttribute) {
+    val tag = context.parent ?: return
     val patchedResultSet = result.withPrefixMatcher(
       AsteriskAwarePrefixMatcher(result.prefixMatcher.cloneWithPrefix(name)))
 
@@ -43,9 +43,6 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
 
     val attributesFilter = WebSymbolsFrameworkHtmlSupport.get(queryExecutor.framework)
       .getAttributeNameCodeCompletionFilter(tag)
-
-    val symbols = (tag.descriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
-                  ?: queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, tag.name)
 
     val filteredOutStandardSymbols = getStandardHtmlAttributeDescriptors(tag)
       .map { it.name }.toMutableSet()
@@ -57,8 +54,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
       name,
       position,
       context,
-      symbols,
-      providedAttributes,
+      providedNames = providedAttributes,
       filter = { item ->
         if (item.symbol is WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol
             && item.offset == 0
@@ -80,7 +76,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
                                                                       queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here
 
             val fullName = name.substring(0, item.offset) + item.name
-            val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName, scope = symbols)
+            val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName)
                           .asSingleSymbol() ?: return@withInsertHandlerAdded
             val info = WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match)
             if (info.acceptsValue && !info.acceptsNoValue) {

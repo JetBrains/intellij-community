@@ -38,7 +38,8 @@ class GitNewProjectWizardStep(
         row("") {
           checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"))
             .bindSelected(gitProperty)
-            .whenStateChangedFromUi { logGitChanged() }
+            .whenStateChangedFromUi { logGitChanged(it) }
+            .onApply { logGitFinished(git) }
         }.bottomGap(BottomGap.SMALL)
       }
     }
@@ -58,7 +59,6 @@ class GitNewProjectWizardStep(
           }
         }
       }
-      logGitFinished(git)
     }
   }
 

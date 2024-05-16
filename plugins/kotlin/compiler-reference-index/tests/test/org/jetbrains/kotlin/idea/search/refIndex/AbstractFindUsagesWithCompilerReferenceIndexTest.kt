@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsag
 import org.jetbrains.kotlin.findUsages.KotlinFindUsageConfigurator
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import java.io.File
 import kotlin.io.path.Path
 import kotlin.io.path.readText
@@ -41,6 +42,7 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
                     findUsageTest(criType)
                 },
                 ignoreLog = ignoreLog,
+                testPlatform = KMPTestPlatform.Unspecified,
                 testType = criType,
             )
         }.fold(

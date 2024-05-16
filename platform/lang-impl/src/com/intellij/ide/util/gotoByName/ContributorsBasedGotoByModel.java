@@ -151,16 +151,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return ArrayUtilRt.toStringArray(allNames);
   }
 
-  private List<ChooseByNameContributor> filterDumb(List<ChooseByNameContributor> contributors) {
-    if (!DumbService.getInstance(myProject).isDumb()) return contributors;
-    List<ChooseByNameContributor> answer = new ArrayList<>(contributors.size());
-    for (ChooseByNameContributor contributor : contributors) {
-      if (DumbService.isDumbAware(contributor)) {
-        answer.add(contributor);
-      }
-    }
-
-    return answer;
+  private List<ChooseByNameContributor> filterDumb(List<? extends ChooseByNameContributor> contributors) {
+    return ContainerUtil.filter(contributors, contributor -> DumbService.getInstance(myProject).isUsableInCurrentContext(contributor));
   }
 
   public Object @NotNull [] getElementsByName(@NotNull String name,

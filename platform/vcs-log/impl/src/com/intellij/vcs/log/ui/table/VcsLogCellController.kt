@@ -9,9 +9,7 @@ interface VcsLogCellController {
 
   fun performMouseMove(row: Int, e: MouseEvent): MouseMoveResult
 
-  fun shouldSelectCell(row: Int, e: MouseEvent): Boolean {
-    return false
-  }
+  fun shouldSelectCell(row: Int, e: MouseEvent): Boolean = true
 
   data class MouseMoveResult(val cursor: Cursor?, val continueProcessing: Boolean = true) {
     companion object {

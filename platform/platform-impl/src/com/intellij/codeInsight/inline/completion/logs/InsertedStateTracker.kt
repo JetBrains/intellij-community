@@ -8,6 +8,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.text.EditDistance
 import kotlinx.coroutines.CoroutineScope
@@ -25,11 +26,13 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
             language: Language?,
             fileLanguage: Language?,
             editor: Editor,
-            startOffset: Int,
-            suggestion: String,
+            initialOffset: Int,
+            insertOffset: Int,
+            finalSuggestion: String,
             duration: Duration) {
     ThreadingAssertions.assertReadAccess()
-    val rangeMarker = editor.document.createRangeMarker(startOffset, startOffset + suggestion.length)
+    val suggestion = editor.document.getText(TextRange(initialOffset, insertOffset)) + finalSuggestion
+    val rangeMarker = editor.document.createRangeMarker(initialOffset, initialOffset + suggestion.length)
     cs.launch {
       delay(duration.toMillis())
       if (!editor.isDisposed) {

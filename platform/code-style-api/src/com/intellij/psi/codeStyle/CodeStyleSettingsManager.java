@@ -376,20 +376,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     throw new UnsupportedOperationException("The method is not implemented");
   }
 
-  /**
-   * @deprecated use {@link #fireCodeStyleSettingsChanged()} for project-wide changes or
-   * {@link #fireCodeStyleSettingsChanged(VirtualFile)} for file-related changes.
-   */
-  @Deprecated(forRemoval = true)
-  public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
-    if (file != null) {
-      fireCodeStyleSettingsChanged(file.getVirtualFile());
-    }
-    else {
-      fireCodeStyleSettingsChanged();
-    }
-  }
-
   public void subscribe(@NotNull CodeStyleSettingsListener listener, @NotNull Disposable disposable) {
     getMessageBus().connect(disposable).subscribe(CodeStyleSettingsListener.TOPIC, listener);
   }

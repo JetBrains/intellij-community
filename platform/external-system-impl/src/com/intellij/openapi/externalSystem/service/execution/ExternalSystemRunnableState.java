@@ -33,6 +33,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildE
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -76,6 +77,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   public static final Key<String> DEBUGGER_DISPATCH_ADDR_KEY = Key.create("DEBUGGER_DISPATCH_ADDR");
   @ApiStatus.Internal
   public static final Key<Integer> BUILD_PROCESS_DEBUGGER_PORT_KEY = Key.create("BUILD_PROCESS_DEBUGGER_PORT");
+  @ApiStatus.Internal
+  public static final @NotNull Key<ExternalSystemTaskNotificationListener> TASK_NOTIFICATION_LISTENER_KEY =
+    Key.create("TASK_NOTIFICATION_LISTENER");
 
   @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
   @NotNull private final Project myProject;
@@ -187,6 +191,10 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmParametersSetup, myConfiguration);
     copyUserDataTo(task);
     addDebugUserDataTo(task);
+    ExternalSystemTaskNotificationListener listener = myEnv.getUserData(TASK_NOTIFICATION_LISTENER_KEY);
+    if (listener != null) {
+      ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(task.getId(), listener);
+    }
 
     final String executionName = StringUtil.isNotEmpty(mySettings.getExecutionName())
                                  ? mySettings.getExecutionName()

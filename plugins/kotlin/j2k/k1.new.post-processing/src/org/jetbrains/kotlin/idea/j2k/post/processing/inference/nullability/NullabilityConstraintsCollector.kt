@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpression
+import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculator
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBuilder
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext

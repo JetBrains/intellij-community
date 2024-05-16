@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.google.common.collect.Iterators;
@@ -29,6 +29,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.GentleFlusherBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
@@ -64,13 +65,14 @@ import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.contentQueue.IndexUpdateWriter;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.IsFileChangedResult;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
 import com.intellij.util.indexing.events.*;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
+import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
@@ -157,8 +159,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final IntSet myStaleIds = new IntOpenHashSet();
   private final DirtyFiles myDirtyFiles = new DirtyFiles(); // project dirty files from last session and new orphan files not in collectors
   private final Map<Project, Ref<Long>> myLastSeenIndexesInOrphanQueue = new ConcurrentHashMap<>();
-  @Nullable
-  private volatile OrphanDirtyFilesQueue myOrphanDirtyFileIdsFromLastSession;
 
   final Lock myReadLock;
   public final Lock myWriteLock;
@@ -335,10 +335,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void setOrphanDirtyFilesQueueFromLastSession(@NotNull OrphanDirtyFilesQueue dirtyFileIds) {
-    myOrphanDirtyFileIdsFromLastSession = dirtyFileIds;
-  }
-
   @NotNull
   DirtyFiles getDirtyFiles() {
     return myDirtyFiles;
@@ -490,7 +486,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     int attemptCount = 2;
     for (int attempt = 0; attempt < attemptCount; attempt++) {
       try {
-        VfsAwareIndexStorageLayout<K, V> layout = DefaultIndexStorageLayout.getLayout(extension);
+        VfsAwareIndexStorageLayout<K, V> layout = IndexStorageLayoutLocator.getLayout(extension);
         index = createIndex(extension, layout);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
@@ -510,7 +506,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         boolean lastAttempt = attempt == attemptCount - 1;
 
         try {
-          VfsAwareIndexStorageLayout<K, V> layout = DefaultIndexStorageLayout.getLayout(extension);
+          VfsAwareIndexStorageLayout<K, V> layout = IndexStorageLayoutLocator.getLayout(extension);
           layout.clearIndexData();
         }
         catch (Exception layoutEx) {
@@ -596,8 +592,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     new ProjectDirtyFilesQueue(dirtyFileIds, lastSeenIndex).store(project, vfsCreationStamp);
   }
 
+  @ApiStatus.Internal
   @NotNull
-  private IntSet getAllDirtyFiles(@Nullable Project project) {
+  public IntSet getAllDirtyFiles(@Nullable Project project) {
     IntSet dirtyFileIds = new IntOpenHashSet();
     dirtyFileIds.addAll(getDirtyFiles(getChangedFilesCollector().getDirtyFiles(), project));
     dirtyFileIds.addAll(getDirtyFiles(myFilesToUpdateCollector.getDirtyFiles(), project));
@@ -644,13 +641,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         PersistentIndicesConfiguration.saveConfiguration();
 
         IntSet unprocessedOrphanDirtyFiles = new IntOpenHashSet();
-        OrphanDirtyFilesQueue orphanDirtyFileIds = myOrphanDirtyFileIdsFromLastSession;
-        if (orphanDirtyFileIds == null) {
-          LOG.info("Shutting FileBaseIndex before orphan dirty files queue was read from disk");
-        }
-        else {
-          unprocessedOrphanDirtyFiles.addAll(orphanDirtyFileIds.getFileIds());
-        }
+        OrphanDirtyFilesQueue orphanDirtyFileIds = registeredIndexes.getOrphanDirtyFilesQueue();
+        unprocessedOrphanDirtyFiles.addAll(orphanDirtyFileIds.getFileIds());
 
         if (myIsUnitTestMode) {
           IntSet allStaleIdsToCheck = new IntOpenHashSet();
@@ -676,15 +668,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         IntSet orphanDirtyFilesFromThisSession = getAllDirtyFiles(null);
-        if (orphanDirtyFileIds != null) {
-          orphanDirtyFileIds.plus(orphanDirtyFilesFromThisSession).store(vfsCreationStamp);
-        }
+        int maxSize = Registry.intValue("maximum.size.of.orphan.dirty.files.queue");
+        orphanDirtyFileIds.plus(orphanDirtyFilesFromThisSession).takeLast(maxSize).store(vfsCreationStamp);
         // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
         getChangedFilesCollector().clear();
         myFilesToUpdateCollector.clear();
         myDirtyFiles.clear();
         vfsCreationStamp = 0;
-        myOrphanDirtyFileIdsFromLastSession = null;
 
         // TODO-ank: Should we catch and ignore CancellationException here to allow other lines to execute?
         IndexingStamp.close();
@@ -908,11 +898,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         myStaleIds.clear();
       }
     }
-  }
-
-  @Nullable
-  OrphanDirtyFilesQueue getOrphanDirtyFileIdsFromLastSession() {
-    return myOrphanDirtyFileIdsFromLastSession;
   }
 
   void ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
@@ -1479,7 +1464,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
 
           boolean update;
-          boolean acceptedAndRequired = getIndexingState(fc, indexId).updateRequired();
+          boolean acceptedAndRequired = getIndexingState(fc, indexId, indexingStamp).updateRequired();
           if (acceptedAndRequired) {
             update = RebuildStatus.isOk(indexId);
             if (!update) {
@@ -1987,10 +1972,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  FileIndexingState getIndexingState(@NotNull IndexedFile file, @NotNull ID<?, ?> indexId) {
+  FileIndexingState getIndexingState(@NotNull IndexedFile file, @NotNull ID<?, ?> indexId, @NotNull FileIndexingStamp indexingStamp) {
+    return getIndexingState(file, getIndex(indexId), indexingStamp);
+  }
+
+  @NotNull
+  FileIndexingState getIndexingState(@NotNull IndexedFile file, @NotNull UpdatableIndex<?, ?, ?, ?> index, @NotNull FileIndexingStamp indexingStamp) {
     VirtualFile virtualFile = file.getFile();
     if (isMock(virtualFile)) return FileIndexingState.NOT_INDEXED;
-    return getIndex(indexId).getIndexingStateForFile(((NewVirtualFile)virtualFile).getId(), file);
+    if (IndexingFlag.isFileChanged(file.getFile(), indexingStamp) == IsFileChangedResult.YES) {
+      return FileIndexingState.OUT_DATED;
+    }
+    return index.getIndexingStateForFile(((NewVirtualFile)virtualFile).getId(), file);
   }
 
   public static boolean isMock(final VirtualFile file) {

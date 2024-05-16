@@ -152,7 +152,6 @@ f:com.intellij.psi.impl.search.LowLevelSearchUtil
 - <init>():V
 - s:processElementsContainingWordInElement(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.PsiElement,com.intellij.util.text.StringSearcher,Z,com.intellij.openapi.progress.ProgressIndicator):Z
 - s:processTexts(java.lang.CharSequence,I,I,com.intellij.util.text.StringSearcher,java.util.function.IntPredicate):Z
-f:com.intellij.psi.impl.search.LowLevelSearchUtilKt
 c:com.intellij.psi.impl.search.PsiSearchHelperImpl
 - com.intellij.psi.search.PsiSearchHelper
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
@@ -521,7 +520,7 @@ f:com.intellij.util.indexing.hints.RejectAllIndexingHint
 - acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
 c:com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor
 - com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor
-- <init>(com.intellij.util.indexing.IndexExtension):V
+- <init>(com.intellij.util.indexing.SingleEntryFileBasedIndexExtension):V
 - convertToDataType(com.intellij.util.indexing.impl.InputData):java.lang.Void
 - p:convertToMap(I,java.lang.Void):java.util.Map
 - createDiffBuilderByMap(I,java.util.Map):com.intellij.util.indexing.impl.InputDataDiffBuilder
@@ -532,39 +531,11 @@ f:com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor$S
 - <init>(I,java.util.Map):V
 - differentiate(java.util.Map,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.RemovedKeyProcessor):Z
 - getKeys():java.util.Collection
-f:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
-- sf:INSTANCE:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
-- f:createIndexStorage(com.intellij.util.indexing.FileBasedIndexExtension,com.intellij.util.io.StorageLockContext):com.intellij.util.indexing.VfsAwareIndexStorage
-- f:getAvailableLayouts():java.util.List
+f:com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
+- sf:INSTANCE:com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
+- sf:getCustomLayoutId():java.lang.String
 - sf:getLayout(com.intellij.util.indexing.FileBasedIndexExtension):com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
-- sf:getUsedLayoutId():java.lang.String
-f:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout$DefaultStorageLayout
-- <init>(com.intellij.util.indexing.FileBasedIndexExtension):V
-- clearIndexData():V
-- getForwardIndexAccessor():com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
-- openForwardIndex():com.intellij.util.indexing.impl.forward.ForwardIndex
-- openIndexStorage():com.intellij.util.indexing.impl.IndexStorage
-f:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout$SingleEntryStorageLayout
-- clearIndexData():V
-- getForwardIndexAccessor():com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
-- openForwardIndex():com.intellij.util.indexing.impl.forward.ForwardIndex
-- openIndexStorage():com.intellij.util.indexing.impl.IndexStorage
-f:com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
-- sf:INSTANCE:com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
-- f:getUsedLayout():com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
-- f:loadUsedLayout():Z
-- f:resetUsedLayout():V
-- f:saveCurrentLayout():V
-- f:setUsedLayout(com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean):V
-f:com.intellij.util.indexing.impl.storage.InMemoryStorageLayout
-- <init>(com.intellij.util.indexing.FileBasedIndexExtension):V
-- clearIndexData():V
-- getForwardIndexAccessor():com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
-- openForwardIndex():com.intellij.util.indexing.impl.forward.ForwardIndex
-- openIndexStorage():com.intellij.util.indexing.impl.IndexStorage
-f:com.intellij.util.indexing.impl.storage.InMemoryStorageLayoutProvider
-- <init>():V
-- getLayout(com.intellij.util.indexing.FileBasedIndexExtension):com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
+- f:getSupportedLayoutProviders():java.util.List
 f:com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage
 - com.intellij.util.indexing.VfsAwareIndexStorage
 - <init>(com.intellij.util.indexing.impl.IndexStorage,com.intellij.util.indexing.FileBasedIndexExtension):V
@@ -587,8 +558,8 @@ com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage$BufferingSt
 - a:bufferingStateChanged(Z):V
 - a:memoryStorageCleared():V
 c:com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
-- com.intellij.util.indexing.impl.MapIndexStorage
 - com.intellij.util.indexing.VfsAwareIndexStorage
+- com.intellij.util.indexing.impl.IndexStorage
 - <init>(java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer,I,Z):V
 - <init>(java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer,I,Z,Z,Z):V
 - addValue(java.lang.Object,I,java.lang.Object):V
@@ -598,31 +569,8 @@ c:com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
 - p:initMapAndCache():V
 - processKeys(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
 - removeAllValues(java.lang.Object,I):V
-f:com.intellij.util.indexing.memory.InMemoryForwardIndex
-- com.intellij.util.indexing.impl.forward.ForwardIndex
-- <init>():V
-- clear():V
-- close():V
-- force():V
-- get(java.lang.Integer):com.intellij.openapi.util.io.ByteArraySequence
-- isDirty():Z
-- keysCountApproximately():I
-- put(java.lang.Integer,com.intellij.openapi.util.io.ByteArraySequence):V
-f:com.intellij.util.indexing.memory.InMemoryIndexStorage
-- com.intellij.util.indexing.VfsAwareIndexStorage
-- <init>(com.intellij.util.io.KeyDescriptor):V
-- addValue(java.lang.Object,I,java.lang.Object):V
-- clear():V
-- clearCaches():V
-- close():V
-- flush():V
-- isDirty():Z
-- keysCountApproximately():I
-- processKeys(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
-- read(java.lang.Object):com.intellij.util.indexing.ValueContainer
-- removeAllValues(java.lang.Object,I):V
 *a:com.intellij.util.indexing.storage.MapReduceIndexBase
-- com.intellij.util.indexing.impl.MapReduceIndex
+- com.intellij.util.indexing.InvertedIndex
 - com.intellij.util.indexing.UpdatableIndex
 - p:<init>(com.intellij.util.indexing.IndexExtension,com.intellij.openapi.util.ThrowableComputable,com.intellij.openapi.util.ThrowableComputable,com.intellij.util.indexing.impl.forward.ForwardIndexAccessor):V
 - checkCanceled():V

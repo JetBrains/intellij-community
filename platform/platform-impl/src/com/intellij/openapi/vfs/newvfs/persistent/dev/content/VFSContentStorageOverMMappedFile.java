@@ -422,22 +422,17 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
 
   private static int storageIdToContentId(long storageId) throws IOException {
-    if (((storageId - 1) & 0b11) != 0) {
-      //rely on AppendOnlyLogOverMMappedFile impl detail: records are int32-aligned
-      throw new AssertionError("Bug: storageId(=" + storageId + ") expected to be int32-aligned");
+    //Math.toIntExact(id) doesn't include id value in the exception message:
+    int intStorageId = (int)storageId;
+    if (intStorageId != storageId) {
+      throw new IOException("Overflow: storageId(=" + storageId + ") > MAX_INT(" + Integer.MAX_VALUE + ")");
     }
-
-    long id = ((storageId - 1) >> 2) + 1;
-    //Math.toIntExact(id) doesn't include id value in exception:
-    if ((int)id != id) {
-      throw new IOException("Overflow: storageId(=" + storageId + ") >MAX_INT even after /4");
-    }
-    return (int)id;
+    return intStorageId;
   }
 
   private static long contentIdToStorageId(int recordId) {
-    //rely on AppendOnlyLogOverMMappedFile impl detail: recordIds are 1-based, and int32-aligned
-    return (((long)recordId - 1) << 2) + 1;
+    //noinspection RedundantCast
+    return (long)recordId;
   }
 
   /** @return hash code (for use in hashtable) of crypto-hash bytes */

@@ -4,11 +4,15 @@ package com.intellij.vcs
 import com.intellij.history.ActivityId
 import com.intellij.history.ActivityPresentationProvider
 import com.intellij.icons.AllIcons
+import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-class VcsActivityPresentationProvider : ActivityPresentationProvider {
-  override val id: String get() = ID
+private const val ID = "Vcs"
+
+private class VcsActivityPresentationProvider : ActivityPresentationProvider {
+  override val id: String
+    get() = ID
 
   override fun getIcon(kind: String): Icon? {
     return when (kind) {
@@ -16,20 +20,15 @@ class VcsActivityPresentationProvider : ActivityPresentationProvider {
       VcsActivity.Rollback.kind -> AllIcons.Actions.Rollback
       VcsActivity.Update.kind -> AllIcons.Actions.CheckOut
       VcsActivity.Get.kind -> AllIcons.Actions.Download
-      VcsActivity.Shelve.kind -> AllIcons.Vcs.Shelve
+      VcsActivity.Shelve.kind -> PlatformVcsImplIcons.Shelve
       VcsActivity.Unshelve.kind -> AllIcons.Vcs.Unshelve
       VcsActivity.ApplyPatch.kind -> AllIcons.Vcs.Patch
       else -> null
     }
   }
-
-  companion object {
-    const val ID = "Vcs"
-  }
 }
 
 object VcsActivity {
-
   @JvmField
   val Commit = createId("Commit")
 
@@ -51,5 +50,5 @@ object VcsActivity {
   @JvmField
   val ApplyPatch = createId("ApplyPatch")
 
-  private fun createId(kind: @NonNls String) = ActivityId(VcsActivityPresentationProvider.ID, kind)
+  private fun createId(kind: @NonNls String) = ActivityId(ID, kind)
 }

@@ -100,8 +100,9 @@ class ExtractKotlinFunctionHandler(
         elements: List<PsiElement>,
         targetSibling: PsiElement
     ) {
+        val adjustedElements = elements.singleOrNull().safeAs<KtBlockExpression>()?.statements ?: elements
+        if (adjustedElements.isEmpty()) return
         nonBlocking(file.project, {
-            val adjustedElements = elements.singleOrNull().safeAs<KtBlockExpression>()?.statements ?: elements
             ExtractionData(file, adjustedElements.toRange(false), targetSibling)
         }) { extractionData ->
             ExtractionEngine(helper).run(editor, extractionData)

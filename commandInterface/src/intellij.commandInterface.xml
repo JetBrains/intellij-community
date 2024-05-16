@@ -1,15 +1,13 @@
 <idea-plugin package="com.intellij.commandInterface">
   <dependencies>
-    <plugin id="com.intellij.modules.platform"/>
-    <plugin id="com.intellij.modules.lang"/>
+    <!-- uses messages.PyBundle -->
+    <module name="intellij.python.community.impl"/>
   </dependencies>
   <!--
    Extension points to support gnu command line language.
    See {@link com.intellij.commandInterface.commandLine}
   -->
   <extensions defaultExtensionNs="com.intellij">
-
-
     <lang.parserDefinition language="CommandLine"
                            implementationClass="com.intellij.commandInterface.commandLine.CommandLineParserDefinition"/>
     <lang.syntaxHighlighter language="CommandLine"

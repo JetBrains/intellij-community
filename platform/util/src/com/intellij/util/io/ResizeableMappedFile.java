@@ -15,6 +15,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.List;
 
 import static java.nio.file.StandardOpenOption.READ;
 
+@Internal
 public final class ResizeableMappedFile implements Forceable, Closeable {
   private static final Logger LOG = Logger.getInstance(ResizeableMappedFile.class);
 

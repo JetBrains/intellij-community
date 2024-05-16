@@ -9,6 +9,14 @@ class PyDictLiteralCompletionTest : PyTestCase() {
     assertCompletionContains("\"x\"", "\"y\"")
   }
 
+  fun testEmptyLiteralsInMethodCall() {
+    assertCompletionContains("\"name\"", "\"age\"")
+  }
+
+  fun testEmptyLiteralsInMethodCallWithKeywordArgument() {
+    assertCompletionContains("\"name\"", "\"age\"")
+  }
+
   fun testEmptyLiteralsInCallExpressionsWithQuotes() {
     assertCompletionContains("x", "y")
   }

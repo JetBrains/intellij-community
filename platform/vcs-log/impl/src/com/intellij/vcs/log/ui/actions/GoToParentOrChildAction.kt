@@ -23,7 +23,7 @@ import com.intellij.vcs.log.ui.table.getCommitId
 import java.awt.Component
 import java.awt.event.KeyEvent
 
-open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
+internal open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -111,6 +111,6 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   }
 }
 
-class GoToParentRowAction : GoToParentOrChildAction(true)
+internal class GoToParentRowAction : GoToParentOrChildAction(true)
 
-class GoToChildRowAction : GoToParentOrChildAction(false)
+internal class GoToChildRowAction : GoToParentOrChildAction(false)

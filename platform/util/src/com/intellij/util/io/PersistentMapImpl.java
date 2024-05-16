@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +13,7 @@ import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
 import com.intellij.util.io.stats.PersistentHashMapStatistics;
 import com.intellij.util.io.stats.StorageStatsRegistrar;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
@@ -54,6 +55,7 @@ import java.util.stream.Stream;
  * e.g., in case Value is non-negative integer the value can be stored
  * directly in storage used for offset and in case of btree enumerator directly in btree leaf.
  **/
+@Internal
 public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Value> {
   private static final Logger LOG = Logger.getInstance(PersistentMapImpl.class);
 
@@ -916,7 +918,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
   }
 
   // make it visible for tests
-  @ApiStatus.Internal
+  @Internal
   public void compact() throws IOException {
     if (!isCompactionSupported()) throw new IncorrectOperationException();
     getWriteLock().lock();
@@ -997,7 +999,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   public boolean isCompactionSupported() {
     return !myIsReadOnly && !myIntMapping;
   }

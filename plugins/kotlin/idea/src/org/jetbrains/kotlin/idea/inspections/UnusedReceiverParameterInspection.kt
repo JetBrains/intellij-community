@@ -147,7 +147,7 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
             private val actionName = KotlinBundle.message("fix.unused.receiver.parameter.remove")
 
             private fun configureChangeSignature() = object : KotlinChangeSignatureConfiguration {
-                override fun performSilently(affectedFunctions: Collection<PsiElement>) = true
+                override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = true
                 override fun configure(originalDescriptor: KotlinMethodDescriptor) = originalDescriptor.modify { it.removeParameter(0) }
             }
 

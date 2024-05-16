@@ -2,7 +2,9 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChangedEvent
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
@@ -48,6 +50,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
           .bindSelected(addSampleCodeProperty)
           .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
+          .onApply { logAddSampleCodeFinished(addSampleCode) }
       }
     }
 
@@ -56,7 +59,8 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         row {
           checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
             .bindSelected(generateOnboardingTipsProperty)
-            .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
+            .whenStateChangedFromUi { logAddSampleOnboardingTipsChanged(it) }
+            .onApply { logAddSampleOnboardingTipsFinished(generateOnboardingTips) }
         }
       }.enabledIf(addSampleCodeProperty)
     }

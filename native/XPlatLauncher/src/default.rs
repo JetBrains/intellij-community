@@ -10,9 +10,9 @@ use log::debug;
 #[cfg(target_os = "windows")]
 use {
     std::os::windows::ffi::OsStrExt,
+    windows::Win32::Foundation::{BOOL, FALSE, GetLastError},
     windows::Win32::Globalization::{GetACP, WC_ERR_INVALID_CHARS, WC_NO_BEST_FIT_CHARS, WideCharToMultiByte},
-    windows::core::PCSTR,
-    windows::core::imp::GetLastError,
+    windows::core::PCSTR
 };
 
 use crate::*;
@@ -66,6 +66,8 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         for vm_option in vm_options.iter_mut() {
             *vm_option = self.expand_path_macro(vm_option)?;
         }
+
+        vm_options.push(jvm_property!("ide.native.launcher", "true"));
 
         Ok(vm_options)
     }
@@ -242,7 +244,7 @@ impl DefaultLaunchConfiguration {
     #[cfg(target_os = "windows")]
     fn assert_valid_in_system_default_ansi_codepage(path: &Path) -> Result<()> {
         let path_wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
-        let mut used_default_char: i32 = -1;
+        let mut used_default_char: BOOL = FALSE;
 
         let acp = unsafe {
             GetACP()
@@ -274,15 +276,12 @@ impl DefaultLaunchConfiguration {
         };
 
         if result == 0 {
-            let error = unsafe {
-                GetLastError()
-            };
-
+            let error = unsafe { GetLastError() }.to_hresult().0;
             let path = path.to_string_checked()?;
             bail!("Failed to determined if path can be represented using the system default ANSI codepage. Win32 error: {error}, ACP: {acp}, Path: {path}")
         }
 
-        if used_default_char > 0 {
+        if used_default_char.as_bool() {
             let path = path.to_string_checked()?;
             bail!("Path cannot be represented using the system default ANSI codepage. ACP: {acp}, Path: {path}")
         }
@@ -366,9 +365,13 @@ fn read_vm_options(path: &Path) -> Result<Vec<String>> {
     let mut vm_options = Vec::with_capacity(50);
     for line in BufReader::new(file).lines() {
         let line = line.with_context(|| format!("Cannot read: {:?}", path))?.trim().to_string();
-        if !(line.is_empty() || line.starts_with('#')) {
-            vm_options.push(line);
+        if line.is_empty() || line.starts_with('#') {
+            continue;
         }
+        if line.contains('\0') {
+            bail!("Invalid character ('\\0') found in VM options file: {:?}", path);
+        }
+        vm_options.push(line);
     }
     debug!("{} line(s)", vm_options.len());
 

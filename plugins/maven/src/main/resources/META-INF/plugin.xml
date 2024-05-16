@@ -385,7 +385,7 @@
     <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="false"
                  description="Refresh resolved artifacts after Maven sync"/>
 
-    <registryKey key="maven.incremental.sync.in.ui" defaultValue="false"
+    <registryKey key="maven.incremental.sync.in.ui" defaultValue="true"
                  description="Show Maven incremental sync option in UI"/>
 
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
@@ -413,6 +413,7 @@
 
     <newProjectWizard.java.buildSystem implementation="org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.idea.maven.MavenCommandLineInspectionProjectConfigurator"/>
+    <workspace.subprojectHandler implementation="org.jetbrains.idea.maven.workspace.MavenSubprojectHandler"/>
 
     <externalSystem.dependencyModifier implementation="org.jetbrains.idea.maven.dsl.MavenDependencyModificator"/>
     <iconMapper mappingFile="MavenIconMappings.json"/>

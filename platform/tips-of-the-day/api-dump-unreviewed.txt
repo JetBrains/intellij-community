@@ -69,7 +69,6 @@ f:com.intellij.ide.util.TipUtils
 - f:getTip(com.intellij.featureStatistics.FeatureDescriptor):com.intellij.ide.util.TipAndTrickBean
 - sf:loadAndParseTip(com.intellij.ide.util.TipAndTrickBean,java.awt.Component):java.util.List
 - f:loadAndParseTipStrict(com.intellij.ide.util.TipAndTrickBean):java.util.List
-f:com.intellij.ide.util.TipUtilsKt
 f:com.intellij.ide.util.TipsFeedback
 - com.intellij.openapi.components.SimplePersistentStateComponent
 - sf:Companion:com.intellij.ide.util.TipsFeedback$Companion

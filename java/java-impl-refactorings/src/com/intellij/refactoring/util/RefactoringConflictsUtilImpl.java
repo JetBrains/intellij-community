@@ -345,8 +345,17 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
     NextUsage:
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
+      final PsiElement referencedElement;
+      if (usage instanceof MoveRenameUsageInfo) {
+        referencedElement = ((MoveRenameUsageInfo)usage).getReferencedElement();
+      }
+      else {
+        referencedElement = usage.getElement();
+      }
+      assert referencedElement != null : usage;
+      final PsiFile movedFile = referencedElement.getContainingFile();
+      if (!(movedFile instanceof PsiJavaFile)) continue NextUsage; // don't create conflicts for elements we are not responsible for
       if (element != null && PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) == null) {
-
         for (PsiElement scope : scopes) {
           if (PsiTreeUtil.isAncestor(scope, element, false)) continue NextUsage;
         }
@@ -367,14 +376,6 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
             Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(usageVFile);
             if (module != null) {
               final String message;
-              final PsiElement referencedElement;
-              if (usage instanceof MoveRenameUsageInfo) {
-                referencedElement = ((MoveRenameUsageInfo)usage).getReferencedElement();
-              }
-              else {
-                referencedElement = usage.getElement();
-              }
-              assert referencedElement != null : usage;
               if (module == targetModule && isInTestSources) {
                 message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.production.of.module.2",
                                                     RefactoringUIUtil.getDescription(referencedElement, true),

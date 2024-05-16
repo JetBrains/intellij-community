@@ -10,11 +10,13 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class TestIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {

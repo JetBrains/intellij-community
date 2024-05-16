@@ -446,6 +446,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("argumentInCallWithReceiver.kt")
+            public void testArgumentInCallWithReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/argumentInCallWithReceiver.kt");
+            }
+
             @TestMetadata("blockHasMoreThanOneStatement.kt")
             public void testBlockHasMoreThanOneStatement() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/blockHasMoreThanOneStatement.kt");
@@ -474,6 +479,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("call4.kt")
             public void testCall4() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/call4.kt");
+            }
+
+            @TestMetadata("callChainWithImplicitReceiver.kt")
+            public void testCallChainWithImplicitReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/callChainWithImplicitReceiver.kt");
+            }
+
+            @TestMetadata("callChainWithVariableCalls.kt")
+            public void testCallChainWithVariableCalls() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/callChainWithVariableCalls.kt");
             }
 
             @TestMetadata("callInvokeOperator.kt")
@@ -561,9 +576,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/ifAndElseBothInBlocks.kt");
             }
 
+            @TestMetadata("ifAndElseBothInBlocks2.kt")
+            public void testIfAndElseBothInBlocks2() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/ifAndElseBothInBlocks2.kt");
+            }
+
             @TestMetadata("ifAndElseNotInBlocks.kt")
             public void testIfAndElseNotInBlocks() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/ifAndElseNotInBlocks.kt");
+            }
+
+            @TestMetadata("ifAndElseNotInBlocks2.kt")
+            public void testIfAndElseNotInBlocks2() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/ifAndElseNotInBlocks2.kt");
             }
 
             @TestMetadata("ifAsExpression.kt")
@@ -589,6 +614,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("implicitReceiverInApply.kt")
             public void testImplicitReceiverInApply() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiverInApply.kt");
+            }
+
+            @TestMetadata("implicitReceiverIsNotLeftMostReceiver.kt")
+            public void testImplicitReceiverIsNotLeftMostReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiverIsNotLeftMostReceiver.kt");
+            }
+
+            @TestMetadata("implicitReceiverVariableCall.kt")
+            public void testImplicitReceiverVariableCall() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiverVariableCall.kt");
             }
 
             @TestMetadata("isCheckSimple.kt")
@@ -631,6 +666,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/lhsNotEqualsNull.kt");
             }
 
+            @TestMetadata("lhsNotEqualsNull2.kt")
+            public void testLhsNotEqualsNull2() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/lhsNotEqualsNull2.kt");
+            }
+
+            @TestMetadata("localVar.kt")
+            public void testLocalVar() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/localVar.kt");
+            }
+
             @TestMetadata("missingNecessaryElseClause.kt")
             public void testMissingNecessaryElseClause() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/missingNecessaryElseClause.kt");
@@ -641,6 +686,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/missingNecessaryThenClause.kt");
             }
 
+            @TestMetadata("multipleUsagesNullCheck.kt")
+            public void testMultipleUsagesNullCheck() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/multipleUsagesNullCheck.kt");
+            }
+
+            @TestMetadata("multipleUsagesThis.kt")
+            public void testMultipleUsagesThis() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/multipleUsagesThis.kt");
+            }
+
+            @TestMetadata("multipleUsagesTypeCheck.kt")
+            public void testMultipleUsagesTypeCheck() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/multipleUsagesTypeCheck.kt");
+            }
+
+            @TestMetadata("multipleUsagesVariableCalls.kt")
+            public void testMultipleUsagesVariableCalls() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/multipleUsagesVariableCalls.kt");
+            }
+
             @TestMetadata("noCondition.kt")
             public void testNoCondition() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/noCondition.kt");
@@ -649,6 +714,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("noElseBlock.kt")
             public void testNoElseBlock() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/noElseBlock.kt");
+            }
+
+            @TestMetadata("noElseBlock2.kt")
+            public void testNoElseBlock2() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/noElseBlock2.kt");
             }
 
             @TestMetadata("noElseBlockAsExpression.kt")
@@ -676,14 +746,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/noThenBlock.kt");
             }
 
+            @TestMetadata("noThenBlock2.kt")
+            public void testNoThenBlock2() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/noThenBlock2.kt");
+            }
+
             @TestMetadata("notApplicableForFunction.kt")
             public void testNotApplicableForFunction() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/notApplicableForFunction.kt");
             }
 
-            @TestMetadata("notApplicableForLocalVar.kt")
-            public void testNotApplicableForLocalVar() throws Exception {
-                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/notApplicableForLocalVar.kt");
+            @TestMetadata("notApplicableForNonLocalVar.kt")
+            public void testNotApplicableForNonLocalVar() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/notApplicableForNonLocalVar.kt");
             }
 
             @TestMetadata("notApplicableResultInCallChain.kt")
@@ -716,6 +791,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/propertyNotNull.kt");
             }
 
+            @TestMetadata("propertyVariableCall.kt")
+            public void testPropertyVariableCall() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/propertyVariableCall.kt");
+            }
+
             @TestMetadata("propertyWithProperty.kt")
             public void testPropertyWithProperty() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/propertyWithProperty.kt");
@@ -741,9 +821,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/rhsEqualsNull.kt");
             }
 
+            @TestMetadata("rhsEqualsNull2.kt")
+            public void testRhsEqualsNull2() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/rhsEqualsNull2.kt");
+            }
+
             @TestMetadata("rhsNotEqualsNull.kt")
             public void testRhsNotEqualsNull() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/rhsNotEqualsNull.kt");
+            }
+
+            @TestMetadata("rhsNotEqualsNull2.kt")
+            public void testRhsNotEqualsNull2() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/rhsNotEqualsNull2.kt");
             }
 
             @TestMetadata("senselessComparison.kt")
@@ -779,6 +869,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("unacceptableNoThenBlock.kt")
             public void testUnacceptableNoThenBlock() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/unacceptableNoThenBlock.kt");
+            }
+
+            @TestMetadata("usageInBlock.kt")
+            public void testUsageInBlock() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/usageInBlock.kt");
+            }
+
+            @TestMetadata("usageInBlock2.kt")
+            public void testUsageInBlock2() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/usageInBlock2.kt");
             }
 
             @TestMetadata("uselessIsCheck.kt")

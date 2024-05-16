@@ -93,6 +93,8 @@ public final class Timer {
     if(mySpan != null) {
       mySpan.setAttribute("max_awt_delay", getLongestDelay());
       mySpan.setAttribute("average_awt_delay", getAverageDelay());
+      mySpan.setAttribute("max_cpu_load", Math.round(myHighestCPULoad * 100));
+      mySpan.setAttribute("average_cpu_load", Math.round(getAverageCPULoad()));
       mySpan.end();
     }
     myStopTime = System.currentTimeMillis();

@@ -16,6 +16,9 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.K1CommonRefactoringSettings"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings"/>
 
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider"
+                        serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10KotlinNameValidatorProviderImpl"/>
+
     <nameSuggestionProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggestionProvider"/>
 
     <lang.refactoringSupport

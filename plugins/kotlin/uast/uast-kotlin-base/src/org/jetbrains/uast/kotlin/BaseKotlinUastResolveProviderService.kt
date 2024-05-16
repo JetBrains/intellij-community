@@ -6,6 +6,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.PsiImplUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 
@@ -157,6 +158,8 @@ interface BaseKotlinUastResolveProviderService {
     fun hasInheritedGenericType(psiElement: PsiElement): Boolean
 
     fun nullability(psiElement: PsiElement): KtTypeNullability?
+
+    fun modality(ktDeclaration: KtDeclaration): Modality?
 
     // ----------
     // Evaluation

@@ -150,7 +150,6 @@ c:com.intellij.collaboration.api.httpclient.RequestTimeoutConfigurer
 f:com.intellij.collaboration.api.json.HttpJsonDeserializationException
 - java.lang.RuntimeException
 - <init>(java.lang.String,java.lang.Throwable):V
-f:com.intellij.collaboration.api.json.HttpJsonDeserializationExceptionKt
 *:com.intellij.collaboration.api.json.JsonDataDeserializer
 - a:fromJson(java.io.Reader,java.lang.Class):java.lang.Object
 - a:fromJson(java.io.Reader,java.lang.Class,java.lang.Class[]):java.lang.Object
@@ -199,6 +198,40 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue
 - sf:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
 f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - f:parse(java.lang.String):com.intellij.collaboration.api.util.LinkHttpHeaderValue
+*f:com.intellij.collaboration.async.AddedAllLast
+- com.intellij.collaboration.async.Change
+- <init>(java.util.List):V
+- f:component1():java.util.List
+- f:copy(java.util.List):com.intellij.collaboration.async.AddedAllLast
+- bs:copy$default(com.intellij.collaboration.async.AddedAllLast,java.util.List,I,java.lang.Object):com.intellij.collaboration.async.AddedAllLast
+- equals(java.lang.Object):Z
+- f:getValues():java.util.List
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.collaboration.async.AddedFirst
+- com.intellij.collaboration.async.Change
+- <init>(java.lang.Object):V
+- f:component1():java.lang.Object
+- f:copy(java.lang.Object):com.intellij.collaboration.async.AddedFirst
+- bs:copy$default(com.intellij.collaboration.async.AddedFirst,java.lang.Object,I,java.lang.Object):com.intellij.collaboration.async.AddedFirst
+- equals(java.lang.Object):Z
+- f:getValue():java.lang.Object
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.collaboration.async.AddedLast
+- com.intellij.collaboration.async.Change
+- <init>(java.lang.Object):V
+- f:component1():java.lang.Object
+- f:copy(java.lang.Object):com.intellij.collaboration.async.AddedLast
+- bs:copy$default(com.intellij.collaboration.async.AddedLast,java.lang.Object,I,java.lang.Object):com.intellij.collaboration.async.AddedLast
+- equals(java.lang.Object):Z
+- f:getValue():java.lang.Object
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.collaboration.async.AllDeleted
+- com.intellij.collaboration.async.Deleted
+- <init>():V
+*:com.intellij.collaboration.async.Change
 *f:com.intellij.collaboration.async.CompletableFutureUtil
 - sf:INSTANCE:com.intellij.collaboration.async.CompletableFutureUtil
 - f:cancellationOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
@@ -275,6 +308,26 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - bs:transformConsecutiveSuccesses$default(kotlinx.coroutines.flow.Flow,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.flow.Flow
 - sf:values(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
 - *sf:withInitial(kotlinx.coroutines.flow.Flow,java.lang.Object):kotlinx.coroutines.flow.Flow
+*c:com.intellij.collaboration.async.Deleted
+- com.intellij.collaboration.async.Change
+- <init>(kotlin.jvm.functions.Function1):V
+- f:isDeleted():kotlin.jvm.functions.Function1
+*:com.intellij.collaboration.async.ListLoader
+- a:getStateFlow():kotlinx.coroutines.flow.Flow
+- a:isBusyFlow():kotlinx.coroutines.flow.StateFlow
+*f:com.intellij.collaboration.async.ListLoader$State
+- <init>(java.util.List,java.lang.Throwable):V
+- f:component1():java.util.List
+- f:component2():java.lang.Throwable
+- f:copy(java.util.List,java.lang.Throwable):com.intellij.collaboration.async.ListLoader$State
+- bs:copy$default(com.intellij.collaboration.async.ListLoader$State,java.util.List,java.lang.Throwable,I,java.lang.Object):com.intellij.collaboration.async.ListLoader$State
+- equals(java.lang.Object):Z
+- f:getError():java.lang.Throwable
+- f:getList():java.util.List
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.collaboration.async.ListLoaderKt
+- sf:getResultOrErrorFlow(com.intellij.collaboration.async.ListLoader):kotlinx.coroutines.flow.Flow
 *f:com.intellij.collaboration.async.MappingScopedItemsContainer
 - *sf:Companion:com.intellij.collaboration.async.MappingScopedItemsContainer$Companion
 - <init>(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3):V
@@ -284,6 +337,56 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - f:update(java.lang.Iterable,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.collaboration.async.MappingScopedItemsContainer$Companion
 - f:byIdentity(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function2):com.intellij.collaboration.async.MappingScopedItemsContainer
+*a:com.intellij.collaboration.async.MutableListLoader
+- com.intellij.collaboration.async.ListLoader
+- <init>():V
+- pf:getMutableStateFlow():kotlinx.coroutines.flow.MutableStateFlow
+- getStateFlow():kotlinx.coroutines.flow.Flow
+- f:update(com.intellij.collaboration.async.Change):V
+*a:com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader
+- com.intellij.collaboration.async.MutableListLoader
+- com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
+- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$PageInfo,kotlin.jvm.functions.Function1,Z):V
+- b:<init>(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$PageInfo,kotlin.jvm.functions.Function1,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- isBusyFlow():kotlinx.coroutines.flow.StateFlow
+- loadAll(kotlin.coroutines.Continuation):java.lang.Object
+- loadMore(kotlin.coroutines.Continuation):java.lang.Object
+- pa:performRequestAndProcess(com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$PageInfo,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- refresh(kotlin.coroutines.Continuation):java.lang.Object
+- reload(kotlin.coroutines.Continuation):java.lang.Object
+*pf:com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$Page
+- <init>(java.lang.Object,java.util.List):V
+- f:component1():java.lang.Object
+- f:component2():java.util.List
+- f:copy(java.lang.Object,java.util.List):com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$Page
+- bs:copy$default(com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$Page,java.lang.Object,java.util.List,I,java.lang.Object):com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$Page
+- equals(java.lang.Object):Z
+- f:getInfo():java.lang.Object
+- f:getList():java.util.List
+- hashCode():I
+- toString():java.lang.String
+*:com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$PageInfo
+- a:createNextPageInfo():com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader$PageInfo
+*:com.intellij.collaboration.async.PotentiallyInfiniteListLoader
+- a:loadAll(kotlin.coroutines.Continuation):java.lang.Object
+- a:loadMore(kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.collaboration.async.ReloadableListLoader
+- a:refresh(kotlin.coroutines.Continuation):java.lang.Object
+- a:reload(kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
+- com.intellij.collaboration.async.ListLoader
+- com.intellij.collaboration.async.PotentiallyInfiniteListLoader
+- com.intellij.collaboration.async.ReloadableListLoader
+*f:com.intellij.collaboration.async.Updated
+- com.intellij.collaboration.async.Change
+- <init>(kotlin.jvm.functions.Function1):V
+- f:component1():kotlin.jvm.functions.Function1
+- f:copy(kotlin.jvm.functions.Function1):com.intellij.collaboration.async.Updated
+- bs:copy$default(com.intellij.collaboration.async.Updated,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.collaboration.async.Updated
+- equals(java.lang.Object):Z
+- f:getUpdater():kotlin.jvm.functions.Function1
+- hashCode():I
+- toString():java.lang.String
 a:com.intellij.collaboration.auth.Account
 - sf:Companion:com.intellij.collaboration.auth.Account$Companion
 - <init>():V
@@ -823,7 +926,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.CodeReviewTabs
 - f:bindTabText(kotlinx.coroutines.CoroutineScope,com.intellij.ui.tabs.TabInfo,java.util.function.Supplier,kotlinx.coroutines.flow.Flow):kotlinx.coroutines.Job
 - f:bindTabUi(kotlinx.coroutines.CoroutineScope,com.intellij.ui.tabs.impl.JBTabsImpl,com.intellij.ui.tabs.TabInfo,java.util.function.Supplier,kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow):kotlinx.coroutines.Job
-*f:com.intellij.collaboration.ui.codereview.CodeReviewTabsKt
 *f:com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 - sf:HEADER_VERT_PADDING:I
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -883,7 +985,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel,com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel,java.lang.String):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - f:getSELECTED_CHANGES():com.intellij.openapi.actionSystem.DataKey
-*f:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactoryKt
 *f:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
 - *sf:Companion:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory$Companion
 - <init>(com.intellij.openapi.project.Project,com.intellij.collaboration.ui.SingleValueModel):V
@@ -954,7 +1055,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:getPrimaryAction():kotlinx.coroutines.flow.StateFlow
 - f:getSecondaryActions():kotlinx.coroutines.flow.StateFlow
 - f:getSubmitHint():kotlinx.coroutines.flow.StateFlow
-*f:com.intellij.collaboration.ui.codereview.comment.RoundedPanelKt
 *c:com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent
 - javax.swing.JComponent
 - *sf:Companion:com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent$Companion
@@ -1046,7 +1146,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 *f:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsBranchComponentFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsBranchComponentFactory
 - f:create(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel):javax.swing.JComponent
-*f:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsBranchComponentFactoryKt
 *f:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitInfoComponentFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsCommitInfoComponentFactory
 - f:create(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0):javax.swing.JComponent
@@ -1109,7 +1208,6 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.details.GroupedRenderer$SeparatorPosition
 - s:values():com.intellij.collaboration.ui.codereview.details.GroupedRenderer$SeparatorPosition[]
-*f:com.intellij.collaboration.ui.codereview.details.GroupedRendererKt
 *f:com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 - f:createTitlePanel(javax.swing.JComponent,javax.swing.JComponent):javax.swing.JComponent
@@ -1307,27 +1405,15 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - a:getShowJobsDetailsRequests():kotlinx.coroutines.flow.SharedFlow
 - a:showJobsDetails():V
 *a:com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer
-- com.intellij.openapi.editor.markup.GutterIconRenderer
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.project.DumbAware
+- com.intellij.collaboration.ui.codereview.diff.LineGutterIconRenderer
 - <init>():V
-- dispose():V
-- a:disposeInlay():V
-- equals(java.lang.Object):Z
-- getAlignment():com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment
-- getIcon():javax.swing.Icon
-- f:getIconVisible():Z
-- a:getLine():I
-- p:getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
 - getTooltipText():java.lang.String
-- hashCode():I
-- isNavigateAction():Z
-- f:setIconVisible(Z):V
+- getVisibleIcon():javax.swing.Icon
+- setVisibleIcon(javax.swing.Icon):V
 *f:com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:createCombinedDiffModel(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 - f:createDiffRequestProcessor(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):com.intellij.diff.impl.DiffRequestProcessor
-*f:com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelperKt
 *f:com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
 - com.intellij.collaboration.ui.codereview.diff.ScrollableDiffRequestProducer
 - com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
@@ -1356,7 +1442,6 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - f:createErrorProducer(java.lang.Throwable):com.intellij.diff.chains.DiffRequestProducer
 - f:getLOADING_PRODUCER():com.intellij.diff.chains.SimpleDiffRequestChain$DiffRequestProducerWrapper
 - f:getPROGRESS_DISPLAY_DELAY-UwyO8pc():J
-*f:com.intellij.collaboration.ui.codereview.diff.DiffUIUtilKt
 *e:com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 - java.lang.Enum
 - sf:ALL:com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
@@ -1385,6 +1470,24 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - <init>(java.util.Set):V
 - mouseExited(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
+*a:com.intellij.collaboration.ui.codereview.diff.LineGutterIconRenderer
+- com.intellij.openapi.editor.markup.GutterIconRenderer
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- dispose():V
+- a:disposeInlay():V
+- equals(java.lang.Object):Z
+- getAlignment():com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment
+- getIcon():javax.swing.Icon
+- f:getIconVisible():Z
+- a:getLine():I
+- p:getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
+- a:getVisibleIcon():javax.swing.Icon
+- hashCode():I
+- isNavigateAction():Z
+- f:setIconVisible(Z):V
+- a:setVisibleIcon(javax.swing.Icon):V
 *:com.intellij.collaboration.ui.codereview.diff.ScrollableDiffRequestProducer
 - com.intellij.diff.chains.DiffRequestProducer
 - a:getScrollRequests():kotlinx.coroutines.flow.Flow
@@ -1401,7 +1504,6 @@ a:com.intellij.collaboration.ui.codereview.diff.action.CodeReviewDiscussionsTogg
 - *:<init>(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):V
 - f:getDiffVm():kotlinx.coroutines.flow.Flow
 - f:showChanges(com.intellij.collaboration.util.ChangesSelection,kotlin.coroutines.Continuation):java.lang.Object
-*f:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewModelComputerKt
 *:com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 - a:getDiscussionsViewOption():kotlinx.coroutines.flow.StateFlow
 - a:setDiscussionsViewOption(com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption):V
@@ -1410,17 +1512,8 @@ a:com.intellij.collaboration.ui.codereview.diff.action.CodeReviewDiscussionsTogg
 *f:com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModelKt
 - sf:getSelected(com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 *f:com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
-- <init>(java.util.List,I):V
-- f:canNavigate():Z
-- f:canSelectNext():Z
-- f:canSelectPrev():Z
 - f:getProducers():kotlinx.coroutines.flow.StateFlow
-- f:select(com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer):V
-- f:selectNext():V
-- f:selectPrev():V
-- f:updateProducers(kotlin.jvm.functions.Function1):V
 *f:com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State
-- <init>(java.util.List,I):V
 - f:component1():java.util.List
 - f:component2():I
 - f:copy(java.util.List,I):com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State
@@ -1446,6 +1539,8 @@ com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:buildChangeContext(com.intellij.collaboration.util.RefComparisonChange):java.util.Map
 - *sf:controlInlaysIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
+- sf:controlReviewIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2):V
+- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.collaboration.ui.codereview.diff.viewer.LineHoverAwareGutterMark
 - com.intellij.codeInsight.daemon.GutterMark
 - a:getLine():I
@@ -1456,19 +1551,22 @@ com.intellij.collaboration.ui.codereview.diff.viewer.LineHoverAwareGutterMark
 - <init>(javax.swing.JComponent):V
 - f:isVisible():Z
 - f:setVisible(Z):V
-*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRendererKt
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel
 - com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 - a:getUpdateRequired():kotlinx.coroutines.flow.StateFlow
 - a:updateBranch():V
-*f:com.intellij.collaboration.ui.codereview.editor.DocumentTrackerCodeReviewEditorGutterChangesModelKt
 *f:com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt
-- *sf:controlInlaysIn(com.intellij.openapi.editor.ex.EditorEx,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
+- sf:controlInlaysIn(com.intellij.openapi.editor.ex.EditorEx,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - sf:insertComponentAfter(com.intellij.openapi.editor.ex.EditorEx,I,javax.swing.JComponent,I,kotlin.jvm.functions.Function1):com.intellij.openapi.editor.Inlay
 - bs:insertComponentAfter$default(com.intellij.openapi.editor.ex.EditorEx,I,javax.swing.JComponent,I,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.editor.Inlay
+- *sf:renderInlays(com.intellij.openapi.editor.ex.EditorEx,kotlinx.coroutines.flow.Flow,com.intellij.util.containers.HashingStrategy,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.collaboration.ui.codereview.editor.EditorMapped
 - a:getLine():kotlinx.coroutines.flow.Flow
 - a:isVisible():kotlinx.coroutines.flow.Flow
+*:com.intellij.collaboration.ui.codereview.editor.EditorMappedViewModel
+- com.intellij.collaboration.ui.codereview.editor.EditorMapped
+- a:getLine():kotlinx.coroutines.flow.StateFlow
+- a:isVisible():kotlinx.coroutines.flow.StateFlow
 *f:com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 - f:getREVIEW_CHANGES_STATUS_COLOR():com.intellij.ui.JBColor
@@ -1671,7 +1769,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - f:showChooserPopup(com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - bs:showChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - bs:showChooserPopup$default(com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil,com.intellij.ui.awt.RelativePoint,java.util.List,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer,com.intellij.collaboration.ui.codereview.list.search.PopupConfig,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-*f:com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtilKt
 *f:com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 - <init>(kotlinx.coroutines.flow.MutableStateFlow):V
 - f:create(kotlinx.coroutines.CoroutineScope,java.lang.String,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):javax.swing.JComponent
@@ -1779,7 +1876,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - sf:HEIGHT:I
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionsUIUtil$Picker
 - sf:WIDTH:I
-*f:com.intellij.collaboration.ui.codereview.reactions.PillButtonKt
 *a:com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitPopupHandler
 - sf:ACTIONS_GAP:I
 - *psf:Companion:com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitPopupHandler$Companion
@@ -1939,7 +2035,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 - paint(java.awt.Graphics,java.awt.Shape):V
 - setParent(javax.swing.text.View):V
 - viewToModel(F,F,java.awt.Shape,javax.swing.text.Position$Bias[]):I
-*f:com.intellij.collaboration.ui.html.ResizingHtmlImageViewKt
 *f:com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 - com.intellij.collaboration.ui.icon.IconsProvider
 - *sf:Companion:com.intellij.collaboration.ui.icon.AsyncImageIconsProvider$Companion
@@ -2005,7 +2100,6 @@ com.intellij.collaboration.ui.codereview.user.CodeReviewUser
 *f:com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout$Companion
 - f:constant(java.lang.Integer,java.lang.Integer):com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 - bs:constant$default(com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout$Companion,java.lang.Integer,java.lang.Integer,I,java.lang.Object):com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
-*f:com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayoutKt
 *f:com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder
 - *sf:Companion:com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder$Companion
 - sf:REVIEW_BRANCH_CHECKOUT_FAILED:java.lang.String
@@ -2319,7 +2413,6 @@ f:com.intellij.collaboration.util.ComputedResultKt
 f:com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 - sf:INSTANCE:com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 - f:shift(java.lang.Iterable,java.lang.Iterable):java.util.List
-f:com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifterKt
 f:com.intellij.collaboration.util.HashingUtil
 - sf:INSTANCE:com.intellij.collaboration.util.HashingUtil
 - f:mappingStrategy(kotlin.jvm.functions.Function1,com.intellij.util.containers.HashingStrategy):com.intellij.util.containers.HashingStrategy
@@ -2374,7 +2467,6 @@ f:com.intellij.collaboration.util.ResultUtil
 - sf:INSTANCE:com.intellij.collaboration.util.ResultUtil
 - f:processErrorAndGet(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
 - f:runCatchingUser-IoAF18A(kotlin.jvm.functions.Function0):java.lang.Object
-f:com.intellij.collaboration.util.ServiceUtilKt
 f:com.intellij.collaboration.util.SingleCoroutineLauncher
 - <init>(kotlinx.coroutines.CoroutineScope):V
 - f:getBusy():kotlinx.coroutines.flow.StateFlow

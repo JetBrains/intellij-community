@@ -242,7 +242,7 @@ object TimelineDiffComponentFactory {
                            filePath: @NlsSafe String,
                            fileNameClickListener: Flow<ActionListener?>,
                            diffComponent: JComponent): JComponent {
-    return ClippingRoundedPanel(8, CodeReviewCommentUIUtil.COMMENT_BUBBLE_BORDER_COLOR).apply {
+    return ClippingRoundedPanel(8, CodeReviewCommentUIUtil.COMMENT_BUBBLE_BORDER_COLOR, ListLayout.vertical()).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground

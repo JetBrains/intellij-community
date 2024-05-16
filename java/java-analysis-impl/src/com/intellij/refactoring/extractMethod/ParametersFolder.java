@@ -179,8 +179,11 @@ public class ParametersFolder {
 
     List<PsiExpression> expressions = null;
     Boolean arrayAccess = null;
-    for (PsiReference reference : ReferencesSearch.search(var, scope)) {
-      PsiElement expression = reference.getElement();
+    List<PsiElement> refExpressions = ReferencesSearch.search(var, scope).findAll().stream()
+      .map(ref -> ref.getElement())
+      .sorted(Comparator.comparingInt(element -> element.getTextRange().getStartOffset()))
+      .toList();
+    for (PsiElement expression : refExpressions) {
       if (expressions == null) {
         expressions = new ArrayList<>();
         while (expression instanceof PsiExpression) {

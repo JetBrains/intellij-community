@@ -11,8 +11,12 @@ import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypedDictType
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Provides completion variants for keys of dict literals marked as TypedDict
@@ -45,20 +49,11 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
   private fun addCompletionToCallExpression(originalElement: PsiElement,
                                             possibleSequenceExpr: PySequenceExpression,
                                             result: CompletionResultSet) {
-    val callExpression = PsiTreeUtil.getParentOfType(originalElement, PyCallExpression::class.java)
-    if (callExpression != null) {
-      val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
-      val callType = typeEvalContext.getType(callExpression.callee ?: return)
-      if (callType !is PyCallableType) return
-
-      val argumentIndex = PyPsiUtils.findArgumentIndex(callExpression, possibleSequenceExpr)
-      if (argumentIndex < 0) return
-      val params = callType.getParameters(typeEvalContext) ?: return
-      if (params.size <= argumentIndex) return
-      val expectedType = params[argumentIndex].getType(typeEvalContext)
-      val actualType = typeEvalContext.getType(possibleSequenceExpr)
-
-      addCompletionForTypedDictKeys(expectedType, actualType, result, getForcedQuote(possibleSequenceExpr, originalElement))
+    val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
+    val actualType = typeEvalContext.getType(possibleSequenceExpr)
+    val quote = getForcedQuote(possibleSequenceExpr, originalElement)
+    PyCallExpressionHelper.getMappedParameters(possibleSequenceExpr, PyResolveContext.defaultContext(typeEvalContext)).forEach {
+      addCompletionForTypedDictKeys(it.getType(typeEvalContext), actualType, result, quote)
     }
   }
 

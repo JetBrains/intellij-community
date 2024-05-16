@@ -15,6 +15,7 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.platform.lvcs.impl"/>
   </dependencies>
 
   <content>
@@ -109,6 +110,10 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ift.short.onboarding.lesson"
+                 description="Use short onborading lesson followed after UI overview"
+                 defaultValue="FALSE"
+                 restartRequired="true"/>
     <registryKey key="ift.help.links"
                  description="Turn on IFT Help and Resources section"
                  defaultValue="TRUE"

@@ -177,7 +177,8 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         PsiExpression operand = cast.getOperand();
         if (operand == null) return;
         PsiType castType = cast.getCastType().getType();
-        if (castType instanceof PsiPrimitiveType) return;
+        if (castType instanceof PsiPrimitiveType &&
+            !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, operand)) return;
         if (!variable.getType().equals(castType)) return;
         PsiType operandType = operand.getType();
         if (operandType == null || castType.isAssignableFrom(operandType)) return;
@@ -307,7 +308,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         typeElement = instanceOfType;
       }
       PsiIfStatement psiIfStatement = PsiTreeUtil.getParentOfType(instanceOf, PsiIfStatement.class);
-      if (psiIfStatement == null) return;
+      if (psiIfStatement == null || psiIfStatement.getParent() == null) return;
       var visitor = new JavaRecursiveElementVisitor() {
         final List<PsiTypeCastExpression> myCasts = new ArrayList<>();
 
@@ -325,7 +326,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         }
       };
 
-      psiIfStatement.accept(visitor);
+      psiIfStatement.getParent().accept(visitor);
       List<PsiTypeCastExpression> casts = visitor.myCasts;
       if (casts.isEmpty()) return;
 
@@ -431,7 +432,8 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
     PsiExpression operand = expression.getOperand();
     if (operand == null) return null;
     PsiType castType = castTypeElement.getType();
-    if (castType instanceof PsiPrimitiveType) return null;
+    if (castType instanceof PsiPrimitiveType &&
+        !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, operand)) return null;
     PsiType operandType = operand.getType();
     if (operandType == null || castType.isAssignableFrom(operandType)) return null;
     PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(expression, null);

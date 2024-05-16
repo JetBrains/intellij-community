@@ -32,12 +32,15 @@ import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
 import com.jetbrains.performancePlugin.commands.takeFullScreenshot
 import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
+import com.jetbrains.performancePlugin.events.StopProfilerEvent
 import com.jetbrains.performancePlugin.jmxDriver.InvokerService
+import com.jetbrains.performancePlugin.profilers.Profiler.Companion.getCurrentProfilerHandler
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
@@ -46,6 +49,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
+import java.net.ConnectException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -88,6 +92,25 @@ private object ProjectLoadedService {
   }
 }
 
+private fun subscribeToStopProfile() {
+  if (ApplicationManagerEx.isInIntegrationTest()) {
+    try {
+      EventsBus.subscribe("ProfileStopSubscriber") { event: StopProfilerEvent ->
+        try {
+          getCurrentProfilerHandler().stopProfiling(event.data)
+        }
+        catch (t: Throwable) {
+          LOG.info("Error stop profiling", t)
+        }
+      }
+    }
+    catch (connectException: ConnectException) {
+      // Some integration tests don't start event bus server. e.g com.jetbrains.rdct.cwm.distributed.connectionTypes.LocalRelayTest
+      LOG.info("Subscription to stop profiling failed", connectException)
+    }
+  }
+}
+
 private fun runOnProjectInit(project: Project) {
   if (System.getProperty("ide.performance.screenshot") != null) {
     (ProjectLoadedService.registerScreenshotTaking(System.getProperty("ide.performance.screenshot"),
@@ -106,6 +129,9 @@ private fun runOnProjectInit(project: Project) {
 
   LOG.info("Start Execution")
   PerformanceTestSpan.startSpan()
+
+  subscribeToStopProfile()
+
   val profilerSettings = initializeProfilerSettingsForIndexing()
   if (profilerSettings != null) {
     try {
@@ -187,7 +213,6 @@ class ProjectLoaded : ApplicationInitializedListener {
                                          { PerformanceTestSpan.getContext() },
                                          { takeFullScreenshot(it) })
     }
-
     if (ApplicationManagerEx.getApplicationEx().isLightEditMode) {
       LightEditService.getInstance().editorManager.addListener(object : LightEditorListener {
         override fun afterSelect(editorInfo: LightEditorInfo?) {

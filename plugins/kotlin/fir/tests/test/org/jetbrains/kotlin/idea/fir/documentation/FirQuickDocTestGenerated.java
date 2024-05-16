@@ -378,6 +378,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/Tailrec.kt");
     }
 
+    @TestMetadata("TailrecFunction.kt")
+    public void testTailrecFunction() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/TailrecFunction.kt");
+    }
+
     @TestMetadata("TailrecName.kt")
     public void testTailrecName() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/TailrecName.kt");

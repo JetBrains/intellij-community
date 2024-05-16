@@ -13,7 +13,6 @@ public final class ServiceCall extends RemoteCall {
 
   private final Ref projectRef;
   private final String serviceInterface;
-  private final Boolean isControllerSession;
 
   public ServiceCall(int sessionId,
                      String timedSpan,
@@ -25,12 +24,10 @@ public final class ServiceCall extends RemoteCall {
                      Object[] args,
                      @Nullable Ref projectRef,
                      @Nullable String serviceInterface,
-                     RdTarget rdTarget,
-                     Boolean isControllerSession) {
+                     RdTarget rdTarget) {
     super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, methodName, rdTarget, args);
     this.projectRef = projectRef;
     this.serviceInterface = serviceInterface;
-    this.isControllerSession = isControllerSession;
   }
 
   public Ref getProjectRef() {
@@ -39,10 +36,6 @@ public final class ServiceCall extends RemoteCall {
 
   public @Nullable String getServiceInterface() {
     return serviceInterface;
-  }
-
-  public Boolean isControllerSession() {
-    return isControllerSession;
   }
 
   @Override

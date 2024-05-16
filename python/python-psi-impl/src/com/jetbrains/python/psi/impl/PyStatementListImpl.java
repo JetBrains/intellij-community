@@ -5,22 +5,25 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
-public class PyStatementListImpl extends PyElementImpl implements PyStatementList {
-  public PyStatementListImpl(ASTNode astNode) {
-    super(astNode);
+public class PyStatementListImpl extends PyLazyParseablePsiElement implements PyStatementList {
+
+  public PyStatementListImpl(@NotNull IElementType type, @Nullable CharSequence buffer) {
+    super(type, buffer);
   }
 
-  @Override
-  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
-    pyVisitor.visitPyStatementList(this);
+  public PyStatementListImpl(@Nullable CharSequence buffer) {
+    super(PyElementTypes.STATEMENT_LIST, buffer);
   }
 
   @Override
@@ -29,7 +32,7 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
   }
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     if (first.getPsi() instanceof PyStatement && getStatements().length == 1) {
       ASTNode treePrev = getNode().getTreePrev();
       if (treePrev != null && treePrev.getElementType() == TokenType.WHITE_SPACE && !treePrev.textContains('\n')) {
@@ -48,5 +51,10 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
       return;
     }
     super.deleteChildInternal(child);
+  }
+
+  @Override
+  public String toString() {
+    return "PyStatementList";
   }
 }

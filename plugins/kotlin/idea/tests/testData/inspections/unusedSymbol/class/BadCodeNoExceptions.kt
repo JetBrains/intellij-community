@@ -1,6 +1,6 @@
 // Closing brace is intentionally missed
-val id = array("kotlin.FlexibleType"
+val idZ803 = array("kotlin.FlexibleType"
 
-private class Some() {
-    override fun foo() = 1
+private class SomeZ803() {
+    override fun fooZ803() = 1
 }

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
@@ -31,34 +32,19 @@ import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.INTRODUCE_PARAMETER
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.IntroduceParameterDescriptor
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinInplaceParameterIntroducerBase
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHelper
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.selectNewParameterContext
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.psiUtil.getValueParameters
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
@@ -69,7 +55,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     context(KtAnalysisSession)
     private fun findInternalUsagesOfParametersAndReceiver(
         targetParent: KtNamedDeclaration
-    ): MultiMap<KtElement, KtElement>? {
+    ): MultiMap<KtElement, KtElement> {
         val usages = MultiMap<KtElement, KtElement>()
 
         targetParent.getValueParameters()
@@ -125,30 +111,13 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     }
 
     operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
-        val physicalExpression = expression.substringContextOrThis
-        if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
-            showErrorHintByKey(project, editor, "cannot.refactor.no.expression", INTRODUCE_PARAMETER)
-            return
+        val expressionTypeEvaluator: KtAnalysisSession.() -> KtType? = {
+            val physicalExpression = expression.substringContextOrThis
+            getExpressionType(physicalExpression, expression)
         }
-
-        var message: String? = null
-        val suggestedNames = SmartList<String>()
-        val descriptorToType = analyzeInModalWindow(targetParent, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            val expressionType = getExpressionType(physicalExpression, expression)
-            message = if (expressionType == null) {
-                KotlinBundle.message("error.text.expression.has.no.type")
-            } else if (expressionType.isUnit || expressionType.isNothing) {
-                KotlinBundle.message(
-                    "cannot.introduce.parameter.of.0.type",
-                    expressionType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
-                )
-            } else null
-
-            if (message != null) {
-                return@analyzeInModalWindow null
-            }
-
-            require(expressionType != null)
+        val nameSuggester: KtAnalysisSession.(KtType) -> List<String> = { expressionType ->
+            val suggestedNames = SmartList<String>()
+            val physicalExpression = expression.substringContextOrThis
             val body = when (targetParent) {
                 is KtFunction -> targetParent.bodyExpression
                 is KtClass -> targetParent.body
@@ -166,8 +135,42 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
                 suggestedNames.addIfNotNull(physicalExpression.name)
             }
             suggestedNames.addAll(KotlinNameSuggester.suggestNamesByType(expressionType, targetParent, nameValidator, "p"))
+            suggestedNames
+        }
+        addParameter(project, editor, expression, targetParent, expressionTypeEvaluator, nameSuggester)
+    }
 
-            val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent) ?: return@analyzeInModalWindow null
+    /**
+     * run change signature refactoring, just like [invoke], but with configurable expression type, and name
+     * (to be reused in "create parameter from usage" where both type and name are fixed, and computed a bit differently from the regular "introduce parameter")
+     */
+    fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KtAnalysisSession.()->KtType?, nameSuggester:  KtAnalysisSession.(KtType)->List<String>) {
+        val physicalExpression = expression.substringContextOrThis
+        if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
+            showErrorHintByKey(project, editor, "cannot.refactor.no.expression", INTRODUCE_PARAMETER)
+            return
+        }
+
+        var message: String? = null
+        var suggestedNames: List<String> = listOf()
+        val descriptorToType = analyzeInModalWindow(targetParent, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            val expressionType = expressionTypeEvaluator.invoke(this)
+            message = if (expressionType == null) {
+                KotlinBundle.message("error.text.expression.has.no.type")
+            } else if (expressionType.isUnit || expressionType.isNothing) {
+                KotlinBundle.message(
+                    "cannot.introduce.parameter.of.0.type",
+                    expressionType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
+                )
+            } else null
+
+            if (message != null) {
+                return@analyzeInModalWindow null
+            }
+            require (expressionType!=null)
+            suggestedNames = nameSuggester.invoke(this, expressionType)
+
+            val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent)
 
             val forbiddenRanges = (targetParent as? KtClass)?.declarations?.asSequence()
                 ?.filter(::isObjectOrNonInnerClass)
@@ -268,7 +271,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         editor: Editor,
         physicalExpression: KtExpression,
         replacementType: KtType,
-        suggestedNames: SmartList<String>,
+        suggestedNames: List<String>,
         introduceParameterDescriptor: IntroduceParameterDescriptor<KtNamedDeclaration>
     ) {
         val types = analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
@@ -292,14 +295,14 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
     private fun introduceParameterDescriptor(
         originalExpression: KtExpression,
         targetParent: KtNamedDeclaration,
-        suggestedNames: SmartList<String>,
+        suggestedNames: List<String>,
         physicalExpression: KtExpression,
         replacementType: KtType,
         parametersUsages: MultiMap<KtElement, KtElement>,
         occurrencesToReplace: List<KotlinPsiRange>,
         psiFactory: KtPsiFactory
     ): IntroduceParameterDescriptor<KtNamedDeclaration> = helper.configure(
-        IntroduceParameterDescriptor<KtNamedDeclaration>(
+        IntroduceParameterDescriptor(
             originalRange = originalExpression.toRange(),
             callable = targetParent,
             callableDescriptor = targetParent,
@@ -377,13 +380,16 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
 }
 
 fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(onExit: (() -> Unit)? = null) {
-    val methodDescriptor = KotlinMethodDescriptor((callable as? KtClass)?.primaryConstructor ?: callable)
+    val superMethods = checkSuperMethods(callable, emptyList(), RefactoringBundle.message("to.refactor"))
+    val targetCallable = superMethods.filterIsInstance<KtNamedDeclaration>().firstOrNull() ?: return
+
+    val methodDescriptor = KotlinMethodDescriptor((targetCallable as? KtClass)?.primaryConstructor ?: targetCallable)
     val changeInfo = KotlinChangeInfo(methodDescriptor)
 
     val defaultValue = if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue
 
     if (!withDefaultValue) {
-        val parameters = callable.getValueParameters()
+        val parameters = targetCallable.getValueParameters()
         val withReceiver = methodDescriptor.receiver != null
         parametersToRemove
             .map {
@@ -398,18 +404,18 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(onExit: 
     }
 
     val parameterInfo = KotlinParameterInfo(
-        originalType = KotlinTypeInfo(newParameterTypeText, callable),
+        originalType = KotlinTypeInfo(newParameterTypeText, targetCallable),
         name = newParameterName,
         originalIndex = -1,
         valOrVar = valVar,
         defaultValueForCall = defaultValue,
         defaultValueAsDefaultParameter = withDefaultValue,
         defaultValue = if (withDefaultValue) defaultValue else null,
-        context = callable
+        context = targetCallable
     )
     changeInfo.addParameter(parameterInfo)
 
-    object : KotlinChangeSignatureProcessor(callable.project, changeInfo) {
+    object : KotlinChangeSignatureProcessor(targetCallable.project, changeInfo) {
         override fun performRefactoring(usages: Array<out UsageInfo?>) {
             super.performRefactoring(usages)
             occurrencesToReplace.forEach {

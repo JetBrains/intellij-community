@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import java.util.*
@@ -287,7 +289,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
     }
 }
 
-fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
+fun KtBlockExpression.addElement(element: KtElement, addNewLine: Boolean = false): KtElement {
     val rBrace = rBrace
     val newLine = KtPsiFactory(project).createNewLine()
     val anchor = if (rBrace == null) {
@@ -323,3 +325,6 @@ fun Project.checkConflictsInteractively(
 
     onAccept()
 }
+
+fun FqNameUnsafe.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
+fun FqName.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }

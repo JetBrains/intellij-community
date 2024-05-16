@@ -31,7 +31,5 @@ annotation class Remote(
   /**
    * Determine the semantics for the remote call in case of Remote IDE.
    */
-  val rdTarget: RdTarget = RdTarget.FRONTEND_FIRST,
-
-  val isControllerSession: Boolean = false
+  val rdTarget: RdTarget = RdTarget.DEFAULT,
 )

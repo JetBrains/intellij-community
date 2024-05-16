@@ -13,7 +13,7 @@ import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.toPromise
 
 /**
- * The command refreshes project (like click 'Load Gradle changes'
+ * The command refreshes project (like click 'Load Gradle changes')
  * Syntax: %refreshGradleProject
  */
 class RefreshGradleProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {

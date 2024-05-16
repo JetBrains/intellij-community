@@ -4,6 +4,7 @@ package com.jetbrains.python.defaultProjectAwareService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,8 @@ public final class PyDefaultProjectAwareServiceClasses<
     return module.getService(myModuleServiceClass);
   }
 
-  void copyFromAppToModule(@NotNull Module module) {
+  @ApiStatus.Internal
+  public void copyFromAppToModule(@NotNull Module module) {
     getModuleService(module).loadState(getAppService().getState());
   }
 

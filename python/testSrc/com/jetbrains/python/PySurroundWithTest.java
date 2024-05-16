@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyWithIfSurrounder;
@@ -58,7 +57,7 @@ public class PySurroundWithTest extends PyTestCase {
 
   private void doTestSurroundWithCustomFoldingRegion() {
     final Surrounder surrounder = ContainerUtil.find(CustomFoldingSurroundDescriptor.getAllSurrounders(),
-                                                     (Condition<Surrounder>)surrounder1 -> surrounder1.getTemplateDescription().contains("<editor-fold"));
+                                                     surrounder1 -> surrounder1.getTemplateDescription().contains("<editor-fold"));
     assertNotNull(surrounder);
     doTest(surrounder);
   }

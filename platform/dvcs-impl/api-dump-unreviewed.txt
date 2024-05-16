@@ -167,7 +167,6 @@ f:com.intellij.dvcs.branch.DvcsBranchSettings
 - f:getGroupingKeyIds():java.util.Set
 - f:setExcludedFavorites(com.intellij.dvcs.branch.BranchStorage):V
 - f:setFavorites(com.intellij.dvcs.branch.BranchStorage):V
-f:com.intellij.dvcs.branch.DvcsBranchSettingsKt
 f:com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.dvcs.branch.DvcsSyncSettings,com.intellij.dvcs.repo.AbstractRepositoryManager):V
 - f:initBranchSyncPolicyIfNotInitialized():V
@@ -252,7 +251,6 @@ a:com.intellij.dvcs.commit.AmendCommitService
 - <init>(com.intellij.openapi.project.Project):V
 - getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.concurrency.CancellablePromise
 - pf:getProject():com.intellij.openapi.project.Project
-f:com.intellij.dvcs.commit.AmendCommitServiceKt
 f:com.intellij.dvcs.commit.CommitAndPushExecutorKt
 - sf:getCommitAndPushActionName(com.intellij.vcs.commit.CommitWorkflowHandler):java.lang.String
 - sf:getCommitAndPushActionName(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String
@@ -272,7 +270,6 @@ f:com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer
 - f:isNotEmpty():Z
 - f:muteForCurrentProject():V
 - f:mutedForCurrentProject():Z
-f:com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizerKt
 a:com.intellij.dvcs.ignore.VcsIgnoredFilesHolderBase
 - com.intellij.dvcs.repo.VcsManagedFilesHolderBase
 - <init>(com.intellij.dvcs.repo.AbstractRepositoryManager):V
@@ -311,7 +308,6 @@ f:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase$Waiter
 - <init>(com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase):V
 - updateFinished(java.util.Collection,Z):V
 - f:waitFor():V
-f:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBaseKt
 com.intellij.dvcs.push.PrePushHandler
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getPresentableName():java.lang.String
@@ -790,7 +786,6 @@ f:com.intellij.dvcs.ui.RepositoryChangesBrowserNode$Companion
 - f:getColorManager(com.intellij.openapi.project.Project):com.intellij.vcs.log.ui.VcsLogColorManager
 - f:getRepositoryIcon(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager):com.intellij.util.ui.ColorIcon
 - bs:getRepositoryIcon$default(com.intellij.dvcs.ui.RepositoryChangesBrowserNode$Companion,com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager,I,java.lang.Object):com.intellij.util.ui.ColorIcon
-f:com.intellij.dvcs.ui.RepositoryChangesBrowserNodeKt
 f:com.intellij.dvcs.ui.RepositoryChangesGroupingPolicy
 - com.intellij.openapi.vcs.changes.ui.SimpleChangesGroupingPolicy
 - <init>(com.intellij.openapi.project.Project,javax.swing.tree.DefaultTreeModel):V
@@ -865,15 +860,3 @@ a:com.intellij.dvcs.util.LocalCommitCompareInfo
 - com.intellij.dvcs.util.CommitCompareInfo
 - <init>():V
 - a:copyChangesFromBranch(java.util.List,Z):V
-f:icons.DvcsImplIcons
-- sf:BranchLabel:javax.swing.Icon
-- sf:CherryPick:javax.swing.Icon
-- sf:CurrentBranchFavoriteLabel:javax.swing.Icon
-- sf:CurrentBranchLabel:javax.swing.Icon
-- sf:Incoming:javax.swing.Icon
-- sf:IncomingLayer:javax.swing.Icon
-- sf:IncomingOutgoing:javax.swing.Icon
-- sf:IncomingOutgoingLayer:javax.swing.Icon
-- sf:Outgoing:javax.swing.Icon
-- sf:OutgoingLayer:javax.swing.Icon
-- <init>():V

@@ -622,28 +622,23 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
                                                    @NotNull ThrowableComputable<T, E> computable) throws E {
     Application app = ApplicationManager.getApplication();
-    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
-      Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
-      boolean preventCaching = dumbModeAccessTypeStack.empty();
-      dumbModeAccessTypeStack.push(dumbModeAccessType);
-      Disposable disposable = Disposer.newDisposable();
-      if (app.isWriteIntentLockAcquired()) {
-        app.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
-                                                          () -> RecursionManager.dropCurrentMemoizationCache());
-      }
-      try {
-        return preventCaching
-               ? ourIgnoranceGuard.computePreventingRecursion(dumbModeAccessType, false, computable)
-               : computable.compute();
-      }
-      finally {
-        Disposer.dispose(disposable);
-        DumbModeAccessType type = dumbModeAccessTypeStack.pop();
-        assert dumbModeAccessType == type;
-      }
+    Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
+    boolean preventCaching = dumbModeAccessTypeStack.empty();
+    dumbModeAccessTypeStack.push(dumbModeAccessType);
+    Disposable disposable = Disposer.newDisposable();
+    if (app.isWriteIntentLockAcquired()) {
+      app.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
+                                                        () -> RecursionManager.dropCurrentMemoizationCache());
     }
-    else {
-      return computable.compute();
+    try {
+      return preventCaching
+             ? ourIgnoranceGuard.computePreventingRecursion(dumbModeAccessType, false, computable)
+             : computable.compute();
+    }
+    finally {
+      Disposer.dispose(disposable);
+      DumbModeAccessType type = dumbModeAccessTypeStack.pop();
+      assert dumbModeAccessType == type;
     }
   }
 

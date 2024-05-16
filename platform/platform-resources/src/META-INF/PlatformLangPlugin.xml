@@ -7,8 +7,6 @@
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.externalSystem"/>
 
-  <xi:include href="/META-INF/essential-modules.xml"/>
-
   <xi:include href="PlatformLangComponents.xml"/>
   <xi:include href="/idea/PlatformLangActionManager.xml"/>
   <xi:include href="/META-INF/coverage-common-plugin.xml">
@@ -81,9 +79,6 @@
     <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
     <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
-    <registryKey key="workspace.model.global.sdk.bridge" defaultValue="true"
-                 description="Enables new implementation for SDK which works via Workspace Model"
-                 restartRequired="true"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
 
@@ -149,12 +144,6 @@
   <xi:include href="/META-INF/diff-impl.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/VCS.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/lvcs.xml">
-    <xi:fallback/>
-  </xi:include>
 
   <xi:include href="/META-INF/ml.xml">
     <xi:fallback/>
@@ -171,9 +160,6 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/smRunner.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/smRunnerVcs.xml">
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/duplicates-analysis.xml">

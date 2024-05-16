@@ -33,10 +33,11 @@ import java.util.function.BiFunction;
 public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
 
-  private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
+  //TODO: this is a temporary solutions, should be done better in IJPL-148813
+  private static @NotNull String ourLangTag = System.getProperty("intellij.searchableOptions.i18n.locale", Locale.ENGLISH.toLanguageTag());
 
   private static final ConcurrentMap<String, ResourceBundle> bundles = CollectionFactory.createConcurrentWeakValueMap();
-
+  private boolean isInitializedBeforeL10Plugin;
   /**
    * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
    * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
@@ -46,6 +47,7 @@ public class DynamicBundle extends AbstractBundle {
    */
   public DynamicBundle(@NotNull Class<?> bundleClass, @NotNull String pathToBundle) {
     super(bundleClass, pathToBundle);
+    isInitializedBeforeL10Plugin = !LocalizationUtil.INSTANCE.isL10nPluginInitialized();
   }
 
   /**
@@ -59,6 +61,7 @@ public class DynamicBundle extends AbstractBundle {
   @Obsolete
   protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
+    isInitializedBeforeL10Plugin = !LocalizationUtil.INSTANCE.isL10nPluginInitialized();
   }
 
   // see BundleUtil
@@ -239,6 +242,16 @@ public class DynamicBundle extends AbstractBundle {
     }
   }
 
+  @Override
+  @ApiStatus.Internal
+  protected ResourceBundle getBundle(boolean isDefault) {
+    if (!isDefault && LocalizationUtil.INSTANCE.isL10nPluginInitialized() && isInitializedBeforeL10Plugin) {
+      isInitializedBeforeL10Plugin = false;
+      return null;
+    }
+    return super.getBundle(isDefault);
+  }
+
   /**
    * @deprecated use {@link #getResourceBundle(ClassLoader, String)}
    */
@@ -339,6 +352,13 @@ public class DynamicBundle extends AbstractBundle {
   public static void loadLocale(@Nullable LanguageBundleEP langBundle) {
     if (langBundle != null) {
       ourLangTag = langBundle.locale;
+      ourCache.clear();
+      return;
+    }
+    // TODO: this is a temporary solutions, should be done better in IJPL-148813
+    String i18Locale = System.getProperty("intellij.searchableOptions.i18n.locale", Locale.ENGLISH.toLanguageTag());
+    if (!Locale.ENGLISH.toLanguageTag().equals(i18Locale)) {
+      ourLangTag = i18Locale;
       ourCache.clear();
     }
   }

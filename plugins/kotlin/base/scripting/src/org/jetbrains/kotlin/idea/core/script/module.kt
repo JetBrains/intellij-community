@@ -76,7 +76,7 @@ private fun getDependenciesFiles(scriptFile: VirtualFile, project: Project): Dep
     val sdk = dependenciesProvider.getScriptSdk(scriptFile)?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
     val dependenciesClassFiles = toVfsRoots(wrapper.dependenciesClassPath)
-    val dependenciesSourceFiles = toVfsRoots(wrapper.dependenciesSources)
+    val dependenciesSourceFiles = emptyList<VirtualFile>() // Temporary
 
     return DependenciesFiles(dependenciesClassFiles, dependenciesSourceFiles, sdk)
 }

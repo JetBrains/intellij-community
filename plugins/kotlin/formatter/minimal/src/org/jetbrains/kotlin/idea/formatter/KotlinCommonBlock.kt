@@ -1067,7 +1067,9 @@ private val INDENT_RULES = arrayOf(
 
     strategy("Block in when entry")
         .within(WHEN_ENTRY)
-        .notForType(BLOCK, WHEN_CONDITION_EXPRESSION, WHEN_CONDITION_IN_RANGE, WHEN_CONDITION_IS_PATTERN, ELSE_KEYWORD, ARROW)
+        .notForType(BLOCK, WHEN_CONDITION_EXPRESSION, WHEN_CONDITION_IN_RANGE, WHEN_CONDITION_IS_PATTERN, ELSE_KEYWORD)
+        // don't add an indent when the condition is missing
+        .forElement { !(it.elementType == ARROW && it.treeParent.startOffset == it.startOffset) }
         .set(Indent.getNormalIndent()),
 
     strategy("Parameter list")

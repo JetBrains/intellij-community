@@ -1,25 +1,25 @@
 package companionObjectUsedInJava
 
-class A {
+class AX826 {
     companion object {
         @JvmField val CONST = 42
     }
 }
 
-class B {
+class BX826 {
     companion object {
         @JvmStatic fun foo() {
         }
     }
 }
 
-class C {
+class CX826 {
     companion object Named {
         @JvmField val CONST = 42
     }
 }
 
-class D {
+class DX826 {
     companion object Named {
         @JvmStatic fun foo() {
         }

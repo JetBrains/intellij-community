@@ -50,6 +50,7 @@ class JKPrefixExpression(
     override val expressionType: JKType? = null,
 ) : JKUnaryExpression() {
     override var expression by child(expression)
+
     override fun accept(visitor: JKVisitor) = visitor.visitPrefixExpression(this)
 }
 
@@ -59,6 +60,7 @@ class JKPostfixExpression(
     override val expressionType: JKType? = null
 ) : JKUnaryExpression() {
     override var expression by child(expression)
+
     override fun accept(visitor: JKVisitor) = visitor.visitPostfixExpression(this)
 }
 
@@ -83,7 +85,7 @@ class JKArrayAccessExpression(
 }
 
 /**
- * @param shouldBePreserved - parentheses came from original Java code and should be preserved
+ * @param shouldBePreserved - parentheses came from the original Java code and should be preserved
  * (don't run "Remove unnecessary parentheses" inspection on them)
  */
 class JKParenthesizedExpression(
@@ -160,6 +162,9 @@ class JKSuperExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitSuperExpression(this)
 }
 
+/**
+ * @see JKIfElseStatement
+ */
 class JKIfElseExpression(
     condition: JKExpression,
     thenBranch: JKExpression,
@@ -413,6 +418,7 @@ class JKJavaAssignmentExpression(
 ) : JKExpression() {
     var field by child(field)
     var expression by child(expression)
+
     override fun accept(visitor: JKVisitor) = visitor.visitJavaAssignmentExpression(this)
 }
 

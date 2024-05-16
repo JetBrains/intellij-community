@@ -11,10 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
-import java.awt.AWTEvent
-import java.awt.BorderLayout
-import java.awt.GraphicsEnvironment
-import java.awt.Point
+import java.awt.*
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLayer

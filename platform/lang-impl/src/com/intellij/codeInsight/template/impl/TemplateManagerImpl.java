@@ -575,8 +575,8 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       }
     }
 
-    // if we have, for example, a Ruby fragment in RHTML selected with its exact bounds, the file language and the base
-    // language will be ERb, so we won't match HTML templates for it. but they're actually valid
+    // if we have, for example, a Ruby fragment in ERB selected with its exact bounds, the file language and the base
+    // language will be ERB, so we won't match HTML templates for it. but they're actually valid
     Language languageAtOffset = PsiUtilCore.getLanguageAtOffset(file, templateActionContext.getStartOffset());
     if (languageAtOffset != file.getLanguage() && languageAtOffset != baseLanguage) {
       PsiFile basePsi = file.getViewProvider().getPsi(languageAtOffset);

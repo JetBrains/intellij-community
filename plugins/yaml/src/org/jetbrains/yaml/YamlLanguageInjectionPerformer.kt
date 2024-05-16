@@ -30,7 +30,7 @@ class YamlLanguageInjectionPerformer : LanguageInjectionPerformer {
 
 }
 
-fun getYamlLiteralRanges(context: PsiElement) = 
+fun getYamlLiteralRanges(context: PsiElement) =
   (context as? YAMLScalarImpl)?.contentRanges ?: listOf(ElementManipulators.getValueTextRange(context))
 
 fun injectIntoYamlMultiRanges(registrar: MultiHostRegistrar,

@@ -1,21 +1,21 @@
 {
   "python": [
     {
-      "version": "3.12.2",
+      "version": "3.12.3",
       "product": "CPython",
       "sources": [
         {
-          "url": "https://www.python.org/ftp/python/3.12.2/Python-3.12.2.tar.xz",
-          "size": 20591308,
-          "sha256": "be28112dac813d2053545c14bf13a16401a21877f1a69eb6ea5d84c4a0f3d870",
-          "fileName": "Python-3.12.2.tar.xz",
+          "url": "https://www.python.org/ftp/python/3.12.3/Python-3.12.3.tar.xz",
+          "size": 20625068,
+          "sha256": "56bfef1fdfc1221ce6720e43a661e3eb41785dd914ce99698d8c7896af4bdaa1",
+          "fileName": "Python-3.12.3.tar.xz",
           "type": "COMPRESSED"
         },
         {
-          "url": "https://www.python.org/ftp/python/3.12.2/Python-3.12.2.tgz",
-          "size": 27116462,
-          "sha256": "a7c4f6a9dc423d8c328003254ab0c9338b83037bd787d680826a5bf84308116e",
-          "fileName": "Python-3.12.2.tgz",
+          "url": "https://www.python.org/ftp/python/3.12.3/Python-3.12.3.tgz",
+          "size": 27159482,
+          "sha256": "a6b9459f45a6ebbbc1af44f5762623fa355a0c87208ed417628b379d762dddb0",
+          "fileName": "Python-3.12.3.tgz",
           "type": "COMPRESSED"
         }
       ],
@@ -25,10 +25,10 @@
           "cpuArch": "X86_64",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.12.2/python-3.12.2-amd64.exe",
-              "size": 26667456,
-              "sha256": "b9314802f9efbf0f20a8e2cb4cacc4d5cfb0110dac2818d94e770e1ba5137c65",
-              "fileName": "python-3.12.2-amd64.exe",
+              "url": "https://www.python.org/ftp/python/3.12.3/python-3.12.3-amd64.exe",
+              "size": 26712328,
+              "sha256": "edfc6c84dc47eebd4fae9167e96ff5d9c27f8abaa779ee1deab9c3d964d0de3c",
+              "fileName": "python-3.12.3-amd64.exe",
               "type": "MICROSOFT_WINDOWS_EXECUTABLE"
             }
           ]
@@ -38,10 +38,10 @@
           "cpuArch": "X86",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.12.2/python-3.12.2.exe",
-              "size": 25320328,
-              "sha256": "f10f43cdcaf4b788d98bcb072f08aa43330502b25513a8fdffb6d77263cbab8e",
-              "fileName": "python-3.12.2.exe",
+              "url": "https://www.python.org/ftp/python/3.12.3/python-3.12.3.exe",
+              "size": 25408176,
+              "sha256": "a9f37c55f9922d00ef25af40d5017e86c2d98abd7d599307bccf0f2b3d055983",
+              "fileName": "python-3.12.3.exe",
               "type": "MICROSOFT_WINDOWS_EXECUTABLE"
             }
           ]
@@ -51,10 +51,10 @@
           "cpuArch": "ARM64",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.12.2/python-3.12.2-arm64.exe",
-              "size": 25882872,
-              "sha256": "3c1876607a70ca4b3f2db13f79392ffc773ed45e6cc0f12d49adfd5370c1cb6b",
-              "fileName": "python-3.12.2-arm64.exe",
+              "url": "https://www.python.org/ftp/python/3.12.3/python-3.12.3-arm64.exe",
+              "size": 25940336,
+              "sha256": "4399c3ccde91c703a368b6d4463af8ed24ce08e694485bed6eff180373b0dff1",
+              "fileName": "python-3.12.3-arm64.exe",
               "type": "MICROSOFT_WINDOWS_EXECUTABLE"
             }
           ]
@@ -63,33 +63,33 @@
           "os": "macOS",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.12.2/python-3.12.2-macos11.pkg",
-              "size": 45586819,
-              "sha256": "af7284515fc601c878aadbb9ded6a031a2309d3d52c1c1d5443c4e5567d500a4",
-              "fileName": "python-3.12.2-macos11.pkg",
+              "url": "https://www.python.org/ftp/python/3.12.3/python-3.12.3-macos11.pkg",
+              "size": 45672323,
+              "sha256": "70a701542ff297760ac5e20f81d0e610aaaa1aba016e411788aa80029e571c5e",
+              "fileName": "python-3.12.3-macos11.pkg",
               "type": "APPLE_SOFTWARE_PACKAGE"
             }
           ]
         }
       ],
-      "title": "Python 3.12.2"
+      "title": "Python 3.12.3"
     },
     {
-      "version": "3.11.8",
+      "version": "3.11.9",
       "product": "CPython",
       "sources": [
         {
-          "url": "https://www.python.org/ftp/python/3.11.8/Python-3.11.8.tar.xz",
-          "size": 20041256,
-          "sha256": "9e06008c8901924395bc1da303eac567a729ae012baa182ab39269f650383bb3",
-          "fileName": "Python-3.11.8.tar.xz",
+          "url": "https://www.python.org/ftp/python/3.11.9/Python-3.11.9.tar.xz",
+          "size": 20175816,
+          "sha256": "9b1e896523fc510691126c864406d9360a3d1e986acbda59cda57b5abda45b87",
+          "fileName": "Python-3.11.9.tar.xz",
           "type": "COMPRESSED"
         },
         {
-          "url": "https://www.python.org/ftp/python/3.11.8/Python-3.11.8.tgz",
-          "size": 26477136,
-          "sha256": "d3019a613b9e8761d260d9ebe3bd4df63976de30464e5c0189566e1ae3f61889",
-          "fileName": "Python-3.11.8.tgz",
+          "url": "https://www.python.org/ftp/python/3.11.9/Python-3.11.9.tgz",
+          "size": 26521757,
+          "sha256": "e7de3240a8bc2b1e1ba5c81bf943f06861ff494b69fda990ce2722a504c6153d",
+          "fileName": "Python-3.11.9.tgz",
           "type": "COMPRESSED"
         }
       ],
@@ -99,10 +99,10 @@
           "cpuArch": "X86_64",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.11.8/python-3.11.8-amd64.exe",
-              "size": 26132480,
-              "sha256": "fd3428eb6c80901b877d036ffa2be127ccad9bbe036a43f00fc96a48b724f9c7",
-              "fileName": "python-3.11.8-amd64.exe",
+              "url": "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe",
+              "size": 26216840,
+              "sha256": "5ee42c4eee1e6b4464bb23722f90b45303f79442df63083f05322f1785f5fdde",
+              "fileName": "python-3.11.9-amd64.exe",
               "type": "MICROSOFT_WINDOWS_EXECUTABLE"
             }
           ]
@@ -112,10 +112,10 @@
           "cpuArch": "X86",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.11.8/python-3.11.8.exe",
-              "size": 24853336,
-              "sha256": "9184e270a087dec2a60cb3b1b3757e20318f8733c62732b68385837188298bdc",
-              "fileName": "python-3.11.8.exe",
+              "url": "https://www.python.org/ftp/python/3.11.9/python-3.11.9.exe",
+              "size": 24933192,
+              "sha256": "af19e5e2f03e715a822181f2cb7d4efef4eda13fa4a2db6da12e998e46f5cbf9",
+              "fileName": "python-3.11.9.exe",
               "type": "MICROSOFT_WINDOWS_EXECUTABLE"
             }
           ]
@@ -125,10 +125,10 @@
           "cpuArch": "ARM64",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.11.8/python-3.11.8-arm64.exe",
-              "size": 25410920,
-              "sha256": "70b050c446929e98dbeb947e30936c2cfba9105a633718880f15b829da9e819e",
-              "fileName": "python-3.11.8-arm64.exe",
+              "url": "https://www.python.org/ftp/python/3.11.9/python-3.11.9-arm64.exe",
+              "size": 25483288,
+              "sha256": "58f3a4e91b63d5a680ecc77c1db4565a1e3966e8656d4c8b89200d58c1f5c4f3",
+              "fileName": "python-3.11.9-arm64.exe",
               "type": "MICROSOFT_WINDOWS_EXECUTABLE"
             }
           ]
@@ -137,37 +137,37 @@
           "os": "macOS",
           "resources": [
             {
-              "url": "https://www.python.org/ftp/python/3.11.8/python-3.11.8-macos11.pkg",
-              "size": 44774987,
-              "sha256": "db3e2ba967acac293c0063591a1d3c4ba713fd89929447715cd56ce06b598200",
-              "fileName": "python-3.11.8-macos11.pkg",
+              "url": "https://www.python.org/ftp/python/3.11.9/python-3.11.9-macos11.pkg",
+              "size": 44860848,
+              "sha256": "b6cfdee2571ca56ee895043ca1e7110fb78a878cee3eb0c21accb2de34d24b55",
+              "fileName": "python-3.11.9-macos11.pkg",
               "type": "APPLE_SOFTWARE_PACKAGE"
             }
           ]
         }
       ],
-      "title": "Python 3.11.8"
+      "title": "Python 3.11.9"
     },
     {
-      "version": "3.10.13",
+      "version": "3.10.14",
       "product": "CPython",
       "sources": [
         {
-          "url": "https://www.python.org/ftp/python/3.10.13/Python-3.10.13.tar.xz",
-          "size": 19663088,
-          "sha256": "5c88848668640d3e152b35b4536ef1c23b2ca4bd2c957ef1ecbb053f571dd3f6",
-          "fileName": "Python-3.10.13.tar.xz",
+          "url": "https://www.python.org/ftp/python/3.10.14/Python-3.10.14.tar.xz",
+          "size": 19600188,
+          "sha256": "9c50481faa8c2832329ba0fc8868d0a606a680fc4f60ec48d26ce8e076751fda",
+          "fileName": "Python-3.10.14.tar.xz",
           "type": "COMPRESSED"
         },
         {
-          "url": "https://www.python.org/ftp/python/3.10.13/Python-3.10.13.tgz",
-          "size": 26111363,
-          "sha256": "698ec55234c1363bd813b460ed53b0f108877c7a133d48bde9a50a1eb57b7e65",
-          "fileName": "Python-3.10.13.tgz",
+          "url": "https://www.python.org/ftp/python/3.10.14/Python-3.10.14.tgz",
+          "size": 25927516,
+          "sha256": "cefea32d3be89c02436711c95a45c7f8e880105514b78680c14fe76f5709a0f6",
+          "fileName": "Python-3.10.14.tgz",
           "type": "COMPRESSED"
         }
       ],
-      "title": "Python 3.10.13"
+      "title": "Python 3.10.14"
     },
     {
       "version": "3.10.11",
@@ -215,25 +215,25 @@
       "title": "Python 3.10.11"
     },
     {
-      "version": "3.9.18",
+      "version": "3.9.19",
       "product": "CPython",
       "sources": [
         {
-          "url": "https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tar.xz",
-          "size": 19673928,
-          "sha256": "01597db0132c1cf7b331eff68ae09b5a235a3c3caa9c944c29cac7d1c4c4c00a",
-          "fileName": "Python-3.9.18.tar.xz",
+          "url": "https://www.python.org/ftp/python/3.9.19/Python-3.9.19.tar.xz",
+          "size": 19682840,
+          "sha256": "d4892cd1618f6458cb851208c030df1482779609d0f3939991bd38184f8c679e",
+          "fileName": "Python-3.9.19.tar.xz",
           "type": "COMPRESSED"
         },
         {
-          "url": "https://www.python.org/ftp/python/3.9.18/Python-3.9.18.tgz",
-          "size": 26294072,
-          "sha256": "504ce8cfd59addc04c22f590377c6be454ae7406cb1ebf6f5a350149225a9354",
-          "fileName": "Python-3.9.18.tgz",
+          "url": "https://www.python.org/ftp/python/3.9.19/Python-3.9.19.tgz",
+          "size": 26304238,
+          "sha256": "f5f9ec8088abca9e399c3b62fd8ef31dbd2e1472c0ccb35070d4d136821aaf71",
+          "fileName": "Python-3.9.19.tgz",
           "type": "COMPRESSED"
         }
       ],
-      "title": "Python 3.9.18"
+      "title": "Python 3.9.19"
     },
     {
       "version": "3.9.13",
@@ -281,25 +281,25 @@
       "title": "Python 3.9.13"
     },
     {
-      "version": "3.8.18",
+      "version": "3.8.19",
       "product": "CPython",
       "sources": [
         {
-          "url": "https://www.python.org/ftp/python/3.8.18/Python-3.8.18.tar.xz",
-          "size": 20696952,
-          "sha256": "3ffb71cd349a326ba7b2fadc7e7df86ba577dd9c4917e52a8401adbda7405e3f",
-          "fileName": "Python-3.8.18.tar.xz",
+          "url": "https://www.python.org/ftp/python/3.8.19/Python-3.8.19.tar.xz",
+          "size": 18975156,
+          "sha256": "d2807ac69f69b84fd46a0b93bbd02a4fa48d3e70f4b2835ff0f72a2885040076",
+          "fileName": "Python-3.8.19.tar.xz",
           "type": "COMPRESSED"
         },
         {
-          "url": "https://www.python.org/ftp/python/3.8.18/Python-3.8.18.tgz",
-          "size": 27337549,
-          "sha256": "7c5df68bab1be81a52dea0cc2e2705ea00553b67107a301188383d7b57320b16",
-          "fileName": "Python-3.8.18.tgz",
+          "url": "https://www.python.org/ftp/python/3.8.19/Python-3.8.19.tgz",
+          "size": 25276823,
+          "sha256": "c7fa55a36e5c7a19ec37d8f90f60a2197548908c9ac8b31e7c0dbffdd470eeac",
+          "fileName": "Python-3.8.19.tgz",
           "type": "COMPRESSED"
         }
       ],
-      "title": "Python 3.8.18"
+      "title": "Python 3.8.19"
     },
     {
       "version": "3.8.10",
@@ -384,6 +384,525 @@
     }
   ],
   "conda": [
+    {
+      "version": "24.3.0-0",
+      "product": "Miniconda",
+      "binaries": [
+        {
+          "os": "Windows",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py39_24.3.0-0-Windows-x86_64.exe",
+              "size": 80056744,
+              "sha256": "2789122e1d978a4bd74dfe4f8154fe82ab575ed3b4880a3295e1c9e2d0864c95",
+              "fileName": "Miniconda3-py39_24.3.0-0-Windows-x86_64.exe",
+              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+            }
+          ],
+          "tags": [
+            "PYTHON39"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py39_24.3.0-0-MacOSX-x86_64.sh",
+              "size": 105109793,
+              "sha256": "ed7cfddd313f3ec568f95abae38b337ebf339cddd378ee2f91c86e5da53374e5",
+              "fileName": "Miniconda3-py39_24.3.0-0-MacOSX-x86_64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON39"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py39_24.3.0-0-MacOSX-x86_64.pkg",
+              "size": 104431720,
+              "sha256": "bb8ea7817437a2dd65daf981a22bd2e4d7ec603ab71d37f40bfcf3378dbdc895",
+              "fileName": "Miniconda3-py39_24.3.0-0-MacOSX-x86_64.pkg",
+              "type": "APPLE_SOFTWARE_PACKAGE"
+            }
+          ],
+          "tags": [
+            "PYTHON39"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py39_24.3.0-0-MacOSX-arm64.sh",
+              "size": 102462725,
+              "sha256": "f091e4e2d7c2521d40c8c2e561c344a401cf9900e4efa122bf1c93fd6ae5cc9c",
+              "fileName": "Miniconda3-py39_24.3.0-0-MacOSX-arm64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON39"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py39_24.3.0-0-MacOSX-arm64.pkg",
+              "size": 101705090,
+              "sha256": "f8c364c227cb452d81b55abda67d9a89e86070efaf1f2b0973ce6e22e9a4fa6a",
+              "fileName": "Miniconda3-py39_24.3.0-0-MacOSX-arm64.pkg",
+              "type": "APPLE_SOFTWARE_PACKAGE"
+            }
+          ],
+          "tags": [
+            "PYTHON39"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py39_24.3.0-0-Linux-x86_64.sh",
+              "size": 131503805,
+              "sha256": "1c3d44e987dc56c7d8954419fa1a078be5ddbc293d8cb98b184a23f9a270faad",
+              "fileName": "Miniconda3-py39_24.3.0-0-Linux-x86_64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON39"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "OTHER",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py39_24.3.0-0-Linux-s390x.sh",
+              "size": 127779570,
+              "sha256": "1570e27adba2dcc24b182c21cd4e793ab5719aa5b1f7f8e29c16ec74d6d9a16f",
+              "fileName": "Miniconda3-py39_24.3.0-0-Linux-s390x.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON39"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py39_24.3.0-0-Linux-aarch64.sh",
+              "size": 125430036,
+              "sha256": "860f532a33501cf0eccc2677048e21db4a12151938d181821af3e5d30e2dc390",
+              "fileName": "Miniconda3-py39_24.3.0-0-Linux-aarch64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON39"
+          ]
+        },
+        {
+          "os": "Windows",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py312_24.3.0-0-Windows-x86_64.exe",
+              "size": 81274240,
+              "sha256": "21b56b75861573ec8ab146d555b20e1ed4462a06aa286d7e92a1cd31acc64dba",
+              "fileName": "Miniconda3-py312_24.3.0-0-Windows-x86_64.exe",
+              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+            }
+          ],
+          "tags": [
+            "PYTHON312"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py312_24.3.0-0-MacOSX-x86_64.sh",
+              "size": 107987235,
+              "sha256": "fd71a4bf03fbb21d4b4d25245f17bef6308dfec478e901a60594dfa02e4605eb",
+              "fileName": "Miniconda3-py312_24.3.0-0-MacOSX-x86_64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON312"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py312_24.3.0-0-MacOSX-x86_64.pkg",
+              "size": 107294031,
+              "sha256": "040fe2b7508587a9c55bf27e83cbf25de2639efa449d7b78e6d8a9e52c5074ed",
+              "fileName": "Miniconda3-py312_24.3.0-0-MacOSX-x86_64.pkg",
+              "type": "APPLE_SOFTWARE_PACKAGE"
+            }
+          ],
+          "tags": [
+            "PYTHON312"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py312_24.3.0-0-MacOSX-arm64.sh",
+              "size": 106927367,
+              "sha256": "72d4e9198a6884c0bd86cce2b4a3e8abb05415776e3b142c4b1de625bbaf4c50",
+              "fileName": "Miniconda3-py312_24.3.0-0-MacOSX-arm64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON312"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py312_24.3.0-0-MacOSX-arm64.pkg",
+              "size": 106154814,
+              "sha256": "1d7505562b59d28872a5d4066a0f44d1714e57f2a953138ed51883af4bde43c4",
+              "fileName": "Miniconda3-py312_24.3.0-0-MacOSX-arm64.pkg",
+              "type": "APPLE_SOFTWARE_PACKAGE"
+            }
+          ],
+          "tags": [
+            "PYTHON312"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py312_24.3.0-0-Linux-x86_64.sh",
+              "size": 143351488,
+              "sha256": "96a44849ff17e960eeb8877ecd9055246381c4d4f2d031263b63fa7e2e930af1",
+              "fileName": "Miniconda3-py312_24.3.0-0-Linux-x86_64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON312"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "OTHER",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py312_24.3.0-0-Linux-s390x.sh",
+              "size": 138838773,
+              "sha256": "b601cb8e3ea65a4ed1aecd96d4f3d14aca5b590b2e1ab0ec5c04c825f5c5e439",
+              "fileName": "Miniconda3-py312_24.3.0-0-Linux-s390x.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON312"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py312_24.3.0-0-Linux-aarch64.sh",
+              "size": 115630358,
+              "sha256": "05f70cbc89b6caf84e22db836f7696a16b617992eb23d6102acf7651eb132365",
+              "fileName": "Miniconda3-py312_24.3.0-0-Linux-aarch64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON312"
+          ]
+        },
+        {
+          "os": "Windows",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-Windows-x86_64.exe",
+              "size": 83663592,
+              "sha256": "de2e3f93137f8162b224abd2c3e545229ef7718c31922e816d686d8024d95e4b",
+              "fileName": "Miniconda3-py311_24.3.0-0-Windows-x86_64.exe",
+              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+            }
+          ],
+          "tags": [
+            "PYTHON311"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-MacOSX-x86_64.sh",
+              "size": 110035235,
+              "sha256": "fdd6294aaa0472f7ddeac89deacceec1469e76bd2a16ac11f37b4ab584fe5089",
+              "fileName": "Miniconda3-py311_24.3.0-0-MacOSX-x86_64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON311"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-MacOSX-x86_64.pkg",
+              "size": 109344963,
+              "sha256": "aeae2b1333d2ea44287c225a450119b4c47e3c9f252e3ca247ec167e3169ab9c",
+              "fileName": "Miniconda3-py311_24.3.0-0-MacOSX-x86_64.pkg",
+              "type": "APPLE_SOFTWARE_PACKAGE"
+            }
+          ],
+          "tags": [
+            "PYTHON311"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-MacOSX-arm64.sh",
+              "size": 107336967,
+              "sha256": "b7663626fedf8395d3fed78383b08060a13bd6747003bdb2a39220407f55cf65",
+              "fileName": "Miniconda3-py311_24.3.0-0-MacOSX-arm64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON311"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-MacOSX-arm64.pkg",
+              "size": 106568885,
+              "sha256": "dcb67032c52c02f689d98c40d0ba2e93a627f82c78e58b1e4bf54de8a55eae84",
+              "fileName": "Miniconda3-py311_24.3.0-0-MacOSX-arm64.pkg",
+              "type": "APPLE_SOFTWARE_PACKAGE"
+            }
+          ],
+          "tags": [
+            "PYTHON311"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-Linux-x86_64.sh",
+              "size": 141446848,
+              "sha256": "4da8dde69eca0d9bc31420349a204851bfa2a1c87aeb87fe0c05517797edaac4",
+              "fileName": "Miniconda3-py311_24.3.0-0-Linux-x86_64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON311"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "OTHER",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-Linux-s390x.sh",
+              "size": 137343733,
+              "sha256": "8e52dd1300c9462367d303a596a931e6ef8db422c7c79194efa6fdb152c92b61",
+              "fileName": "Miniconda3-py311_24.3.0-0-Linux-s390x.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON311"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-Linux-aarch64.sh",
+              "size": 117668118,
+              "sha256": "49082882752167cdea60e1aeedac7b73136bdfdd63b9bb3aca3c038901544458",
+              "fileName": "Miniconda3-py311_24.3.0-0-Linux-aarch64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON311"
+          ]
+        },
+        {
+          "os": "Windows",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-Windows-x86_64.exe",
+              "size": 79884560,
+              "sha256": "5c683a007e5383b1a566c15c25972b35f33bc2c9252333c82dbd94513173321e",
+              "fileName": "Miniconda3-py310_24.3.0-0-Windows-x86_64.exe",
+              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+            }
+          ],
+          "tags": [
+            "PYTHON310"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-MacOSX-x86_64.sh",
+              "size": 105806115,
+              "sha256": "094c5a94818caf41deba41411876c3cffa918efdf8ada40dc32bcc535d181c78",
+              "fileName": "Miniconda3-py310_24.3.0-0-MacOSX-x86_64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON310"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-MacOSX-x86_64.pkg",
+              "size": 105126220,
+              "sha256": "26a4ce2553d4443a8865b1cd9357e9a2d38faf599a0ff8eaeb0dc48a9b86ef47",
+              "fileName": "Miniconda3-py310_24.3.0-0-MacOSX-x86_64.pkg",
+              "type": "APPLE_SOFTWARE_PACKAGE"
+            }
+          ],
+          "tags": [
+            "PYTHON310"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-MacOSX-arm64.sh",
+              "size": 103097607,
+              "sha256": "ceae63e7c99b4ff33ddb1a9973956d829d4a00d39f1f7c6e2056e0e076059535",
+              "fileName": "Miniconda3-py310_24.3.0-0-MacOSX-arm64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON310"
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-MacOSX-arm64.pkg",
+              "size": 102331278,
+              "sha256": "9c1d03f42edd7777635a53762d2971113ac3d9f0da5aca92bd6a99e405c8439c",
+              "fileName": "Miniconda3-py310_24.3.0-0-MacOSX-arm64.pkg",
+              "type": "APPLE_SOFTWARE_PACKAGE"
+            }
+          ],
+          "tags": [
+            "PYTHON310"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-Linux-x86_64.sh",
+              "size": 134094528,
+              "sha256": "def595b1b182749df0974cddb5c8befe70664ace16403d7a7bf54467be5ea48b",
+              "fileName": "Miniconda3-py310_24.3.0-0-Linux-x86_64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON310"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "OTHER",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-Linux-s390x.sh",
+              "size": 130605812,
+              "sha256": "fb0f113b0ad2eb9a05b017f49d4a27960ff9ec3d8ec0b580b79efb8c84d15d8e",
+              "fileName": "Miniconda3-py310_24.3.0-0-Linux-s390x.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON310"
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://repo.anaconda.com/miniconda/Miniconda3-py310_24.3.0-0-Linux-aarch64.sh",
+              "size": 114166038,
+              "sha256": "cacbd0c4b829dae73ddbcee6b30674dc7aa20bf6dea720929fb01d4b6279f743",
+              "fileName": "Miniconda3-py310_24.3.0-0-Linux-aarch64.sh",
+              "type": "SHELL_SCRIPT"
+            }
+          ],
+          "tags": [
+            "PYTHON310"
+          ]
+        }
+      ],
+      "title": "Miniconda 24.3.0-0"
+    },
     {
       "version": "2024.02-1",
       "product": "Anaconda",

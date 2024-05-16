@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.evaluatesTo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -95,7 +95,7 @@ class ConvertTwoComparisonsToRangeCheckInspection :
         firstLess: KtExpression, firstGreater: KtExpression, firstStrict: Boolean,
         secondLess: KtExpression, secondGreater: KtExpression, secondStrict: Boolean
     ) = when {
-        firstGreater !is KtConstantExpression && firstGreater.evaluatesTo(secondLess) ->
+        firstGreater !is KtConstantExpression && firstGreater.isSimplifiableTo(secondLess) ->
             generateRangeExpressionData(
                 firstGreater,
                 min = firstLess,
@@ -103,7 +103,7 @@ class ConvertTwoComparisonsToRangeCheckInspection :
                 incrementMinByOne = firstStrict,
                 decrementMaxByOne = secondStrict
             )
-        firstLess !is KtConstantExpression && firstLess.evaluatesTo(secondGreater) ->
+        firstLess !is KtConstantExpression && firstLess.isSimplifiableTo(secondGreater) ->
             generateRangeExpressionData(
                 firstLess,
                 min = secondLess,

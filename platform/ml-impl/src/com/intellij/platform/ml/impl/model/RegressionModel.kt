@@ -2,9 +2,14 @@
 package com.intellij.platform.ml.impl.model
 
 import com.intellij.internal.ml.DecisionFunction
-import com.intellij.platform.ml.*
-import com.intellij.platform.ml.impl.FeatureSelector
-import com.intellij.platform.ml.impl.LevelTiers
+import com.intellij.platform.ml.LevelTiers
+import com.intellij.platform.ml.MLModel
+import com.intellij.platform.ml.PerTier
+import com.intellij.platform.ml.Tier
+import com.intellij.platform.ml.environment.Environment
+import com.intellij.platform.ml.feature.Feature
+import com.intellij.platform.ml.feature.FeatureDeclaration
+import com.intellij.platform.ml.feature.FeatureSelector
 import org.jetbrains.annotations.ApiStatus
 
 /**

@@ -32,12 +32,11 @@ import java.nio.file.Path
  */
 @RunWith(JUnit4::class)
 class KotlinBinaryRootToPackageIndexJrtTest : AbstractMultiModuleTest() {
+
     private val testDataPath = KotlinRoot.DIR.resolve("base/indices/tests/testData/kotlinBinaryRootToPackageIndex/jrt").toPath()
 
     lateinit var jrtPath: Path
     lateinit var jrtRoot: VirtualFile
-
-    override fun isFirPlugin(): Boolean = false
 
     override fun getTestDataDirectory(): File = testDataPath.toFile()
 

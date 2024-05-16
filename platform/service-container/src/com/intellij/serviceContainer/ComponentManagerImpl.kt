@@ -32,7 +32,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
@@ -235,7 +235,7 @@ abstract class ComponentManagerImpl(
   @JvmField
   internal var componentContainerIsReadonly: String? = null
 
-  override fun getCoroutineScope(): CoroutineScope {
+  final override fun getCoroutineScope(): CoroutineScope {
     if (parent?.parent == null) {
       return scopeHolder.containerScope
     }
@@ -929,7 +929,7 @@ abstract class ComponentManagerImpl(
     val pluginId = pluginDescriptor.pluginId
     try {
       @Suppress("UNCHECKED_CAST")
-      return instantiateClass(doLoadClass(className, pluginDescriptor) as Class<T>, pluginId)
+      return instantiateClass(doLoadClass(className, pluginDescriptor, checkCoreSubModules = true) as Class<T>, pluginId)
     }
     catch (e: Throwable) {
       when {
@@ -1367,7 +1367,7 @@ abstract class ComponentManagerImpl(
     // The parent scope should become canceled only when the container is disposed, or the plugin is unloaded.
     // Leaking the parent scope might lead to premature cancellation.
     // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
-    return intersectionScope.namedChildScope(pluginClass.name)
+    return intersectionScope.childScope(pluginClass.name)
   }
 
   @Internal // to run post-start-up activities - to not create scope for each class and do not keep it alive
@@ -1443,14 +1443,32 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   }
 }
 
-internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor): Class<*> {
+internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor, checkCoreSubModules: Boolean = false): Class<*> {
   // maybe null in unit tests
   val classLoader = pluginDescriptor.pluginClassLoader ?: ComponentManagerImpl::class.java.classLoader
   if (classLoader is PluginAwareClassLoader) {
     return classLoader.tryLoadingClass(name, true) ?: throw ClassNotFoundException("$name $classLoader")
   }
   else {
-    return classLoader.loadClass(name)
+    try {
+      return classLoader.loadClass(name)
+    }
+    catch (e: ClassNotFoundException) {
+      if (checkCoreSubModules && pluginDescriptor.pluginId == PluginManagerCore.CORE_ID && pluginDescriptor is IdeaPluginDescriptorImpl) {
+        for (module in pluginDescriptor.content.modules) {
+          val subDescriptor = module.requireDescriptor()
+          if (subDescriptor.packagePrefix == null && !module.name.startsWith("intellij.libraries.")) {
+            val pluginClassLoader = subDescriptor.classLoader as? PluginAwareClassLoader ?: continue
+            pluginClassLoader.loadClassInsideSelf(name)?.let {
+              assert(it.isAnnotationPresent(InternalIgnoreDependencyViolation::class.java))
+              return it
+            }
+          }
+        }
+      }
+
+      throw e
+    }
   }
 }
 
@@ -1596,6 +1614,9 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
   try {
     return action()
   }
+  catch (pce : ProcessCanceledException) {
+    throw pce
+  }
   catch (ce: CancellationException) {
     throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = ce)
     throw CeProcessCanceledException(ce)
@@ -1620,6 +1641,9 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(contextForInitializer, action)
+    }
+    catch (pce : ProcessCanceledException) {
+      throw pce
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)

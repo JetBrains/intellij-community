@@ -10,14 +10,38 @@ fun waitFor(
   errorMessage: String = "",
   condition: () -> Boolean
 ) {
+  waitFor(duration = duration, interval = interval, errorMessage = errorMessage, getter = condition, checker = { it })
+}
+
+fun <T> waitNotNull(
+  duration: Duration = 5.seconds,
+  interval: Duration = 1.seconds,
+  errorMessage: String = "",
+  getter: () -> T?
+): T {
+  return waitFor(duration = duration, interval = interval, errorMessage = errorMessage, getter = getter, checker = { it != null })!!
+}
+
+fun <T> waitFor(
+  duration: Duration = 5.seconds,
+  interval: Duration = 1.seconds,
+  errorMessage: String = "",
+  getter: () -> T,
+  checker: (T) -> Boolean
+): T {
   val endTime = System.currentTimeMillis() + duration.inWholeMilliseconds
   var now = System.currentTimeMillis()
-  while (now < endTime && condition().not()) {
+  var result = getter()
+  while (now < endTime && checker(result).not()) {
     Thread.sleep(interval.inWholeMilliseconds)
+    result = getter()
     now = System.currentTimeMillis()
   }
-  if (condition().not()) {
-    throw WaitForException(duration, errorMessage)
+  if (checker(result).not()) {
+    throw WaitForException(duration, errorMessage + if (result !is Boolean) " Actual: $result" else "")
+  }
+  else {
+    return result
   }
 }
 

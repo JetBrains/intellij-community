@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode
 
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
@@ -11,10 +12,10 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
 
 /**
@@ -37,7 +38,7 @@ val NOTEBOOK_EDITOR_MODE: Topic<NotebookEditorModeListener> = Topic.create("Note
 @FunctionalInterface
 interface NotebookEditorModeListener {
 
-  fun onModeChange(mode: NotebookEditorMode)
+  fun onModeChange(editor: Editor, mode: NotebookEditorMode)
 }
 
 class NotebookEditorModeListenerAdapter(private val editor: Editor) : NotebookEditorModeListener, CaretListener {
@@ -71,7 +72,7 @@ class NotebookEditorModeListenerAdapter(private val editor: Editor) : NotebookEd
     }
   }
 
-  override fun onModeChange(mode: NotebookEditorMode) {
+  override fun onModeChange(editor: Editor, mode: NotebookEditorMode) {
     val modeWasChanged = currentEditorMode != mode
 
     currentEditorMode = mode
@@ -104,9 +105,9 @@ class NotebookEditorModeListenerAdapter(private val editor: Editor) : NotebookEd
         NotebookEditorMode.COMMAND -> true
       })
       editor.contentComponent.enableInputMethods(when (mode) {
-        NotebookEditorMode.EDIT -> true
-        NotebookEditorMode.COMMAND -> false
-      })
+                                                   NotebookEditorMode.EDIT -> true
+                                                   NotebookEditorMode.COMMAND -> false
+                                                 })
     }
   }
 
@@ -121,28 +122,33 @@ class NotebookEditorModeListenerAdapter(private val editor: Editor) : NotebookEd
   }
 }
 
+private val key = Key<NotebookEditorMode>("Jupyter Notebook Editor Mode")
 
-@CalledInAny
-fun currentMode(): NotebookEditorMode = currentMode_
+val Editor.currentMode: NotebookEditorMode
+  get() {
+    return getEditor().getUserData(key) ?: NotebookEditorMode.COMMAND
+  }
+
+private fun Editor.getEditor(): Editor {
+  var editor = this
+  while (editor is EditorWindow) {
+    editor = editor.delegate
+  }
+  return editor
+}
 
 @RequiresEdt
-fun setMode(mode: NotebookEditorMode) {
+fun Editor.setMode(mode: NotebookEditorMode) {
   // Although LAB-50 is marked as closed, the checks still aren't added to classes written in Kotlin.
   ThreadingAssertions.assertEventDispatchThread()
 
-  val modeChanged = mode != currentMode_
-  currentMode_ = mode
+  val modeChanged = mode != currentMode
+  getEditor().putUserData(key, mode)
 
-  // may be call should be skipped if mode == currentMode_
   if (modeChanged) {
-    ApplicationManager.getApplication().messageBus.syncPublisher(NOTEBOOK_EDITOR_MODE).onModeChange(mode)
+    ApplicationManager.getApplication().messageBus.syncPublisher(NOTEBOOK_EDITOR_MODE).onModeChange(this, mode)
   }
 }
-
-@Volatile
-private var currentMode_: NotebookEditorMode = NotebookEditorMode.EDIT
-
-
 
 private val INVISIBLE_CARET = CaretVisualAttributes(
   Color(0, 0, 0, 0),

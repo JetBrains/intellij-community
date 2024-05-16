@@ -38,6 +38,7 @@ import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -55,7 +56,6 @@ import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
 import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
-import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
@@ -70,7 +70,10 @@ internal const val COMMON_SOURCES_DIR = "commonSrc"
 internal const val SCRIPT_SOURCES_DIR = "scripts"
 internal const val JVM_MODULE_NAME_START = "jvm"
 
-abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCase {
+abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
+                                          IgnorableTestCase,
+                                          ExpectedPluginModeProvider {
+
     private lateinit var testAppDirectory: File
     private lateinit var jvmSourcesOutputDirectory: File
     private lateinit var commonSourcesOutputDirectory: File
@@ -106,18 +109,18 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
             println("Test is skipped for K2 code")
             return
         }
-        if (isK2Plugin) {
-            IgnoreTests.runTestIfNotDisabledByFileDirective(
+
+        when (pluginMode) {
+            KotlinPluginMode.K2 -> IgnoreTests.runTestIfNotDisabledByFileDirective(
                 dataFile().toPath(),
                 getK2IgnoreDirective(),
                 directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
             ) {
                 super.runBare(testRunnable)
             }
-        } else {
-            super.runBare(testRunnable)
-        }
 
+            KotlinPluginMode.K1 -> super.runBare(testRunnable)
+        }
     }
 
     protected open fun getK2IgnoreDirective(): String = IgnoreTests.DIRECTIVES.IGNORE_K2
@@ -146,18 +149,20 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
             .setValue(originalDisableFallbackToOldEvaluator)
     }
 
-    protected open val isK2Plugin: Boolean get() = false
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     protected open val compileWithK2: Boolean get() = false
 
+    protected open val useInlineScopes: Boolean get() = false
+
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
 
         registerEvaluatorBackend()
 
         KotlinEvaluator.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
-        checkPluginIsCorrect(isK2Plugin)
         atDebuggerTearDown { restoreEvaluatorBackend() }
         atDebuggerTearDown { logPropagator = null }
         atDebuggerTearDown { logPropagator?.detach() }
@@ -227,7 +232,12 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
 
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, jvmTarget,
-            TestCompileConfiguration(lambdasGenerationScheme(), languageVersion, enabledLanguageFeatures)
+            TestCompileConfiguration(
+                lambdasGenerationScheme(),
+                languageVersion,
+                enabledLanguageFeatures,
+                useInlineScopes
+            )
         )
 
         compileLibrariesAndTestSources(preferences, compilerFacility)
@@ -290,7 +300,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
     }
 
     protected open fun getMainClassName(compilerFacility: DebuggerTestCompilerFacility): String {
-        if (!isK2Plugin) {
+        if (pluginMode == KotlinPluginMode.K1) {
             // Although the implementation below is frontend-agnostic, K1 tests seem to depend on resolution ordering.
             // Some evaluation tests fail if not all files are analyzed at this point.
             return compilerFacility.analyzeAndFindMainClass(sourcesKtFiles.jvmKtFiles)
@@ -523,6 +533,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
 
     protected fun getExpectedOutputFile(): File {
         val extensions = sequenceOf(
+            ".scopes.out".takeIf { useInlineScopes },
             ".k2.out".takeIf { compileWithK2 },
             ".indy.out".takeIf { lambdasGenerationScheme() == JvmClosureGenerationScheme.INDY },
             ".out",

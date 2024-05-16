@@ -1585,9 +1585,17 @@ public final class TreeUtil {
                                                                @NotNull Stream<? extends TreeVisitor> visitors,
                                                                @Nullable Consumer<? super List<TreePath>> consumer) {
     AsyncPromise<List<TreePath>> promise = new AsyncPromise<>();
+    return promiseVisitAll(tree, visitors, promise, visitor -> promiseMakeVisible(tree, visitor, promise), consumer);
+  }
+
+  private static Promise<List<TreePath>> promiseVisitAll(@NotNull JTree tree,
+                                                               @NotNull Stream<? extends TreeVisitor> visitors,
+                                                               @NotNull AsyncPromise<List<TreePath>> promise,
+                                                               @NotNull Function<? super TreeVisitor, Promise<TreePath>> visitAction,
+                                                               @Nullable Consumer<? super List<TreePath>> consumer) {
     List<Promise<TreePath>> promises = visitors
       .filter(Objects::nonNull)
-      .map(visitor -> promiseMakeVisible(tree, visitor, promise))
+      .map(visitAction)
       .collect(toList());
     Promises.collectResults(promises, true)
       .onError(promise::setError)
@@ -1951,6 +1959,14 @@ public final class TreeUtil {
     AsyncPromise<TreePath> promise = new AsyncPromise<>();
     EdtInvocationManager.invokeLaterIfNeeded(() -> promise.setResult(visitModel(model, visitor)));
     return promise;
+  }
+
+  @ApiStatus.Internal
+  public static Promise<List<TreePath>> promiseVisit(@NotNull JTree tree,
+                                                        @NotNull Stream<? extends TreeVisitor> visitors,
+                                                        @Nullable Consumer<? super List<TreePath>> consumer) {
+    AsyncPromise<List<TreePath>> promise = new AsyncPromise<>();
+    return promiseVisitAll(tree, visitors, promise, visitor -> promiseVisit(tree, visitor), consumer);
   }
 
   /**

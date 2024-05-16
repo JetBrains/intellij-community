@@ -1,4 +1,5 @@
 // PROBLEM: none
+// FIR_COMPARISON
 
 interface Foo
 interface Bar : Foo {

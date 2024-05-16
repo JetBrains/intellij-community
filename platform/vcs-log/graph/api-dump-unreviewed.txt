@@ -149,7 +149,6 @@ f:com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator$Companion
 f:com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGeneratorImpl
 - com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
 - <init>(com.intellij.vcs.log.graph.collapsing.CollapsedGraph,com.intellij.vcs.log.graph.collapsing.CollapsedGraph$Modification,I,I):V
-f:com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGeneratorKt
 c:com.intellij.vcs.log.graph.collapsing.EdgeStorage
 - sf:NULL_ID:I
 - <init>():V
@@ -395,7 +394,6 @@ f:com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl
 - getHeadNodeIndex():it.unimi.dsi.fastutil.ints.IntList
 - getLayoutIndex(I):I
 - getOneOfHeadNodeIndex(I):I
-f:com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImplKt
 f:com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl
 - com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 - sf:Companion:com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl$Companion
@@ -443,28 +441,29 @@ c:com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex
 c:com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl
 - com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 - com.intellij.vcs.log.graph.EdgePrintElement
+- sf:Companion:com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl$Companion
 - <init>(I,I,I,com.intellij.vcs.log.graph.EdgePrintElement$Type,com.intellij.vcs.log.graph.api.elements.GraphEdge,Z,com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager):V
-- s:convertToLineStyle(com.intellij.vcs.log.graph.api.elements.GraphEdgeType):com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
 - equals(java.lang.Object):Z
 - getLineStyle():com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
 - getPositionInOtherRow():I
 - getType():com.intellij.vcs.log.graph.EdgePrintElement$Type
 - hasArrow():Z
 - hashCode():I
+f:com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl$Companion
+- f:convertToLineStyle(com.intellij.vcs.log.graph.api.elements.GraphEdgeType):com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
 a:com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 - com.intellij.vcs.log.graph.PrintElement
-- pf:myGraphElement:com.intellij.vcs.log.graph.api.elements.GraphElement
-- pf:myPositionInCurrentRow:I
-- pf:myPresentationManager:com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
-- pf:myRowIndex:I
+- sf:Companion:com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement$Companion
 - p:<init>(I,I,com.intellij.vcs.log.graph.api.elements.GraphElement,com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager):V
-- s:converted(com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement,com.intellij.vcs.log.graph.api.elements.GraphElement):com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 - getColorId():I
-- getGraphElement():com.intellij.vcs.log.graph.api.elements.GraphElement
+- f:getGraphElement():com.intellij.vcs.log.graph.api.elements.GraphElement
 - getPositionInCurrentRow():I
+- pf:getPresentationManager():com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 - getRowIndex():I
 - isSelected():Z
-c:com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
+f:com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement$Companion
+- f:converted(com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement,com.intellij.vcs.log.graph.api.elements.GraphElement):com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
+f:com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
 - com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 - com.intellij.vcs.log.graph.NodePrintElement
 - <init>(I,I,com.intellij.vcs.log.graph.api.elements.GraphElement,com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager):V

@@ -3,21 +3,16 @@
 // technically we shouldn't use #cfg in build.rs due to cross-compilation,
 // but the only we do is windows x64 -> arm64, so it's fine for our purposes
 
-use anyhow::{Context, Result};
-use std::fs::File;
-use std::io::{BufWriter, Write};
-use std::path::PathBuf;
-
 #[cfg(target_os = "windows")]
 use {
-    anyhow::bail,
+    anyhow::{bail, Context, Result},
     reqwest::blocking::Client,
     sha1::{Digest, Sha1},
     std::env,
-    std::io::{BufRead, BufReader, Read},
-    std::path::Path,
+    std::fs::File,
+    std::io::Read,
+    std::path::{Path, PathBuf},
     std::process::Command,
-    windows::Win32::System::SystemInformation::GetLocalTime,
     winresource::WindowsResource,
 };
 
@@ -28,6 +23,7 @@ macro_rules! trace {
     };
 }
 
+#[cfg(target_os = "windows")]
 macro_rules! cargo {
     ($($arg:tt)*) => {
         println!("cargo:{}", format_args!($($arg)*));
@@ -35,53 +31,29 @@ macro_rules! cargo {
 }
 
 fn main() {
-    cargo!("rerun-if-changed=build.rs");
-    main_os_specific()
-        .expect("Failed to execute buildscript");
-}
-
-#[cfg(not(target_os = "windows"))]
-fn main_os_specific() -> Result<()> {
-    write_cef_version("NOT_SUPPORTED")
-}
-
-fn write_cef_version(cef_version: &str) -> Result<()> {
-    let generated_file = PathBuf::from("./src/cef_generated.rs");
-    let out_file = File::create(&generated_file)?;
-
-    let mut buf_writer = BufWriter::new(out_file);
-
-    writeln!(buf_writer, "pub static CEF_VERSION: &str = \"{cef_version}\";")?;
-
-    buf_writer.flush()
-        .context(format!("Failed to write CEF version to {generated_file:?}"))
+    #[cfg(target_os = "windows")]
+    {
+        cargo!("rerun-if-changed=build.rs");
+        link_cef().expect("Failed to link with CEF");
+        embed_metadata().expect("Failed to embed metadata");
+    }
 }
 
 #[cfg(target_os = "windows")]
-fn main_os_specific() -> Result<()> {
-    cargo!("rustc-link-lib=legacy_stdio_definitions");
+fn link_cef() -> Result<()> {
+    let cef_version = "122.1.9+gd14e051+chromium-122.0.6261.94";
 
     let cef_arch_string = match env::var("CARGO_CFG_TARGET_ARCH")?.as_str() {
         "x86_64" => "windows64",
         "aarch64" => "windowsarm64",
-        e => bail!("Unknown target arch: {e}")
+        e => panic!("Unsupported arch: {}", e)
     };
-
-    let cef_version = "122.1.9+gd14e051+chromium-122.0.6261.94";
 
     let cef_download_root = PathBuf::from("./deps/cef");
     let cef_dir = download_cef(cef_version, cef_arch_string, &cef_download_root)?;
-
     link_cef_sandbox(&cef_dir)?;
-    write_cef_version(cef_version)?;
 
-    // metadata embedding breaks incremental build due to verbose output of the used tools
-    // for the convenience of the development we'll avoid this
-    // for the builds which are explicitly marked as debug by cargo
-    let is_debug =  env::var("DEBUG")? == "true";
-    if !is_debug {
-        embed_metadata()?;
-    }
+    cargo!("rustc-env=CEF_VERSION={cef_version}");
 
     Ok(())
 }
@@ -303,75 +275,18 @@ fn embed_metadata() -> Result<()> {
     let cargo_root_env_var = env::var("CARGO_MANIFEST_DIR")?;
     let cargo_root = PathBuf::from(cargo_root_env_var);
 
-    let manifest_relative_to_root = "resources/windows/WinLauncher.manifest";
-    cargo!("rerun-if-changed={manifest_relative_to_root}");
-
-    let manifest_file = cargo_root.join(manifest_relative_to_root);
-    assert_exists_and_file(&manifest_file)?;
-
+    let manifest_relative_path = "resources/windows/WinLauncher.manifest";
+    assert_exists_and_file(&cargo_root.join(manifest_relative_path))?;
+    cargo!("rerun-if-changed={manifest_relative_path}");
     cargo!("rustc-link-arg-bins=/MANIFEST:EMBED");
-    cargo!("rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_to_root}");
+    cargo!("rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_path}");
 
-    let rc_template_relative_to_root = "resources/windows/WinLauncher.rc";
-    cargo!("rerun-if-changed={rc_template_relative_to_root}");
-
-    let rc_template_file = PathBuf::from(rc_template_relative_to_root);
-    assert_exists_and_file(&rc_template_file)?;
-
-    let rc_file = process_rc_template(&rc_template_file)?;
+    let icon_relative_path = "resources/windows/WinLauncher.ico";
+    assert_exists_and_file(&cargo_root.join(icon_relative_path))?;
 
     let mut res = WindowsResource::new();
-    res.set_resource_file(&get_non_unc_string(&rc_file)?);
-    res.compile().context("Failed to embed resource table")
-}
-
-#[cfg(target_os = "windows")]
-fn process_rc_template(template: &Path) -> Result<PathBuf> {
-    let file = File::open(template)?;
-
-    let current_year = get_current_year();
-    let package_name = env::var("CARGO_PKG_NAME")?;
-
-
-    let mut processed_lines = Vec::with_capacity(60);
-    for line in BufReader::new(file).lines() {
-        let processed_line = line?
-            .replace("@YEAR@", &current_year)
-            .replace("@FILE_NAME@", &package_name);
-        processed_lines.push(processed_line)
-    }
-
-    let out_dir = PathBuf::from(env::var("OUT_DIR")?);
-
-    let out_file_path = out_dir.join("xplat-launcher.rc");
-    let out_file = File::create(&out_file_path)?;
-
-    let mut buf_writer = BufWriter::new(out_file);
-
-    for line in processed_lines {
-        writeln!(buf_writer, "{line}")?;
-    }
-
-    buf_writer.flush()?;
-
-    let rc_dependencies = vec!["resource.h", "WinLauncher.ico"];
-    for dep in rc_dependencies {
-        let src = PathBuf::from(format!("./resources/windows/{dep}"));
-        let dest = out_dir.join(dep);
-        std::fs::copy(&src, &dest)?;
-    }
-
-    Ok(out_file_path)
-}
-
-#[cfg(target_os = "windows")]
-fn get_current_year() -> String {
-    let system_time = unsafe {
-        GetLocalTime()
-    };
-
-    let current_year = system_time.wYear as u32;
-    current_year.to_string()
+    res.set_icon_with_id(icon_relative_path, "2000");  // see `resources/windows/resource.h`
+    res.compile().context("Failed to embed resources")
 }
 
 #[cfg(target_os = "windows")]

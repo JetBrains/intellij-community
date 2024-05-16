@@ -1,10 +1,7 @@
-f:com.intellij.platform.navbar.NavBarItemPresentation
-- <init>(javax.swing.Icon,java.lang.String,java.lang.String,com.intellij.ui.SimpleTextAttributes,Z):V
-- f:getHasContainingFile():Z
-- f:getIcon():javax.swing.Icon
-- f:getPopupText():java.lang.String
-- f:getText():java.lang.String
-- f:getTextAttributes():com.intellij.ui.SimpleTextAttributes
+com.intellij.platform.navbar.NavBarItemPresentation
+f:com.intellij.platform.navbar.NavBarItemPresentationKt
+- sf:NavBarItemPresentation(javax.swing.Icon,java.lang.String,java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.platform.navbar.NavBarItemPresentation
+- bs:NavBarItemPresentation$default(javax.swing.Icon,java.lang.String,java.lang.String,com.intellij.ui.SimpleTextAttributes,I,java.lang.Object):com.intellij.platform.navbar.NavBarItemPresentation
 com.intellij.platform.navbar.NavBarVmItem
 - sf:Companion:com.intellij.platform.navbar.NavBarVmItem$Companion
 - sf:SELECTED_ITEMS:com.intellij.openapi.actionSystem.DataKey

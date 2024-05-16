@@ -161,14 +161,6 @@ c:com.intellij.openapi.externalSystem.action.task.AssignShortcutAction
 - <init>():V
 - p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - p:perform(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.model.task.TaskData,com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.externalSystem.action.task.ExternalSystemTaskMenu
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- com.intellij.openapi.project.DumbAware
-- sf:Companion:com.intellij.openapi.externalSystem.action.task.ExternalSystemTaskMenu$Companion
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.externalSystem.action.task.ExternalSystemTaskMenu$Companion
 c:com.intellij.openapi.externalSystem.action.task.GroupModulesAction
 - com.intellij.openapi.externalSystem.action.ExternalSystemViewGearAction
 - <init>():V
@@ -526,8 +518,6 @@ f:com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier$Buil
 - f:build(java.util.concurrent.Executor):com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 - f:coalesceBy(java.lang.Object[]):com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier$Builder
 - f:shouldKeepTasksAsynchronous(kotlin.jvm.functions.Function0):com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier$Builder
-f:com.intellij.openapi.externalSystem.autolink.CoroutineUtilKt
-f:com.intellij.openapi.externalSystem.autolink.ExtensionPointUtilKt
 f:com.intellij.openapi.externalSystem.autolink.UnlinkedProjectSettings
 - com.intellij.openapi.components.SimplePersistentStateComponent
 - com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectSettings
@@ -545,8 +535,6 @@ f:com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
 - <init>():V
 - execute(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity$Companion
-f:com.intellij.openapi.externalSystem.configurationStore.ExternalSystemStorageKt
-f:com.intellij.openapi.externalSystem.configurationStore.PersistentMapManagerKt
 a:com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
 - com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerAction
 - <init>():V
@@ -612,8 +600,6 @@ a:com.intellij.openapi.externalSystem.dependency.analyzer.ExternalSystemDependen
 - <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 - getConfigFile(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.vfs.VirtualFile
 - a:getExternalProjectPath(com.intellij.openapi.actionSystem.AnActionEvent):java.lang.String
-f:com.intellij.openapi.externalSystem.dependency.analyzer.util.DependencyUiUtilKt
-f:com.intellij.openapi.externalSystem.dependency.analyzer.util.UiUtilsKt
 f:com.intellij.openapi.externalSystem.diagnostic.ExternalSystemObservabilityScopesKt
 - sf:ExternalSystem:com.intellij.platform.diagnostic.telemetry.Scope
 - sf:forSystem(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.platform.diagnostic.telemetry.Scope
@@ -972,12 +958,6 @@ c:com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigu
 - suggestedName():java.lang.String
 - writeExternal(org.jdom.Element):V
 - ps:writeExternalBoolean(org.jdom.Element,java.lang.String,Z):V
-com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationExtension
-- a:appendEditors(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,com.intellij.openapi.options.SettingsEditorGroup):V
-- a:attachToProcess(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler,com.intellij.execution.configurations.RunnerSettings):V
-- a:readExternal(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,org.jdom.Element):V
-- a:updateVMParameters(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,com.intellij.execution.configurations.SimpleJavaParameters,com.intellij.execution.configurations.RunnerSettings,com.intellij.execution.Executor):V
-- a:writeExternal(com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration,org.jdom.Element):V
 f:com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 - com.intellij.build.BuildProgressListener
 - com.intellij.build.BuildProgressObservable
@@ -1773,13 +1753,11 @@ f:com.intellij.openapi.externalSystem.service.project.settings.EncodingConfigura
 - com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 - <init>():V
 - onSuccessImport(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.externalSystem.service.project.IdeModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-f:com.intellij.openapi.externalSystem.service.project.settings.EncodingConfigurationHandlerKt
 f:com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationHandler
 - com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 - <init>():V
 - apply(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
 - apply(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-f:com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationHandlerKt
 f:com.intellij.openapi.externalSystem.service.project.settings.InspectionsProfileConfigurationHandler
 - com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 - <init>():V
@@ -1792,7 +1770,6 @@ f:com.intellij.openapi.externalSystem.service.project.settings.PackagePrefixConf
 - com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 - <init>():V
 - apply(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-f:com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationHandlerKt
 f:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 - sf:INSTANCE:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 - sf:confirmLinkingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.nio.file.Path):Z
@@ -2057,7 +2034,6 @@ f:com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfig
 - com.intellij.openapi.options.BoundSearchableConfigurable
 - <init>(com.intellij.openapi.project.Project):V
 - createPanel():com.intellij.openapi.ui.DialogPanel
-f:com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurableKt
 a:com.intellij.openapi.externalSystem.service.task.ui.AbstractExternalSystemToolWindowFactory
 - com.intellij.openapi.project.DumbAware
 - com.intellij.openapi.wm.ToolWindowFactory
@@ -2617,6 +2593,7 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 - s:runTask(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.task.TaskCallback,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):V
 - s:runTask(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.task.TaskCallback,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode,Z):V
 - s:runTask(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.task.TaskCallback,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode,Z,com.intellij.openapi.util.UserDataHolderBase):V
+- s:runTask(com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec):V
 - s:scheduleExternalViewStructureUpdate(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 c:com.intellij.openapi.externalSystem.util.OutputWrapper
 - java.io.OutputStream
@@ -2646,6 +2623,33 @@ f:com.intellij.openapi.externalSystem.util.environment.SystemEnvironment
 - <init>():V
 - property(java.lang.String):java.lang.String
 - variable(java.lang.String):java.lang.String
+com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+- sf:Companion:com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec$Companion
+- s:create(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:getActivateToolWindowBeforeRun():Z
+- a:getActivateToolWindowOnFailure():Z
+- a:getCallback():com.intellij.openapi.externalSystem.task.TaskCallback
+- a:getExecutorId():java.lang.String
+- a:getListener():com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+- a:getProgressExecutionMode():com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
+- a:getProject():com.intellij.openapi.project.Project
+- a:getSettings():com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+- a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
+- a:getUserData():com.intellij.openapi.util.UserDataHolderBase
+f:com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec$Companion
+- f:create(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:build():com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+- a:getExecutorId():java.lang.String
+- a:getProject():com.intellij.openapi.project.Project
+- a:getSettings():com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+- a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
+- a:withActivateToolWindowBeforeRun(Z):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withActivateToolWindowOnFailure(Z):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withCallback(com.intellij.openapi.externalSystem.task.TaskCallback):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withProgressExecutionMode(com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 a:com.intellij.openapi.externalSystem.util.ui.DataView
 - sf:Companion:com.intellij.openapi.externalSystem.util.ui.DataView$Companion
 - <init>():V
@@ -2890,6 +2894,22 @@ c:com.intellij.openapi.externalSystem.view.TasksNode
 - getName():java.lang.String
 - isVisible():Z
 - p:update(com.intellij.ide.projectView.PresentationData):V
+*f:com.intellij.platform.externalSystem.impl.workspace.ExternalSubproject
+- com.intellij.ide.workspace.Subproject
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ExternalProjectInfo,com.intellij.ide.workspace.SubprojectHandler):V
+- equals(java.lang.Object):Z
+- getHandler():com.intellij.ide.workspace.SubprojectHandler
+- getName():java.lang.String
+- f:getProjectInfo():com.intellij.openapi.externalSystem.model.ExternalProjectInfo
+- getProjectPath():java.lang.String
+- getWorkspace():com.intellij.openapi.project.Project
+- hashCode():I
+*a:com.intellij.platform.externalSystem.impl.workspace.ExternalSubprojectHandler
+- com.intellij.ide.workspace.SubprojectHandler
+- <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId):V
+- getSubprojects(com.intellij.openapi.project.Project):java.util.List
+- f:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
+- removeSubprojects(java.util.List):V
 f:icons.ExternalSystemIcons
 - sf:Task:javax.swing.Icon
 - <init>():V

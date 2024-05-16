@@ -77,7 +77,6 @@ c:com.intellij.injected.editor.MarkupModelWindow
 - removeAllHighlighters():V
 - removeHighlighter(com.intellij.openapi.editor.markup.RangeHighlighter):V
 - setRangeHighlighterAttributes(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.openapi.editor.markup.TextAttributes):V
-f:com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManagerKt
 a:com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 - com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl
 - com.intellij.configurationStore.SerializableScheme
@@ -747,6 +746,3 @@ c:com.intellij.psi.impl.search.PsiTodoSearchHelperImpl
 - getTodoItemsCount(com.intellij.psi.PsiFile,com.intellij.psi.search.TodoPattern):I
 - processFilesWithTodoItems(com.intellij.util.Processor):Z
 - shouldHighlightInEditor(com.intellij.psi.PsiFile):Z
-c:com.intellij.psi.impl.search.TodoItemsCreator
-- <init>():V
-- createTodo(com.intellij.psi.search.IndexPatternOccurrence):com.intellij.psi.search.TodoItem

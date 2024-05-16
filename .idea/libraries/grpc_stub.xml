@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="grpc-stub" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.grpc:grpc-stub:1.61.0">
+    <properties include-transitive-deps="false" maven-id="io.grpc:grpc-stub:1.63.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.61.0/grpc-stub-1.61.0.jar">
-          <sha256sum>72098cc69a1c786b707a697ceb2a82b45c624add09e78900ec4a5990a594f586</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.63.0/grpc-stub-1.63.0.jar">
+          <sha256sum>a92fc7c7f1ac9d580c5e3df5825b977c842f442874794663b78db22b27d649e0</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.61.0/grpc-stub-1.61.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.63.0/grpc-stub-1.63.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.61.0/grpc-stub-1.61.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-stub/1.63.0/grpc-stub-1.63.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

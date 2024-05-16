@@ -394,7 +394,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
     val splitter = createSplitter(isVertical = orientation == JSplitPane.VERTICAL_SPLIT, proportion = 0.5f, minProp = 0.1f, maxProp = 0.9f)
     splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
-    val result = EditorWindow(owner = owner, owner.coroutineScope.childScope(CoroutineName("EditorWindow")))
+    val result = EditorWindow(owner = owner, owner.coroutineScope.childScope("EditorWindow"))
     owner.addWindow(result)
     val selectedComposite = selectedComposite
 

@@ -39,6 +39,8 @@ import kotlin.concurrent.withLock
 
 @ApiStatus.Internal
 object BuildDependenciesDownloader {
+  data class Credentials(val username: String, val password: String)
+
   private val LOG = Logger.getLogger(BuildDependenciesDownloader::class.java.name)
   private val fileLocks = Striped.lock(1024)
   private val cleanupFlag = AtomicBoolean(false)
@@ -109,8 +111,8 @@ object BuildDependenciesDownloader {
   }
 
   @JvmStatic
-  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, username: String, password: String): Path {
-    return downloadFileToCacheLocationSync(url = uri.toString(), communityRoot = communityRoot, username = username, password = password)
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, credentialsProvider: () -> Credentials): Path {
+    return downloadFileToCacheLocationSync(url = uri.toString(), communityRoot = communityRoot, credentialsProvider)
   }
 
   fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String): Path {

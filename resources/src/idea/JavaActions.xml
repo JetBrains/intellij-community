@@ -105,7 +105,7 @@
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
       <action id="CompileFile" class="com.intellij.compiler.actions.CompileFileAction" use-shortcut-of="Compile"/>
       <separator/>
-      <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction" icon="com.intellij.icons.ExpUiIcons.Build.Rebuild"/>
+      <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction" icon="com.intellij.icons.AllIcons.Actions.Rebuild"/>
       <separator/>
       <separator/>
       <action id="BuildArtifact" class="com.intellij.compiler.actions.BuildArtifactAction"/>
@@ -313,10 +313,6 @@
 
     <action id="GenerateModuleDescriptors" class="com.intellij.codeInspection.java19api.Java9GenerateModuleDescriptorsAction">
       <add-to-group group-id="CodeMenu" anchor="last"/>
-    </action>
-
-    <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" overrides="true">
-      <override-text place="EditorPopup"/>
     </action>
 
     <group id="RefactoringMenu1">

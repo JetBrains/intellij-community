@@ -3,6 +3,4 @@ com/intellij/psi/stubs/SerializedStubTree
 com/intellij/psi/stubs/StubIdList
 com/intellij/util/indexing/IndexableFileSet
 com/intellij/util/indexing/diagnostic/IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
-com/intellij/util/indexing/storage/FileBasedIndexLayoutProviderBean
 com/intellij/util/indexing/storage/VfsAwareIndexStorageLayout
-com/intellij/util/io/StorageLockContext

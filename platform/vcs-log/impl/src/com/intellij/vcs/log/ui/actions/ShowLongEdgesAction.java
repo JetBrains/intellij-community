@@ -21,8 +21,10 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ShowLongEdgesAction extends BooleanPropertyToggleAction {
   public ShowLongEdgesAction() {
     super(VcsLogBundle.messagePointer("vcs.log.action.show.long.edges"),

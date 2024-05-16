@@ -49,11 +49,7 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
           if (library is LibraryEx &&
               !missingLibrariesResolutionTasks.containsKey(library) &&
               library.needToReload()) {
-            if (CustomLibraryTableBridge.isEnabled()) {
-              newQueue.revokeSynchronization((library as LibraryBridge).libraryId)
-            } else {
-              queue.revokeSynchronization(library)
-            }
+            newQueue.revokeSynchronization((library as LibraryBridge).libraryId)
             missingLibrariesResolutionTasks[library] = ResolutionTask(library, module, context.project)
           }
           true

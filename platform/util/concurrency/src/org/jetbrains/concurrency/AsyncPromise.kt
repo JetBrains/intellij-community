@@ -52,12 +52,11 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
 
   // because of the contract: get() should return null for canceled promise
   private inline fun nullizeCancelled(value: () -> T?): T? {
-    if (isCancelled) {
-      return null
-    }
-
     return try {
       value()
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
     }
     catch (e: CancellationException) {
       null

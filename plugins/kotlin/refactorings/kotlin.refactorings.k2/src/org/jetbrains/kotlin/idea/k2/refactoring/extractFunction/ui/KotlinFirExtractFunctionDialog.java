@@ -303,6 +303,6 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
                                              returnType,
                                              originalDescriptor.getModifiers(),
                                              originalDescriptor.getOptInMarkers(),
-                                             originalDescriptor.getAnnotations());
+                                             originalDescriptor.getAnnotationClassIds());
     }
 }

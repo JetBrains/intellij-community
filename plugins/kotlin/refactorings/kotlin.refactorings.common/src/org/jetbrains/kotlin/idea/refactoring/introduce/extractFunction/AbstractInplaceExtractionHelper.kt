@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
@@ -28,6 +30,9 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processD
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
+import kotlin.math.max
 import kotlin.math.min
 
 interface AbstractInplaceExtractionHelper<KotlinType,
@@ -57,9 +62,10 @@ interface AbstractInplaceExtractionHelper<KotlinType,
         val descriptor = descriptorWithConflicts.descriptor
         val elements = descriptor.extractionData.physicalElements
         val file = descriptor.extractionData.originalFile
+        val first = elements.first()
         val callTextRange =
             editor.document.createRangeMarker(
-                rangeOf(elements.first()).startOffset,
+                max(rangeOf(PsiTreeUtil.skipSiblingsBackward(first, PsiComment::class.java) ?: first).startOffset - 1, 0),
                 rangeOf(elements.last()).endOffset
             ).apply {
                 isGreedyToLeft = true
@@ -79,16 +85,22 @@ interface AbstractInplaceExtractionHelper<KotlinType,
                 return
             }
             val callRange: TextRange = callTextRange.textRange
-            val callIdentifier = findSingleCallExpression(file, callRange)?.calleeExpression ?: throw IllegalStateException()
+            val callIdentifier = findCallExpressionInRange(file, callRange, extraction.declaration.name)?.calleeExpression ?: throw IllegalStateException()
             val methodIdentifier = extraction.declaration.nameIdentifier ?: throw IllegalStateException()
             val methodRange = extraction.declaration.textRange
             val methodOffset = extraction.declaration.navigationElement.textRange.endOffset
             val callOffset = callIdentifier.textRange.endOffset
             val preview = InplaceExtractUtils.createPreview(editor, methodRange, methodOffset, callRange, callOffset)
             Disposer.register(disposable, preview)
+            val shortcut = KeymapUtil.getPrimaryShortcut("ExtractFunction") ?: throw IllegalStateException("Action is not found")
             val templateField = TemplateField(callIdentifier.textRange, listOf(methodIdentifier.textRange))
                 .withCompletionNames(descriptor.suggestedNames)
-                .withCompletionHint(getDialogAdvertisement())
+                .withCompletionHint(
+                    RefactoringBundle.message(
+                        "inplace.refactoring.advertisement.text",
+                        KeymapUtil.getShortcutText(shortcut)
+                    )
+                )
                 .withValidation { variableRange ->
                     val error = getIdentifierError(file, variableRange)
                     if (error != null) {
@@ -116,12 +128,6 @@ interface AbstractInplaceExtractionHelper<KotlinType,
         }
     }
 
-    @Nls
-    private fun getDialogAdvertisement(): String {
-        val shortcut = KeymapUtil.getPrimaryShortcut("ExtractFunction") ?: throw IllegalStateException("Action is not found")
-        return RefactoringBundle.message("inplace.refactoring.advertisement.text", KeymapUtil.getShortcutText(shortcut))
-    }
-
     fun rangeOf(element: PsiElement): TextRange {
         return (element as? KtExpression)?.extractableSubstringInfo?.contentRange ?: element.textRange
     }
@@ -137,12 +143,23 @@ interface AbstractInplaceExtractionHelper<KotlinType,
         return ::findRange
     }
 
-
-    fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
+    /**
+     * Finds the first occurrence of a call expression within the given range.
+     * If [name] is specified, first occurrence with the given reference name would be taken.
+     *
+     * Range is created from the previous element of the extraction, and thus when the function is inserted before the selection,
+     * e.g., when extracted function is added as local function, range contains extracted function and the call to it.
+     * So we need additional ad hock filtering to prevent broken code on rename template start.
+     */
+    fun findCallExpressionInRange(file: KtFile, range: TextRange?, name: @NlsSafe String?): KtCallExpression? {
         if (range == null) return null
-        val container = PsiTreeUtil.findCommonParent(file.findElementAt(range.startOffset),
-                                                     file.findElementAt(min(file.textLength - 1, range.endOffset)))
+        val container = PsiTreeUtil.findCommonParent(
+            file.findElementAt(range.startOffset), file.findElementAt(min(file.textLength - 1, range.endOffset))
+        )
         val callExpressions = PsiTreeUtil.findChildrenOfType(container, KtCallExpression::class.java)
-        return callExpressions.singleOrNull { it.textRange in range }
+        val callExpressionsInRange = callExpressions.filter { it.textRange in range }
+        if (name == null) return callExpressionsInRange.firstOrNull()
+        return callExpressionsInRange.find { (it.calleeExpression as? KtNameReferenceExpression)?.getReferencedName() == name }
+            ?: callExpressionsInRange.firstOrNull()
     }
 }

@@ -3,9 +3,7 @@ package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.LineNumberConverter
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
@@ -46,7 +44,7 @@ inline fun paintNotebookCellBackgroundGutter(
   if (editor.getUserData(isFoldingEnabledKey) != true) {
     if (editor.editorKind == EditorKind.DIFF) return
     if (stripe != null) {
-      paintCellStripe(appearance, g, r, stripe, top, height)
+      paintCellStripe(appearance, g, r, stripe, top, height, editor)
     }
     if (stripeHover != null) {
       g.color = stripeHover
@@ -62,9 +60,10 @@ fun paintCellStripe(
   stripe: Color,
   top: Int,
   height: Int,
+  editor: Editor,
 ) {
   g.color = stripe
-  g.fillRect(r.width - appearance.getLeftBorderWidth(), top, appearance.getCellLeftLineWidth(), height)
+  g.fillRect(r.width - appearance.getLeftBorderWidth(), top, appearance.getCellLeftLineWidth(editor), height)
 }
 
 /**
@@ -77,7 +76,7 @@ fun paintCellGutter(inlayBounds: Rectangle,
                     r: Rectangle) {
   val appearance = editor.notebookAppearance
   appearance.getCellStripeColor(editor, lines)?.let { stripeColor ->
-    paintCellStripe(appearance, g, r, stripeColor, inlayBounds.y, inlayBounds.height)
+    paintCellStripe(appearance, g, r, stripeColor, inlayBounds.y, inlayBounds.height, editor)
   }
 }
 
@@ -97,14 +96,6 @@ fun paintCaretRow(editor: EditorImpl, g: Graphics, lines: IntRange) {
   }
 }
 
-@Deprecated("To be removed after PY-71962")
-fun installNotebookEditorView(editor: Editor) {
-  if (editor is EditorEx) {
-    editor.gutterComponentEx.setLineNumberConverter(object : LineNumberConverter {
-      override fun convert(editor: Editor, lineNumber: Int): Int? = null
-      override fun getMaxLineNumber(editor: Editor): Int? = null
-    })
-  }
-}
-
 fun getJupyterCellSpacing(editor: Editor): Int = editor.getLineHeight()
+
+internal fun EditorKind.isDiff(): Boolean = this === EditorKind.DIFF

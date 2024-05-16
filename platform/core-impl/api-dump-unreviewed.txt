@@ -491,16 +491,11 @@ e:com.intellij.ide.plugins.ActionDescriptorName
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ide.plugins.ActionDescriptorName
 - s:values():com.intellij.ide.plugins.ActionDescriptorName[]
-f:com.intellij.ide.plugins.BrokenPluginFileKt
 f:com.intellij.ide.plugins.ClassLoaderConfiguratorKt
 - sf:createPluginDependencyAndContentBasedScope(com.intellij.ide.plugins.IdeaPluginDescriptorImpl,com.intellij.ide.plugins.PluginSet):com.intellij.ide.plugins.cl.ResolveScopeManager
 - sf:sortDependenciesInPlace(com.intellij.ide.plugins.IdeaPluginDescriptorImpl[]):V
-f:com.intellij.ide.plugins.DescriptorListLoadingContextKt
 f:com.intellij.ide.plugins.IdeaPluginDescriptorImplKt
 - sf:toPluginIdSet(java.lang.Iterable):java.util.Set
-f:com.intellij.ide.plugins.KotlinK2ModeCompatibilityCheckerKt
-f:com.intellij.ide.plugins.ModuleGraphKt
-- sf:getKnownNotFullyMigratedPluginIds():java.util.Set
 com.intellij.ide.plugins.PathResolver
 - isFlat():Z
 - a:loadXIncludeReference(com.intellij.ide.plugins.RawPluginDescriptor,com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.DataLoader,java.lang.String,java.lang.String):Z
@@ -529,7 +524,6 @@ f:com.intellij.ide.plugins.PluginLoadingError
 - f:isNotifyUser():Z
 - toString():java.lang.String
 f:com.intellij.ide.plugins.PluginLoadingError$Companion
-f:com.intellij.ide.plugins.PluginLoadingResultKt
 f:com.intellij.ide.plugins.PluginManager
 - sf:EXPLICIT_BIG_NUMBER_PATTERN:java.util.regex.Pattern
 - sf:INSTALLED_TXT:java.lang.String
@@ -593,8 +587,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:toPluginIds(java.util.Collection):java.util.Set
 - f:writePluginIdsToFile(java.nio.file.Path,java.util.Collection,java.nio.file.OpenOption[]):V
 - bs:writePluginIdsToFile$default(com.intellij.ide.plugins.PluginManagerCore,java.nio.file.Path,java.util.Collection,java.nio.file.OpenOption[],I,java.lang.Object):V
-f:com.intellij.ide.plugins.PluginManagerCoreKt
-f:com.intellij.ide.plugins.PluginSetBuilderKt
 f:com.intellij.ide.plugins.PluginXmlPathResolver
 - com.intellij.ide.plugins.PathResolver
 - sf:Companion:com.intellij.ide.plugins.PluginXmlPathResolver$Companion
@@ -604,6 +596,8 @@ f:com.intellij.ide.plugins.PluginXmlPathResolver
 - resolveModuleFile(com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor):com.intellij.ide.plugins.RawPluginDescriptor
 - resolvePath(com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor):com.intellij.ide.plugins.RawPluginDescriptor
 f:com.intellij.ide.plugins.PluginXmlPathResolver$Companion
+- f:toLoadPath(java.lang.String,java.lang.String):java.lang.String
+- bs:toLoadPath$default(com.intellij.ide.plugins.PluginXmlPathResolver$Companion,java.lang.String,java.lang.String,I,java.lang.Object):java.lang.String
 com.intellij.ide.plugins.ReadModuleContext
 - a:getInterner():com.intellij.util.xml.dom.XmlInterner
 - isMissingIncludeIgnored():Z
@@ -612,7 +606,6 @@ f:com.intellij.ide.plugins.XmlReader
 - sf:readModuleDescriptor(java.io.InputStream,com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.PathResolver,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor,java.lang.String):com.intellij.ide.plugins.RawPluginDescriptor
 - sf:readModuleDescriptor(B[],com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.PathResolver,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor,java.lang.String):com.intellij.ide.plugins.RawPluginDescriptor
 - sf:readModuleDescriptorForTest(B[]):com.intellij.ide.plugins.RawPluginDescriptor
-f:com.intellij.ide.plugins.cl.PluginClassLoaderKt
 a:com.intellij.indentation.AbstractIndentParser
 - com.intellij.lang.PsiParser
 - p:myBuilder:com.intellij.indentation.IndentPsiBuilder
@@ -1194,7 +1187,6 @@ com.intellij.openapi.application.impl.JobProvider
 - a:getJob():kotlinx.coroutines.Job
 com.intellij.openapi.application.impl.ModalContextProjectLocator
 - a:isPartOf(javax.swing.JFrame,com.intellij.openapi.project.Project):Z
-f:com.intellij.openapi.application.impl.ModalityKt
 f:com.intellij.openapi.application.impl.ModalityStateEx
 - com.intellij.openapi.application.ModalityState
 - <init>():V
@@ -1810,7 +1802,6 @@ c:com.intellij.openapi.progress.impl.CoreProgressManager
 - silenceGlobalIndicator(java.util.function.Supplier):java.lang.Object
 - p:sleepIfNeededToGivePriorityToAnotherThread():Z
 - p:startTask(com.intellij.openapi.progress.Task,com.intellij.openapi.progress.ProgressIndicator,java.lang.Runnable):V
-f:com.intellij.openapi.progress.impl.ProgressManagerScopeKt
 f:com.intellij.openapi.progress.impl.ProgressResult
 - <init>(java.lang.Object,Z,java.lang.Throwable):V
 - equals(java.lang.Object):Z
@@ -1987,7 +1978,6 @@ c:com.intellij.openapi.vfs.impl.LightFilePointer
 - getUrl():java.lang.String
 - hashCode():I
 - isValid():Z
-f:com.intellij.openapi.vfs.impl.LightFilePointerKt
 c:com.intellij.openapi.vfs.impl.VirtualFileManagerImpl
 - com.intellij.openapi.vfs.VirtualFileManager
 - com.intellij.openapi.Disposable
@@ -3169,7 +3159,7 @@ a:com.intellij.psi.impl.file.UpdateAddedFileProcessor
 - a:canProcessElement(com.intellij.psi.PsiFile):Z
 - s:forElement(com.intellij.psi.PsiFile):com.intellij.psi.impl.file.UpdateAddedFileProcessor
 - a:update(com.intellij.psi.PsiFile,com.intellij.psi.PsiFile):V
-- s:updateAddedFiles(java.lang.Iterable):V
+- s:updateAddedFiles(java.lang.Iterable,java.lang.Iterable):V
 com.intellij.psi.impl.file.impl.FileManager
 - a:cleanupForNextTest():V
 - a:createFileViewProvider(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.psi.FileViewProvider

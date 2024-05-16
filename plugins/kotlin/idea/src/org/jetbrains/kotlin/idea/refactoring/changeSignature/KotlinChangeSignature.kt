@@ -37,8 +37,8 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 interface KotlinChangeSignatureConfiguration {
     fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor = originalDescriptor
-    fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean = false
-    fun forcePerformForSelectedFunctionOnly(): Boolean = false
+    fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean = false
+    fun isForcePerformForSelectedFunctionOnly(): Boolean = false
 
     object Empty : KotlinChangeSignatureConfiguration
 }
@@ -77,7 +77,7 @@ class KotlinChangeSignature(
     callableDescriptor,
     commandName ?: RefactoringBundle.message("changeSignature.refactoring.name")
 ) {
-    override fun forcePerformForSelectedFunctionOnly() = configuration.forcePerformForSelectedFunctionOnly()
+    override fun forcePerformForSelectedFunctionOnly() = configuration.isForcePerformForSelectedFunctionOnly()
 
     /**
      * @param propertyProcessor:
@@ -251,7 +251,7 @@ class KotlinChangeSignature(
         val affectedFunctions = adjustedDescriptor.affectedCallables.mapNotNull { it.element }
         if (affectedFunctions.any { !checkModifiable(it) }) return
 
-        if (configuration.performSilently(affectedFunctions)) {
+        if (configuration.isPerformSilently(affectedFunctions)) {
             runSilentRefactoring(adjustedDescriptor)
         } else {
             runInteractiveRefactoring(adjustedDescriptor)

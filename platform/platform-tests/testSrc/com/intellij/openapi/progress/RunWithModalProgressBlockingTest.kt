@@ -81,7 +81,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
   fun rethrow(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       testRunWithModalProgressBlockingRethrow(object : Throwable() {})
-      testRunWithModalProgressBlockingRethrow(CancellationException()) // manual CE
+      testRunWithModalProgressBlockingRethrowPce(CancellationException()) // manual CE
       testRunWithModalProgressBlockingRethrow(ProcessCanceledException()) // manual PCE
     }
   }
@@ -95,7 +95,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
     assertSame(t, thrown)
   }
 
-  private fun testRunWithModalProgressBlockingRethrow(t: CancellationException) {
+  private fun testRunWithModalProgressBlockingRethrowPce(t: CancellationException) {
     val thrown = assertThrows<CeProcessCanceledException> {
       runWithModalProgressBlocking {
         throw t

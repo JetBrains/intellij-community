@@ -42,6 +42,7 @@ class ModuleGraph internal constructor(
 }
 
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
+private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 
 internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraph {
   val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
@@ -64,7 +65,9 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
   val result: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
   val directDependencies = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(modules.size)
   for (module in modules) {
-    val implicitDep = if (hasAllModules) getImplicitDependency(module, moduleMap) else null
+    // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
+   // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
+    val implicitDep = if (hasAllModules && isCheckingForImplicitDependencyNeeded(module)) moduleMap.get(PluginManagerCore.JAVA_MODULE_ID.idString) else null
     if (implicitDep != null) {
       if (module === implicitDep) {
         PluginManagerCore.logger.error("Plugin $module depends on self")
@@ -82,11 +85,16 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     if (module.pluginId != PluginManagerCore.CORE_ID || module.moduleName != null) {
       val strictCheck = module.isBundled || PluginManagerCore.isVendorJetBrains(module.vendor ?: "")
       if (!strictCheck || doesDependOnPluginAlias(module, VCS_ALIAS_ID)) {
+        moduleMap.get("intellij.platform.vcs.impl")?.let { result.add(it) }
         moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
         moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
       }
       if (!strictCheck) {
         moduleMap.get("intellij.platform.collaborationTools")?.let { result.add(it) }
+      }
+
+      if (doesDependOnPluginAlias(module, RIDER_ALIAS_ID)) {
+        moduleMap.get("intellij.rider")?.let { result.add(it) }
       }
     }
 
@@ -158,36 +166,7 @@ private fun copySorted(
   return result
 }
 
-/**
- * In 191.* and earlier builds Java plugin was part of the platform, so any plugin installed in IntelliJ IDEA might be able to use its
- * classes without declaring explicit dependency on the Java module. This method is intended to add implicit dependency on the Java plugin
- * for such plugins to avoid breaking compatibility with them.
- */
-private fun getImplicitDependency(
-  descriptor: IdeaPluginDescriptorImpl,
-  idMap: Map<String, IdeaPluginDescriptorImpl>,
-): IdeaPluginDescriptorImpl? {
-  // skip our plugins as expected to be up to date whether bundled or not
-  if (descriptor.isBundled ||
-      descriptor.packagePrefix != null ||
-      descriptor.implementationDetail ||
-      descriptor.content.modules.isNotEmpty() ||
-      descriptor.dependencies.modules.isNotEmpty() ||
-      descriptor.dependencies.plugins.isNotEmpty()) {
-    return null
-  }
-
-  val pluginId = descriptor.pluginId
-  if (PluginManagerCore.CORE_ID == pluginId || PluginManagerCore.JAVA_PLUGIN_ID == pluginId || hasModuleDependencies(descriptor)) {
-    return null
-  }
-
-  // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
-  // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
-  return idMap.get(PluginManagerCore.JAVA_MODULE_ID.idString)
-}
-
-val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
+private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
   // Migration started with converting intellij.notebooks.visualization to a platform plugin, but adding a package prefix to Pythonid
   // or com.jetbrains.pycharm.ds.customization is a difficult task that can't be done by a single shot.
   "Pythonid",

@@ -378,6 +378,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/Tailrec.kt");
     }
 
+    @TestMetadata("TailrecFunction.kt")
+    public void testTailrecFunction() throws Exception {
+        runTest("testData/editor/quickDoc/TailrecFunction.kt");
+    }
+
     @TestMetadata("TailrecName.kt")
     public void testTailrecName() throws Exception {
         runTest("testData/editor/quickDoc/TailrecName.kt");

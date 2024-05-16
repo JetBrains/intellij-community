@@ -98,7 +98,9 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       border = UiUtils.CARD_BORDER
     }
 
-    activeScheme = pages[0]
+    activeScheme = service.initialSchemeId?.let { initialId ->
+      pages.firstOrNull { it.scheme.id == initialId }
+    } ?: pages[0]
     activePane(activeScheme)
 
     val backAction = controller.goBackAction?.let {

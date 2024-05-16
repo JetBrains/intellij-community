@@ -99,6 +99,16 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     override fun setUp() {
         super.setUp()
+        myFixture.addClass(
+            """package org.jetbrains.annotations;
+import java.lang.annotation.*;
+@Documented
+@Retention(RetentionPolicy.CLASS)
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+public @interface NotNull {
+  String value() default "";
+}"""
+        )
         CodeStyle.getSettings(project).clearCodeStyleSettings()
     }
 
@@ -564,6 +574,10 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     // ------------- add parameter ------------
 
+    fun testAddParameterWithSameNameConflict() = doTestConflict {
+        addParameter(createKotlinIntParameter())
+    }
+
     fun testAddNewParameterWithDefaultValueToFunctionWithEmptyArguments() = withIgnoredConflicts<Throwable> {
         doTest {
             addNewIntParameterWithValue(true)
@@ -756,6 +770,8 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     //------------ remove parameters ------------
 
+    fun testRemoveParameterInOverriderOnly() = doTest { removeParameter(0) }
+
     fun testRemoveLastNonLambdaParameter() = doTest { removeParameter(0) }
 
     fun testRemoveLastNonLambdaParameter2() = doTest { removeParameter(1) }
@@ -816,6 +832,8 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     fun testRemoveDefaultParameterBeforeLambda() = doTest { removeParameter(1) }
     fun testRemoveParameterKeepOtherComments() = doTest { removeParameter(1) }
+
+    fun testCalledByJvmName() = doTest { removeParameter(0) }
 
     //----------- receivers ---------------
 
@@ -1517,6 +1535,12 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     fun testSAMRenameParam() = doJavaTest { newParameters[0].name = "p" }
 
     fun testSAMChangeParamType() = doJavaTest { newParameters[0].setType(objectPsiType) }
+
+    fun testJavaParameterToNotNull() = doJavaTest {
+        val notNullString =
+            JavaPsiFacade.getElementFactory(project).createTypeFromText("@org.jetbrains.annotations.NotNull String", method)
+        newParameters[0].setType(notNullString)
+    }
 
     fun testSAMRenameMethod() = doJavaTest { newName = "bar" }
 

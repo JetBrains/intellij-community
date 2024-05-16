@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -25,7 +26,6 @@ import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChange
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK1
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK2
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.core.script.k2ScriptingEnabled
 import org.jetbrains.kotlin.idea.core.script.ucache.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -48,7 +48,7 @@ import java.nio.file.Path
  * Listener should do something to invalidate configuration and schedule reloading.
  */
 class CompositeScriptConfigurationManager(val project: Project, val scope: CoroutineScope) : ScriptConfigurationManager {
-    private val notifier = if (k2ScriptingEnabled()) ScriptChangesNotifierK2() else ScriptChangesNotifierK1(project)
+    private val notifier = if (KotlinPluginModeProvider.isK2Mode()) ScriptChangesNotifierK2() else ScriptChangesNotifierK1(project)
     private val classpathRoots: ScriptClassRootsCache
         get() = updater.classpathRoots
 

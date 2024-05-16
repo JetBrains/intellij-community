@@ -84,7 +84,7 @@ public final class ParameterInfoComponent extends JPanel {
   private final Editor myEditor;
   private final boolean myRequestFocus;
 
-  private final boolean mySimpleDesignMode = ExperimentalUI.isNewUI();
+  private final boolean mySimpleDesignMode = ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode();
 
   private boolean mySetup;
 

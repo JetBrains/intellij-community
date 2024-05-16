@@ -121,12 +121,12 @@
                  description="Use previously stored 'indexed flag' while scanning. To store 'indexing flag' please set registry option 'indexing.disable.virtual.file.system.entry.is.file.indexed=false'."/>
     <registryKey defaultValue="true" key="full.scanning.on.startup.can.be.skipped" restartRequired="false"
                  description="Full scanning on startup will be skipped when possible."/>
+    <registryKey defaultValue="1000000" key="maximum.size.of.orphan.dirty.files.queue" restartRequired="false"
+                 description="Limits size of orphan dirty files queue."/>
     <registryKey defaultValue="true" key="indexing.over.fast.attributes" restartRequired="true"
                  description="Store indexing data (including IndexingStamps) in regular (false) or fast (true) attributes storage"/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
-    <registryKey defaultValue="true" key="retrieve.pushed.properties.from.vfs" restartRequired="true"
-                 description="Retrieve previously pushed properties from VFS (via PersistentKey) if the value is urgently needed before pushers complete their work."/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
@@ -632,6 +632,7 @@
     <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor"/>
+    <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.TodoHighlightVisitor"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector"/>
     <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
 
@@ -1558,7 +1559,7 @@
                           order="last"/>
 
     <printHandler implementation="com.intellij.codeEditor.printing.TextPrintHandler" id="TextPrintHandler"/>
-    <customFileDropHandler implementation="com.intellij.application.options.colors.EditorColorSchemeDropHandler"/>
+    <fileDropHandler implementation="com.intellij.application.options.colors.EditorColorSchemeDropHandler"/>
 
     <editorNotificationProvider implementation="com.intellij.internal.retype.RetypeEditorNotificationProvider"/>
 
@@ -1632,6 +1633,8 @@
 
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.IntentionsUI"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.IntentionsUIImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.HighlightInfoUpdater"
+                    serviceImplementation="com.intellij.codeInsight.daemon.impl.HighlightInfoUpdaterImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.UnresolvedReferenceQuickFixUpdaterImpl"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.CommentJoinLinesHandler" order="last"/>
@@ -1680,6 +1683,8 @@
                        key="notification.group.automatic.indent.detection"/>
     <notificationGroup id="Incorrect Formatting" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="inspection.incorrect.formatting.notification.group"/>
+    <notificationGroup id="Sticky Lines" displayType="BALLOON" bundle="messages.ApplicationBundle"
+                       key="settings.editor.sticky.lines.disabled.title" />
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
     <platform.backend.documentation.inlineDocumentationProvider order="last"
@@ -1749,6 +1754,10 @@
     <recoveryAction implementation="com.intellij.util.indexing.ReindexAction"/>
     <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
 
+    <projectAttachProcessor implementation="com.intellij.ide.workspace.WorkspaceAttachProcessor" order="last"/>
+    <treeStructureProvider implementation="com.intellij.ide.workspace.projectView.WorkspaceTreeStructureProvider" order="last"/>
+    <workspace.settingsImporter implementation="com.intellij.ide.workspace.DefaultWorkspaceSettingsImporter"/>
+
     <postStartupActivity implementation="com.intellij.codeInsight.documentation.DocumentationSettingsListener"/>
     <projectService serviceInterface="com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider"
                     serviceImplementation="com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl"/>
@@ -1780,8 +1789,6 @@
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
               class="com.intellij.codeInsight.daemon.impl.EditorTrackerImpl$MyAppLevelFileEditorManagerListener"/>
 
-    <listener class="com.intellij.ui.NewUiRegistryListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.projectView.impl.ProjectViewImpl$MyToolWindowManagerListener"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </applicationListeners>
@@ -1789,7 +1796,7 @@
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"
               topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
     <listener class="com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarter"
-              topic="com.intellij.ide.SaveAndSyncHandlerListener"/>
+              topic="com.intellij.ide.SaveAndSyncHandlerListener" />
     <listener class="com.intellij.codeInsight.daemon.impl.DaemonFusReporter"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.InlineCompletionLookupManagerListener"
@@ -1801,6 +1808,8 @@
     <listener class="com.intellij.psi.impl.file.impl.PsiVFSListener$MyModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
     <listener class="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener$WorkspaceModelListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeCleaner"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 </idea-plugin>

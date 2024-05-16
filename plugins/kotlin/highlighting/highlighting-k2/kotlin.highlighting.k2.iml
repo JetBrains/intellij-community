@@ -56,5 +56,7 @@
     <orderEntry type="module" module-name="kotlin.searching.k2" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.scripting" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
   </component>
 </module>

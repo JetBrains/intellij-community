@@ -27,6 +27,7 @@ interface KotlinCompilation : KotlinComponent, HasMutableExtras {
     val platform: KotlinPlatform
     val kotlinTaskProperties: KotlinTaskProperties
     val nativeExtensions: KotlinNativeCompilationExtensions?
+    val wasmExtensions: KotlinWasmCompilationExtensions?
 
     /**
      * Compilation outputs packed in an archive (JAR, KLIB) file

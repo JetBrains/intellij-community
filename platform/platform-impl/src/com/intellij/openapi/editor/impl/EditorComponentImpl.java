@@ -56,6 +56,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -1261,6 +1262,19 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         return EditorBundle.message("editor.for.file.accessible.name", file.getName());
       }
       return EditorBundle.message("editor.accessible.name");
+    }
+
+    @Override
+    public String getAccessibleDescription() {
+      String description = super.getAccessibleDescription();
+      if (description == null && StringUtil.isEmpty(getText())) {
+        //noinspection HardCodedStringLiteral
+        String emptyText = getEditor().getPlaceholder().toString();
+        if (!emptyText.isEmpty()) {
+          return AccessibleContextUtil.getUniqueDescription(this, emptyText);
+        }
+      }
+      return description;
     }
 
     @Override

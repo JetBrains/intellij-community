@@ -15,7 +15,6 @@ internal sealed class LcrCellBaseImpl<T: LcrInitParams>(val initParams: T, val b
 
   enum class Type(private val instanceFactory: () -> JComponent) {
     ICON(::JLabel),
-    TEXT(::JLabel),
     SIMPLE_COLORED_TEXT(::PatchedSimpleColoredComponent);
 
     private val instance = lazy { instanceFactory() }

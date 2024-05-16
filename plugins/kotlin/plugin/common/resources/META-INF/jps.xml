@@ -53,7 +53,8 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JsIdePlatformKind"/>
-    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmJsIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmWasiIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind"/>
   </extensions>
 </idea-plugin>

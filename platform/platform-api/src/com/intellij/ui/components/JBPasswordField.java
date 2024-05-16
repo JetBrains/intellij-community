@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
@@ -52,7 +53,7 @@ public class JBPasswordField extends JPasswordField implements ComponentWithEmpt
     @Override
     public String getAccessibleDescription() {
       String description = super.getAccessibleDescription();
-      if (description == null) {
+      if (description == null && StringUtil.isEmpty(new String(getPassword()))) {
         //noinspection HardCodedStringLiteral
         String emptyText = myEmptyText.toString();
         if (!emptyText.isEmpty()) {

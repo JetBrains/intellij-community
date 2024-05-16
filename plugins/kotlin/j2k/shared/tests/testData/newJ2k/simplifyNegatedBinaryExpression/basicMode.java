@@ -1,4 +1,3 @@
-// IGNORE_K2
 // !BASIC_MODE: true
 class C {
     void foo(int a, int b, String s1, String s2) {

@@ -98,7 +98,10 @@ internal fun toPsiMethod(
         }
     }
     return when (val psi = psiForUast(functionSymbol, context.project)) {
-        null -> null
+        null -> {
+            // Lint/UAST CLI: try `fake` creation for a deserialized declaration
+            toPsiMethodForDeserialized(functionSymbol, context, psi)
+        }
         is PsiMethod -> psi
         is KtClassOrObject -> {
             // For synthetic members in enum classes, `psi` points to their containing enum class.
@@ -126,7 +129,7 @@ internal fun toPsiMethod(
                     handleLocalOrSynthetic(psi)
                 functionSymbol.unwrapFakeOverrides.origin == KtSymbolOrigin.LIBRARY ->
                     // PSI to regular libraries should be handled by [DecompiledPsiDeclarationProvider]
-                    // That is, this one is a deserialized declaration.
+                    // That is, this one is a deserialized declaration (in Lint/UAST IDE).
                     toPsiMethodForDeserialized(functionSymbol, context, psi)
                 else ->
                     psi.getRepresentativeLightMethod()
@@ -141,7 +144,7 @@ context(KtAnalysisSession)
 private fun toPsiMethodForDeserialized(
     functionSymbol: KtFunctionLikeSymbol,
     context: KtElement,
-    psi: KtFunction,
+    psi: KtFunction?,
 ): PsiMethod? {
 
     fun equalSignatures(psiMethod: PsiMethod): Boolean {
@@ -179,16 +182,28 @@ private fun toPsiMethodForDeserialized(
         return psiMethodReturnType == symbolReturnType
     }
 
-    // NB: no fake generation for member functions, as deserialized source PSI for built-ins can trigger FIR build/resolution
-    fun PsiClass.lookup(fake: Boolean): PsiMethod? {
+    fun PsiClass.lookup(): PsiMethod? {
         val candidates =
             if (functionSymbol is KtConstructorSymbol)
                 constructors.filter { it.parameterList.parameters.size == functionSymbol.valueParameters.size }
             else
-                methods.filter { it.name == psi.name }
+                methods.filter { it.name == psi?.name }
         return when (candidates.size) {
-            0 -> if (fake) UastFakeDeserializedSourceLightMethod(psi, this) else null
-            1 -> candidates.single()
+            0 -> {
+                if (psi != null) {
+                    UastFakeDeserializedSourceLightMethod(psi, this@lookup)
+                } else if (functionSymbol is KtFunctionSymbol) {
+                    UastFakeDeserializedSymbolLightMethod(
+                        functionSymbol.createPointer(),
+                        functionSymbol.name.identifier,
+                        this@lookup,
+                        context
+                    )
+                } else null
+            }
+            1 -> {
+                candidates.single()
+            }
             else -> {
                 candidates.firstOrNull { equalSignatures(it) } ?: candidates.first()
             }
@@ -196,17 +211,27 @@ private fun toPsiMethodForDeserialized(
     }
 
     // Deserialized member function
-    return psi.containingClass()?.getClassId()?.let { classId ->
+    functionSymbol.callableIdIfNonLocal?.classId?.let { classId ->
         toPsiClass(
             buildClassType(classId),
             source = null,
             context,
             TypeOwnerKind.DECLARATION,
-            isBoxed = false
-        )?.lookup(fake = false)
-    } ?:
+        )?.lookup()?.let { return it }
+    }
     // Deserialized top-level function
-    psi.containingKtFile.findFacadeClass()?.lookup(fake = true)
+    return if (psi != null) {
+        // Lint/UAST IDE: with deserialized PSI
+        psi.containingKtFile.findFacadeClass()?.lookup()
+    } else if (functionSymbol is KtFunctionSymbol) {
+        // Lint/UAST CLI: attempt to find the binary class
+        //   with the facade fq name from the resolved symbol
+        functionSymbol.getContainingJvmClassName()?.let { fqName ->
+            JavaPsiFacade.getInstance(context.project)
+                .findClass(fqName, context.resolveScope)
+                ?.lookup()
+        }
+    } else null
 }
 
 context(KtAnalysisSession)

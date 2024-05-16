@@ -44,9 +44,9 @@ UFile (package = ) [public final class BrokenMethodKt {...]
                                     UParameter (name = $this$doStuff1) [@org.jetbrains.annotations.NotNull var $this$doStuff1: java.lang.Object]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                     UBlockExpression [{...}]
-                                        UReturnExpression [return <init>(this)]
-                                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(this)] : @org.jetbrains.annotations.NotNull() Used
+                                        UReturnExpression [return Used(this)]
+                                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Used(this)] : @org.jetbrains.annotations.NotNull() Used
                                                 UIdentifier (Identifier (Used)) [UIdentifier (Identifier (Used))]
-                                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Used) [<init>] : @org.jetbrains.annotations.NotNull() Used
+                                                USimpleNameReferenceExpression (identifier = Used, resolvesTo = PsiClass: Used) [Used]
                                                 UThisExpression (label = null) [this] : @org.jetbrains.annotations.NotNull() java.lang.Object
                                 UMethod (name = Companion) [private fun Companion() = UastEmptyExpression]

@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
@@ -32,7 +31,6 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
 import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.statistic.FilterableTestStatisticsEventLoggerProvider
@@ -311,11 +309,6 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     private fun applyAction(contents: String, hint: ActionHint, intention: IntentionAction, fileName: String) {
         val unwrappedIntention = unwrapIntention(intention)
-        if (shouldCheckIntentionActionType) {
-            if (intention.asModCommandAction() == null && unwrappedIntention !is LocalQuickFixOnPsiElement) {
-                assertInstanceOf(unwrappedIntention, QuickFixActionBase::class.java)
-            }
-        }
         val priorityName = InTextDirectivesUtils.findStringWithPrefixes(contents, "// $PRIORITY_DIRECTIVE: ")
         if (priorityName != null) {
             val expectedPriority = enumValueOf<PriorityAction.Priority>(priorityName)
@@ -370,14 +363,6 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     open fun getAfterFileName(beforeFileName: String): String {
         return File(beforeFileName).name + ".after"
     }
-
-    /**
-     * If true, the type of the [IntentionAction] to invoke is [QuickFixActionBase]. This ensures that the action is coming from a
-     * quickfix (i.e., diagnostic-based), and not a regular IDE intention.
-     */
-    protected open val shouldCheckIntentionActionType: Boolean
-        // For FE 1.0, many quickfixes are implemented as IntentionActions, which may or may not be used as regular IDE intentions as well
-        get() = false
 
     private fun checkForUnexpectedActions() {
         val text = myFixture.editor.document.text

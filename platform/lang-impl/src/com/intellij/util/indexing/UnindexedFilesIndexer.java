@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,6 +30,7 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.events.FileIndexingRequest;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import io.opentelemetry.api.trace.SpanBuilder;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
@@ -38,6 +41,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.time.Instant;
 import java.util.*;
+
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 
 /**
  * UnindexedFilesIndexer is to index files: explicitly provided (see providerToFiles in constructor), and implicitly marked as dirty, e.g.,
@@ -162,6 +167,15 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
 
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+    SpanBuilder spanBuilder = TelemetryManager.getInstance().getTracer(Indexes)
+      .spanBuilder("UnindexedFilesIndexer.performInDumbMode");
+    TraceKt.use(spanBuilder, span -> {
+      doPerformInDumbMode(indicator);
+      return null;
+    });
+  }
+
+  private void doPerformInDumbMode(@NotNull ProgressIndicator indicator) {
     myIndex.loadIndexes(); // make sure that indexes are loaded, because we can get here without scanning (e.g., from VFS refresh)
     if (!IndexInfrastructure.hasIndices()) {
       return;

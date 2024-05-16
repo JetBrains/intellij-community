@@ -32,6 +32,8 @@ public abstract class ActionPlaces {
   public static final String EDITOR_POPUP = "EditorPopup";
   public static final String EDITOR_TOOLBAR = "EditorToolbar";
 
+  public static final String CUSTOMIZE_ACTIONS_PANEL = "CustomizeActionsPanel";
+
   public static final String EDITOR_FLOATING_TOOLBAR = "EditorFloatingToolbar";
   public static final String EDITOR_TAB_POPUP = "EditorTabPopup";
   public static final String EDITOR_TAB = "EditorTab";

@@ -7,9 +7,6 @@
     <openTelemetryExporterProvider implementation="com.intellij.remoteDev.tracing.RdctExportersProvider"/>
     <openTelemetryExporterProvider implementation="com.intellij.remoteDev.tracing.LuxExportersProvider"/>
     <applicationInitializedListener implementation="com.intellij.remoteDev.tracing.CustomExportersListener"/>
-    <registryKey key="rdct.enable.per.connection.client.process" defaultValue="true"
-                 description="Use client handle lifetime to track the process of clients of the same version"
-                 restartRequired="false" />
     <registryKey key="rdct.use.embedded.client" defaultValue="true"
                  description="Enable to run JetBrains Client process from the current IDE instead of downloading it when connecting to an IDE of same version"/>
     <registryKey key="rdct.always.use.embedded.client" defaultValue="false"

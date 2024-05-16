@@ -93,7 +93,9 @@ public final class JarRepositoryManager {
   // used in integration tests
   private static final boolean DO_REFRESH = SystemProperties.getBooleanProperty("idea.do.refresh.after.jps.library.downloaded", true);
 
-  public final static NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Repository");
+  public static @NotNull NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Repository");
+  }
 
   public static boolean hasRunningTasks() {
     return ourTasksInProgress.get() > 0;   // todo: count tasks on per-project basis?
@@ -383,7 +385,7 @@ public final class JarRepositoryManager {
       sb.append(root.getFile().getName());
     }
     @NlsSafe final String content = sb.toString();
-    Notifications.Bus.notify(GROUP.createNotification(title, content, NotificationType.INFORMATION), project);
+    Notifications.Bus.notify(getNotificationGroup().createNotification(title, content, NotificationType.INFORMATION), project);
   }
 
   public static void searchArtifacts(Project project,

@@ -69,10 +69,15 @@ fn get_vfprintf_hook_pointer() -> *mut c_void {
 #[no_mangle]
 extern "C" fn abort_hook() {
     error!("[JVM] abort_hook");
-    let text = HOOK_MESSAGES.lock().unwrap().as_ref().unwrap().join("");
-    if !text.is_empty() {
-        let gui = !DEBUG_MODE.load(Ordering::Acquire);
-        ui::show_error(gui, anyhow::format_err!(text))
+    match HOOK_MESSAGES.lock() {
+        Ok(unlocked) => {
+            let text = unlocked.as_ref().map(|lines| lines.join("")).unwrap_or("".to_string());
+            if !text.is_empty() {
+                let gui = !DEBUG_MODE.load(Ordering::Acquire);
+                ui::show_error(gui, anyhow::format_err!(text))
+            }
+        }
+        Err(e) => error!("[JVM] HOOK_MESSAGES.lock() failed: {}", e)
     }
 }
 
@@ -109,7 +114,6 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
 
         let mut vm_options = vm_options.clone();
         vm_options.push(jvm_property!("sun.java.command", main_class));
-        vm_options.push(jvm_property!("ide.native.launcher", "true"));
 
         let jni_env_result = load_and_start_jvm(&jre_home, vm_options);
         let jni_env = match jni_env_result {

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -19,24 +18,45 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
 import com.intellij.util.EventDispatcher
-import com.intellij.util.containers.BidirectionalMultiMap
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.MultiMap
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
+import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
   companion object {
     private const val LIBRARY_NAME_DELIMITER = ":"
     @JvmStatic
     private val LOG = logger<ModuleDependencyIndexImpl>()
+
+    private val changedListenerTimeMs = MillisecondsMeasurer()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val changedListenerTimeCounter = meter.counterBuilder("module.dependency.index.workspace.model.listener.on.changed.ms").buildObserver()
+
+      meter.batchCallback(
+        {
+          changedListenerTimeCounter.record(changedListenerTimeMs.asMilliseconds())
+        }, changedListenerTimeCounter
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 
   private val eventDispatcher = EventDispatcher.create(ModuleDependencyListener::class.java)
@@ -67,8 +87,12 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     eventDispatcher.addListener(listener)
   }
 
+  override fun removeListener(listener: ModuleDependencyListener) {
+    eventDispatcher.removeListener(listener)
+  }
+
   override fun setupTrackedLibrariesAndJdks() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     LOG.debug { "Add tracked global libraries and SDK for all modules" }
     val currentStorage = WorkspaceModel.getInstance(project).currentSnapshot
     for (moduleEntity in currentStorage.entities(ModuleEntity::class.java)) {
@@ -92,7 +116,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     return jdkChangeListener.hasDependencyOn(sdk)
   }
 
-  fun workspaceModelChanged(event: VersionedStorageChange) {
+  fun workspaceModelChanged(event: VersionedStorageChange) = changedListenerTimeMs.addMeasuredTime {
     if (project.isDisposed) return
 
     // Roots changed event should be fired for the global libraries linked with module
@@ -181,31 +205,34 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   }
   
   private inner class LibraryTablesListener : LibraryTable.Listener {
-    private val librariesPerModuleMap = BidirectionalMultiMap<ModuleId, String>()
+    // Library identifier as a key
+    private val libToModuleMap = MultiMap.createSet<String, ModuleId>()
 
     fun addTrackedLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
-      val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      if (!librariesPerModuleMap.containsValue(libraryIdentifier) && library != null) {
-        library.rootProvider.addRootSetChangedListener(rootSetChangeListener)
-        eventDispatcher.multicaster.addedDependencyOn(library)
+      if (!libToModuleMap.containsKey(libraryIdentifier)) {
+        val library = libraryTable.getLibraryByName(libraryName)
+        if (library != null) {
+          library.rootProvider.addRootSetChangedListener(rootSetChangeListener)
+          eventDispatcher.multicaster.addedDependencyOn(library)
+        }
       }
-      librariesPerModuleMap.put(moduleEntity.symbolicId, libraryIdentifier)
+      libToModuleMap.putValue(libraryIdentifier, moduleEntity.symbolicId)
     }
 
     fun unTrackLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
       val library = libraryTable.getLibraryByName(libraryName)
       val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      librariesPerModuleMap.remove(moduleEntity.symbolicId, libraryIdentifier)
-      if (!librariesPerModuleMap.containsValue(libraryIdentifier) && library != null) {
+      libToModuleMap.remove(libraryIdentifier, moduleEntity.symbolicId)
+      if (!libToModuleMap.containsKey(libraryIdentifier) && library != null) {
         eventDispatcher.multicaster.removedDependencyOn(library)
         library.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
       }
     }
 
-    fun isEmpty(libraryLevel: String) = librariesPerModuleMap.values.none { it.startsWith("$libraryLevel$LIBRARY_NAME_DELIMITER") }
+    fun isEmpty(libraryLevel: String) = libToModuleMap.keySet().none { it.startsWith("$libraryLevel$LIBRARY_NAME_DELIMITER") }
 
-    fun getLibraryLevels() = librariesPerModuleMap.values.mapTo(HashSet()) { it.substringBefore(LIBRARY_NAME_DELIMITER) }
+    fun getLibraryLevels() = libToModuleMap.keySet().mapTo(HashSet()) { it.substringBefore(LIBRARY_NAME_DELIMITER) }
 
     override fun afterLibraryAdded(newLibrary: Library) {
       if (hasDependencyOn(newLibrary)) {
@@ -223,20 +250,20 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       }
     }
 
-    fun hasDependencyOn(library: Library) = librariesPerModuleMap.containsValue(getLibraryIdentifier(library))
-    fun hasDependencyOn(libraryId: LibraryId) = librariesPerModuleMap.containsValue(getLibraryIdentifier(libraryId))
+    fun hasDependencyOn(library: Library) = libToModuleMap.containsKey(getLibraryIdentifier(library))
+    fun hasDependencyOn(libraryId: LibraryId) = libToModuleMap.containsKey(getLibraryIdentifier(libraryId))
 
     override fun afterLibraryRenamed(library: Library, oldName: String?) {
       val libraryTable = library.table
       val newName = library.name
       if (libraryTable != null && oldName != null && newName != null) {
         val oldLibraryIdentifier = getLibraryIdentifier(libraryTable, oldName)
-        val affectedModules = librariesPerModuleMap.getKeys(oldLibraryIdentifier)
+        val affectedModules = libToModuleMap.get(oldLibraryIdentifier)
         if (affectedModules.isNotEmpty()) {
           // Update collection in advance to avoid redundant handling on `addTrackedLibrary`
           val newLibraryIdentifier = getLibraryIdentifier(libraryTable, newName)
-          affectedModules.forEach { affectedModule -> librariesPerModuleMap.put(affectedModule, newLibraryIdentifier) }
-          librariesPerModuleMap.removeValue(oldLibraryIdentifier)
+          affectedModules.forEach { affectedModule -> libToModuleMap.putValue(newLibraryIdentifier, affectedModule) }
+          libToModuleMap.remove(oldLibraryIdentifier)
 
           val libraryTableId = LibraryNameGenerator.getLibraryTableId(libraryTable.tableLevel)
           WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: after library renamed") { builder ->
@@ -282,7 +309,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           }
         }
       }
-      librariesPerModuleMap.clear()
+      libToModuleMap.clear()
     }
 
     fun unsubscribeFromCustomTableOnDispose(libraryTable: LibraryTable) {

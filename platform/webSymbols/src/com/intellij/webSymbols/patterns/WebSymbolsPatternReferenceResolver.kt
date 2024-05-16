@@ -7,11 +7,14 @@ import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : WebSymbolsPatternSymbolsResolver {
   override fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
     items.asSequence().map { it.qualifiedKind }.toSet()

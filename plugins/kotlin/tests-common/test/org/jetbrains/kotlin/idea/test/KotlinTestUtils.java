@@ -45,6 +45,8 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot;
+import org.jetbrains.kotlin.idea.test.kmp.KMPTest;
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestRunner;
 import org.jetbrains.kotlin.idea.test.util.JetTestUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.KtFile;
@@ -558,7 +560,11 @@ public final class KotlinTestUtils {
             }
         }
 
-        test.invoke(absoluteTestDataFilePath);
+        if (testCase instanceof KMPTest) {
+            KMPTestRunner.run(absoluteTestDataFilePath, test, (KMPTest) testCase);
+        } else {
+            test.invoke(absoluteTestDataFilePath);
+        }
     }
 
     private static DoTest testWithCustomIgnoreDirective(DoTest test, TargetBackend targetBackend, String ignoreDirective, TestCase testCase) {

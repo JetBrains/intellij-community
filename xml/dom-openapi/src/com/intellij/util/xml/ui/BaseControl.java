@@ -205,7 +205,7 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     myDomWrapper.setValue("".equals(value) ? null : value);
   }
 
-  protected final Project getProject() {
+  public final Project getProject() {
     return myDomWrapper.getProject();
   }
 
@@ -225,10 +225,8 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
   }
 
   @Override
-  public void navigate(DomElement element) {
-  }
+  public void navigate(DomElement element) { }
 
   protected abstract @Nullable T getValue();
   protected abstract void setValue(T value);
-
 }

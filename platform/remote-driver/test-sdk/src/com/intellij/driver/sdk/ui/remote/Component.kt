@@ -1,9 +1,12 @@
 package com.intellij.driver.sdk.ui.remote
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.sdk.remoteDev.BeControlClass
+import com.intellij.driver.sdk.remoteDev.BeControlComponentBuilder
 import java.awt.Point
 
 @Remote("java.awt.Component")
+@BeControlClass(BeControlComponentBuilder::class)
 interface Component {
   val x: Int
   val y: Int

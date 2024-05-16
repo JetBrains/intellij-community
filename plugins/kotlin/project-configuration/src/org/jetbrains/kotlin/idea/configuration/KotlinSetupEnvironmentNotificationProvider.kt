@@ -54,7 +54,6 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             return null
         }
 
-        // No notification while auto-configuration is checking/running
         if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog()) {
             return null
         }

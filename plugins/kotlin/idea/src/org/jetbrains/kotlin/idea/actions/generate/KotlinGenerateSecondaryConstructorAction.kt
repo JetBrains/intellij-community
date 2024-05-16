@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
-import org.jetbrains.kotlin.idea.refactoring.appendElement
+import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -188,7 +188,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
                 val paramType = IdeDescriptorRenderers.SOURCE_CODE.renderType(property.type)
 
                 parameterList.addParameter(psiFactory.createParameter("$paramName: $paramType"))
-                body.appendElement(psiFactory.createExpression("this.${propertyName.quoteIfNeeded()} = $paramName"), true)
+                body.addElement(psiFactory.createExpression("this.${propertyName.quoteIfNeeded()} = $paramName"), true)
             }
 
             constructor.add(body)

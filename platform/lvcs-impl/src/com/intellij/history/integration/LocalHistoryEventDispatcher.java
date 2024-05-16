@@ -33,11 +33,11 @@ final class LocalHistoryEventDispatcher {
   private static final Boolean USE_WORKSPACE_TRAVERSAL =
     SystemProperties.getBooleanProperty("lvcs.use-workspace-traversal", true);
 
-  private final LocalHistoryFacade myVcs;
-  private final IdeaGateway myGateway;
-  private final DisposableWrapperList<BulkFileListener> myVfsEventListeners = new DisposableWrapperList<>();
+  private final @NotNull LocalHistoryFacade myVcs;
+  private final @NotNull IdeaGateway myGateway;
+  private final @NotNull DisposableWrapperList<BulkFileListener> myVfsEventListeners = new DisposableWrapperList<>();
 
-  LocalHistoryEventDispatcher(LocalHistoryFacade vcs, IdeaGateway gw) {
+  LocalHistoryEventDispatcher(@NotNull LocalHistoryFacade vcs, @NotNull IdeaGateway gw) {
     myVcs = vcs;
     myGateway = gw;
   }

@@ -4,8 +4,6 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.experimental.ExperimentalUiCollector;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -41,8 +39,6 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class WhatsNewAction extends AnAction implements DumbAware {
-  private static final String ENABLE_NEW_UI_REQUEST = "enable-new-UI";
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     var available = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl() != null;
@@ -93,21 +89,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
         .notify(project);
     }
     else {
-      openWhatsNewPage(project, url, onUpgrade, (id, jsRequest, completion) -> {
-        if (ENABLE_NEW_UI_REQUEST.equals(jsRequest)) {
-          if (!ExperimentalUI.isNewUI()) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.WHATS_NEW_PAGE, true);
-              ExperimentalUI.Companion.setNewUI(true);
-              UISettings.getInstance().fireUISettingsChanged();
-            });
-          }
-          return "true";
-        }
-        else {
-          throw new IllegalArgumentException("Unexpected query: " + jsRequest);
-        }
-      });
+      openWhatsNewPage(project, url, onUpgrade, null);
     }
   }
 

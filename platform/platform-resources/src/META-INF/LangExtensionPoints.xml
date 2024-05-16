@@ -661,6 +661,13 @@
     <extensionPoint name="commandLineInspectionProjectConfigurator" interface="com.intellij.ide.CommandLineInspectionProjectConfigurator" dynamic="true"/>
     <extensionPoint name="environmentKeyProvider" interface="com.intellij.ide.environment.EnvironmentKeyProvider" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.workspace.subprojectHandler"
+                    interface="com.intellij.ide.workspace.SubprojectHandler"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.workspace.settingsImporter"
+                    interface="com.intellij.ide.workspace.WorkspaceSettingsImporter"
+                    dynamic="true"/>
+
     <extensionPoint name="fileTypeStatisticProvider" interface="com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider" dynamic="true"/>
     <extensionPoint name="lang.directNavigationProvider" dynamic="true" interface="com.intellij.navigation.DirectNavigationProvider"/>
     <extensionPoint name="lang.symbolTypeProvider" dynamic="true" interface="com.intellij.codeInsight.navigation.SymbolTypeProvider"/>

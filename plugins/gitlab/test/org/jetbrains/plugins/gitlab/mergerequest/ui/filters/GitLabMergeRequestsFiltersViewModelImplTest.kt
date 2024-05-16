@@ -1,17 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
-import com.intellij.collaboration.api.page.SequentialListLoader
+import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
 import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
@@ -46,13 +48,13 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
                                                   tokenRefreshFlow = mock(),
                                                   loaderSupplier = loaderSupplierMock)
     vm.awaitLoader()
-    verify(loaderSupplierMock, times(1)).invoke(defaultFilter)
+    verify(loaderSupplierMock, times(1)).invoke(any(), eq(defaultFilter))
     clearInvocations(loaderSupplierMock)
 
     // Default filter
     filterVm.searchState.value = defaultFilter
     vm.awaitLoader()
-    verify(loaderSupplierMock, times(0)).invoke(defaultFilter)
+    verify(loaderSupplierMock, times(0)).invoke(any(), eq(defaultFilter))
 
     // Default filter
     filterVm.searchState.value = GitLabMergeRequestsFiltersValue(
@@ -60,19 +62,22 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
       assignee = MergeRequestsAssigneeFilterValue(mockedUser.username, mockedUser.name)
     )
     vm.awaitLoader()
-    verify(loaderSupplierMock, times(0)).invoke(GitLabMergeRequestsFiltersValue(
+
+    // Needs to be a variable because mocking is magic
+    val expectedFiltersValue = GitLabMergeRequestsFiltersValue(
       state = MergeRequestStateFilterValue.OPENED,
       assignee = MergeRequestsAssigneeFilterValue(mockedUser.username, mockedUser.name)
-    ))
+    )
+    verify(loaderSupplierMock, times(0)).invoke(any(), eq(expectedFiltersValue))
 
     // Change filter from Default
     filterVm.searchState.value = GitLabMergeRequestsFiltersValue.EMPTY
     vm.awaitLoader()
-    verify(loaderSupplierMock, times(1)).invoke(GitLabMergeRequestsFiltersValue.EMPTY)
+    verify(loaderSupplierMock, times(1)).invoke(any(), eq(GitLabMergeRequestsFiltersValue.EMPTY))
 
     filterVm.searchState.value = defaultFilter
     vm.awaitLoader()
-    verify(loaderSupplierMock, times(1)).invoke(defaultFilter)
+    verify(loaderSupplierMock, times(1)).invoke(any(), eq(defaultFilter))
 
     cs.cancel()
   }
@@ -94,16 +99,16 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     val filterValueStateMerged = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.MERGED)
     filterVm.searchState.value = filterValueStateMerged
     vm.awaitLoader()
-    verify(loaderSupplierMock, times(1)).invoke(filterValueStateMerged)
+    verify(loaderSupplierMock, times(1)).invoke(any(), eq(filterValueStateMerged))
 
     filterVm.searchState.value = GitLabMergeRequestsFiltersValue.EMPTY
     vm.awaitLoader()
-    verify(loaderSupplierMock, times(1)).invoke(GitLabMergeRequestsFiltersValue.EMPTY)
+    verify(loaderSupplierMock, times(1)).invoke(any(), eq(GitLabMergeRequestsFiltersValue.EMPTY))
 
     val filterValueStateClosed = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.CLOSED)
     filterVm.searchState.value = filterValueStateClosed
     vm.awaitLoader()
-    verify(loaderSupplierMock, times(1)).invoke(filterValueStateClosed)
+    verify(loaderSupplierMock, times(1)).invoke(any(), eq(filterValueStateClosed))
 
     cs.cancel()
   }
@@ -208,18 +213,19 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
   private suspend fun verifyFilterParticipantSelect(
     vm: GitLabMergeRequestsListViewModel,
     filterVm: GitLabMergeRequestsFiltersViewModelImpl,
-    loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestDetails>,
+    loaderSupplier: (CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>,
     filter: GitLabMergeRequestsFiltersValue
   ) {
     filterVm.searchState.value = filter
     vm.awaitLoader()
-    verify(loaderSupplier, times(1)).invoke(filter)
+    verify(loaderSupplier, times(1)).invoke(any(), eq(filter))
   }
 
-  private fun mockLoaderSupplier(): (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestDetails> {
-    val mockLoader = mock<SequentialListLoader<GitLabMergeRequestDetails>>()
-    return mock<(GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestDetails>> {
-      whenever(it.invoke(any())).thenReturn(mockLoader)
+  private fun mockLoaderSupplier(): (CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO> {
+    val mockLoader = mock<ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>>()
+    whenever(mockLoader.isBusyFlow).thenReturn(MutableStateFlow(false))
+    return mock<(CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>> {
+      whenever(it.invoke(any(), any())).thenReturn(mockLoader)
     }
   }
 

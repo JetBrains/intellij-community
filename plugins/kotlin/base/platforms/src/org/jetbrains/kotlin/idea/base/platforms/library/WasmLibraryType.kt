@@ -4,17 +4,18 @@ package org.jetbrains.kotlin.idea.base.platforms.library
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryType
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
 import javax.swing.JComponent
 
-class WasmLibraryType : LibraryType<DummyLibraryProperties>(KotlinWasmLibraryKind) {
+abstract class WasmLibraryType(libraryKind: PersistentLibraryKind<DummyLibraryProperties>) : LibraryType<DummyLibraryProperties>(libraryKind) {
     override fun createPropertiesEditor(editorComponent: LibraryEditorComponent<DummyLibraryProperties>) = null
 
-    @Suppress("HardCodedStringLiteral")
-    override fun getCreateActionName() = "Kotlin/Wasm"
+    override fun getCreateActionName(): Nothing? = null
 
     override fun createNewLibrary(
       parentComponent: JComponent,
@@ -24,3 +25,7 @@ class WasmLibraryType : LibraryType<DummyLibraryProperties>(KotlinWasmLibraryKin
 
     override fun getIcon(properties: DummyLibraryProperties?) = KotlinIcons.JS
 }
+
+class WasmJsLibraryType : WasmLibraryType(KotlinWasmJsLibraryKind)
+
+class WasmWasiLibraryType : WasmLibraryType(KotlinWasmWasiLibraryKind)

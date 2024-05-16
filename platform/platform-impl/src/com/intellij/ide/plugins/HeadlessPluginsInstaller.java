@@ -60,10 +60,10 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
 
       if (!customRepositories.isEmpty()) {
         RepositoryHelper.amendPluginHostsProperty(customRepositories);
-        logInfo("plugin hosts: " + System.getProperty("idea.plugin.hosts"));
+        LOG.info("plugin hosts: " + System.getProperty("idea.plugin.hosts"));
       }
 
-      logInfo("installing: " + pluginIds);
+      LOG.info("installing: " + pluginIds);
       var installed = installPlugins(pluginIds);
       System.exit(installed.size() == pluginIds.size() ? 0 : 1);
     }
@@ -71,11 +71,6 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
       LOG.error(t);
       System.exit(1);
     }
-  }
-
-  private static void logInfo(String message) {
-    LOG.info(message);
-    System.out.println(message);
   }
 
   private static void printUsageHint() {
@@ -110,27 +105,28 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
     var plugins = RepositoryHelper.loadPlugins(pluginIds);
 
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(plugins)) {
-      logInfo("3rd-party plugins rejected");
+      LOG.info("3rd-party plugins rejected");
       return Collections.emptyList();
     }
 
     if (plugins.size() < pluginIds.size()) {
       var unknown = new HashSet<>(pluginIds);
       for (var plugin : plugins) unknown.remove(plugin.getPluginId());
-      logInfo("unknown plugins: " + unknown);
+      LOG.info("unknown plugins: " + unknown);
     }
 
-    var indicator = new EmptyProgressIndicator();
+    @SuppressWarnings("UsagesOfObsoleteApi") var indicator = new EmptyProgressIndicator();
     var policy = PluginManagementPolicy.getInstance();
     var installed = new ArrayList<PluginNode>();
 
     for (var plugin : plugins) {
       if (PluginManagerCore.getPlugin(plugin.getPluginId()) != null) {
-        logInfo("already installed: " + plugin.getPluginId());
+        LOG.info("already installed: " + plugin.getPluginId());
+        installed.add(plugin);
         continue;
       }
       if (!policy.canInstallPlugin(plugin)) {
-        logInfo("rejected by policy: " + plugin.getPluginId());
+        LOG.info("rejected by policy: " + plugin.getPluginId());
         continue;
       }
       try {

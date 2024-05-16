@@ -10,7 +10,8 @@ abstract class AbstractK2ExternalAnnotationTest : AbstractExternalAnnotationTest
 
     override fun doTest(kotlinFilePath: String) {
         val original = File(kotlinFilePath)
-        super.doTest(IgnoreTests.getFirTestFile(original).path)
-        IgnoreTests.cleanUpIdenticalFirTestFile(original)
+        val k2Extension = IgnoreTests.FileExtension.FIR
+        super.doTest(IgnoreTests.getK2TestFile(original, k2Extension).path)
+        IgnoreTests.cleanUpIdenticalK2TestFile(original, k2Extension)
     }
 }

@@ -1,33 +1,29 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui
 
-import com.intellij.icons.AllIcons
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.*
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.feedback.newUi.NewUIInfoService
-import com.intellij.util.PlatformUtils
-import com.intellij.util.application
-import com.intellij.util.ui.RestartDialog
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -37,82 +33,95 @@ private val LOG: Logger
  * @author Konstantin Bulenkov
  */
 private class ExperimentalUIImpl : ExperimentalUI() {
-  private var shouldApplyOnClose: Boolean? = null
   private var shouldUnsetNewUiSwitchKey: Boolean = true
-
   private val isIconPatcherSet = AtomicBoolean()
-  private var iconPathPatcher: IconPathPatcher? = null
+  private val isFirstCheck = AtomicBoolean(true)
+  private val isResetLaf = AtomicBoolean()
 
-  override fun lookAndFeelChanged() {
-    if (isNewUI()) {
-      installIconPatcher()
-      patchUiDefaultsForNewUi()
+  override fun earlyInitValue(): Boolean {
+    val prevNewUI = super.earlyInitValue() && !forcedSwitchedUi
+    val newUi = !IconMapperBean.EP_NAME_REVERSE.hasAnyExtensions()
+
+    if (isFirstCheck.compareAndSet(true, false)) {
+      changeValue(prevNewUI, newUi)
+    }
+
+    return newUi
+  }
+
+  private fun changeValue(prevNewUi: Boolean, newUi: Boolean) {
+    val application = ApplicationManager.getApplication()
+    if (application.isHeadlessEnvironment || application.isUnitTestMode || !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+      return
+    }
+
+    val enabled: Boolean
+
+    if (prevNewUi && !newUi) {
+      isResetLaf.set(true)
+
+      enabled = false
+      NewUIInfoService.getInstance().updateDisableNewUIDate()
+
+      LOG.info("=== UI: new -> old ===")
+    }
+    else if (!prevNewUi && newUi) {
+      isResetLaf.set(true)
+
+      enabled = true
+      setNewUiUsed()
+      NewUIInfoService.getInstance().updateEnableNewUIDate()
+
+      if (!DistractionFreeModeController.shouldMinimizeCustomHeader()) {
+        UISettings.getInstance().hideToolStripes = false
+      }
+
+      LOG.info("=== UI: old -> new ===")
+    }
+    else {
+      return
+    }
+
+    EP_LISTENER.forEachExtensionSafe {
+      it.changeUI(enabled)
+    }
+
+    try {
+      EarlyAccessRegistryManager.setBoolean(KEY, enabled)
+      EarlyAccessRegistryManager.syncAndFlush()
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
     }
   }
 
-  fun onRegistryValueChange(isEnabled: Boolean) {
-    if (isEnabled) {
-      installIconPatcher()
+  override fun lookAndFeelChanged() {
+    if (isNewUI()) {
       patchUiDefaultsForNewUi()
-      onValueChanged(isEnabled = true)
     }
-    else if (isIconPatcherSet.compareAndSet(true, false)) {
-      iconPathPatcher?.let {
-        iconPathPatcher = null
-        IconLoader.removePathPatcher(it)
-      }
-      onValueChanged(isEnabled = false)
+    if (isResetLaf.compareAndSet(true, false)) {
+      resetLafSettingsToDefault()
     }
   }
 
   override fun installIconPatcher() {
-    if (!isNewUI()) {
-      return
+    if (isNewUI()) {
+      installIconPatcher { createPathPatcher(it) }
     }
+    else {
+      installIconPatcher { createReversePathPatcher(it) }
+    }
+  }
 
+  private fun installIconPatcher(patcherProvider: (Map<ClassLoader, Map<String, String>>) -> IconPathPatcher) {
     val iconMapping = service<IconMapLoader>().loadIconMapping() ?: return
     if (!isIconPatcherSet.compareAndSet(false, true)) {
       return
     }
 
-    val patcher = iconMapping.takeIf { it.isNotEmpty() }?.let { createPathPatcher(it) }
-    iconPathPatcher = patcher
+    val patcher = iconMapping.takeIf { it.isNotEmpty() }?.let { patcherProvider(it) }
     if (patcher != null) {
       IconLoader.installPostPathPatcher(patcher)
-    }
-  }
-
-  /**
-   * For RD session, we take the newUI preference from the join link of IDE backend,
-   * and we don't read from or write to a local thin client registry.
-   *
-   * For CWM session, we take the newUI preference from a local thin client registry,
-   * and when a user changes the value, we write it to the local registry.
-   *
-   * Both for RD and CWM sessions an actual change of newUI preference is done by
-   * [ExperimentalUIJetBrainsClientDelegate].
-   *
-   * For local IDE, we show a restart dialog on user action.
-   * On app closing, we save new value stored in the [shouldApplyOnClose]
-   */
-  override fun setNewUIInternal(newUI: Boolean, suggestRestart: Boolean) {
-    if (newUI == NewUiValue.isEnabled()) {
-      LOG.warn("Setting the same value $newUI")
-      return
-    }
-
-    if (PlatformUtils.isJetBrainsClient()) {
-      changeUiWithDelegate(newUI)
-    }
-    else {
-      onValueChanged(newUI)
-      if (suggestRestart) {
-        shouldApplyOnClose = newUI
-        RestartDialog.showRestartRequired()
-      }
-      else {
-        saveNewValue(newUI)
-      }
     }
   }
 
@@ -127,54 +136,10 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     if (shouldUnsetNewUiSwitchKey) {
       PropertiesComponent.getInstance().unsetValue(NEW_UI_SWITCH)
     }
-    val newValue = shouldApplyOnClose
-    if (newValue != null && newValue != NewUiValue.isEnabled()) {
-      saveNewValue(newValue)
-    }
-  }
-
-  private fun onValueChanged(isEnabled: Boolean) {
-    if (isEnabled) {
-      setNewUiUsed()
-    }
-
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      return
-    }
-
-    if (isEnabled) {
-      NewUIInfoService.getInstance().updateEnableNewUIDate()
-      // Do not force enabling tool window stripes in DFM
-      if (!DistractionFreeModeController.shouldMinimizeCustomHeader()) {
-        UISettings.getInstance().hideToolStripes = false
-      }
-    }
-    else {
-      NewUIInfoService.getInstance().updateDisableNewUIDate()
-    }
-
-    // On the client, onValueChanged will not be called again as there's no real registry value change.
-    // Set the override before calling resetLafSettingsToDefault to ensure the correct LaF is chosen.
-    if (PlatformUtils.isJetBrainsClient()) {
-      NewUiValue.overrideNewUiForOneRemDevSession(isEnabled)
-    }
-    resetLafSettingsToDefault()
-  }
-
-  private fun saveNewValue(enabled: Boolean) {
-    try {
-      LOG.info("Saving newUi=$enabled to registry")
-      EarlyAccessRegistryManager.setBoolean(KEY, enabled)
-      EarlyAccessRegistryManager.syncAndFlush()
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
   }
 
   override fun saveCurrentValueAndReapplyDefaultLaf() {
-    saveNewValue(NewUiValue.isEnabled())
-    resetLafSettingsToDefault()
+    // TODO: remove all callers
   }
 
   private fun setNewUiUsed() {
@@ -187,48 +152,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     }
     propertyComponent.setValue(NEW_UI_SWITCH, true)
     shouldUnsetNewUiSwitchKey = false
-  }
-
-  private fun changeUiWithDelegate(isEnabled: Boolean) {
-    val restartNow = MessageDialogBuilder.yesNo(
-      title = IdeBundle.message("dialog.newui.title.user.interface"),
-      message = IdeBundle.message("dialog.newui.message.need.restart.client.and.backend.to.apply.settings"),
-      icon = AllIcons.General.QuestionDialog,
-    ).yesText(IdeBundle.message("dialog.newui.message.new.ui.restart.now"))
-      .noText(IdeBundle.message("dialog.newui.message.new.ui.restart.later"))
-      .guessWindowAndAsk()
-    fun changeUI() {
-      val delegate = ExperimentalUIJetBrainsClientDelegate.getInstance()
-      delegate.changeUi(isEnabled, updateLocally = {
-        onValueChanged(isEnabled)
-        saveNewValue(isEnabled)
-      })
-    }
-    if (restartNow) {
-      changeUI()
-    }
-    else {
-      val disposable = Disposer.newDisposable("NewUI change")
-      application.messageBus.connect(disposable).subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
-        override fun appClosing() {
-          Disposer.dispose(disposable)
-          changeUI()
-        }
-      })
-    }
-  }
-}
-
-private fun resetLafSettingsToDefault() {
-  val lafManager = LafManager.getInstance()
-  val defaultLightLaf = lafManager.defaultLightLaf ?: return
-  val defaultDarkLaf = lafManager.defaultDarkLaf ?: return
-  val laf = if (JBColor.isBright()) defaultLightLaf else defaultDarkLaf
-  lafManager.currentUIThemeLookAndFeel = laf
-  if (lafManager.autodetect) {
-    lafManager.setPreferredLightLaf(defaultLightLaf)
-    lafManager.setPreferredDarkLaf(defaultDarkLaf)
-    lafManager.resetPreferredEditorColorScheme()
   }
 }
 
@@ -246,12 +169,37 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
   }
 }
 
+// TODO: create new impl for RMD or remove
 interface ExperimentalUIJetBrainsClientDelegate {
   companion object {
     fun getInstance() = service<ExperimentalUIJetBrainsClientDelegate>()
   }
 
   fun changeUi(isEnabled: Boolean, updateLocally: (Boolean) -> Unit)
+}
+
+private fun resetLafSettingsToDefault() {
+  val lafManager = LafManager.getInstance()
+  val defaultLightLaf = lafManager.defaultLightLaf ?: return
+  val defaultDarkLaf = lafManager.defaultDarkLaf ?: return
+  val laf = if (JBColor.isBright()) defaultLightLaf else defaultDarkLaf
+  lafManager.currentUIThemeLookAndFeel = laf
+
+  val editorColorsManager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
+  var editorSchemeId = laf.editorSchemeId
+  if (editorSchemeId == null && !isNewUI() && DarculaLaf.NAME == laf.name) {
+    editorSchemeId = DarculaLaf.NAME
+  }
+  val scheme = if (editorSchemeId == null) null else editorColorsManager.getScheme(editorSchemeId)
+  editorColorsManager.setGlobalScheme(scheme, true)
+
+  LOG.info("=== UI: reset laf ($laf | $editorSchemeId | $scheme) ===")
+
+  if (lafManager.autodetect) {
+    lafManager.setPreferredLightLaf(defaultLightLaf)
+    lafManager.setPreferredDarkLaf(defaultDarkLaf)
+    lafManager.resetPreferredEditorColorScheme()
+  }
 }
 
 private fun patchUiDefaultsForNewUi() {
@@ -263,14 +211,13 @@ private fun patchUiDefaultsForNewUi() {
   }
 }
 
-internal class NewUiRegistryListener : RegistryValueListener {
-  override fun afterValueChanged(value: RegistryValue) {
-    // JetBrains Client has custom listener
-    if (PlatformUtils.isJetBrainsClient() || value.key != ExperimentalUI.KEY) {
-      return
+private fun createReversePathPatcher(map: Map<ClassLoader, Map<String, String>>): IconPathPatcher {
+  return object : IconPathPatcher() {
+    override fun patchPath(path: String, classLoader: ClassLoader?): String? {
+      return map.get(classLoader)?.get(path)
     }
 
-    (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.onRegistryValueChange(value.asBoolean())
+    override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?) = originalClassLoader
   }
 }
 
@@ -285,7 +232,7 @@ private fun createPathPatcher(paths: Map<ClassLoader, Map<String, String>>): Ico
       get() = System.getProperty("ide.experimental.ui.use.reflective.path", "true").toBoolean()
 
     override fun patchPath(path: String, classLoader: ClassLoader?): String? {
-      val mappings = paths.get(classLoader) ?: return null
+      val mappings = classLoader?.let { paths.get(classLoader) } ?: return null
       val patchedPath = mappings.get(path.trimStart('/'))
       if (patchedPath == null && dumpNotPatchedIcons) {
         NotPatchedIconRegistry.registerNotPatchedIcon(path, classLoader)

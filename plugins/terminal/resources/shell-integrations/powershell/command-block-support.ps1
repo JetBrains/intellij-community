@@ -43,9 +43,7 @@ function Global:Prompt() {
     $Global:__JetBrainsIntellijGeneratorRunning = $false
     # Hide internal command in the built-in session history.
     # See "Set-PSReadLineOption -AddToHistoryHandler" for hiding same commands in the PSReadLine history.
-    Clear-History -CommandLine "__JetBrainsIntellijGetCompletions*",`
-                               "__jetbrains_intellij_get_environment*",`
-                               "__jetbrains_intellij_get_directory_files*"
+    Clear-History -CommandLine "__jetbrains_intellij_run_generator*"
     return ""
   }
 
@@ -128,8 +126,40 @@ function Global:__JetBrainsIntellij_ClearAllAndMoveCursorToTopLeft() {
   [Console]::Clear()
 }
 
-function Global:__JetBrainsIntellijGetCompletions([int]$RequestId, [string]$Command, [int]$CursorIndex) {
+function Global:__jetbrains_intellij_run_generator([int]$RequestId, [string]$Command) {
   $Global:__JetBrainsIntellijGeneratorRunning = $true
+  # Remember the exit code, because it can be changed in a result of generator command execution
+  $RealExitCode = $Global:LastExitCode
+  $Global:LastExitCode = 0
+
+  $Success = $false
+  $Result = ""
+  # Redirect the stderr of generator command to stdout. Invoke-Expression can't take all the output for external applications.
+  $AdjustedCommand = $Command + " 2>&1"
+  # Catch the exceptions in a different ways, because exceptions
+  # inside Invoke-Expression and inside $AdjustedCommand can be propagated differently.
+  try {
+    $Result = Invoke-Expression $AdjustedCommand -ErrorVariable Exception
+    if($Exception -ne $null){
+      Throw $Exception
+    }
+    $Success = $true
+  }
+  catch {
+    $Result = $_
+  }
+  $ExitCode = $Global:LastExitCode
+  if (($ExitCode -eq $null) -or ($ExitCode -eq 0 -and -not $Success)) {
+    $ExitCode = if ($Success) { 0 } else { 1 }
+  }
+
+  $ResultOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $Result);exit_code=$ExitCode"
+  $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
+  [Console]::Write($CommandEndMarker + $ResultOSC)
+  $Global:LastExitCode = $RealExitCode
+}
+
+function Global:__JetBrainsIntellijGetCompletions([string]$Command, [int]$CursorIndex) {
   $Completions = TabExpansion2 -inputScript $Command -cursorColumn $CursorIndex
   if ($null -ne $Completions) {
     $CompletionsJson = $Completions | ConvertTo-Json -Compress
@@ -137,23 +167,18 @@ function Global:__JetBrainsIntellijGetCompletions([int]$RequestId, [string]$Comm
   else {
     $CompletionsJson = ""
   }
-  $CompletionsOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $CompletionsJson)"
-  $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
-  [Console]::Write($CommandEndMarker + $CompletionsOSC)
+  return $CompletionsJson
 }
 
-function Global:__jetbrains_intellij_get_directory_files([int]$RequestId, [string]$Path) {
-  $Global:__JetBrainsIntellijGeneratorRunning = $true
+function Global:__jetbrains_intellij_get_directory_files([string]$Path) {
   $Files = Get-ChildItem -Force -Path $Path | Where { $_ -is [System.IO.FileSystemInfo] }
   $Separator = [System.IO.Path]::DirectorySeparatorChar
   $FileNames = $Files | ForEach-Object { if ($_ -is [System.IO.DirectoryInfo]) { $_.Name + $Separator } else { $_.Name } }
   $FilesString = $FileNames -join "`n"
-  $FilesOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $FilesString)"
-  $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
-  [Console]::Write($CommandEndMarker + $FilesOSC)
+  return $FilesString
 }
 
-function Global:__jetbrains_intellij_get_environment([int]$RequestId) {
+function Global:__jetbrains_intellij_get_environment() {
   $Global:__JetBrainsIntellijGeneratorRunning = $true
   $Functions = Get-Command -CommandType "Function, Filter, ExternalScript, Script, Workflow"
   $Cmdlets = Get-Command -CommandType Cmdlet
@@ -169,15 +194,11 @@ function Global:__jetbrains_intellij_get_environment([int]$RequestId) {
     aliases = $Aliases | ConvertTo-Json -Compress
   }
   $EnvJson = $EnvObject | ConvertTo-Json -Compress
-  $EnvOSC = Global:__JetBrainsIntellijOSC "generator_finished;request_id=$RequestId;result=$(__JetBrainsIntellijEncode $EnvJson)"
-  $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
-  [Console]::Write($CommandEndMarker + $EnvOSC)
+  return $EnvJson
 }
 
 function Global:__JetBrainsIntellijIsGeneratorCommand([string]$Command) {
-  return $Command -like "__JetBrainsIntellijGetCompletions*" `
-         -or $Command -like "__jetbrains_intellij_get_environment*" `
-         -or $Command -like "__jetbrains_intellij_get_directory_files*"
+  return $Command -like "__jetbrains_intellij_run_generator*"
 }
 
 # Override the clear cmdlet to handle it on IDE side and remove the blocks

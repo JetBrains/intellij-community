@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -17,7 +17,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,42 +97,38 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     return getGeneralGroupName();
   }
 
-  public static @NotNull List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
+  public static @NotNull List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile psiFile,
                                                                                 boolean highlightErrorElements,
                                                                                 boolean runAnnotators,
                                                                                 boolean runVisitors) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Project project = file.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    Project project = psiFile.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return Collections.emptyList();
     DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    HighlightingSessionImpl.getOrCreateHighlightingSession(file, daemonProgressIndicator, ProperTextRange.create(file.getTextRange()));
-    TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
-    List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
-    List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);
-    if (!runVisitors) {
-      for (GeneralHighlightingPass gpass : gpasses) {
-        gpass.setHighlightVisitorProducer(() -> {
-          gpass.incVisitorUsageCount(1);
-          return List.of(new DefaultHighlightVisitor(project, highlightErrorElements, true));
-        });
-        gpass.setRunAnnotators(runAnnotators);
-      }
-    }
+    // in case the inspection is running in batch mode
+    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, daemonProgressIndicator, ProperTextRange.create(psiFile.getTextRange()));
+    GeneralHighlightingPass ghp =
+      new GeneralHighlightingPass(psiFile, document, 0, psiFile.getTextLength(), true, ProperTextRange.create(psiFile.getTextRange()), null,
+                                  runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);
+    InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(psiFile, document, null, 0, psiFile.getTextLength(), true,
+                                                                               ProperTextRange.create(psiFile.getTextRange()), null,
+                                                                               runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);
 
-    String fileName = file.getName();
+    String fileName = psiFile.getName();
     List<HighlightInfo> result = new ArrayList<>();
     IJTracer tracer = TelemetryManager.Companion.getTracer(HighlightVisitorScope);
 
-    for (TextEditorHighlightingPass pass : gpasses) {
+    for (TextEditorHighlightingPass pass : List.of(ghp, ighp)) {
       runWithSpan(tracer, pass.getClass().getSimpleName(), span -> {
         span.setAttribute("file", fileName);
 
         pass.doCollectInformation(daemonProgressIndicator);
         List<HighlightInfo> infos = pass.getInfos();
         for (HighlightInfo info : infos) {
-          if (info != null && info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
+          if (info == null) continue;
+          if (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
             result.add(info);
           }
         }

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.filePathPattern
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
@@ -25,29 +26,29 @@ class K2ScriptDefinitionProvider(val project: Project) : LazyScriptDefinitionPro
     public override val currentDefinitions: Sequence<ScriptDefinition>
         get() = _definitions.get()?.takeIf { it.isNotEmpty() }?.asSequence() ?: sequenceOf(getDefaultDefinition())
 
-    private fun getFilePattern(it: KotlinScriptDefinitionFromAnnotatedTemplate): String =
-        when (it.name) {
-            "KotlinSettingsScript" -> ".*settings\\.gradle\\.kts"
-            "KotlinBuildScript" -> ".*build\\.gradle\\.kts"
-            "KotlinInitScript" -> ".*init\\.gradle\\.kts"
-            else -> ".kts"
-        }
-
-    fun updateDefinitions(definitions: List<ScriptDefinition>) {
-        val definitionsFromConfigurations = definitions.map { definition ->
+    fun updateDefinitions(templateDefinitions: List<ScriptDefinition>) {
+        val definitionsFromConfigurations = templateDefinitions.map { definition ->
             val configuration = definition.compilationConfiguration.with {
                 definition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
-                    // remove when fix pattern on compiler side
-                    filePathPattern(getFilePattern(it))
+                    // remove when fix pattern processing on compiler side
+                    filePathPattern(it.scriptFilePattern.pattern)
                 }
             }
 
-            ScriptDefinition.FromConfigurations(
+            object : ScriptDefinition.FromConfigurations(
                 definition.hostConfiguration,
                 configuration,
                 definition.evaluationConfiguration,
                 definition.defaultCompilerOptions
-            )
+            ) {
+                // remove when fix pattern processing on compiler side
+                override fun isScript(script: SourceCode): Boolean {
+                    val extension = ".$fileExtension"
+                    val location = script.locationId ?: return false
+                    val name = script.name ?: location
+                    return name.endsWith(extension) && filePathPattern?.let { Regex(it).matches(name) } != false
+                }
+            }
         }
         _definitions.set(definitionsFromConfigurations)
         clearCache()

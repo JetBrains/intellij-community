@@ -1,4 +1,4 @@
-// ERROR: Type mismatch: inferred type is J but Unit was expected
+// ERROR: Return type mismatch: expected 'kotlin.Unit', actual 'J'.
 class J(x: Int, y: Int) {
     fun foo() {
         return J(0, TODO("Cannot convert element"))

@@ -28,14 +28,32 @@ internal class BlockTerminalController(
   private val promptController: TerminalPromptController,
   private val selectionController: TerminalSelectionController,
   private val focusModel: TerminalFocusModel
-) : ShellCommandListener {
+) {
   private val listeners: MutableList<BlockTerminalControllerListener> = CopyOnWriteArrayList()
 
   var searchSession: BlockTerminalSearchSession? = null
     private set
 
   init {
-    session.addCommandListener(this)
+    session.addCommandListener(object: ShellCommandListener {
+      override fun initialized() {
+        finishCommandBlock(exitCode = 0)
+      }
+
+      override fun shellInfoReceived(rawShellInfo: String) {
+        thisLogger().info("Started shell info: $rawShellInfo")
+        ApplicationManager.getApplication().executeOnPooledThread {
+          TerminalShellInfoStatistics.getLoggableShellInfo(rawShellInfo)?.let {
+            TerminalUsageTriggerCollector.triggerLocalShellStarted(project, session.shellIntegration.shellType.toString(), it)
+          }
+        }
+      }
+
+      override fun commandFinished(event: CommandFinishedEvent) {
+        finishCommandBlock(event.exitCode)
+        TerminalUsageTriggerCollector.triggerCommandFinished(project, event.command, event.exitCode, event.duration)
+      }
+    })
 
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
@@ -80,24 +98,6 @@ internal class BlockTerminalController(
     session.model.isCommandRunning = true
 
     TerminalUsageLocalStorage.getInstance().recordCommandExecuted(session.shellIntegration.shellType.toString())
-  }
-
-  override fun shellInfoReceived(rawShellInfo: String) {
-    thisLogger().info("Started shell info: $rawShellInfo")
-    ApplicationManager.getApplication().executeOnPooledThread {
-      TerminalShellInfoStatistics.getLoggableShellInfo(rawShellInfo)?.let {
-        TerminalUsageTriggerCollector.triggerLocalShellStarted(project, session.shellIntegration.shellType.toString(), it)
-      }
-    }
-  }
-
-  override fun initialized() {
-    finishCommandBlock(exitCode = 0)
-  }
-
-  override fun commandFinished(event: CommandFinishedEvent) {
-    finishCommandBlock(event.exitCode)
-    TerminalUsageTriggerCollector.triggerCommandFinished(project, event.command, event.exitCode, event.duration)
   }
 
   private fun finishCommandBlock(exitCode: Int) {

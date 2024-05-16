@@ -609,6 +609,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findClassUsages/localAndNonLocalClass.0.kt");
             }
 
+            @TestMetadata("primaryConstructorOfEnum.0.kt")
+            public void testPrimaryConstructorOfEnum() throws Exception {
+                runTest("testData/findUsages/kotlin/findClassUsages/primaryConstructorOfEnum.0.kt");
+            }
+
             @TestMetadata("primaryConstructorWithDefaultParams.0.kt")
             public void testPrimaryConstructorWithDefaultParams() throws Exception {
                 runTest("testData/findUsages/kotlin/findClassUsages/primaryConstructorWithDefaultParams.0.kt");
@@ -1120,6 +1125,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("primaryConstructorNoKeyword.0.kt")
             public void testPrimaryConstructorNoKeyword() throws Exception {
                 runTest("testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorNoKeyword.0.kt");
+            }
+
+            @TestMetadata("primaryConstructorOfEnum.0.kt")
+            public void testPrimaryConstructorOfEnum() throws Exception {
+                runTest("testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorOfEnum.0.kt");
             }
 
             @TestMetadata("primaryConstructorWithKeyword.0.kt")

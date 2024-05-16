@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
+import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
@@ -76,7 +77,7 @@ interface BuildContext : CompilationContext {
    * [BuildOptions.useModularLoader].
    */
   val useModularLoader: Boolean
-  
+
   /**
    * Specifies whether the runtime module repository should be added to the distributions, see [BuildOptions.generateRuntimeModuleRepository].
    */
@@ -87,7 +88,7 @@ interface BuildContext : CompilationContext {
    * In IDEs, which use path-based loader, this list is specified manually in [ProductModulesLayout.bundledPluginModules] property.
    */
   val bundledPluginModules: List<String>
-  
+
   /**
    * see BuildTasksImpl.buildProvidedModuleList
    */
@@ -125,9 +126,9 @@ interface BuildContext : CompilationContext {
   }
 
   val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter
-  
+
   val isEmbeddedJetBrainsClientEnabled: Boolean
-  
+
   fun shouldBuildDistributions(): Boolean
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
@@ -139,16 +140,21 @@ interface BuildContext : CompilationContext {
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
 
   fun checkDistributionBuildNumber()
+
+  suspend fun cleanupJarCache()
+
+  suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
 }
 
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
-                                            stepId: String,
-                                            crossinline step: suspend CoroutineScope.(Span) -> Unit) {
+suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
+                                                stepId: String,
+                                                crossinline step: suspend CoroutineScope.(Span) -> T): T? {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
+    return null
   }
   else {
-    spanBuilder.useWithScope(Dispatchers.IO, step)
+    return spanBuilder.useWithScope(Dispatchers.IO, step)
   }
 }
 
@@ -176,13 +182,13 @@ sealed interface DistFileContent {
   fun readAsStringForDebug(): String
 }
 
-internal data class LocalDistFileContent(@JvmField val file: Path) : DistFileContent {
+data class LocalDistFileContent(@JvmField val file: Path) : DistFileContent {
   override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).toString(Charsets.UTF_8)
 
   override fun toString(): String = "LocalDistFileContent(file=$file)"
 }
 
-internal data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
+data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
   override fun readAsStringForDebug(): String = String(data, 0, data.size.coerceAtMost(1024), Charsets.UTF_8)
 
   override fun equals(other: Any?): Boolean {

@@ -20,7 +20,7 @@ fun getScopeToSearchParameterReferences(parameter: KtParameter): SearchScope? {
     val restrictedScope = if (useScope is GlobalSearchScope) {
         val psiSearchHelper = PsiSearchHelper.getInstance(parameter.project)
         for (accessorName in parameter.getAccessorNames()) {
-            val searchResult = psiSearchHelper.isCheapEnoughToSearchConsideringOperators(accessorName, useScope, null)
+            val searchResult = psiSearchHelper.isCheapEnoughToSearchConsideringOperators(accessorName, useScope)
             when (searchResult) {
                 PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> {
                     // Go on
@@ -34,7 +34,7 @@ fun getScopeToSearchParameterReferences(parameter: KtParameter): SearchScope? {
         }
         // TOO_MANY_OCCURRENCES: too expensive
         // ZERO_OCCURRENCES: unused at all, reported elsewhere
-        val searchResult = psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null)
+        val searchResult = psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)
         if (searchResult != PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
             return null
         }

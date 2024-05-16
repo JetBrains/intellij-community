@@ -14,7 +14,6 @@ import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
 import com.intellij.openapi.vcs.ex.LstRange
 import com.intellij.util.cancelOnDispose
@@ -127,17 +126,13 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
   private inner class ShiftedNewDiscussion(vm: GitLabMergeRequestEditorNewDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestEditorNewDiscussionViewModel>(vm) {
-    override val key: Any = "NEW_${vm.originalLine}"
+    override val key: Any = vm.key
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val line: StateFlow<Int?> = vm.line.shiftLine()
     override fun cancel() = cancelNewDiscussion(vm.originalLine)
   }
 
   override fun dispose() = Unit
-
-  companion object {
-    val KEY: Key<GitLabMergeRequestEditorReviewUIModel> = Key.create("GitLab.MergeRequest.Editor.Review.UIModel")
-  }
 }
 
 private data class GutterState(

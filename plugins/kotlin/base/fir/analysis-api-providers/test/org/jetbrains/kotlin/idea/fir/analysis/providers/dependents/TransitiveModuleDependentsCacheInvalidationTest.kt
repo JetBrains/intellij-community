@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.dependents
 import org.jetbrains.kotlin.analysis.project.structure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
@@ -17,9 +18,11 @@ import java.io.File
  * This test ensures that cached transitive dependents of the IDE's [KotlinModuleDependentsProvider] are properly invalidated.
  */
 class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest() {
+
     override fun getTestDataDirectory(): File = error("Should not be called")
 
-    override fun isFirPlugin(): Boolean = true
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     private val moduleDependentsProvider get() = KotlinModuleDependentsProvider.getInstance(project)
 

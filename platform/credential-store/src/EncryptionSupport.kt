@@ -6,6 +6,7 @@ import com.intellij.credentialStore.windows.WindowsCryptUtils
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.toByteArray
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.security.Key
@@ -25,11 +26,13 @@ internal interface EncryptionSupport {
   fun decrypt(data: ByteArray): ByteArray
 }
 
+@ApiStatus.Internal
 enum class EncryptionType {
   BUILT_IN, CRYPT_32, PGP_KEY
 }
 
-fun getDefaultEncryptionType() = if (SystemInfo.isWindows) EncryptionType.CRYPT_32 else EncryptionType.BUILT_IN
+@ApiStatus.Internal
+fun getDefaultEncryptionType(): EncryptionType = if (SystemInfo.isWindows) EncryptionType.CRYPT_32 else EncryptionType.BUILT_IN
 
 private open class AesEncryptionSupport(private val key: Key) : EncryptionSupport {
   companion object {
@@ -73,6 +76,7 @@ private class PgpKeyEncryptionSupport(private val encryptionSpec: EncryptionSpec
   override fun decrypt(data: ByteArray) = Pgp().decrypt(data)
 }
 
+@ApiStatus.Internal
 data class EncryptionSpec(val type: EncryptionType, val pgpKeyId: String?)
 
 internal fun createEncryptionSupport(spec: EncryptionSpec): EncryptionSupport {

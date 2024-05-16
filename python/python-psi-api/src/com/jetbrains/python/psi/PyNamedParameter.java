@@ -20,6 +20,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.ast.PyAstNamedParameter;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,9 @@ public interface PyNamedParameter extends PyAstNamedParameter, PyParameter, PsiN
   /**
    * @param context context to be used to resolve argument type
    * @return argument type. Returns element type for *param and value type for **param.
+   * @deprecated Use {@link PyCallableParameter#getArgumentType(TypeEvalContext)}
    */
+  @Deprecated
   @Nullable
   PyType getArgumentType(@NotNull TypeEvalContext context);
 

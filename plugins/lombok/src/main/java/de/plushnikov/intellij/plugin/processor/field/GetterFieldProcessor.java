@@ -69,8 +69,8 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     if (result && lazy) {
       if (!psiField.hasModifierProperty(PsiModifier.FINAL) || !psiField.hasModifierProperty(PsiModifier.PRIVATE)) {
         builder.addErrorMessage("inspection.message.lazy.requires.field.to.be.private.final")
-          .withLocalQuickFixes(()->PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
-                               ()->PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
+          .withLocalQuickFixes(() -> PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
+                               () -> PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, true, false));
         result = false;
       }
       if (!psiField.hasInitializer()) {
@@ -107,8 +107,10 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
 
   @Nullable
   @Contract("_,_,_,null -> !null")
-  public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull PsiClass psiClass, @NotNull String methodModifier,
-                                      @Nullable String nameHint) {
+  public static PsiMethod createGetterMethod(@NotNull PsiField psiField,
+                                             @NotNull PsiClass psiClass,
+                                             @NotNull String methodModifier,
+                                             @Nullable String nameHint) {
     final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
     final String methodName = LombokUtils.getGetterName(psiField, accessorsInfo);
     if (nameHint != null && !nameHint.equals(methodName)) return null;

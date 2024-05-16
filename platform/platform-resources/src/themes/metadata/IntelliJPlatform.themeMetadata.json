@@ -260,8 +260,13 @@
     },
     {
       "key": "CompletionPopup.Body.insets",
-      "description": "Insets around body  (experimental UI only). If bottom panel with advertiser is visible then bottom inset is not applied",
+      "description": "Insets around body  (experimental UI only). If bottom panel with advertiser is visible then BodyWithAdvertiser.insets is used instead",
       "since": "2022.2"
+    },
+    {
+      "key": "CompletionPopup.BodyWithAdvertiser.insets",
+      "description": "Insets around body  (experimental UI only). Used only when the advertiser (bottom panel) is visible",
+      "since": "2024.2"
     },
     {
       "key": "CompletionPopup.infoForeground",

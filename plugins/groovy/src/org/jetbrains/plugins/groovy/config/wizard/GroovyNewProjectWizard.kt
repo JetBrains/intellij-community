@@ -49,7 +49,6 @@ class GroovyNewProjectWizard : LanguageGeneratorNewProjectWizard {
       super.setupProject(project)
 
       logBuildSystemFinished()
-      logGroovySdkFinished(groovySdk)
     }
 
     init {

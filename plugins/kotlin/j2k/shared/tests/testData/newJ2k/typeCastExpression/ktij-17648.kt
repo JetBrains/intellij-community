@@ -11,7 +11,7 @@ class Foo {
             val difference = q[offset--] - product
             carry = ((product ushr 32)
                     + (if (((difference and LONG_MASK) >
-                        ((product.toInt().inv().toLong() and LONG_MASK)))
+                        (((product.toInt().inv()).toLong() and LONG_MASK)))
             ) 1 else 0))
         }
         return carry.toInt()

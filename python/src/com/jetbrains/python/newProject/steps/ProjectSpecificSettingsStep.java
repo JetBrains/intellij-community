@@ -19,9 +19,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
@@ -46,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
@@ -349,17 +346,6 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     checkValid();
 
     return decoratorPanel;
-  }
-
-  private void addLocationChangeListener(@NotNull Consumer<? super DocumentEvent> listener) {
-    final TextFieldWithBrowseButton field = myLocationField;
-    if (field == null) return;
-    field.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull DocumentEvent e) {
-        listener.consume(e);
-      }
-    });
   }
 
   private static @NotNull TextWithMnemonic getProjectInterpreterTitle(@NotNull PyAddSdkPanel panel) {

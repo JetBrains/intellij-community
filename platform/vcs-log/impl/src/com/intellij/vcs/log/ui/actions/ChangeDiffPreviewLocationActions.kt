@@ -8,16 +8,16 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SP
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 
-class MoveDiffPreviewToBottomAction : ChangeDiffPreviewLocationAction()
+internal class MoveDiffPreviewToBottomAction : ChangeDiffPreviewLocationAction()
 
-class MoveDiffPreviewToRightAction : ChangeDiffPreviewLocationAction() {
+internal class MoveDiffPreviewToRightAction : ChangeDiffPreviewLocationAction() {
 
   override fun isSelected(e: AnActionEvent): Boolean = !super.isSelected(e)
 
   override fun setSelected(e: AnActionEvent, state: Boolean) = super.setSelected(e, !state)
 }
 
-abstract class ChangeDiffPreviewLocationAction : BooleanPropertyToggleAction() {
+internal abstract class ChangeDiffPreviewLocationAction : BooleanPropertyToggleAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -31,7 +31,7 @@ abstract class ChangeDiffPreviewLocationAction : BooleanPropertyToggleAction() {
   override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = DIFF_PREVIEW_VERTICAL_SPLIT
 }
 
-class DiffPreviewLocationActionGroup : DefaultActionGroup() {
+internal class DiffPreviewLocationActionGroup : DefaultActionGroup() {
   init {
     templatePresentation.isHideGroupIfEmpty = true
   }

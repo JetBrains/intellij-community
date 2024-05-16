@@ -29,6 +29,9 @@ public class ID<K, V> extends IndexId<K,V> {
   private static final Logger LOG = Logger.getInstance(ID.class);
   private static final PluginId CORE_PLUGIN_ID = PluginId.getId("com.intellij");
 
+  @ApiStatus.Internal
+  public static final String INDICES_ENUM_FILE = "indices.enum";
+
   private static volatile SimpleStringPersistentEnumerator nameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
 
   private static final Map<String, ID<?, ?>> idObjects = new ConcurrentHashMap<>();
@@ -42,7 +45,7 @@ public class ID<K, V> extends IndexId<K,V> {
 
   @ApiStatus.Internal
   private static @NotNull Path getEnumFile() {
-    return PathManager.getIndexRoot().resolve("indices.enum");
+    return PathManager.getIndexRoot().resolve(INDICES_ENUM_FILE);
   }
 
   @ApiStatus.Internal

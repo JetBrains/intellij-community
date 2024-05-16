@@ -31,7 +31,6 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
       // disable "the only project" optimization since we have now more than one project.
       // (even though the default project is not a real project, it can be used indirectly in e.g. "Settings|Code Style" code fragments PSI)
       ((ProjectManagerImpl)ProjectManager.getInstance()).updateTheOnlyProjectField();
-
     }
     return value;
   }

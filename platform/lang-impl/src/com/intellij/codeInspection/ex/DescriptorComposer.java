@@ -44,12 +44,14 @@ public final class DescriptorComposer extends HTMLComposerImpl {
 
       LOG.assertTrue(descriptions != null);
 
-      buf.append("\n<ul>");
+      startList(buf);
       for (int i = 0; i < descriptions.length; i++) {
-        buf.append("\n<li>");
+        startListItem(buf);
         composeDescription(descriptions[i], i, buf, refEntity);
+        doneListItem(buf);
       }
-      buf.append("\n</ul>\n</div>");
+      doneList(buf);
+      buf.append("\n</div>");
 
       appendResolution(buf, refEntity, quickFixTexts(refEntity, myTool));
     }
@@ -147,7 +149,7 @@ public final class DescriptorComposer extends HTMLComposerImpl {
       descriptionTemplate = StringUtil.replace(descriptionTemplate, "</code>", "'");
       descriptionTemplate = XmlStringUtil.escapeString(descriptionTemplate);
     }
-    String res = NBSP + descriptionTemplate.replaceAll("#ref", anchor.toString());
+    String res = descriptionTemplate.replaceAll("#ref", anchor.toString());
     int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
     StringBuilder lineAnchor = new StringBuilder();
     if (expression != null && lineNumber >= 0) {

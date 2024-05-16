@@ -55,7 +55,6 @@ f:com.intellij.diff.comparison.MergeResolveUtil
 - sf:INSTANCE:com.intellij.diff.comparison.MergeResolveUtil
 - sf:tryGreedyResolve(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence):java.lang.CharSequence
 - sf:tryResolve(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence):java.lang.CharSequence
-f:com.intellij.diff.comparison.MergeResolveUtilKt
 f:com.intellij.diff.comparison.TrimUtil
 - sf:expand(java.lang.CharSequence,java.lang.CharSequence,I,I,I,I):com.intellij.diff.util.Range
 - sf:expand(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.util.Range):com.intellij.diff.util.Range

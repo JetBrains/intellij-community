@@ -75,10 +75,6 @@ public final class ExpectedTypesProvider {
       return ArrayUtil.mergeArrays(sourceMethods, libraryMethods);
     }
   };
-  private static final PsiType[] PRIMITIVE_TYPES = {PsiTypes.byteType(), PsiTypes.charType(), PsiTypes.shortType(), PsiTypes.intType(),
-    PsiTypes.longType(),
-    PsiTypes.floatType(),
-    PsiTypes.doubleType()};
 
   public static @NotNull ExpectedTypeInfo createInfo(@NotNull  PsiType type, @ExpectedTypeInfo.Type int kind, PsiType defaultType, @NotNull TailType tailType) {
     return createInfoImpl(type, kind, defaultType, tailType);
@@ -221,10 +217,9 @@ public final class ExpectedTypesProvider {
                                                       @NotNull Set<? super PsiType> set) {
     if (type.equals(PsiTypes.booleanType()) || type.equals(PsiTypes.voidType()) || type.equals(PsiTypes.nullType())) return;
 
-    for (int i = 0; ; i++) {
-      final PsiType primitive = PRIMITIVE_TYPES[i];
-      processType(primitive, visitor, set);
-      if (primitive.equals(type)) return;
+    for (PsiPrimitiveType primitiveType : PsiTypes.primitiveTypes()) {
+      processType(primitiveType, visitor, set);
+      if (primitiveType.equals(type)) return;
     }
   }
 
@@ -234,11 +229,16 @@ public final class ExpectedTypesProvider {
     if (type instanceof PsiPrimitiveType) {
       if (type.equals(PsiTypes.booleanType()) || type.equals(PsiTypes.voidType()) || type.equals(PsiTypes.nullType())) return;
 
+      List<PsiPrimitiveType> primitiveTypes = PsiTypes.primitiveTypes();
       Stack<PsiType> stack = new Stack<>();
-      for (int i = PRIMITIVE_TYPES.length - 1; !PRIMITIVE_TYPES[i].equals(type); i--) {
-        stack.push(PRIMITIVE_TYPES[i]);
+      for (int i = primitiveTypes.size() - 1; i >= 0; i--) {
+        PsiPrimitiveType primitiveType = primitiveTypes.get(i);
+        if (primitiveTypes.get(i).equals(type)) break;
+        //it is already processed before
+        if (primitiveType.equals(PsiTypes.booleanType())) continue;
+        stack.push(primitiveType);
       }
-      while(!stack.empty()) {
+      while (!stack.empty()) {
         processType(stack.pop(), visitor, set);
       }
     }

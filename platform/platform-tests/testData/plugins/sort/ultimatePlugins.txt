@@ -163,12 +163,12 @@
 + -org-intellij-grails-
 
 
-Plugin Jupyter Notebook requires plugin com.intellij.modules.pycharm to be installed
-Plugin Python pytest-bdd support requires plugin com.intellij.modules.pycharm.professional to be installed
-Plugin Python Docker requires plugin com.intellij.modules.pycharm.professional to be installed
-Plugin Python BDD support for engines, based on Gherkin (cucumber, behave) requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Python SSH Interpreter requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Python WSL Support requires plugin com.intellij.modules.pycharm.professional to be installed
+Plugin Jupyter Notebook requires plugin com.intellij.modules.pycharm to be installed
+Plugin Python BDD support for engines, based on Gherkin (cucumber, behave) requires plugin com.intellij.modules.pycharm.professional to be installed
+Plugin Python pytest-bdd support requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Concurrency Visualiser requires plugin com.intellij.modules.pycharm.professional to be installed
+Plugin Python Docker requires plugin com.intellij.modules.pycharm.professional to be installed
 <a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>

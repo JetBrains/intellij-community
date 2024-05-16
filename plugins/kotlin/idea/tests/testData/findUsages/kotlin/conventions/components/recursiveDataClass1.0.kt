@@ -12,4 +12,4 @@ fun f(a: A) {
 
 
 
-// IGNORE_K2_LOG
+

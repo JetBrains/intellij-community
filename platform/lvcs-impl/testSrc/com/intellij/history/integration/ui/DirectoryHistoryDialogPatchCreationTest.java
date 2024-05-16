@@ -10,11 +10,12 @@ import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import java.nio.file.Path;
 import java.util.List;
 
+import static com.intellij.history.integration.ui.HistoryDialogModelsKt.createDirectoryModel;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
   public void testPatchCreation() throws Exception {
-    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), myRoot);
+    DirectoryHistoryDialogModel m = createDirectoryModel(this, myRoot);
     m.clearRevisions();
     createChildDataWithoutContent(myRoot, "f0.txt");
     createChildDataWithContent(myRoot, "f1.txt");

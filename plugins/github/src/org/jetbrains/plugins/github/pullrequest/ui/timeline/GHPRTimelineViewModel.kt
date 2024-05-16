@@ -73,7 +73,7 @@ internal class GHPRTimelineViewModelImpl(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider
 ) : GHPRTimelineViewModel {
-  private val cs = parentCs.childScope(Dispatchers.Main + CoroutineName("GitHub Pull Request Timeline View Model"))
+  private val cs = parentCs.childScope("GitHub Pull Request Timeline View Model", Dispatchers.Main)
 
   private val securityService = dataContext.securityService
 

@@ -20,11 +20,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
-import com.intellij.refactoring.ui.ConflictsDialog
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.VisibilityUtil
@@ -53,11 +51,9 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.rename.canonicalRender
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -402,10 +398,6 @@ fun invokeOnceOnCommandFinish(action: () -> Unit) {
         }
     })
 }
-
-fun FqNameUnsafe.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
-
-fun FqName.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
 
 fun PsiNamedElement.isInterfaceClass(): Boolean = when (this) {
     is KtClass -> isInterface()

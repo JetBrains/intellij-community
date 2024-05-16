@@ -27,7 +27,7 @@ class IdeScriptReportSink(
         // TODO: persist errors between launches?
         scriptFile.scriptDiagnostics = reports
 
-        if (scriptingEnabled && KotlinPluginModeProvider.isK1Mode()) {
+        if (KotlinPluginModeProvider.isK1Mode()) {
             coroutineScope.launch {
                 readAction {
                     PsiManager.getInstance(project).findFile(scriptFile)?.let {

@@ -10,37 +10,45 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.VisualPosition
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.notebooks.ui.visualization.*
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookCodeCellBackgroundLineMarkerRenderer
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookLineMarkerRenderer
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
+import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.*
-import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayController
 import java.awt.*
 import javax.swing.JComponent
+import kotlin.reflect.KClass
 
 class EditorCellView(
-  private val editor: EditorEx,
+  private val editor: EditorImpl,
   private val intervals: NotebookCellLines,
-  internal var intervalPointer: NotebookIntervalPointer
+  internal var cell: EditorCell
 ) {
 
   private var _controllers: List<NotebookCellInlayController> = emptyList()
-  val controllers: List<NotebookCellInlayController>
+  private val controllers: List<NotebookCellInlayController>
     get() = _controllers + ((input.component as? ControllerEditorCellViewComponent)?.controller?.let { listOf(it) } ?: emptyList())
 
-  private val interval get() = intervalPointer.get() ?: error("Invalid interval")
+  private val intervalPointer: NotebookIntervalPointer
+    get() = cell.intervalPointer
+  private val interval: NotebookCellLines.Interval
+    get() {
+      return intervalPointer.get() ?: error("Invalid interval")
+    }
 
   val input: EditorCellInput = EditorCellInput(
     editor,
     { currentComponent: EditorCellViewComponent? ->
       val currentController = (currentComponent as? ControllerEditorCellViewComponent)?.controller
-      val controller = getInputFactories().firstNotNullOfOrNull {
-        failSafeCompute(it, editor, currentController?.let { listOf(it) }
+      val controller = getInputFactories().firstNotNullOfOrNull { factory ->
+        failSafeCompute(factory, editor, currentController?.let { listOf(it) }
                                     ?: emptyList(), intervals.intervals.listIterator(interval.ordinal))
       }
       if (controller != null) {
@@ -52,9 +60,9 @@ class EditorCellView(
         }
       }
       else {
-        TextEditorCellViewComponent(editor, intervalPointer)
+        TextEditorCellViewComponent(editor, cell)
       }
-    }, intervalPointer).also {
+    }, cell).also {
     it.addViewComponentListener(object : EditorCellViewComponentListener {
       override fun componentBoundaryChanged(location: Point, size: Dimension) {
         updateBoundaries()
@@ -70,7 +78,10 @@ class EditorCellView(
 
   val size: Dimension get() = _size
 
-  private var output: EditorCellOutput? = null
+  private var _outputs: EditorCellOutputs? = null
+
+  val outputs: EditorCellOutputs?
+    get() = _outputs
 
   private var selected = false
 
@@ -82,15 +93,13 @@ class EditorCellView(
   }
 
   private fun updateBoundaries() {
-    val y = input.location.y
+    val inputBounds = input.bounds
+    val y = inputBounds.y
     _location = Point(0, y)
-    val currentOutput = output
+    val currentOutputs = outputs
     _size = Dimension(
       editor.contentSize.width,
-      if (currentOutput == null)
-        input.size.height
-      else
-        currentOutput.size.height + currentOutput.location.y - y
+      currentOutputs?.bounds?.let { it.height + it.y - y } ?: inputBounds.height
     )
   }
 
@@ -99,7 +108,7 @@ class EditorCellView(
       disposeController(controller)
     }
     input.dispose()
-    output?.dispose()
+    outputs?.dispose()
     removeCellHighlight()
   }
 
@@ -134,16 +143,30 @@ class EditorCellView(
       }
     }
     input.update()
-    output?.dispose()
-    val outputController = controllers.filterIsInstance<NotebookOutputInlayController>().firstOrNull()
-    if (outputController != null) {
-      output = EditorCellOutput(editor, outputController)
-      updateCellHighlight()
-      updateFolding()
-    }
+    updateOutputs()
     updateBoundaries()
     updateCellHighlight()
   }
+
+  private fun updateOutputs() {
+    if (hasOutputs()) {
+      if (_outputs == null) {
+        _outputs = EditorCellOutputs(editor, { interval })
+        updateCellHighlight()
+        updateFolding()
+      }
+      else {
+        outputs?.update()
+      }
+    }
+    else {
+      outputs?.dispose()
+      _outputs = null
+    }
+  }
+
+  private fun hasOutputs() = interval.type == NotebookCellLines.CellType.CODE
+                             && (editor.editorKind != EditorKind.DIFF || Registry.`is`("jupyter.diff.viewer.output"))
 
   private fun getInputFactories(): Sequence<NotebookCellInlayController.Factory> {
     return NotebookCellInlayController.Factory.EP_NAME.extensionList.asSequence()
@@ -165,12 +188,12 @@ class EditorCellView(
 
   fun updatePositions() {
     input.updatePositions()
-    output?.updatePositions()
+    outputs?.updatePositions()
   }
 
   fun onViewportChanges() {
     input.onViewportChange()
-    output?.onViewportChange()
+    outputs?.onViewportChange()
   }
 
   fun setGutterAction(action: AnAction) {
@@ -185,6 +208,15 @@ class EditorCellView(
   fun mouseEntered() {
     mouseOver = true
     updateFolding()
+  }
+
+  inline fun <reified T : Any> getExtension(): T? {
+    return getExtension(T::class)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T : Any> getExtension(type: KClass<T>): T? {
+    return controllers.firstOrNull { type.isInstance(it) } as? T
   }
 
   private fun removeCellHighlight() {
@@ -226,9 +258,7 @@ class EditorCellView(
         endOffset,
         HighlighterLayer.FIRST - 99,  // Border should be seen behind any syntax highlighting, selection or any other effect.
         HighlighterTargetArea.LINES_IN_RANGE
-      ).also {
-        it.lineMarkerRenderer = NotebookCellLineNumbersLineMarkerRenderer(it)
-      }
+      )
     }
 
     if (interval.type == NotebookCellLines.CellType.CODE) {
@@ -255,14 +285,14 @@ class EditorCellView(
 
   private fun updateFolding() {
     input.updateSelection(selected)
-    output?.updateSelection(selected)
+    outputs?.updateSelection(selected)
     if (mouseOver || selected) {
       input.showFolding()
-      output?.showFolding()
+      outputs?.showFolding()
     }
     else {
       input.hideFolding()
-      output?.hideFolding()
+      outputs?.hideFolding()
     }
   }
 
@@ -285,19 +315,18 @@ class EditorCellView(
       }
     }
 
-    fun paintBackground(editor: EditorImpl,
-                        g: Graphics,
-                        r: Rectangle,
-                        interval: NotebookCellLines.Interval) {
-      val notebookCellInlayManager = NotebookCellInlayManager.get(editor) ?: throw AssertionError("Register inlay manager first")
-
-      for (controller: NotebookCellInlayController in notebookCellInlayManager.inlaysForInterval(interval)) {
+    private fun paintBackground(editor: EditorImpl,
+                                g: Graphics,
+                                r: Rectangle,
+                                interval: NotebookCellLines.Interval) {
+      for (controller: NotebookCellInlayController in controllers) {
         controller.paintGutter(editor, g, r, interval)
       }
+      outputs?.paintGutter(editor, g, r)
     }
   }
 
-  private data class NotebookCellDataProvider(
+  internal data class NotebookCellDataProvider(
     val editor: Editor,
     val component: JComponent,
     val intervalProvider: () -> NotebookCellLines.Interval,

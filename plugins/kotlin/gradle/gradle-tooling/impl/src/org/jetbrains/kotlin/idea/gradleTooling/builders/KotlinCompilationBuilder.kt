@@ -33,6 +33,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
         val kotlinTaskProperties = getKotlinTaskProperties(compileKotlinTask, classifier)
 
         val nativeExtensions = origin.konanTargetName?.let(::KotlinNativeCompilationExtensionsImpl)
+        val wasmExtensions = origin.wasmTargetName?.let(::KotlinWasmCompilationExtensionsImpl)
 
         val allSourceSets = kotlinSourceSets
             .flatMap { sourceSet -> importingContext.resolveAllDependsOnSourceSets(sourceSet) }
@@ -67,6 +68,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             compilerArguments = compilerArguments,
             kotlinTaskProperties = kotlinTaskProperties,
             nativeExtensions = nativeExtensions,
+            wasmExtensions = wasmExtensions,
             associateCompilations = associateCompilations.toSet(),
             extras = IdeaKotlinExtras.from(serializedExtras),
             isTestComponent = isTestCompilation,

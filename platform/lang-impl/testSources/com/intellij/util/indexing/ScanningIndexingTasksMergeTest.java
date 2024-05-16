@@ -1,11 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.CheckedDisposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -73,31 +70,15 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     UnindexedFilesScanner t1 = createScanningTask(iter1, "reason 1", ScanningType.PARTIAL);
     UnindexedFilesScanner full = createScanningTask(null, "full", ScanningType.FULL);
 
-    assertNull(t1.tryMergeWith(full).getPredefinedIndexableFilesIterators());
-    assertNull(full.tryMergeWith(t1).getPredefinedIndexableFilesIterators());
-  }
+    List<UnindexedFilesScanner> mergedVariants = Arrays.asList(
+      t1.tryMergeWith(full),
+      full.tryMergeWith(t1)
+    );
 
-  public void testTryMergeDumbScanningTasks() {
-    UnindexedFilesScanner t1 = createScanningTask(iter1, "reason 1", ScanningType.PARTIAL);
-    UnindexedFilesScanner t2 = createScanningTask(iter2, "reason 2", ScanningType.PARTIAL);
-
-    assertSameElements(mergeAsDumbTasks(t1, t2).getPredefinedIndexableFilesIterators(), Arrays.asList(iter1, iter2));
-    assertSameElements(mergeAsDumbTasks(t2, t1).getPredefinedIndexableFilesIterators(), Arrays.asList(iter1, iter2));
-  }
-
-  public void testDumbWrapperInvokesOriginalDispose() {
-    UnindexedFilesScanner t1 = createScanningTask(iter1, "reason 1", ScanningType.PARTIAL);
-    UnindexedFilesScannerExecutorImpl executor = new UnindexedFilesScannerExecutorImpl(getProject());
-    DumbModeTask dumb1 = executor.wrapAsDumbTask(t1);
-
-    // Disposer.isDisposed() deprecated. Use checkedDisposable instead
-    CheckedDisposable checked = Disposer.newCheckedDisposable();
-    Disposer.register(t1, checked);
-
-    assertFalse(checked.isDisposed());
-
-    Disposer.dispose(dumb1);
-    assertTrue(checked.isDisposed());
+    for (UnindexedFilesScanner merged : mergedVariants) {
+      assertNull(merged.getPredefinedIndexableFilesIterators());
+      assertEquals(ScanningType.FULL, merged.getScanningType());
+    }
   }
 
   // we don't care which exact reason will be after merge. We only care that we don't have hundreds of "On refresh of files" in it
@@ -130,25 +111,10 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     assertEquals("Merged " + task1Reason + " with " + task2Reason + " with " + task2Reason, merged.getIndexingReason());
   }
 
-  private UnindexedFilesScanner mergeAsDumbTasks(UnindexedFilesScanner t1, UnindexedFilesScanner t2) {
-    UnindexedFilesScannerExecutorImpl executor = new UnindexedFilesScannerExecutorImpl(getProject());
-    DumbModeTask dumb1 = executor.wrapAsDumbTask(t1);
-    DumbModeTask dumb2 = executor.wrapAsDumbTask(t2);
-    DumbModeTask mergedDumb = dumb1.tryMergeWith(dumb2);
-
-    assertEquals("Should be of the same class to merge successfully", dumb1.getClass(), dumb2.getClass());
-    assertEquals(
-      "Should be of the same class, otherwise mergedDumb will not be able to merge with new tasks produced by executor.wrapAsDumbTask",
-      mergedDumb.getClass(), dumb1.getClass()
-    );
-
-    return (UnindexedFilesScanner)((FilesScanningTaskAsDumbModeTaskWrapper)mergedDumb).getTask();
-  }
-
   @NotNull
   private UnindexedFilesScanner createScanningTask(IndexableFilesIterator iter, String reason, ScanningType type) {
     List<IndexableFilesIterator> iterators = iter == null ? null : Collections.singletonList(iter);
-    return new UnindexedFilesScanner(getProject(), false, false, false, iterators, null, reason, type, null);
+    return new UnindexedFilesScanner(getProject(), false, false, iterators, null, reason, type, null);
   }
 
   private void assertMergedStateInvariants(UnindexedFilesIndexer mergedTask) {

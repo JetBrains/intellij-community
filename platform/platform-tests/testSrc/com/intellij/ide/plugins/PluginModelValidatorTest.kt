@@ -122,7 +122,8 @@ class PluginModelValidatorTest {
       """,
     )
 
-    (root / "intellij.angularJs" / "intellij.angularJs.diagram.xml").writeIdeaPluginXml(
+    writeIdeaPluginXml(
+      file = (root / "intellij.angularJs" / "intellij.angularJs.diagram.xml"),
       content = """
       <idea-plugin package="org.angularjs.diagram">
         <dependencies>
@@ -210,10 +211,9 @@ class PluginModelValidatorTest {
   private fun assertWithMatchSnapshot(charSequence: CharSequence) = assertThat(charSequence).toMatchSnapshot(snapshot)
 }
 
-private fun Path.writeIdeaPluginXml(
-  @Language("xml") content: String,
-  mutator: (String) -> String,
-) = write(mutator(content).trimIndent())
+private fun writeIdeaPluginXml(file: Path, @Language("xml") content: String, mutator: (String) -> String): Path {
+  return file.write(mutator(content).trimIndent())
+}
 
 private fun writeIdeaPluginXml(
   name: String,
@@ -221,13 +221,12 @@ private fun writeIdeaPluginXml(
   path: String = "META-INF/plugin",
   @Language("xml") content: String,
   mutator: (String) -> String = { it },
-) = object : PluginModelValidator.Module {
-
-  init {
-    (sourceRoot / "$path.xml")
-      .writeIdeaPluginXml(content, mutator)
-  }
-
-  override val name: String = name
-  override val sourceRoots: List<Path> = listOf(sourceRoot)
+): PluginModelValidator.Module {
+  writeIdeaPluginXml(file = sourceRoot.resolve("$path.xml"), content = content, mutator = mutator)
+  return PluginModel(name, sequenceOf(sourceRoot))
 }
+
+private data class PluginModel(
+  override val name: String,
+  override val sourceRoots: Sequence<Path>,
+) : PluginModelValidator.Module

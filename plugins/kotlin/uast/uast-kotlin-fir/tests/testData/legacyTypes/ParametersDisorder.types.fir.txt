@@ -27,12 +27,10 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
             UBlockExpression [{...}] : void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [global(2.2, 2)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (global)) [UIdentifier (Identifier (global))]
-                    USimpleNameReferenceExpression (identifier = global, resolvesTo = null) [global] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     ULiteralExpression (value = 2.2) [2.2] : float
                     ULiteralExpression (value = 2) [2] : int
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [withDefault("bbb")] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (withDefault)) [UIdentifier (Identifier (withDefault))]
-                    USimpleNameReferenceExpression (identifier = withDefault, resolvesTo = null) [withDefault] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UPolyadicExpression (operator = +) ["bbb"] : java.lang.String
                         ULiteralExpression (value = "bbb") ["bbb"] : java.lang.String
                 UQualifiedReferenceExpression ["abc".withReceiver(1, 1.2)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
@@ -40,19 +38,16 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         ULiteralExpression (value = "abc") ["abc"] : java.lang.String
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [withReceiver(1, 1.2)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         UIdentifier (Identifier (withReceiver)) [UIdentifier (Identifier (withReceiver))]
-                        USimpleNameReferenceExpression (identifier = withReceiver, resolvesTo = null) [withReceiver] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                         ULiteralExpression (value = 1) [1] : int
                         ULiteralExpression (value = 1.2) [1.2] : float
                 UQualifiedReferenceExpression [Math.atan2(1.3, 3.4)] : double
                     USimpleNameReferenceExpression (identifier = Math) [Math]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [atan2(1.3, 3.4)] : double
                         UIdentifier (Identifier (atan2)) [UIdentifier (Identifier (atan2))]
-                        USimpleNameReferenceExpression (identifier = atan2, resolvesTo = null) [atan2] : double
                         ULiteralExpression (value = 1.3) [1.3] : double
                         ULiteralExpression (value = 3.4) [3.4] : double
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>("param1", "param2")] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (unresolvedMethod))("param1", "param2")] : <ErrorType>
                     UIdentifier (Identifier (unresolvedMethod)) [UIdentifier (Identifier (unresolvedMethod))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
                     UPolyadicExpression (operator = +) ["param1"] : java.lang.String
                         ULiteralExpression (value = "param1") ["param1"] : java.lang.String
                     UPolyadicExpression (operator = +) ["param2"] : java.lang.String
@@ -65,7 +60,6 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         USimpleNameReferenceExpression (identifier = String) [String]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4)) [format("%i %i %i", 1, 2, 3)] : java.lang.String
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
-                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : java.lang.String
                         UPolyadicExpression (operator = +) ["%i %i %i"] : java.lang.String
                             ULiteralExpression (value = "%i %i %i") ["%i %i %i"] : java.lang.String
                         ULiteralExpression (value = 1) [1] : int
@@ -79,12 +73,10 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         USimpleNameReferenceExpression (identifier = String) [String]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [format("%i %i %i", arrayOf(1, 2, 3))] : java.lang.String
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
-                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : java.lang.String
                         UPolyadicExpression (operator = +) ["%i %i %i"] : java.lang.String
                             ULiteralExpression (value = "%i %i %i") ["%i %i %i"] : java.lang.String
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [arrayOf(1, 2, 3)] : @org.jetbrains.annotations.NotNull() java.lang.Integer @org.jetbrains.annotations.NotNull() []
                             UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
-                            USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] : @org.jetbrains.annotations.NotNull() java.lang.Integer @org.jetbrains.annotations.NotNull() []
                             ULiteralExpression (value = 1) [1] : int
                             ULiteralExpression (value = 2) [2] : int
                             ULiteralExpression (value = 3) [3] : int
@@ -96,18 +88,15 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         USimpleNameReferenceExpression (identifier = String) [String]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [format("%i %i %i", arrayOf(1, 2, 3), arrayOf(4, 5, 6))] : java.lang.String
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
-                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : java.lang.String
                         UPolyadicExpression (operator = +) ["%i %i %i"] : java.lang.String
                             ULiteralExpression (value = "%i %i %i") ["%i %i %i"] : java.lang.String
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [arrayOf(1, 2, 3)] : @org.jetbrains.annotations.NotNull() java.lang.Integer @org.jetbrains.annotations.NotNull() []
                             UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
-                            USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] : @org.jetbrains.annotations.NotNull() java.lang.Integer @org.jetbrains.annotations.NotNull() []
                             ULiteralExpression (value = 1) [1] : int
                             ULiteralExpression (value = 2) [2] : int
                             ULiteralExpression (value = 3) [3] : int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [arrayOf(4, 5, 6)] : @org.jetbrains.annotations.NotNull() java.lang.Integer @org.jetbrains.annotations.NotNull() []
                             UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
-                            USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] : @org.jetbrains.annotations.NotNull() java.lang.Integer @org.jetbrains.annotations.NotNull() []
                             ULiteralExpression (value = 4) [4] : int
                             ULiteralExpression (value = 5) [5] : int
                             ULiteralExpression (value = 6) [6] : int
@@ -119,7 +108,6 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         USimpleNameReferenceExpression (identifier = String) [String]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [format("%i %i %i", "".chunked(2).toTypedArray())] : java.lang.String
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
-                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : java.lang.String
                         UPolyadicExpression (operator = +) ["%i %i %i"] : java.lang.String
                             ULiteralExpression (value = "%i %i %i") ["%i %i %i"] : java.lang.String
                         UQualifiedReferenceExpression ["".chunked(2).toTypedArray()] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
@@ -128,17 +116,14 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                                     ULiteralExpression (value = "") [""] : java.lang.String
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [chunked(2)] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                     UIdentifier (Identifier (chunked)) [UIdentifier (Identifier (chunked))]
-                                    USimpleNameReferenceExpression (identifier = chunked, resolvesTo = null) [chunked] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                     ULiteralExpression (value = 2) [2] : int
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toTypedArray()] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
                                 UIdentifier (Identifier (toTypedArray)) [UIdentifier (Identifier (toTypedArray))]
-                                USimpleNameReferenceExpression (identifier = toTypedArray, resolvesTo = null) [toTypedArray] : @org.jetbrains.annotations.NotNull() java.lang.String @org.jetbrains.annotations.NotNull() []
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<init>(), { ...})] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(A(), { ...})] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (with)) [UIdentifier (Identifier (with))]
-                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] : @org.jetbrains.annotations.NotNull() kotlin.Unit
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : @org.jetbrains.annotations.NotNull() A
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [A()] : @org.jetbrains.annotations.NotNull() A
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : @org.jetbrains.annotations.NotNull() A
+                        USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                     ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function1<? super @org.jetbrains.annotations.NotNull() A, ? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
                         UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                             UReturnExpression [return "def".with2Receivers(8, 7.0)]
@@ -147,7 +132,6 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                                         ULiteralExpression (value = "def") ["def"] : java.lang.String
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with2Receivers(8, 7.0)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                         UIdentifier (Identifier (with2Receivers)) [UIdentifier (Identifier (with2Receivers))]
-                                        USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null) [with2Receivers] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                         ULiteralExpression (value = 8) [8] : int
                                         ULiteralExpression (value = 7.0) [7.0] : float
         UMethod (name = objectLiteral) [public static final fun objectLiteral() : void {...}]
@@ -159,9 +143,9 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                     UClass (name = null) [final class null : Parent {...}]
                         UMethod (name = ) [private fun () {...}]
                             UBlockExpression [{...}]
-                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, "foo")]
+                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [Parent(1, "foo")]
                                     UIdentifier (Identifier (Parent)) [UIdentifier (Identifier (Parent))]
-                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Parent) [<init>]
+                                    USimpleNameReferenceExpression (identifier = Parent, resolvesTo = PsiClass: Parent) [Parent] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                                     ULiteralExpression (value = 1) [1] : int
                                     UPolyadicExpression (operator = +) ["foo"] : java.lang.String
                                         ULiteralExpression (value = "foo") ["foo"] : java.lang.String

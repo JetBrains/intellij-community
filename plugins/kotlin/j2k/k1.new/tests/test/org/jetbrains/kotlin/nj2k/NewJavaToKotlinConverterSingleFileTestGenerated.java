@@ -1724,6 +1724,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/detectProperties/DropGetterForMutable.java");
         }
 
+        @TestMetadata("Enum.java")
+        public void testEnum() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/Enum.java");
+        }
+
         @TestMetadata("FalseGetter.java")
         public void testFalseGetter() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/FalseGetter.java");
@@ -1737,6 +1742,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("FieldUsagesInFactoryMethods.java")
         public void testFieldUsagesInFactoryMethods() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/FieldUsagesInFactoryMethods.java");
+        }
+
+        @TestMetadata("FunctionalInterfaceGetter.java")
+        public void testFunctionalInterfaceGetter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/FunctionalInterfaceGetter.java");
         }
 
         @TestMetadata("GetterAndSetterNamesDifferent.java")
@@ -2076,11 +2086,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     public static class Enum extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("colorEnum.java")
-        public void testColorEnum() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/enum/colorEnum.java");
         }
 
         @TestMetadata("companionObject.java")
@@ -2962,14 +2967,9 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("AbstractGetter1.java")
-        public void testAbstractGetter1() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/functionalInterfaces/AbstractGetter1.java");
-        }
-
-        @TestMetadata("AbstractGetter2.java")
-        public void testAbstractGetter2() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/functionalInterfaces/AbstractGetter2.java");
+        @TestMetadata("AbstractGetter.java")
+        public void testAbstractGetter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/functionalInterfaces/AbstractGetter.java");
         }
 
         @TestMetadata("AbstractGetterNoFunctionalInterfaceAnnotation.java")
@@ -3813,6 +3813,21 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("streamOperations.java")
         public void testStreamOperations() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/javaStreamsApi/streamOperations.java");
+        }
+
+        @TestMetadata("stringLines.java")
+        public void testStringLines() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/javaStreamsApi/stringLines.java");
+        }
+
+        @TestMetadata("stringLinesCustomClass.java")
+        public void testStringLinesCustomClass() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/javaStreamsApi/stringLinesCustomClass.java");
+        }
+
+        @TestMetadata("stringLinesRef.java")
+        public void testStringLinesRef() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/javaStreamsApi/stringLinesRef.java");
         }
     }
 
@@ -4896,6 +4911,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/nullability/notNullCast.java");
         }
 
+        @TestMetadata("nullableBoxedBooleanParameter.java")
+        public void testNullableBoxedBooleanParameter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/nullableBoxedBooleanParameter.java");
+        }
+
         @TestMetadata("nullableField.java")
         public void testNullableField() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/nullableField.java");
@@ -5073,6 +5093,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("equalsCallToEqEqOperatorInsideElvis.java")
+        public void testEqualsCallToEqEqOperatorInsideElvis() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/equalsCallToEqEqOperatorInsideElvis.java");
+        }
+
         @TestMetadata("parenthesized.java")
         public void testParenthesized() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/parenthesized.java");
@@ -5086,6 +5111,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("parenthesized3.java")
         public void testParenthesized3() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/parenthesized3.java");
+        }
+
+        @TestMetadata("removeUnnecessaryParentheses.java")
+        public void testRemoveUnnecessaryParentheses() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/removeUnnecessaryParentheses.java");
         }
     }
 
@@ -6229,6 +6259,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("nestedClassPrivateMethod.java")
         public void testNestedClassPrivateMethod() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/visibility/nestedClassPrivateMethod.java");
+        }
+
+        @TestMetadata("overrideEqualsBuiltIn.java")
+        public void testOverrideEqualsBuiltIn() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/visibility/overrideEqualsBuiltIn.java");
         }
     }
 

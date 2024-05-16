@@ -151,7 +151,7 @@ class InspectionRunner {
 
     List<InspectionContext> init = new ArrayList<>(applicableByLanguage.size());
     List<InspectionContext> redundantContexts = new ArrayList<>();
-    HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(project);
+    HighlightInfoUpdaterImpl highlightInfoUpdater = (HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(project);
     // might be different from myPriorityRange because DividedElements can cache not exact but containing ranges
     TextRange finalPriorityRange = finalPriorityRange(myPriorityRange, allDivided);
     if (LOG.isTraceEnabled()) {
@@ -174,7 +174,7 @@ class InspectionRunner {
           }
           tool.inspectionStarted(session, myIsOnTheFly);
 
-          List<? extends PsiElement> sortedInside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
+          List<? extends PsiElement> sortedInside = HighlightInfoUpdaterImpl.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
           List<? extends PsiElement> outside = toolWrapper.runForWholeFile() ? wholeOutside : restrictedOutside;
           InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, outside, true, InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor), myPsiFile);
           init.add(context);
@@ -182,7 +182,7 @@ class InspectionRunner {
       }
       //sort `init`, according to the priorities, saved earlier to run in order
       // but only for visible elements, because we don't care about the order in 'outside', and spending CPU on their rearrangement would be counterproductive
-      InspectionProfilerDataHolder.sortByLatencies(myPsiFile, init);
+      InspectionProfilerDataHolder.sortByLatencies(myPsiFile, init, highlightInfoUpdater);
 
       int initSize = init.size();
       AtomicInteger addedInvisibles = new AtomicInteger();
@@ -221,7 +221,7 @@ class InspectionRunner {
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for the batch process, there could be too many files
-        InspectionProfilerDataHolder.saveStats(myPsiFile, init);
+        InspectionProfilerDataHolder.saveStats(myPsiFile, init, highlightInfoUpdater);
       }
       if (myIsOnTheFly && addRedundantSuppressions) {
         addRedundantSuppressions(init, toolWrappers, redundantContexts, applyIncrementallyCallback, contextFinishedCallback);
@@ -230,11 +230,12 @@ class InspectionRunner {
     return ContainerUtil.concat(init, redundantContexts, injectedContexts);
   }
 
-  private void contextCompleted(@NotNull InspectionContext context,
-                                @NotNull LocalInspectionToolSession session, @NotNull JobLauncherImpl.QueueController<? super InspectionContext> addToQueue,
-                                int initSize,
-                                @NotNull AtomicInteger addedInvisibles,
-                                @NotNull Consumer<? super InspectionContext> contextFinishedCallback) {
+  private static void contextCompleted(@NotNull InspectionContext context,
+                                       @NotNull LocalInspectionToolSession session,
+                                       @NotNull JobLauncherImpl.QueueController<? super InspectionContext> addToQueue,
+                                       int initSize,
+                                       @NotNull AtomicInteger addedInvisibles,
+                                       @NotNull Consumer<? super InspectionContext> contextFinishedCallback) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("onComplete: " + context + "; visible=" + context.isVisible()+"; holder:"+context.holder.getResults());
     }
@@ -254,7 +255,7 @@ class InspectionRunner {
       holder.toolStamps.finishTimeStamp = System.nanoTime();
       context.tool.getTool().inspectionFinished(session, holder);
       // report descriptors which were added by crazy inspections in their inspectionFinished() as the result of "visiting" fake element
-      holder.reportAddedDescriptors(HighlightInfoUpdater.FAKE_ELEMENT);
+      holder.reportAddedDescriptors(HighlightInfoUpdaterImpl.FAKE_ELEMENT);
       contextFinishedCallback.accept(context);
     }
   }

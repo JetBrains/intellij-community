@@ -24,7 +24,7 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
   private fun updateCacheForHead(head: Int, root: VirtualFile) {
     rootForHead.put(head, root)
 
-    val bestRef = allRefsByRoot[root]!!.refsToCommit(head).minWithOrNull(providers[root]!!.referenceManager.branchLayoutComparator)
+    val bestRef = refsToCommit(root, head).minWithOrNull(providers[root]!!.referenceManager.branchLayoutComparator)
     if (bestRef != null) {
       bestRefForHead.put(head, bestRef)
     }
@@ -43,7 +43,11 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
       return refs?.refsToCommit(index) ?: emptyList()
     }
     val id = storage.getCommitId(index) ?: return emptyList()
-    return allRefsByRoot[id.root]!!.refsToCommit(index)
+    return refsToCommit(id.root, index)
+  }
+
+  fun refsToCommit(root: VirtualFile, index: Int): List<VcsRef> {
+    return allRefsByRoot[root]?.refsToCommit(index) ?: emptyList()
   }
 
   override fun getBranches(): Collection<VcsRef> {

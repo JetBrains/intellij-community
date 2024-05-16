@@ -19,6 +19,7 @@ com.intellij.codeHighlighting.MainHighlightingPassFactory
 - a:createMainHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor):com.intellij.codeHighlighting.TextEditorHighlightingPass
 com.intellij.codeHighlighting.Pass
 - sf:EXTERNAL_TOOLS:I
+- sf:INJECTED_GENERAL_HIGHLIGHTINGS:I
 - sf:LAST_PASS:I
 - sf:LINE_MARKERS:I
 - sf:LOCAL_INSPECTIONS:I
@@ -596,6 +597,7 @@ a:com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 - markDocumentDirty(com.intellij.openapi.editor.Document,java.lang.Object):V
 - s:processHighlights(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.util.Processor):Z
 - s:processHighlights(com.intellij.openapi.editor.ex.MarkupModelEx,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.util.Processor):Z
+- pa:progressIsAdvanced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,D):V
 - a:runMainPasses(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 c:com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 - com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
@@ -642,7 +644,7 @@ c:com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass
 - s:assertHighlightingPassNotRunning():V
 - p:collectInformationWithProgress(com.intellij.openapi.progress.ProgressIndicator):V
 - p:createInfoHolder(com.intellij.psi.PsiFile):com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-- getInfos():java.util.List
+- f:getInfos():java.util.List
 - toString():java.lang.String
 c:com.intellij.codeInsight.daemon.impl.HighlightInfo
 - com.intellij.openapi.util.Segment
@@ -752,6 +754,7 @@ com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:INJECTED_LANGUAGE_BACKGROUND:com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:INJECTED_LANGUAGE_FRAGMENT:com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:MARKED_FOR_REMOVAL:com.intellij.codeInsight.daemon.impl.HighlightInfoType
+- sf:PENDING_REFERENCE:com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:POSSIBLE_PROBLEM:com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - sf:SYMBOL_TYPE_SEVERITY:com.intellij.lang.annotation.HighlightSeverity
 - sf:TEXT_ATTRIBUTES:com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -795,6 +798,8 @@ com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
 - a:isForceHighlightParents(com.intellij.psi.PsiFile):Z
 com.intellij.codeInsight.daemon.impl.HighlightVisitor
 - com.intellij.openapi.project.PossiblyDumbAware
+- sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
+- sf:EMPTY_ARRAY:com.intellij.codeInsight.daemon.impl.HighlightVisitor[]
 - sf:EP_HIGHLIGHT_VISITOR:com.intellij.openapi.extensions.ExtensionPointName
 - a:analyze(com.intellij.psi.PsiFile,Z,com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder,java.lang.Runnable):Z
 - a:clone():com.intellij.codeInsight.daemon.impl.HighlightVisitor
@@ -802,7 +807,6 @@ com.intellij.codeInsight.daemon.impl.HighlightVisitor
 - a:suitableForFile(com.intellij.psi.PsiFile):Z
 - a:visit(com.intellij.psi.PsiElement):V
 com.intellij.codeInsight.daemon.impl.HighlightingSession
-- a:addFileLevelHighlight(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.editor.ex.RangeHighlighterEx):V
 - a:getColorsScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
 - a:getDocument():com.intellij.openapi.editor.Document
 - a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
@@ -811,8 +815,6 @@ com.intellij.codeInsight.daemon.impl.HighlightingSession
 - a:getVisibleRange():com.intellij.openapi.util.ProperTextRange
 - a:isCanceled():Z
 - a:isEssentialHighlightingOnly():Z
-- a:removeFileLevelHighlight(com.intellij.codeInsight.daemon.impl.HighlightInfo):V
-- a:updateFileLevelHighlights(java.util.List,I,Z):V
 f:com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
 - com.intellij.codeInsight.daemon.impl.HighlightingSession
 - addFileLevelHighlight(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.editor.ex.RangeHighlighterEx):V
@@ -825,9 +827,7 @@ f:com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
 - getVisibleRange():com.intellij.openapi.util.ProperTextRange
 - isCanceled():Z
 - isEssentialHighlightingOnly():Z
-- removeFileLevelHighlight(com.intellij.codeInsight.daemon.impl.HighlightInfo):V
 - toString():java.lang.String
-- updateFileLevelHighlights(java.util.List,I,Z):V
 f:com.intellij.codeInsight.daemon.impl.IdentifierUtil
 - <init>():V
 - s:getNameIdentifier(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
@@ -845,6 +845,7 @@ a:com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass
 - f:doApplyInformationToEditor():V
 - f:doCollectInformation(com.intellij.openapi.progress.ProgressIndicator):V
 - p:getEditor():com.intellij.openapi.editor.Editor
+- p:getHighlightingSession():com.intellij.codeInsight.daemon.impl.HighlightingSession
 - p:getPresentableName():java.lang.String
 - getProgress():D
 - isFinished():Z
@@ -898,7 +899,6 @@ f:com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - createPassesForEditor():com.intellij.codeHighlighting.TextEditorHighlightingPass[]
 - f:getPasses(I[]):java.util.List
-f:com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighterKt
 f:com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 - com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -1007,6 +1007,7 @@ c:com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 - getProject():com.intellij.openapi.project.Project
 - hasErrorResults():Z
 - size():I
+- toString():java.lang.String
 a:com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 - <init>():V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
@@ -1098,7 +1099,6 @@ a:com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 - getIcon(I):javax.swing.Icon
 - a:getIndex():I
 - isShowSubmenu():Z
-f:com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionActionKt
 com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoice
 - com.intellij.codeInsight.intention.IntentionActionWithChoice
 - getAllAsFixes():java.util.List
@@ -2734,7 +2734,6 @@ f:com.intellij.codeInspection.ex.CurrentProfileOptionControllerProvider
 - name():java.lang.String
 com.intellij.codeInspection.ex.DynamicGroupTool
 - a:getChildren():java.util.List
-f:com.intellij.codeInspection.ex.Dynamic_inspectionsKt
 com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection
 - com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool
 - checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.InspectionManager):com.intellij.codeInspection.ProblemDescriptor[]
@@ -2856,10 +2855,8 @@ a:com.intellij.codeInspection.ex.InspectionElementsMergerBase
 - p:transformElement(java.lang.String,org.jdom.Element,org.jdom.Element):org.jdom.Element
 - p:writeMergedContent(org.jdom.Element):Z
 - p:writeOldSettings(java.lang.String):org.jdom.Element
-f:com.intellij.codeInspection.ex.InspectionEventsKt
 f:com.intellij.codeInspection.ex.InspectionMetaInformationService
 - <init>(kotlinx.coroutines.CoroutineScope):V
-- f:getServiceScope():kotlinx.coroutines.CoroutineScope
 - f:getState(kotlin.coroutines.Continuation):java.lang.Object
 - f:invalidateState():V
 f:com.intellij.codeInspection.ex.InspectionMetainformationServiceKt
@@ -3014,7 +3011,6 @@ f:com.intellij.codeInspection.ex.InspectionToolRegistrar
 - sf:getInstance():com.intellij.codeInspection.ex.InspectionToolRegistrar
 f:com.intellij.codeInspection.ex.InspectionToolRegistrar$Companion
 - f:getInstance():com.intellij.codeInspection.ex.InspectionToolRegistrar
-f:com.intellij.codeInspection.ex.InspectionToolRegistrarKt
 a:com.intellij.codeInspection.ex.InspectionToolsSupplier
 - com.intellij.openapi.Disposable
 - pf:listeners:com.intellij.util.containers.DisposableWrapperList
@@ -3029,15 +3025,6 @@ f:com.intellij.codeInspection.ex.InspectionToolsSupplier$Simple
 - com.intellij.codeInspection.ex.InspectionToolsSupplier
 - <init>(java.util.List):V
 - createTools():java.util.List
-f:com.intellij.codeInspection.ex.InspectionsMetaInformation
-- <init>(java.util.List):V
-- f:component1():java.util.List
-- f:copy(java.util.List):com.intellij.codeInspection.ex.InspectionsMetaInformation
-- bs:copy$default(com.intellij.codeInspection.ex.InspectionsMetaInformation,java.util.List,I,java.lang.Object):com.intellij.codeInspection.ex.InspectionsMetaInformation
-- equals(java.lang.Object):Z
-- f:getInspections():java.util.List
-- hashCode():I
-- toString():java.lang.String
 c:com.intellij.codeInspection.ex.JsonInspectionsReportConverter
 - com.intellij.codeInspection.InspectionsReportConverter
 - sf:DUPLICATED_CODE:java.lang.String
@@ -3086,8 +3073,8 @@ f:com.intellij.codeInspection.ex.MetaInformation
 - hashCode():I
 - toString():java.lang.String
 f:com.intellij.codeInspection.ex.MetaInformationState
+- f:inspections:java.util.Map
 - <init>(java.util.Map):V
-- f:getInspections():java.util.Map
 a:com.intellij.codeInspection.ex.NewInspectionProfile
 - com.intellij.profile.ProfileEx
 - com.intellij.codeInspection.InspectionProfile
@@ -4095,7 +4082,6 @@ a:com.intellij.psi.FilePropertyKeyImpl
 - sf:createPersistentStringKey(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute,java.util.function.Function,java.util.function.Function):com.intellij.psi.FilePropertyKey
 - pa:fromRaw(java.lang.Object):java.lang.Object
 - getPersistentValue(com.intellij.openapi.vfs.VirtualFile):java.lang.Object
-- sf:getREAD_PERSISTENT_VALUE():Z
 - f:getUserDataKey():com.intellij.openapi.util.Key
 - pf:readValue(com.intellij.openapi.vfs.VirtualFile):java.lang.Object
 - pa:readValue(com.intellij.openapi.vfs.newvfs.AttributeInputStream):java.lang.Object
@@ -4108,7 +4094,6 @@ f:com.intellij.psi.FilePropertyKeyImpl$Companion
 - f:createPersistentIntKey(java.lang.String,java.lang.String,I):com.intellij.psi.FilePropertyKey
 - f:createPersistentStringKey(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute):com.intellij.psi.FilePropertyKey
 - f:createPersistentStringKey(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute,java.util.function.Function,java.util.function.Function):com.intellij.psi.FilePropertyKey
-- f:getREAD_PERSISTENT_VALUE():Z
 c:com.intellij.psi.IntentionFilterOwnerActionFilter
 - com.intellij.codeInsight.daemon.impl.IntentionActionFilter
 - <init>():V

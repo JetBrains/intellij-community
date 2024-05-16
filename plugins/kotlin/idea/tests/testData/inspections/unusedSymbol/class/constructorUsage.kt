@@ -1,7 +1,7 @@
 fun main(args: Array<String>) {
-    A()
+    AZ805()
 }
 
-class A {
+class AZ805 {
     constructor() {}
 }

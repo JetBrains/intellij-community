@@ -10,7 +10,6 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
 import com.jetbrains.jsonSchema.impl.MatchResult;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLKeyValue;

@@ -7,17 +7,11 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollec
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors.COUNTER_EP_NAME
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.intellij.platform.ml.Environment
-import com.intellij.platform.ml.Feature
-import com.intellij.platform.ml.ObsoleteTierDescriptor
-import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startMLSession
-import com.intellij.platform.ml.impl.apiPlatform.CodeLikePrinter
-import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
-import com.intellij.platform.ml.impl.logs.EntireSessionLoggingStrategy
+import com.intellij.platform.ml.*
+import com.intellij.platform.ml.environment.Environment
 import com.intellij.platform.ml.impl.logs.MLEventLoggerProvider.Companion.ML_RECORDER_ID
-import com.intellij.platform.ml.impl.logs.registerMLTaskLogging
-import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
-import com.intellij.platform.ml.with
+import com.intellij.platform.ml.logs.EntireSessionLoggingStrategy
+import com.intellij.platform.ml.monitoring.MLTaskGroupListener
 import com.intellij.util.application
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.runBlocking
@@ -57,12 +51,6 @@ private object DumbModeApiPlatform : TestApiPlatform() {
     SomeListener("Nika"),
     SomeListener("Alex"),
   )
-
-
-  override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) {
-    val printer = CodeLikePrinter()
-    println("$descriptor is missing the following declaration: ${printer.printCodeLikeString(nonDeclaredFeatures.map { it.declaration })}")
-  }
 }
 
 private class DumbTaskFusLogger : CounterUsagesCollector() {

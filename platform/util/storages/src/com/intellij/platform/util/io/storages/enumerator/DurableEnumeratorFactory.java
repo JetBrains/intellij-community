@@ -99,7 +99,7 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
 
   @Override
   public @NotNull DurableEnumerator<V> open(@NotNull Path storagePath) throws IOException {
-    String name = storagePath.getName(storagePath.getNameCount() - 1).toString();
+    String name = storagePath.getFileName().toString();
     Path hashToIdPath = storagePath.resolveSibling(name + mapFileSuffix);
 
     return valuesLogFactory.wrapStorageSafely(
@@ -111,13 +111,13 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
             //If hashToId map is durable, but its factory configured to 'create an empty map if (corrupted, inconsistent,
             // wasn't properly closed...)' -- then this branch rebuilds such a map, hence provides a recovery even for
             // durable maps
-            //If hashToId is really non-durable (see DEFAULT_IN_MEMORY_MAP_FACTORY) than this branch refill the map.
+            //If hashToId is really non-durable (see DEFAULT_IN_MEMORY_MAP_FACTORY) then this branch refills the map.
             if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
 
-              boolean durableMap = !(valueHashToId instanceof NonDurableNonParallelIntToMultiIntMap);
+              boolean mapIsDurable = !(valueHashToId instanceof NonDurableNonParallelIntToMultiIntMap);
 
-              //this branch is a warning for durable maps, but regular for non-durable:
-              if (durableMap) {
+              //this branch is a warning for durable maps, but a regular thing for non-durable:
+              if (mapIsDurable) {
                 LOG.warn("[" + name + "]: .valueHashToId map is out-of-sync with .valuesLog data (records count don't match) " +
                          "-> rebuilding the map (impl: " + valueHashToId.getClass() + ")");
               }
@@ -125,7 +125,7 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
               //MAYBE RC: valueHashToId could be build/load async -- to not delay initialization (see DurableStringEnumerator)
               DurableEnumerator.fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
 
-              if (durableMap) {
+              if (mapIsDurable) {
                 LOG.warn("[" + name + "]: .valueHashToId was rebuilt (" + valueHashToId.size() + " records)");
               }
               else {

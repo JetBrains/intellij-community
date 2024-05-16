@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.testApps
 
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
@@ -21,8 +21,8 @@ object SimpleTextRepeater {
   }
 
   class Item(private val prefix: String, private val withIncrementingId: Boolean, private val withNewLine: Boolean, val count: Int) {
-    fun getTextToPrint(id: Int): String {
-      return prefix + (if (withIncrementingId) id.toString() else "") + (if (withNewLine) System.lineSeparator() else "")
+    internal fun getTextToPrint(id: Int): String {
+      return prefix + (if (withIncrementingId) id.toString() else "") + (if (withNewLine) LINE_SEPARATOR else "")
     }
 
     fun toCommandline(): List<String> {
@@ -57,3 +57,9 @@ object SimpleTextRepeater {
     }
   }
 }
+
+/**
+ * Same line separator as used in block command output and in [com.intellij.openapi.editor.Document].
+ * @see org.jetbrains.plugins.terminal.exp.ShellCommandOutputScraper
+ */
+internal const val LINE_SEPARATOR: String = "\n"

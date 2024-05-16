@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 interface ActivityProvider {
   fun getActivityItemsChanged(scope: ActivityScope): Flow<Unit>
 
-  fun loadActivityList(scope: ActivityScope, scopeFilter: String?): List<ActivityItem>
+  fun loadActivityList(scope: ActivityScope, scopeFilter: String?): ActivityData
   fun filterActivityList(scope: ActivityScope, data: ActivityData, activityFilter: String?): Set<ActivityItem>?
 
   fun loadDiffData(scope: ActivityScope, selection: ActivitySelection): ActivityDiffData?

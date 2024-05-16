@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith
 
-import com.intellij.lang.surroundWith.Surrounder
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
+import com.intellij.lang.surroundWith.ModCommandSurrounder
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
@@ -16,42 +16,48 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
-abstract class KotlinExpressionSurrounder : Surrounder {
-  override fun isApplicable(elements: Array<PsiElement>): Boolean {
-    if (elements.size != 1 || elements[0] !is KtExpression) {
-      return false
+abstract class KotlinExpressionSurrounder : ModCommandSurrounder() {
+    final override fun isApplicable(elements: Array<PsiElement>): Boolean {
+        if (elements.size != 1 || elements[0] !is KtExpression) {
+            return false
+        }
+        val expression = elements[0] as KtExpression
+        return if (expression is KtCallExpression && expression.getParent() is KtQualifiedExpression) {
+            false
+        } else isApplicable(expression)
     }
-    val expression = elements[0] as KtExpression
-    return if (expression is KtCallExpression && expression.getParent() is KtQualifiedExpression) {
-      false
+
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    protected open fun isApplicable(expression: KtExpression): Boolean {
+        allowAnalysisOnEdt {
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            // TODO: drop `allowAnalysisFromWriteAction` when IJPL-149774 is fixed
+            allowAnalysisFromWriteAction {
+                return analyze(expression) {
+                    val type = expression.getKtType()
+                    if (type == null || type is KtErrorType || type.isUnit && isApplicableToStatements) {
+                        false
+                    } else {
+                        isApplicableToStatements || expression.isUsedAsExpression()
+                    }
+                }
+            }
+        }
     }
-    else isApplicable(expression)
-  }
 
-  @OptIn(KtAllowAnalysisOnEdt::class)
-  protected open fun isApplicable(expression: KtExpression): Boolean {
-      allowAnalysisOnEdt {
-          @OptIn(KtAllowAnalysisFromWriteAction::class)
-          allowAnalysisFromWriteAction {
-              return analyze(expression) {
-                  val type = expression.getKtType()
-                  if (type == null || type is KtErrorType || type.isUnit && isApplicableToStatements) {
-                      false
-                  } else {
-                      isApplicableToStatements || expression.isUsedAsExpression()
-                  }
-              }
-          }
-      }
-  }
+    protected open val isApplicableToStatements: Boolean
+        get() = true
 
-  protected open val isApplicableToStatements: Boolean
-    get() = true
+    final override fun surroundElements(context: ActionContext, elements: Array<out PsiElement>): ModCommand {
+        assert(elements.size == 1) { "KotlinExpressionSurrounder should be applicable only for 1 expression: " + elements.size }
+        return ModCommand.psiUpdate(context) { updater ->
+            surroundExpression(
+                context,
+                updater.getWritable(elements[0] as KtExpression),
+                updater
+            )
+        }
+    }
 
-  override fun surroundElements(project: Project, editor: Editor, elements: Array<PsiElement>): TextRange? {
-    assert(elements.size == 1) { "KotlinExpressionSurrounder should be applicable only for 1 expression: " + elements.size }
-    return surroundExpression(project, editor, elements[0] as KtExpression)
-  }
-
-  protected abstract fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange?
+    protected abstract fun surroundExpression(context: ActionContext, expression: KtExpression, updater: ModPsiUpdater)
 }

@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUIUtil
@@ -27,8 +26,8 @@ import javax.swing.SwingUtilities
  * Represents one editor's line (gutter + line text)
  */
 internal class StickyLineComponent(private val editor: EditorEx) : JComponent() {
-  var primaryVisualLine: Int = -1
-  var scopeVisualLine: Int = -1
+  private var primaryVisualLine: Int = -1
+  private var scopeVisualLine: Int = -1
   private var offsetOnClick: Int = -1
   private var debugText: String? = null
   private var dumbTextImage: BufferedImage? = null
@@ -43,19 +42,6 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
   }
 
   fun setLine(
-    primaryVisualLine: VisualPosition,
-    scopeVisualLine: VisualPosition,
-    offsetOnClick: Int,
-    debugText: String?,
-  ) {
-    setLine(primaryVisualLine.line, scopeVisualLine.line, offsetOnClick, debugText)
-  }
-
-  fun resetLine() {
-    setLine(-1, -1, -1, null)
-  }
-
-  private fun setLine(
     primaryVisualLine: Int,
     scopeVisualLine: Int,
     offsetOnClick: Int,
@@ -71,6 +57,10 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     this.mouseListener.isGutterHovered = false
   }
 
+  fun resetLine() {
+    setLine(primaryVisualLine = -1, scopeVisualLine = -1, offsetOnClick = -1, debugText = null)
+  }
+
   fun isEmpty(): Boolean {
     return primaryVisualLine == -1 || scopeVisualLine == -1 || offsetOnClick == -1
   }
@@ -79,6 +69,12 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     // special mode when the line is rendered as an image to avoid flicking,
     // the mode ends when the corresponding editor's mode ends
     paintStickyLine(graphicsOrDumb = null)
+  }
+
+  fun repaintIfInRange(startVisualLine: Int, endVisualLine: Int) {
+    if (primaryVisualLine in startVisualLine..endVisualLine) {
+      repaint()
+    }
   }
 
   override fun paintComponent(g: Graphics) {
@@ -107,11 +103,13 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     }
   }
 
+  @Suppress("SSBasedInspection")
   private fun paintGutter(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int) {
     g.setClip(0, editorY, gutterWidth, lineHeight)
     editor.gutterComponentEx.paint(g)
   }
 
+  @Suppress("SSBasedInspection")
   private fun paintText(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int, textWidth: Int) {
     g.translate(gutterWidth, 0)
     g.setClip(0, editorY, textWidth, lineHeight)

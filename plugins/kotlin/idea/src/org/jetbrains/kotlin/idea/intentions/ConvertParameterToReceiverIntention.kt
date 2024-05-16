@@ -49,7 +49,7 @@ class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
                 return originalDescriptor.modify { it.receiver = originalDescriptor.parameters[parameterIndex] }
             }
 
-            override fun performSilently(affectedFunctions: Collection<PsiElement>) = true
+            override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = true
         }
 
     override fun startInWriteAction() = false

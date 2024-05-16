@@ -47,5 +47,9 @@
             id="kotlin.proximity"
             order="after proximity"
             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinLookupElementProximityWeigher"/>
+
+    <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
+             id="kotlin.preferKotlinx"
+             order="after sameModule, before knownElement"/>
   </extensions>
 </idea-plugin>

@@ -199,6 +199,18 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
+  public void testSwitchWithPrimitivesNotAllowed() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
+  }
+
+  public void testSwitchRecordPrimitiveIsNotAllowed() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
+  }
+
+  public void testUnconditionalForSelectTypeAndDominated() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();

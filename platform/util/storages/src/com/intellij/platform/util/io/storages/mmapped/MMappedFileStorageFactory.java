@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.mmapped;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,16 +14,18 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
+import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.THROW_EXCEPTION;
 import static java.nio.file.StandardOpenOption.*;
 
 
 @ApiStatus.Internal
 public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStorage> {
+  private static final Logger LOG = Logger.getInstance(MMappedFileStorageFactory.class);
 
   public static final int DEFAULT_PAGE_SIZE = IOUtil.MiB;
 
   public static MMappedFileStorageFactory withDefaults() {
-    return new MMappedFileStorageFactory(DEFAULT_PAGE_SIZE, false, true);
+    return new MMappedFileStorageFactory(DEFAULT_PAGE_SIZE, THROW_EXCEPTION, true);
   }
 
 
@@ -35,13 +39,13 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
    * Useful mostly useful for something like backward compatibility: e.g. increase pageSize is a safe change for many
    * storages -- there is no migration needed, except to align the file size to the new pageSize.
    */
-  private final boolean expandFileIfNotPageAligned;
+  private final IfNotPageAligned ifFileNotPageAligned;
 
   /** If directories along the path to the file do not exist yet -- create them */
   private final boolean createParentDirectoriesIfNotExist;
 
   private MMappedFileStorageFactory(int pageSize,
-                                    boolean expandFileIfNotPageAligned,
+                                    @NotNull IfNotPageAligned ifFileNotPageAligned,
                                     boolean createParentDirectoriesIfNotExist) {
     if (pageSize <= 0) {
       throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be >0");
@@ -50,22 +54,23 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
       throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be a power of 2");
     }
     this.pageSize = pageSize;
-    this.expandFileIfNotPageAligned = expandFileIfNotPageAligned;
+    this.ifFileNotPageAligned = ifFileNotPageAligned;
     this.createParentDirectoriesIfNotExist = createParentDirectoriesIfNotExist;
   }
 
   public MMappedFileStorageFactory pageSize(int pageSize) {
-    return new MMappedFileStorageFactory(pageSize, expandFileIfNotPageAligned, createParentDirectoriesIfNotExist);
+    return new MMappedFileStorageFactory(pageSize, ifFileNotPageAligned, createParentDirectoriesIfNotExist);
   }
 
   /**
    * What to do if fileSize is not page-aligned (i.e. fileSize != N*pageSize), and there is no marker of unfinished
    * file expansion?
-   * true: expand (and fill with zeroes) the file, so it is page-aligned (fileSize=N * pageSize)
-   * false: throw IOException
+   * {@link IfNotPageAligned#EXPAND_FILE} (and fill with zeroes) the file, so it is page-aligned (fileSize=N * pageSize)
+   * {@link IfNotPageAligned#THROW_EXCEPTION}: throw IOException, {@link IfNotPageAligned#CLEAN} drop the current file
+   * content, and open the file as-new
    */
-  public MMappedFileStorageFactory expandFileIfNotPageAligned(boolean expand) {
-    return new MMappedFileStorageFactory(pageSize, expand, createParentDirectoriesIfNotExist);
+  public MMappedFileStorageFactory ifFileIsNotPageAligned(@NotNull IfNotPageAligned ifFileNotPageAligned) {
+    return new MMappedFileStorageFactory(pageSize, ifFileNotPageAligned, createParentDirectoriesIfNotExist);
   }
 
   /**
@@ -73,7 +78,7 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
    * false: throw {@link NoSuchFileException} if parent directory doesn't exist
    */
   public MMappedFileStorageFactory createParentDirectories(boolean createParentDirectories) {
-    return new MMappedFileStorageFactory(pageSize, expandFileIfNotPageAligned, createParentDirectories);
+    return new MMappedFileStorageFactory(pageSize, ifFileNotPageAligned, createParentDirectories);
   }
 
   @Override
@@ -115,16 +120,24 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
       return;
     }
 
-    if (expandFileIfNotPageAligned) {
-      //expand (zeroes) file up to the next page:
-      long fileSizeRoundedUpToPageSize = ((fileSize / pageSize) + 1) * pageSize;
-      try (FileChannel channel = FileChannel.open(storagePath, WRITE)) {
-        IOUtil.allocateFileRegion(channel, fileSizeRoundedUpToPageSize);
+    switch (ifFileNotPageAligned) {
+      case THROW_EXCEPTION -> {
+        throw new IOException("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned");
       }
-      return;
-    }
 
-    throw new IOException("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned");
+      case EXPAND_FILE -> {
+        LOG.warn("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned -> expand until aligned");
+        //expand (zeroes) file up to the next page:
+        long fileSizeRoundedUpToPageSize = ((fileSize / pageSize) + 1) * pageSize;
+        try (FileChannel channel = FileChannel.open(storagePath, WRITE)) {
+          IOUtil.allocateFileRegion(channel, fileSizeRoundedUpToPageSize);
+        }
+      }
+      case CLEAN -> {
+        LOG.warn("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned -> delete & re-create");
+        FileUtil.delete(storagePath);
+      }
+    }
   }
 
   private void checkParentDirectories(@NotNull Path storagePath) throws IOException {
@@ -145,8 +158,16 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
   public String toString() {
     return "MMappedFileStorageFactory{" +
            "pageSize: " + pageSize +
-           ", expandFileIfNotPageAligned: " + expandFileIfNotPageAligned +
+           ", ifNotPageAligned: " + ifFileNotPageAligned +
            ", createParentDirectoriesIfNotExist: " + createParentDirectoriesIfNotExist +
            '}';
+  }
+
+  public enum IfNotPageAligned {
+    /** Expand the file (and fill with zeros) until it is N*pageSize */
+    EXPAND_FILE,
+    THROW_EXCEPTION,
+    /** Clear the file content, and open as-if-fresh-new */
+    CLEAN
   }
 }

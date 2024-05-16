@@ -2,13 +2,11 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder;
 import org.jetbrains.kotlin.psi.*;
 
@@ -24,11 +22,11 @@ public class KotlinStringTemplateSurrounder extends KotlinExpressionSurrounder {
         return !(expression instanceof KtStringTemplateExpression) && super.isApplicable(expression);
     }
 
-    @Nullable
     @Override
-    public TextRange surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull KtExpression expression) {
+    protected void surroundExpression(@NotNull ActionContext context, @NotNull KtExpression expression, @NotNull ModPsiUpdater updater) {
+        KtPsiFactory factory = new KtPsiFactory(context.project());
         KtStringTemplateExpression stringTemplateExpression =
-                (KtStringTemplateExpression) new KtPsiFactory(expression.getProject()).createExpression(getCodeTemplate(expression));
+                (KtStringTemplateExpression) factory.createExpression(getCodeTemplate(expression));
         KtStringTemplateEntry templateEntry = stringTemplateExpression.getEntries()[0];
         KtExpression innerExpression = templateEntry.getExpression();
         assert innerExpression != null : "KtExpression should exists for " + stringTemplateExpression;
@@ -36,10 +34,10 @@ public class KotlinStringTemplateSurrounder extends KotlinExpressionSurrounder {
 
         expression = (KtExpression) expression.replace(stringTemplateExpression);
 
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expression);
+        CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(expression);
 
         int offset = expression.getTextRange().getEndOffset();
-        return new TextRange(offset, offset);
+        updater.moveCaretTo(offset);
     }
 
     private static String getCodeTemplate(KtExpression expression) {

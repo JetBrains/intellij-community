@@ -88,9 +88,7 @@ public final class PyQuotedStringIntention extends PsiUpdateModCommandAction<Psi
 
   public void invoke(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
     ActionContext context = ActionContext.from(editor, file);
-    ModCommand command = perform(context);
-    ModCommandExecutor instance = ModCommandExecutor.getInstance();
-    instance.executeInteractively(context, command, editor);
+    ModCommandExecutor.executeInteractively(context, getFamilyName(), editor, () -> perform(context));
   }
 
   private static void convertStringElement(@NotNull PyStringElement stringElement) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
@@ -15,6 +16,8 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.kotlin.idea.artifacts.KmpAwareLibraryDependency
+import org.jetbrains.kotlin.idea.artifacts.KmpLightFixtureDependencyDownloader
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -23,16 +26,55 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 /**
  * The project is created with three modules: Common, Jvm -> Common, Js -> Common.
  *
- * Currently, no libraries are added.
+ * Standard library and kotlinx-coroutines-core of fixed versions are added to all modules.
+ *
+ * Since we can't use Gradle in light fixture tests due to performance reasons, correct libraries should be mapped to modules manually.
  */
 object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
     enum class PlatformDescriptor(
         val moduleName: String,
-        val sourceRootName: String? = null
+        val targetPlatform: TargetPlatform,
+        val isKotlinSdkUsed: Boolean = true,
+        val refinementDependencies: List<PlatformDescriptor> = emptyList(),
+        val libraryDependencies: List<KmpAwareLibraryDependency> = emptyList(),
     ) {
-        COMMON("Common", sourceRootName = "src_common"),
-        JVM("Jvm", sourceRootName = "src_jvm"),
-        JS("Js", sourceRootName = "src_js");
+        COMMON(
+            moduleName = "Common",
+            targetPlatform = TargetPlatform(
+                setOf(
+                    JvmPlatforms.jvm8.single(),
+                    JsPlatforms.defaultJsPlatform.single()
+                )
+            ),
+            libraryDependencies = listOf(
+                KmpAwareLibraryDependency.allMetadataJar("org.jetbrains.kotlin:kotlin-stdlib:commonMain:1.9.23"), // TODO (KTIJ-29725): sliding version
+                KmpAwareLibraryDependency.metadataKlib("org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0")
+            ),
+        ),
+        JVM(
+            moduleName = "Jvm",
+            targetPlatform = JvmPlatforms.jvm8,
+            isKotlinSdkUsed = false,
+            refinementDependencies = listOf(COMMON),
+            libraryDependencies = listOf(
+                KmpAwareLibraryDependency.jar("org.jetbrains.kotlin:kotlin-stdlib:1.9.23"),
+                KmpAwareLibraryDependency.jar("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0"),
+                KmpAwareLibraryDependency.jar("org.jetbrains:annotations:23.0.0"),
+            ),
+        ),
+        JS(
+            moduleName = "Js",
+            targetPlatform = JsPlatforms.defaultJsPlatform,
+            refinementDependencies = listOf(COMMON),
+            libraryDependencies = listOf(
+                KmpAwareLibraryDependency.klib("org.jetbrains.kotlin:kotlin-stdlib-js:1.9.23"),
+                KmpAwareLibraryDependency.klib("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.8.0"),
+                KmpAwareLibraryDependency.klib("org.jetbrains.kotlinx:atomicfu-js:0.23.1"),
+            ),
+        );
+
+        val sourceRootName: String
+            get() = "src_${moduleName.lowercase()}"
 
         fun sourceRoot(): VirtualFile? = findRoot(sourceRootName)
 
@@ -68,41 +110,42 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
 
     private fun configureModule(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {
         model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.HIGHEST
-        if (descriptor.sourceRootName != null) {
-            val sourceRoot = createSourceRoot(module, descriptor.sourceRootName)
-            model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
-        }
+        val sourceRoot = createSourceRoot(module, descriptor.sourceRootName)
+        model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
 
-        val setupKotlinSdk: () -> Unit = {
+        setUpSdk(module, model, descriptor)
+
+        module.createMultiplatformFacetM3(
+            platformKind = descriptor.targetPlatform,
+            useProjectSettings = false,
+            dependsOnModuleNames = descriptor.refinementDependencies.map(PlatformDescriptor::moduleName),
+            pureKotlinSourceFolders = listOf(descriptor.sourceRoot()!!.path),
+        )
+        for (libraryCoordinates in descriptor.libraryDependencies) {
+            val library = setUpLibraryFromCoordinates(module.project, libraryCoordinates)
+            model.addLibraryEntry(library)
+        }
+    }
+
+    private fun setUpLibraryFromCoordinates(project: Project, dependency: KmpAwareLibraryDependency): Library {
+        val dependencyRoot = KmpLightFixtureDependencyDownloader.resolveDependency(dependency)?.toFile()
+            ?: error("Unable to download library ${dependency.coordinates}")
+        return ConfigLibraryUtil.addProjectLibrary(project = project, name = dependency.coordinates.toString()) {
+            addRoot(dependencyRoot, OrderRootType.CLASSES)
+            commit()
+        }
+    }
+
+    private fun setUpSdk(module: Module, model: ModifiableRootModel, descriptor: PlatformDescriptor) {
+        if (descriptor.isKotlinSdkUsed) {
             KotlinSdkType.setUpIfNeeded(module)
             ConfigLibraryUtil.configureSdk(
                 module,
                 runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
                     ?: error("Kotlin SDK wasn't created")
             )
-        }
-        when (descriptor) {
-            PlatformDescriptor.JVM -> {
-                model.sdk = sdk
-                module.createMultiplatformFacetM3(JvmPlatforms.jvm8, false, listOf("Common"), listOf(descriptor.sourceRoot()!!.path))
-            }
-
-            PlatformDescriptor.JS -> {
-                setupKotlinSdk()
-                module.createMultiplatformFacetM3(JsPlatforms.defaultJsPlatform, false, listOf("Common"), listOf(descriptor.sourceRoot()!!.path))
-            }
-
-            PlatformDescriptor.COMMON -> {
-                setupKotlinSdk()
-                module.createMultiplatformFacetM3(
-                    TargetPlatform(
-                        setOf(
-                            JvmPlatforms.jvm8.single(),
-                            JsPlatforms.defaultJsPlatform.single()
-                        )
-                    ), false, emptyList(), listOf(descriptor.sourceRoot()!!.path)
-                )
-            }
+        } else {
+            model.sdk = sdk
         }
     }
 

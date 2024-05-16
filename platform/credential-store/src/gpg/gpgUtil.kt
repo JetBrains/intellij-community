@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class Pgp(private val gpgTool: GpgToolWrapper = createGpg()) {
   // only keys with "Encrypt" capability are returned
   fun listKeys(): List<PgpKey> {
@@ -61,6 +63,7 @@ class Pgp(private val gpgTool: GpgToolWrapper = createGpg()) {
   fun encrypt(data: ByteArray, recipient: String) = gpgTool.encrypt(data, recipient)
 }
 
+@ApiStatus.Internal
 interface GpgToolWrapper {
   fun listSecretKeys(): String
 
@@ -69,7 +72,7 @@ interface GpgToolWrapper {
   fun decrypt(data: ByteArray): ByteArray
 }
 
-fun createGpg(): GpgToolWrapper {
+private fun createGpg(): GpgToolWrapper {
   if (ApplicationManager.getApplication().isUnitTestMode) {
     return DummyGpgToolWrapper()
   }
@@ -93,4 +96,5 @@ private class DummyGpgToolWrapper : GpgToolWrapper {
   override fun listSecretKeys() = ""
 }
 
+@ApiStatus.Internal
 data class PgpKey(@NlsSafe val keyId: String, @NlsSafe val userId: String)

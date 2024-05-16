@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.fir.completion.test.handlers
 
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.completion.test.firFileName
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractKeywordCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.test.utils.withExtension
 
 abstract class AbstractFirKeywordCompletionHandlerTest : AbstractKeywordCompletionHandlerTest() {
@@ -14,7 +14,7 @@ abstract class AbstractFirKeywordCompletionHandlerTest : AbstractKeywordCompleti
 
     override fun isFirPlugin(): Boolean = true
 
-    override fun fileName(): String = firFileName(super.fileName(), testDataDirectory, ".after")
+    override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, IgnoreTests.FileExtension.FIR, ".after")
 
     override fun tearDown() {
         runAll(
@@ -27,8 +27,9 @@ abstract class AbstractFirKeywordCompletionHandlerTest : AbstractKeywordCompleti
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
             super.doTest(testPath)
             val originalTestFile = dataFile()
-            IgnoreTests.cleanUpIdenticalFirTestFile(
+            IgnoreTests.cleanUpIdenticalK2TestFile(
                 originalTestFile,
+                k2Extension = IgnoreTests.FileExtension.FIR,
                 additionalFileToMarkFirIdentical = originalTestFile.withExtension("kt.after"),
                 additionalFileToDeleteIfIdentical = originalTestFile.withExtension("fir.kt.after"),
                 additionalFilesToCompare = listOf(originalTestFile.withExtension("kt.after") to originalTestFile.withExtension("fir.kt.after")),

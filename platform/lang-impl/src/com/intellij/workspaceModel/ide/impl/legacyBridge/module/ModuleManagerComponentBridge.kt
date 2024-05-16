@@ -38,6 +38,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ModuleRootListe
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.nio.file.Path
 
@@ -72,10 +75,7 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
   @Suppress("UNCHECKED_CAST")
   override fun initializeBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     // Initialize modules
-    val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
-    for (moduleChange in moduleChanges) {
-      initializeModuleBridge(moduleChange, builder)
-    }
+    initializeModuleBridges(event, builder)
 
     // Initialize facets
     FacetEntityChangeListener.getInstance(project).initializeFacetBridge(event, builder)
@@ -88,20 +88,31 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     }
   }
 
-  private fun initializeModuleBridge(change: EntityChange<ModuleEntity>, builder: MutableEntityStorage) {
-    if (change is EntityChange.Added) {
-      val alreadyCreatedModule = change.entity.findModule(builder)
-      if (alreadyCreatedModule == null) {
-        // Create module bridge
-        val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-        val module = createModuleInstance(moduleEntity = change.entity,
-                                          versionedStorage = entityStore,
-                                          diff = builder,
-                                          isNew = true,
-                                          precomputedExtensionModel = null,
-                                          plugins = plugins,
-                                          corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
-        builder.mutableModuleMap.addMapping(change.entity, module)
+  @Suppress("SSBasedInspection", "UNCHECKED_CAST")
+  private fun initializeModuleBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+    val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
+    // `runBlocking` usage approved: https://jetbrains.team/im/thread/2dJ00M3nYBxT/DA2Jg0U6sRs?message=D9Bh40U795a&channel=1Dx4720YRoCU
+    runBlocking {
+      val moduleFutures = moduleChanges.mapNotNull {
+        if (it !is EntityChange.Added<ModuleEntity>) return@mapNotNull null
+        if (it.entity.findModule(builder) != null) return@mapNotNull null
+
+        async(Dispatchers.Default) {
+          val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+          val bridge = createModuleInstance(moduleEntity = it.entity,
+                                            versionedStorage = entityStore,
+                                            diff = builder,
+                                            isNew = true,
+                                            precomputedExtensionModel = null,
+                                            plugins = plugins,
+                                            corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID })
+          bridge to it.entity
+        }
+      }
+
+      for (moduleFuture in moduleFutures) {
+        val (bridge, entity) = moduleFuture.await()
+        builder.mutableModuleMap.addMapping(entity, bridge)
       }
     }
   }

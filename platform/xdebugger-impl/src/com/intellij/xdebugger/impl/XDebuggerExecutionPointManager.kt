@@ -24,7 +24,7 @@ private val LOG = logger<XDebuggerExecutionPointManager>()
 
 internal class XDebuggerExecutionPointManager(private val project: Project,
                                               parentScope: CoroutineScope) {
-  private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
+  private val coroutineScope: CoroutineScope = parentScope.childScope(javaClass.simpleName, Dispatchers.EDT)
 
   private val updateRequestFlow = MutableSharedFlow<ExecutionPositionUpdateRequest>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
@@ -56,7 +56,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     }
 
   init {
-    val uiScope = coroutineScope.childScope(CoroutineName("${javaClass.simpleName}/UI"))
+    val uiScope = coroutineScope.childScope("${javaClass.simpleName}/UI")
     showExecutionPointUi(project, uiScope, executionPointVmState)
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -89,7 +89,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     }
 
     executionPointVm = ExecutionPointVmImpl.create(project,
-                                                   coroutineScope.childScope(CoroutineName(ExecutionPointVm::class.java.simpleName)),
+                                                   coroutineScope.childScope(ExecutionPointVm::class.java.simpleName),
                                                    mainSourcePosition,
                                                    alternativeSourcePosition,
                                                    isTopFrame,

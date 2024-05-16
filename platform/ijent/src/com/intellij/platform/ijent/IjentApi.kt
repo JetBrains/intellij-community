@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 
 /**
  * Provides access to an IJent process running on some machine. An instance of this interface gives ability to run commands
@@ -11,11 +12,10 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Usually, [IjentSessionProvider] creates instances of [IjentApi].
  */
-@ApiStatus.Experimental
-interface IjentApi : AutoCloseable {
+sealed interface IjentApi : AutoCloseable {
   val id: IjentId
 
-  val platform: IjentExecFileProvider.SupportedPlatform
+  val platform: IjentPlatform
 
   /**
    * Checks if the API is active and is safe to use. If it returns false, IJent on the other side is certainly unavailable.
@@ -30,7 +30,7 @@ interface IjentApi : AutoCloseable {
   /**
    * Returns basic info about the process that doesn't change during the lifetime of the process.
    */
-  val info: Info
+  val info: IjentInfo
 
   /**
    * Explicitly terminates the process on the remote machine.
@@ -54,15 +54,16 @@ interface IjentApi : AutoCloseable {
   interface Pid {
     val value: Long
   }
+}
 
-  /**
-   * [architecture] is the remote architecture of the built binary. Intended to be used for debugging purposes.
-   * [remotePid] is a process ID of IJent running on the remote machine.
-   * [version] is the version of the IJent binary. Intended to be used for debugging purposes.
-   */
-  interface Info {
-    val architecture: String
-    val remotePid: Pid
-    val version: String
-  }
+interface IjentPosixApi : IjentApi {
+  override val info: IjentPosixInfo
+  override val fs: IjentFileSystemPosixApi
+  override val tunnels: IjentTunnelsPosixApi
+}
+
+interface IjentWindowsApi : IjentApi {
+  override val info: IjentWindowsInfo
+  override val fs: IjentFileSystemWindowsApi
+  override val tunnels: IjentTunnelsWindowsApi
 }

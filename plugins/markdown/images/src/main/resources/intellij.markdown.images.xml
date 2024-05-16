@@ -12,8 +12,8 @@
     <customPasteProvider id="MarkdownFileLinkPasteProvider"
                          order="after MarkdownImagePasteProvider"
                          implementation="org.intellij.plugins.markdown.images.editor.paste.FileLinkPasteProvider"/>
-    <customFileDropHandler id="MarkdownEditorFileDropHandler"
-                           implementation="org.intellij.plugins.markdown.images.editor.paste.MarkdownFileDropHandler"/>
+    <fileDropHandler id="MarkdownEditorFileDropHandler"
+                     implementation="org.intellij.plugins.markdown.images.editor.paste.MarkdownFileDropHandler"/>
 
     <completion.contributor language="Markdown"
                             implementationClass="org.intellij.plugins.markdown.images.editor.completion.MarkdownImageTagCompletionContributor"/>

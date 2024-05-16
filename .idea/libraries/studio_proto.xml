@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="studio-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:studio-proto:231.0.26.0">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:studio-proto:232.1.23.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio-proto/231.0.26.0/studio-proto-231.0.26.0.jar">
-          <sha256sum>263170a91b4cddea11a586fbddc290c56a9c8ce19c1e6596430de455d671a032</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio-proto/232.1.23.0/studio-proto-232.1.23.0.jar">
+          <sha256sum>88f5f7ac3b5bdfffbcedd9de6158740249ad4b71cb61d0d42b12b70949434f12</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio-proto/231.0.26.0/studio-proto-231.0.26.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio-proto/232.1.23.0/studio-proto-232.1.23.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

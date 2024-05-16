@@ -6,6 +6,7 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.captureThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -35,7 +36,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class AsyncEditorLoader internal constructor(
   private val project: Project,
   private val provider: TextEditorProvider,
-  @JvmField val coroutineScope: CoroutineScope
+  @JvmField val coroutineScope: CoroutineScope,
 ) {
   /**
    * [delayedActions] contains either:
@@ -62,6 +63,9 @@ class AsyncEditorLoader internal constructor(
 
     internal fun isFirstInBulk(file: VirtualFile): Boolean = file.getUserData(FIRST_IN_BULK) != null
 
+    /**
+     * Invoke callback when the editor is successfully loaded. The callback will not be called if the loading was canceled.
+     */
     @JvmStatic
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
@@ -74,13 +78,22 @@ class AsyncEditorLoader internal constructor(
       }
     }
 
-    internal suspend fun waitForLoaded(editor: Editor) {
-      val asyncLoader = editor.getUserData(ASYNC_LOADER)
-      if (asyncLoader != null && !asyncLoader.isLoaded()) {
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          suspendCancellableCoroutine {
-            performWhenLoaded(editor, ContextAwareRunnable { it.resume(Unit) })
+    internal suspend fun waitForCompleted(editor: Editor) {
+      val asyncLoader = editor.getUserData(ASYNC_LOADER)?.takeIf { !it.isLoaded() } ?: return
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        suspendCancellableCoroutine { continuation ->
+          // resume on editor close
+          val handle = asyncLoader.coroutineScope.coroutineContext.job.invokeOnCompletion {
+            continuation.resume(Unit)
           }
+          asyncLoader.performWhenLoaded(ContextAwareRunnable {
+            try {
+              continuation.resume(Unit)
+            }
+            finally {
+              handle.dispose()
+            }
+          })
         }
       }
     }
@@ -151,11 +164,17 @@ class AsyncEditorLoader internal constructor(
       }
       EditorNotifications.getInstance(project).scheduleUpdateNotifications(textEditor)
     }
+      .invokeOnCompletion {
+        // make sure that async loaded marked as completed
+        delayedActions.set(null)
+      }
   }
 
   private fun executeDelayedActions(delayedActions: Array<Runnable>) {
-    for (action in delayedActions) {
-      action.run()
+    resetThreadContext().use {
+      for (action in delayedActions) {
+        action.run()
+      }
     }
   }
 

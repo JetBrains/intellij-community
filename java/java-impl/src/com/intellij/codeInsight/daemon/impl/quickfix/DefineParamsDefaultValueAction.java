@@ -6,6 +6,7 @@ import com.intellij.codeInsight.generation.RecordConstructorMember;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.ParameterClassMember;
 import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -16,10 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.JavaElementKind;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -109,7 +107,11 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
     PsiCodeBlock body = prototype.getBody();
     final String callArgs =
       "(" + StringUtil.join(parameterList.getParameters(), psiParameter -> {
-        if (ArrayUtil.find(parameters, psiParameter) > -1) return TypeUtils.getDefaultValue(psiParameter.getType());
+        if (ArrayUtil.find(parameters, psiParameter) > -1) {
+          PsiType type = GenericsUtil.getVariableTypeByExpressionType(psiParameter.getType());
+          String defaultValue = TypeUtils.getDefaultValue(type);
+          return defaultValue.equals(PsiKeyword.NULL) ? "(" + type.getCanonicalText() + ")null" : defaultValue;
+        }
         return psiParameter.getName();
       }, ",") + ");";
     final String methodCall;
@@ -141,7 +143,10 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
       PsiExpression[] toDefaults =
         ContainerUtil.map2Array(parameters, PsiExpression.class, (parameter -> args[parameterList.getParameterIndex(parameter)]));
       ModTemplateBuilder builder = updater.templateBuilder();
-      for (final PsiExpression exprToBeDefault : toDefaults) {
+      for (PsiExpression exprToBeDefault : toDefaults) {
+        if (exprToBeDefault instanceof PsiTypeCastExpression cast && RedundantCastUtil.isCastRedundant(cast)) {
+          exprToBeDefault = RemoveRedundantCastUtil.removeCast(cast);
+        }
         builder.field(exprToBeDefault, new TextExpression(exprToBeDefault.getText()));
       }
     }
@@ -153,16 +158,23 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
                                 (PsiMethod)method.copy();
     final PsiCodeBlock body = prototype.getBody();
     final PsiCodeBlock emptyBody = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlock();
+    PsiModifierList modifierList = prototype.getModifierList();
     if (body != null) {
       body.replace(emptyBody);
     } else {
-      prototype.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
+      modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
       prototype.addBefore(emptyBody, null);
     }
 
     final PsiClass aClass = method.getContainingClass();
     if (aClass != null && aClass.isInterface() && !method.hasModifierProperty(PsiModifier.STATIC)) {
-      prototype.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
+      modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+    }
+
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      if (annotation.hasQualifiedName(CommonClassNames.JAVA_LANG_OVERRIDE)) {
+        annotation.delete();
+      }
     }
 
     final PsiParameterList parameterList = method.getParameterList();

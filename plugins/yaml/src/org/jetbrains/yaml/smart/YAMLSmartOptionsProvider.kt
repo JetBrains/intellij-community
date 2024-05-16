@@ -7,8 +7,9 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.yaml.YAMLBundle
 
-class YAMLSmartOptionsProvider : BoundConfigurable(YAMLBundle.message("yaml.smartkeys.option.title"),
-                                                   "reference.settings.editor.smart.keys.yaml") {
+class YAMLSmartOptionsProvider : BoundConfigurable(
+  YAMLBundle.message("yaml.smartkeys.option.title"),
+  "reference.settings.editor.smart.keys.yaml") {
 
   override fun createPanel(): DialogPanel {
     val settings = YAMLEditorOptions.getInstance()

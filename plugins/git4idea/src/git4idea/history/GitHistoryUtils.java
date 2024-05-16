@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -28,7 +27,6 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import git4idea.history.browser.SHAHash;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -295,33 +293,5 @@ public final class GitHistoryUtils {
     String output = result.getOutputAsJoinedString().trim();
     if (output.isEmpty()) return null;
     return GitRevisionNumber.resolve(project, root, output);
-  }
-
-  /**
-   * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)} or methods from {@link GitFileHistory}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<Pair<SHAHash, Date>> onlyHashesHistory(@NotNull Project project,
-                                                            @NotNull FilePath path,
-                                                            @NotNull VirtualFile root,
-                                                            String... parameters)
-    throws VcsException {
-    // adjust path using change manager
-    path = VcsUtil.getLastCommitPath(project, path);
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME);
-    h.setStdoutSuppressed(true);
-    h.addParameters(parameters);
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.endOptions();
-    h.addRelativePaths(path);
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-
-    final List<Pair<SHAHash, Date>> rc = new ArrayList<>();
-    for (GitLogRecord record : parser.parse(output)) {
-      record.setUsedHandler(h);
-      rc.add(Pair.create(new SHAHash(record.getHash()), record.getDate()));
-    }
-    return rc;
   }
 }

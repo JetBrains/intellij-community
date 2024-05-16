@@ -152,10 +152,16 @@ fun <T> List<T>.init(): List<T> {
   return subList(0, size - 1)
 }
 
+/**
+ * @return this, if not empty. null otherwise.
+ */
 fun <T> List<T>?.nullize(): List<T>? {
   return if (this.isNullOrEmpty()) null else this
 }
 
+/**
+ * @return this, if not empty. null otherwise.
+ */
 fun <T> Array<T>?.nullize(): Array<T>? {
   return if (this.isNullOrEmpty()) null else this
 }

@@ -217,6 +217,11 @@
 
     <!--advanced settings-->
     <advancedSetting id="gradle.download.sources" default="false" bundle="messages.GradleBundle" groupKey="advanced.settings.gradle"/>
+    <experimentalFeature id="gradle.parallel.model.fetch" percentOfUsers="50">
+      <description>
+        Enable Building of models in parallel during Gradle project sync.
+      </description>
+    </experimentalFeature>
   </extensions>
 
   <applicationListeners>

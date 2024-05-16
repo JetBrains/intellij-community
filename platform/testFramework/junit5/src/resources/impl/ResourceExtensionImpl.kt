@@ -57,6 +57,12 @@ class ResourceExtensionImpl<R : Any, PR : ResourceProvider<R>>(private val provi
   private val instancesToDeleteKey = TypedStoreKey.createList<R>("[$id")
 
   companion object {
+    @TestOnly
+    private fun <R : Any, PR : ResourceProvider<R>> getResourceCreatedByProvider(store: ExtensionContext.Store,
+                                                                                 provider: KClass<out PR>,
+                                                                                 resourceType: KClass<R>): R? =
+      store.getTyped(provider.keyForResourceByProvider(resourceType))
+
     /**
      * Stored in context if at least one class-level resource used
      */
@@ -97,7 +103,7 @@ class ResourceExtensionImpl<R : Any, PR : ResourceProvider<R>>(private val provi
     if (lifetime.classLevel) {
       context.store.putTyped(testHasClassLifeTimeResources, true)
       val clazz = context.element.get() as Class<*>
-      fillFieldsWithResource(createNewAutomatically(context), clazz, clazz)
+      fillFieldsWithResource(createNewAutomatically(context), clazz, clazz, static = true)
     }
   }
 
@@ -108,12 +114,17 @@ class ResourceExtensionImpl<R : Any, PR : ResourceProvider<R>>(private val provi
   }
 
   override fun beforeEach(context: ExtensionContext) {
-
     this.latestContext = context
-    if (lifetime.methodLevel) {
-      val instance = context.testInstance.get()
-      fillFieldsWithResource(createNewAutomatically(context), instance.javaClass, instance)
-    }
+    val instance = context.testInstance.get()
+
+    // For method-level annotations we create new resource each time.
+    // For class-level we create it at the previous (beforeAll) step and then inject it into instance field before each run
+    // We can't do that beforeAll: no instance at that moment
+    val resource = if (lifetime.methodLevel) createNewAutomatically(context)
+    else
+      getResourceCreatedByProvider(context.store, this.provider::class, this.provider.resourceType)!! // Can't be null: there must be resource created at beforeAll
+
+    fillFieldsWithResource(resource, instance.javaClass, instance, static = false)
   }
 
   override fun afterEach(context: ExtensionContext) {
@@ -141,8 +152,8 @@ class ResourceExtensionImpl<R : Any, PR : ResourceProvider<R>>(private val provi
     destroy(context)
   }
 
-  private fun fillFieldsWithResource(value: R, clazz: Class<*>, instance: Any) {
-    for (field in clazz.declaredFields.filter { it.type.isAssignableFrom(provider.resourceType.java) }) {
+  private fun fillFieldsWithResource(value: R, clazz: Class<*>, instance: Any, static: Boolean) {
+    for (field in clazz.declaredFields.filter { it.type.isAssignableFrom(provider.resourceType.java) && java.lang.reflect.Modifier.isStatic(it.modifiers) == static }) {
       if (field.isAnnotationPresent(NoInject::class.java)) {
         continue
       }
@@ -176,7 +187,7 @@ class ResourceExtensionImpl<R : Any, PR : ResourceProvider<R>>(private val provi
       override fun <R : Any, PR : ResourceProvider<R>> getResourceCreatedByProvider(provider: KClass<out PR>,
                                                                                     resourceType: KClass<R>): Result<R> {
         val funToCreate: (ResourceProvider<Any>) -> ResourceExtensionApi<Any, ResourceProvider<Any>> = ResourceExtensionApi.Companion::forProvider
-        return store.getTyped(provider.keyForResourceByProvider(resourceType))?.let { Result.success(it) }
+        return Companion.getResourceCreatedByProvider(store, provider, resourceType)?.let { Result.success(it) }
                ?: Result.failure(IllegalStateException(""" 
                  Instance of ${resourceType} requested by some extension. 
                   This instance expected to be created by provider $provider, 

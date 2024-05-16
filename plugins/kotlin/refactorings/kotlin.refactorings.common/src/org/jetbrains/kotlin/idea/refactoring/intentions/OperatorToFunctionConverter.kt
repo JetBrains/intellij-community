@@ -200,6 +200,10 @@ object OperatorToFunctionConverter {
         val callee = element.calleeExpression!!
         val receiver = element.parent?.safeAs<KtQualifiedExpression>()?.receiverExpression
         val isAnonymousFunctionWithReceiver = receiver != null && callee.safeDeparenthesize() is KtNamedFunction
+        // to skip broken code like Main.({ println("hello")})() which is possible during inline anonymous function.
+        // see KotlinInlineAnonymousFunctionProcessor.Companion.findFunction
+        // and corresponding test InlineVariableOrProperty.testFunctionalPropertyWithReceiver
+        val isLambdaWithReceiver = receiver != null && callee.safeDeparenthesize() is KtLambdaExpression
         val argumentsList = element.valueArgumentList
         val argumentString = argumentsList?.text?.removeSurrounding("(", ")") ?: ""
         val argumentsWithReceiverIfNeeded = if (isAnonymousFunctionWithReceiver) {
@@ -213,7 +217,8 @@ object OperatorToFunctionConverter {
         val funcLitArgs = element.lambdaArguments
         val calleeText = callee.text
         val transformation = "$calleeText.${OperatorNameConventions.INVOKE.asString()}" + "($argumentsWithReceiverIfNeeded)"
-        val transformed = KtPsiFactory(element.project).createExpression(transformation)
+        val factory = KtPsiFactory(element.project)
+        val transformed = factory.createExpression(transformation)
         val callExpression = transformed.getCalleeExpressionIfAny()?.parent as? KtCallExpression
         if (callExpression != null && funcLitArgs.isNotEmpty()) {
             funcLitArgs.forEach { callExpression.add(it) }
@@ -222,7 +227,25 @@ object OperatorToFunctionConverter {
             }
         }
 
-        val elementToReplace = if (isAnonymousFunctionWithReceiver) element.parent else callee.parent
+        val parent = element.parent
+        if (!isAnonymousFunctionWithReceiver && !isLambdaWithReceiver && parent is KtDotQualifiedExpression) {
+            // lift dot qualifier (calleeText) to the upper level, otherwise psi is created as
+            // dotQualified
+            // - receiver
+            // - selection dotQualified
+            //   - calleeText
+            //   - callExpression newName(args)
+            // though from text the following structure is expected
+            // dotQualified
+            //  - receiver dotQualified
+            //     - receiver
+            //     - calleeText
+            //  - callExpression newName(arge)
+            val dotExpression = parent.replace(factory.createExpression(parent.receiverExpression.text + "." + transformed.text)) as KtDotQualifiedExpression
+            return dotExpression.selectorExpression as KtExpression
+        }
+
+        val elementToReplace = if (isAnonymousFunctionWithReceiver) element.parent else element
         return elementToReplace.replace(transformed) as KtExpression
     }
 

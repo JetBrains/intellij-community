@@ -7,9 +7,8 @@ package com.intellij.util.concurrency
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -34,17 +33,14 @@ fun createSingleTaskApplicationPoolExecutor(name: String, coroutineScope: Corout
 @Internal
 @OptIn(ExperimentalCoroutinesApi::class)
 class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: String) {
-  private val childScope = coroutineScope.namedChildScope(name, Dispatchers.IO.limitedParallelism(parallelism = 1))
+  private val childScope = coroutineScope.childScope(name, Dispatchers.IO.limitedParallelism(parallelism = 1))
 
   fun isEmpty(): Boolean = childScope.coroutineContext.job.children.none()
 
   fun schedule(it: Runnable) {
     childScope.launch(ClientId.coroutineContext()) {
-      // `blockingContext` is not used by intention - low-level tasks are expected in such executors
-      try {
+      blockingContext {
         it.run()
-      }
-      catch (_: ProcessCanceledException) {
       }
     }
   }

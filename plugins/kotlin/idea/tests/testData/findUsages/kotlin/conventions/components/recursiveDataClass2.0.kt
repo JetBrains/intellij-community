@@ -11,4 +11,4 @@ fun f(a: A) {
     val (a1, s) = b
 }
 
-// IGNORE_K2_LOG
+

@@ -89,10 +89,9 @@ private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWith
   val language = element.language
 
   val project = element.project
-  val isDumbMode = DumbService.isDumb(project)
 
   return HintUtils.getHintProvidersForLanguage(language).filter {
-    (!isDumbMode || DumbService.isDumbAware(it.provider)) &&
+    DumbService.getInstance(project).isUsableInCurrentContext(it.provider) &&
     // to avoid cases when old and new code vision UI are shown
     !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) &&
     (settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key))

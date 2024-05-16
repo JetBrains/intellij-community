@@ -65,7 +65,6 @@ interface CompilationContext {
 
 interface CompilationTasks {
   companion object {
-    @JvmStatic
     fun create(context: CompilationContext): CompilationTasks = CompilationTasksImpl(context)
   }
 

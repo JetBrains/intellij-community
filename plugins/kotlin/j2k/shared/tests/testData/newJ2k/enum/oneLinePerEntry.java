@@ -1,4 +1,3 @@
-// IGNORE_K2
 enum BigEnum {
     ENUM_ONE("SOME_NAME_TO_PUT_HERE"),
     ENUM_TWO("SOME_NAME_TO_PUT_HERE"),

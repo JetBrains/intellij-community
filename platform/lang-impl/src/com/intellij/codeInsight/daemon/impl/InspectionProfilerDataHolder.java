@@ -16,18 +16,19 @@ import java.util.Map;
 class InspectionProfilerDataHolder {
   /**
    * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder})
-   * to use later in {@link #sortByLatencies(PsiFile, List)}
+   * to use later in {@link #sortByLatencies(PsiFile, List, HighlightInfoUpdaterImpl)}
    */
-  static void saveStats(@NotNull PsiFile psiFile, @NotNull List<? extends InspectionRunner.InspectionContext> contexts) {
+  static void saveStats(@NotNull PsiFile psiFile, @NotNull List<? extends InspectionRunner.InspectionContext> contexts,
+                        @NotNull HighlightInfoUpdaterImpl highlightInfoUpdater) {
     if (!psiFile.getViewProvider().isPhysical()) {
       // ignore editor text fields/consoles etc
       return;
     }
-    Map<Object, HighlightInfoUpdater.ToolLatencies> latencies = ContainerUtil.map2Map(contexts, context -> Pair.create(context.tool().getShortName(), new HighlightInfoUpdater.ToolLatencies(
+    Map<Object, HighlightInfoUpdaterImpl.ToolLatencies> latencies = ContainerUtil.map2Map(contexts, context -> Pair.create(context.tool().getShortName(), new HighlightInfoUpdaterImpl.ToolLatencies(
                                                                  Math.max(0, context.holder().toolStamps.errorStamp - context.holder().toolStamps.initTimeStamp),
                                                                  Math.max(0, context.holder().toolStamps.warningStamp - context.holder().toolStamps.initTimeStamp),
                                                                  Math.max(0, context.holder().toolStamps.otherStamp - context.holder().toolStamps.initTimeStamp))));
-    HighlightInfoUpdater.getInstance(psiFile.getProject()).saveLatencies(psiFile, latencies);
+    HighlightInfoUpdaterImpl.saveLatencies(psiFile, latencies);
   }
 
   /**
@@ -36,13 +37,12 @@ class InspectionProfilerDataHolder {
    * - second, contexts with inspection tools which produced warnings in previous run, ordered by latency to the 1st created warning
    * - last, contexts with inspection tools which produced all other problems in previous run, ordered by latency to the 1st created problem
    */
-  static void sortByLatencies(@NotNull PsiFile psiFile, @NotNull List<InspectionRunner.InspectionContext> init) {
-    HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(psiFile.getProject());
-
+  static void sortByLatencies(@NotNull PsiFile psiFile, @NotNull List<InspectionRunner.InspectionContext> init,
+                              @NotNull HighlightInfoUpdaterImpl highlightInfoUpdater) {
     init.sort((context1, context2) -> {
       String toolId1 = context1.tool().getShortName();
       String toolId2 = context2.tool().getShortName();
-      return highlightInfoUpdater.compareLatencies(psiFile, toolId1, toolId2);
+      return HighlightInfoUpdaterImpl.compareLatencies(psiFile, toolId1, toolId2);
     });
   }
 }

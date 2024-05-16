@@ -9,7 +9,9 @@ import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 
+@get:ApiStatus.Internal
 val isMacOsCredentialStoreSupported: Boolean
   get() = SystemInfo.isMac
 

@@ -222,7 +222,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                             commitCount: CommitCountStage,
                             commitCandidates: IntSet?): FilterByDetailsResult {
     var commitCountToTry = commitCount
-    if (commitCountToTry == CommitCountStage.INITIAL) {
+    if (commitCountToTry.isInitial) {
       if (filters.get(VcsLogFilterCollection.RANGE_FILTER) == null) { // not filtering in memory by range for simplicity
         val commitsFromMemory = filterDetailsInMemory(graph, filters.detailsFilters, matchingHeads, commitCandidates)
         if (commitsFromMemory.size >= commitCountToTry.count) {
@@ -308,12 +308,12 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       }
     }
     val filterMessages = Registry.`is`("vcs.log.filter.messages.by.hash")
-    if (!filterMessages || commitCount == CommitCountStage.INITIAL) {
+    if (!filterMessages || commitCount.isInitial) {
       if (hashFilterResult.isEmpty()) return null
 
       val visibleGraph = dataPack.permanentGraph.createVisibleGraph(graphOptions, null, hashFilterResult)
       val visiblePack = VisiblePack(dataPack, visibleGraph, filterMessages, VcsLogFilterObject.collection(hashFilter))
-      return FilterByHashResult(visiblePack, if (filterMessages) commitCount.next() else CommitCountStage.ALL, FilterKind.Memory)
+      return FilterByHashResult(visiblePack, if (filterMessages) commitCount.next() else commitCount.last(), FilterKind.Memory)
     }
 
     val textFilter = hashFilter.toTextFilter()
@@ -498,8 +498,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     if (graphOptions is PermanentGraph.Options.Base) {
       setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_SORT_TYPE.key, graphOptions.sortType.presentation)
     }
-    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT.key,
-                 if (commitCount.isAll()) CommitCountStage.ALL.toString() else commitCount.count.toString())
+    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT.key, commitCount.toString())
     if (dataPack.isFull) {
       setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_REPOSITORY_COMMIT_COUNT, dataPack.permanentGraph.allCommits.size)
     }

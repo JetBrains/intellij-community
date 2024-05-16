@@ -33,6 +33,7 @@ __jetbrains_intellij_encode_slow() {
   builtin printf "%s" "$out"
 }
 
+# Util method. Serializes string so that it could be safely passed to the escape sequence payload.
 __jetbrains_intellij_encode() {
   builtin local value="$1"
   if builtin command -v od > /dev/null && builtin command -v tr > /dev/null; then
@@ -43,19 +44,27 @@ __jetbrains_intellij_encode() {
 }
 
 __jetbrains_intellij_is_generator_command() {
-  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* || "$1" == *"__jetbrains_intellij_get_environment"* ]]
+  [[ "$1" == *"__jetbrains_intellij_run_generator"*  || "$1" == *"__jetbrains_intellij_report_shell_editor_buffer"* ]]
+}
+
+__jetbrains_intellij_run_generator() {
+  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
+  builtin local request_id="$1"
+  builtin local command="$2"
+  # Can't be joined with an assignment, otherwise we will fail to capture the exit code of eval.
+  builtin local result
+  result="$(eval "$command" 2>&1)"
+  builtin local exit_code=$?
+  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s;exit_code=%s\a' "$request_id" \
+    "$(__jetbrains_intellij_encode "$result")" \
+    "$exit_code"
 }
 
 __jetbrains_intellij_get_directory_files() {
-  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
-  builtin local request_id="$1"
-  builtin local result="$(ls -1ap "$2")"
-  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode "${result}")"
+  builtin printf '%s' "$(ls -1ap "$1")"
 }
 
 __jetbrains_intellij_get_environment() {
-  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
-  builtin local request_id="$1"
   builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin compgen -A export)")"
   builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A keyword)")"
   builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin compgen -A builtin)")"
@@ -64,7 +73,7 @@ __jetbrains_intellij_get_environment() {
   builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
 
   builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\",  \"aliases\": \"$aliases_mapping\"}"
-  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode "${result}")"
+  builtin printf '%s' "$result"
 }
 
 __jetbrains_intellij_escape_json() {
@@ -82,6 +91,7 @@ __jetbrains_intellij_configure_prompt() {
     # Remember the original prompt to use it in '__jetbrains_intellij_report_prompt_state'
     __JETBRAINS_INTELLIJ_ORIGINAL_PS1=$PS1
   fi
+  # Trick: We put escape sequence to the PS1 so that every time prompt is shown, the event is triggered for IJ, but it stays invisible for end-user.
   PS1=$__JETBRAINS_INTELLIJ_PS1
 }
 
@@ -128,7 +138,7 @@ __jetbrains_intellij_command_terminated() {
     builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
     __jetbrains_intellij_debug_log 'initialized'
     builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode $shell_info)"
-    builtin local hist="$(builtin history)"
+    builtin local hist="$(HISTTIMEFORMAT="" builtin history)"
     builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode "$hist")"
   else
     __jetbrains_intellij_debug_log "command_finished exit_code=$last_exit_code"
@@ -215,7 +225,8 @@ __jetbrains_intellij_collect_shell_info() {
 function __jetbrains_intellij_fix_prompt_command_order() {
   function cleanup_command() {
     builtin local command="$1"
-    command="${command//@(__bp_precmd_invoke_cmd|__bp_interactive_mode)/}"
+    command="${command//__bp_precmd_invoke_cmd/}"
+    command="${command//__bp_interactive_mode/}"
     command="${command//$'\n':$'\n'/$'\n'}"
     # it is the function from the Bash-preexec
     __bp_sanitize_string command "$command"
@@ -261,6 +272,24 @@ clear() {
   builtin printf '\e]1341;clear_invoked\a'
 }
 
+# This function will be triggered by a key bindings.
+function __jetbrains_intellij_report_shell_editor_buffer () {
+  # The commands executed by `bind -x` also trigger `PREEXEC` and `PRECMD` (unlike ZSH' `bindkey`).
+  # Mark as generator to avoid triggering `command_started` and `command_finished` events.
+  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
+  builtin printf '\e]1341;shell_editor_buffer_reported;shell_editor_buffer=%s\a' "$(__jetbrains_intellij_encode "${READLINE_LINE:-}")"
+}
+
+# Binding works in Bash >= 4.0.
+if [[ -n "${BASH_VERSINFO-}" ]] && (( BASH_VERSINFO[0] >= 4)); then
+  # Remove binding if exists.
+  builtin bind -r '"\e[24~"'
+  # Bind F12 key to report prompt buffer.
+  # Note: We are allowed to bind only shortcuts which could not be typed by user via IJ UI.
+  builtin bind -x '"\e[24~":"__jetbrains_intellij_report_shell_editor_buffer"'
+fi
+
 preexec_functions+=(__jetbrains_intellij_command_started)
 precmd_functions+=(__jetbrains_intellij_command_terminated)
-HISTIGNORE="${HISTIGNORE-}:__jetbrains_intellij_get_directory_files*:__jetbrains_intellij_get_environment*"
+HISTIGNORE="${HISTIGNORE-}:__jetbrains_intellij_run_generator*"
+HISTIGNORE="${HISTIGNORE-}:__jetbrains_intellij_report_shell_editor_buffer*"

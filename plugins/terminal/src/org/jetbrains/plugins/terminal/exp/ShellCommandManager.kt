@@ -4,8 +4,9 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.jediterm.terminal.TerminalCustomCommandListener
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptState
@@ -32,6 +33,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
           "command_finished" -> processCommandFinishedEvent(it)
           "prompt_state_updated" -> processPromptStateUpdatedEvent(it)
           "command_history" -> processCommandHistoryEvent(it)
+          "shell_editor_buffer_reported" -> fireShellEditorBufferReported(it)
           "generator_finished" -> processGeneratorFinishedEvent(it)
           "clear_invoked" -> fireClearInvoked()
           else -> LOG.warn("Unknown custom command: $it")
@@ -99,14 +101,15 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
   private fun processGeneratorFinishedEvent(event: List<String>) {
     val requestId = Param.REQUEST_ID.getIntValue(event.getOrNull(1))
     val result = Param.RESULT.getDecodedValue(event.getOrNull(2))
+    val exitCode = Param.EXIT_CODE.getIntValue(event.getOrNull(3))
     if (session.commandBlockIntegration.commandEndMarker != null) {
       debug { "Received generator_finished event, waiting for command end marker" }
       ShellCommandEndMarkerListener(session) {
-        fireGeneratorFinished(requestId, result)
+        fireGeneratorFinished(requestId, result, exitCode)
       }
     }
     else {
-      fireGeneratorFinished(requestId, result)
+      fireGeneratorFinished(requestId, result, exitCode)
     }
   }
 
@@ -180,10 +183,18 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     }
   }
 
-  private fun fireGeneratorFinished(requestId: Int, result: String) {
+  private fun fireShellEditorBufferReported(event: List<String>) {
+    val buffer = Param.SHELL_EDITOR_BUFFER.getDecodedValue(event.getOrNull(1))
+    debug { "Shell event: shell_editor_buffer_reported of ${buffer.length} size" }
+    for (listener in listeners) {
+      listener.commandBufferReceived(buffer)
+    }
+  }
+
+  private fun fireGeneratorFinished(requestId: Int, result: String, exitCode: Int) {
     debug { "Shell event: generator_finished with requestId $requestId and result of ${result.length} size" }
     for (listener in listeners) {
-      listener.generatorFinished(requestId, result)
+      listener.generatorFinished(GeneratorFinishedEvent(requestId, result, exitCode))
     }
     clearTerminal()
   }
@@ -201,8 +212,8 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
 
   fun sendCommandToExecute(shellCommand: String) = commandExecutionManager.sendCommandToExecute(shellCommand)
 
-  fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): CompletableDeferred<String> {
-    return commandExecutionManager.runGeneratorAsync(generatorName, generatorParameters)
+  fun runGeneratorAsync(shellCommand: String): Deferred<ShellCommandResult> {
+    return commandExecutionManager.runGeneratorAsync(shellCommand)
   }
 
   companion object {
@@ -230,6 +241,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     GIT_BRANCH,
     VIRTUAL_ENV,
     CONDA_ENV,
+    SHELL_EDITOR_BUFFER,
     ORIGINAL_PROMPT,
     ORIGINAL_RIGHT_PROMPT,
 
@@ -278,13 +290,17 @@ internal interface ShellCommandListener {
 
   fun commandHistoryReceived(history: String) {}
 
+  fun commandBufferReceived(buffer: String) {}
+
   fun shellInfoReceived(rawShellInfo: String) {}
 
-  fun generatorFinished(requestId: Int, result: String) {}
+  fun generatorFinished(event: GeneratorFinishedEvent) {}
 
   fun clearInvoked() {}
 }
 
 internal data class CommandFinishedEvent(val command: String, val exitCode: Int, val duration: Duration)
+
+internal data class GeneratorFinishedEvent(val requestId: Int, val output: String, val exitCode: Int)
 
 private data class StartedCommand(val command: String, val currentDirectory: String, val commandStarted: TimeMark)

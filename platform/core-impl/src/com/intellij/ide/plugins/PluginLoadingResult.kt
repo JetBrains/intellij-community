@@ -15,7 +15,7 @@ import org.jetbrains.annotations.VisibleForTesting
 // If a plugin does not include any module dependency tags in its plugin.xml,
 // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
 @ApiStatus.Internal
-class PluginLoadingResult(private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
+class PluginLoadingResult(private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ() && PlatformUtils.getPlatformPrefix() != PlatformUtils.QODANA_PREFIX) {
   private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
   @JvmField
@@ -23,7 +23,8 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
   private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
-  private val pluginErrors = HashMap<PluginId, PluginLoadingError>()
+  // the order of errors matters
+  private val pluginErrors = LinkedHashMap<PluginId, PluginLoadingError>()
 
   @VisibleForTesting
   @JvmField val shadowedBundledIds: MutableSet<PluginId> = HashSet()
@@ -36,7 +37,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   val enabledPlugins: List<IdeaPluginDescriptorImpl>
     get() = enabledPluginsById.entries.sortedBy { it.key }.map { it.value }
 
-  internal fun copyPluginErrors(): MutableMap<PluginId, PluginLoadingError> = HashMap(pluginErrors)
+  internal fun copyPluginErrors(): MutableMap<PluginId, PluginLoadingError> = LinkedHashMap(pluginErrors)
 
   fun getIncompleteIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = incompletePlugins
 
@@ -86,7 +87,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
       return
     }
 
-    if (checkModuleDependencies && !descriptor.isBundled && descriptor.packagePrefix == null && !hasModuleDependencies(descriptor)) {
+    if (checkModuleDependencies && isCheckingForImplicitDependencyNeeded(descriptor)) {
       addIncompletePlugin(descriptor, PluginLoadingError(
         plugin = descriptor,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
@@ -152,7 +153,20 @@ data class PluginManagerState internal constructor(
   @JvmField val pluginIdsToEnable: Set<PluginId>,
 )
 
-internal fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
+// skip our plugins as expected to be up to date whether bundled or not
+internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescriptorImpl): Boolean {
+  return !descriptor.isBundled &&
+         descriptor.packagePrefix == null &&
+         !descriptor.implementationDetail &&
+         descriptor.content.modules.isEmpty() &&
+         descriptor.dependencies.modules.isEmpty() &&
+         descriptor.dependencies.plugins.isEmpty() &&
+         descriptor.pluginId != PluginManagerCore.CORE_ID &&
+         descriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
+         !hasModuleDependencies(descriptor)
+}
+
+private fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
   for (dependency in descriptor.pluginDependencies) {
     val dependencyPluginId = dependency.pluginId
     if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||

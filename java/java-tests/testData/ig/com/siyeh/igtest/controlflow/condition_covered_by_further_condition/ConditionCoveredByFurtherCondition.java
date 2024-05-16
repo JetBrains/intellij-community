@@ -149,8 +149,8 @@ public class ConditionCoveredByFurtherCondition {
     }
 
     void testErrorElement(Object obj) {
-        if(!(obj instanceof Integer) && !(obj instanceof Long) && !(obj<error descr="')' expected"><error descr="')' expected"> </error></error><error descr="Not a statement">Number</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {}
-        if(<warning descr="Condition '!(obj instanceof Integer)' covered by subsequent condition '!(obj instanceof Number)'">!(obj instanceof Integer)</warning> && !(obj instanceof Number) && !(obj<error descr="')' expected"><error descr="')' expected"> </error></error><error descr="Not a statement">Number</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {}
+        if(!(obj instanceof Integer) && !(obj instanceof Long) && <error descr="Operator '!' cannot be applied to 'java.lang.Object'">!(obj</error><error descr="')' expected"><error descr="')' expected"> </error></error><error descr="Not a statement">Number</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {}
+        if(<warning descr="Condition '!(obj instanceof Integer)' covered by subsequent condition '!(obj instanceof Number)'">!(obj instanceof Integer)</warning> && !(obj instanceof Number) && <error descr="Operator '!' cannot be applied to 'java.lang.Object'">!(obj</error><error descr="')' expected"><error descr="')' expected"> </error></error><error descr="Not a statement">Number</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {}
     }
 
     void testErrorElement2(char ch) {
@@ -167,7 +167,7 @@ public class ConditionCoveredByFurtherCondition {
     }
 
     void testIncompleteLambda2(Object x) {
-        if (x != null && () -> x instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>
+        if (x != null && <error descr="Lambda expression not expected here">() -> x instanceof</error><error descr="')' expected"><error descr="Type expected"> </error></error>
     }
 
     void testBooleanChain(boolean b1, boolean b2) {

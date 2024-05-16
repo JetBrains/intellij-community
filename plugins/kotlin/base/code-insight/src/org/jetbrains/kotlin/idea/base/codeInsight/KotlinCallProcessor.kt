@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.progress.ProgressManager
@@ -168,7 +168,7 @@ object KotlinCallProcessor {
                             is KtFunctionLikeSymbol -> {
                                 val signature = symbol.asSignature()
                                 val partiallyAppliedSymbol = KtPartiallyAppliedFunctionSymbol(signature, null, null)
-                                val call = KtSimpleFunctionCall(partiallyAppliedSymbol, linkedMapOf(), mapOf(), _isImplicitInvoke = false)
+                                val call = KtSimpleFunctionCall(partiallyAppliedSymbol, linkedMapOf(), mapOf(), isImplicitInvoke = false)
                                 processCallTarget(FunctionCallTarget(element, call, partiallyAppliedSymbol))
                             }
 

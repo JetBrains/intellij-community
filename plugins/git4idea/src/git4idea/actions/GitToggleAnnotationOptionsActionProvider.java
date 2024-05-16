@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import git4idea.GitVcs;
@@ -64,8 +64,8 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     private final VcsLogApplicationSettings mySettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
     private ToggleCommitDate() {
-      super(VcsBundle.messagePointer("prefer.commit.timestamp.action.text.show"),
-            VcsBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
+      super(VcsLogBundle.messagePointer("prefer.commit.timestamp.action.text.show"),
+            VcsLogBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
     }
 
     @Override

@@ -22,4 +22,4 @@ class Key<Value> {
     fun get(): Value = null as Value
 }
 
-// IGNORE_K2_LOG
+

@@ -2,10 +2,8 @@
 package com.intellij.application
 
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.assertInstanceOf
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.Dispatchers
@@ -29,13 +27,7 @@ class PooledCoroutineContextTest : LightPlatformTestCase() {
   @Test
   fun `do not log ProcessCanceledException`() {
     val exception = ProcessCanceledException()
-    val logged = loggedErrorsAfterThrowingFromGlobalScope(exception)
-    if (Registry.`is`("ide.log.coroutine.pce")) {
-      assertSame(exception, assertInstanceOf<IllegalStateException>(logged).cause)
-    }
-    else {
-      assertNull(logged)
-    }
+    assertNull(loggedErrorsAfterThrowingFromGlobalScope(exception))
   }
 
   private fun loggedErrorsAfterThrowingFromGlobalScope(exception: Throwable): Throwable? = withNoopThreadUncaughtExceptionHandler {

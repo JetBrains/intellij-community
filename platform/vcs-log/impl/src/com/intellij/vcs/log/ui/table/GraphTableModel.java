@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -115,7 +116,15 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
   }
 
   public @NotNull List<VcsRef> getRefsAtRow(int row) {
-    return ((RefsModel)myVisiblePack.getRefs()).refsToCommit(getId(row));
+    if (myVisiblePack.getRefs() instanceof RefsModel refsModel) {
+      VirtualFile root = myVisiblePack.getRoot(row);
+      int id = getId(row);
+      if (root != null) {
+        return refsModel.refsToCommit(root, id);
+      }
+      return refsModel.refsToCommit(id);
+    }
+    return Collections.emptyList();
   }
 
   public @NotNull List<VcsRef> getBranchesAtRow(int row) {

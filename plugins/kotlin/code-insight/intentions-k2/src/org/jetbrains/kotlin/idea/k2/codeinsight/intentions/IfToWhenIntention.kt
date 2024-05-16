@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
+import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -205,7 +205,7 @@ internal class IfToWhenIntention : KotlinApplicableModCommandAction<KtIfExpressi
 
     private fun BuilderByPattern<*>.appendElseBlock(block: KtExpression?, unwrapBlockOrParenthesis: Boolean = false) {
         appendFixedText("else->")
-        appendExpression(if (unwrapBlockOrParenthesis) block?.unwrapBlockOrParenthesis() else block)
+        appendExpression(if (unwrapBlockOrParenthesis) block?.getSingleUnwrappedStatementOrThis() else block)
         appendFixedText("\n")
     }
 

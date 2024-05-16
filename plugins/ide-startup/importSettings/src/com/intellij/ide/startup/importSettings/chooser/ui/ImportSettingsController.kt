@@ -12,6 +12,7 @@ import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCo
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
+import com.jetbrains.rd.util.reactive.viewNotNull
 
 interface ImportSettingsController : BaseController {
   companion object {
@@ -43,8 +44,9 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
       dialog.dialogClose()
     }
 
-    settService.error.advise(lifetime) {
-      dialog.showError(it)
+
+    settService.notification.viewNotNull(lifetime) { lt, it ->
+      dialog.showOverlay(it, lt)
     }
   }
 

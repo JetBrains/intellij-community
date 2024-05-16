@@ -10,9 +10,6 @@ mod tests {
     use xplat_launcher::jvm_property;
     use crate::utils::*;
 
-    #[cfg(target_os = "windows")]
-    use xplat_launcher::cef_generated::CEF_VERSION;
-
     #[test]
     fn correct_launcher_startup_test() {
         run_launcher(LauncherRunSpec::standard().assert_status());
@@ -82,7 +79,7 @@ mod tests {
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(vm_options_file.canonicalize().unwrap(), path.canonicalize().unwrap());
 
-        // hardcoded vmoptions
+        // hardcoded VM options
         assert_vm_option_presence(&dump, "-Dide.native.launcher=true");
 
         dump.vmOptions.iter().find(|s| s.starts_with("-XX:ErrorFile="))
@@ -95,7 +92,7 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::Standard);
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
-        assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={CEF_VERSION}").as_ref());
+        assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={}", env!("CEF_VERSION")).as_ref());
         dump.vmOptions.iter().find(|s| s.starts_with("-Djcef.sandbox.ptr="))
             .unwrap_or_else(|| panic!("'-Djcef.sandbox.ptr=' is not in {:?}", dump.vmOptions));
     }
@@ -196,6 +193,20 @@ mod tests {
     }
 
     #[test]
+    fn corrupted_vm_options_test() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("\0\0\0\0-Xmx512m\n");
+
+        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+
+        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+
+        let nul_message = "Invalid character ('\\0') found in VM options file";
+        let nul_message_present = result.stderr.find(nul_message);
+        assert!(nul_message_present.is_some(), "Error message ('{}') is missing: {:?}", nul_message, result);
+    }
+
+    #[test]
     fn arguments_test() {
         let args = &["arguments-test-123"];
         let dump = run_launcher(LauncherRunSpec::standard().with_dump().with_args(args).assert_status()).dump();
@@ -275,13 +286,14 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn reporting_vm_creation_failures() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-XX:+UseG1GC\n-XX:+UseZGC\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
 
-        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
 
         let header = "Cannot start the IDE";
         let header_present = result.stderr.find(header);
@@ -295,13 +307,14 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn reporting_vm_creation_panics() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-Xms2g\n-Xmx1g\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
 
-        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
 
         let header = "Cannot start the IDE";
         let header_present = result.stderr.find(header);
@@ -315,6 +328,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn crash_log_creation() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         let crash_log_path = test.project_dir.join("_jvm_error.log");

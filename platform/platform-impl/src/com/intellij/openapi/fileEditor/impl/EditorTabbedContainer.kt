@@ -28,7 +28,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LO
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
 import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
-import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
+import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
@@ -530,7 +530,7 @@ class EditorTabbedContainer internal constructor(
   }
 
   private inner class MyTransferHandler : TransferHandler() {
-    private val fileDropHandler = FileDropHandler(null)
+    private val fileDropHandler = FileEditorDropHandler(null)
     override fun importData(comp: JComponent, t: Transferable): Boolean {
       if (fileDropHandler.canHandleDrop(t.transferDataFlavors)) {
         fileDropHandler.handleDrop(t, window.manager.project, window)

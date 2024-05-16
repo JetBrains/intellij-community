@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -48,16 +48,14 @@ interface StatusBar : StatusBarInfo {
 
   /**
    * Adds the given widget on the right.
-   *
    */
-  @Deprecated("Use {@link StatusBarWidgetFactory}")
+  @Deprecated("Use StatusBarWidgetFactory")
   fun addWidget(widget: StatusBarWidget)
 
   /**
    * Adds the given widget positioned according to given anchor (see [Anchors]).
-   *
    */
-  @Deprecated("Use {@link StatusBarWidgetFactory}")
+  @Deprecated("Use StatusBarWidgetFactory")
   fun addWidget(widget: StatusBarWidget, anchor: @NonNls String)
 
   /**
@@ -108,6 +106,7 @@ interface StatusBar : StatusBarInfo {
 
   object StandardWidgets {
     const val ENCODING_PANEL: String = "Encoding"
+
     // keep the old ID for backwards compatibility
     const val COLUMN_SELECTION_MODE_PANEL: String = "InsertOverwrite"
     const val READONLY_ATTRIBUTE_PANEL: String = "ReadOnlyAttribute"
@@ -120,7 +119,8 @@ interface StatusBar : StatusBarInfo {
   fun stopRefreshIndication()
 
   @Internal
-  fun addListener(listener: StatusBarListener, parentDisposable: Disposable) {}
+  fun addListener(listener: StatusBarListener, parentDisposable: Disposable) {
+  }
 
   val allWidgets: Collection<StatusBarWidget>?
     get() = null

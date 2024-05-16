@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-guava" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.8.0">
+    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-guava:1.8.0-intellij-4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.8.0/kotlinx-coroutines-guava-1.8.0.jar">
-          <sha256sum>650b3681fef3c82b900367fa3e1d8645f41891b3abe00b27bc6dbdeb2c2fa22b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1.8.0-intellij-4/kotlinx-coroutines-guava-1.8.0-intellij-4.jar">
+          <sha256sum>50580a4fa6e5a2837edb3eb00622bc096a405e3cd2ab57fcf3b25fba58739910</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.8.0/kotlinx-coroutines-guava-1.8.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1.8.0-intellij-4/kotlinx-coroutines-guava-1.8.0-intellij-4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.8.0/kotlinx-coroutines-guava-1.8.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1.8.0-intellij-4/kotlinx-coroutines-guava-1.8.0-intellij-4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

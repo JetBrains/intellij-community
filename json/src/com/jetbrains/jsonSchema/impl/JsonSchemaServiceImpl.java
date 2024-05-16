@@ -625,9 +625,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     private @NotNull List<JsonSchemaFileProvider> getDumbAwareProvidersAndUpdateRestWhenSmart() {
       List<JsonSchemaProviderFactory> readyFactories = new ArrayList<>();
       List<JsonSchemaProviderFactory> notReadyFactories = new ArrayList<>();
-      boolean dumb = DumbService.getInstance(myProject).isDumb();
       for (JsonSchemaProviderFactory factory : getProviderFactories()) {
-        if (!dumb || DumbService.isDumbAware(factory)) {
+        if (DumbService.getInstance(myProject).isUsableInCurrentContext(factory)) {
           readyFactories.add(factory);
         }
         else {

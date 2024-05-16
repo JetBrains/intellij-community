@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -16,6 +16,7 @@ import com.intellij.util.indexing.IndexId;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
+import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
@@ -1011,17 +1012,17 @@ public final class IndexLookupTimingsReporting {
     private static final Recorder stubEntriesLookupDurationsMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
 
 
-    private final ObservableDoubleMeasurement allKeysTotalLookups;
+    private final ObservableLongMeasurement allKeysTotalLookups;
     private final ObservableDoubleMeasurement allKeysLookupDurationAvg;
     private final ObservableDoubleMeasurement allKeysLookupDuration90P;
     private final ObservableDoubleMeasurement allKeysLookupDurationMax;
 
-    private final ObservableDoubleMeasurement entriesTotalLookups;
+    private final ObservableLongMeasurement entriesTotalLookups;
     private final ObservableDoubleMeasurement entriesLookupDurationAvg;
     private final ObservableDoubleMeasurement entriesLookupDuration90P;
     private final ObservableDoubleMeasurement entriesLookupDurationMax;
 
-    private final ObservableDoubleMeasurement stubsTotalLookups;
+    private final ObservableLongMeasurement stubsTotalLookups;
     private final ObservableDoubleMeasurement stubsLookupDurationAvg;
     private final ObservableDoubleMeasurement stubsLookupDuration90P;
     private final ObservableDoubleMeasurement stubsLookupDurationMax;
@@ -1032,17 +1033,17 @@ public final class IndexLookupTimingsReporting {
     private IndexOperationToOTelMetricsReporter() {
       final Meter meter = TelemetryManager.getInstance().getMeter(Indexes);
 
-      allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").buildObserver();
+      allKeysTotalLookups = meter.counterBuilder("Indexes.allKeys.lookups").buildObserver();
       allKeysLookupDurationAvg = meter.gaugeBuilder("Indexes.allKeys.lookupDurationAvgMs").buildObserver();
       allKeysLookupDuration90P = meter.gaugeBuilder("Indexes.allKeys.lookupDuration90PMs").buildObserver();
       allKeysLookupDurationMax = meter.gaugeBuilder("Indexes.allKeys.lookupDurationMaxMs").buildObserver();
 
-      entriesTotalLookups = meter.gaugeBuilder("Indexes.entries.lookups").buildObserver();
+      entriesTotalLookups = meter.counterBuilder("Indexes.entries.lookups").buildObserver();
       entriesLookupDurationAvg = meter.gaugeBuilder("Indexes.entries.lookupDurationAvgMs").buildObserver();
       entriesLookupDuration90P = meter.gaugeBuilder("Indexes.entries.lookupDuration90PMs").buildObserver();
       entriesLookupDurationMax = meter.gaugeBuilder("Indexes.entries.lookupDurationMaxMs").buildObserver();
 
-      stubsTotalLookups = meter.gaugeBuilder("Indexes.stubs.lookups").buildObserver();
+      stubsTotalLookups = meter.counterBuilder("Indexes.stubs.lookups").buildObserver();
       stubsLookupDurationAvg = meter.gaugeBuilder("Indexes.stubs.lookupDurationAvgMs").buildObserver();
       stubsLookupDuration90P = meter.gaugeBuilder("Indexes.stubs.lookupDuration90PMs").buildObserver();
       stubsLookupDurationMax = meter.gaugeBuilder("Indexes.stubs.lookupDurationMaxMs").buildObserver();

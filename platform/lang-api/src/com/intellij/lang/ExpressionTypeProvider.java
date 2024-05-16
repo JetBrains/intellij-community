@@ -16,17 +16,23 @@ import java.util.List;
 public abstract class ExpressionTypeProvider<T extends PsiElement> implements PossiblyDumbAware {
   /**
    * Returns HTML string for type info hint.
+   * <p>
+   * This method is executed from non-UI thread in read action.
    * @see com.intellij.openapi.util.text.StringUtil#escapeXmlEntities(String)
    */
   public abstract @NotNull @HintText String getInformationHint(@NotNull T element);
 
   /**
    * Returns HTML string if no target found at position.
+   * <p>
+   * This method can be executed from UI thread.
    */
   public abstract @NotNull @HintText String getErrorHint();
 
   /**
    * Returns the list of all possible targets at specified position.
+   * <p>
+   * This method can be executed from UI thread.
    */
   public abstract @NotNull List<T> getExpressionsAt(@NotNull PsiElement elementAt);
 

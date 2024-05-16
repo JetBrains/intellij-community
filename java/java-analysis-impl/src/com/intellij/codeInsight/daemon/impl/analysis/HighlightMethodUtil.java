@@ -562,6 +562,7 @@ public final class HighlightMethodUtil {
   private static HighlightInfo.Builder createIncompatibleCallHighlightInfo(@NotNull PsiExpressionList list,
                                                                            @NotNull MethodCandidateInfo candidateInfo,
                                                                            @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+    if (PsiTreeUtil.hasErrorElements(list)) return null;
     PsiMethod resolvedMethod = candidateInfo.getElement();
     PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
     String methodName = HighlightMessageUtil.getSymbolName(resolvedMethod, substitutor);
@@ -583,10 +584,12 @@ public final class HighlightMethodUtil {
             parameters.length != expressions.length) {
           toolTip = createMismatchedArgumentCountTooltip(parameters.length, expressions.length);
         }
+        else if (mismatchedExpressions.isEmpty()) {
+          if (IncompleteModelUtil.isIncompleteModel(list)) return null;
+          toolTip = XmlStringUtil.escapeString(description);
+        }
         else {
-          toolTip = mismatchedExpressions.isEmpty()
-                    ? XmlStringUtil.escapeString(description)
-                    : createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
+          toolTip = createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
         }
       }
     }
@@ -873,6 +876,12 @@ public final class HighlightMethodUtil {
     String description;
     PsiElement elementToHighlight = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
     if (element != null && !resolveResult.isAccessible()) {
+      PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceToMethod);
+      if (qualifierClass!=null &&
+          IncompleteModelUtil.isIncompleteModel(file) &&
+          IncompleteModelUtil.canBeAugmented(qualifierClass)) {
+        return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+      }
       description = HighlightUtil.accessProblemDescription(referenceToMethod, element, resolveResult);
     }
     else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
@@ -894,15 +903,28 @@ public final class HighlightMethodUtil {
       PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
 
       if (className != null) {
+        if (qualifierExpression == null &&
+            IncompleteModelUtil.isIncompleteModel(file) &&
+            IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
+          return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+        }
+        if (IncompleteModelUtil.isIncompleteModel(file) && IncompleteModelUtil.canBeAugmented(qualifierClass)) {
+          return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+        }
         description = JavaErrorBundle.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), className);
       }
-      else {
+      else if (qualifierExpression != null &&
+               qualifierExpression.getType() instanceof PsiPrimitiveType primitiveType &&
+               !primitiveType.equals(PsiTypes.nullType()) && !primitiveType.equals(PsiTypes.voidType())) {
         description =
-          qualifierExpression != null &&
-          qualifierExpression.getType() instanceof PsiPrimitiveType primitiveType &&
-          !primitiveType.equals(PsiTypes.nullType()) && !primitiveType.equals(PsiTypes.voidType())
-          ? JavaErrorBundle.message("cannot.call.method.on.type", qualifierExpression.getText(), primitiveType.getPresentableText(false))
-          : JavaErrorBundle.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
+          JavaErrorBundle.message("cannot.call.method.on.type", qualifierExpression.getText(), primitiveType.getPresentableText(false));
+      }
+      else {
+        if (IncompleteModelUtil.isIncompleteModel(file) && IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
+          return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+        }
+        description =
+          JavaErrorBundle.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
       }
       highlightInfoType = HighlightInfoType.WRONG_REF;
     }
@@ -936,13 +958,13 @@ public final class HighlightMethodUtil {
   }
 
   static HighlightInfo.Builder checkAmbiguousMethodCallArguments(@NotNull PsiReferenceExpression referenceToMethod,
-                                                         JavaResolveResult @NotNull [] resolveResults,
-                                                         @NotNull PsiExpressionList list,
-                                                         PsiElement element,
-                                                         @NotNull JavaResolveResult resolveResult,
-                                                         @NotNull PsiMethodCallExpression methodCall,
-                                                         @NotNull PsiResolveHelper resolveHelper,
-                                                         @NotNull PsiElement elementToHighlight) {
+                                                                 JavaResolveResult @NotNull [] resolveResults,
+                                                                 @NotNull PsiExpressionList list,
+                                                                 PsiElement element,
+                                                                 @NotNull JavaResolveResult resolveResult,
+                                                                 @NotNull PsiMethodCallExpression methodCall,
+                                                                 @NotNull PsiResolveHelper resolveHelper,
+                                                                 @NotNull PsiElement elementToHighlight) {
     Pair<MethodCandidateInfo, MethodCandidateInfo> pair = findCandidates(resolveResults);
     MethodCandidateInfo methodCandidate1 = pair.first;
     MethodCandidateInfo methodCandidate2 = pair.second;
@@ -976,12 +998,19 @@ public final class HighlightMethodUtil {
       if (element != null && (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect())) {
         return null;
       }
-      String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list, true);
-      description = JavaErrorBundle.message("cannot.resolve.method", methodName);
       if (candidates.length == 0) {
         return null;
       }
+      if (IncompleteModelUtil.isIncompleteModel(list) &&
+          ContainerUtil.exists(list.getExpressions(), IncompleteModelUtil::mayHaveUnknownTypeDueToPendingReference)) {
+        return null;
+      }
+      String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list, true);
+      description = JavaErrorBundle.message("cannot.resolve.method", methodName);
       toolTip = XmlStringUtil.escapeString(description);
+    }
+    if (PsiTreeUtil.hasErrorElements(list)) {
+      return null;
     }
     TextRange fixRange = getFixRange(elementToHighlight);
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).description(description).escapedToolTip(toolTip);
@@ -1271,7 +1300,8 @@ public final class HighlightMethodUtil {
     PsiExpression expression = i < expressions.length ? expressions[i] : null;
     if (expression == null) return true;
     PsiType paramType = substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
-    return paramType != null && TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression);
+    return paramType != null && TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression) ||
+           IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.isPotentiallyConvertible(paramType, expression);
   }
 
   static HighlightInfo.Builder checkMethodMustHaveBody(@NotNull PsiMethod method, @Nullable PsiClass aClass) {

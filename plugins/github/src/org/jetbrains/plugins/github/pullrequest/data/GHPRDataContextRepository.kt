@@ -48,7 +48,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
         val existing = cache[repository]
         if (existing != null) return@withLock existing
         try {
-          val contextScope = cs.childScope(classAsCoroutineName<GHPRDataContext>())
+          val contextScope = cs.childScope(GHPRDataContext::class.java.name)
           val context = contextScope.getContextAsync(account, requestExecutor, repository, remote).await()
           cache[repository] = context
           context

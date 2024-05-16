@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
+import com.intellij.codeInsight.documentation.DocumentationInteractionCollector.logDownloadFinished
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
@@ -162,7 +163,13 @@ internal class DocumentationBrowser private constructor(
     val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
     if (file != null) {
       cs.launch {
-        DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }?.download(project, file)
+        val handler = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }
+        if (handler != null) {
+          val callback = handler.download(project, file)
+          callback.doWhenProcessed {
+            logDownloadFinished(project, handler::class.java, callback.isDone)
+          }
+        }
         closeTrigger?.invoke()
       }
     }

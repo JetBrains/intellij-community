@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -47,22 +48,22 @@ object K2CreateLocalVariableFromUsageBuilder {
     }
 
 
-    internal class CreateLocalFromUsageAction(refExpr: KtNameReferenceExpression, val propertyName: String = refExpr.getReferencedName()) : IntentionAction {
-        val pointer = SmartPointerManager.createPointer(refExpr)
+    internal class CreateLocalFromUsageAction(refExpr: KtNameReferenceExpression, private val propertyName: String = refExpr.getReferencedName()) : IntentionAction {
+        val pointer: SmartPsiElementPointer<KtNameReferenceExpression> = SmartPointerManager.createPointer(refExpr)
         override fun getText(): String = KotlinBundle.message("fix.create.from.usage.local.variable", propertyName)
-        var declarationText:String = computeDeclarationText()
+        private var declarationText:String = computeDeclarationText()
 
         private fun computeDeclarationText(): String {
             val refExpr = pointer.element ?: return ""
             val assignment = refExpr.getAssignmentByLHS()
             val varExpected = assignment != null
-            var originalElement: KtExpression = assignment ?: refExpr
+            val originalElement: KtExpression = assignment ?: refExpr
 
             val valVar = if (varExpected) "var" else "val"
             val initializer =
                 analyze(refExpr) {
                     if (assignment == null) {
-                        var expressionForTypeGuess = originalElement.getAssignmentByLHS()?.right ?: originalElement
+                        val expressionForTypeGuess = originalElement.getAssignmentByLHS()?.right ?: originalElement
                         expressionForTypeGuess.getExpectedKotlinType()?.ktType?.defaultInitializer
                     }
                     else {
@@ -76,9 +77,9 @@ object K2CreateLocalVariableFromUsageBuilder {
             val refExpr = pointer.element ?: return
             val container = getContainer(refExpr) ?: return
             if (!ReadonlyStatusHandler.ensureFilesWritable(project, PsiUtil.getVirtualFile(container))) {
-                return;
+                return
             }
-            WriteCommandAction.runWriteCommandAction(project) {
+            WriteCommandAction.writeCommandAction(project).run<Throwable> {
                 val (actualContainer, actualAnchor) = when (container) {
                     is KtBlockExpression -> container to refExpr
                     is KtDeclarationWithBody -> {

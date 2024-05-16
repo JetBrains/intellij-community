@@ -1,4 +1,3 @@
-// IGNORE_K2
 import org.jetbrains.annotations.Nullable;
 
 class Base {

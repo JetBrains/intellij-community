@@ -5,7 +5,7 @@
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/unused.kt" />
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused Symbol</problem_class>
-    <description>Class 'A' is never used</description>
+    <description>Class 'AZ801' is never used</description>
   </problem>
   <problem>
     <file>usedOnlyInside.kt</file>
@@ -13,7 +13,7 @@
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/usedOnlyInside.kt" />
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused Symbol</problem_class>
-    <description>Class 'A' is never used</description>
+    <description>Class 'AZ800' is never used</description>
   </problem>
   <problem>
     <file>localUnused.kt</file>
@@ -37,7 +37,7 @@
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/usedOnlyInImport.kt" />
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused Symbol</problem_class>
-    <description>Class 'A' is never used</description>
+    <description>Class 'AZ802' is never used</description>
   </problem>
   <problem>
     <file>usedOnlyInImport.kt</file>
@@ -45,7 +45,7 @@
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/usedOnlyInImport.kt" />
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused Symbol</problem_class>
-    <description>Class 'B' is never used</description>
+    <description>Class 'BZ802' is never used</description>
   </problem>
   <problem>
     <file>BadCodeNoExceptions.kt</file>
@@ -53,7 +53,7 @@
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/badCodeNoExceptions.kt" />
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused Symbol</problem_class>
-    <description>Property 'id' is never used</description>
+    <description>Property 'idZ803' is never used</description>
   </problem>
   <problem>
     <file>BadCodeNoExceptions.kt</file>
@@ -61,7 +61,7 @@
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/BadCodeNoExceptions.kt" />
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused symbol</problem_class>
-    <description>Class 'Some' is never used</description>
+    <description>Class 'SomeZ803' is never used</description>
   </problem>
   <problem>
     <file>headerImpl.kt</file>

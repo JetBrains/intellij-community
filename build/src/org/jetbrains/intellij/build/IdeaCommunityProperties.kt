@@ -48,7 +48,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     buildCrossPlatformDistribution = true
 
     productLayout.productImplementationModules = listOf(
-      "intellij.platform.main",
+      "intellij.platform.starter",
       "intellij.idea.community.customization",
     )
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS

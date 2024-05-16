@@ -31,6 +31,9 @@ f:com.intellij.history.core.ChangeListStorageImpl
 - purge(J,I,com.intellij.util.Consumer):V
 - readPrevious(I,it.unimi.dsi.fastutil.ints.IntSet):com.intellij.history.core.ChangeSetHolder
 - writeNextSet(com.intellij.history.core.changes.ChangeSet):V
+*c:com.intellij.history.core.ChangeProcessorBase
+- <init>(java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
+- process(com.intellij.history.core.changes.ChangeSet,com.intellij.history.core.changes.Change,java.lang.String):V
 f:com.intellij.history.core.ChangeSetHolder
 - java.lang.Record
 - <init>(I,com.intellij.history.core.changes.ChangeSet):V
@@ -100,7 +103,6 @@ a:com.intellij.history.core.LocalHistoryFacade$Listener
 - changeSetFinished(com.intellij.history.core.changes.ChangeSet):V
 f:com.intellij.history.core.LocalHistoryFacadeKt
 - *sf:collectChanges(com.intellij.history.core.LocalHistoryFacade,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
-- sf:matches(com.intellij.history.core.changes.Change,java.lang.String,java.lang.String,java.util.regex.Pattern):Z
 f:com.intellij.history.core.LocalHistoryRecordsTable
 - com.intellij.util.io.storage.AbstractRecordsTable
 - <init>(java.nio.file.Path,com.intellij.util.io.StorageLockContext):V
@@ -119,7 +121,7 @@ f:com.intellij.history.core.LocalHistoryRecordsTable
 - setPrevRecord(I,I):V
 - setTimestamp(I,J):V
 f:com.intellij.history.core.LocalHistoryStorage
-- com.intellij.util.io.storage.AbstractStorage
+- com.intellij.util.io.storage.IStorage
 - <init>(java.nio.file.Path):V
 - createNextRecord():I
 - deleteRecordsUpTo(I):V
@@ -329,7 +331,6 @@ a:com.intellij.history.core.changes.StructuralChange
 f:com.intellij.history.core.revisions.ChangeRevision
 - com.intellij.history.core.revisions.Revision
 - <init>(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry,java.lang.String,com.intellij.history.core.changes.ChangeSet,Z):V
-- containsChangeWithId(J):Z
 - findEntry():com.intellij.history.core.tree.Entry
 - getAffectedFileNames():com.intellij.openapi.util.Pair
 - getChangeSetId():java.lang.Long
@@ -458,13 +459,15 @@ c:com.intellij.history.integration.IdeaGateway
 - createEntryForDeletion(com.intellij.openapi.vfs.VirtualFile):com.intellij.history.core.tree.Entry
 - createTransientEntry(com.intellij.openapi.vfs.VirtualFile):com.intellij.history.core.tree.Entry
 - createTransientRootEntry():com.intellij.history.core.tree.RootEntry
-- createTransientRootEntryForPathOnly(java.lang.String):com.intellij.history.core.tree.RootEntry
+- createTransientRootEntryForPath(java.lang.String,Z):com.intellij.history.core.tree.RootEntry
+- createTransientRootEntryForPaths(java.util.Collection,Z):com.intellij.history.core.tree.RootEntry
 - ensureFilesAreWritable(com.intellij.openapi.project.Project,java.util.List):Z
 - findOrCreateFileSafely(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile
 - findOrCreateFileSafely(java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile
 - findVirtualFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - getDocument(java.lang.String):com.intellij.openapi.editor.Document
 - getFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
+- s:getNameOrUrlPart(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getPathOrUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - ps:getVersionedFilterData():com.intellij.history.integration.IdeaGateway$VersionedFilterData
 - isVersioned(com.intellij.openapi.vfs.VirtualFile):Z
@@ -504,8 +507,6 @@ f:com.intellij.history.integration.LocalHistoryImpl
 f:com.intellij.history.integration.LocalHistoryImpl$Companion
 - f:getInstanceImpl():com.intellij.history.integration.LocalHistoryImpl
 - f:getStorageDir():java.nio.file.Path
-f:com.intellij.history.integration.LocalHistoryUtil
-- <init>():V
 f:com.intellij.history.integration.ValidateHistoryAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
@@ -549,49 +550,6 @@ f:com.intellij.history.integration.revertion.UndoChangeRevertingVisitor
 f:com.intellij.history.integration.revertion.UndoChangeRevertingVisitor$RuntimeIOException
 - java.lang.RuntimeException
 - <init>(java.lang.Throwable):V
-a:com.intellij.history.integration.ui.actions.LocalHistoryAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- pa:actionPerformed(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- p:getGateway():com.intellij.history.integration.IdeaGateway
-- p:getVcs():com.intellij.history.core.LocalHistoryFacade
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.history.integration.ui.actions.LocalHistoryGroup
-- com.intellij.ide.actions.NonTrivialActionGroup
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.history.integration.ui.actions.PutLabelAction
-- com.intellij.history.integration.ui.actions.LocalHistoryAction
-- <init>():V
-f:com.intellij.history.integration.ui.actions.RecentChangesAction
-- com.intellij.history.integration.ui.actions.LocalHistoryAction
-- <init>():V
-c:com.intellij.history.integration.ui.actions.ShowHistoryAction
-- com.intellij.history.integration.ui.actions.LocalHistoryAction
-- <init>():V
-- p:actionPerformed(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getFile(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.vfs.VirtualFile
-- p:isEnabled(com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile):Z
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.history.integration.ui.actions.ShowProjectHistoryAction
-- com.intellij.history.integration.ui.actions.ShowHistoryAction
-- <init>():V
-f:com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction
-- com.intellij.history.integration.ui.actions.ShowHistoryAction
-- <init>():V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.history.integration.ui.models.DirectoryChangeModel
-- <init>(com.intellij.history.core.revisions.Difference,com.intellij.history.integration.IdeaGateway):V
-- canShowFileDifference():Z
-- getContentRevision(I):com.intellij.openapi.vcs.changes.ContentRevision
-- getDifference():com.intellij.history.core.revisions.Difference
-- getEntry(I):com.intellij.history.core.tree.Entry
-- getEntryName(I):java.lang.String
-- isFile():Z
 c:com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
 - com.intellij.history.integration.ui.models.HistoryDialogModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile):V
@@ -602,7 +560,7 @@ c:com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
 f:com.intellij.history.integration.ui.models.EntireFileDifferenceModel
 - com.intellij.history.integration.ui.models.FileDifferenceModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.Entry,com.intellij.history.core.tree.Entry,Z):V
-f:com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel
+c:com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel
 - com.intellij.history.integration.ui.models.FileHistoryDialogModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile):V
 - getDifferenceModel():com.intellij.history.integration.ui.models.FileDifferenceModel
@@ -642,6 +600,7 @@ a:com.intellij.history.integration.ui.models.HistoryDialogModel
 - p:collectRevisionData():com.intellij.history.integration.ui.models.RevisionData
 - p:createChange(com.intellij.history.core.revisions.Difference):com.intellij.openapi.vcs.changes.Change
 - a:createReverter():com.intellij.history.integration.revertion.Reverter
+- p:createRootEntry():com.intellij.history.core.tree.RootEntry
 - getChanges():java.util.List
 - getCurrentRevision():com.intellij.history.core.revisions.Revision
 - p:getDifferences():java.util.List
@@ -719,10 +678,11 @@ f:com.intellij.history.integration.ui.models.SelectionDifferenceModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.integration.ui.models.RevisionSelectionCalculator,com.intellij.history.core.revisions.Revision,com.intellij.history.core.revisions.Revision,I,I,Z):V
 f:com.intellij.history.integration.ui.views.DirectoryChange
 - com.intellij.openapi.vcs.changes.Change
-- <init>(com.intellij.history.integration.ui.models.DirectoryChangeModel):V
+- <init>(com.intellij.history.integration.IdeaGateway,com.intellij.history.core.revisions.Difference):V
 - canShowFileDifference():Z
 - getDifference():com.intellij.history.core.revisions.Difference
-- getModel():com.intellij.history.integration.ui.models.DirectoryChangeModel
+- getLeftEntry():com.intellij.history.core.tree.Entry
+- getRightEntry():com.intellij.history.core.tree.Entry
 c:com.intellij.history.integration.ui.views.DirectoryHistoryDialog
 - com.intellij.history.integration.ui.views.HistoryDialog
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile):V
@@ -808,9 +768,10 @@ com.intellij.history.integration.ui.views.RevisionsList$SelectionListener
 f:com.intellij.history.integration.ui.views.SelectionHistoryDialog
 - com.intellij.history.integration.ui.views.FileHistoryDialog
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile,I,I):V
-f:com.intellij.history.integration.ui.views.SelectionHistoryDialogModel
+c:com.intellij.history.integration.ui.views.SelectionHistoryDialogModel
 - com.intellij.history.integration.ui.models.FileHistoryDialogModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile,I,I):V
+- p:collectRevisionData():com.intellij.history.integration.ui.models.RevisionData
 - createReverter():com.intellij.history.integration.revertion.Reverter
 - filterContents(java.lang.String):java.util.Set
 - getDifferenceModel():com.intellij.history.integration.ui.models.FileDifferenceModel
@@ -869,14 +830,16 @@ com.intellij.platform.lvcs.impl.ActivityDiffObject
 - a:getPresentation(com.intellij.platform.lvcs.impl.ActivityItem):com.intellij.platform.lvcs.impl.ActivityPresentation
 - a:isActivityFilterSupported(com.intellij.platform.lvcs.impl.ActivityScope):Z
 - a:isScopeFilterSupported(com.intellij.platform.lvcs.impl.ActivityScope):Z
-- a:loadActivityList(com.intellij.platform.lvcs.impl.ActivityScope,java.lang.String):java.util.List
+- a:loadActivityList(com.intellij.platform.lvcs.impl.ActivityScope,java.lang.String):com.intellij.platform.lvcs.impl.ActivityData
 - a:loadDiffData(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.platform.lvcs.impl.ActivityDiffData
 - a:loadSingleDiff(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.diff.chains.DiffRequestProducer
 *:com.intellij.platform.lvcs.impl.ActivityScope
 - *sf:Companion:com.intellij.platform.lvcs.impl.ActivityScope$Companion
 - s:fromFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.lvcs.impl.ActivityScope
+- s:fromFiles(java.util.Collection):com.intellij.platform.lvcs.impl.ActivityScope
 *f:com.intellij.platform.lvcs.impl.ActivityScope$Companion
 - f:fromFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.lvcs.impl.ActivityScope
+- f:fromFiles(java.util.Collection):com.intellij.platform.lvcs.impl.ActivityScope
 *f:com.intellij.platform.lvcs.impl.ActivityScope$Directory
 - com.intellij.platform.lvcs.impl.ActivityScope$File
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
@@ -890,6 +853,16 @@ com.intellij.platform.lvcs.impl.ActivityDiffObject
 *:com.intellij.platform.lvcs.impl.ActivityScope$File
 - com.intellij.platform.lvcs.impl.ActivityScope
 - a:getFile():com.intellij.openapi.vfs.VirtualFile
+*f:com.intellij.platform.lvcs.impl.ActivityScope$Files
+- com.intellij.platform.lvcs.impl.ActivityScope
+- <init>(java.util.Collection):V
+- f:component1():java.util.Collection
+- f:copy(java.util.Collection):com.intellij.platform.lvcs.impl.ActivityScope$Files
+- bs:copy$default(com.intellij.platform.lvcs.impl.ActivityScope$Files,java.util.Collection,I,java.lang.Object):com.intellij.platform.lvcs.impl.ActivityScope$Files
+- equals(java.lang.Object):Z
+- f:getFiles():java.util.Collection
+- hashCode():I
+- toString():java.lang.String
 *f:com.intellij.platform.lvcs.impl.ActivityScope$Recent
 - com.intellij.platform.lvcs.impl.ActivityScope
 - sf:INSTANCE:com.intellij.platform.lvcs.impl.ActivityScope$Recent
@@ -984,7 +957,6 @@ f:com.intellij.platform.lvcs.impl.ChangeSetSelectionKt
 - sf:getLeftRevision(com.intellij.platform.lvcs.impl.ChangeSetSelection):com.intellij.platform.lvcs.impl.RevisionId
 - sf:getRightRevision(com.intellij.platform.lvcs.impl.ChangeSetSelection):com.intellij.platform.lvcs.impl.RevisionId
 - sf:toChangeSetSelection(com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.platform.lvcs.impl.ChangeSetSelection
-f:com.intellij.platform.lvcs.impl.LocalHistoryActivityDataKt
 f:com.intellij.platform.lvcs.impl.LocalHistoryActivityProviderKt
 - sf:getACTIVITY_PRESENTATION_PROVIDER_EP():com.intellij.openapi.extensions.ExtensionPointName
 a:com.intellij.platform.lvcs.impl.RevisionId
@@ -1006,37 +978,11 @@ f:com.intellij.platform.lvcs.impl.RevisionId$Current
 - toString():java.lang.String
 f:com.intellij.platform.lvcs.impl.RevisionIdKt
 - sf:getRevisionId(com.intellij.platform.lvcs.impl.ChangeSetActivityItem):com.intellij.platform.lvcs.impl.RevisionId
-a:com.intellij.platform.lvcs.impl.actions.ChangeSetSelectionAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- a:actionPerformed(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ChangeSetSelection):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.platform.lvcs.impl.actions.CreatePatchAction
-- com.intellij.platform.lvcs.impl.actions.ChangeSetSelectionAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ChangeSetSelection):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-f:com.intellij.platform.lvcs.impl.actions.RevertAction
-- com.intellij.platform.lvcs.impl.actions.ChangeSetSelectionAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ChangeSetSelection):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-f:com.intellij.platform.lvcs.impl.actions.RevertDifferencesAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.platform.lvcs.impl.diff.ActivityDiffDataImplKt
-f:com.intellij.platform.lvcs.impl.diff.DiffUtilsKt
-f:com.intellij.platform.lvcs.impl.diff.DifferenceObjectKt
 f:com.intellij.platform.lvcs.impl.diff.EntryDiffContentKt
 - sf:createCurrentDiffContent(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,java.lang.String):com.intellij.diff.contents.DiffContent
 - sf:createCurrentDiffContent(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,java.lang.String,I,I):com.intellij.diff.contents.DiffContent
 - sf:createDiffContent(com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.Entry,J,com.intellij.history.integration.ui.models.SelectionCalculator,com.intellij.history.integration.ui.models.RevisionProcessingProgress):com.intellij.diff.contents.DiffContent
 - sf:createDiffContent(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.Entry):com.intellij.diff.contents.DiffContent
-f:com.intellij.platform.lvcs.impl.operations.RevertKt
 f:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 - sf:INSTANCE:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 - getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -1065,6 +1011,7 @@ e:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - java.lang.Enum
 - sf:Directory:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - sf:File:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
+- sf:Files:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - sf:Recent:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - sf:Selection:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - s:getEntries():kotlin.enums.EnumEntries
@@ -1078,7 +1025,6 @@ f:com.intellij.platform.lvcs.impl.ui.ActivityChangesBrowser
 - getData(java.lang.String):java.lang.Object
 - f:getDiffData():com.intellij.platform.lvcs.impl.ActivityDiffData
 - f:setDiffData(com.intellij.platform.lvcs.impl.ActivityDiffData):V
-f:com.intellij.platform.lvcs.impl.ui.ActivityItemRendererKt
 com.intellij.platform.lvcs.impl.ui.ActivityModelListener
 - java.util.EventListener
 - onDiffDataLoadingStarted():V
@@ -1120,5 +1066,3 @@ f:com.intellij.platform.lvcs.impl.ui.ActivityView$Companion
 - f:getSCOPE():com.intellij.openapi.actionSystem.DataKey
 - f:getSELECTED_DIFFERENCES():com.intellij.openapi.actionSystem.DataKey
 - f:getSELECTION():com.intellij.openapi.actionSystem.DataKey
-f:com.intellij.platform.lvcs.impl.ui.ActivityViewKt
-f:com.intellij.platform.lvcs.impl.ui.SingleFileActivityDiffPreviewKt

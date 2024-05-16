@@ -38,14 +38,15 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   public abstract @NotNull Language getBaseLanguage();
 
   @Override
-  public @NotNull List<PsiFile> getAllFiles() {
-    List<PsiFile> roots = new ArrayList<>();
+  public @NotNull List<@NotNull PsiFile> getAllFiles() {
+    List<@NotNull PsiFile> roots = new ArrayList<>();
     for (Language language : getLanguages()) {
       PsiFile psi = getPsi(language);
       if (psi != null) roots.add(psi);
     }
-    PsiFile base = getPsi(getBaseLanguage());
-    if (!roots.isEmpty() && roots.get(0) != base) {
+    Language baseLanguage = getBaseLanguage();
+    PsiFile base = getPsi(baseLanguage);
+    if (!roots.isEmpty() && roots.get(0) != base && base != null) {
       roots.remove(base);
       roots.add(0, base);
     }

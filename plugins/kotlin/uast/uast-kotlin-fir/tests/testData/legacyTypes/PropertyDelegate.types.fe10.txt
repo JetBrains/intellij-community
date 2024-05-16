@@ -4,7 +4,6 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : kotlin.Lazy<? extends java.lang.String>
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
-                USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] : kotlin.Lazy<? extends java.lang.String>
                 ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends java.lang.String>
                     UBlockExpression [{...}]
                         UReturnExpression [return "/sdcard"]
@@ -15,7 +14,6 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
             UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : kotlin.Lazy<? extends java.lang.Integer>
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
-                USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] : kotlin.Lazy<? extends java.lang.Integer>
                 ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends java.lang.Integer>
                     UBlockExpression [{...}]
                         UReturnExpression [return 1 + 1]
@@ -29,7 +27,6 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
                     ULocalVariable (name = sdCardPathLocal) [var sdCardPathLocal: java.lang.String]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : kotlin.Lazy<? extends java.lang.String>
                             UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
-                            USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] : kotlin.Lazy<? extends java.lang.String>
                             ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function0<? extends java.lang.String>
                                 UBlockExpression [{...}]
                                     UReturnExpression [return "/sdcard"]

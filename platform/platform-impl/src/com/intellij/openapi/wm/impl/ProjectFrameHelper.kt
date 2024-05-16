@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -30,6 +31,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
@@ -452,7 +454,11 @@ private object WindowCloseListener : WindowAdapter() {
 
     val app = ApplicationManager.getApplication()
     if (app != null && !app.isDisposed) {
-      frameHelper.windowClosing(project)
+      // Project closing process is also subject to cancellation checks.
+      // Here we run the closing process in the scope of applicaiton, so that the user gets the chance to abort project closing process.
+      installThreadContext((app as ComponentManagerImpl).getCoroutineScope().coroutineContext).use {
+        frameHelper.windowClosing(project)
+      }
     }
   }
 }

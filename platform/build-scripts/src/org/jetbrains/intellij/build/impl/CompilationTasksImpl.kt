@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.CompilationContext
@@ -10,11 +10,11 @@ import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
 
-class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
+internal class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
   override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
     resolveProjectDependencies()
     spanBuilder("compile modules").use {
-      CompiledClasses.reuseOrCompile(context, moduleNames, includingTestsInModules)
+      CompiledClasses.reuseOrCompile(context = context, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules)
     }
   }
 

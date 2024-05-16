@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.ActivityScope
 
 object LocalHistoryCounter : CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("local.history.counter", 2)
+  private val GROUP: EventLogGroup = EventLogGroup("local.history.counter", 3)
 
   private val KIND_FIELD = EventFields.Enum<Kind>("kind")
   private val IS_TOOL_WINDOW_UI_FIELD = EventFields.Boolean("is_toolwindow_ui")
@@ -70,11 +70,12 @@ object LocalHistoryCounter : CounterUsagesCollector() {
       is ActivityScope.Directory -> Kind.Directory
       is ActivityScope.Selection -> Kind.Selection
       is ActivityScope.SingleFile -> Kind.File
+      is ActivityScope.Files -> Kind.Files
       ActivityScope.Recent -> Kind.Recent
     }
 
   enum class Kind {
-    Recent, File, Directory, Selection
+    Recent, Files, File, Directory, Selection
   }
 
   enum class ActionKind {

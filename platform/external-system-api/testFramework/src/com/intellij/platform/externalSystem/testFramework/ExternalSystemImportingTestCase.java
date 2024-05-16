@@ -28,7 +28,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -41,11 +40,10 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.utils.module.ModuleAssertions;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
-import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +54,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -67,44 +66,22 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
  * @author Vladislav.Soroka
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
-  protected void assertModulesContains(@NotNull Project project, String... expectedNames) {
-    Module[] actual = ModuleManager.getInstance(project).getModules();
-    List<String> actualNames = new ArrayList<>();
-
-    for (Module m : actual) {
-      actualNames.add(m.getName());
-    }
-
-    assertContain(actualNames, expectedNames);
-  }
 
   protected void assertModulesContains(String... expectedNames) {
-    assertModulesContains(myProject, expectedNames);
+    ModuleAssertions.assertModulesContains(myProject, expectedNames);
   }
 
   protected void assertModules(String... expectedNames) {
-    Module[] actualModules = ModuleManager.getInstance(myProject).getModules();
-
-    Assertions.assertThat(actualModules)
-      .extracting("name")
-      .containsExactlyInAnyOrder(expectedNames);
+    ModuleAssertions.assertModules(myProject, expectedNames);
   }
 
   protected void assertModules(List<String> expectedNames) {
-    assertModules(ArrayUtil.toStringArray(expectedNames));
+    ModuleAssertions.assertModules(myProject, expectedNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
-    List<String> actual = new ArrayList<>();
-    for (ContentEntry e : getContentRoots(moduleName)) {
-      actual.add(e.getUrl());
-    }
-
-    for (int i = 0; i < expectedRoots.length; i++) {
-      expectedRoots[i] = VfsUtilCore.pathToUrl(expectedRoots[i]);
-    }
-
-    assertUnorderedPathsAreEqual(actual, Arrays.asList(expectedRoots));
+    var expectedRootPaths = ContainerUtil.map(expectedRoots, it -> Path.of(it));
+    ModuleAssertions.assertContentRoots(myProject, moduleName, expectedRootPaths);
   }
 
   protected void assertSources(String moduleName, String... expectedSources) {

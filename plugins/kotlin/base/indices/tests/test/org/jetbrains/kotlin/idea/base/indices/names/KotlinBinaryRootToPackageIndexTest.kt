@@ -17,7 +17,6 @@ import kotlin.io.path.name
  * data are created from the zipped JPS project `binary-root-to-package-index-test-data-origin-project.zip`, also found in the test data.
  */
 class KotlinBinaryRootToPackageIndexTest : AbstractMultiModuleTest() {
-    override fun isFirPlugin(): Boolean = false
 
     override fun getTestDataDirectory(): File = KotlinRoot.DIR.resolve("base/indices/tests/testData/kotlinBinaryRootToPackageIndex")
 

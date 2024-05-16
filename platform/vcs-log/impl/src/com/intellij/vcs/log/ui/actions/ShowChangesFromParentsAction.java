@@ -18,7 +18,9 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class ShowChangesFromParentsAction extends BooleanPropertyToggleAction {
 
   public ShowChangesFromParentsAction() {

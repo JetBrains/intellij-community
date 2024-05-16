@@ -57,7 +57,8 @@ constructor(private val myProject: Project,
       }
     }
     else {
-      if (null == FileEditorManager.getInstance(project).openTextEditor(descriptor, true) && myUseBrowser) {
+      val editors = FileEditorManager.getInstance(project).openEditor(descriptor, true)
+      if (editors.isEmpty() && myUseBrowser) {
         BrowserHyperlinkInfo(descriptor.file.url).navigate(project)
       }
     }

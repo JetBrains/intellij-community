@@ -16,7 +16,7 @@ internal class GHReactionImageLoader(
   private val serverPath: GithubServerPath,
   private val requestExecutor: GithubApiRequestExecutor
 ) : AsyncImageIconsProvider.AsyncImageLoader<GHReactionContent> {
-  private val cs = parentCs.childScope(CoroutineName("GitHub Reactions Image Loader"))
+  private val cs = parentCs.childScope("GitHub Reactions Image Loader")
 
   private val emojisNameToUrl: Deferred<Map<String, String>> = cs.async(Dispatchers.IO) {
     requestExecutor.executeSuspend(GithubApiRequests.Emojis.loadNameToUrlMap(serverPath))

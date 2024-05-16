@@ -3,6 +3,8 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.psi.KtConstantExpression
@@ -19,6 +21,14 @@ class KotlinULiteralExpression(
 
     override val isNull: Boolean
         get() = sourcePsi.unwrapBlockOrParenthesis().node?.elementType == KtNodeTypes.NULL
+
+    override fun getExpressionType(): PsiType? {
+        // `null` of `kotlin.Nothing?` type would be mapped to `java.lang.Void` without this shortcut.
+        return if (isNull)
+            PsiTypes.nullType()
+        else
+            super<KotlinUElementWithType>.getExpressionType()
+    }
 
     override val value: Any?
         get() = valuePart.getOrBuild { evaluate() }

@@ -110,8 +110,8 @@ internal class GitLabMergeRequestViewModels(private val project: Project,
     cs.launchNow {
       diffVm.flatMapLatest {
         it.result?.getOrNull()?.producers?.map { state -> (state.getSelected() as? CodeReviewDiffRequestProducer)?.change } ?: flowOf(null)
-      }.collectLatest {
-        if (lazyDetailsVm.isInitialized() && it != null) {
+      }.filterNotNull().collectLatest {
+        if (lazyDetailsVm.isInitialized()) {
           lazyDetailsVm.value.changesVm.selectChange(it)
         }
       }

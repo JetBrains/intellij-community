@@ -50,12 +50,10 @@ class UsageNodeTreeBuilder {
                         @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue) {
     if (!isVisible(usage)) return null;
 
-    final boolean dumb = DumbService.isDumb(myProject);
-
     GroupNode groupNode = myRoot;
     for (int i = 0; i < myGroupingRules.length; i++) {
       UsageGroupingRule rule = myGroupingRules[i];
-      if (dumb && !DumbService.isDumbAware(rule)) continue;
+      if (!DumbService.getInstance(myProject).isUsableInCurrentContext(rule)) continue;
 
       List<UsageGroup> groups = rule.getParentGroupsFor(usage, myTargets);
       for (UsageGroup group : groups) {

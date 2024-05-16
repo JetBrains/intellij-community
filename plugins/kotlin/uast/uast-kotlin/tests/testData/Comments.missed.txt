@@ -147,7 +147,6 @@ org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpressi
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (String)) <- USimpleNameReferenceExpression (identifier = String) <- UTypeReferenceExpression (name = java.lang.String) <- UMethod (name = getName) <- UClass (name = Margherita)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (java)) <- USimpleNameReferenceExpression (identifier = java) <- UQualifiedReferenceExpression <- UQualifiedReferenceExpression <- UReturnExpression
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (lang)) <- USimpleNameReferenceExpression (identifier = lang) <- UQualifiedReferenceExpression <- UQualifiedReferenceExpression <- UReturnExpression
-org.jetbrains.kotlin.psi.KtNameReferenceExpression: USimpleNameReferenceExpression (identifier = String) <- UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) <- UQualifiedReferenceExpression <- UReturnExpression <- UBlockExpression
 org.jetbrains.kotlin.kdoc.psi.impl.KDocImpl: UComment <- UMethod (name = contains) <- UClass (name = Margherita) <- UFile (package = )
 org.jetbrains.kotlin.kdoc.psi.impl.KDocName: UQualifiedReferenceExpression <- UComment <- UMethod (name = contains) <- UClass (name = Margherita) <- UFile (package = )
 org.jetbrains.kotlin.kdoc.psi.impl.KDocName: USimpleNameReferenceExpression (identifier = Pizza) <- UQualifiedReferenceExpression <- UComment <- UMethod (name = contains) <- UClass (name = Margherita)

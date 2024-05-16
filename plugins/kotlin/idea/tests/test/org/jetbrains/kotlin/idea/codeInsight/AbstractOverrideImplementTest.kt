@@ -186,7 +186,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
             if (firIdenticalIsPresent) {
                 goldenResultFile
             } else {
-                val firResultFile = File(myFixture.testDataPath, "$fileNameWithoutExtension.kt.fir.after")
+                val firResultFile = File(myFixture.testDataPath, "$fileNameWithoutExtension.kt.${IgnoreTests.FileExtension.FIR}.after")
                 if (!firResultFile.exists()) {
                     goldenResultFile.copyTo(firResultFile)
                 }
@@ -218,8 +218,9 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         }
 
         if (resultFile != goldenResultFile) {
-            IgnoreTests.cleanUpIdenticalFirTestFile(
+            IgnoreTests.cleanUpIdenticalK2TestFile(
                 goldenResultFile,
+                IgnoreTests.FileExtension.FIR,
                 resultFile,
                 File(myFixture.testDataPath, "$fileNameWithoutExtension.kt"),
             )

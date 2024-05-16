@@ -821,7 +821,6 @@ private class CachingKtCompletionExtensionCandidateChecker(
      */
     private val cache: MutableMap<KtCallableSymbol, KtExtensionApplicabilityResult> = mutableMapOf()
 
-    context(KtAnalysisSession)
     override fun computeApplicability(candidate: KtCallableSymbol): KtExtensionApplicabilityResult {
         return cache.computeIfAbsent(candidate) {
             delegate.computeApplicability(candidate)

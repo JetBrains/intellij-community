@@ -1,22 +1,32 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
-import com.intellij.ide.CommandLineInspectionProgressReporter
-import com.intellij.ide.warmup.WarmupLogger
-import com.intellij.ide.warmup.WarmupStatus
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.configuration.HeadlessLogging
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.application
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.plugins.gradle.GradleWarmupConfigurator
+import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationListener
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager
+import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.nio.file.Path
+import kotlin.io.path.appendText
+import kotlin.io.path.createFile
+import kotlin.io.path.div
 
 class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (WarmupStatus.currentStatus() != WarmupStatus.InProgress || !Registry.`is`("ide.warmup.use.predicates")) {
+    if (!application.isHeadlessEnvironment || application.isUnitTestMode) {
       return
     }
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
@@ -26,42 +36,132 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
   }
 
   private fun addTaskNotificationListener(progressManager: ExternalSystemProgressNotificationManager) {
-    val listener = GradleWarmupConfigurator.LoggingNotificationListener(object : CommandLineInspectionProgressReporter {
-      override fun reportError(message: String?) {
-        if (message == null) {
-          return
-        }
-        WarmupLogger.fatalError(message, null)
-      }
-
-      override fun reportMessage(minVerboseLevel: Int, message: String?) {
-        if (message == null) {
-          return
-        }
-        WarmupLogger.message(message)
-      }
-    })
+    val listener = LoggingNotificationListener()
     progressManager.addNotificationListener(listener)
-    scope.awaitCancellationAndInvoke {
-      progressManager.removeNotificationListener(listener)
+    scope.launch {
+      awaitCancellationAndInvoke {
+        progressManager.removeNotificationListener(listener)
+      }
     }
   }
 
   private fun addStateNotificationListener(project: Project, progressManager: ExternalSystemProgressNotificationManager) {
-    val notificationListener = GradleWarmupConfigurator.StateNotificationListener(project, scope)
+    val notificationListener = StateNotificationListener(project, scope)
     progressManager.addNotificationListener(notificationListener)
-    scope.awaitCancellationAndInvoke {
-      progressManager.removeNotificationListener(notificationListener)
+    scope.launch {
+      awaitCancellationAndInvoke {
+        progressManager.removeNotificationListener(notificationListener)
+      }
     }
   }
 
   private fun addAnnotationListener() {
     val externalAnnotationsNotificationManager = ExternalAnnotationsProgressNotificationManager.getInstance()
-    val externalAnnotationsProgressListener = GradleWarmupConfigurator.StateExternalAnnotationNotificationListener()
+    val externalAnnotationsProgressListener = StateExternalAnnotationNotificationListener()
 
     externalAnnotationsNotificationManager.addNotificationListener(externalAnnotationsProgressListener)
-    scope.awaitCancellationAndInvoke {
-      externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
+    scope.launch {
+      awaitCancellationAndInvoke {
+        externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
+      }
     }
   }
+
+  class StateExternalAnnotationNotificationListener : ExternalAnnotationsProgressNotificationListener {
+
+    override fun onStartResolve(id: ExternalAnnotationsTaskId) {
+      HeadlessLogging.logMessage(gradlePrefix + "Gradle resolving external annotations started ${id.projectId}")
+    }
+
+    override fun onFinishResolve(id: ExternalAnnotationsTaskId) {
+      HeadlessLogging.logMessage(gradlePrefix + "Gradle resolving external annotations finished ${id.projectId}")
+    }
+  }
+
+  class StateNotificationListener(
+    private val project: Project, private val scope: CoroutineScope
+  ) : ExternalSystemTaskNotificationListener {
+
+    override fun onSuccess(id: ExternalSystemTaskId) {
+      if (!id.isGradleProjectResolveTask()) return
+      HeadlessLogging.logMessage(gradlePrefix + "Gradle resolve stage finished with success: ${id.ideProjectId}")
+
+      project.messageBus.connect(scope)
+        .subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
+          override fun onImportStarted(projectPath: String?) {
+            HeadlessLogging.logMessage(gradlePrefix + "Gradle data import stage started: ${id.ideProjectId}")
+          }
+
+          override fun onImportFinished(projectPath: String?) {
+            HeadlessLogging.logMessage(gradlePrefix + "Gradle data import stage finished with success: ${id.ideProjectId}")
+          }
+
+          override fun onFinalTasksFinished(projectPath: String?) {
+            HeadlessLogging.logMessage(gradlePrefix + "Gradle data import(final tasks) stage finished: ${id.ideProjectId}")
+          }
+
+          override fun onFinalTasksStarted(projectPath: String?) {
+            HeadlessLogging.logMessage(gradlePrefix + "Gradle data import(final tasks) stage started: ${id.ideProjectId}")
+          }
+
+          override fun onImportFailed(projectPath: String?, t: Throwable) {
+            HeadlessLogging.logFatalError(t)
+          }
+        })
+    }
+
+    override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
+      if (!id.isGradleProjectResolveTask()) return
+      HeadlessLogging.logFatalError(e)
+    }
+
+    override fun onCancel(id: ExternalSystemTaskId) {
+      if (!id.isGradleProjectResolveTask()) return
+      HeadlessLogging.logWarning(gradlePrefix + "Gradle resolve stage canceled ${id.ideProjectId}")
+    }
+
+    override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
+      if (!id.isGradleProjectResolveTask()) return
+      HeadlessLogging.logMessage(gradlePrefix + "Gradle resolve stage started ${id.ideProjectId}, working dir: $workingDir")
+    }
+  }
+
+  class LoggingNotificationListener : ExternalSystemTaskNotificationListener {
+
+    private val logPath = try {
+      gradleLogWriterPath.createParentDirectories().createFile()
+    }
+    catch (e: java.nio.file.FileAlreadyExistsException) {
+      gradleLogWriterPath
+    }
+
+    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+      val gradleText = (if (stdOut) "" else "STDERR: ") + text
+      logPath.appendText(gradleText)
+      val croppedMessage = processMessage(gradleText)
+      if (croppedMessage != null) {
+        HeadlessLogging.logMessage(gradlePrefix + croppedMessage)
+      }
+    }
+
+    private fun processMessage(gradleText: String): String? {
+      val cropped = gradleText.trimStart('\r').trimEnd('\n')
+      if (cropped.startsWith("Download")) {
+        // we don't want to be flooded by a ton of download messages, so we'll print only final message
+        if (cropped.contains(" took ")) {
+          return cropped
+        }
+        return null
+      }
+      return cropped
+    }
+  }
+
 }
+
+internal fun ExternalSystemTaskId.isGradleProjectResolveTask() = this.projectSystemId == GradleConstants.SYSTEM_ID &&
+                                                                 this.type == ExternalSystemTaskType.RESOLVE_PROJECT
+
+private val gradleLogWriterPath = Path.of(PathManager.getLogPath()) / "gradle-import.log"
+
+private val gradlePrefix = "[Gradle]: "

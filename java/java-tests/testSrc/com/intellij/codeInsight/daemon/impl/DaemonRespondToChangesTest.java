@@ -160,6 +160,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
+    //noinspection removal
     return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
   }
 
@@ -770,7 +771,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testOverrideMethodsHighlightingPersistWhenTypeInsideMethodBody() {
-    configureByText(JavaFileType.INSTANCE, """
+    @Language("JAVA")
+    String text = """
       package x;\s
       class ClassA {
           static <T> void sayHello(Class<? extends T> msg) {}
@@ -779,7 +781,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           static <T extends String> void sayHello(Class<? extends T> msg) {<caret>
           }
       }
-      """);
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
 
     assertOneElement(highlightErrors());
     type("//my comment inside method body, so class modifier won't be visited");
@@ -1104,87 +1107,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     undo();
     assertEmpty(highlightErrors());
-  }
-
-  public void testBulbAppearsAfterType() {
-    String text = "class S { ArrayList<caret>XXX x;}";
-    configureByText(JavaFileType.INSTANCE, text);
-
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-
-    Set<LightweightHint> shown = new ReferenceOpenHashSet<>();
-    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
-      @Override
-      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
-        shown.add(hint);
-        hint.addHintListener(event -> shown.remove(hint));
-      }
-    });
-
-    assertNotEmpty(highlightErrors());
-
-    IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(hintComponent);
-    assertFalse(hintComponent.isDisposed());
-    assertNotNull(hintComponent.getComponentHint());
-    assertTrue(shown.contains(hintComponent.getComponentHint()));
-
-    type("x");
-    assertNotEmpty(highlightErrors());
-    hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(hintComponent);
-    assertFalse(hintComponent.isDisposed());
-    assertNotNull(hintComponent.getComponentHint());
-    assertTrue(shown.contains(hintComponent.getComponentHint()));
-  }
-
-  public void testBulbMustDisappearAfterPressEscape() {
-    String text = "class S { ArrayList<caret>XXX x;}";
-    configureByText(JavaFileType.INSTANCE, text);
-
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-
-    Set<LightweightHint> shown = new ReferenceOpenHashSet<>();
-    getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC,
-                                                     new EditorHintListener() {
-                                                       @Override
-                                                       public void hintShown(@NotNull Editor editor,
-                                                                             @NotNull LightweightHint hint,
-                                                                             int flags,
-                                                                             @NotNull HintHint hintInfo) {
-                                                         shown.add(hint);
-                                                         hint.addHintListener(event -> shown.remove(hint));
-                                                       }
-                                                     });
-
-    assertNotEmpty(highlightErrors());
-
-    IntentionHintComponent hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(hintComponent);
-    assertFalse(hintComponent.isDisposed());
-    assertNotNull(hintComponent.getComponentHint());
-    assertTrue(shown.contains(hintComponent.getComponentHint()));
-    assertTrue(hintComponent.hasVisibleLightBulbOrPopup());
-
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_EDITOR_ESCAPE, true), "", null, getEditor().getDocument());
-
-    assertNotEmpty(highlightErrors());
-    hintComponent = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNull(hintComponent);
-
-    // the bulb must reappear when the caret moved
-    caretLeft();
-    assertNotEmpty(highlightErrors());
-    IntentionHintComponent hintComponentAfter = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(hintComponentAfter);
-    assertFalse(hintComponentAfter.isDisposed());
-    assertNotNull(hintComponentAfter.getComponentHint());
-    assertTrue(shown.contains(hintComponentAfter.getComponentHint()));
-    assertTrue(hintComponentAfter.hasVisibleLightBulbOrPopup());
   }
 
   // todo - StoreUtil.saveDocumentsAndProjectsAndApp cannot save in EDT. If it is called in EDT,
@@ -1871,52 +1793,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  public void testLightBulbDoesNotUpdateIntentionsInEDT() {
-    IntentionAction longLongUpdate = new AbstractIntentionAction() {
-      @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getText() {
-        return "LongAction";
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        ApplicationManager.getApplication().assertIsNonDispatchThread();
-        return true;
-      }
-    };
-    IntentionManager.getInstance().addAction(longLongUpdate);
-    Disposer.register(getTestRootDisposable(), () -> IntentionManager.getInstance().unregisterIntention(longLongUpdate));
-    configureByText(JavaFileType.INSTANCE, "class X { <caret>  }");
-    makeEditorWindowVisible(new Point(0, 0), myEditor);
-    doHighlighting();
-    myDaemonCodeAnalyzer.restart();
-    runWithReparseDelay(0, () -> {
-      for (int i = 0; i < 1000; i++) {
-        caretRight();
-        UIUtil.dispatchAllInvocationEvents();
-        caretLeft();
-        Object updateProgress = new HashMap<>(myDaemonCodeAnalyzer.getUpdateProgress());
-        long waitForDaemonStart = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress) && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until the daemon started
-          UIUtil.dispatchAllInvocationEvents();
-        }
-        if (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress)) {
-          throw new RuntimeException("Daemon failed to start in 5000 ms");
-        }
-        long start = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
-          UIUtil.dispatchAllInvocationEvents(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
-        }
-      }
-    });
-  }
-
   static void runWithReparseDelay(int reparseDelayMs, @NotNull Runnable task) {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int oldDelay = settings.getAutoReparseDelay();
@@ -1926,50 +1802,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
     finally {
       settings.setAutoReparseDelay(oldDelay);
-    }
-  }
-
-  public void testLightBulbIsHiddenWhenFixRangeIsCollapsed() {
-    configureByText(JavaFileType.INSTANCE, "class S { void foo() { boolean <selection>var; if (va<caret>r</selection>) {}} }");
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
-    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
-
-    Set<LightweightHint> visibleHints = new ReferenceOpenHashSet<>();
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
-      @Override
-      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
-        visibleHints.add(hint);
-        hint.addHintListener(new HintListener() {
-          @Override
-          public void hintHidden(@NotNull EventObject event) {
-            visibleHints.remove(hint);
-            hint.removeHintListener(this);
-          }
-        });
-      }
-    });
-
-    assertNotEmpty(highlightErrors());
-    UIUtil.dispatchAllInvocationEvents();
-    IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertNotNull(lastHintBeforeDeletion);
-    IntentionContainer lastHintIntentions = lastHintBeforeDeletion.getCachedIntentions();
-    assertNotNull(lastHintIntentions);
-    assertTrue(lastHintIntentions.toString(),
-               ContainerUtil.exists(lastHintIntentions.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
-
-    delete(myEditor);
-    assertNotEmpty(highlightErrors());
-    UIUtil.dispatchAllInvocationEvents();
-    IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
-    // it must be either hidden or not have that error anymore
-    if (lastHintAfterDeletion == null) {
-      assertEmpty(visibleHints);
-    }
-    else {
-      IntentionContainer after = lastHintAfterDeletion.getCachedIntentions();
-      assertNotNull(after);
-      assertFalse(after.toString(), ContainerUtil.exists(after.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
     }
   }
 
@@ -2118,8 +1950,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-
-
   public void testDumbAwareHighlightingPassesStartEvenInDumbMode() {
     List<TextEditorHighlightingPassFactory> collected = Collections.synchronizedList(new ArrayList<>());
     List<TextEditorHighlightingPassFactory> applied = Collections.synchronizedList(new ArrayList<>());
@@ -2185,43 +2015,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertSame(dumbFac, f2);
     });
   }
-
-  public void testIntentionActionIsAvailableMustBeQueriedOnlyOncePerHighlightingSession() {
-    Map<ProgressIndicator, Throwable> isAvailableCalled = new ConcurrentHashMap<>();
-    IntentionAction action = new AbstractIntentionAction() {
-      @Nls(capitalization = Nls.Capitalization.Sentence)
-      @NotNull
-      @Override
-      public String getText() {
-        return "My";
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        DaemonProgressIndicator indicator = (DaemonProgressIndicator)ProgressIndicatorProvider.getGlobalProgressIndicator();
-        Throwable alreadyCalled = isAvailableCalled.put(indicator, new Throwable());
-        if (alreadyCalled != null) {
-          throw new IllegalStateException(" .isAvailable() already called in:\n---------------\n"+ExceptionUtil.getThrowableText(alreadyCalled)+"\n-----------");
-        }
-        return true;
-      }
-
-      @Override
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      }
-    };
-    IntentionManager.getInstance().addAction(action);
-    Disposer.register(getTestRootDisposable(), () -> IntentionManager.getInstance().unregisterIntention(action));
-
-    @Language("JAVA")
-    String text = "class X { }";
-    configureByText(JavaFileType.INSTANCE, text);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText(text));
-    doHighlighting();
-    myDaemonCodeAnalyzer.restart();
-    doHighlighting();
-  }
-
 
   public void testUncommittedByAccidentNonPhysicalDocumentMustNotHangDaemon() {
     ThreadingAssertions.assertEventDispatchThread();
@@ -2376,251 +2169,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId1}, null, false, forcedId3);
     registrar.registerTextEditorHighlightingPass(new EmptyPassFactory(), new int[]{forcedId3}, null, false, forcedId2);
     assertEmpty(highlightErrors());
-  }
-
-  public void testHighlightInfoMustImmediatelyShowItselfOnScreenRightAfterCreation() {
-    AtomicBoolean xxxMustBeVisible = new AtomicBoolean();
-    HighlightVisitor visitor = new MyHighlightCommentsSubstringVisitor(xxxMustBeVisible);
-    myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
-    @Language("JAVA")
-    String text = """
-      class X {
-        void f(boolean b) {
-          if (b) {
-            // xxx
-          }
-        }
-      }
-      """;
-    configureByText(JavaFileType.INSTANCE, text);
-
-    TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
-    Runnable callbackWhileWaiting = () -> {
-      if (xxxMustBeVisible.get()) {
-        List<String> myInfos = ContainerUtil.map(filterMy(DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject())), h->h.getDescription());
-        assertTrue(myInfos.toString(), myInfos.contains("MY: XXX"));
-      }
-    };
-    myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, callbackWhileWaiting);
-
-    List<HighlightInfo> myWarns = filterMy(doHighlighting());
-    assertEquals(myWarns.toString(), 2, myWarns.size());
-  }
-
-  @NotNull
-  private static List<HighlightInfo> filterMy(@NotNull List<? extends HighlightInfo> infos) {
-    return ContainerUtil.filter(infos, h -> h.getDescription() != null && h.getDescription().startsWith("MY: "));
-  }
-
-  private static class MyHighlightCommentsSubstringVisitor implements HighlightVisitor {
-    private final AtomicBoolean xxxMustBeVisible;
-    private HighlightInfoHolder myHolder;
-
-    MyHighlightCommentsSubstringVisitor(@NotNull AtomicBoolean xxxMustBeVisible) {
-      this.xxxMustBeVisible = xxxMustBeVisible;
-    }
-
-    @Override
-    public boolean suitableForFile(@NotNull PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void visit(@NotNull PsiElement element) {
-      if (element instanceof PsiComment) {
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element.getTextRange().cutOut(TextRange.create(0, 1))).description("MY: XXX").create());
-        // immediately after creation
-        ApplicationManager.getApplication().invokeLater(()->xxxMustBeVisible.set(true));
-        TimeoutUtil.sleep(10_000);
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element.getTextRange().cutOut(TextRange.create(1, 2))).description("MY: XXX2").create());
-      }
-    }
-
-    @Override
-    public boolean analyze(@NotNull PsiFile file,
-                           boolean updateWholeFile,
-                           @NotNull HighlightInfoHolder holder,
-                           @NotNull Runnable action) {
-      myHolder = holder;
-      action.run();
-      return true;
-    }
-
-    @Override
-    public @NotNull HighlightVisitor clone() {
-      return new MyHighlightCommentsSubstringVisitor(xxxMustBeVisible);
-    }
-  }
-
-  public void testHighlightInfoMustImmediatelyShowItselfOnScreenRightAfterCreationInBGT() {
-    Runnable commentHighlighted = () -> {
-      ApplicationManager.getApplication().assertIsNonDispatchThread();
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-
-      // assert markup is updated as soon as the HighlightInfo is created
-      List<HighlightInfo> highlightsFromMarkup = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
-      MyHighlightCommentVisitor.assertHighlighted(highlightsFromMarkup);
-    };
-    HighlightVisitor visitor = new MyHighlightCommentVisitor(commentHighlighted);
-    myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
-    @Language("JAVA")
-    String text = """
-      class X {
-        void f(boolean b) {
-          if (b) {
-            // xxx
-          }
-        }
-      }
-      """;
-    configureByText(JavaFileType.INSTANCE, text);
-
-    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
-    MyHighlightCommentVisitor.assertHighlighted(infos);
-  }
-
-  private static class MyHighlightCommentVisitor implements HighlightVisitor {
-    private final Runnable commentHighlighted;
-    private HighlightInfoHolder myHolder;
-
-    private MyHighlightCommentVisitor(@NotNull Runnable commentHighlighted) {
-      this.commentHighlighted = commentHighlighted;
-    }
-
-    @Override
-    public boolean suitableForFile(@NotNull PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void visit(@NotNull PsiElement element) {
-      if (element instanceof PsiComment) {
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element.getTextRange()).description("MY2: CMT").create());
-        commentHighlighted.run();
-      }
-    }
-
-    @Override
-    public boolean analyze(@NotNull PsiFile file,
-                           boolean updateWholeFile,
-                           @NotNull HighlightInfoHolder holder,
-                           @NotNull Runnable action) {
-      myHolder = holder;
-      action.run();
-      return true;
-    }
-
-    @Override
-    public @NotNull HighlightVisitor clone() {
-      return new MyHighlightCommentVisitor(commentHighlighted);
-    }
-
-    private static void assertHighlighted(List<? extends HighlightInfo> infos) {
-      assertTrue("HighlightInfo is missing. All available infos are: "+infos, ContainerUtil.exists(infos, info -> info.getDescription().equals("MY2: CMT")));
-    }
-  }
-
-  public void testDaemonListenerFiresEventsInCorrectOrder() {
-    List<String> log = Collections.synchronizedList(new ArrayList<>());
-    myProject.getMessageBus().connect(getTestRootDisposable())
-      .subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
-        @Override
-        public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
-          log.add("F");
-        }
-
-        @Override
-        public void daemonStarting(@NotNull Collection<? extends FileEditor> fileEditors) {
-          log.add("S");
-        }
-
-        @Override
-        public void daemonCancelEventOccurred(@NotNull String reason) {
-          log.add("C");
-        }
-      });
-
-    @Language("JAVA")
-    String text = """
-      class X {
-        // comment1
-        // comment2
-      }""";
-    configureByText(JavaFileType.INSTANCE, text);
-    assertEmpty(highlightErrors());
-
-    log.clear();
-    INTERRUPT.set(true);
-    HighlightVisitor visitor = new MyInterruptingVisitor();
-    myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR).registerExtension(visitor, getTestRootDisposable());
-
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
-
-    myDaemonCodeAnalyzer.restart();
-    myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false);
-    try {
-      myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), TextEditorProvider.getInstance().getTextEditor(getEditor()), ArrayUtilRt.EMPTY_INT_ARRAY, true, () -> {});
-    }
-    catch (ProcessCanceledException ignored) {
-    }
-
-    List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
-    MyInterruptingVisitor.assertHighlighted(infos);
-    assertEquals("[S, C]", log.toString());
-
-    INTERRUPT.set(false);
-    log.clear();
-    try {
-      myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), TextEditorProvider.getInstance().getTextEditor(getEditor()), ArrayUtilRt.EMPTY_INT_ARRAY, true, () -> { });
-    }
-    catch (ProcessCanceledException ignored) {
-    }
-    finally {
-      myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    }
-    infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
-    MyInterruptingVisitor.assertHighlighted(infos);
-    assertEquals("[S, F]", log.toString());
-  }
-
-  private static final AtomicBoolean INTERRUPT = new AtomicBoolean();
-  private static class MyInterruptingVisitor implements HighlightVisitor {
-    private HighlightInfoHolder myHolder;
-
-    @Override
-    public boolean suitableForFile(@NotNull PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void visit(@NotNull PsiElement element) {
-      if (element instanceof PsiComment) {
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element.getTextRange()).description("MY3: CMT").create());
-        if (INTERRUPT.get()) {
-          throw new ProcessCanceledException();
-        }
-      }
-    }
-
-    @Override
-    public boolean analyze(@NotNull PsiFile file,
-                           boolean updateWholeFile,
-                           @NotNull HighlightInfoHolder holder,
-                           @NotNull Runnable action) {
-      myHolder = holder;
-      action.run();
-      return true;
-    }
-
-    @Override
-    public @NotNull HighlightVisitor clone() {
-      return new MyInterruptingVisitor();
-    }
-
-    private static void assertHighlighted(List<? extends HighlightInfo> infos) {
-      assertTrue("HighlightInfo is missing. All available infos are: "+infos, ContainerUtil.exists(infos, info -> info.getDescription().equals("MY3: CMT")));
-    }
   }
 
   public void testHighlightersMustDisappearWhenTheHighlightingIsSwitchedOff() {

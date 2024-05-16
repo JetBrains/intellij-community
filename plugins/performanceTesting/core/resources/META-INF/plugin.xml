@@ -12,6 +12,7 @@
 
   <content>
     <module name="intellij.performanceTesting.remoteDriver"/>
+    <module name="intellij.performanceTesting.vcs"/>
   </content>
 
   <dependencies>

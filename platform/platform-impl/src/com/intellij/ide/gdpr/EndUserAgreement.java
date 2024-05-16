@@ -58,7 +58,8 @@ public final class EndUserAgreement {
   }
 
   private static @NotNull Path getDocumentNameFile() {
-    return getDataRoot().resolve(isEAP() ? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
+    boolean isEAP = isEAP() && !Agreements.isReleaseAgreementsEnabled();
+    return getDataRoot().resolve(isEAP ? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
   }
 
   private static boolean isEAP() {
@@ -181,15 +182,15 @@ public final class EndUserAgreement {
   private static @NotNull String getDocumentName() {
     if (!PlatformUtils.isCommercialEdition()) {
       if (PlatformUtils.isCommunityEdition()) {
-        return isEAP() ? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
+        return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
       }
       if (PlatformUtils.isJetBrainsClient()) {
         return CWM_GUEST_EULA_NAME;
       }
       if (PlatformUtils.isGateway()) {
-        return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+        return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
       }
-      return isEAP()? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
+      return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
     }
 
     try {
@@ -199,7 +200,7 @@ public final class EndUserAgreement {
       }
     }
     catch (IOException ignored) { }
-    return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+    return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
   private static @NotNull String getAcceptedVersionKey(@NotNull String docName) {

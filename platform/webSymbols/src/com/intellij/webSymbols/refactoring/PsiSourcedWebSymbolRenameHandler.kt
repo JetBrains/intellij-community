@@ -11,7 +11,9 @@ import com.intellij.psi.SyntheticElement
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.webSymbols.PsiSourcedWebSymbol
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PsiSourcedWebSymbolRenameHandler : RenameHandler {
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext?) {

@@ -10,6 +10,7 @@ import java.util.function.Predicate
 
 data class OpenProjectTask internal constructor(
   val forceOpenInNewFrame: Boolean,
+  val forceReuseFrame: Boolean = false,
   val projectToClose: Project?,
   val isNewProject: Boolean = false,
   /** Ignored if [isNewProject] is set to false. */
@@ -96,6 +97,7 @@ class OpenProjectTaskBuilder internal constructor() {
   var projectName: String? = null
 
   var forceOpenInNewFrame: Boolean = false
+  var forceReuseFrame: Boolean = false
 
   var isNewProject: Boolean = false
   var useDefaultProjectAsTemplate: Boolean? = null
@@ -147,6 +149,7 @@ class OpenProjectTaskBuilder internal constructor() {
     builder()
     return OpenProjectTask(
       forceOpenInNewFrame = forceOpenInNewFrame,
+      forceReuseFrame = forceReuseFrame,
       preloadServices = preloadServices,
 
       projectToClose = projectToClose,

@@ -8,10 +8,13 @@ import com.intellij.psi.PsiModifierListOwner;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.Processor;
+import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
+import de.plushnikov.intellij.plugin.processor.field.AbstractFieldProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
+import java.util.function.Predicate;
 
 /**
  * Provides implicit usages of lombok fields
@@ -35,8 +38,8 @@ public final class LombokImplicitUsageProvider implements ImplicitUsageProvider 
 
   private static boolean checkUsage(@NotNull PsiElement element, EnumSet<LombokPsiElementUsage> elementUsages) {
     if (element instanceof PsiField psiField) {
-      if (isUsedByLombokAnnotations(psiField, psiField, elementUsages) ||
-          isUsedByLombokAnnotations(psiField, psiField.getContainingClass(), elementUsages)) {
+      if (isUsedByLombokAnnotations(psiField, psiField, AbstractFieldProcessor.class::isInstance, elementUsages) ||
+          isUsedByLombokAnnotations(psiField, psiField.getContainingClass(), AbstractClassProcessor.class::isInstance, elementUsages)) {
         return true;
       }
     }
@@ -45,13 +48,16 @@ public final class LombokImplicitUsageProvider implements ImplicitUsageProvider 
 
   private static boolean isUsedByLombokAnnotations(@NotNull PsiField psiField,
                                                    @Nullable PsiModifierListOwner modifierListOwner,
+                                                   Predicate<Processor> kindOfProcessor,
                                                    EnumSet<LombokPsiElementUsage> elementUsages) {
     if (null != modifierListOwner) {
       for (PsiAnnotation psiAnnotation : modifierListOwner.getAnnotations()) {
         for (Processor processor : LombokProcessorManager.getProcessors(psiAnnotation)) {
-          final LombokPsiElementUsage psiElementUsage = processor.checkFieldUsage(psiField, psiAnnotation);
-          if (elementUsages.contains(psiElementUsage)) {
-            return true;
+          if(kindOfProcessor.test(processor)) {
+            final LombokPsiElementUsage psiElementUsage = processor.checkFieldUsage(psiField, psiAnnotation);
+            if (elementUsages.contains(psiElementUsage)) {
+              return true;
+            }
           }
         }
       }

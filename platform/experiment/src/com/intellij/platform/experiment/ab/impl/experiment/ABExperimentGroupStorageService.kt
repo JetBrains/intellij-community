@@ -65,17 +65,18 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
     val groupNumberToExperimentOptionId = myState.groupNumberToExperimentOptionId
     LOG.debug { "State BEFORE update is: $groupNumberToExperimentOptionId" }
 
-    val options = ABExperiment.getJbABExperimentOptionList()
+    val optionBeans = ABExperiment.getJbABExperimentOptionBeanList()
     val usedOptionIds = groupNumberToExperimentOptionId.values.toSet()
-    val newOptions = options.filter { it.id.value !in usedOptionIds }
+    val newOptionBeans = optionBeans.filter { it.instance.id.value !in usedOptionIds }
 
-    if (newOptions.isEmpty()) {
+    if (newOptionBeans.isEmpty()) {
       return
     }
 
     val isPopularIDE = ABExperiment.isPopularIDE()
 
-    for (newOption in newOptions) {
+    for (newOptionBean in newOptionBeans) {
+      val newOption = newOptionBean.instance
       val groupCount = newOption.getGroupSizeForIde(isPopularIDE).groupCount
       for (i in 0 until groupCount) {
         val freeGroupKey = groupNumberToExperimentOptionId.entries.find { entry ->
@@ -84,7 +85,7 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
 
         if (freeGroupKey == null) {
           LOG.error("There is no available groups for option ${newOption.id} from plugin " +
-                    newOption.getPluginDescriptor().pluginId.idString)
+                    newOptionBean.pluginDescriptor.pluginId.idString)
           return
         }
 

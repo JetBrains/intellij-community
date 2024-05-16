@@ -156,7 +156,7 @@ private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackag
   val installedPackages = PyPackageManager.getInstance(sdk).refreshAndGetPackages(false)
   val importedPackages = task.result.asSequence()
     .flatMap { topLevelPackage ->
-      val alias = PyPsiPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: ""
+      val alias = PyPsiPackageUtil.moduleToPackageName(topLevelPackage, default = "")
       sequence {  
         yield(topLevelPackage)
         if (alias.isNotEmpty()) yield(alias)

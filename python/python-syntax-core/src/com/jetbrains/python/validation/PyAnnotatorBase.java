@@ -11,6 +11,8 @@ import com.jetbrains.python.ast.PyAstFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.SYMBOL_TYPE_SEVERITY;
+
 @ApiStatus.Experimental
 public interface PyAnnotatorBase {
   @ApiStatus.Internal
@@ -36,7 +38,7 @@ public interface PyAnnotatorBase {
 
   @ApiStatus.Internal
   default void addHighlightingAnnotation(@NotNull PsiElement target, @NotNull TextAttributesKey key) {
-    addHighlightingAnnotation(target, key, HighlightSeverity.INFORMATION);
+    addHighlightingAnnotation(target, key, SYMBOL_TYPE_SEVERITY);
   }
 
   @ApiStatus.Internal

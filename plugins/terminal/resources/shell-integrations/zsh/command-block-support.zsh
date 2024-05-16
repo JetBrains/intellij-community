@@ -28,19 +28,27 @@ __jetbrains_intellij_encode_large() {
 }
 
 __jetbrains_intellij_is_generator_command() {
-  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* || "$1" == *"__jetbrains_intellij_get_environment"* ]]
+  [[ "$1" == *"__jetbrains_intellij_run_generator"* ]]
+}
+
+__jetbrains_intellij_run_generator() {
+  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
+  builtin local request_id="$1"
+  builtin local command="$2"
+  # Can't be joined with an assignment, otherwise we will fail to capture the exit code of eval.
+  builtin local result
+  result="$(eval "$command" 2>&1)"
+  builtin local exit_code=$?
+  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s;exit_code=%s\a' "$request_id" \
+    "$(__jetbrains_intellij_encode_large "$result")" \
+    "$exit_code"
 }
 
 __jetbrains_intellij_get_directory_files() {
-  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
-  builtin local request_id="$1"
-  builtin local result="$(ls -1ap "$2")"
-  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode_large "${result}")"
+  builtin printf '%s' "$(ls -1ap "$1")"
 }
 
 __jetbrains_intellij_get_environment() {
-  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
-  builtin local request_id="$1"
   builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)parameters[(R)*export*]})")"
   builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)reswords})")"
   builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)builtins})")"
@@ -49,7 +57,7 @@ __jetbrains_intellij_get_environment() {
   builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
 
   builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\", \"aliases\": \"$aliases_mapping\"}"
-  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode_large "${result}")"
+  builtin printf '%s' "$result"
 }
 
 __jetbrains_intellij_escape_json() {
@@ -167,6 +175,18 @@ __jetbrains_intellij_collect_shell_info() {
 clear() {
   builtin printf '\e]1341;clear_invoked\a'
 }
+
+# This function will be triggered by a key bindings as ZLE widget.
+function __jetbrains_intellij_report_shell_editor_buffer () {
+  builtin printf '\e]1341;shell_editor_buffer_reported;shell_editor_buffer=%s\a' "$(__jetbrains_intellij_encode "${BUFFER:-}")"
+}
+# `bindkey` is a part of ZLE, therefore all ZLE widgets need to be registered with `zle -N`
+# See https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Zle-Widgets
+zle -N __jetbrains_intellij_report_shell_editor_buffer
+# Remove binding if exists.
+builtin bindkey -r '\e[24~'
+# Bind F12 key to report prompt buffer.
+builtin bindkey '\e[24~' __jetbrains_intellij_report_shell_editor_buffer
 
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd

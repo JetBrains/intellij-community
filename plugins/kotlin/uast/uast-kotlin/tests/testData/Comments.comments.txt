@@ -30,7 +30,6 @@ UFile (package = ) [  ]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [  ]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [  ]
                     UIdentifier (Identifier (mutableSetOf)) [  ]
-                    USimpleNameReferenceExpression (identifier = mutableSetOf, resolvesTo = null) [  ]
             UMethod (name = addIngredient) [ /**
          * Adds [ingredient] to the [ingredients]
          *
@@ -59,7 +58,7 @@ UFile (package = ) [  ]
                             USimpleNameReferenceExpression (identifier = lang) [  ]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [  ]
                             UIdentifier (Identifier (String)) [  ]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: String) [  ]
+                            USimpleNameReferenceExpression (identifier = String, resolvesTo = PsiClass: String) [  ]
                             UPolyadicExpression (operator = +) [  ]
                                 ULiteralExpression (value = "Margherita") [  ]
         UMethod (name = contains) [ /**

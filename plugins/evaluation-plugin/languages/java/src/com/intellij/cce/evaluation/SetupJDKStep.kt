@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.resolveFromRootOrRelative
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
@@ -45,6 +46,10 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
   override fun isApplicable(language: Language): Boolean = language in setOf(Language.JAVA, Language.KOTLIN, Language.SCALA)
 
   override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
+    val projectDir = project.guessProjectDir()?.let { vFile ->
+      System.getenv("PROJECT_DIR_REL")?.let { vFile.resolveFromRootOrRelative(it) } ?: vFile
+    } ?: throw IllegalArgumentException("Can't find project directory")
+
     ApplicationManager.getApplication().invokeAndWait {
       WriteAction.run<Throwable> {
         val projectRootManager = ProjectRootManager.getInstance(project)
@@ -60,11 +65,11 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
             projectRootManager.projectSdk = sdk
           }
         }
-        forceUseProjectJdkForImporter(project)
+        forceUseProjectJdkForImporter(project, projectDir)
       }
     }
 
-    JvmBuildSystem.tryFindFor(project)?.refresh(project)
+    JvmBuildSystem.tryFindFor(projectDir)?.refresh(project, projectDir)
 
     return workspace
   }
@@ -127,8 +132,8 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
   }
 }
 
-private fun forceUseProjectJdkForImporter(project: Project) {
-  when (JvmBuildSystem.tryFindFor(project)) {
+private fun forceUseProjectJdkForImporter(project: Project, projectDir: VirtualFile) {
+  when (JvmBuildSystem.tryFindFor(projectDir)) {
     JvmBuildSystem.Maven -> {
       val mavenManager = MavenProjectsManager.getInstance(project)
       mavenManager.importingSettings.jdkForImporter = ExternalSystemJdkUtil.USE_PROJECT_JDK
@@ -146,7 +151,7 @@ private fun forceUseProjectJdkForImporter(project: Project) {
       }
     }
     JvmBuildSystem.JpsIntellij -> {
-      val projectHome = project.guessProjectDir()!!.path
+      val projectHome = projectDir.path
       val m2Repo = Paths.get(SystemProperties.getUserHome(), ".m2/repository").invariantSeparatorsPathString
       val jpsProject = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo),
                                                                          true)
@@ -181,8 +186,6 @@ enum class JvmBuildSystem {
 
   abstract fun accepts(projectFile: VirtualFile): Boolean
 
-  open fun accepts(project: Project): Boolean = project.guessProjectDir()?.let { accepts(it) } == true
-
   companion object {
     val gradleProjectOpenProcessor by lazy {
       ProjectOpenProcessor.EXTENSION_POINT_NAME.findExtensionOrFail(GradleProjectOpenProcessor::class.java)
@@ -192,10 +195,10 @@ enum class JvmBuildSystem {
       ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.first { it.name.lowercase().contains("maven") }
     }
 
-    fun tryFindFor(project: Project): JvmBuildSystem? = entries.firstOrNull { it.accepts(project) }
+    fun tryFindFor(projectDir: VirtualFile): JvmBuildSystem? = entries.firstOrNull { it.accepts(projectDir) }
   }
 
-  internal fun refresh(project: Project) {
+  internal fun refresh(project: Project, projectDir: VirtualFile) {
     val jvmBuildSystem = this
     runBlockingCancellable {
       when (jvmBuildSystem) {
@@ -210,10 +213,10 @@ enum class JvmBuildSystem {
             ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
           }
         }
-        Maven -> project.guessProjectDir()?.let { dir ->
+        Maven -> {
           Logger.getInstance("#org.jetbrains.idea.maven").setLevel(LogLevel.ALL)
           Registry.get("external.system.auto.import.disabled").setValue(false) // prevent gradle interference
-          mavenProjectOpenProcessor.importProjectAfterwardsAsync(project, dir)
+          mavenProjectOpenProcessor.importProjectAfterwardsAsync(project, projectDir)
         }
         JpsIntellij -> {
           //TODO: consider to add logic? (move JpsJavaExtensionService.getInstance().getOrCreateProjectExtension?)

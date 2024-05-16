@@ -28,10 +28,19 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
 
+    <fileBasedIndexLayout id="default"
+                          priority="0"
+                          presentableNameKey="ide.indexes.default-storage.presentable.name"
+                          bundleName="messages.IndexingBundle"
+                          providerClass="com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider"
+                          version="0"/>
+
+    <!-- FileBasedIndex.USE_IN_MEMORY_INDEX=true to enable -->
     <fileBasedIndexLayout id="in-memory"
-                          presentableNameKey="in.memory.storage.presentable.name"
-                          bundleName="messages.LangBundle"
-                          providerClass="com.intellij.util.indexing.impl.storage.InMemoryStorageLayoutProvider"
+                          priority="-1"
+                          presentableNameKey="ide.indexes.in-memory-storage.presentable.name"
+                          bundleName="messages.IndexingBundle"
+                          providerClass="com.intellij.util.indexing.memory.InMemoryStorageLayoutProvider"
                           version="0"/>
 
     <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup"/>

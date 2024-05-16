@@ -1284,6 +1284,7 @@ a:com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettin
 - getProjectSyncType():java.util.Map
 - getRecentTasks():java.util.List
 - getState():com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings$State
+- invalidateCaches():V
 - loadState(com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings$State):V
 - setAvailableProjects(java.util.Map):V
 - setProjectBuildClasspath(java.util.Map):V

@@ -7,8 +7,11 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnmodifiableView;
 
+import java.util.Collections;
 import java.util.EventListener;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -70,6 +73,13 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
   public int getRepositoryCount() {
     synchronized (myLock) {
       return myState.repositories.size();
+    }
+  }
+
+  @Contract(pure = true)
+  public @NotNull @UnmodifiableView SortedSet<String> getRepositoryPaths() {
+    synchronized (myLock) {
+      return Collections.unmodifiableSortedSet(myState.repositories);
     }
   }
 

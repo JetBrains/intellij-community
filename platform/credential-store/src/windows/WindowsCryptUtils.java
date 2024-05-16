@@ -5,11 +5,13 @@ import com.sun.jna.Memory;
 import com.sun.jna.platform.win32.Crypt32;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinCrypt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Windows Utilities for the Password Safe
  */
+@ApiStatus.Internal
 public final class WindowsCryptUtils {
   private WindowsCryptUtils() { }
 

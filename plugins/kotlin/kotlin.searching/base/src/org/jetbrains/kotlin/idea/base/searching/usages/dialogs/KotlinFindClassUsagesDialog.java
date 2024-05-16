@@ -171,6 +171,11 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
     @Override
     protected void update() {
         super.update();
+
+        if (expectedUsages != null) {
+            updateStateOnUsagesStateChange(expectedUsages);
+        }
+
         if (!isOKActionEnabled() && (constructorUsages.isSelected() || derivedTraits.isSelected() || derivedClasses.isSelected())) {
             setOKActionEnabled(true);
         }

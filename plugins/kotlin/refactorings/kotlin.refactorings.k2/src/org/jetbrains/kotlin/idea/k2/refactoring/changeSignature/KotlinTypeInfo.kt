@@ -31,8 +31,12 @@ data class KotlinTypeInfo(var text: String?, val context: KtElement) {
 
 private val errorIgnoringRenderer: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
     typeErrorTypeRenderer = object : KtTypeErrorTypeRenderer {
-        context(KtAnalysisSession, KtTypeRenderer)
-        override fun renderType(type: KtTypeErrorType, printer: PrettyPrinter) {
+        override fun renderType(
+            analysisSession: KtAnalysisSession,
+            type: KtTypeErrorType,
+            typeRenderer: KtTypeRenderer,
+            printer: PrettyPrinter
+        ) {
             type.tryRenderAsNonErrorType()?.let {
                 printer.append(it)
             }

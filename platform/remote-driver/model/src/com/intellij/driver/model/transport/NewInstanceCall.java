@@ -19,9 +19,6 @@ public final class NewInstanceCall extends RemoteCall {
                          RdTarget rdTarget,
                          Object[] args) {
     super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, "new", rdTarget, args);
-    if (rdTarget != RdTarget.FRONTEND_ONLY && rdTarget != RdTarget.BACKEND_ONLY) {
-      throw new IllegalArgumentException("NewInstanceCall must have RdTarget set to either FRONTEND_ONLY or BACKEND_ONLY");
-    }
   }
 
   @Override

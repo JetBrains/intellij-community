@@ -21,6 +21,7 @@ class RawPluginDescriptor {
   @JvmField internal var untilBuild: String? = null
 
   @JvmField var `package`: String? = null
+  @JvmField var isSeparateJar: Boolean = false
 
   @JvmField internal var url: String? = null
   @JvmField internal var vendor: String? = null

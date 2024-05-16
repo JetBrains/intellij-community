@@ -652,11 +652,6 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/ParametersBeforeKeywords.kt");
         }
 
-        @TestMetadata("PreferFromJdk.kt")
-        public void testPreferFromJdk() throws Exception {
-            runTest("../testData/weighers/basic/PreferFromJdk.kt");
-        }
-
         @TestMetadata("PreferGetMethodToProperty.kt")
         public void testPreferGetMethodToProperty() throws Exception {
             runTest("../testData/weighers/basic/PreferGetMethodToProperty.kt");

@@ -59,7 +59,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     for (int i = 0; i < count; i++) {
       ProgressManager.checkCanceled();
       Filter filter = filters.get(i);
-      if (!dumb || DumbService.isDumbAware(filter)) {
+      if (myDumbService.isUsableInCurrentContext(filter)) {
         long t0 = System.currentTimeMillis();
 
         Result result;

@@ -29,6 +29,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
     fun testAnyType() = doTest()
     fun testArrays() = doTest()
+    fun testAssertApply() = doTest()
     fun testBoolean() = doTest()
     fun testBooleanConst() = doTest()
     fun testBoxedInt() = doTest()
@@ -102,6 +103,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testUInt() = doTest()
     fun testUsefulNull() = doTest()
     fun testWhen() = doTest()
+    fun testWhenInLambda() = doTest()
     fun testWhenIsObject() = doTest()
     fun testWhileLoop() = doTest()
 

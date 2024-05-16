@@ -186,7 +186,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   private fun testRunBlockingCancellableRethrow() {
     testRunBlockingCancellableRethrow(object : Throwable() {})
-    testRunBlockingCancellableRethrow(CancellationException()) // manual CE
+    testRunBlockingCancellableRethrowPce(CancellationException()) // manual CE
     testRunBlockingCancellableRethrow(ProcessCanceledException()) // manual PCE
   }
 
@@ -199,7 +199,7 @@ class RunBlockingCancellableTest : CancellationTest() {
     assertSame(t, thrown)
   }
 
-  private fun testRunBlockingCancellableRethrow(t: CancellationException) {
+  private fun testRunBlockingCancellableRethrowPce(t: CancellationException) {
     val thrown = assertThrows<CeProcessCanceledException> {
       runBlockingCancellable {
         throw t
@@ -224,7 +224,8 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   private fun testRunBlockingCancellableChildFailure() {
     testRunBlockingCancellableChildFailure(object : Throwable() {})
-    testRunBlockingCancellableChildFailure(ProcessCanceledException())
+    testRunBlockingCancellableChildDoesNotFailParent(CancellationException())
+    testRunBlockingCancellableChildDoesNotFailParent(ProcessCanceledException())
   }
 
   private inline fun <reified T : Throwable> testRunBlockingCancellableChildFailure(t: T) {
@@ -234,6 +235,14 @@ class RunBlockingCancellableTest : CancellationTest() {
       }
     }
     assertSame(t, thrown)
+  }
+
+  private fun testRunBlockingCancellableChildDoesNotFailParent(t: Throwable) {
+    assertDoesNotThrow {
+      runBlockingCancellable {
+        Job(parent = coroutineContext.job).completeExceptionally(t)
+      }
+    }
   }
 
   @Test

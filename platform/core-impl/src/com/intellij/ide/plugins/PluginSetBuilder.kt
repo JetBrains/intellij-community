@@ -116,6 +116,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       }
       else {
         enabledModuleV2Ids.put(module.moduleName, module)
+        for (pluginAlias in module.pluginAliases) {
+          enabledPluginIds.put(pluginAlias, module)
+        }
       }
     }
 

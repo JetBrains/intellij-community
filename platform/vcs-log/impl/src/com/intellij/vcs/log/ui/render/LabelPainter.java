@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.ui.VcsBookmarkRef;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public class LabelPainter {
   private final @NotNull LabelIconCache myIconCache;
   private final @NotNull UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
 
-  protected @NotNull List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
+  protected @NotNull List<Pair<String, Icon>> myLabels = new ArrayList<>();
   private int myHeight = JBUIScale.scale(22);
   private int myWidth = 0;
   protected @NotNull Color myBackground = UIUtil.getTableBackground();
@@ -74,48 +75,64 @@ public class LabelPainter {
                                boolean isSelected,
                                int availableWidth,
                                @NotNull List<? extends RefGroup> refGroups) {
+    customizePainter(background, foreground, isSelected, availableWidth, refGroups, Collections.emptyList());
+  }
+
+  public void customizePainter(@NotNull Color background,
+                               @NotNull Color foreground,
+                               boolean isSelected,
+                               int availableWidth,
+                               @NotNull List<? extends RefGroup> refGroups,
+                               @NotNull List<VcsBookmarkRef> bookmarks) {
     myBackground = background;
     myForeground = foreground;
 
     updateHeight();
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
     myGreyBackground = ExperimentalUI.isNewUI() ? null : calculateGreyBackground(refGroups, background, isSelected, myCompact);
-    Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
-      calculatePresentation(refGroups, metrics, myGreyBackground != null ? myGreyBackground : myBackground,
+    Pair<List<Pair<String, Icon>>, Integer> presentation =
+      calculatePresentation(refGroups, bookmarks, metrics, myGreyBackground != null ? myGreyBackground : myBackground,
                             availableWidth, myCompact);
 
     myLabels = presentation.first;
     myWidth = presentation.second;
   }
 
-  private @NotNull Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<? extends RefGroup> refGroups,
-                                                                                      @NotNull FontMetrics fontMetrics,
-                                                                                      @NotNull Color background,
-                                                                                      int availableWidth,
-                                                                                      boolean compact) {
-    int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
-
-    List<Pair<String, LabelIcon>> labels = new ArrayList<>();
-    if (refGroups.isEmpty()) return Pair.create(labels, width);
-
-    if (compact) return calculateCompactPresentation(refGroups, fontMetrics, background, availableWidth);
-    return calculateLongPresentation(refGroups, fontMetrics, background, availableWidth);
+  private @NotNull Pair<List<Pair<String, Icon>>, Integer> calculatePresentation(@NotNull List<? extends RefGroup> refGroups,
+                                                                                 @NotNull List<VcsBookmarkRef> bookmarks,
+                                                                                 @NotNull FontMetrics fontMetrics,
+                                                                                 @NotNull Color background,
+                                                                                 int availableWidth,
+                                                                                 boolean compact) {
+    if (compact) return calculateCompactPresentation(refGroups, bookmarks, fontMetrics, background, availableWidth);
+    return calculateLongPresentation(refGroups, bookmarks, fontMetrics, background, availableWidth);
   }
 
 
-  private @NotNull Pair<List<Pair<String, LabelIcon>>, Integer> calculateCompactPresentation(@NotNull List<? extends RefGroup> refGroups,
-                                                                                             @NotNull FontMetrics fontMetrics,
-                                                                                             @NotNull Color background,
-                                                                                             int availableWidth) {
+  private @NotNull Pair<List<Pair<String, Icon>>, Integer> calculateCompactPresentation(@NotNull List<? extends RefGroup> refGroups,
+                                                                                        @NotNull List<VcsBookmarkRef> bookmarks,
+                                                                                        @NotNull FontMetrics fontMetrics,
+                                                                                        @NotNull Color background,
+                                                                                        int availableWidth) {
+    List<Pair<String, Icon>> labels = new ArrayList<>();
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
+    int height = fontMetrics.getHeight();
 
-    List<Pair<String, LabelIcon>> labels = new ArrayList<>();
-    if (refGroups.isEmpty()) return Pair.create(labels, width);
+    for (VcsBookmarkRef bookmark : bookmarks) {
+      Icon icon = new BookmarkIcon(myComponent, height, background, bookmark);
+      boolean isLast = refGroups.isEmpty() && bookmark == ContainerUtil.getLastItem(bookmarks);
+      int newWidth = width + icon.getIconWidth() + (isLast ? 0 : COMPACT_MIDDLE_PADDING.get());
+      newWidth += getIconTextPadding();
+
+      labels.add(Pair.create("", icon));
+      width = newWidth;
+    }
 
     for (RefGroup group : refGroups) {
       List<Color> colors = group.getColors();
-      LabelIcon labelIcon = getIcon(fontMetrics.getHeight(), background, colors);
-      int newWidth = width + labelIcon.getIconWidth() + (group != ContainerUtil.getLastItem(refGroups) ? COMPACT_MIDDLE_PADDING.get() : 0);
+      LabelIcon labelIcon = getIcon(height, background, colors);
+      boolean isLast = group == ContainerUtil.getLastItem(refGroups);
+      int newWidth = width + labelIcon.getIconWidth() + (isLast ? 0 : COMPACT_MIDDLE_PADDING.get());
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
       newWidth += fontMetrics.stringWidth(text);
@@ -128,16 +145,23 @@ public class LabelPainter {
     return Pair.create(labels, width);
   }
 
-  private @NotNull Pair<List<Pair<String, LabelIcon>>, Integer> calculateLongPresentation(@NotNull List<? extends RefGroup> refGroups,
-                                                                                          @NotNull FontMetrics fontMetrics,
-                                                                                          @NotNull Color background,
-                                                                                          int availableWidth) {
+  private @NotNull Pair<List<Pair<String, Icon>>, Integer> calculateLongPresentation(@NotNull List<? extends RefGroup> refGroups,
+                                                                                     @NotNull List<VcsBookmarkRef> bookmarks,
+                                                                                     @NotNull FontMetrics fontMetrics,
+                                                                                     @NotNull Color background,
+                                                                                     int availableWidth) {
+    List<Pair<String, Icon>> labels = new ArrayList<>();
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
-
-    List<Pair<String, LabelIcon>> labels = new ArrayList<>();
-    if (refGroups.isEmpty()) return Pair.create(labels, width);
-
     int height = fontMetrics.getHeight();
+
+    for (VcsBookmarkRef bookmark : bookmarks) {
+      Icon icon = new BookmarkIcon(myComponent, height, background, bookmark);
+      boolean isLast = refGroups.isEmpty() && bookmark == ContainerUtil.getLastItem(bookmarks);
+      int newWidth = width + icon.getIconWidth() + (isLast ? 0 : MIDDLE_PADDING.get());
+      labels.add(Pair.create("", icon));
+      width = newWidth;
+    }
+
     for (int i = 0; i < refGroups.size(); i++) {
       RefGroup group = refGroups.get(i);
 
@@ -149,7 +173,8 @@ public class LabelPainter {
 
       List<Color> colors = group.getColors();
       LabelIcon labelIcon = getIcon(height, background, colors);
-      int newWidth = width + labelIcon.getIconWidth() + (i != refGroups.size() - 1 ? MIDDLE_PADDING.get() : 0);
+      boolean isLast = i == refGroups.size() - 1;
+      int newWidth = width + labelIcon.getIconWidth() + (isLast ? 0 : MIDDLE_PADDING.get());
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
       newWidth += fontMetrics.stringWidth(text);
@@ -289,8 +314,8 @@ public class LabelPainter {
 
     x += LEFT_PADDING.get();
 
-    for (Pair<String, LabelIcon> label : myLabels) {
-      LabelIcon icon = label.second;
+    for (Pair<String, Icon> label : myLabels) {
+      Icon icon = label.second;
       String text = label.first;
 
       if (myGreyBackground != null && !myCompact) {

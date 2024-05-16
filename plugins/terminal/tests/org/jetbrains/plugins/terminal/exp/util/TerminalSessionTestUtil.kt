@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.util
 
 import com.intellij.execution.Platform
@@ -11,12 +11,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.LineSeparator
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.block.testApps.LINE_SEPARATOR
 import org.jetbrains.plugins.terminal.exp.*
 import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -117,12 +117,15 @@ internal object TerminalSessionTestUtil {
     catch (e: Exception) {
       throw RuntimeException(e)
     }
-    var actualOutput = StringUtil.splitByLinesDontTrim(actualResult.output).joinToString("\n") { it.trimEnd() }
-    val expectedOutputWithLF = StringUtil.convertLineSeparators(expectedOutput, LineSeparator.LF.separatorString)
-    if (expectedOutputWithLF == actualOutput + "\n") {
-      actualOutput += "\n"
+    val actualOutput = normalizeActualOutput(actualResult.output).let {
+      if (expectedOutput == it + LINE_SEPARATOR) it + LINE_SEPARATOR else it
     }
-    Assert.assertEquals(stringify(expectedExitCode, expectedOutputWithLF), stringify(actualResult.exitCode, actualOutput))
+    Assert.assertEquals(stringify(expectedExitCode, expectedOutput), stringify(actualResult.exitCode, actualOutput))
+  }
+
+  private fun normalizeActualOutput(output: String): String {
+    // Trim trailing whitespaces on Windows as ConPTY gets crazy sometimes
+    return StringUtil.splitByLinesDontTrim(output).joinToString(LINE_SEPARATOR) { it.trimEnd() }
   }
 
   private fun stringify(exitCode: Int, output: String): String {

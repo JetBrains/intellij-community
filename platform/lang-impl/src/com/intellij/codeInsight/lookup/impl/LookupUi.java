@@ -138,9 +138,9 @@ final class LookupUi {
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myScrollPane.getVerticalScrollBar().putClientProperty(JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
     if (ExperimentalUI.isNewUI()) {
-      Insets bodyInsets = LookupCellRenderer.bodyInsets();
+      Insets bodyInsets = showBottomPanel ? LookupCellRenderer.bodyInsetsWithAdvertiser() : LookupCellRenderer.bodyInsets();
       //noinspection UseDPIAwareBorders
-      myScrollPane.setBorder(new EmptyBorder(bodyInsets.top, 0, showBottomPanel ? 0 : bodyInsets.bottom, 0));
+      myScrollPane.setBorder(new EmptyBorder(bodyInsets.top, 0, bodyInsets.bottom, 0));
     }
 
     lookup.getComponent().add(layeredPane, BorderLayout.CENTER);

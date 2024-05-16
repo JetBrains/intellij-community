@@ -4,6 +4,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -60,7 +61,11 @@ internal class ActionsLanguageModel(val coroutineScope: CoroutineScope) {
   private fun getWordsFromActions(): Sequence<@NlsActions.ActionText String> {
     return (ActionManager.getInstance() as ActionManagerImpl).actionsOrStubs()
       .filterNot { it is ActionGroup && !it.isSearchable }
-      .mapNotNull { it.templateText }
+      .mapNotNull {
+        val presentation = it.templatePresentation
+        it.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation)
+        return@mapNotNull presentation.text
+      }
   }
 
   private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName CharSequence> {

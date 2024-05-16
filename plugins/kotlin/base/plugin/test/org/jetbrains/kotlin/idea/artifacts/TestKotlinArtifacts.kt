@@ -70,6 +70,7 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibJsLegacyJar: File by lazy { downloadOrReportUnavailability("kotlin-stdlib-js", "1.9.22") }
     @JvmStatic val kotlinDomApiCompat: File by lazy { getKlib("kotlin-dom-api-compat") }
     @JvmStatic val kotlinStdlibWasmJs: File by lazy { getKlib("kotlin-stdlib-wasm-js") }
+    @JvmStatic val kotlinStdlibWasmWasi: File by lazy { getKlib("kotlin-stdlib-wasm-wasi") }
     @JvmStatic val kotlinStdlibSources: File by lazy { getSourcesJar("kotlin-stdlib") }
     @JvmStatic val kotlinTest: File by lazy { getJar("kotlin-test") }
     @JvmStatic val kotlinTestJs: File by lazy { getKlib("kotlin-test-js") }

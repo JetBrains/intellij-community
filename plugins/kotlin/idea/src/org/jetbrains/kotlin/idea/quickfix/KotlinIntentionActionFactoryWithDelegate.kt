@@ -22,10 +22,10 @@ abstract class KotlinSingleIntentionActionFactoryWithDelegate<E : KtElement, D :
         originalElementPointer: SmartPsiElementPointer<E>,
         diagnostic: Diagnostic,
         quickFixDataFactory: (E) -> D?
-    ): List<QuickFixWithDelegateFactory> = QuickFixWithDelegateFactory(actionPriority) factory@{
-        val originalElement = originalElementPointer.element ?: return@factory null
-        val data = quickFixDataFactory(originalElement) ?: return@factory null
-        createFix(originalElement, data)
+    ): List<QuickFixWithDelegateFactory> = QuickFixWithDelegateFactory(actionPriority) {
+        val originalElement = originalElementPointer.element
+        val data = originalElement?.let { quickFixDataFactory(originalElement) }
+        data?.let { createFix(originalElement, data) }
     }.let(::listOf)
 }
 
@@ -54,17 +54,18 @@ abstract class KotlinIntentionActionFactoryWithDelegate<E : KtElement, D : Any> 
         val cachedData: Ref<D> = Ref.create(extractFixData(originalElement, diagnostic))
 
         return try {
-            createFixes(originalElementPointer, diagnostic) factory@{
-                val element = originalElementPointer.element ?: return@factory null
-                val diagnosticElement = diagnosticElementPointer.element ?: return@factory null
-                if (!diagnosticElement.isValid || !element.isValid) return@factory null
+            createFixes(originalElementPointer, diagnostic) {
+                val element = originalElementPointer.element
+                val diagnosticElement = diagnosticElementPointer.element
+                if (diagnosticElement == null || !diagnosticElement.isValid || element == null || !element.isValid) null
+                else {
+                    val currentDiagnostic = element.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+                        .diagnostics
+                        .forElement(diagnosticElement)
+                        .firstOrNull { DefaultErrorMessages.render(it) == diagnosticMessage }
 
-                val currentDiagnostic = element.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
-                    .diagnostics
-                    .forElement(diagnosticElement)
-                    .firstOrNull { DefaultErrorMessages.render(it) == diagnosticMessage } ?: return@factory null
-
-                cachedData.get() ?: extractFixData(element, currentDiagnostic)
+                    cachedData.get() ?: currentDiagnostic?.let { extractFixData(element, currentDiagnostic) }
+                }
             }.filter { it.isAvailable(project, null, file) }
         } finally {
             cachedData.set(null) // Do not keep cache after all actions are initialized

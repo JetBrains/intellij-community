@@ -79,47 +79,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
    */
   @Override
   public PsiReference findReferenceAt(int offset) {
-    // copy/paste from SharedPsiElementImplUtil
-    PsiElement element = findElementAt(offset);
-    if (element == null || element instanceof OuterLanguageElement) return null;
-    offset = getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
-
-    List<PsiReference> referencesList = new ArrayList<>();
-    final PsiFile file = element.getContainingFile();
-    final var context =
-      file != null ? TypeEvalContext.codeAnalysis(file.getProject(), file) : TypeEvalContext.codeInsightFallback(element.getProject());
-    final PyResolveContext resolveContext = PyResolveContext.implicitContext(context);
-    while (element != null) {
-      addReferences(offset, element, referencesList, resolveContext);
-      offset = element.getStartOffsetInParent() + offset;
-      if (element instanceof PsiFile) break;
-      element = element.getParent();
-    }
-
-    if (referencesList.isEmpty()) return null;
-    if (referencesList.size() == 1) return referencesList.get(0);
-    return new PsiMultiReference(referencesList.toArray(PsiReference.EMPTY_ARRAY),
-                                 referencesList.get(referencesList.size() - 1).getElement());
-  }
-
-  private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences,
-                                    PyResolveContext resolveContext) {
-    final PsiReference[] references;
-    if (element instanceof PyReferenceOwner owner) {
-      final PsiPolyVariantReference reference = owner.getReference(resolveContext);
-      references = new PsiReference[]{reference};
-    }
-    else {
-      references = element.getReferences();
-    }
-    for (final PsiReference reference : references) {
-      for (TextRange range : ReferenceRange.getRanges(reference)) {
-        assert range != null : reference;
-        if (range.containsOffset(offset)) {
-          outReferences.add(reference);
-        }
-      }
-    }
+    return findReferenceAt(this, offset);
   }
 
   @Nullable
@@ -139,5 +99,51 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   @Override
   public <E extends PsiElement> @Nullable E getStubOrPsiParentOfType(@NotNull Class<E> parentClass) {
     return super.getStubOrPsiParentOfType(parentClass);
+  }
+
+  @Nullable
+  static PsiReference findReferenceAt(@NotNull PsiElement target, int offset) {
+    PsiElement element = target.findElementAt(offset);
+    if (element == null || element instanceof OuterLanguageElement) return null;
+    offset = target.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
+
+    List<PsiReference> referencesList = new ArrayList<>();
+    final PsiFile file = element.getContainingFile();
+    final var context =
+      file != null ? TypeEvalContext.codeAnalysis(file.getProject(), file) : TypeEvalContext.codeInsightFallback(element.getProject());
+    final PyResolveContext resolveContext = PyResolveContext.implicitContext(context);
+    while (element != null) {
+      addReferences(offset, element, referencesList, resolveContext);
+      offset = element.getStartOffsetInParent() + offset;
+      if (element instanceof PsiFile) break;
+      element = element.getParent();
+    }
+
+    if (referencesList.isEmpty()) return null;
+    if (referencesList.size() == 1) return referencesList.get(0);
+    return new PsiMultiReference(referencesList.toArray(PsiReference.EMPTY_ARRAY),
+                                 referencesList.get(referencesList.size() - 1).getElement());
+  }
+
+  private static void addReferences(int offset,
+                                    @NotNull PsiElement element,
+                                    @NotNull final Collection<PsiReference> outReferences,
+                                    @NotNull PyResolveContext resolveContext) {
+    final PsiReference[] references;
+    if (element instanceof PyReferenceOwner owner) {
+      final PsiPolyVariantReference reference = owner.getReference(resolveContext);
+      references = new PsiReference[]{reference};
+    }
+    else {
+      references = element.getReferences();
+    }
+    for (final PsiReference reference : references) {
+      for (TextRange range : ReferenceRange.getRanges(reference)) {
+        assert range != null : reference;
+        if (range.containsOffset(offset)) {
+          outReferences.add(reference);
+        }
+      }
+    }
   }
 }

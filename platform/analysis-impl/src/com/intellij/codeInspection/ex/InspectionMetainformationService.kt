@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.fasterxml.jackson.annotation.JsonCreator
@@ -16,10 +16,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import java.util.concurrent.atomic.AtomicReference
 
-val CWE_TOP25_2023 = setOf(20, 22, 77, 78, 79, 89, 94, 119, 125, 190, 269, 276, 287, 306, 352, 362, 416, 434, 476, 502,
-                           787, 798, 862, 863, 918)
+val CWE_TOP25_2023: Set<Int> = setOf(20, 22, 77, 78, 79, 89, 94, 119, 125, 190, 269, 276, 287, 306, 352, 362, 416, 434, 476, 502,
+                                     787, 798, 862, 863, 918)
 
-data class InspectionsMetaInformation @JsonCreator constructor(
+private data class InspectionsMetaInformation @JsonCreator constructor(
   @JsonProperty("inspections") val inspections: List<MetaInformation>
 )
 
@@ -29,16 +29,14 @@ data class MetaInformation @JsonCreator constructor(
   @JsonProperty("categories") val categories: List<String>?
 )
 
-class MetaInformationState(val inspections: Map<String, MetaInformation>)
-
+class MetaInformationState(@JvmField val inspections: Map<String, MetaInformation>)
 
 @Service(Service.Level.APP)
-class InspectionMetaInformationService(val serviceScope: CoroutineScope) {
+class InspectionMetaInformationService(serviceScope: CoroutineScope) {
   private val loadJob = AtomicReference<Deferred<MetaInformationState>?>()
 
   init {
     val app = ApplicationManager.getApplication()
-
     app.getMessageBus().connect(serviceScope).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
         invalidateState()
@@ -62,9 +60,13 @@ class InspectionMetaInformationService(val serviceScope: CoroutineScope) {
   private fun loadState(): Deferred<MetaInformationState> {
     val deferred = CompletableDeferred<MetaInformationState>()
     while (true) {
-      if (loadJob.compareAndSet(null, deferred)) break
-      val job = loadJob.get()
-      if (job != null) return job
+      if (loadJob.compareAndSet(null, deferred)) {
+        break
+      }
+
+      loadJob.get()?.let {
+        return it
+      }
     }
 
     var error: Throwable? = null

@@ -18,13 +18,14 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 
 class CreateParameterFromUsageFix<E : KtElement>(
     originalExpression: E,
     private val dataProvider: (E) -> CreateParameterData<E>?
 ) : CreateFromUsageFixBase<E>(originalExpression) {
-    private var parameterInfoReference: WeakReference<KotlinParameterInfo>? = null
+    private var parameterInfoReference: Reference<KotlinParameterInfo>? = null
 
     private fun parameterInfo(): KotlinParameterInfo? =
         parameterInfoReference?.get() ?: parameterData()?.parameterInfo?.also {
@@ -51,7 +52,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
 
     override fun getText(): String = element?.run { calculatedText } ?: ""
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
     private fun runChangeSignature(project: Project, editor: Editor?) {
         val originalExpression = element ?: return
@@ -61,7 +62,7 @@ class CreateParameterFromUsageFix<E : KtElement>(
                 return originalDescriptor.modify { it.addParameter(parameterInfo) }
             }
 
-            override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean = parameterData()?.createSilently ?: false
+            override fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean = parameterData()?.createSilently ?: false
         }
 
         runChangeSignature(project, editor, parameterInfo.callableDescriptor, config, originalExpression, text)
@@ -90,46 +91,49 @@ class CreateParameterFromUsageFix<E : KtElement>(
         fun <E : KtElement> createFixForPrimaryConstructorPropertyParameter(
             element: E,
             callableInfosFactory: (E) -> List<CallableInfo>?
-        ): CreateParameterFromUsageFix<E> = CreateParameterFromUsageFix(element, dataProvider = fun(element): CreateParameterData<E>? {
-            val info = callableInfosFactory.invoke(element)?.singleOrNull().safeAs<PropertyInfo>() ?: return null
-            if (info.receiverTypeInfo.staticContextRequired) return null
+        ): CreateParameterFromUsageFix<E> {
+            fun dataProvider(element:E): CreateParameterData<E>? {
+                val info = callableInfosFactory.invoke(element)?.singleOrNull().safeAs<PropertyInfo>() ?: return null
+                if (info.receiverTypeInfo.staticContextRequired) return null
 
-            val builder = CallableBuilderConfiguration(listOf(info), element).createBuilder()
-            val receiverTypeCandidate = builder.computeTypeCandidates(info.receiverTypeInfo).firstOrNull()
+                val builder = CallableBuilderConfiguration(listOf(info), element).createBuilder()
+                val receiverTypeCandidate = builder.computeTypeCandidates(info.receiverTypeInfo).firstOrNull()
 
-            val receiverClassDescriptor: ClassDescriptor =
-                if (receiverTypeCandidate != null) {
-                    builder.placement = CallablePlacement.WithReceiver(receiverTypeCandidate)
-                    receiverTypeCandidate.theType.constructor.declarationDescriptor as? ClassDescriptor ?: return null
-                } else {
-                    if (element !is KtSimpleNameExpression) return null
+                val receiverClassDescriptor: ClassDescriptor =
+                    if (receiverTypeCandidate != null) {
+                        builder.placement = CallablePlacement.WithReceiver(receiverTypeCandidate)
+                        receiverTypeCandidate.theType.constructor.declarationDescriptor as? ClassDescriptor ?: return null
+                    } else {
+                        if (element !is KtSimpleNameExpression) return null
 
-                    val classOrObject = element.getStrictParentOfType<KtClassOrObject>() ?: return null
+                        val classOrObject = element.getStrictParentOfType<KtClassOrObject>() ?: return null
 
-                    val classDescriptor = classOrObject.resolveToDescriptorIfAny() ?: return null
-                    val paramInfo = CreateParameterByRefActionFactory.extractFixData(element)?.parameterInfo
-                    if (paramInfo?.callableDescriptor == classDescriptor.unsubstitutedPrimaryConstructor) return null
+                        val classDescriptor = classOrObject.resolveToDescriptorIfAny() ?: return null
+                        val paramInfo = CreateParameterByRefActionFactory.extractFixData(element)?.parameterInfo
+                        if (paramInfo?.callableDescriptor == classDescriptor.unsubstitutedPrimaryConstructor) return null
 
-                    classDescriptor
-                }
+                        classDescriptor
+                    }
 
-            if (receiverClassDescriptor.kind != ClassKind.CLASS) return null
+                if (receiverClassDescriptor.kind != ClassKind.CLASS) return null
 
-            receiverClassDescriptor.source.getPsi().safeAs<KtClass>()?.takeIf { it.canRefactor() } ?: return null
-            val constructorDescriptor = receiverClassDescriptor.unsubstitutedPrimaryConstructor ?: return null
+                receiverClassDescriptor.source.getPsi().safeAs<KtClass>()?.takeIf { it.canRefactor() } ?: return null
+                val constructorDescriptor = receiverClassDescriptor.unsubstitutedPrimaryConstructor ?: return null
 
-            val paramType = info.returnTypeInfo.getPossibleTypes(builder).firstOrNull()
-            if (paramType != null && paramType.hasTypeParametersToAdd(constructorDescriptor, builder.currentFileContext)) return null
+                val paramType = info.returnTypeInfo.getPossibleTypes(builder).firstOrNull()
+                if (paramType != null && paramType.hasTypeParametersToAdd(constructorDescriptor, builder.currentFileContext)) return null
 
-            return CreateParameterData(
-                parameterInfo = KotlinParameterInfo(
-                    callableDescriptor = constructorDescriptor,
-                    name = info.name,
-                    originalTypeInfo = KotlinTypeInfo(false, paramType),
-                    valOrVar = if (info.writable) KotlinValVar.Var else KotlinValVar.Val
-                ),
-                originalExpression = element
-            )
-        })
+                return CreateParameterData(
+                    parameterInfo = KotlinParameterInfo(
+                        callableDescriptor = constructorDescriptor,
+                        name = info.name,
+                        originalTypeInfo = KotlinTypeInfo(false, paramType),
+                        valOrVar = if (info.writable) KotlinValVar.Var else KotlinValVar.Val
+                    ),
+                    originalExpression = element
+                )
+            }
+            return CreateParameterFromUsageFix(element, dataProvider = ::dataProvider)
+        }
     }
 }

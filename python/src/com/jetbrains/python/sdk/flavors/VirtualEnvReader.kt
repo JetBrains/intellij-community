@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.flavors
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.SystemProperties
+import com.jetbrains.python.sdk.PythonSdkUtil
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -108,7 +109,8 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
     val envPath = envGetter(env)
     val path = if (!envPath.isEmpty()) {
       tryResolvePath(envPath)
-    } else {
+    }
+    else {
       tryResolvePath(SystemProperties.getUserHome())?.resolve(dirName)
     }
 
@@ -120,6 +122,7 @@ class VirtualEnvReader @JvmOverloads constructor(val envGetter: (String) -> Stri
   }
 
   private fun tryResolvePath(str: String): Path? {
+    if (PythonSdkUtil.isCustomPythonSdkHomePath(str)) return null
     try {
       val path = Paths.get(str)
       return path

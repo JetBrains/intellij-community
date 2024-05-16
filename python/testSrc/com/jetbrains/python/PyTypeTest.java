@@ -1136,6 +1136,72 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  public void testTupleVariableDestructuringAssignmentToDict() {
+    doTest(
+      "Dict[str, int]",
+      """
+        expr = {}
+        t = 1, 2
+        expr["a"], _ = t
+        """
+    );
+  }
+
+  // PY-42664
+  public void testFunctionCallReturningTupleDestructuringAssignmentToDict() {
+    doTest(
+      "Dict[str, int]",
+      """
+        expr = {}
+        expr["a"], _ = divmod(1, 2)
+        """
+    );
+  }
+
+  // PY-42664
+  public void testGenericCollectionDestructuringAssignmentToDict() {
+    doTest(
+      "Dict[str, int]",
+      """
+        expr = {}
+        d = {1: True, 2: False}
+        _, expr["a"] = d
+        """
+    );
+  }
+
+  public void testCollectionTypeThroughSetUnpacking() {
+    doTest("List[Union[int, str]]",
+           """
+             expr = []
+             expr[0], _ = {1, "foo"}
+             """);
+  }
+
+  public void testCollectionTypeThroughHomogenousSetUnpacking() {
+    doTest("List[bool]",
+           """
+             expr = []
+             expr[0], _ = {False, True, False}
+             """);
+  }
+
+  public void testCollectionTypeThroughDictUnpacking() {
+    doTest("List[Union[int, bool]]",
+           """
+             expr = []
+             expr[0], _ = {1: "foo", True: "bar"}
+             """);
+  }
+
+  public void testCollectionTypeThroughHomogenousDictUnpacking() {
+    doTest("List[int]",
+           """
+             expr = []
+             expr[0], _ = {1: "foo", 2: "bar"}
+             """);
+  }
+
   public void testListLiteralDestructuringAssignmentToDict() {
     doTest(
       "Dict[str, int]",

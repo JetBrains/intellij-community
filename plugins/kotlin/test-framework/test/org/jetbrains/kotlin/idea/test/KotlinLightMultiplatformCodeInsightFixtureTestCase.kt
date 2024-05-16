@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import org.jetbrains.kotlin.idea.base.test.ModuleStructureSplitter
@@ -31,11 +32,12 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
      *
      * Each file is added to the test project's platform module.
      *
-     * Returns file which was marked as `MAIN` or null
+     * Returns a list of all files and a file which was marked as `MAIN` or `null` if it's absent.
      */
-    fun configureModuleStructure(abstractFilePath: String): VirtualFile? {
+    fun configureModuleStructure(abstractFilePath: String): Pair<List<VirtualFile>, VirtualFile?> {
         val map = ModuleStructureSplitter.splitPerModule(File(abstractFilePath))
         var mainFile: VirtualFile? = null
+        val allFiles: MutableList<VirtualFile> = mutableListOf()
         map.forEach { (platform, files) ->
             val platformDescriptor = when (platform) {
                 "Common" -> KotlinMultiPlatformProjectDescriptor.PlatformDescriptor.COMMON
@@ -46,6 +48,7 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
             if (platformDescriptor != null) {
                 for (testFile in files) {
                     val virtualFile = VfsTestUtil.createFile(platformDescriptor.sourceRoot()!!, testFile.relativePath, testFile.text)
+                    allFiles.add(virtualFile)
                     if (testFile.isMain) {
                         mainFile = virtualFile
                     }
@@ -53,13 +56,19 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
                 }
             }
         }
-        return mainFile
+        return allFiles to mainFile
+    }
+
+    override fun setUp() {
+        super.setUp()
+        Registry.get("kotlin.k2.kmp.enabled").setValue(true)
     }
 
     override fun tearDown() {
         runAll(
             { KotlinMultiPlatformProjectDescriptor.cleanupSourceRoots() },
             { KotlinSdkType.removeKotlinSdkInTests() },
+            { Registry.get("kotlin.k2.kmp.enabled").setValue(false) },
             { super.tearDown() },
         )
     }

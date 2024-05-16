@@ -189,12 +189,12 @@ public final class VfsImplUtil {
    * {@code extractRootFromPath(JarFileSystem.getInstance, "/temp/temp.jar!/com/foo/bar")} -> ("/temp/temp.jar!/", "/com/foo/bar")
    */
   public static PathFromRoot extractRootFromPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    String normalizedPath = vfs.normalize(path);
+    String normalizedPath = NewVirtualFileSystem.normalizePath(vfs, path);
     if (normalizedPath == null || normalizedPath.isBlank()) {
       return null;
     }
 
-    String rootPath = vfs.extractRootPath(normalizedPath);
+    String rootPath = NewVirtualFileSystem.extractRootPath(vfs, normalizedPath);
     if (rootPath.isBlank() || rootPath.length() > normalizedPath.length()) {
       LOG.warn(vfs + " has extracted incorrect root '" + rootPath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
@@ -242,15 +242,10 @@ public final class VfsImplUtil {
   private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap(); // guarded by ourLock
   private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap(); // guarded by ourLock; values too
 
-  @ApiStatus.Internal
-  public static @NotNull String getLocalPath(@NotNull ArchiveFileSystem vfs, @NotNull String entryPath) {
-    return vfs.extractLocalPath(entryPath);
-  }
-
   public static @NotNull <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
                                                                  @NotNull VirtualFile entryFile,
                                                                  @NotNull Function<? super String, ? extends T> producer) {
-    String localPath = getLocalPath(vfs, VfsUtilCore.getRootFile(entryFile).getPath());
+    String localPath = ArchiveFileSystem.getLocalPath(vfs, VfsUtilCore.getRootFile(entryFile).getPath());
     checkSubscription();
 
     T handler;
@@ -365,7 +360,7 @@ public final class VfsImplUtil {
       if (myRootsToRefresh != null) {
         List<@NotNull NewVirtualFile> rootsToRefresh = ContainerUtil.mapNotNull(
           myRootsToRefresh,
-          pathAndFs -> ManagingFS.getInstance().findRoot(pathAndFs.second.composeRootPath(pathAndFs.first), pathAndFs.second));
+          pathAndFs -> ManagingFS.getInstance().findRoot(ArchiveFileSystem.composeRootPath(pathAndFs.second, pathAndFs.first), pathAndFs.second));
         for (@NotNull NewVirtualFile root : rootsToRefresh) {
           root.markDirtyRecursively();
         }
@@ -418,7 +413,7 @@ public final class VfsImplUtil {
     VirtualFile local = null;
     if (entryFileSystem instanceof ArchiveFileSystem) {
       local = ((ArchiveFileSystem)entryFileSystem).getLocalByEntry(file);
-      path = local == null ? getLocalPath((ArchiveFileSystem)entryFileSystem, path) : local.getPath();
+      path = local == null ? ArchiveFileSystem.getLocalPath((ArchiveFileSystem)entryFileSystem, path) : local.getPath();
     }
     String[] jarPaths;
     synchronized (ourLock) {
@@ -438,7 +433,7 @@ public final class VfsImplUtil {
       }
       if (entryFileSystem instanceof LocalFileSystem) {
         ArchiveFileSystem fileSystem = handlerPair.first;
-        NewVirtualFile root = ManagingFS.getInstance().findRoot(fileSystem.composeRootPath(jarPath), fileSystem);
+        NewVirtualFile root = ManagingFS.getInstance().findRoot(ArchiveFileSystem.composeRootPath(fileSystem, jarPath), fileSystem);
         if (root != null) {
           VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root);
           Runnable runnable = () -> {

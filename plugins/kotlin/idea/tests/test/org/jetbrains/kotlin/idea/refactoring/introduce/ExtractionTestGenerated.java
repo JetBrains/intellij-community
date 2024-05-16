@@ -561,6 +561,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/It.kt");
             }
 
+            @TestMetadata("javaInnerClassQualifier.kt")
+            public void testJavaInnerClassQualifier() throws Exception {
+                runTest("testData/refactoring/introduceVariable/javaInnerClassQualifier.kt");
+            }
+
             @TestMetadata("kt10808.kt")
             public void testKt10808() throws Exception {
                 runTest("testData/refactoring/introduceVariable/kt10808.kt");
@@ -724,6 +729,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("PropertyAccessorAddBlockInner.kt")
             public void testPropertyAccessorAddBlockInner() throws Exception {
                 runTest("testData/refactoring/introduceVariable/PropertyAccessorAddBlockInner.kt");
+            }
+
+            @TestMetadata("propertyBasedQualifier.kt")
+            public void testPropertyBasedQualifier() throws Exception {
+                runTest("testData/refactoring/introduceVariable/propertyBasedQualifier.kt");
             }
 
             @TestMetadata("qualifier.kt")
@@ -1136,6 +1146,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("suspendCall.kt")
             public void testSuspendCall() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/suspendCall.kt");
+            }
+
+            @TestMetadata("suspendCallInsideSuspendContinuation.kt")
+            public void testSuspendCallInsideSuspendContinuation() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/suspendCallInsideSuspendContinuation.kt");
             }
 
             @TestMetadata("suspendCallWithExtractedParameter.kt")
@@ -1925,6 +1940,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public void testSingleExpression() throws Exception {
                 runTest("testData/refactoring/extractFunction/duplicates/singleExpression.kt");
             }
+
+            @TestMetadata("syntheticJavaReference.kt")
+            public void testSyntheticJavaReference() throws Exception {
+                runTest("testData/refactoring/extractFunction/duplicates/syntheticJavaReference.kt");
+            }
+
+            @TestMetadata("unrelatedSignature.kt")
+            public void testUnrelatedSignature() throws Exception {
+                runTest("testData/refactoring/extractFunction/duplicates/unrelatedSignature.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -2156,6 +2181,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("filterPropagatingMarkers.kt")
             public void testFilterPropagatingMarkers() throws Exception {
                 runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkers.kt");
+            }
+
+            @TestMetadata("filterPropagatingMarkersImplicitUsage.kt")
+            public void testFilterPropagatingMarkersImplicitUsage() throws Exception {
+                runTest("testData/refactoring/extractFunction/optIn/filterPropagatingMarkersImplicitUsage.kt");
             }
 
             @TestMetadata("filterPropagatingMarkersWitArgs.kt")
@@ -2504,6 +2534,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/classObject.kt");
                 }
 
+                @TestMetadata("differentReceivers.kt")
+                public void testDifferentReceivers() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/differentReceivers.kt");
+                }
+
                 @TestMetadata("extensionLambda.kt")
                 public void testExtensionLambda() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/extensionLambda.kt");
@@ -2512,6 +2547,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("extensionLambdaAsParameter.kt")
                 public void testExtensionLambdaAsParameter() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/extensionLambdaAsParameter.kt");
+                }
+
+                @TestMetadata("functionalParameterTypeWithReceiver.kt")
+                public void testFunctionalParameterTypeWithReceiver() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/functionalParameterTypeWithReceiver.kt");
                 }
 
                 @TestMetadata("idWithBackticks.kt")
@@ -2602,6 +2642,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("qualifiedTypeRef.kt")
                 public void testQualifiedTypeRef() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeRef.kt");
+                }
+
+                @TestMetadata("receiverWithFunctionalLiteral.kt")
+                public void testReceiverWithFunctionalLiteral() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/receiverWithFunctionalLiteral.kt");
                 }
 
                 @TestMetadata("reducedParameterList.kt")
@@ -2835,6 +2880,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         public static class TypeParameters extends AbstractExtractionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("definitelyNotNullType.kt")
+            public void testDefinitelyNotNullType() throws Exception {
+                runTest("testData/refactoring/extractFunction/typeParameters/definitelyNotNullType.kt");
             }
 
             @TestMetadata("localClassInBound.kt")
@@ -3451,6 +3501,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/classUsedParameter.kt");
             }
 
+            @TestMetadata("conflictingName.kt")
+            public void testConflictingName() throws Exception {
+                runTest("testData/refactoring/introduceParameter/conflictingName.kt");
+            }
+
+            @TestMetadata("defaultParameter.kt")
+            public void testDefaultParameter() throws Exception {
+                runTest("testData/refactoring/introduceParameter/defaultParameter.kt");
+            }
+
             @TestMetadata("defaultValueInParens.kt")
             public void testDefaultValueInParens() throws Exception {
                 runTest("testData/refactoring/introduceParameter/defaultValueInParens.kt");
@@ -3469,6 +3529,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("foreignParameterRef.kt")
             public void testForeignParameterRef() throws Exception {
                 runTest("testData/refactoring/introduceParameter/foreignParameterRef.kt");
+            }
+
+            @TestMetadata("fromComment.kt")
+            public void testFromComment() throws Exception {
+                runTest("testData/refactoring/introduceParameter/fromComment.kt");
             }
 
             @TestMetadata("fun.kt")
@@ -3544,6 +3609,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("lastParameterHasEolCommentAndTrailingComma.kt")
             public void testLastParameterHasEolCommentAndTrailingComma() throws Exception {
                 runTest("testData/refactoring/introduceParameter/lastParameterHasEolCommentAndTrailingComma.kt");
+            }
+
+            @TestMetadata("overrideFunction.kt")
+            public void testOverrideFunction() throws Exception {
+                runTest("testData/refactoring/introduceParameter/overrideFunction.kt");
             }
 
             @TestMetadata("partialSubstitution.kt")

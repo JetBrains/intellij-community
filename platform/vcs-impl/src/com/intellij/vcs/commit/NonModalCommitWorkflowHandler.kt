@@ -379,9 +379,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       return null // checks passed
     }
-    catch (ce: CancellationException) {
+    catch (e: CancellationException) {
+      LOG.debug("runNonModalBeforeCommitChecks was cancelled")
       // Do not report error on cancellation
-      throw ce
+      throw e
     }
     catch (e: Throwable) {
       LOG.error(Throwable(e))

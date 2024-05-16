@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
@@ -20,6 +21,7 @@ import com.intellij.execution.testframework.sm.runner.history.actions.AbstractIm
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.history.LocalHistory;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -53,10 +55,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -85,6 +84,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
+  private static final Color RED = new JBColor(new Color(250, 220, 220), new Color(104, 67, 67));
+  private static final Color GREEN = new JBColor(new Color(220, 250, 220), new Color(44, 66, 60));
 
   private SMTRunnerTestTreeView myTreeView;
 
@@ -119,6 +120,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   private final String myHistoryFileName;
 
+  @ApiStatus.Internal
   public SMTestRunnerResultsForm(@NotNull ConsoleView consoleView,
                                  @NotNull TestConsoleProperties consoleProperties,
                                  @Nullable String splitterPropertyName) {
@@ -145,11 +147,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                         new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
   }
 
+  @ApiStatus.Internal
   @Override
   protected ToolbarPanel createToolbarPanel() {
-    return new SMTRunnerToolbarPanel(myProperties, this, this);
+    ToolbarPanel toolbarPanel = new ToolbarPanel(myProperties, this);
+    toolbarPanel.setModel(this);
+    return toolbarPanel;
   }
 
+  @ApiStatus.Internal
   @Override
   protected JComponent createTestTreeView() {
     myTreeView = new SMTRunnerTestTreeView();
@@ -198,6 +204,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * Returns root node, fake parent suite for all tests and suites
    *
    */
+  @ApiStatus.Internal
   @Override
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myTotalTestCount = 0;
@@ -247,6 +254,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
+  @ApiStatus.Internal
   @Override
   public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     myEndTime = System.currentTimeMillis();
@@ -263,7 +271,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myUpdateTreeRequests.cancelAllRequests();
     myTreeBuilder.updateFromRoot();
 
-    LvcsHelper.addLabel(this);
+    addLabel(this);
 
     if (myLastSelected == null) {
       selectAndNotify(myTestsRootNode);
@@ -317,6 +325,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
+  @ApiStatus.Internal
   @Override
   public void onTestsCountInSuite(final int count) {
     updateCountersAndProgressOnTestCount(count, false);
@@ -328,6 +337,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    *
    * @param testProxy Proxy
    */
+  @ApiStatus.Internal
   @Override
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
     if (!testProxy.isConfig() && !TestListenerProtocol.CLASS_CONFIGURATION.equals(testProxy.getName())) {
@@ -337,6 +347,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     fireOnTestNodeAdded(testProxy);
   }
 
+  @ApiStatus.Internal
   @Override
   public void onSuiteTreeNodeAdded(SMTestProxy testProxy) {
     if (!testProxy.isSuite()) {
@@ -344,10 +355,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
+  @ApiStatus.Internal
   @Override
   public void onSuiteTreeStarted(SMTestProxy suite) {
   }
 
+  @ApiStatus.Internal
   @Override
   public void onTestFailed(@NotNull final SMTestProxy test) {
     if (Comparing.equal(test, myLastFailed)) return;
@@ -371,6 +384,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
   }
 
+  @ApiStatus.Internal
   @Override
   public void onTestIgnored(@NotNull final SMTestProxy test) {
     updateOnTestIgnored(test);
@@ -383,32 +397,38 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    *
    * @param newSuite Tests suite
    */
+  @ApiStatus.Internal
   @Override
   public void onSuiteStarted(@NotNull final SMTestProxy newSuite) {
     _addTestOrSuite(newSuite);
   }
 
+  @ApiStatus.Internal
   @Override
   public void onCustomProgressTestsCategory(@Nullable String categoryName, int testCount) {
     myCurrentCustomProgressCategory = categoryName;
     updateCountersAndProgressOnTestCount(testCount, true);
   }
 
+  @ApiStatus.Internal
   @Override
   public void onCustomProgressTestStarted() {
     updateOnTestStarted(true);
   }
 
+  @ApiStatus.Internal
   @Override
   public void onCustomProgressTestFailed() {
     updateOnTestFailed(true);
   }
 
+  @ApiStatus.Internal
   @Override
   public void onCustomProgressTestFinished() {
     updateOnTestFinished(true);
   }
 
+  @ApiStatus.Internal
   @Override
   public void onTestFinished(@NotNull final SMTestProxy test) {
     if (!test.isConfig()) {
@@ -417,6 +437,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateIconProgress(false);
   }
 
+  @ApiStatus.Internal
   @Override
   public void onSuiteFinished(@NotNull final SMTestProxy suite) {
     //Do nothing
@@ -541,10 +562,12 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myIgnoredTestCount;
   }
 
+  @ApiStatus.Internal
   public Color getTestsStatusColor() {
     return myStatusLine.getStatusColor();
   }
 
+  @ApiStatus.Internal
   public Set<String> getMentionedCategories() {
     return myMentionedCategories;
   }
@@ -673,6 +696,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   /**
    * for java unit tests
    */
+  @ApiStatus.Internal
   public void performUpdate() {
     myTreeBuilder.updateFromRoot();
   }
@@ -769,19 +793,49 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myStatusLine.setWarning(SmRunnerBundle.message("suffix.incomplete.index.was.used"));
   }
 
+  @ApiStatus.Internal
   public String getHistoryFileName() {
     return myHistoryFileName;
   }
 
-  AnAction[] getToolbarActions() { return myToolbarPanel.actionsToMerge; }
+  @ApiStatus.Internal
+  AnAction[] getToolbarActions() { return myToolbarPanel.getActionsToMerge(); }
 
-  AnAction[] getAdditionalToolbarActions() { return myToolbarPanel.additionalActionsToMerge; }
+  @ApiStatus.Internal
+  AnAction[] getAdditionalToolbarActions() { return myToolbarPanel.getAdditionalActionsToMerge(); }
 
 
   @Override
   protected void hideToolbar() {
     super.hideToolbar();
     myToolbarPanel.setVisible(false);
+  }
+
+  private static void addLabel(final TestFrameworkRunningModel model) {
+
+    AbstractTestProxy root = model.getRoot();
+
+    if (root.isInterrupted()) return;
+
+    TestConsoleProperties consoleProperties = model.getProperties();
+    String configName = consoleProperties.getConfiguration().getName();
+
+    String name;
+    int color;
+
+    if (root.isPassed() || root.isIgnored()) {
+      color = GREEN.getRGB();
+      name = ExecutionBundle.message("junit.running.info.tests.passed.with.test.name.label", configName);
+    }
+    else {
+      color = RED.getRGB();
+      name = ExecutionBundle.message("junit.running.info.tests.failed.with.test.name.label", configName);
+    }
+
+    Project project = consoleProperties.getProject();
+    if (project.isDisposed()) return;
+
+    LocalHistory.getInstance().putSystemLabel(project, name, color);
   }
 
   private static class MySaveHistoryTask extends Task.Backgroundable {

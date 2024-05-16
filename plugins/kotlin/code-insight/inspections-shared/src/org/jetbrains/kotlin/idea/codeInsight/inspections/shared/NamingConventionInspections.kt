@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
@@ -22,8 +22,8 @@ import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.quickfix.RenameIdentifierFix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
+import org.jetbrains.kotlin.idea.quickfix.RenameIdentifierFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -100,7 +100,7 @@ class NamingConventionInspectionSettings(
             setNamePatternCallback.invoke(value)
             nameRegex = try {
                 value.toRegex()
-            } catch (e: PatternSyntaxException) {
+            } catch (_: PatternSyntaxException) {
                 null
             }
         }
@@ -158,10 +158,6 @@ sealed class NamingConventionInspection(
 
     protected fun verifyName(element: PsiNameIdentifierOwner, holder: ProblemsHolder, additionalCheck: () -> Boolean = { true }) {
         namingSettings.verifyName(element, holder, additionalCheck, rules)
-    }
-
-    protected fun getNameMismatchMessage(name: String): String {
-        return namingSettings.getNameMismatchMessage(name, rules)
     }
 
     override fun getOptionsPane(): OptPane = namingSettings.getOptionsPane()
@@ -363,6 +359,7 @@ class LocalVariableNameInspection : PropertyNameInspectionBase(
     override fun getNamingRules(): Array<NamingRule> = arrayOf(START_LOWER, NO_UNDERSCORES, NO_BAD_CHARACTERS)
 }
 
+@Suppress("InspectionDescriptionNotFoundInspection")
 private class PackageNameInspectionLocal(
     val parentInspection: InspectionProfileEntry,
     val namingSettings: NamingConventionInspectionSettings

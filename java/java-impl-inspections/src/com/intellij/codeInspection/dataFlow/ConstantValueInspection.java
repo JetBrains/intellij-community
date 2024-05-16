@@ -321,13 +321,17 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
     }
     if (expression instanceof PsiInstanceOfExpression instanceOf) {
       PsiType type = instanceOf.getOperand().getType();
-      if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(instanceOf);
+      if (type == null ||
+          (!TypeConstraints.instanceOf(type).isResolved() &&
+           (!JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel) ||
+            !(type instanceof PsiPrimitiveType)))) {
+        return true;
+      }
       PsiPattern pattern = instanceOf.getPattern();
       if (pattern instanceof PsiTypeTestPattern typeTestPattern && typeTestPattern.getPatternVariable() != null) {
         PsiTypeElement checkType = typeTestPattern.getCheckType();
-        LanguageLevel languageLevel = PsiUtil.getLanguageLevel(instanceOf);
         if (checkType != null && checkType.getType().isAssignableFrom(type) &&
-            //see com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl.visitInstanceOfExpression
             !JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isSufficient(languageLevel)) {
           // Reported as compilation error
           return true;

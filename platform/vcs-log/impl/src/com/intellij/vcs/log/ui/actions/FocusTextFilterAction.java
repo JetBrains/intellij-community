@@ -11,8 +11,10 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class FocusTextFilterAction extends DumbAwareAction {
   public FocusTextFilterAction() {
     super(VcsLogBundle.messagePointer("action.FocusTextFilterAction.text"),

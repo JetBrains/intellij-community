@@ -132,4 +132,12 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testTextRangeOfLocalVariable() {
         checkTextRangeOfLocalVariable(myFixture)
     }
+
+    fun testNameReferenceVisitInConstructorCall() {
+        checkNameReferenceVisitInConstructorCall(myFixture)
+    }
+
+    fun testNullLiteral() {
+        checkNullLiteral(myFixture)
+    }
 }

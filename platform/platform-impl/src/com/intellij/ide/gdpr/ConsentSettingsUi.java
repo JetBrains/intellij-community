@@ -104,6 +104,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     final JPanel pane;
     final boolean dataSharingDisabledExternally = ConsentOptions.getInstance().isUsageStatsConsent(consent)
                                                   && StatisticsUploadAssistant.isCollectionForceDisabled();
+    final boolean dataSharingEnabledByFreeLicense = ConsentOptions.getInstance().isUsageStatsConsent(consent)
+                                                  && StatisticsUploadAssistant.isAllowedByFreeLicense();
     if (addCheckBox) {
       String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
       if (ConsentOptions.getInstance().isEAP()) {
@@ -112,7 +114,13 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         }
       }
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
-      cb.setEnabled(!dataSharingDisabledExternally);
+      if (dataSharingDisabledExternally) {
+        cb.setEnabled(false);
+      }
+      else if (dataSharingEnabledByFreeLicense) {
+        cb.setEnabled(false);
+        cb.setSelected(true);
+      }
       //noinspection HardCodedStringLiteral
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
@@ -151,12 +159,14 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       consentMapping.add(Pair.create(null, consent));
     }
     pane.setOpaque(false);
-    return !dataSharingDisabledExternally ? pane : wrapPanelWithWarning(pane);
+
+    if (dataSharingDisabledExternally) return wrapPanelWithWarning(pane, Objects.requireNonNullElse(StatisticsUploadAssistant.getConsentWarning(),
+                                                                                                    IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning")));
+    if (dataSharingEnabledByFreeLicense) return wrapPanelWithWarning(pane, IdeBundle.message("gdpr.usage.statistics.enabled.for.free.license.warning"));
+    return pane;
   }
 
-  private static JPanel wrapPanelWithWarning(JPanel panel) {
-    final String warningText = Objects.requireNonNullElse(
-      StatisticsUploadAssistant.getConsentWarning(), IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning"));
+  private static JPanel wrapPanelWithWarning(JPanel panel, @NlsContexts.DetailedDescription String warningText) {
     return UI.PanelFactory.panel(panel).withCommentIcon(AllIcons.General.Warning).withComment(warningText).createPanel();
   }
 

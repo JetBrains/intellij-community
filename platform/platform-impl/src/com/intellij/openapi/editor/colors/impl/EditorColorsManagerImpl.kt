@@ -101,7 +101,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     for (defaultScheme in DefaultColorSchemesManager.getInstance().allSchemes) {
       schemeManager.addScheme(defaultScheme)
     }
-    if (!isUnitTestOrHeadlessMode) {
+    if (!isHeadlessMode) {
       schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes))
     }
     schemeManager.loadSchemes()
@@ -281,7 +281,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     for ((schemeName, value) in additionalTextAttributes) {
       val scheme = schemeManager.findSchemeByName(schemeName)
       if (scheme !is AbstractColorsScheme) {
-        if (!isUnitTestOrHeadlessMode) {
+        if (!isHeadlessMode) {
           LOG.warn("Cannot find scheme: $schemeName from plugins: " +
                    value.joinToString(separator = ";") { it.pluginDescriptor.getPluginId().idString })
         }
@@ -557,13 +557,20 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     override fun onCurrentSchemeSwitched(oldScheme: EditorColorsScheme?,
                                          newScheme: EditorColorsScheme?,
                                          processChangeSynchronously: Boolean) {
+      // the method receives the base scheme as the argument, but the actual scheme might be different
+      val actualNewScheme = if (schemeManager.activeScheme == newScheme) {
+        activeVisibleScheme
+      }
+      else {
+        newScheme
+      }
       if (processChangeSynchronously) {
-        handleCurrentSchemeSwitched(newScheme)
+        handleCurrentSchemeSwitched(actualNewScheme)
       }
       else {
         // don't do heavy operations right away
         ApplicationManager.getApplication().invokeLater {
-          handleCurrentSchemeSwitched(newScheme)
+          handleCurrentSchemeSwitched(actualNewScheme)
         }
       }
     }
@@ -588,7 +595,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
 
     override fun reloaded(schemeManager: SchemeManager<EditorColorsScheme>, schemes: Collection<EditorColorsScheme>) {
-      if (!isUnitTestOrHeadlessMode) {
+      if (!isHeadlessMode) {
         schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes))
       }
       initEditableDefaultSchemesCopies()
@@ -599,8 +606,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 }
 
-private val isUnitTestOrHeadlessMode: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()
+private val isHeadlessMode: Boolean
+  get() = ApplicationManager.getApplication().isHeadlessEnvironment()
 
 private fun collectAdditionalTextAttributesEPs(): MutableMap<String, MutableList<AdditionalTextAttributesEP>> {
   val result = HashMap<String, MutableList<AdditionalTextAttributesEP>>()

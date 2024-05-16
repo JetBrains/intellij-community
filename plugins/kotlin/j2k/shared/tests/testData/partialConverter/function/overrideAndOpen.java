@@ -1,6 +1,5 @@
-// IGNORE_K2
 class A {
-  void foo() {}
+    void foo() {}
 }
 
 class B extends A {

@@ -5,6 +5,7 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.idea.IJIgnore;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -510,6 +511,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
   }
 
+  @IJIgnore(issue = "IJPL-149171")
   public void testCheckCanceledReadAction() throws Exception {
     Semaphore mayStartReadAction = new Semaphore();
     mayStartReadAction.down();
@@ -568,6 +570,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (e.get() != null) throw e.get();
   }
 
+  @IJIgnore(issue = "https://youtrack.jetbrains.com/issue/IDEA-351874/")
   public void testReadActionInImpatientModeShouldThrowWhenThereIsAPendingWrite() throws Throwable {
     AtomicBoolean stopRead = new AtomicBoolean();
     AtomicBoolean readAcquired = new AtomicBoolean();

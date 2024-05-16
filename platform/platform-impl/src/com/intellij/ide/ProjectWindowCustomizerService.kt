@@ -14,6 +14,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectNameListener
@@ -36,6 +37,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.ui.AvatarIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
@@ -94,6 +96,7 @@ class ProjectWindowCustomizerService : Disposable {
     private var instance: ProjectWindowCustomizerService? = null
     private var leftGradientCache: GradientTextureCache = GradientTextureCache()
     private var rightGradientCache: GradientTextureCache = GradientTextureCache()
+    private val LOG = Logger.getInstance(ProjectWindowCustomizerService::class.java)
 
     init {
       ApplicationManager.registerCleaner { instance = null }
@@ -226,6 +229,12 @@ class ProjectWindowCustomizerService : Disposable {
     if (!RecentProjectsManagerBase.getInstanceEx().hasCustomIcon(project)) return false
 
     val icon = project.service<ProjectWindowCustomizerIconCache>().cachedIcon.get()
+    if (icon is AvatarIcon) {
+      // Somehow, the icon may be an AvatarIcon already in the cache. AvatarIcon can't be a custom icon.
+      LOG.warn("Unexpected cached AvatarIcon as a custom icon during the project color setup")
+      return false
+    }
+
     val iconMainColor = IconUtil.mainColor(icon)
     setCustomProjectColor(project, iconMainColor)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.ModuleItem
@@ -21,7 +21,7 @@ interface ScrambleTool {
    */
   suspend fun scramble(platform: PlatformLayout, context: BuildContext)
 
-  suspend fun scramblePlugin(context: BuildContext, pluginLayout: PluginLayout, targetDir: Path, additionalPluginsDir: Path)
+  suspend fun scramblePlugin(pluginLayout: PluginLayout, targetDir: Path, additionalPluginDir: Path, layouts: Collection<PluginLayout>, context: BuildContext)
 
   /**
    * Returns list of module names which cannot be included in the product without scrambling.

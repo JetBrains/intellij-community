@@ -18,7 +18,7 @@ import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
-import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
+import com.jetbrains.python.inspections.unresolvedReference.PY_COMMON_IMPORT_ALIASES
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.fromFoothold
@@ -82,7 +82,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         val psiElement = item.psiElement
         if (psiElement is PsiNamedElement && psiElement.containingFile != null) {
           val name = QualifiedName.fromDottedString(item.lookupString).removeLastComponent().toString()
-          val packageNameForAlias = PyPackageAliasesProvider.commonImportAliases[name]
+          val packageNameForAlias = PY_COMMON_IMPORT_ALIASES[name]
           val nameToImport = packageNameForAlias ?: name
           AddImportHelper.addImportStatement(context.file, nameToImport, if (packageNameForAlias != null) name else null,
                                              AddImportHelper.getImportPriority(context.file, psiElement.containingFile),
@@ -113,7 +113,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
 
         ProgressManager.checkCanceled()
         val qualifiedName = qualifier.append(attribute)
-        val packageNameForAlias = PyPackageAliasesProvider.commonImportAliases[qualifier.toString()]
+        val packageNameForAlias = PY_COMMON_IMPORT_ALIASES[qualifier.toString()]
         val packageName = if (packageNameForAlias != null) QualifiedName.fromDottedString(packageNameForAlias) else qualifier
         val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifiedName))
         val scope = PySearchUtilBase.defaultSuggestionScope(parameters.originalFile)

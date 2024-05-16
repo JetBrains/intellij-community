@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.PopupMenuListenerAdapter;
@@ -46,11 +48,10 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -575,13 +576,33 @@ public final class CustomizationUtil {
       }
 
       @Override
-      protected void doOKAction() {
+      protected Action @NotNull [] createActions() {
+        List<Action> actions = new ArrayList<>(Arrays.asList(super.createActions()));
+        Action applyAction = new DialogWrapperAction(IdeBundle.message("dialog.apply")) {
+          @Override
+          protected void doAction(ActionEvent e) {
+            apply();
+            setEnabled(false);
+          }
+        };
+        actions.add(applyAction);
+        panel.setApplyAction(applyAction);
+
+        return actions.toArray(Action[]::new);
+      }
+
+      private void apply() {
         try {
           panel.apply();
         }
         catch (ConfigurationException ex) {
           LOG.error(ex);
         }
+      }
+
+      @Override
+      protected void doOKAction() {
+        apply();
         close(OK_EXIT_CODE);
       }
 
@@ -606,10 +627,54 @@ public final class CustomizationUtil {
   private static final class ToolbarCustomizableActionsPanel extends CustomizableActionsPanel {
     private final @NotNull String myGroupID;
     private final @Nls @NotNull String myGroupName;
+    private @Nullable Action myApplyAction;
 
     private ToolbarCustomizableActionsPanel(@NotNull String groupID, @Nls @NotNull String groupName) {
       myGroupID = groupID;
       myGroupName = groupName;
+    }
+
+    @Override
+    public void apply() throws ConfigurationException {
+      super.apply();
+      updateActionToolbars();
+      onModified();
+    }
+
+    private void setApplyAction(@Nullable Action applyAction) {
+      this.myApplyAction = applyAction;
+      if (applyAction != null) {
+        applyAction.setEnabled(isModified(false));
+      }
+    }
+
+    private void updateActionToolbars() {
+      HashSet<String> editedChildrenSet = new HashSet<>();
+      if (ActionManager.getInstance().getAction(myGroupID) instanceof ActionGroup group) {
+        editedChildrenSet.addAll(Arrays.stream(group.getChildren(null)).map(action -> {
+          return ActionManager.getInstance().getId(action);
+        }).toList());
+      }
+
+      for (IdeFrame frame: WindowManager.getInstance().getAllProjectFrames()) {
+        for (Component c : UIUtil.uiTraverser(frame.getComponent()).traverse()) {
+          if (c instanceof ActionToolbar toolbar) {
+            AnAction foundGroup = ActionUtil.getDelegateChainRootAction(toolbar.getActionGroup());
+
+            String foundId = ActionManager.getInstance().getId(foundGroup);
+            if (myGroupID.equals(foundId) || editedChildrenSet.contains(foundId)) {
+              toolbar.updateActionsAsync();
+            }
+          }
+        }
+      }
+    }
+
+    @Override
+    protected void onModified() {
+      if (myApplyAction != null) {
+        myApplyAction.setEnabled(CustomActionsSchema.getInstance().isModified(mySelectedSchema));
+      }
     }
 
     @Override

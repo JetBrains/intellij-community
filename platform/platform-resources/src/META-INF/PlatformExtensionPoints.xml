@@ -12,10 +12,6 @@
     <extensionPoint name="jps.plugin"
                     beanClass="com.intellij.jps.impl.JpsPluginBean" dynamic="true"/>
 
-    <extensionPoint name="preloadingActivity"
-                    interface="com.intellij.openapi.application.PreloadingActivity"
-                    dynamic="true"/>
-
     <extensionPoint name="projectConfigurable"
                     beanClass="com.intellij.openapi.options.ConfigurableEP"
                     area="IDEA_PROJECT"
@@ -175,6 +171,7 @@
     </extensionPoint>
 
     <extensionPoint name="customFileDropHandler" area="IDEA_PROJECT" interface="com.intellij.openapi.editor.CustomFileDropHandler" dynamic="true"/>
+    <extensionPoint name="fileDropHandler" interface="com.intellij.openapi.editor.FileDropHandler" dynamic="true"/>
 
     <extensionPoint name="additionalTextAttributes" beanClass="com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP" dynamic="true"/>
     <extensionPoint name="bundledColorScheme" beanClass="com.intellij.configurationStore.BundledSchemeEP" dynamic="true"/>
@@ -395,6 +392,7 @@
     <extensionPoint name="streamProviderFactory" interface="com.intellij.configurationStore.StreamProviderFactory" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="updateSettingsProvider" interface="com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider" dynamic="true"/>
+    <extensionPoint name="updateSettingsUIProvider" interface="com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider" dynamic="true"/>
     <extensionPoint name="externalComponentSource" interface="com.intellij.ide.externalComponents.ExternalComponentSource" dynamic="true"/>
 
     <extensionPoint name="webHelpProvider" interface="com.intellij.openapi.help.WebHelpProvider" dynamic="true"/>
@@ -408,6 +406,8 @@
     <extensionPoint name="themeRemapper" interface="com.intellij.ide.ui.laf.UiThemeRemapper" dynamic="true"/>
     <extensionPoint name="themeMetadataProvider" beanClass="com.intellij.ide.ui.UIThemeMetadataProvider" dynamic="true"/>
     <extensionPoint name="iconMapper" beanClass="com.intellij.ide.ui.IconMapperBean" dynamic="true"/>
+    <extensionPoint name="iconMapperReverse" beanClass="com.intellij.ide.ui.IconMapperBean" dynamic="false"/>
+    <extensionPoint name="uiChangeListener" interface="com.intellij.ui.ExperimentalUI$Listener" dynamic="true"/>
 
     <extensionPoint name="tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
@@ -510,7 +510,6 @@
     <extensionPoint name="beforeRunStartupTasks" interface="com.intellij.execution.startup.BeforeRunStartupTasks" area="IDEA_PROJECT"/>
 
     <extensionPoint name="warmupConfigurator" interface="com.intellij.ide.warmup.WarmupConfigurator" dynamic="true" />
-    <extensionPoint name="warmupLogger" interface="com.intellij.ide.warmup.WarmupLogger" dynamic="true" />
 
     <extensionPoint name="activityTracker" interface="com.intellij.platform.backend.observation.ActivityTracker"
                     dynamic="true"/>
@@ -520,13 +519,13 @@
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.platform.ml.environmentExtender"
-                    interface="com.intellij.platform.ml.EnvironmentExtender"
+                    interface="com.intellij.platform.ml.environment.EnvironmentExtender"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ml.descriptor"
                     interface="com.intellij.platform.ml.TierDescriptor"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ml.taskListener"
-                    interface="com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener"
+                    interface="com.intellij.platform.ml.monitoring.MLTaskGroupListener"
                     dynamic="true"/>
 
     <extensionPoint name="defender.config" interface="com.intellij.diagnostic.WindowsDefenderChecker$Extension" dynamic="true" />
@@ -535,7 +534,6 @@
 
     <extensionPoint name="codeWithMe.authorizationProvider" interface="com.intellij.codeWithMe.CodeWithMeAuthorizationProvider" dynamic="true" />
     <extensionPoint name="codeWithMe.serverUrlProvider" interface="com.intellij.codeWithMe.CodeWithMeServerUrlProvider" dynamic="true" />
-    <extensionPoint name="newUIConfigurable" interface="com.intellij.ui.ExperimentalUIConfigurable" dynamic="true"/>
     <extensionPoint name="emptyIntentionProvider" interface="com.intellij.codeInsight.daemon.impl.EmptyIntentionProvider" dynamic="true"/>
 
     <extensionPoint name="idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>

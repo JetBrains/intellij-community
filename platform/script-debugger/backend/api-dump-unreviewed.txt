@@ -435,7 +435,6 @@ f:org.jetbrains.debugger.ValueModifierUtil
 - f:evaluateGet(org.jetbrains.debugger.Variable,java.lang.Object,org.jetbrains.debugger.EvaluateContext,java.lang.String):org.jetbrains.concurrency.Promise
 - f:propertyNamesToString(java.util.List,Z):java.lang.String
 - f:setValue(org.jetbrains.debugger.Variable,java.lang.String,org.jetbrains.debugger.EvaluateContext,org.jetbrains.debugger.ValueModifier):org.jetbrains.concurrency.Promise
-f:org.jetbrains.debugger.ValueModifierUtilKt
 org.jetbrains.debugger.Variable
 - a:getName():java.lang.String
 - a:getValue():org.jetbrains.debugger.values.Value
@@ -728,7 +727,6 @@ e:org.jetbrains.debugger.values.ValueType
 - s:values():org.jetbrains.debugger.values.ValueType[]
 f:org.jetbrains.debugger.values.ValueType$Companion
 - f:fromIndex(I):org.jetbrains.debugger.values.ValueType
-f:org.jetbrains.debugger.values.ValueTypeKt
 a:org.jetbrains.rpc.CommandProcessor
 - org.jetbrains.rpc.CommandSenderBase
 - org.jetbrains.rpc.MessageManager$Handler

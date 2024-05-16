@@ -5,6 +5,7 @@
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
@@ -18,19 +19,23 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object CallParameterInfoProvider {
     /**
-     * Returns true when there is an argument before current that is mapped to a parameter with different type.
+     * Returns `true` when there is an argument before the current one that is mapped to a parameter with a different type.
+     *
+     * If error types should be ignored when checking for type mismatches, please specify [KaSubtypingErrorTypePolicy.LENIENT] as the
+     * [subtypingErrorTypePolicy].
      */
     context(KtAnalysisSession)
     fun hasTypeMismatchBeforeCurrent(
         sourceElement: KtElement,
         argumentMapping: Map<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
         currentArgumentIndex: Int,
+        subtypingErrorTypePolicy: KaSubtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.STRICT,
     ): Boolean {
         val argumentExpressionsBeforeCurrent = getArgumentOrIndexExpressions(sourceElement).take(currentArgumentIndex).filterNotNull()
         for (argumentExpression in argumentExpressionsBeforeCurrent) {
             val parameterForArgument = argumentMapping[argumentExpression] ?: continue
             val argumentType = argumentExpression.getKtType() ?: error("Argument should have a KtType")
-            if (argumentType.isNotSubTypeOf(parameterForArgument.returnType)) {
+            if (argumentType.isNotSubTypeOf(parameterForArgument.returnType, subtypingErrorTypePolicy)) {
                 return true
             }
         }

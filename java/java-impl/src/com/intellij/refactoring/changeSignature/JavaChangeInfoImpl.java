@@ -63,7 +63,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
                                                   boolean generateDelegate,
                                                   boolean fixFieldConflicts,
                                                   @Nullable("Null means unchanged") @PsiModifier.ModifierConstant String newVisibility,
-                                                  String newName,
+                                                  @NotNull String newName,
                                                   CanonicalTypes.Type newType,
                                                   ParameterInfoImpl @NotNull [] parameterInfo,
                                                   ThrownExceptionInfo[] thrownExceptions,

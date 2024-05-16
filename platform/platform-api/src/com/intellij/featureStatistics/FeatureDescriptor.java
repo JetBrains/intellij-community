@@ -129,14 +129,6 @@ public class FeatureDescriptor {
     return myGroupId;
   }
 
-  /**
-   * @deprecated Use {@code getTipId()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable String getTipFileName() {
-    return myTipId;
-  }
-
   public @Nullable String getTipId() {
     return myTipId;
   }

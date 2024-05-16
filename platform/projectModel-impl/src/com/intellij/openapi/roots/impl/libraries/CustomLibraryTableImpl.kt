@@ -8,16 +8,10 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.CustomLibraryTableBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.CustomLibraryTableBridge
 import org.jdom.Element
 
 class CustomLibraryTableImpl(level: String, presentation: LibraryTablePresentation) : CustomLibraryTable, Disposable {
-  private val delegate: CustomLibraryTable = if (CustomLibraryTableBridge.isEnabled()) {
-    CustomLibraryTableBridgeImpl(level, presentation)
-  }
-  else {
-    LegacyCustomLibraryTable(level, presentation)
-  }
+  private val delegate: CustomLibraryTable = CustomLibraryTableBridgeImpl(level, presentation)
 
   override fun getLibraries(): Array<Library> = delegate.libraries
 

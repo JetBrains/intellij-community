@@ -18,7 +18,7 @@ suspend fun fourth(): Int {
 
 suspend fun third() : Int? {
     fourth()
-    delay(10)
+    delay(1)
     return 5
 }
 

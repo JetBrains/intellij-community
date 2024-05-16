@@ -9,7 +9,8 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayR
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
 import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
-import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
+import com.intellij.collaboration.ui.codereview.editor.renderInlays
+import com.intellij.collaboration.util.HashingUtil
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -71,13 +72,10 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
               editorMarkupModel?.addInspectionWidgetAction(toolbarActionGroup, Constraints.FIRST)
 
               try {
-                val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }.distinctUntilChanged()
-                val syncedFlow = reviewVm.updateRequired.map { !it }.distinctUntilChanged()
-                combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest { enabled ->
-                  if (enabled) supervisorScope {
-                    setupReview(settings, fileVm, editor)
-                    awaitCancellation()
-                  }
+                val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
+                val syncedFlow = reviewVm.updateRequired.map { !it }
+                combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.distinctUntilChanged().collectLatest { enabled ->
+                  if (enabled) showReview(settings, fileVm, editor)
                 }
               }
               finally {
@@ -94,13 +92,20 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
   }
 }
 
-private fun CoroutineScope.setupReview(settings: GithubPullRequestsProjectUISettings,
-                                       fileVm: GHPRReviewFileEditorViewModel,
-                                       editor: EditorEx) {
-  val model = GHPRReviewFileEditorModel(this, settings, fileVm, editor.document)
-  CodeReviewEditorGutterChangesRenderer.setupIn(this, model, editor)
-  CodeReviewEditorGutterControlsRenderer.setupIn(this, model, editor)
-  editor.controlInlaysIn(this, model.inlays, { it.key }) { createRenderer(it) }
+private suspend fun showReview(settings: GithubPullRequestsProjectUISettings, fileVm: GHPRReviewFileEditorViewModel, editor: EditorEx): Nothing {
+  withContext(Dispatchers.Main) {
+    val model = GHPRReviewFileEditorModel(this, settings, fileVm, editor.document)
+    launchNow {
+      CodeReviewEditorGutterChangesRenderer.render(model, editor)
+    }
+    launchNow {
+      CodeReviewEditorGutterControlsRenderer.render(model, editor)
+    }
+    launchNow {
+      editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) { createRenderer(it) }
+    }
+    awaitCancellation()
+  }
 }
 
 private fun CoroutineScope.createRenderer(model: GHPREditorMappedComponentModel): CodeReviewComponentInlayRenderer =

@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -83,7 +82,7 @@ public abstract class InspectionTreeNode implements TreeNode {
 
   void dropProblemCountCaches() {
     InspectionTreeNode current = this;
-    while (current != null && getParent() != null) {
+    while (current != null) {
       current.myProblemLevels.drop();
       current = current.getParent();
     }
@@ -214,12 +213,13 @@ public abstract class InspectionTreeNode implements TreeNode {
       Object2IntMap<HighlightDisplayLevel> counter=new Object2IntOpenHashMap<>();
       visitProblemSeverities(counter);
       LevelAndCount[] arr = new LevelAndCount[counter.size()];
-      final int[] i = {0};
+      int i = 0;
       for (Object2IntMap.Entry<HighlightDisplayLevel> entry : counter.object2IntEntrySet()) {
-        arr[i[0]++] = new LevelAndCount(entry.getKey(), entry.getIntValue());
+        arr[i++] = new LevelAndCount(entry.getKey(), entry.getIntValue());
       }
-      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
-        .reversed());
+      Comparator<LevelAndCount> comparator =
+        Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity()).reversed();
+      Arrays.sort(arr, comparator);
       return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;
     }
 

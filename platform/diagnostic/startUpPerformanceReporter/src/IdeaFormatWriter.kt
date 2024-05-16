@@ -13,6 +13,7 @@ import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.CharArrayWriter
 import java.io.Writer
 import java.nio.ByteBuffer
@@ -206,6 +207,7 @@ private fun writeCommonFields(event: ActivityImpl, writer: JsonGenerator, timeOf
   }
 }
 
+@Internal
 class ExposingCharArrayWriter : CharArrayWriter(8192) {
   fun toByteBuffer(): ByteBuffer {
     return Charsets.UTF_8.encode(CharBuffer.wrap(buf, 0, count))

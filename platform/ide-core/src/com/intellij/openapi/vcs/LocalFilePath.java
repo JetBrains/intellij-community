@@ -2,8 +2,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -82,15 +80,6 @@ public class LocalFilePath implements FilePath {
     int result = Strings.stringHashCodeInsensitive(myPath);
     result = 31 * result + (myIsDirectory ? 1 : 0);
     return result;
-  }
-
-  @Override
-  public void refresh() {
-  }
-
-  @Override
-  public void hardRefresh() {
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(myPath);
   }
 
   /**
@@ -188,16 +177,6 @@ public class LocalFilePath implements FilePath {
   @Override
   public String getPresentableUrl() {
     return FileUtil.toSystemDependentName(myPath);
-  }
-
-  @Override
-  @Nullable
-  public Document getDocument() {
-    VirtualFile file = getVirtualFile();
-    if (file == null || file.getFileType().isBinary()) {
-      return null;
-    }
-    return FileDocumentManager.getInstance().getDocument(file);
   }
 
   @Override

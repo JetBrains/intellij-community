@@ -5,6 +5,8 @@ import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.Document
 import com.intellij.driver.sdk.Editor
 import com.intellij.driver.sdk.logicalPosition
+import com.intellij.driver.sdk.remoteDev.BeControlClass
+import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
@@ -13,6 +15,10 @@ import java.awt.Point
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
            JEditorUiComponent::class.java)
+}
+
+fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiComponent.() -> Unit) {
+  x(xpath ?: "//div[@class='EditorComponentImpl']", JEditorUiComponent::class.java).action()
 }
 
 class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
@@ -36,12 +42,21 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
 
   fun getCaretLine() = caretPosition.getLine() + 1
+  fun getCaretColumn() = caretPosition.getColumn() + 1
+
+
 
   fun setCaretPosition(line: Int, column: Int) {
-    setFocus()
+    click()
     driver.withContext(OnDispatcher.EDT) {
       editor.getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1))
     }
+  }
+
+  fun clickOnPosition(line: Int, column: Int) {
+    setFocus()
+    click(interact { val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line-1, column-1))
+      Point(lowerPoint.getX().toInt(), lowerPoint.getY().toInt()+editor.getLineHeight()/2)})
   }
 
   fun getLineText(line: Int) = editor.getDocument().getText().split("\n").let {
@@ -56,6 +71,7 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorComponentImpl")
+@BeControlClass(EditorComponentImplBeControlBuilder::class)
 interface EditorComponentImpl : Component {
   fun getEditor(): Editor
 }
@@ -75,8 +91,13 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
   val iconAreaOffset
     get() = gutter.getIconAreaOffset()
 
-  fun getIcon(line: Int) =
+
+  fun getIconName(line: Int) =
     icons.firstOrNull { it.line == line - 1 }?.mark?.getIcon().toString().substringAfterLast("/")
+
+  fun hoverOverIcon(line: Int) {
+    moveMouse(icons.firstOrNull { it.line == line - 1 }!!.location)
+  }
 
   inner class GutterIcon(private val data: GutterIconWithLocation) {
     val line: Int
@@ -89,6 +110,11 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     fun click() {
       click(location)
     }
+
+
+
+
+
   }
 }
 

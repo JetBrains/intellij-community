@@ -4,7 +4,10 @@ package com.intellij.ide.ui.search;
 import com.intellij.BundleBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -52,55 +55,7 @@ public final class SearchUtil {
 
   private SearchUtil() { }
 
-  static void processConfigurables(@NotNull List<? extends Configurable> configurables,
-                                   @NotNull Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options, boolean i18n) {
-    for (final Configurable configurable : configurables) {
-      if (!(configurable instanceof SearchableConfigurable searchableConfigurable)) {
-        continue;
-      }
-
-      Set<OptionDescription> configurableOptions = new TreeSet<>();
-      options.put(searchableConfigurable, configurableOptions);
-
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-        extension.beforeConfigurable(searchableConfigurable, configurableOptions);
-      }
-
-      if (configurable instanceof MasterDetails md) {
-        md.initUi();
-        processComponent(searchableConfigurable, configurableOptions, md.getMaster(), i18n);
-        processComponent(searchableConfigurable, configurableOptions, md.getDetails().getComponent(), i18n);
-      }
-      else {
-        processComponent(searchableConfigurable, configurableOptions, configurable.createComponent(), i18n);
-        final Configurable unwrapped = unwrapConfigurable(configurable);
-        if (unwrapped instanceof CompositeConfigurable) {
-          unwrapped.disposeUIResources();
-          final List<? extends UnnamedConfigurable> children = ((CompositeConfigurable<?>)unwrapped).getConfigurables();
-          for (final UnnamedConfigurable child : children) {
-            final Set<OptionDescription> childConfigurableOptions = new TreeSet<>();
-            options.put(new SearchableConfigurableAdapter(searchableConfigurable, child), childConfigurableOptions);
-
-            if (child instanceof SearchableConfigurable) {
-              processUILabel(((SearchableConfigurable)child).getDisplayName(), childConfigurableOptions, null, i18n);
-            }
-            final JComponent component = child.createComponent();
-            if (component != null) {
-              processComponent(component, childConfigurableOptions, null,  i18n);
-            }
-
-            configurableOptions.removeAll(childConfigurableOptions);
-          }
-        }
-      }
-
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-        extension.afterConfigurable(searchableConfigurable, configurableOptions);
-      }
-    }
-  }
-
-  private static @NotNull Configurable unwrapConfigurable(@NotNull Configurable configurable) {
+  static @NotNull Configurable unwrapConfigurable(@NotNull Configurable configurable) {
     if (configurable instanceof ConfigurableWrapper) {
       final UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
       if (wrapped instanceof SearchableConfigurable) {
@@ -117,22 +72,14 @@ public final class SearchUtil {
     return configurable;
   }
 
-  private static void processComponent(SearchableConfigurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component, boolean i18n) {
+  static void processComponent(SearchableConfigurable configurable, Set<OptionDescription> configurableOptions, JComponent component, boolean i18n) {
     if (component != null) {
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-        extension.beforeComponent(configurable, component, configurableOptions);
-      }
-
       processUILabel(configurable.getDisplayName(), configurableOptions, null, i18n);
       processComponent(component, configurableOptions, null, i18n);
-
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
-        extension.afterComponent(configurable, component, configurableOptions);
-      }
     }
   }
 
-  private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path, boolean i18n) {
+  static void processComponent(JComponent component, Set<OptionDescription> configurableOptions, String path, boolean i18n) {
     if (Boolean.TRUE.equals(ClientProperty.get(component, SEARCH_SKIP_COMPONENT_KEY))) {
       return;
     }
@@ -198,7 +145,7 @@ public final class SearchUtil {
   }
 
   /**
-   * This method tries to extract a user-visible text (as opposed to a HTML markup string) from a Swing text component.
+   * This method tries to extract a user-visible text (as opposed to an HTML markup string) from a Swing text component.
    */
   private static @Nullable String getLabelFromTextView(@NotNull JComponent component) {
     Object view = component.getClientProperty("html");
@@ -281,7 +228,7 @@ public final class SearchUtil {
     return result;
   }
 
-  private static void processUILabel(String title, Set<? super OptionDescription> configurableOptions, String path, boolean i18n) {
+  static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path, boolean i18n) {
     int headStart = title.indexOf("<head>");
     int headEnd = headStart >= 0 ? title.indexOf("</head>") : -1;
     if (headEnd > headStart) {
@@ -321,7 +268,7 @@ public final class SearchUtil {
           return i;
         }
       }
-      else if (tabIdx.equalsIgnoreCase(title)) { //e.g. only stop words
+      else if (tabIdx.equalsIgnoreCase(title)) { //e.g., only stop words
         return i;
       }
     }
@@ -343,15 +290,16 @@ public final class SearchUtil {
       for (String each : label) {
         if (isComponentHighlighted(each, option, force, configurable)) {
           highlightComponent(rootComponent, option);
-          return true; // do not visit children of highlighted component
+          return true; // do not visit children of a highlighted component
         }
       }
     }
     else if (rootComponent instanceof JComboBox) {
       List<String> labels = getItemsFromComboBox(((JComboBox<?>)rootComponent));
+      //noinspection SSBasedInspection
       if (labels.stream().anyMatch(t -> isComponentHighlighted(t, option, force, configurable))) {
         highlightComponent(rootComponent, option);
-        // do not visit children of highlighted component
+        // do not visit children of a highlighted component
         return true;
       }
     }
@@ -388,7 +336,7 @@ public final class SearchUtil {
       if (isComponentHighlighted(title, option, force, configurable)) {
         highlightComponent(rootComponent, option);
         rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, Boolean.TRUE);
-        return true; // do not visit children of highlighted component
+        return true; // do not visit children of a highlighted component
       }
     }
     boolean highlight = false;
@@ -710,50 +658,6 @@ public final class SearchUtil {
         list.add(eachKid);
         addChildren(eachKid, list);
       }
-    }
-  }
-
-  private static final class SearchableConfigurableAdapter implements SearchableConfigurable {
-    private final SearchableConfigurable myOriginal;
-    private final UnnamedConfigurable myDelegate;
-
-    private SearchableConfigurableAdapter(final @NotNull SearchableConfigurable original, final @NotNull UnnamedConfigurable delegate) {
-      myOriginal = original;
-      myDelegate = delegate;
-    }
-
-    @Override
-    public @NotNull String getId() {
-      return myOriginal.getId();
-    }
-
-    @Override
-    public @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName() {
-      return myOriginal.getDisplayName();
-    }
-
-    @Override
-    public @NotNull Class<?> getOriginalClass() {
-      return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).getOriginalClass() : myDelegate.getClass();
-    }
-
-    @Override
-    public @Nullable JComponent createComponent() {
-      return null;
-    }
-
-    @Override
-    public boolean isModified() {
-      return false;
-    }
-
-    @Override
-    public void apply() {
-    }
-
-    @Override
-    public String toString() {
-      return getDisplayName();
     }
   }
 }

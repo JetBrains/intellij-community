@@ -15,11 +15,13 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class AnnotateRevisionFromHistoryAction extends FileHistoryMetadataAction {
 
   @Override

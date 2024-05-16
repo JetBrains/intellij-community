@@ -1,5 +1,5 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
-// GROUPING_RULES: org.jetbrains.kotlin.idea.base.searching.usages.KotlinDeclarationGroupingRule
+// GROUPING_RULES: org.jetbrains.kotlin.idea.base.searching.usages.KotlinDeclarationSecondLevelGroupRuleProvider
 // OPTIONS: usages
 fun gg(u: () -> Unit, u1: () -> Unit ) {}
 fun ll() {

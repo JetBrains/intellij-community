@@ -16,7 +16,7 @@ class GradleActionWithImportTest : GradleActionWithImportTestCase() {
   fun `test start tasks can be set by model builder and run on import`() {
     Disposer.newDisposable().use { disposable ->
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
-        addModelProviders(disposable, TestBuildObjectModelProvider())
+        addModelProviders(TestBuildObjectModelProvider())
       }
 
       val testFile = File(projectPath, "testFile")
@@ -83,7 +83,7 @@ class GradleActionWithImportTest : GradleActionWithImportTestCase() {
   fun `test default tasks are not run on import`() {
     Disposer.newDisposable().use { disposable ->
       addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
-        addModelProviders(disposable, TestBuildObjectModelProvider())
+        addModelProviders(TestBuildObjectModelProvider())
       }
 
       importProject("""

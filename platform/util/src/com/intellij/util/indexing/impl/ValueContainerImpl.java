@@ -41,7 +41,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
    * 1 entry:    (myInputIdMapping, myInputIdMappingValue) = (value, inputId*)
    * >1 entries: (myInputIdMapping, myInputIdMappingValue) = (ValueToInputMap[ Value -> inputId*], null)
    * </pre>
-   *
+   * <p>
    * inputId* (=set of inputId, also mentioned as FileSet in code) is also stored to optimize for the most
    * frequent case of 0-1 inputIds: it is either null (empty set), Integer (1-element set) or {@link ChangeBufferingList}
    * for a >1 inputIds.
@@ -473,8 +473,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   }
 
   @Override
-  public void saveTo(final @NotNull DataOutput out,
-                     final @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
+  public void saveTo(@NotNull DataOutput out,
+                     @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
     DataInputOutputUtil.writeINT(out, size());
 
     for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
@@ -486,8 +486,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  public static void storeFileSet(final @NotNull DataOutput out,
-                                  final @NotNull Object fileSetObject) throws IOException {
+  public static void storeFileSet(@NotNull DataOutput out,
+                                  @NotNull Object fileSetObject) throws IOException {
     // format is either <single id> (positive int value)
     //               or <-ids count> <id_1> <id_2-id_1> <id_3-id_2> ... (i.e. diff-encoded ids)
     if (fileSetObject instanceof Integer) {
@@ -539,7 +539,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
         boolean doCompact = false;
         if (inputIds instanceof int[]) {
           for (int inputId : (int[])inputIds) {
-            doCompact = removeValue(mapping, inputId);
+            doCompact |= removeValue(mapping, inputId);
           }
         }
         else {
@@ -555,7 +555,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
           int idCountOrSingleValue = DataInputOutputUtil.readINT(stream);
 
           if (idCountOrSingleValue > 0) {
-            @NotNull Object inputIds = remapping.remap(idCountOrSingleValue);
+            int singleId = idCountOrSingleValue;
+            @NotNull Object inputIds = remapping.remap(singleId);
 
             if (inputIds instanceof int[]) {
               for (int inputId : (int[])inputIds) {
@@ -568,11 +569,11 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
             }
           }
           else {
-            idCountOrSingleValue = -idCountOrSingleValue;
-            ChangeBufferingList changeBufferingList = ensureFileSetCapacityForValue(value, idCountOrSingleValue);
+            int idsCount = -idCountOrSingleValue;
+            ChangeBufferingList changeBufferingList = ensureFileSetCapacityForValue(value, idsCount);
             int prev = 0;
 
-            for (int i = 0; i < idCountOrSingleValue; i++) {
+            for (int i = 0; i < idsCount; i++) {
               final int id = DataInputOutputUtil.readINT(stream);
               @NotNull Object inputIds = remapping.remap(prev + id);
 
@@ -594,13 +595,14 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  private boolean removeValue(FileId2ValueMapping<Value> mapping, int inputId) {
+  /** @return true if something was actually removed */
+  private boolean removeValue(@Nullable FileId2ValueMapping<Value> mapping,
+                              int inputId) {
     if (mapping != null) {
       return mapping.removeFileId(inputId);
     }
     else {
-      removeAssociatedValue(inputId);
-      return true;
+      return removeAssociatedValue(inputId);
     }
   }
 

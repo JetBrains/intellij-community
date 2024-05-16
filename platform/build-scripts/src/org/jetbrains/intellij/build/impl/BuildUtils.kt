@@ -1,4 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtilRt
@@ -15,11 +17,7 @@ object BuildUtils {
     return result
   }
 
-  fun copyAndPatchFile(sourcePath: Path,
-                       targetPath: Path,
-                       replacements: Map<String, String>,
-                       marker: String = "__",
-                       lineSeparator: String = "") {
+  fun copyAndPatchFile(sourcePath: Path, targetPath: Path, replacements: Map<String, String>, marker: String = "__", lineSeparator: String = "") {
     Files.createDirectories(targetPath.parent)
     var content = replaceAll(Files.readString(sourcePath), replacements, marker)
     if (!lineSeparator.isEmpty()) {
@@ -28,24 +26,7 @@ object BuildUtils {
     Files.writeString(targetPath, content)
   }
 
-  fun propertiesToJvmArgs(properties: List<Pair<String, String>>): List<String> {
-    val result = ArrayList<String>(properties.size)
-    for ((key, value) in properties) {
-      addVmProperty(result, key, value)
-    }
-    return result
-  }
-
-  internal fun addVmProperty(args: MutableList<String>, key: String, value: String?) {
-    if (value != null) {
-      args.add("-D$key=$value")
-    }
-  }
-
-  @JvmStatic
   fun getPluginJars(pluginPath: Path): List<Path> {
     return Files.newDirectoryStream(pluginPath.resolve("lib"), "*.jar").use { it.toList() }
   }
 }
-
-internal fun String.withTrailingSlash(): String = if (endsWith('/')) this else "${this}/"

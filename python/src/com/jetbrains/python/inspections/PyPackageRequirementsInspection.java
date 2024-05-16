@@ -14,6 +14,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -166,7 +167,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
 
       final String packageName = packageReferenceExpression.getName();
       if (packageName != null && !myIgnoredPackages.contains(packageName)) {
-        final String possiblePyPIPackageNames = PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, "");
+        final String possiblePyPIPackageNames = PyPsiPackageUtil.INSTANCE.moduleToPackageName(packageName, "");
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
             !PyPIPackageUtil.INSTANCE.isInPyPI(packageName) &&
@@ -399,6 +400,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL);
       if (!checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
         PyUiUtil.clearFileLevelInspectionResults(project);
         installPackages(project);
@@ -652,6 +654,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
       if (element != null) {
         final PyPackageRequirementsInspection inspection = getInstance(element);
         if (inspection != null) {
+          SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL);
           final Set<String> packagesToIgnore = new HashSet<>(myPackageNames);
           for (String pkg : inspection.ignoredPackages) {
             packagesToIgnore.remove(pkg);

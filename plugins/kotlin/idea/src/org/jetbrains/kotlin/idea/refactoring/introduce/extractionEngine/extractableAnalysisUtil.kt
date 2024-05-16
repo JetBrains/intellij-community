@@ -26,10 +26,9 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
@@ -38,13 +37,17 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
+import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.isResolvableInScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isInsideOf
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
@@ -477,32 +480,20 @@ class KotlinTypeDescriptor(private val data: ExtractionData) : TypeDescriptor<Ko
     }
 }
 
-object ExtractNameSuggester: IExtractionNameSuggester<KotlinType> {
+object ExtractNameSuggester : IExtractionNameSuggester<KotlinType> {
+
     override fun suggestNamesByType(
         kotlinType: KotlinType,
         container: KtElement,
-        validator: (String) -> Boolean,
-        defaultName: String?
-    ): List<String> {
-        if (KotlinBuiltIns.isUnit(kotlinType)) return emptyList()
-        return Fe10KotlinNameSuggester.suggestNamesByType(kotlinType, validator, defaultName)
-    }
-
-    override fun createNameValidator(
-        container: KtElement,
-        anchor: PsiElement?,
-        validatorType: KotlinNameSuggestionProvider.ValidatorTarget
-    ): (String) -> Boolean {
-        return Fe10KotlinNewDeclarationNameValidator(container, anchor, validatorType)
-    }
+        validator: KotlinNameValidator,
+        defaultName: String?,
+    ): List<String> = if (KotlinBuiltIns.isUnit(kotlinType)) emptyList()
+    else Fe10KotlinNameSuggester.suggestNamesByType(kotlinType, validator, defaultName)
 
     override fun suggestNameByName(
         name: String,
-        container: KtElement,
-        anchor: PsiElement?
-    ): String {
-        return Fe10KotlinNameSuggester.suggestNameByName(name, createNameValidator(container, anchor, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE))
-    }
+        validator: KotlinNameValidator,
+    ): String = Fe10KotlinNameSuggester.suggestNameByName(name, validator)
 }
 
 private class ExtractionDataAnalyzer(private val extractionData: ExtractionData): AbstractExtractionDataAnalyzer<KotlinType, MutableParameter>(extractionData) {

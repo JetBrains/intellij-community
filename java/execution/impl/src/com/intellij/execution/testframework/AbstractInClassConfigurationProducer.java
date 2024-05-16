@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -210,7 +211,14 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
   private static JvmAnnotationAttribute getAnnotationValue(PsiJavaToken token) {
     PsiAnnotation psiAnnotation = PsiTreeUtil.getParentOfType(token, PsiAnnotation.class, true, PsiMethod.class);
     if (psiAnnotation == null) return null;
-    String annotationName = psiAnnotation.getQualifiedName();
+    DumbService dumbService = DumbService.getInstance(psiAnnotation.getProject());
+    String annotationName;
+    if (dumbService.isAlternativeResolveEnabled()) {
+      annotationName = psiAnnotation.getQualifiedName();
+    }
+    else {
+      annotationName = dumbService.computeWithAlternativeResolveEnabled(() -> psiAnnotation.getQualifiedName());
+    }
     if (annotationName == null) return null;
     boolean match = ContainerUtil.exists(SOURCE_ANNOTATIONS, anno ->
       annotationName.equals(anno));

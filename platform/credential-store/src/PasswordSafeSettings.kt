@@ -8,19 +8,24 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.messages.Topic
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.OptionTag
+import org.jetbrains.annotations.ApiStatus
 
 private val defaultProviderType: ProviderType
   get() = CredentialStoreManager.getInstance().defaultProvider()
 
+@ApiStatus.Internal
 @State(name = "PasswordSafe",
        category = SettingsCategory.SYSTEM,
        exportable = true,
        storages = [Storage(value = "security.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
 class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<PasswordSafeOptions> {
   companion object {
+    /**
+     * API note: moved to [PasswordSafeSettingsListener.TOPIC]
+     */
     @JvmField
     @Topic.AppLevel
-    val TOPIC: Topic<PasswordSafeSettingsListener> = Topic("PasswordSafeSettingsListener", PasswordSafeSettingsListener::class.java)
+    val TOPIC: Topic<PasswordSafeSettingsListener> = PasswordSafeSettingsListener.TOPIC
   }
 
   private var state = PasswordSafeOptions()
@@ -75,6 +80,7 @@ class PasswordSafeSettings : PersistentStateComponentWithModificationTracker<Pas
   override fun getStateModificationCount() = state.modificationCount
 }
 
+@ApiStatus.Internal
 class PasswordSafeOptions : BaseState() {
   // do not use it directly
   @get:OptionTag("PROVIDER")

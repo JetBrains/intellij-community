@@ -15,8 +15,6 @@ com/jetbrains/WindowDecorations$CustomTitleBar
 com/jetbrains/plugin/blockmap/core/BlockMap
 com/jetbrains/plugin/blockmap/core/Chunk
 com/jetbrains/plugin/blockmap/core/ChunkMerger
-com/pty4j/PtyProcess
-com/pty4j/WinSize
 com/sun/jna/Callback
 com/sun/jna/Memory
 com/sun/jna/Pointer
@@ -29,7 +27,6 @@ com/sun/jna/platform/win32/WinDef$UINT
 com/sun/jna/platform/win32/WinDef$UINTByReference
 com/sun/jna/win32/StdCallLibrary
 io/netty/buffer/ByteBuf
-io/opentelemetry/api/metrics/BatchCallback
 io/opentelemetry/api/metrics/Meter
 it/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap
 it/unimi/dsi/fastutil/ints/IntArrayList

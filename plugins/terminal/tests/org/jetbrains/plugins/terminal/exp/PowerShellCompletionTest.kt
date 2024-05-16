@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionContributorEP
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.PlainTextFileType
@@ -16,9 +17,11 @@ import com.intellij.testFramework.fixtures.ModuleFixture
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.testFramework.utils.io.deleteRecursively
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellGeneratorsExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.IJShellRuntimeContextProvider
+import org.jetbrains.plugins.terminal.block.util.TestTerminalSessionInfo
 import org.jetbrains.plugins.terminal.exp.completion.powershell.PowerShellCompletionContributor
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.junit.Assume
 import org.junit.Test
@@ -157,7 +160,10 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
   private fun getCompletionsForCommand(command: String): List<String>? {
     myFixture.configureByText(PlainTextFileType.INSTANCE, command)
     editor.putUserData(BlockTerminalSession.KEY, session)
-    editor.putUserData(ShellCommandExecutor.KEY, ShellCommandExecutorImpl(session))
+    editor.putUserData(TerminalPromptModel.KEY, TerminalPromptModel(editor as EditorEx, TestTerminalSessionInfo()))
+    editor.putUserData(IJShellRuntimeContextProvider.KEY, IJShellRuntimeContextProvider(project, session))
+    editor.putUserData(IJShellGeneratorsExecutor.KEY, IJShellGeneratorsExecutor(session))
+
     myFixture.completeBasic()
     return myFixture.lookupElementStrings
   }
@@ -172,6 +178,7 @@ class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder
     assertSameElements("Expected $expected, but was: $completions", completions!!, expected)
   }
 
+  @Suppress("SameParameterValue")
   private fun selectItemAndCheckResult(itemText: String, expectedText: String) {
     myFixture.lookup.currentItem = myFixture.lookupElements!!.find { it.lookupString.contains(itemText) }
     myFixture.finishLookup('\n')

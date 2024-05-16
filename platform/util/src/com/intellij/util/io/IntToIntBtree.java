@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.BitUtil;
@@ -7,6 +7,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.io.stats.BTreeStatistics;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+@Internal
 public final class IntToIntBtree extends AbstractIntToIntBtree {
   private static final boolean CACHE_ROOT_NODE_BUFFER = SystemProperties.getBooleanProperty("idea.btree.cache.root.node.buffer", true);
 

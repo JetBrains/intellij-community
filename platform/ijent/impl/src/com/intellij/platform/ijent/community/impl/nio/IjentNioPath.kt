@@ -2,11 +2,8 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.Canonicalize
-import com.intellij.platform.ijent.fs.IjentFsResult
-import com.intellij.platform.ijent.fs.IjentPath
-import com.intellij.platform.ijent.fs.getOrThrow
-import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.*
 
@@ -19,14 +16,16 @@ import java.nio.file.*
  * val path: Path = ijent.fs.asNioFileSystem().getPath("/usr/bin/cowsay")
  * ```
  */
-@ApiStatus.Experimental
 class IjentNioPath internal constructor(
   val ijentPath: IjentPath,
   internal val nioFs: IjentNioFileSystem,
 ) : Path {
-  val ijentId: IjentId get() = nioFs.ijentFsApi.id
+  val ijentId: IjentId get() = nioFs.ijent.fs.id
 
-  private val isWindows get() = nioFs.isWindows
+  private val isWindows get() = when (nioFs.ijent.fs) {
+    is IjentFileSystemPosixApi -> false
+    is IjentFileSystemWindowsApi -> true
+  }
 
   override fun getFileSystem(): FileSystem = nioFs
 
@@ -136,7 +135,7 @@ class IjentNioPath internal constructor(
               normalizedPath
             else
               nioFs.fsBlocking {
-                when (val v = nioFs.ijentFsApi.canonicalize(normalizedPath)) {
+                when (val v = nioFs.ijent.fs.canonicalize(normalizedPath)) {
                   is Canonicalize.Ok -> v.value
                   is IjentFsResult.Error -> v.throwFileSystemException()
                 }
@@ -163,6 +162,11 @@ class IjentNioPath internal constructor(
       nioFs = nioFs,
     )
 
+  /**
+   * Commonly, instances of Path are not considered as equal if they actually represent the same path but come from different file systems.
+   *
+   * See [sun.nio.fs.UnixPath.equals] and [sun.nio.fs.WindowsPath#equals].
+   */
   override fun equals(other: Any?): Boolean =
     other is IjentNioPath &&
     ijentPath == other.ijentPath &&

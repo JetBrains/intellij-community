@@ -12,15 +12,14 @@ UFile (package = ) [public final class ObjectLiteralKt {...]
                                             ULiteralExpression (value = 42) [42] : int
                                 UMethod (name = ) [private fun () {...}]
                                     UBlockExpression [{...}]
-                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()]
+                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [A()]
                                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
+                                            USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                 UReturnExpression [return o.foo()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UQualifiedReferenceExpression [o.foo()] : int
                         USimpleNameReferenceExpression (identifier = o) [o] : @org.jetbrains.annotations.NotNull() java.lang.Object
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : int
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                            USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : int
     UClass (name = I) [public abstract interface I {...}]
         UMethod (name = foo) [public abstract fun foo() : int = UastEmptyExpression]
     UClass (name = A) [public final class A {...}]

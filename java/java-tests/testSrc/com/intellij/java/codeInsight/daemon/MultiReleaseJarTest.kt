@@ -177,17 +177,15 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val class9 = facade.findClass(CLASS_NAME, scope9())!!
     assertVersioned(class9)
     myFixture.configureByText("Test.java", "import com.example.*; class Test extends MultiReleaseClass {}")
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_8) {
-      val refs = ReferencesSearch.search(class8).findAll()
-      assertEquals(1, refs.size)
-      assertEquals(myFixture.file, refs.first().element.containingFile)
-      assertEmpty(ReferencesSearch.search(class9).findAll())
-    }
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_9) {
-      val refs = ReferencesSearch.search(class9).findAll()
-      assertEquals(1, refs.size)
-      assertEquals(myFixture.file, refs.first().element.containingFile)
-      assertEmpty(ReferencesSearch.search(class8).findAll())
+    for(level in listOf(LanguageLevel.JDK_1_8, LanguageLevel.JDK_1_9)) {
+      IdeaTestUtil.withLevel(module, level) {
+        var refs = ReferencesSearch.search(class8).findAll()
+        assertEquals(1, refs.size)
+        assertEquals(myFixture.file, refs.first().element.containingFile)
+        refs = ReferencesSearch.search(class9).findAll()
+        assertEquals(1, refs.size)
+        assertEquals(myFixture.file, refs.first().element.containingFile)
+      }
     }
   }
 

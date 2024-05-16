@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
     Project project = e.getProject();
     if (project != null) {
       Editor editor = getEditor(e.getDataContext(), project, false);
-      actionPerformedImpl(project, editor);
+      actionPerformedImpl(project, editor, e.getDataContext());
     }
   }
 
@@ -46,11 +47,16 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
   }
 
   public void actionPerformedImpl(final @NotNull Project project, final Editor editor) {
+    actionPerformedImpl(project, editor, DataContext.EMPTY_CONTEXT);
+  }
+
+  private void actionPerformedImpl(final @NotNull Project project, final Editor editor, @NotNull DataContext dataContext) {
     if (editor == null) return;
     //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
-    final CodeInsightActionHandler handler = getHandler();
+    final CodeInsightActionHandler handler = getHandler(dataContext);
+
     PsiElement elementToMakeWritable = handler.getElementToMakeWritable(psiFile);
     if (elementToMakeWritable != null &&
         !(EditorModificationUtil.checkModificationAllowed(editor) &&
@@ -115,7 +121,15 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
     return true;
   }
 
+  /**
+   * Use {@link CodeInsightAction#getHandler(DataContext)}
+   */
+  @ApiStatus.Obsolete
   protected abstract @NotNull CodeInsightActionHandler getHandler();
+
+  protected @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
+    return getHandler();
+  }
 
   protected @NlsContexts.Command String getCommandName() {
     String text = getTemplatePresentation().getText();

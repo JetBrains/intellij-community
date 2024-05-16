@@ -10,5 +10,5 @@
     <plugin id="com.intellij.java"/>
   </dependencies>
 
-  <xi:include href="k2.xml"/>
+  <xi:include href="kotlin.plugin.k2.xml"/>
 </idea-plugin>

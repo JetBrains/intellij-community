@@ -3,5 +3,8 @@
     <registryKey defaultValue="true"
                  description="Try to include navigation within a diff in the editor's navigation history."
                  key="include.diffs.in.navigation.history"/>
+
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
   </extensions>
 </idea-plugin>

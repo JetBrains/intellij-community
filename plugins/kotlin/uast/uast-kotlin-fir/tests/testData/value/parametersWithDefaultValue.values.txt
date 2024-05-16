@@ -49,7 +49,6 @@ UFile (package = test.pkg) [package test.pkg...]
                 UBinaryExpression (operator = +) [double(myInt) + str.length] = Undetermined
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [double(myInt)] = external double(myInt)(Undetermined)
                         UIdentifier (Identifier (double)) [UIdentifier (Identifier (double))]
-                        USimpleNameReferenceExpression (identifier = double, resolvesTo = null) [double] = external double(myInt)(Undetermined)
                         USimpleNameReferenceExpression (identifier = myInt) [myInt] = Undetermined
                     UQualifiedReferenceExpression [str.length] = external length()
                         USimpleNameReferenceExpression (identifier = str) [str] = Undetermined
@@ -72,14 +71,13 @@ UFile (package = test.pkg) [package test.pkg...]
                             ULiteralExpression (value = 2) [2] = 2
                             USimpleNameReferenceExpression (identifier = myInt) [myInt] = Undetermined
             UMethod (name = print) [public final fun print(@org.jetbrains.annotations.NotNull foo: test.pkg.Foo) : void {...}]
-                UParameter (name = foo) [@org.jetbrains.annotations.NotNull var foo: test.pkg.Foo = <init>()]
+                UParameter (name = foo) [@org.jetbrains.annotations.NotNull var foo: test.pkg.Foo = Foo()]
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Foo()] = external Foo()()
                         UIdentifier (Identifier (Foo)) [UIdentifier (Identifier (Foo))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Foo) [<init>] = external <init>()()
+                        USimpleNameReferenceExpression (identifier = Foo, resolvesTo = PsiClass: Foo) [Foo] = external Foo()
                 UBlockExpression [{...}] = external println(foo)(Undetermined)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(foo)] = external println(foo)(Undetermined)
                         UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(foo)(Undetermined)
                         USimpleNameReferenceExpression (identifier = foo) [foo] = Undetermined
             UMethod (name = Companion) [private fun Companion() = UastEmptyExpression]

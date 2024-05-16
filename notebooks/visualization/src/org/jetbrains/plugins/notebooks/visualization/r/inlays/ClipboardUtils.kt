@@ -7,14 +7,18 @@ package org.jetbrains.plugins.notebooks.visualization.r.inlays
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
 import java.awt.Image
-import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
+import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 import javax.swing.JTable
 
 // TODO: Some problems with getting "event.isControlDown" on component placed on top of Idea Editor content.
@@ -57,7 +61,7 @@ object ClipboardUtils {
 
   fun copyAllToClipboard(table: JTable, cellBreak: String = CELL_BREAK, limit: Int = Int.MAX_VALUE) {
     val sel = StringSelection(copyAllToString(table, cellBreak, limit))
-    Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, sel)
+    CopyPasteManager.getInstance().setContents(sel)
   }
 
   fun copySelectedToString(table: JTable, cellBreak: String = CELL_BREAK): String {
@@ -96,7 +100,7 @@ object ClipboardUtils {
 
   fun copySelectedToClipboard(table: JTable, cellBreak: String = CELL_BREAK) {
     val sel = StringSelection(copySelectedToString(table, cellBreak))
-    Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, sel)
+    CopyPasteManager.getInstance().setContents(sel)
   }
 
   fun escape(cell: Any, cellBreak: String = CELL_BREAK): String {
@@ -110,8 +114,15 @@ object ClipboardUtils {
   }
 
   fun copyImageToClipboard(image: Image) {
-    val transferable = ImageTransferable(image)
-    Toolkit.getDefaultToolkit().systemClipboard.setContents(transferable, null)
+    CopyPasteManager.getInstance().setContents(ImageTransferable(image))
+  }
+
+  // We have a situation that on some MacOS the image is copied as TIFF.
+  // To avoid this situation on Mac, we have a special transferable which copies image as png.
+  // https://bugs.openjdk.org/browse/JDK-8313706
+  // https://youtrack.jetbrains.com/issue/PY-69919/Result-of-Copy-plot-command-results-in-Unsupported-image-type-in-Google-Slides
+  fun copyPngImageToClipboard(image: BufferedImage) {
+    CopyPasteManager.getInstance().setContents(PngTransferable(image))
   }
 
   private class ImageTransferable(private val image: Image) : Transferable {
@@ -131,4 +142,25 @@ object ClipboardUtils {
     }
   }
 
+  /**
+   * When using [ImageTransferable], the image data is transferred in format by OS decision,
+   * for example, macOS can use TIFF format. This class transfers the image data as png.
+   */
+  private class PngTransferable(private val image: BufferedImage) : Transferable {
+
+    private val pngFlavor = DataFlavor("image/png;class=java.io.InputStream", "PNG Image")
+
+    override fun getTransferDataFlavors() = arrayOf(pngFlavor)
+
+    override fun isDataFlavorSupported(dataFlavor: DataFlavor) = pngFlavor == dataFlavor
+
+    override fun getTransferData(dataFlavor: DataFlavor): Any {
+      if (!isDataFlavorSupported(dataFlavor))
+        throw UnsupportedFlavorException(dataFlavor)
+
+      val outputStream = ByteArrayOutputStream()
+      ImageIO.write(image, "png", outputStream)
+      return ByteArrayInputStream(outputStream.toByteArray())
+    }
+  }
 }

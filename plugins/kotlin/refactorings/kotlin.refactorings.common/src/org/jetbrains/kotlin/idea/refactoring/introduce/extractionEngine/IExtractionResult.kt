@@ -7,6 +7,6 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 interface IExtractionResult<KotlinType> : Disposable {
     val config: IExtractionGeneratorConfiguration<KotlinType>
-    val declaration: KtNamedDeclaration
+    var declaration: KtNamedDeclaration
     val duplicateReplacers: Map<KotlinPsiRange, () -> Unit>
 }

@@ -2,11 +2,11 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
     UClass (name = PropertyReferencesKt) [public final class PropertyReferencesKt {...}]
         UMethod (name = properties) [public static final fun properties() : void {...}]
             UBlockExpression [{...}] : int
-                UDeclarationsExpression [var a: A = <init>(17)]
-                    ULocalVariable (name = a) [var a: A = <init>(17)]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(17)] : A
+                UDeclarationsExpression [var a: A = A(17)]
+                    ULocalVariable (name = a) [var a: A = A(17)]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(17)] : A
                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : A
+                            USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                             ULiteralExpression (value = 17) [17] : int
                 UDeclarationsExpression [var x: int = -a.mutableProp]
                     ULocalVariable (name = x) [var x: int = -a.mutableProp]

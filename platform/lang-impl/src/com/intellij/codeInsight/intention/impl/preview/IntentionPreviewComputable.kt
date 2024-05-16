@@ -162,8 +162,6 @@ class IntentionPreviewComputable(private val project: Project,
           policy = policy)
       }
       IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
-      is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(info)
-      is IntentionPreviewInfo.MultiFileDiff -> IntentionPreviewDiffResult.fromMultiDiff(info)
       else -> info
     }
   }
@@ -171,11 +169,9 @@ class IntentionPreviewComputable(private val project: Project,
   private fun getModActionPreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo {
     val unwrapped = action.asModCommandAction() ?: return IntentionPreviewInfo.EMPTY
     var info: IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
-    SideEffectGuard.computeWithoutSideEffects {
-      val context = ActionContext.from(origEditor, origFile).applyIf(fixOffset >= 0) { withOffset(fixOffset) }
-      IntentionPreviewUtils.previewSession(origEditor) {
-        info = unwrapped.generatePreview(context)
-      }
+    val context = ActionContext.from(origEditor, origFile).applyIf(fixOffset >= 0) { withOffset(fixOffset) }
+    IntentionPreviewUtils.previewSession(origEditor) {
+      info = unwrapped.generatePreview(context)
     }
     return convertResult(info, origFile, origFile, false) ?: IntentionPreviewInfo.EMPTY
   }

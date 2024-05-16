@@ -36,12 +36,6 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
 
   public abstract void clearAllResources(Project project);
 
-  /**
-   * @deprecated Use {@link #addIgnoredResources(List, Disposable)}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void addIgnoredResource(@NotNull String url);
-
   public abstract void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable);
 
   public abstract boolean isIgnoredResource(@NotNull String url);

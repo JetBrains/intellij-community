@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
@@ -122,7 +123,7 @@ private fun internalNameMatches(methodName: String, targetMethodName: String): B
 }
 
 private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangledInBytecode: Boolean, isInternalMethod: Boolean): Boolean {
-    val variableName = name().trimIfMangledInBytecode(isNameMangledInBytecode)
+    val variableName = name().dropInlineScopeInfo().trimIfMangledInBytecode(isNameMangledInBytecode)
     if (!variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) return false
     val inlineMethodName = variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
     return inlineMethodName == methodName ||

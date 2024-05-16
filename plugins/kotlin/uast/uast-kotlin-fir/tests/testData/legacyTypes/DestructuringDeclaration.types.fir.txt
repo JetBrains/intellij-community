@@ -4,28 +4,26 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
             UParameter (name = data) [@org.jetbrains.annotations.NotNull var data: java.lang.Object]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : void
-                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1...@org.jetbrains.annotations.NotNull var b: int = var268d41a5.<anonymous class>()]
+                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1...@org.jetbrains.annotations.NotNull var b: int = var268d41a5.UIdentifier (Identifier (component2))()]
                     ULocalVariable (name = var268d41a5) [@org.jetbrains.annotations.NotNull var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBinaryExpression (operator = <other>) ["foo" <other> 1] : @org.jetbrains.annotations.NotNull() kotlin.Pair<? extends @org.jetbrains.annotations.NotNull() java.lang.String, ? extends @org.jetbrains.annotations.NotNull() java.lang.Integer>
                             UPolyadicExpression (operator = +) ["foo"] : java.lang.String
                                 ULiteralExpression (value = "foo") ["foo"] : java.lang.String
                             ULiteralExpression (value = 1) [1] : int
-                    ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: java.lang.String = var268d41a5.<anonymous class>()]
+                    ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: java.lang.String = var268d41a5.UIdentifier (Identifier (component1))()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                        UQualifiedReferenceExpression [var268d41a5.<anonymous class>()] : <ErrorType>
+                        UQualifiedReferenceExpression [var268d41a5.UIdentifier (Identifier (component1))()] : <ErrorType>
                             USimpleNameReferenceExpression (identifier = var268d41a5) [var268d41a5] : <ErrorType>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] : <ErrorType>
                                 UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
-                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
-                    ULocalVariable (name = b) [@org.jetbrains.annotations.NotNull var b: int = var268d41a5.<anonymous class>()]
+                    ULocalVariable (name = b) [@org.jetbrains.annotations.NotNull var b: int = var268d41a5.UIdentifier (Identifier (component2))()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                        UQualifiedReferenceExpression [var268d41a5.<anonymous class>()] : <ErrorType>
+                        UQualifiedReferenceExpression [var268d41a5.UIdentifier (Identifier (component2))()] : <ErrorType>
                             USimpleNameReferenceExpression (identifier = var268d41a5) [var268d41a5] : <ErrorType>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] : <ErrorType>
                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
-                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
-                UDeclarationsExpression [@org.jetbrains.annotations.NotNull @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>...@org.jetbrains.annotations.NotNull var v: java.lang.String = var465978a0.<anonymous class>()]
+                UDeclarationsExpression [@org.jetbrains.annotations.NotNull @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>...@org.jetbrains.annotations.NotNull var v: java.lang.String = var465978a0.UIdentifier (Identifier (component2))()]
                     ULocalVariable (name = var465978a0) [@org.jetbrains.annotations.NotNull @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "UNCHECKED_CAST")]
@@ -35,17 +33,15 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                         UBinaryExpressionWithType [data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] : @org.jetbrains.annotations.NotNull() kotlin.Pair<? extends @org.jetbrains.annotations.NotNull() java.lang.String, ? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                             USimpleNameReferenceExpression (identifier = data) [data] : @org.jetbrains.annotations.NotNull() java.lang.Object
                             UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) [kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
-                    ULocalVariable (name = k) [@org.jetbrains.annotations.NotNull var k: java.lang.String = var465978a0.<anonymous class>()]
+                    ULocalVariable (name = k) [@org.jetbrains.annotations.NotNull var k: java.lang.String = var465978a0.UIdentifier (Identifier (component1))()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                        UQualifiedReferenceExpression [var465978a0.<anonymous class>()] : <ErrorType>
+                        UQualifiedReferenceExpression [var465978a0.UIdentifier (Identifier (component1))()] : <ErrorType>
                             USimpleNameReferenceExpression (identifier = var465978a0) [var465978a0] : <ErrorType>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] : <ErrorType>
                                 UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
-                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>
-                    ULocalVariable (name = v) [@org.jetbrains.annotations.NotNull var v: java.lang.String = var465978a0.<anonymous class>()]
+                    ULocalVariable (name = v) [@org.jetbrains.annotations.NotNull var v: java.lang.String = var465978a0.UIdentifier (Identifier (component2))()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                        UQualifiedReferenceExpression [var465978a0.<anonymous class>()] : <ErrorType>
+                        UQualifiedReferenceExpression [var465978a0.UIdentifier (Identifier (component2))()] : <ErrorType>
                             USimpleNameReferenceExpression (identifier = var465978a0) [var465978a0] : <ErrorType>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : <ErrorType>
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] : <ErrorType>
                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
-                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : <ErrorType>

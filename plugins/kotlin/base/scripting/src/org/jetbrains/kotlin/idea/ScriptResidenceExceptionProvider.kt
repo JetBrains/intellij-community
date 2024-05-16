@@ -31,6 +31,7 @@ private val scriptResidenceExceptionProviders = listOf(
     ScriptResidenceExceptionProvider(".gradle.kts", true),
     ScriptResidenceExceptionProvider(".main.kts"),
     ScriptResidenceExceptionProvider(".space.kts"),
+    ScriptResidenceExceptionProvider(".inspection.kts"),
     ScriptResidenceExceptionProvider(".ws.kts", true),
     object : ScriptResidenceExceptionProvider(".teamcity.kts", true) {
         override fun isSupportedScriptExtension(virtualFile: VirtualFile): Boolean {

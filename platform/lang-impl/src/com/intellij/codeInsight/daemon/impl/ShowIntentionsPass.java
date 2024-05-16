@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -34,16 +35,13 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.psi.util.PsiTreeUtilKt.parents;
-
-public final class ShowIntentionsPass extends TextEditorHighlightingPass {
+public final class ShowIntentionsPass extends TextEditorHighlightingPass implements DumbAware {
   private final Editor myEditor;
 
   private final PsiFile myFile;
@@ -55,7 +53,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   /**
    *
-   * @param queryIntentionActions true if {@link IntentionManager} must be asked for all registered {@link IntentionAction} and {@link IntentionAction#isAvailable(Project, Editor, PsiFile)} must be called on each
+   * @param queryIntentionActions true if {@link IntentionManager} must be asked for all registered {@link IntentionAction} and {@link IntentionAction#isAvailable(Project, Editor, PsiFile)} must be called on each.
    *                              Usually, this expensive process should be executed only once per highlighting session
    */
   ShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull Editor editor, boolean queryIntentionActions) {
@@ -116,11 +114,10 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
         return null;
       }
 
-      if (DumbService.isDumb(file.getProject()) && !DumbService.isDumbAware(descriptor.getAction())) {
+      if (!DumbService.getInstance(file.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
         return null;
       }
 
-      Project project = file.getProject();
       if (checkOffset && !range.contains(offset) && offset != range.getEndOffset()) {
         return null;
       }
@@ -270,7 +267,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
-
   /**
    * Returns the list of actions to show in the Alt-Enter popup at the caret offset in the given editor.
    */
@@ -410,10 +406,10 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     if (psiElementAtOffset != null) {
-      SequencesKt.forEach(parents(psiElementAtOffset, true), p -> {
-        languageIds.add(p.getLanguage().getID());
-        return null;
-      });
+      for (PsiElement element = psiElementAtOffset; element != null; element = element.getParent()) {
+        languageIds.add(element.getLanguage().getID());
+        if (element instanceof PsiFile) break;
+      }
     }
 
     return languageIds;

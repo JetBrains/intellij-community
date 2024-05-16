@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.NonNls
 import kotlin.time.Duration.Companion.milliseconds
 
-class TypingWithCompletionCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class TypingWithCompletionCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
     companion object {
         const val NAME: @NonNls String = "typingWithCompletion"
         const val PREFIX: @NonNls String = "$CMD_PREFIX$NAME"

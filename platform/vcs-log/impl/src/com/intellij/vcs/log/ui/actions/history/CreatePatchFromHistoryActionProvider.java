@@ -16,10 +16,12 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class CreatePatchFromHistoryActionProvider implements AnActionExtensionProvider {
   private final boolean mySilentClipboard;
 

@@ -79,6 +79,10 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
     doTest5();
   }
 
+  public void testSuppressionIsNotAnEntryPoint() {
+    doTest();
+  }
+
   public void testSuppressByNoinspectionTag() {
     doTest();
   }

@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl;
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -47,13 +46,9 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
   }
 
   public ProjectJdkImpl(@NotNull String name, @NotNull SdkTypeId sdkType, String homePath, String version) {
-    if (!GlobalSdkTableBridge.Companion.isEnabled()) {
-      delegate = new LegacyProjectJdkDelegate(name, sdkType, homePath, version);
-    } else {
-      SdkEntity.Builder sdkEntity =
-        SdkBridgeImpl.Companion.createEmptySdkEntity(name, sdkType.getName(),  homePath, version);
-      delegate = new SdkBridgeImpl(sdkEntity);
-    }
+    SdkEntity.Builder sdkEntity =
+      SdkBridgeImpl.Companion.createEmptySdkEntity(name, sdkType.getName(), homePath, version);
+    delegate = new SdkBridgeImpl(sdkEntity);
     // register on VirtualFilePointerManager because we want our virtual pointers to be disposed before VFPM to avoid "pointer leaked" diagnostics fired
     Disposer.register((Disposable)VirtualFilePointerManager.getInstance(), this);
   }

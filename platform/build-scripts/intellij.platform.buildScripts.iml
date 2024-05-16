@@ -61,7 +61,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="json-schema-validator" level="project" />
-    <orderEntry type="library" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
@@ -110,7 +109,6 @@
     </orderEntry>
     <orderEntry type="library" name="jackson-datatype-joda" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
-    <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="library" name="ktor-serialization-kotlinx-json" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
     <orderEntry type="library" name="ktor-client-content-negotiation" level="project" />

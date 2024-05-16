@@ -25,7 +25,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     Disposer.newDisposable().use { disposable ->
       val modelFetchCompletionAssertion = ListenerAssertion()
 
-      addModelProviders(disposable, TestModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
+      addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
+        addModelProviders(TestModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
+      }
       whenModelFetchCompleted(disposable) { resolverContext ->
         modelFetchCompletionAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
@@ -57,8 +59,10 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val projectLoadingAssertion = ListenerAssertion()
       val modelFetchCompletionAssertion = ListenerAssertion()
 
-      addModelProviders(disposable, TestModelProvider(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
-      addModelProviders(disposable, TestModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
+      addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
+        addModelProviders(TestModelProvider(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
+        addModelProviders(TestModelProvider(GradleModelFetchPhase.ADDITIONAL_MODEL_PHASE))
+      }
       whenProjectLoaded(disposable) { resolverContext ->
         projectLoadingAssertion.trace {
           for (buildModel in resolverContext.allBuilds) {
@@ -119,7 +123,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val projectLoadedPhases = allPhases.filter { it <= GradleModelFetchPhase.PROJECT_LOADED_PHASE }
       val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
 
-      addModelProviders(disposable, phasedModelProviders)
+      addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
+        addModelProviders(phasedModelProviders)
+      }
       whenPhaseCompleted(disposable) { resolverContext, phase ->
         modelFetchPhaseCompletionAssertion.trace {
           for (completedPhase in completedPhases) {
@@ -326,7 +332,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val expectedCompletedPhases = allPhases.filter { it <= cancellationPhase }
       val actualCompletedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
 
-      addModelProviders(disposable, phasedModelProviders)
+      addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
+        addModelProviders(phasedModelProviders)
+      }
       whenPhaseCompleted(disposable) { _, phase ->
         modelFetchPhaseCompletionAssertion.touch()
         actualCompletedPhases.add(phase)
@@ -578,7 +586,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val expectedCompletedPhases = allPhases.filter { it <= cancellationPhase }
       val actualCompletedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
 
-      addModelProviders(disposable, phasedModelProviders)
+      addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
+        addModelProviders(phasedModelProviders)
+      }
       whenPhaseCompleted(disposable) { resolverContext, phase ->
         modelFetchPhaseCompletionAssertion.trace {
           actualCompletedPhases.add(phase)

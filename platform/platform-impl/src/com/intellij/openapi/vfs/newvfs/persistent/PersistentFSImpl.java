@@ -15,7 +15,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -92,16 +91,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
-  /** Show notification about successful VFS recovery if VFS init takes longer than [nanoseconds] */
+  /**
+   * Show notification about successful VFS recovery if VFS init takes longer than [nanoseconds]
+   * <br/>
+   * By default notification is <b>off completely</b>: there is too much controversy about it's
+   * usefulness and wording, and from the other side -- so far recovery seems to work smoothly
+   * enough, so user doesn't really need to even know about it.
+   * TODO RC: consider removing it completely in the v243, if not re-requested
+   */
   private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS = SECONDS.toNanos(
-    getLongProperty("vfs.notify-user-if-recovery-longer-sec", defaultLongRecoveryThresholdSec())
+    getLongProperty("vfs.notify-user-if-recovery-longer-sec", Long.MAX_VALUE)
   );
-
-  private static long defaultLongRecoveryThresholdSec() {
-    Application app = ApplicationManager.getApplication();
-    return (app != null && app.isEAP()) ? 10 : Long.MAX_VALUE;
-  }
-
+  
   /**
    * Sometimes PFS got request for the files with lost (missed) roots. We try to resolve each root against persistence,
    * and it is quite expensive, so we don't want to repeat that attempt for the same root, if it is found to be missed.

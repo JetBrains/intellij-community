@@ -178,7 +178,7 @@ private fun showImportErrorNotification(error: Throwable) {
     (error.localizedMessage ?: error.message)
       .nullize(nullizeSpaces = true) ?: ImportSettingsBundle.message("transfer.error.no-error-message")
   )
-  SettingsService.getInstance().error.fire(object : NotificationData {
+  SettingsService.getInstance().notification.set(object : NotificationData {
     override val status = NotificationData.NotificationStatus.ERROR
     override val message = message
     override val customActionList = emptyList<NotificationData.Action>()

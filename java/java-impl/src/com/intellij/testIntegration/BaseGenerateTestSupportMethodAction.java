@@ -51,7 +51,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     final PsiClass targetClass = editor == null || file == null ? null : getTargetClass(editor, file);
     if (targetClass != null) {
       final List<TestFramework> frameworks = TestIntegrationUtils.findSuitableFrameworks(targetClass);
-      final TestIntegrationUtils.MethodKind methodKind = ((MyHandler)getHandler()).myMethodKind;
+      final TestIntegrationUtils.MethodKind methodKind = ((MyHandler)getHandler(dataContext)).myMethodKind;
       if (!frameworks.isEmpty()) {
         return new AnAction(JavaBundle.message("action.text.edit.template")) {
           @Override

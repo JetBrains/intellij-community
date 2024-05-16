@@ -35,7 +35,7 @@ internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
                                           private val messageBus: MessageBus)
   : GHPRReviewDataProvider {
 
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val pendingReviewComment: MutableStateFlow<String> = MutableStateFlow("")
 

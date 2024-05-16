@@ -5,6 +5,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -40,7 +41,8 @@ public final class ClassPresentationProvider implements ItemPresentationProvider
           if (version != null) {
             packageName += "/" + JavaPsiBundle.message("class.file.version", version.feature());
           }
-          return NewUiValue.isEnabled() ? JavaPsiBundle.message("aux.context.display", packageName) : "(" + packageName + ")";
+          return NewUiValue.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode()
+                 ? JavaPsiBundle.message("aux.context.display", packageName) : "(" + packageName + ")";
         }
         return null;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.application.writeAction
@@ -93,7 +93,7 @@ class VfsLogImpl private constructor(
       storagePath / "compacted",
       readOnly,
       { tryAcquireCompactionContext() },
-      coroutineScope.childScope(CoroutineName("VfsLog compaction")),
+      coroutineScope.childScope("VfsLog compaction"),
       COMPACTION_DELAY_MS,
       COMPACTION_INTERVAL_MS,
       if (COMPACTION_MODE == -1) DEFAULT_COMPACTION_MODE else OperationMode.entries[COMPACTION_MODE],

@@ -288,9 +288,8 @@ class VcsLogFiltererTest {
       }.flatten()
       detailsCache.storeDetails(details)
 
-      val builder = VcsLogFiltererImpl(providers, hashMap, detailsCache, newTrivialDataGetter(), EmptyIndex())
-
-      return builder.filter(dataPack, VisiblePack.EMPTY, PermanentGraph.Options.Default, filters, CommitCountStage.INITIAL).first
+      val filterer = VcsLogFiltererImpl(providers, hashMap, detailsCache, newTrivialDataGetter(), EmptyIndex())
+      return filterer.filter(dataPack, VisiblePack.EMPTY, PermanentGraph.Options.Default, filters, filterer.initialCommitCount).first
     }
 
     private fun newTrivialDataGetter(): DataGetter<VcsFullCommitDetails> {

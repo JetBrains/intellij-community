@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.VisualPosition;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -53,7 +55,10 @@ final class FoldingHintMouseMotionListener implements EditorMouseMotionListener 
         return;
       }
 
-      TextRange psiElementRange = EditorFoldingInfo.get(editor).getPsiElementRange(fold);
+      TextRange psiElementRange;
+      try (AccessToken ignore = SlowOperations.knownIssue("EA-841311, IDEA-345919")) {
+        psiElementRange = EditorFoldingInfo.get(editor).getPsiElementRange(fold);
+      }
       if (psiElementRange == null) return;
 
       int textOffset = psiElementRange.getStartOffset();

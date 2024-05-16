@@ -15,6 +15,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ComponentStoreOwner
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
@@ -188,18 +189,22 @@ private fun loadConfiguration(project: Project?): LoadedConfiguration {
 }
 
 internal fun streamProvider(project: Project?): StreamProvider {
-  val componentManager = (project ?: ApplicationManager.getApplication()) as ComponentStoreOwner
-  return (componentManager as ComponentStoreOwner).componentStore.storageManager.streamProvider
+  return ((project ?: ApplicationManager.getApplication()) as ComponentStoreOwner).componentStore.storageManager.streamProvider
 }
 
 private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult {
   val result = FileTemplateLoadResult(HashMap())
   val processedUrls = HashSet<URL>()
   val processedLoaders = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
-  for (plugin in PluginManagerCore.getPluginSet().enabledPlugins) {
-    val loader = plugin.classLoader
-    if (loader is PluginAwareClassLoader && (loader as PluginAwareClassLoader).files.isEmpty() || !processedLoaders.add(loader)) {
+  for (module in PluginManagerCore.getPluginSet().getEnabledModules()) {
+    val loader = module.classLoader
+    if ((loader is PluginAwareClassLoader && loader.files.isEmpty()) || !processedLoaders.add(loader)) {
       // test or development mode, when IDEA_CORE's loader contains all the classpath
+      continue
+    }
+
+    if (module.moduleName != null && module.jarFiles.isNullOrEmpty()) {
+      // not isolated module - skip, as resource will be loaded from plugin classpath
       continue
     }
 
@@ -220,10 +225,10 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
 
         val protocol = url.protocol
         if (URLUtil.JAR_PROTOCOL.equals(protocol, ignoreCase = true)) {
-          loadDefaultsFromJar(url, prefixes, result)
+          loadDefaultsFromJar(module = module, url = url, prefixes = prefixes, result = result)
         }
         else if (URLUtil.FILE_PROTOCOL.equals(protocol, ignoreCase = true)) {
-          loadDefaultsFromDirectory(url, result, prefixes)
+          loadDefaultsFromDirectory(module = module, root = url, result = result, prefixes = prefixes)
         }
       }
     }
@@ -234,13 +239,13 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
   return result
 }
 
-private fun loadDefaultsFromJar(url: URL, prefixes: List<String>, result: FileTemplateLoadResult) {
+private fun loadDefaultsFromJar(module: PluginDescriptor, url: URL, prefixes: List<String>, result: FileTemplateLoadResult) {
   val children = UrlUtil.getChildPathsFromJar(url)
   if (children.isEmpty()) {
     return
   }
 
-  val descriptionPaths: MutableSet<String> = HashSet()
+  val descriptionPaths = HashSet<String>()
   for (path in children) {
     if (path.endsWith("includes/default.html")) {
       result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { loadTemplate(url, it) } }
@@ -254,21 +259,26 @@ private fun loadDefaultsFromJar(url: URL, prefixes: List<String>, result: FileTe
     }
   }
 
-  processTemplates(files = children.asSequence().filter { it.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX) },
-                   prefixes = prefixes,
-                   descriptionPaths = descriptionPaths,
-                   result = result,
-                   descriptionLoader = { loadTemplate(url, it) },
-                   dataLoader = { loadTemplate(url, it) }
+  processTemplates(
+    module = module,
+    files = children.asSequence().filter { it.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX) },
+    prefixes = prefixes,
+    descriptionPaths = descriptionPaths,
+    result = result,
+    descriptionLoader = { loadTemplate(url, it) },
+    dataLoader = { loadTemplate(url, it) },
   )
 }
 
-private fun processTemplates(files: Sequence<String>,
-                                    prefixes: List<String>,
-                                    descriptionPaths: MutableSet<String>,
-                                    result: FileTemplateLoadResult,
-                                    descriptionLoader: Function<String, String?>,
-                             dataLoader: Function<String, String?>) {
+private fun processTemplates(
+  module: PluginDescriptor,
+  files: Sequence<String>,
+  prefixes: List<String>,
+  descriptionPaths: MutableSet<String>,
+  result: FileTemplateLoadResult,
+  descriptionLoader: Function<String, String?>,
+  dataLoader: Function<String, String?>,
+) {
   for (path in files) {
     val prefix = prefixes.firstOrNull {
       if (it.isEmpty()) {
@@ -282,53 +292,62 @@ private fun processTemplates(files: Sequence<String>,
     val filename = path.substring(if (prefix.isEmpty()) 0 else prefix.length + 1, path.length - FTManager.TEMPLATE_EXTENSION_SUFFIX.length)
     val extension = FileUtilRt.getExtension(filename)
 
-    val templateName = if (extension.isNotEmpty()) { // can be empty, e.g. Dockerfile
+    // can be empty, e.g., Dockerfile
+    val templateName = if (extension.isNotEmpty()) {
       filename.substring(0, filename.length - extension.length - 1)
-    } else {
+    }
+    else {
       filename
     }
 
     val descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths)
-    val template = DefaultTemplate(name = templateName,
-                                   extension = extension,
-                                   textLoader = dataLoader,
-                                   descriptionLoader = descriptionLoader.takeIf { descriptionPath != null },
-                                   descriptionPath = descriptionPath,
-                                   templatePath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path))
+    val template = DefaultTemplate(
+      name = templateName,
+      extension = extension,
+      textLoader = dataLoader,
+      descriptionLoader = descriptionLoader.takeIf { descriptionPath != null },
+      descriptionPath = descriptionPath,
+      templatePath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path),
+      pluginDescriptor = module,
+    )
     result.prefixToTemplates.computeIfAbsent(prefix) { mutableListOf() }.add(template)
   }
 }
 
-private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult, prefixes: List<String>) {
+private fun loadDefaultsFromDirectory(module: PluginDescriptor, root: URL, result: FileTemplateLoadResult, prefixes: List<String>) {
   val descriptionPaths = HashSet<String>()
   val templateFiles = mutableListOf<String>()
   val pathToFileTemplate = urlToPath(root)
   val rootFolder = pathToFileTemplate.parent
-  Files.find(pathToFileTemplate, Int.MAX_VALUE, BiPredicate { _, a -> a.isRegularFile }).use {
-    it.forEach { file ->
+  Files.find(pathToFileTemplate, Int.MAX_VALUE, BiPredicate { _, a -> a.isRegularFile }).use { stream ->
+    stream.forEach { file ->
       val path = pathToFileTemplate.relativize(file).invariantSeparatorsPathString
-      if (path.endsWith("includes/default.html")) {
-        result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(rootFolder, filePath) } }
-      }
-      else if (path.endsWith("default.html")) {
-        result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(rootFolder, filePath) } }
-      }
-      else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
-        descriptionPaths.add(path)
-      }
-      else if (path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
-        templateFiles.add(path)
+      when {
+        path.endsWith("includes/default.html") -> {
+          result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(rootFolder, filePath) } }
+        }
+        path.endsWith("default.html") -> {
+          result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(rootFolder, filePath) } }
+        }
+        path.endsWith(DESCRIPTION_EXTENSION_SUFFIX) -> {
+          descriptionPaths.add(path)
+        }
+        path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX) -> {
+          templateFiles.add(path)
+        }
       }
     }
   }
 
-  processTemplates(files = templateFiles.asSequence(),
-                   prefixes = prefixes,
-                   descriptionPaths = descriptionPaths,
-                   result = result,
-                   descriptionLoader = { loadFileContent(rootFolder, it) },
-                   dataLoader = {
-                     loadFileContent(rootFolder, it) })
+  processTemplates(
+    module = module,
+    files = templateFiles.asSequence(),
+    prefixes = prefixes,
+    descriptionPaths = descriptionPaths,
+    result = result,
+    descriptionLoader = { loadFileContent(rootFolder, it) },
+    dataLoader = { loadFileContent(rootFolder, it) },
+  )
 }
 
 private fun getLocalizedContent(path: String, pathResolver: Function<String, String?>): String {

@@ -82,7 +82,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addRunBeforeLambda", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addSemicolonBeforeLambdaExpression", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addSpreadOperatorForArrayAsVarargAfterSam", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/addStarProjections", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/addStarProjections", pattern = pattern)
             model("$idea/quickfix/addSuspend", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addTypeAnnotationToValueParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addUnsafeVarianceAnnotation", pattern = pattern, isIgnored = true)
@@ -188,7 +188,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/specifyTypeExplicitly", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/superTypeIsExtensionType", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/suppress", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/surroundWithNullCheck", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/surroundWithNullCheck", pattern = pattern)
             model("$idea/quickfix/suspiciousCollectionReassignment", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/tooLongCharLiteralToString", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/typeImports", pattern = pattern, isIgnored = true)
@@ -209,10 +209,22 @@ internal fun MutableTWorkspace.generateK2FixTests() {
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
+            val pattern = Patterns.forRegex("""^(\w+)\.((before\.Main\.\w+)|(test))$""")
+            val testMethodName = "doTestWithExtraFile"
             model(
                 "$idea/quickfix/autoImports",
-                pattern = Patterns.forRegex("""^(\w+)\.((before\.Main\.\w+)|(test))$"""),
-                testMethodName = "doTestWithExtraFile"
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/surroundWithNullCheck",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/modifiers/addOpenToClassDeclaration",
+                pattern = pattern,
+                testMethodName = testMethodName,
             )
         }
 

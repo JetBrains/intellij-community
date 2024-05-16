@@ -54,7 +54,7 @@ object NewUINotebookDiffEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val EXTRA_PADDING_EXECUTION_COUNT = 0
   override val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT = 0  // not needed, see JupyterEditorGutterExtraSpaceManager
 
-  override fun getCellLeftLineWidth(): Int = 10
+  override fun getCellLeftLineWidth(editor: Editor): Int = 10
   override fun getCellLeftLineHoverWidth(): Int = 10
 
   override fun getLeftBorderWidth(): Int =

@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.experiment.ab.impl.experiment
 
-import com.intellij.openapi.extensions.PluginAware
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
 
 /**
@@ -10,9 +8,8 @@ import com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSi
  *
  * Implement and register an option for your feature.
  *
- * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBase
  */
-interface ABExperimentOption : PluginAware {
+interface ABExperimentOption {
   val id: ABExperimentOptionId
 
   /**
@@ -25,9 +22,13 @@ interface ABExperimentOption : PluginAware {
    * In such a case, you need to communicate with related persons of other options
    * to handle such a case and rearrange option groups accordingly.
    *
+   * @param isPopularIde true if the current IDE is popular.
+   * It can be used to adjust the group size of the option accordingly.
+   * Popular IDEs have more users and the group size should be smaller than it is in other IDEs.
+   *
    * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperiment.TOTAL_NUMBER_OF_GROUPS
    */
-  fun getGroupSizeForIde(isPopular: Boolean): ABExperimentOptionGroupSize
+  fun getGroupSizeForIde(isPopularIde: Boolean): ABExperimentOptionGroupSize
 
   /**
    * Check if the option should be enabled in a certain IDE.
@@ -48,8 +49,6 @@ interface ABExperimentOption : PluginAware {
    * For IDEs it allows to control in what version of IDE what options are enabled.
    */
   fun checkIdeVersionIsSuitable(): Boolean
-
-  fun getPluginDescriptor(): PluginDescriptor
 }
 
 fun ABExperimentOption.isEnabled(): Boolean {

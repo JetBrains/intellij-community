@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 
@@ -31,7 +31,7 @@ class ParallelRunner(val project: Project, val cs: CoroutineScope) {
         }
       }
       else if (maxParallel <= 0) {
-        val runScope = cs.namedChildScope("ParallelRunner.runInParallel-unbounded", Dispatchers.IO, true)
+        val runScope = cs.childScope("ParallelRunner.runInParallel-unbounded", Dispatchers.IO, true)
         collection.map {
           runScope.async {
             method(it)
@@ -41,7 +41,7 @@ class ParallelRunner(val project: Project, val cs: CoroutineScope) {
 
       }
       else {
-        val runScope = cs.namedChildScope("ParallelRunner.runInParallel-bounded", Dispatchers.IO, true)
+        val runScope = cs.childScope("ParallelRunner.runInParallel-bounded", Dispatchers.IO, true)
         val semaphore = Semaphore(maxParallel)
         collection.map {
           semaphore.acquire()

@@ -283,7 +283,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     if (isInfoNotificationDisabled && type == NotificationType.INFORMATION) return
 
     /* Reuse [JarRepositoryManager]'s notification group */
-    val notification = JarRepositoryManager.GROUP.createNotification(
+    val notification = JarRepositoryManager.getNotificationGroup().createNotification(
       JavaUiBundle.message("repository.library.utils.library.update.title"),
       content,
       type

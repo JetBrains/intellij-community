@@ -47,6 +47,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.PsiAnnotationSupport"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.testFramework" interface="com.intellij.testIntegration.TestFramework" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.testFramework.java.dumbMode" interface="com.intellij.testIntegration.JavaTestFrameworkInDumbMode" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin" interface="org.jetbrains.uast.UastLanguagePlugin" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.analysis.uastAnalysisPlugin"
                     interface="org.jetbrains.uast.analysis.UastAnalysisPlugin"

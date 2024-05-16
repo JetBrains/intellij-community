@@ -2,6 +2,7 @@
 package com.intellij.history.integration.ui;
 
 import com.intellij.history.core.changes.ChangeSet;
+import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
@@ -142,6 +143,11 @@ public class HistoryDialogModelTest extends IntegrationTestCase {
 
   private void initModelFor() {
     m = new HistoryDialogModel(myProject, myGateway, getVcs(), f) {
+      @Override
+      protected @NotNull RootEntry createRootEntry() {
+        return getRootEntry();
+      }
+
       @Override
       public Reverter createReverter() {
         throw new UnsupportedOperationException();

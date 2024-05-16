@@ -8,6 +8,7 @@ import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.data.ExtActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.data.SyncActionsDataProvider
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -30,6 +31,7 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
   }
 
   private val lifetime = controller.lifetime.createNested().intersect(this.createLifetime())
+  private val syncDataProvider = SyncActionsDataProvider.createProvider(lifetime)
 
   private val accountLabel = JLabel("user.name").apply {
     icon = AllIcons.General.User
@@ -37,17 +39,19 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
     val settService = SettingsService.getInstance()
 
     settService.jbAccount.advise(lifetime) {
-      isVisible = it != null
-      if (!isVisible) {
-        return@advise
-      }
-
       text = it?.loginName
     }
 
+    settService.isSyncEnabled.advise(lifetime) {
+      isVisible = it
+    }
   }
 
-  private val pane = JPanel(VerticalLayout(JBUI.scale(26), SwingConstants.CENTER)).apply {
+  private val pane = object: JPanel(VerticalLayout(JBUI.scale(26), SwingConstants.CENTER)) {
+    override fun getComponentGraphics(g: Graphics?): Graphics {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
+    }
+  }.apply {
     add(JLabel(ImportSettingsBundle.message("choose.product.title")).apply {
       font = JBFont.h1()
     })
@@ -59,7 +63,7 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
     group.isPopup = false
 
     group.add(SyncStateAction())
-    group.add(SyncChooserAction(controller))
+    group.add(SyncChooserAction(controller, syncDataProvider))
     group.add(JbChooserAction(controller))
     for (service in SettingsService.getInstance().getExternalService().productServices) {
       val provider = ExtActionsDataProvider(service)
@@ -92,7 +96,7 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
     }
   }.apply {
     val group = DefaultActionGroup()
-    group.add(OtherOptions(controller))
+    group.add(OtherOptions(controller, syncDataProvider))
 
     val at = ActionToolbarImpl(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, true)
     at.setReservePlaceAutoPopupIcon(false)

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="opentelemetry-extension-kotlin" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-extension-kotlin:1.35.0">
+    <properties include-transitive-deps="false" maven-id="io.opentelemetry:opentelemetry-extension-kotlin:1.37.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.35.0/opentelemetry-extension-kotlin-1.35.0.jar">
-          <sha256sum>def759aa3b01758a72b573ef4f4eb39776d0975b1f60644c6f78ce4ec97e6354</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.37.0/opentelemetry-extension-kotlin-1.37.0.jar">
+          <sha256sum>d3d0f6410ad1d18c3970e1cb465e740e9f2623b21b749109e1afb4b8fa70af2c</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.35.0/opentelemetry-extension-kotlin-1.35.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.37.0/opentelemetry-extension-kotlin-1.37.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.35.0/opentelemetry-extension-kotlin-1.35.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-extension-kotlin/1.37.0/opentelemetry-extension-kotlin-1.37.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

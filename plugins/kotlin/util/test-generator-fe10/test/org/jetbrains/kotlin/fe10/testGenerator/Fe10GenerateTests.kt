@@ -107,6 +107,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineMultiFileTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTestWithSomeDescriptors
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
+import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractInplaceIntroduceFunctionTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractK1MultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMoveTest
 import org.jetbrains.kotlin.idea.refactoring.pullUp.AbstractPullUpTest
@@ -218,6 +219,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
           AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
           AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
           AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
+          AbstractInlineScopesAndK1IdeK2CodeEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
                 model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
@@ -638,8 +640,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("codeInsight/unwrapAndRemove/unwrapFunctionParameter", testMethodName = "doTestFunctionParameterUnwrapper")
         }
 
-        testClass<AbstractExpressionTypeTest> {
-            model("codeInsight/expressionType")
+        testClass<AbstractK1ExpressionTypeTest> {
+            model("codeInsight/expressionType", pattern = KT or TEST)
         }
 
         testClass<AbstractRenderingKDocTest> {
@@ -755,6 +757,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("findUsages/propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""))
         }
 
+        testClass<AbstractFindUsagesMultiModuleTest> {
+            model("multiModuleFindUsages", isRecursive = false, pattern = DIRECTORY)
+        }
+
         testClass<AbstractKotlinScriptFindUsagesTest> {
             model("findUsages/kotlinScript", pattern = Patterns.forRegex("""^(.+)\.0\.kts$"""))
         }
@@ -826,7 +832,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests") {
+    testGroup("idea/tests", category = CODE_INSIGHT) {
         testClass<AbstractFormatterTest> {
             model("formatter", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""))
             model(
@@ -848,7 +854,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 testClassName = "FormatterInvertedCallSite",
             )
         }
+    }
 
+    testGroup("idea/tests") {
         testClass<AbstractDiagnosticMessageTest> {
             model("diagnosticMessage", isRecursive = false)
         }
@@ -1143,7 +1151,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("idea/tests", category = EXTRACT_REFACTORING) {
         testClass<AbstractExtractionTest> {
             model("refactoring/introduceVariable", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
-            model("refactoring/extractFunction", pattern = KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("inplace"))
+            model("refactoring/extractFunction", pattern = KT_OR_KTS, testMethodName = "doExtractFunctionTest")
             model("refactoring/introduceProperty", pattern = KT_OR_KTS, testMethodName = "doIntroducePropertyTest")
             model("refactoring/introduceParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceSimpleParameterTest")
             model("refactoring/introduceLambdaParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceLambdaParameterTest")
@@ -1153,6 +1161,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/introduceConstant", pattern = KT_OR_KTS, testMethodName = "doIntroduceConstantTest")
             model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
             model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
+        }
+        testClass<AbstractInplaceIntroduceFunctionTest> {
+            model("refactoring/extractFunctionInplace")
         }
     }
 

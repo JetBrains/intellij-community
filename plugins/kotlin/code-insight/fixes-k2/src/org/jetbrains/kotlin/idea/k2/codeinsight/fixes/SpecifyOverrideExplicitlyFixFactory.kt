@@ -107,7 +107,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
         }
     }
 
-    class ElementContext(
+    private class ElementContext(
         val signature: String,
         val delegateParameters: MutableList<SmartPsiElementPointer<KtParameter>>,
         val generatedMembers: List<KtCallableDeclaration>,

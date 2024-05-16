@@ -3,12 +3,12 @@ package com.intellij.webSymbols.references
 
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 
-data class WebSymbolReferenceProblem(
-  val symbolKinds: Set<WebSymbolQualifiedKind>,
-  val kind: ProblemKind,
-  val descriptor: ProblemDescriptor,
-) {
+sealed interface WebSymbolReferenceProblem {
+  val symbolKinds: Set<WebSymbolQualifiedKind>
+  val kind: ProblemKind
+  val descriptor: ProblemDescriptor
 
   enum class ProblemKind {
     DeprecatedSymbol,
@@ -17,4 +17,19 @@ data class WebSymbolReferenceProblem(
     MissingRequiredPart,
     DuplicatedPart
   }
+
+  companion object {
+    fun create(
+      symbolKinds: Set<WebSymbolQualifiedKind>,
+      kind: ProblemKind,
+      descriptor: ProblemDescriptor,
+    ): WebSymbolReferenceProblem =
+      WebSymbolReferenceProblemData(symbolKinds, kind, descriptor)
+  }
 }
+
+private data class WebSymbolReferenceProblemData(
+  override val symbolKinds: Set<WebSymbolQualifiedKind>,
+  override val kind: ProblemKind,
+  override val descriptor: ProblemDescriptor,
+) : WebSymbolReferenceProblem

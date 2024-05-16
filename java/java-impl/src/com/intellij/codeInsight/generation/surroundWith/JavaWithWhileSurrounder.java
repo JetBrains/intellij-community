@@ -17,30 +17,32 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
+public class JavaWithWhileSurrounder extends JavaStatementsModCommandSurrounder {
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.while.template");
   }
 
   @Override
-  public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+  protected void surroundStatements(@NotNull ActionContext context,
+                                    @NotNull PsiElement container,
+                                    @NotNull PsiElement @NotNull [] statements,
+                                    @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
-    if (statements.length == 0){
-      return null;
-    }
+    if (statements.length == 0) return;
 
     @NonNls String text = "while(true){\n}";
     PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText(text, null);
@@ -49,15 +51,15 @@ public class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
     whileStatement = (PsiWhileStatement)addAfter(whileStatement, container, statements);
 
     PsiStatement body = whileStatement.getBody();
-    if (!(body instanceof PsiBlockStatement)) {
-      return null;
-    }
-    PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
+    if (!(body instanceof PsiBlockStatement block)) return;
+    PsiCodeBlock bodyBlock = block.getCodeBlock();
     SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements);
     addRangeWithinContainer(bodyBlock, container, statements, false);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiExpression condition = whileStatement.getCondition();
-    return condition == null ? null : condition.getTextRange();
+    if (condition != null) {
+      updater.select(condition);
+    }
   }
 }

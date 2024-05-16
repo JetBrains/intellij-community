@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -108,6 +109,14 @@ class KotlinLambdaAsyncMethodFilter(
             }
 
             val frameIndex = if (methodName.isGeneratedIrBackendLambdaMethodName()) 1 else 0
+            return isTargetLambda(thread, frameIndex)
+                    // For lambdas passed to Java functions, the lambda could be additionally wrapped for type compatibility.
+                    // One of the previous frames (heuristically 3rd frame) should contain the original lambda.
+                    || isTargetLambda(thread, 3)
+        }
+
+        private fun isTargetLambda(thread: ThreadReferenceProxyImpl, frameIndex: Int): Boolean {
+            if (thread.frameCount() <= frameIndex) return false
             val lambdaReference = thread.frame(frameIndex).safeThisObject()
             return lambdaReference != null && lambdaReference.uniqueID() == lambdaId
         }

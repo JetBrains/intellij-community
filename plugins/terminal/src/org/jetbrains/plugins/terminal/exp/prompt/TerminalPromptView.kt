@@ -53,7 +53,7 @@ internal class TerminalPromptView(
   init {
     val editorTextField = createPromptTextField(session)
     editor = editorTextField.getEditor(true) as EditorImpl
-    controller = TerminalPromptController(editor, session, commandExecutor)
+    controller = TerminalPromptController(project, editor, session, commandExecutor)
     controller.addListener(this)
 
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, controller.model, commandExecutor)

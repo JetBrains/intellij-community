@@ -24,12 +24,12 @@ import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.Writer
 import java.net.URL
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -68,7 +68,7 @@ class PluginClassLoader(
   private val coreLoader: ClassLoader,
   resolveScopeManager: ResolveScopeManager?,
   packagePrefix: String?,
-  private val libDirectories: MutableList<String>,
+  private val libDirectories: List<Path>,
 ) : UrlClassLoader(classPath), PluginAwareClassLoader {
   // cache of a computed list of all parents (not only direct)
   @Volatile
@@ -119,9 +119,7 @@ class PluginClassLoader(
     }
   }
 
-  fun getLibDirectories(): MutableList<String> {
-    return libDirectories
-  }
+  fun getLibDirectories(): List<Path> = libDirectories
 
   override fun getPackagePrefix(): String? = packagePrefix
 
@@ -178,7 +176,7 @@ class PluginClassLoader(
         _resolveScopeManager.isDefinitelyAlienClass(name = name, packagePrefix = it, force = forceLoadFromSubPluginClassloader)
       }
       if (consistencyError == null) {
-        c = loadClassInsideSelf(name, fileName, packageNameHash, forceLoadFromSubPluginClassloader)
+        c = loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash, forceLoadFromSubPluginClassloader = forceLoadFromSubPluginClassloader)
       }
       else {
         if (!consistencyError.isEmpty()) {
@@ -314,36 +312,34 @@ class PluginClassLoader(
     return consistencyError == null && super.hasLoadedClass(name)
   }
 
-  override fun loadClassInsideSelf(name: String,
-                                   fileName: String,
-                                   packageNameHash: Long,
-                                   forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
+  override fun loadClassInsideSelf(name: String): Class<*>? {
+    val fileNameWithoutExtension = name.replace('.', '/')
+    val fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION
+    val packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'))
+    return loadClassInsideSelf(name, fileName, packageNameHash, false)
+  }
+
+  override fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long, forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
     synchronized(getClassLoadingLock(name)) {
       var c = findLoadedClass(name)
-      if (c != null && c.classLoader === this) {
+      if (c?.classLoader === this) {
         return c
       }
 
-      val logStream = logStream
       c = try {
         classPath.findClass(name, fileName, packageNameHash, classDataConsumer)
       }
       catch (e: LinkageError) {
         logStream?.let { logClass(name = name, logStream = it, exception = e) }
         flushDebugLog()
-        throw PluginException("""Cannot load class $name (
-  error: ${e.message},
-  classLoader=$this
-)""", e, pluginId)
+        throw PluginException("Cannot load class $name (\n  error: ${e.message},\n  classLoader=$this\n)", e, pluginId)
       }
       if (c == null) {
         return null
       }
 
       loadedClassCounter.incrementAndGet()
-      if (logStream != null) {
-        logClass(name = name, logStream = logStream, exception = null)
-      }
+      logStream?.let { logClass(name = name, logStream = it, exception = null) }
       return c
     }
   }
@@ -461,9 +457,9 @@ ${if (exception == null) "" else exception.message}""")
       val libFileName = System.mapLibraryName(libName)
       val iterator = libDirectories.listIterator(libDirectories.size)
       while (iterator.hasPrevious()) {
-        val libFile = File(iterator.previous(), libFileName)
-        if (libFile.exists()) {
-          return libFile.absolutePath
+        val libFile = iterator.previous().resolve(libFileName)
+        if (Files.exists(libFile)) {
+          return libFile.toString()
         }
       }
     }

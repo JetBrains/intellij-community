@@ -8,13 +8,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 
 internal class GithubYamlIconProvider : FileIconProvider {
-
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
-
-    if (isGithubActionsFile(file, project)) {
+    if (isGithubActionsFile(file)) {
       return AllIcons.Vcs.Vendors.Github
     }
-
     return null
   }
 }

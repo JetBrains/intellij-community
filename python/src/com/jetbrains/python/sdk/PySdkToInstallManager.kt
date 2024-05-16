@@ -4,19 +4,13 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Version
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.installer.*
+import com.jetbrains.python.sdk.installer.BinaryInstallation
+import com.jetbrains.python.sdk.installer.BinaryInstallerUsagesCollector
+import com.jetbrains.python.sdk.installer.ResourceTypeBinaryInstaller
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
@@ -50,62 +44,6 @@ object PySdkToInstallManager {
     }.toMap()
   }
 
-  fun install(binaryInstallation: BinaryInstallation, project: Project?, indicator: ProgressIndicator) {
-    val (release, binary, installer) = binaryInstallation
-    installer.install(binary, indicator) {
-      PySdkToInstallCollector.logSdkDownload(
-        project, release.version, PySdkToInstallCollector.DownloadResult.OK
-      )
-    }
-    PySdkToInstallCollector.logSdkInstall(
-      project, release.version, PySdkToInstallCollector.InstallationResult.OK
-    )
-  }
-
-  fun install(sdk: PySdkToInstall, project: Project?, indicator: ProgressIndicator) {
-    install(sdk.installation, project, indicator)
-  }
-
-  @RequiresEdt
-  fun install(sdk: PySdkToInstall, module: Module?, systemWideSdksDetector: () -> List<PyDetectedSdk>): PyDetectedSdk? {
-    val project = module?.project
-    try {
-      return ProgressManager.getInstance().run(
-        object : Task.WithResult<PyDetectedSdk?, Exception>(project, PyBundle.message("python.sdk.installing", sdk.name), true) {
-          override fun compute(indicator: ProgressIndicator): PyDetectedSdk? {
-            install(sdk, project, indicator)
-            return findInstalledSdk(
-              languageLevel = Version.parseVersion(sdk.installation.release.version).toLanguageLevel(),
-              project = project,
-              systemWideSdksDetector = systemWideSdksDetector
-            )
-          }
-        }
-      )
-    }
-    catch (ex: BinaryInstallerException) {
-      LOGGER.info(ex)
-      PySdkToInstallCollector.logInstallerException(project, sdk.installation.release, ex)
-      showErrorNotification(project, sdk.installation.release, ex)
-    }
-    return null
-  }
-
-  private fun showErrorNotification(project: Project?, release: Release, ex: BinaryInstallerException) {
-    val title = when (ex) {
-      is PrepareException -> PyBundle.message("python.sdk.download.failed.title", release.title)
-      else -> PyBundle.message("python.sdk.installation.failed.title", release.title)
-    }
-
-    val message = when (ex) {
-      is CancelledProcessException, is CancelledPrepareException -> PyBundle.message("python.sdk.installation.cancelled.message")
-      is PrepareException -> PyBundle.message("python.sdk.download.failed.message")
-      else -> PyBundle.message("python.sdk.try.to.install.python.manually")
-    }
-    Messages.showErrorDialog(project, message, title)
-  }
-
-
   private fun getLanguageLevelInstallations(product: Product = Product.CPython): Map<LanguageLevel, List<BinaryInstallation>> {
     return SdksKeeper.pythonReleasesByLanguageLevel().mapValues { (_, releases) ->
       val releaseBinaries = releases
@@ -123,7 +61,7 @@ object PySdkToInstallManager {
   }
 
 
-  private fun findInstalledSdk(languageLevel: LanguageLevel?,
+  fun findInstalledSdk(languageLevel: LanguageLevel?,
                                project: Project?,
                                systemWideSdksDetector: () -> List<PyDetectedSdk>): PyDetectedSdk? {
     LOGGER.debug("Resetting system-wide sdks detectors")
@@ -140,12 +78,13 @@ object PySdkToInstallManager {
         languageLevel?.equals(detectedLevel) ?: true
       }
       .also {
-        PySdkToInstallCollector.logSdkLookup(
+        BinaryInstallerUsagesCollector.logLookupEvent(
           project,
+          Product.CPython,
           languageLevel.toString(),
           when (it.isNotEmpty()) {
-            true -> PySdkToInstallCollector.LookupResult.FOUND
-            false -> PySdkToInstallCollector.LookupResult.NOT_FOUND
+            true -> BinaryInstallerUsagesCollector.LookupResult.FOUND
+            false -> BinaryInstallerUsagesCollector.LookupResult.NOT_FOUND
           }
         )
       }

@@ -21,6 +21,11 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
     return false
   }
 
+    override fun isUsageOfActual(
+        reference: PsiReference,
+        declaration: KtNamedDeclaration
+    ): Boolean = false
+
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean =
         reference.isCallableOverrideUsage(declaration)
 

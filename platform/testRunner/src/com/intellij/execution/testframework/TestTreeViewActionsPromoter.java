@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class TestTreeViewActionsPromoter implements ActionPromoter {
+class TestTreeViewActionsPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     if (AbstractTestProxy.DATA_KEY.getData(context) != null) {

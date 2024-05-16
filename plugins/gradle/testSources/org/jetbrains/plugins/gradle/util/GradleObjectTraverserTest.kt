@@ -16,7 +16,7 @@ class GradleObjectTraverserTest {
     val aRootObject = Data(NestedData1(), NestedData2())
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("Data", "NestedData1", "NestedData2"), result)
@@ -31,7 +31,7 @@ class GradleObjectTraverserTest {
     val aRootObject = Data(NestedData1(), NestedData2())
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("Data", "NestedData1", "NestedData2"), result)
@@ -46,7 +46,7 @@ class GradleObjectTraverserTest {
     val aRootObject = Data(NestedData1(1), NestedData2(1.0f))
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("Data", "NestedData1", "NestedData2"), result)
@@ -63,7 +63,7 @@ class GradleObjectTraverserTest {
     }
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("ArrayList", "UniqueData", "UniqueData", "UniqueData"), result)
@@ -78,7 +78,7 @@ class GradleObjectTraverserTest {
     }
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("ArrayList"), result)
@@ -96,7 +96,7 @@ class GradleObjectTraverserTest {
     }
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf(
@@ -116,7 +116,7 @@ class GradleObjectTraverserTest {
     }
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("LinkedHashMap"), result)
@@ -131,7 +131,7 @@ class GradleObjectTraverserTest {
     val aRootObject = Data(NestedData1(), NestedData2())
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject, classesToSkip = setOf(NestedData1::class.java)) { anObject ->
+    GradleObjectTraverser(classesToSkip = setOf(NestedData1::class.java)).walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("Data", "NestedData2"), result)
@@ -146,7 +146,7 @@ class GradleObjectTraverserTest {
     val aRootObject = Data(NestedData1(), NestedData2())
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject, classesToSkip = setOf(Data::class.java)) { anObject ->
+    GradleObjectTraverser(classesToSkip = setOf(Data::class.java)).walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf<String>(), result)
@@ -161,7 +161,7 @@ class GradleObjectTraverserTest {
     val aRootObject = Data(NestedData1(), NestedData2())
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject, classesToSkipChildren = setOf(Data::class.java)) { anObject ->
+    GradleObjectTraverser(classesToSkipChildren = setOf(Data::class.java)).walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("Data"), result)
@@ -177,7 +177,7 @@ class GradleObjectTraverserTest {
     val aRootObject = Data(NestedData1(), NestedData2())
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("Data", "NestedData2", "NestedData1"), result)
@@ -192,7 +192,7 @@ class GradleObjectTraverserTest {
     val aRootObject = Data(aNestedObject, aNestedObject, aNestedObject)
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("Data", "NestedData"), result)
@@ -212,7 +212,7 @@ class GradleObjectTraverserTest {
     aNestedObject.children.add(aRootObject)
 
     val result = ArrayList<String>()
-    GradleObjectTraverser.traverse(aRootObject) { anObject ->
+    GradleObjectTraverser().walk(aRootObject) { anObject ->
       result.add(anObject.javaClass.simpleName)
     }
     Assertions.assertEquals(listOf("Root", "ArrayList", "Node", "ArrayList"), result)

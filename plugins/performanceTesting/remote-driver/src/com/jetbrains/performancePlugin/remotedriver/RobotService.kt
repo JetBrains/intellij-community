@@ -13,7 +13,7 @@ internal class RobotService {
   val robot: SmoothRobot = SmoothRobot()
 
   fun saveHierarchy(folderPath: String, fileName: String = "ui.html") {
-    val html = XpathDataModelCreator.create(null).convertToHtml()
+    val html = XpathDataModelCreator().create(null).convertToHtml()
     Paths.get(folderPath).resolve(fileName).toFile().writeText(html)
 
     staticFiles.forEach { staticFilePath ->

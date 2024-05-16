@@ -172,10 +172,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Override
   public int getMnemonicPos(final PopupFactoryImpl.ActionItem value) {
     String text = getTextFor(value);
-    int i = text.indexOf(UIUtil.MNEMONIC);
-    if (i < 0) i = text.indexOf('&');
-    if (i < 0) i = text.indexOf('_');
-    return i;
+    return text.indexOf(UIUtil.MNEMONIC);
   }
 
   @Override

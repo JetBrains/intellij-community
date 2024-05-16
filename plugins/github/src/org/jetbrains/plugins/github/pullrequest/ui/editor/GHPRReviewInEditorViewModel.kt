@@ -44,7 +44,7 @@ internal class GHPRReviewInEditorViewModelImpl(
   private val threadsVms: GHPRThreadsViewModels,
   private val showDiff: (ChangesSelection) -> Unit
 ) : GHPRReviewInEditorViewModel {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
   private val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
 
   private val changesComputationState =

@@ -94,7 +94,8 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
             TestCompileConfiguration(
                 lambdasGenerationScheme,
                 languageVersion = chooseLanguageVersionForCompilation(compileWithK2),
-                enabledLanguageFeatures = emptyList()
+                enabledLanguageFeatures = emptyList(),
+                useInlineScopes = false
             )
         )
         compilerFacility.compileTestSourcesWithCli(

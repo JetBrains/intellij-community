@@ -12,7 +12,7 @@ import javax.swing.UIManager
 class LcrTextInitParams(foreground: Color) : LcrInitParams() {
 
   /**
-   * A grey text, that is usually used for non-primary information in renderers
+   * A gray text, that is usually used for non-primary information in renderers
    */
   val greyForeground: Color
     get() = NamedColorUtil.getInactiveTextColor()
@@ -30,4 +30,9 @@ class LcrTextInitParams(foreground: Color) : LcrInitParams() {
   var attributes: SimpleTextAttributes? = null
 
   var font: Font? = UIManager.getFont("Label.font")
+
+  /**
+   * true if the text is used by speed search and therefore should be highlighted while searching
+   */
+  var speedSearchHighlighting: Boolean = true
 }

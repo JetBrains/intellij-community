@@ -178,7 +178,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
           return InvisibleEditor(editor)
         }
         else if (isFinishedInDumbMode || isCancelled) {
-          LOG.info("Unfinished editor ${editor.description}")
+          LOG.info("Unfinished editor isFinishedInDumbMode=$isFinishedInDumbMode, isCancelled=$isCancelled ${editor.description}")
           return IncompletelyHighlightedEditor(editor)
         }
         else {
@@ -205,7 +205,8 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
         else {
           val shouldWait = highlightedEditor.shouldWaitForNextHighlighting || exceptionWithTime.wasStartedInLimitedSetup
           LOG.info("daemon stopped for ${highlightedEditor.editor.description}, " +
-                   "shouldWaitForHighlighting=${shouldWait}")
+                   "shouldWaitForHighlighting=${shouldWait}, " +
+                   "editor.shouldWaitForNextHighlighting=${highlightedEditor.shouldWaitForNextHighlighting}")
           if (shouldWait) {
             ExceptionWithTime.markAnalysisFinished(exceptionWithTime)
           }

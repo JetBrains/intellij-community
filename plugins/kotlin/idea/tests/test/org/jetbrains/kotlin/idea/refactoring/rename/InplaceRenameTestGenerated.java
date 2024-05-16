@@ -118,6 +118,21 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/conflicts/typeParameters/HidingClassByTypeParameter1.kt");
     }
 
+    @TestMetadata("conflicts/typeParameters/TypeParameterInCompanionDontHideOuter.kt")
+    public void testConflicts_typeParameters_TypeParameterInCompanionDontHideOuter() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterInCompanionDontHideOuter.kt");
+    }
+
+    @TestMetadata("conflicts/typeParameters/TypeParameterInInnerHideOuter.kt")
+    public void testConflicts_typeParameters_TypeParameterInInnerHideOuter() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterInInnerHideOuter.kt");
+    }
+
+    @TestMetadata("conflicts/typeParameters/TypeParameterInStaticDontHideOuter.kt")
+    public void testConflicts_typeParameters_TypeParameterInStaticDontHideOuter() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterInStaticDontHideOuter.kt");
+    }
+
     @TestMetadata("conflicts/typeParameters/TypeParameterVsLocalFunction.kt")
     public void testConflicts_typeParameters_TypeParameterVsLocalFunction() throws Exception {
         runTest("testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterVsLocalFunction.kt");

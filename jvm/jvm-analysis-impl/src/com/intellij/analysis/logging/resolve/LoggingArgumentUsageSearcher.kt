@@ -7,7 +7,7 @@ import com.intellij.find.usages.api.UsageSearchParameters
 import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.util.Query
-import com.siyeh.ig.format.DefUsage
+import com.siyeh.ig.format.PsiElementUsage
 
 class LoggingArgumentUsageSearcher : UsageSearcher {
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> {
@@ -16,7 +16,7 @@ class LoggingArgumentUsageSearcher : UsageSearcher {
     val uLiteralExpression = target.getPlaceholderString() ?: return emptyList()
     return getLogArgumentReferences(uLiteralExpression)?.let {
       it.filter { ref: PsiSymbolReference -> ref.resolvesTo(target) }
-        .flatMap { usage -> listOf(PsiUsage.textUsage(usage), DefUsage(target.expression)) }
+        .flatMap { usage -> listOf(PsiUsage.textUsage(usage), PsiElementUsage(target.expression)) }
         .map { psiUsage -> LoggingArgumentPsiUsageQuery(psiUsage) }
     } ?: emptyList()
   }

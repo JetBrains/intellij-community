@@ -27,7 +27,7 @@ public class SuspendManagerImpl implements SuspendManager {
    * "paused at breakpoint" and JDI prohibits data queries on its stack frames
    */
   private final Deque<SuspendContextImpl> myPausedContexts = new ConcurrentLinkedDeque<>();
-  private final Set<ThreadReferenceProxyImpl> myFrozenThreads = Collections.synchronizedSet(new HashSet<>());
+  private final Set<ThreadReferenceProxyImpl> myFrozenThreads = ConcurrentCollectionFactory.createConcurrentSet();
 
   private final DebugProcessImpl myDebugProcess;
 
@@ -81,7 +81,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @NotNull
   @Override
-  public SuspendContextImpl pushSuspendContext(final EventSet set) {
+  public SuspendContextImpl pushSuspendContext(final @NotNull EventSet set) {
     SuspendContextImpl suspendContext = new SuspendContextImpl(myDebugProcess, set.suspendPolicy(), set.size(), set) {
       @Override
       protected void resumeImpl() {
@@ -108,7 +108,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public void resume(SuspendContextImpl context) {
+  public void resume(@NotNull SuspendContextImpl context) {
     SuspendManagerUtil.prepareForResume(context);
 
     myDebugProcess.logThreads();
@@ -118,7 +118,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public void popFrame(SuspendContextImpl suspendContext) {
+  public void popFrame(@NotNull SuspendContextImpl suspendContext) {
     boolean paused = hasPausedContext(suspendContext);
     popContext(suspendContext);
     suspendContext.resume(false); // just set resumed flag for correct commands cancellation
@@ -157,12 +157,12 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public boolean isFrozen(ThreadReferenceProxyImpl thread) {
+  public boolean isFrozen(@NotNull ThreadReferenceProxyImpl thread) {
     return myFrozenThreads.contains(thread);
   }
 
   @Override
-  public boolean isSuspended(ThreadReferenceProxyImpl thread) throws ObjectCollectedException {
+  public boolean isSuspended(@NotNull ThreadReferenceProxyImpl thread) throws ObjectCollectedException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     boolean suspended;
@@ -178,11 +178,11 @@ public class SuspendManagerImpl implements SuspendManager {
     //if (LOG.isDebugEnabled() && suspended) {
     //  LOG.assertTrue(thread.suspends(), thread.name());
     //}
-    return suspended && (thread == null || thread.isSuspended());
+    return suspended && thread.isSuspended();
   }
 
   @Override
-  public void suspendThread(SuspendContextImpl context, ThreadReferenceProxyImpl thread) {
+  public void suspendThread(@NotNull SuspendContextImpl context, @NotNull ThreadReferenceProxyImpl thread) {
     LOG.assertTrue(thread != context.getEventThread(), "Thread is already suspended at the breakpoint");
 
     if (context.isExplicitlyResumed(thread)) {
@@ -193,7 +193,7 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public void resumeThread(SuspendContextImpl context, @NotNull ThreadReferenceProxyImpl thread) {
+  public void resumeThread(@NotNull SuspendContextImpl context, @NotNull ThreadReferenceProxyImpl thread) {
     //LOG.assertTrue(thread != context.getThread(), "Use resume() instead of resuming breakpoint thread");
     LOG.assertTrue(!context.isExplicitlyResumed(thread));
 
@@ -206,14 +206,14 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public void freezeThread(ThreadReferenceProxyImpl thread) {
+  public void freezeThread(@NotNull ThreadReferenceProxyImpl thread) {
     if (myFrozenThreads.add(thread)) {
       thread.suspend();
     }
   }
 
   @Override
-  public void unfreezeThread(ThreadReferenceProxyImpl thread) {
+  public void unfreezeThread(@NotNull ThreadReferenceProxyImpl thread) {
     if (myFrozenThreads.remove(thread)) {
       thread.resume();
     }
@@ -252,19 +252,19 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   @Override
-  public void voteResume(SuspendContextImpl suspendContext) {
+  public void voteResume(@NotNull SuspendContextImpl suspendContext) {
     LOG.debug("Resume voted");
     processVote(suspendContext);
   }
 
   @Override
-  public void voteSuspend(SuspendContextImpl suspendContext) {
+  public void voteSuspend(@NotNull SuspendContextImpl suspendContext) {
     suspendContext.myIsVotedForResume = false;
     processVote(suspendContext);
   }
 
   @Override
-  public List<SuspendContextImpl> getPausedContexts() {
+  public @NotNull List<SuspendContextImpl> getPausedContexts() {
     return new ArrayList<>(myPausedContexts);
   }
 

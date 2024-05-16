@@ -512,7 +512,13 @@ public final class IOUtil {
     }
     catch (Throwable mainEx) {
       try {
-        storageToWrap.close();
+        if (storageToWrap instanceof Unmappable) {
+          Unmappable unmappable = (Unmappable)storageToWrap;
+          unmappable.closeAndUnsafelyUnmap();
+        }
+        else {
+          storageToWrap.close();
+        }
       }
       catch (Throwable closeEx) {
         mainEx.addSuppressed(closeEx);

@@ -61,6 +61,9 @@
     <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger" dynamic="true"/>
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter" dynamic="true"/>
     <extensionPoint name="optionController" interface="com.intellij.codeInspection.options.OptionControllerProvider" dynamic="true"/>
+    <extensionPoint name="formatting.caretRestorationDecider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.formatting.CaretRestorationDecider"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.codeInsight.completion.InternalCompletionSettings"/>

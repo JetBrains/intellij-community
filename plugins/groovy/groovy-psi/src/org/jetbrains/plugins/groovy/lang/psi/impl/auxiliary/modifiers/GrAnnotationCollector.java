@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
@@ -201,11 +202,13 @@ public final class GrAnnotationCollector {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Set<String> result = new HashSet<>();
       GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      for (PsiClass collector : JavaPsiFacade.getInstance(project).findClasses(GROOVY_TRANSFORM_ANNOTATION_COLLECTOR, scope)) {
-        AnnotatedElementsSearch.searchPsiClasses(collector, scope).forEach(aClass -> {
-          ContainerUtil.addIfNotNull(result, aClass.getName());
-          return true;
-        });
+      if (!DumbService.isDumb(project)) {
+        for (PsiClass collector : JavaPsiFacade.getInstance(project).findClasses(GROOVY_TRANSFORM_ANNOTATION_COLLECTOR, scope)) {
+          AnnotatedElementsSearch.searchPsiClasses(collector, scope).forEach(aClass -> {
+            ContainerUtil.addIfNotNull(result, aClass.getName());
+            return true;
+          });
+        }
       }
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });

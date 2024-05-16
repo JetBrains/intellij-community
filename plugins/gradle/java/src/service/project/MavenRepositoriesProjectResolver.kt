@@ -9,21 +9,21 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
-import org.jetbrains.plugins.gradle.model.RepositoriesModel
+import org.jetbrains.plugins.gradle.model.RepositoryModels
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.*
 
 
 class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
   override fun populateProjectExtraModels(gradleProject: IdeaProject, ideProject: DataNode<ProjectData>) {
-    val repositories = resolverCtx.getRootModel(RepositoriesModel::class.java)
+    val repositories = resolverCtx.getRootModel(RepositoryModels::class.java)
     addRepositoriesToProject(ideProject, repositories)
 
     super.populateProjectExtraModels(gradleProject, ideProject)
   }
 
   override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
-    val repositories = resolverCtx.getExtraProject(gradleModule, RepositoriesModel::class.java)
+    val repositories = resolverCtx.getExtraProject(gradleModule, RepositoryModels::class.java)
     val ideProject = ExternalSystemApiUtil.findParent(ideModule, ProjectKeys.PROJECT)
     ideProject?.let { addRepositoriesToProject(it, repositories) }
 
@@ -31,18 +31,18 @@ class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
   }
 
   override fun getExtraProjectModelClasses(): MutableSet<Class<*>> {
-    return Collections.singleton(RepositoriesModel::class.java)
+    return Collections.singleton(RepositoryModels::class.java)
   }
 
   private fun addRepositoriesToProject(ideProject: DataNode<ProjectData>,
-                                       repositories: RepositoriesModel?) {
+                                       repositories: RepositoryModels?) {
     if (repositories != null) {
       val knownRepositories = ExternalSystemApiUtil.getChildren(ideProject, MavenRepositoryData.KEY)
         .asSequence()
         .map { it.data }
         .toSet()
 
-      repositories.all.asSequence()
+      repositories.repositories.asSequence()
         .map { MavenRepositoryData(GradleConstants.SYSTEM_ID, it.name, it.url) }
         .filter { !knownRepositories.contains(it) }
         .forEach { ideProject.addChild(DataNode(MavenRepositoryData.KEY, it, ideProject)) }

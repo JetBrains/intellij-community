@@ -69,6 +69,9 @@ public final class JBSwingUtilities {
     return image.createGraphics();
   });
 
+  /**
+   * A rendering hint for explicit alpha value setting of the background image drawn by IdeBackgroundUtils
+   */
   @ApiStatus.Internal
   public static final RenderingHints.Key ADJUSTED_BACKGROUND_ALPHA = new RenderingHints.Key(1) {
     @Override

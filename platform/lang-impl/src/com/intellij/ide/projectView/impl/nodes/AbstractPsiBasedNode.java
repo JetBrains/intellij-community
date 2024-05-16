@@ -39,14 +39,12 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileTimestamp;
 import static com.intellij.ide.projectView.impl.nodes.ProjectViewNodeExtensionsKt.getVirtualFileForNodeOrItsPSI;
@@ -71,6 +69,14 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   protected abstract @Nullable Collection<AbstractTreeNode<?>> getChildrenImpl();
 
   protected abstract void updateImpl(@NotNull PresentationData data);
+
+  @Override
+  @ApiStatus.Internal
+  public @Nullable Map<String, String> getCacheableAttributes() {
+    var file = getVirtualFile();
+    if (file == null) file = getVirtualFileForValue();
+    return getCacheableAttributesFromFile(file);
+  }
 
   @Override
   public final @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {

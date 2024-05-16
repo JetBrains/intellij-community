@@ -397,19 +397,6 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
   return result
 }
 
-fun createStashHandler(project: Project, root: VirtualFile, keepIndex: Boolean = false, message: String = ""): GitLineHandler {
-  val handler = GitLineHandler(project, root, GitCommand.STASH)
-  handler.addParameters("save")
-  if (keepIndex) {
-    handler.addParameters("--keep-index")
-  }
-  val msg = message.trim()
-  if (msg.isNotEmpty()) {
-    handler.addParameters(msg)
-  }
-  return handler
-}
-
 private fun createUnstashHandler(project: Project, stash: StashInfo, branch: String?,
                                  popStash: Boolean, reinstateIndex: Boolean): GitLineHandler {
   val h = GitLineHandler(project, stash.root, GitCommand.STASH)
@@ -426,18 +413,35 @@ private fun createUnstashHandler(project: Project, stash: StashInfo, branch: Str
   return h
 }
 
-fun createStashPushHandler(project: Project, root: VirtualFile, files: Collection<FilePath>, vararg parameters: String): GitLineHandler {
+fun createStashHandler(project: Project, root: VirtualFile, keepIndex: Boolean = false, message: String = ""): GitLineHandler {
+  return createStashHandler(project, root, emptyList(), buildList {
+    if (keepIndex) add("--keep-index")
+    val msg = message.trim()
+    if (msg.isNotEmpty()) {
+      add("--message")
+      add(msg)
+    }
+  })
+}
+
+fun createStashHandler(project: Project, root: VirtualFile, files: Collection<FilePath>, vararg parameters: String): GitLineHandler {
+  return createStashHandler(project, root, files, parameters.toList())
+}
+
+private fun createStashHandler(project: Project, root: VirtualFile, files: Collection<FilePath>, parameters: List<String>): GitLineHandler {
   val handler = GitLineHandler(project, root, GitCommand.STASH)
   handler.addParameters("push")
-  handler.addParameters(*parameters)
-  if (GitVersionSpecialty.STASH_PUSH_PATHSPEC_FROM_FILE_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))) {
-    handler.addParameters("--pathspec-from-file=-")
-    handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(VcsFileUtil.toRelativePaths(root, files),
-                                                                      "\n", handler.charset, false))
-  }
-  else {
-    handler.endOptions()
-    handler.addRelativePaths(files)
+  handler.addParameters(parameters)
+  if (files.isNotEmpty()) {
+    if (GitVersionSpecialty.STASH_PUSH_PATHSPEC_FROM_FILE_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))) {
+      handler.addParameters("--pathspec-from-file=-")
+      handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(VcsFileUtil.toRelativePaths(root, files),
+                                                                        "\n", handler.charset, false))
+    }
+    else {
+      handler.endOptions()
+      handler.addRelativePaths(files)
+    }
   }
   return handler
 }

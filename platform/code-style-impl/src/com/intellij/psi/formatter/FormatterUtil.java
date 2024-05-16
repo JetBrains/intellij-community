@@ -26,12 +26,6 @@ import java.util.Collections;
 
 public final class FormatterUtil {
 
-  /**
-   * @deprecated Use {@link #getReformatBeforeCommitCommandName()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final String REFORMAT_BEFORE_COMMIT_COMMAND_NAME = "Reformat Code Before Commit";
-
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtil.newHashSet(
     CodeStyleBundle.message("process.reformat.code"), getReformatBeforeCommitCommandName()
   ));

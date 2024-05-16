@@ -241,8 +241,8 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   public static int currentImplementationVersion() {
-    //bumped main version (62 -> 63) because records.ownershipAcquisitionTimestamp header field added
-    final int mainVFSFormatVersion = 63;
+    //bumped main version (63 -> 64) because AppendOnlyLog ids assignment algo changed
+    final int mainVFSFormatVersion = 64;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.storageImplementation().getId()), /* acceptable range is [0..255] */ 8,
            nextMask(!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE,  //former USE_CONTENT_HASHES=true, this is why negation

@@ -123,6 +123,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
+    public boolean isAlwaysVisible() {
+      var pane = getCurrentProjectViewPane();
+      return pane != null && pane.supportsAbbreviatePackageNames();
+    }
+
+    @Override
     public boolean isSelected() {
       return currentState.getAbbreviatePackageNames();
     }
@@ -960,6 +966,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public synchronized void setupImpl(@NotNull ToolWindow toolWindow, final boolean loadPaneExtensions) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isInitialized) return;
+    project.getService(ProjectViewInitNotifier.class).initStarted();
 
     actionGroup = new DefaultActionGroup();
 

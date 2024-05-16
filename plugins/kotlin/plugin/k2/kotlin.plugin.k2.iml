@@ -69,10 +69,10 @@
     <orderEntry type="module" module-name="kotlin.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.fir.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.fir.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" scope="RUNTIME" />
@@ -97,7 +97,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.refactorings.introduce.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.searching.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" scope="RUNTIME" />
@@ -115,5 +114,6 @@
     <orderEntry type="module" module-name="kotlin.formatter.minimal" />
     <orderEntry type="module" module-name="kotlin.ide" />
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" scope="RUNTIME" />
   </component>
 </module>

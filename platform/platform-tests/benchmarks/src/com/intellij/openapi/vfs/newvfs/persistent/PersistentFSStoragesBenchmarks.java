@@ -65,7 +65,7 @@ public class PersistentFSStoragesBenchmarks {
 
 
   @State(Scope.Thread)
-  public static class IterationState {
+  public static class RecordIterationState {
     public int cursor = 0;
 
     @Setup
@@ -262,7 +262,7 @@ public class PersistentFSStoragesBenchmarks {
 
     //RC: first establish baseline(s): sequential array/bytebuffer read, random read, random volatile read
     @Benchmark
-    public int array_SequentialPlainRead(final IterationState it,
+    public int array_SequentialPlainRead(final RecordIterationState it,
                                          final ArrayState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final int[] array = state.array;
@@ -275,7 +275,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int array_RandomPlainRead(final IterationState it,
+    public int array_RandomPlainRead(final RecordIterationState it,
                                      final ArrayState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final int[] array = state.array;
@@ -288,7 +288,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int array_RandomVolatileRead(final IterationState it,
+    public int array_RandomVolatileRead(final RecordIterationState it,
                                         final AtomicArrayState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final AtomicIntegerArray array = state.array;
@@ -301,7 +301,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int byteBuffer_SequentialPlainRead(final IterationState it,
+    public int byteBuffer_SequentialPlainRead(final RecordIterationState it,
                                               final ByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
@@ -314,7 +314,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int byteBuffer_RandomPlainRead(final IterationState it,
+    public int byteBuffer_RandomPlainRead(final RecordIterationState it,
                                           final ByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
@@ -327,7 +327,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int byteBufferDirect_RandomPlainRead(final IterationState it,
+    public int byteBufferDirect_RandomPlainRead(final RecordIterationState it,
                                                 final DirectByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
@@ -343,7 +343,7 @@ public class PersistentFSStoragesBenchmarks {
       byteBufferViewVarHandle(int[].class, nativeOrder());
 
     @Benchmark
-    public int byteBuffer_RandomVolatileRead_ViaVarHandle(final IterationState it,
+    public int byteBuffer_RandomVolatileRead_ViaVarHandle(final RecordIterationState it,
                                                           final ByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final int recordSizeBytes = state.recordSize;
@@ -358,7 +358,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int byteBuffer_RandomVolatileRead_ViaUnsafe(final IterationState it,
+    public int byteBuffer_RandomVolatileRead_ViaUnsafe(final RecordIterationState it,
                                                        final ByteBufferState state) {
       int recordSizeInInts = state.recordSizeInInts;
       int recordSizeBytes = state.recordSize;
@@ -375,7 +375,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int byteBuffer_SingleInt32RandomVolatileRead_ViaVarHandle(IterationState it,
+    public int byteBuffer_SingleInt32RandomVolatileRead_ViaVarHandle(RecordIterationState it,
                                                                      ByteBufferState state) {
       int recordSizeBytes = state.recordSize;
       ByteBuffer buffer = state.buffer;
@@ -385,7 +385,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int byteBuffer_SingleInt32RandomVolatileRead_ViaUnsafe(IterationState it,
+    public int byteBuffer_SingleInt32RandomVolatileRead_ViaUnsafe(RecordIterationState it,
                                                                   ByteBufferState state) {
       //int recordSizeInInts = state.recordSizeInInts;
       int recordSizeBytes = state.recordSize;
@@ -400,7 +400,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int byteBufferDirect_SingleInt32RandomVolatileRead_ViaUnsafe(final IterationState it,
+    public int byteBufferDirect_SingleInt32RandomVolatileRead_ViaUnsafe(final RecordIterationState it,
                                                                         final DirectByteBufferState state) {
       //int recordSizeInInts = state.recordSizeInInts;
       int recordSizeBytes = state.recordSize;
@@ -412,7 +412,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int byteBufferDirect_SingleInt32RandomVolatileRead_ViaVarHandle(final IterationState it,
+    public int byteBufferDirect_SingleInt32RandomVolatileRead_ViaVarHandle(final RecordIterationState it,
                                                                            final DirectByteBufferState state) throws IOException {
       final int recordSizeInBytes = state.recordSize;
       //final int recordSizeInInts = state.recordSizeInInts;
@@ -423,7 +423,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int byteBufferDirect_RandomVolatileRead_ViaUnsafe(final IterationState it,
+    public int byteBufferDirect_RandomVolatileRead_ViaUnsafe(final RecordIterationState it,
                                                              final DirectByteBufferState state) {
       int recordSizeInInts = state.recordSizeInInts;
       int recordSizeBytes = state.recordSize;
@@ -440,7 +440,7 @@ public class PersistentFSStoragesBenchmarks {
 
 
     @Benchmark
-    public int byteBufferMemoryMapped_RandomVolatileRead_ViaVarHandle(final IterationState it,
+    public int byteBufferMemoryMapped_RandomVolatileRead_ViaVarHandle(final RecordIterationState it,
                                                                       final MappedByteBufferState state) throws IOException {
       final int recordSizeInBytes = state.recordSize;
       final int recordSizeInInts = state.recordSizeInInts;
@@ -457,7 +457,7 @@ public class PersistentFSStoragesBenchmarks {
     //RC: now compare baseline with actual FSRecordsStorage implementations:
 
     @Benchmark
-    public int FSRecords_InMemory_RandomReadByField(final IterationState it,
+    public int FSRecords_InMemory_RandomReadByField(final RecordIterationState it,
                                                     final FSRecordsInMemoryState state) throws IOException {
       final PersistentFSRecordsStorage storage = state.storage;
 
@@ -465,7 +465,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int FSRecords_MemoryMapped_RandomReadByField(final IterationState it,
+    public int FSRecords_MemoryMapped_RandomReadByField(final RecordIterationState it,
                                                         final FSRecordsOverMMappedFileState state) throws IOException {
       final PersistentFSRecordsStorage storage = state.storage;
 
@@ -473,7 +473,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int FSRecords_OverNewFPC_RandomReadByField(final IterationState it,
+    public int FSRecords_OverNewFPC_RandomReadByField(final RecordIterationState it,
                                                       final FSRecordsOverLockFreeFPCState state) throws IOException {
       final PersistentFSRecordsStorage storage = state.storage;
 
@@ -481,7 +481,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int FSRecords_MemoryMapped_RandomReadByRecord(final IterationState it,
+    public int FSRecords_MemoryMapped_RandomReadByRecord(final RecordIterationState it,
                                                          final FSRecordsOverMMappedFileState state) throws IOException {
       final IPersistentFSRecordsStorage storage = state.storage;
 
@@ -489,14 +489,14 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public int FSRecords_OverNewFPC_RandomReadByRecord(final IterationState it,
+    public int FSRecords_OverNewFPC_RandomReadByRecord(final RecordIterationState it,
                                                        final FSRecordsOverLockFreeFPCState state) throws IOException {
       final IPersistentFSRecordsStorage storage = state.storage;
 
       return fsRecords_RandomReadByRecord(it, storage);
     }
 
-    private static int fsRecords_randomReadByField(final IterationState it,
+    private static int fsRecords_randomReadByField(final RecordIterationState it,
                                                    final PersistentFSRecordsStorage storage) throws IOException {
       final int recordId = it.nextRandomRecordIndex();
       int consumer = 0;
@@ -511,7 +511,7 @@ public class PersistentFSStoragesBenchmarks {
       return consumer;
     }
 
-    private static int fsRecords_RandomReadByRecord(final IterationState it,
+    private static int fsRecords_RandomReadByRecord(final RecordIterationState it,
                                                     final IPersistentFSRecordsStorage storage) throws IOException {
       final IntRef consumer = new IntRef(0);
       final int recordId = it.nextRandomRecordIndex();
@@ -541,7 +541,7 @@ public class PersistentFSStoragesBenchmarks {
 
     //RC: first establish baseline(s): sequential array/bytebuffer read, random read, random volatile read
     @Benchmark
-    public void array_SequentialPlainWrite(final IterationState it,
+    public void array_SequentialPlainWrite(final RecordIterationState it,
                                            final ArrayState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final int[] array = state.array;
@@ -552,7 +552,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void array_RandomPlainWrite(final IterationState it,
+    public void array_RandomPlainWrite(final RecordIterationState it,
                                        final ArrayState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final int[] array = state.array;
@@ -563,7 +563,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void array_RandomVolatileWrite(final IterationState it,
+    public void array_RandomVolatileWrite(final RecordIterationState it,
                                           final AtomicArrayState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final AtomicIntegerArray array = state.array;
@@ -574,7 +574,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void byteBuffer_SequentialPlainWrite(final IterationState it,
+    public void byteBuffer_SequentialPlainWrite(final RecordIterationState it,
                                                 final ByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
@@ -585,7 +585,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void byteBuffer_RandomPlainWrite(final IterationState it,
+    public void byteBuffer_RandomPlainWrite(final RecordIterationState it,
                                             final ByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
@@ -596,7 +596,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void byteBufferDirect_RandomPlainWrite(final IterationState it,
+    public void byteBufferDirect_RandomPlainWrite(final RecordIterationState it,
                                                   final DirectByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
@@ -610,7 +610,7 @@ public class PersistentFSStoragesBenchmarks {
       .withInvokeExactBehavior();
 
     @Benchmark
-    public void byteBuffer_RandomVolatileWrite_ViaVarHandle(final IterationState it,
+    public void byteBuffer_RandomVolatileWrite_ViaVarHandle(final RecordIterationState it,
                                                             final ByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final int recordSizeInBytes = state.recordSize;
@@ -623,7 +623,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void byteBufferMemoryMapped_RandomCASWrite_ViaVarHandle(final IterationState it,
+    public void byteBufferMemoryMapped_RandomCASWrite_ViaVarHandle(final RecordIterationState it,
                                                                    final MappedByteBufferState state) throws IOException {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer mmappedBuffer = state.buffer;
@@ -638,7 +638,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void byteBufferMemoryMapped_RandomVolatileWrite_ViaVarHandle(final IterationState it,
+    public void byteBufferMemoryMapped_RandomVolatileWrite_ViaVarHandle(final RecordIterationState it,
                                                                         final MappedByteBufferState state) throws IOException {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer mmappedBuffer = state.buffer;
@@ -652,7 +652,7 @@ public class PersistentFSStoragesBenchmarks {
     //RC: now compare baseline with actual FSRecordsStorage implementations:
 
     @Benchmark
-    public void FSRecords_InMemory_RandomWriteByField(final IterationState it,
+    public void FSRecords_InMemory_RandomWriteByField(final RecordIterationState it,
                                                       final FSRecordsInMemoryState state) throws IOException {
       final PersistentFSRecordsStorage storage = state.storage;
 
@@ -660,7 +660,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void FSRecords_MemoryMapped_RandomWriteByField(final IterationState it,
+    public void FSRecords_MemoryMapped_RandomWriteByField(final RecordIterationState it,
                                                           final FSRecordsOverMMappedFileState state) throws IOException {
       final PersistentFSRecordsStorage storage = state.storage;
 
@@ -668,7 +668,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void FSRecords_OverNewFPC_RandomWriteByField(final IterationState it,
+    public void FSRecords_OverNewFPC_RandomWriteByField(final RecordIterationState it,
                                                         final FSRecordsOverLockFreeFPCState state) throws IOException {
       final PersistentFSRecordsStorage storage = state.storage;
 
@@ -676,7 +676,7 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void FSRecords_MemoryMapped_RandomWriteByRecord(final IterationState it,
+    public void FSRecords_MemoryMapped_RandomWriteByRecord(final RecordIterationState it,
                                                            final FSRecordsOverMMappedFileState state) throws IOException {
       final IPersistentFSRecordsStorage storage = state.storage;
 
@@ -684,14 +684,14 @@ public class PersistentFSStoragesBenchmarks {
     }
 
     @Benchmark
-    public void FSRecords_OverNewFPC_RandomWriteByRecord(final IterationState it,
+    public void FSRecords_OverNewFPC_RandomWriteByRecord(final RecordIterationState it,
                                                          final FSRecordsOverLockFreeFPCState state) throws IOException {
       final IPersistentFSRecordsStorage storage = state.storage;
 
       fsRecords_randomWriteByRecord(it, storage);
     }
 
-    private static void fsRecords_randomWriteByField(final IterationState it,
+    private static void fsRecords_randomWriteByField(final RecordIterationState it,
                                                      final PersistentFSRecordsStorage storage) throws IOException {
       final int recordId = it.nextRandomRecordIndex();
       storage.updateNameId(recordId, 1);
@@ -703,7 +703,7 @@ public class PersistentFSStoragesBenchmarks {
       storage.setFlags(recordId, 7);
     }
 
-    private static void fsRecords_randomWriteByRecord(final IterationState it,
+    private static void fsRecords_randomWriteByRecord(final RecordIterationState it,
                                                       final IPersistentFSRecordsStorage storage) throws IOException {
       final int recordId = it.nextRandomRecordIndex();
       storage.updateRecord(recordId, record -> {

@@ -8,12 +8,12 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -286,7 +286,7 @@ private fun tryLoadJarIcons(idPlugin: String,
 
 private fun downloadOrCheckUpdateFile(idPlugin: String, file: Path, theme: String) {
   try {
-    val url = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl + "/api/icon?pluginId=" +
+    val url = MarketplaceUrls.getPluginManagerUrl() + "/api/icon?pluginId=" +
               URLUtil.encodeURIComponent(idPlugin) + theme
     MarketplaceRequests.readOrUpdateFile(file, url, null, "", InputStream::close)
   }

@@ -47,6 +47,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -642,7 +643,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
 
       myModel.setSelectedScheme(myModel.getScheme(schemeToSelect.getName()), this);
-      assert myModel.getSelectedScheme() != null : schemeToSelect.getName() + "; myschemes=" + myModel.allSchemes();
+      assert myModel.getSelectedScheme() != null :
+        schemeToSelect.getName() + "; mySchemes=" +
+        ContainerUtil.map(myModel.schemesKeySet(), key -> "(" + key + ": " + myModel.getScheme(key) + ")");
     });
   }
 

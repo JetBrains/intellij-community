@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
@@ -14,6 +12,7 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.kotlin.idea.base.util.isMavenModule
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 
 class MavenKotlinBuildSystemDependencyManager(
@@ -49,7 +48,7 @@ class MavenKotlinBuildSystemDependencyManager(
     }
 
     override fun isProjectSyncPending(): Boolean {
-        return ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("Maven")).get()
+        return KotlinProjectConfigurationService.getInstance(project).isMavenSyncPending()
     }
 
     override fun isProjectSyncInProgress(): Boolean {

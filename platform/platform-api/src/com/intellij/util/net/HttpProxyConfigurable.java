@@ -2,10 +2,11 @@
 package com.intellij.util.net;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableBase;
 import org.jetbrains.annotations.NotNull;
 
-public class HttpProxyConfigurable extends ConfigurableBase<HttpProxySettingsUi, HttpConfigurable> {
+public class HttpProxyConfigurable extends ConfigurableBase<HttpProxySettingsUi, HttpConfigurable> implements Configurable.NoMargin {
   private final HttpConfigurable settings;
 
   public HttpProxyConfigurable() {

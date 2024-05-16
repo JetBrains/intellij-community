@@ -19,7 +19,13 @@ class IndexingUtilsTest {
       "AString" to "A String",
       "SimpleXMLParser" to "Simple XML Parser",
       "GL11Version" to "GL 11 Version",
-      "русскоеСлово" to "русское Слово"
+      "русскоеСлово" to "русское Слово",
+      "com.intellij.something" to "com intellij something",
+      " with whitespace in front" to "with whitespace in front",
+      "with whitespace in back " to "with whitespace in back",
+      "multiple   spaces" to "multiple spaces",
+      "path/with/multiple/foldersUnderEachOther" to "path with multiple folders Under Each Other",
+      "register..." to "register",
     )
 
     for ((input, expected) in cases) {

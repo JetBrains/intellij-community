@@ -25,8 +25,8 @@ class ExpChooserAction(
     provider.productService.productId.icon(IconProductSize.SMALL)
 }
 
-class SyncChooserAction(callback: ImportSettingsController) : MainChooserAction<SyncService>(SyncActionsDataProvider.getInstance(),
-                                                                                             callback) {
+class SyncChooserAction(controller: ImportSettingsController, syncDataProvider: SyncActionsDataProvider) : MainChooserAction<SyncService>(syncDataProvider,
+                                                                                               controller) {
   private val service = SettingsService.getInstance()
 
   override fun getIcon(products: List<Product>): Icon {

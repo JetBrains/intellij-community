@@ -60,17 +60,17 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
     }, false);
   }
 
-  private static Collection<ProjectType> findProjectTypes(@NotNull Project project) {
+  private static @NotNull List<ProjectType> findProjectTypes(@NotNull Project project) {
     List<ProjectTypesProvider> providers = ProjectTypesProvider.EP_NAME.getExtensionList();
     if (providers.isEmpty()) return emptyList();
 
-    return ReadAction.compute(() -> {
+    return ReadAction.<List<ProjectType>>nonBlocking(() -> {
       if (DumbService.isDumb(project)) return emptyList();
 
       return providers.stream()
         .flatMap(p -> p.inferProjectTypes(project).stream())
         .toList();
-    });
+    }).executeSynchronously();
   }
 
   public static void setProjectType(@NotNull Project project, @NotNull ProjectType projectType) {

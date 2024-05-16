@@ -25,4 +25,3 @@ public class JavaClassInvoke {
     }
 }
 
-// IGNORE_K2_LOG

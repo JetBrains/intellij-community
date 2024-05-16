@@ -2,22 +2,21 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement;
 
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle;
+import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.KtTryExpression;
 
-public class KotlinTryCatchSurrounder extends KotlinTrySurrounderBase {
+public class KotlinTryCatchSurrounder extends KotlinTrySurrounderBase<KtElement> {
 
     @Override
     protected String getCodeTemplate() {
         return "try { \n} catch(e: Exception) {\nTODO(\"Not yet implemented\")\n}";
     }
 
-    @NotNull
     @Override
-    protected TextRange getTextRangeForCaret(@NotNull KtTryExpression expression) {
-        return getCatchTypeParameterTextRange(expression);
+    protected KtElement getSelectionElement(@NotNull KtTryExpression expression) {
+        return getCatchTypeParameter(expression);
     }
 
     @SuppressWarnings("DialogTitleCapitalization")

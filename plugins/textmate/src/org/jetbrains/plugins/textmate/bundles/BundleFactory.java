@@ -22,7 +22,7 @@ public class BundleFactory {
 
   /**
    * Create bundle object from directory.
-   * Return {code}null{code} if bundle type can't be defined or
+   * Return {@code null} if bundle type can't be defined or
    * if IO exception occurred while reading directory.
    *
    * @return Bundle object or null

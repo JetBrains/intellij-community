@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyStatementListImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,11 +63,8 @@ public final class ReplaceListComprehensionWithForIntention extends PsiUpdateMod
       PyForStatement forStatement = createForLoop(expression, elementGenerator,
                                                   leftExpr.getText() + ".append("+ expression.getResultExpression().getText() +")");
 
-      PyStatementList stList = new PyStatementListImpl(initAssignment.getNode());
-      stList.add(initAssignment);
-      stList.add(forStatement);
-      stList.getStatements()[0].delete();
-      parent.replace(stList);
+      parent.getParent().addBefore(initAssignment, parent);
+      parent.replace(forStatement);
 
     }
     else if (parent instanceof PyPrintStatement) {

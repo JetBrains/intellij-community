@@ -18,7 +18,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
@@ -116,6 +115,6 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
   @Override
   public boolean isDumbAware() {
-    return FileBasedIndex.isIndexAccessDuringDumbModeEnabled();
+    return true;
   }
 }
