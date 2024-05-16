@@ -45,7 +45,7 @@ __jetbrains_intellij_run_generator() {
 }
 
 __jetbrains_intellij_get_directory_files() {
-  builtin printf '%s' "$(ls -1ap "$1")"
+  builtin printf '%s' "$(command ls -1ap "$1")"
 }
 
 __jetbrains_intellij_get_environment() {
