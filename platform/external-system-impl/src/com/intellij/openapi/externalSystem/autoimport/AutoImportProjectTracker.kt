@@ -6,7 +6,7 @@ import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros.CACHE_FILE
@@ -34,8 +34,10 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.LongAdder
 import kotlin.streams.asStream
 
 @ApiStatus.Internal
@@ -44,7 +46,7 @@ class AutoImportProjectTracker(
   private val project: Project
 ) : ExternalSystemProjectTracker,
     Disposable.Default,
-    PersistentStateComponent<AutoImportProjectTracker.State> {
+    PersistentStateComponentWithModificationTracker<AutoImportProjectTracker.State> {
 
   private val serviceDisposable: Disposable = this
 
@@ -58,6 +60,10 @@ class AutoImportProjectTracker(
   private val isProjectLookupActivateProperty = AtomicBooleanProperty(false)
   private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, true, null, serviceDisposable)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
+
+  private val stateChangeCounter = LongAdder()
+
+  override fun getStateModificationCount() = stateChangeCounter.sum()
 
   private fun createProjectChangesListener() =
     object : ProjectBatchFileChangeListener(project) {
@@ -168,6 +174,8 @@ class AutoImportProjectTracker(
       val context = ProjectReloadContext(explicitReload, hasUndefinedModifications, settingsContext)
       projectData.projectAware.reloadProject(context)
     }
+
+    stateChangeCounter.increment()
   }
 
   private fun updateProjectNotification() {
@@ -218,26 +226,33 @@ class AutoImportProjectTracker(
     parentDisposable.whenDisposed { notificationAware.notificationExpire(projectId) }
 
     loadState(projectId, projectData)
+
+    stateChangeCounter.increment()
   }
 
   override fun activate(id: ExternalSystemProjectId) {
     val projectData = projectDataMap(id) { get(it) } ?: return
     projectData.isActivated = true
+
+    stateChangeCounter.increment()
   }
 
   override fun remove(id: ExternalSystemProjectId) {
     val projectData = projectDataMap.remove(id) ?: return
     Disposer.dispose(projectData.parentDisposable)
+    stateChangeCounter.increment()
   }
 
   override fun markDirty(id: ExternalSystemProjectId) {
     val projectData = projectDataMap(id) { get(it) } ?: return
     projectData.status.markDirty(currentTime())
+    stateChangeCounter.increment()
   }
 
   override fun markDirtyAllProjects() {
     val modificationTimeStamp = currentTime()
     projectDataMap.forEach { it.value.status.markDirty(modificationTimeStamp) }
+    stateChangeCounter.increment()
   }
 
   private fun projectDataMap(
@@ -252,10 +267,10 @@ class AutoImportProjectTracker(
   }
 
   override fun getState(): State {
-    val systemStates = HashMap<String, HashMap<String, ProjectDataState>>()
+    val systemStates = TreeMap<String, TreeMap<String, ProjectDataState>>()
     for ((projectId, projectData) in projectDataMap) {
       val (systemId, externalProjectPath) = projectId
-      val projectStates = systemStates.getOrPut(systemId.id) { HashMap() }
+      val projectStates = systemStates.computeIfAbsent(systemId.id) { TreeMap() }
       projectStates[externalProjectPath] = ProjectDataState(
         projectData.status.isDirty(),
         projectData.settingsTracker.getState()
