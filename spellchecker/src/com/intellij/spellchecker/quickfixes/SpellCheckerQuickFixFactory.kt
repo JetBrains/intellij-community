@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * Extension point for product-wide spellchecking inspection quickfixes customization.
  */
 @Internal
-interface SpellCheckerQuickFixFactory {
+abstract class SpellCheckerQuickFixFactory {
   companion object {
     private val EP_NAME = ExtensionPointName.create<SpellCheckerQuickFixFactory>("com.intellij.spellchecker.quickFixFactory")
 
@@ -37,7 +37,7 @@ interface SpellCheckerQuickFixFactory {
     }
   }
 
-  fun createRename(element: PsiElement): LocalQuickFix? = null
-  fun createChangeToVariantsFixes(element: PsiElement, rangeInElement: TextRange, word: String): List<LocalQuickFix>? = null
-  fun createSaveToFix(element: PsiElement, rangeInElement: TextRange, word: String, layer: DictionaryLayer?): LocalQuickFix? = null
+  open fun createRename(element: PsiElement): LocalQuickFix? = null
+  open fun createChangeToVariantsFixes(element: PsiElement, rangeInElement: TextRange, word: String): List<LocalQuickFix>? = null
+  open fun createSaveToFix(element: PsiElement, rangeInElement: TextRange, word: String, layer: DictionaryLayer?): LocalQuickFix? = null
 }
