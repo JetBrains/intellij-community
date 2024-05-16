@@ -44,6 +44,7 @@ interface CombinedDiffManager {
   }
 }
 
+@ApiStatus.Internal
 class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
                                          goToChangeAction: AnAction?) : CombinedDiffComponentProcessor {
 

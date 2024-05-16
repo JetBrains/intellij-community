@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
@@ -52,6 +53,7 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
+@ApiStatus.Internal
 class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToChangeAction: AnAction?) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
