@@ -547,8 +547,6 @@ com.intellij.codeInsight.completion.ml.ContextFeatures
 - a:categoricalValue(java.lang.String):java.lang.String
 - a:classNameValue(java.lang.String):java.lang.String
 - a:floatValue(java.lang.String):java.lang.Double
-*:com.intellij.codeInsight.completion.ml.MLRankingIgnorable
-- s:wrap(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.lookup.LookupElement
 f:com.intellij.codeInsight.completion.util.CompletionStyleUtil
 - <init>():V
 - s:getCodeStyleSettings(com.intellij.codeInsight.completion.InsertionContext):com.intellij.psi.codeStyle.CommonCodeStyleSettings

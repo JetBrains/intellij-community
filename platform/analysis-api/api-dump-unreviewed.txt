@@ -416,6 +416,8 @@ f:com.intellij.codeInsight.completion.PrioritizedLookupElement
 - s:withExplicitProximity(com.intellij.codeInsight.lookup.LookupElement,I):com.intellij.codeInsight.lookup.LookupElement
 - s:withGrouping(com.intellij.codeInsight.lookup.LookupElement,I):com.intellij.codeInsight.lookup.LookupElement
 - s:withPriority(com.intellij.codeInsight.lookup.LookupElement,D):com.intellij.codeInsight.lookup.LookupElement
+*:com.intellij.codeInsight.completion.ml.MLRankingIgnorable
+- s:wrap(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.lookup.LookupElement
 a:com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
 - com.intellij.codeInsight.completion.InsertHandler
 - sf:NO_PARAMETERS:com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
