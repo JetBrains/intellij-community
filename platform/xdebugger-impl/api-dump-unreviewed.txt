@@ -2706,6 +2706,7 @@ c:com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox
 c:com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor
 - com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XExpression,Z,Z,Z):V
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XExpression,Z,Z,Z,com.intellij.psi.PsiElement):V
 - p:doSetText(com.intellij.xdebugger.XExpression):V
 - getComponent():javax.swing.JComponent
 - getEditor():com.intellij.openapi.editor.Editor
