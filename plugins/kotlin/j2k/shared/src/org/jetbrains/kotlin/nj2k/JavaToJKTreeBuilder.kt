@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
-import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.diagnostic.Logger
@@ -45,7 +44,8 @@ import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClassLiteralExpression.ClassLiteralType
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.*
-import org.jetbrains.kotlin.nj2k.tree.Mutability.*
+import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
+import org.jetbrains.kotlin.nj2k.tree.Mutability.UNKNOWN
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -76,12 +76,17 @@ class JavaToJKTreeBuilder(
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
         declarationNullabilityInfo = null
+        val codeBlock = when (psi) {
+            is PsiCodeBlock -> psi
+            else -> psi.parentOfType<PsiCodeBlock>()
+        }
+        val immutableVariables: Set<PsiElement>? = LocalCanBeFinal().getImmutableLocalVariablesInBlock(codeBlock)
 
         return when (psi) {
             is PsiJavaFile -> psi.toJK()
             is PsiReferenceExpression -> with(expressionTreeMapper) { psi.toJK(ignoreFacades = false) }
             is PsiExpression -> with(expressionTreeMapper) { psi.toJK() }
-            is PsiStatement -> with(declarationMapper) { psi.toJK() }
+            is PsiStatement -> with(declarationMapper) { psi.toJK(immutableVariables) }
             is PsiTypeParameter -> with(declarationMapper) { psi.toJK() }
             is PsiClass -> with(declarationMapper) { psi.toJK() }
             is PsiField -> with(declarationMapper) { psi.toJK() }
@@ -142,7 +147,7 @@ class JavaToJKTreeBuilder(
         }
 
         private fun PsiSwitchExpression.toJK(): JKJavaSwitchExpression =
-            JKJavaSwitchExpression(expression.toJK(), collectSwitchCases())
+            JKJavaSwitchExpression(expression.toJK(), collectSwitchCases(null))
 
         private fun PsiInstanceOfExpression.toJK(): JKIsExpression {
             val pattern = pattern.safeAs<PsiTypeTestPattern>()
@@ -173,10 +178,8 @@ class JavaToJKTreeBuilder(
 
         private fun PsiSuperExpression.toJK(): JKSuperExpression {
             val qualifyingType = qualifier?.resolve() as? PsiClass
-            if (qualifyingType == null) {
-                // Case 0: plain "super.foo()" call
+                ?: // Case 0: plain "super.foo()" call
                 return JKSuperExpression(type.toJK())
-            }
 
             // Java's qualified super call syntax "A.super.foo()" is represented by two different cases in Kotlin.
             // See https://kotlinlang.org/docs/inheritance.html#calling-the-superclass-implementation
@@ -797,7 +800,7 @@ class JavaToJKTreeBuilder(
         fun PsiField.toJK(): JKField {
             val mutability = when {
                 containingClass?.isInterface == true -> IMMUTABLE
-                visibility().visibility == Visibility.PRIVATE && FinalUtils.isImmutableField(this) -> IMMUTABLE
+                visibility().visibility == Visibility.PRIVATE && FinalUtils.canBeImmutable(this) -> IMMUTABLE
                 else -> UNKNOWN
             }
             return JKField(
@@ -968,28 +971,23 @@ class JavaToJKTreeBuilder(
             }
         }
 
-        fun PsiCodeBlock.toJK(): JKBlock = JKBlockImpl(
-            if (withBody) statements.map { it.toJK() } else listOf(createTodoExpression().asStatement())
-        ).withFormattingFrom(this).also {
-            it.leftBrace.withFormattingFrom(lBrace)
-            it.rightBrace.withFormattingFrom(rBrace)
+        fun PsiCodeBlock.toJK(): JKBlock {
+            val immutableVariables = LocalCanBeFinal().getImmutableLocalVariablesInBlock(this)
+            return JKBlockImpl(
+                if (withBody) statements.map { it.toJK(immutableVariables) } else listOf(createTodoExpression().asStatement())
+            ).withFormattingFrom(this).also {
+                it.leftBrace.withFormattingFrom(lBrace)
+                it.rightBrace.withFormattingFrom(rBrace)
+            }
         }
 
-        fun PsiLocalVariable.toJK(): JKLocalVariable {
+        fun PsiLocalVariable.toJK(immutableVariables: Set<PsiElement>?): JKLocalVariable {
             val codeBlock = parentOfType<PsiCodeBlock>()
-            val mutability: Mutability
-            if (hasModifierProperty(PsiModifier.FINAL)) {
-                mutability = IMMUTABLE
-            } else {
-                val projectInstance = InspectionManager.getInstance(project)
-                val canBeFinal = LocalCanBeFinal().checkCodeBlockForImmutability(codeBlock, projectInstance)
-                mutability = when {
-                    canBeFinal?.any { it.toString() == "Variable '${name}' can have 'final' modifier" } == true -> IMMUTABLE
-
-                    canBeFinal != null || codeBlock == null -> UNKNOWN
-                    codeBlock.hasMatchingNameAssignment(this) -> MUTABLE
-                    else -> IMMUTABLE
-                }
+            val mutability = when {
+                hasModifierProperty(PsiModifier.FINAL) -> IMMUTABLE
+                immutableVariables?.any { it == this } == true -> IMMUTABLE
+                immutableVariables != null || codeBlock == null -> UNKNOWN
+                else -> IMMUTABLE
             }
 
             return JKLocalVariable(
@@ -1013,16 +1011,16 @@ class JavaToJKTreeBuilder(
             }
         }
 
-        fun PsiStatement?.asJKStatementsList() = when (this) {
+        fun PsiStatement?.asJKStatementsList(immutableVariables: Set<PsiElement>?) = when (this) {
             null -> emptyList()
             is PsiExpressionListStatement -> expressionList.expressions.map { expression ->
                 JKExpressionStatement(with(expressionTreeMapper) { expression.toJK() })
             }
 
-            else -> listOf(toJK())
+            else -> listOf(toJK(immutableVariables))
         }
 
-        fun PsiStatement?.toJK(): JKStatement {
+        fun PsiStatement?.toJK(immutableVariables: Set<PsiElement>?): JKStatement {
             return when (this) {
                 null -> JKExpressionStatement(JKStubExpression())
 
@@ -1034,7 +1032,7 @@ class JavaToJKTreeBuilder(
                     JKDeclarationStatement(declaredElements.mapNotNull {
                         when (it) {
                             is PsiClass -> it.toJK()
-                            is PsiLocalVariable -> it.toJK()
+                            is PsiLocalVariable -> it.toJK(immutableVariables)
                             else -> null
                         }
                     })
@@ -1046,30 +1044,35 @@ class JavaToJKTreeBuilder(
 
                 is PsiIfStatement ->
                     with(expressionTreeMapper) {
-                        JKIfElseStatement(condition.toJK(), thenBranch.toJK(), elseBranch.toJK())
+                        JKIfElseStatement(condition.toJK(), thenBranch.toJK(immutableVariables), elseBranch.toJK(immutableVariables))
                     }
 
                 is PsiForStatement -> JKJavaForLoopStatement(
-                    initialization.asJKStatementsList(),
+                    initialization.asJKStatementsList(immutableVariables),
                     with(expressionTreeMapper) { condition.toJK() },
-                    update.asJKStatementsList(),
-                    body.toJK()
+                    update.asJKStatementsList(immutableVariables),
+                    body.toJK(immutableVariables)
                 )
 
                 is PsiForeachStatement ->
                     JKForInStatement(
                         iterationParameter.toJK().asForLoopVariable(),
                         with(expressionTreeMapper) { iteratedValue?.toJK() ?: JKStubExpression() },
-                        body?.toJK() ?: blockStatement()
+                        body?.toJK(immutableVariables) ?: blockStatement()
                     )
 
                 is PsiBlockStatement -> JKBlockStatement(codeBlock.toJK())
 
-                is PsiWhileStatement -> JKWhileStatement(with(expressionTreeMapper) { condition.toJK() }, body.toJK())
+                is PsiWhileStatement -> JKWhileStatement(with(expressionTreeMapper) { condition.toJK() }, body.toJK(immutableVariables))
 
-                is PsiDoWhileStatement -> JKDoWhileStatement(body.toJK(), with(expressionTreeMapper) { condition.toJK() })
+                is PsiDoWhileStatement -> JKDoWhileStatement(
+                    body.toJK(immutableVariables),
+                    with(expressionTreeMapper) { condition.toJK() })
 
-                is PsiSwitchStatement -> JKJavaSwitchStatement(with(expressionTreeMapper) { expression.toJK() }, collectSwitchCases())
+                is PsiSwitchStatement -> JKJavaSwitchStatement(
+                    with(expressionTreeMapper) { expression.toJK() },
+                    collectSwitchCases(immutableVariables)
+                )
 
                 is PsiBreakStatement ->
                     JKBreakStatement(labelIdentifier?.let { JKLabelText(JKNameIdentifier(it.text)) } ?: JKLabelEmpty())
@@ -1083,7 +1086,7 @@ class JavaToJKTreeBuilder(
 
                 is PsiLabeledStatement -> {
                     val (labels, statement) = collectLabels()
-                    JKLabeledExpression(statement.toJK(), labels.map { JKNameIdentifier(it.text) }).asStatement()
+                    JKLabeledExpression(statement.toJK(immutableVariables), labels.map { JKNameIdentifier(it.text) }).asStatement()
                 }
 
                 is PsiEmptyStatement -> JKEmptyStatement()
@@ -1119,7 +1122,7 @@ class JavaToJKTreeBuilder(
 
         fun PsiResourceListElement.toJK(): JKJavaResourceElement =
             when (this) {
-                is PsiResourceVariable -> JKJavaResourceDeclaration((this as PsiLocalVariable).toJK())
+                is PsiResourceVariable -> JKJavaResourceDeclaration((this as PsiLocalVariable).toJK(null))
                 is PsiResourceExpression -> JKJavaResourceExpression(with(expressionTreeMapper) { this@toJK.expression.toJK() })
                 else -> error("Unexpected resource list ${this::class.java}")
             }
@@ -1240,48 +1243,49 @@ class JavaToJKTreeBuilder(
     private fun PsiType?.toJK(): JKType =
         if (this == null) JKNoType else typeFactory.fromPsiType(this)
 
-    private fun PsiSwitchBlock.collectSwitchCases(): List<JKJavaSwitchCase> = with(declarationMapper) {
-        val statements = body?.statements ?: return emptyList()
-        val cases = mutableListOf<JKJavaSwitchCase>()
-        for (statement in statements) {
-            when (statement) {
-                is PsiSwitchLabelStatement ->
-                    cases += when {
-                        statement.isDefaultCase -> JKJavaDefaultSwitchCase(emptyList())
-                        else -> JKJavaClassicLabelSwitchCase(
-                            with(expressionTreeMapper) {
-                                statement.caseLabelElementList?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
-                            },
-                            emptyList()
-                        )
-                    }.withFormattingFrom(statement)
-
-                is PsiSwitchLabeledRuleStatement -> {
-                    val body = statement.body.toJK()
-                    cases += when {
-                        statement.isDefaultCase -> JKJavaDefaultSwitchCase(listOf(body))
-                        else -> {
-                            JKJavaArrowSwitchLabelCase(
+    private fun PsiSwitchBlock.collectSwitchCases(immutableVariables: Set<PsiElement>?): List<JKJavaSwitchCase> =
+        with(declarationMapper) {
+            val statements = body?.statements ?: return emptyList()
+            val cases = mutableListOf<JKJavaSwitchCase>()
+            for (statement in statements) {
+                when (statement) {
+                    is PsiSwitchLabelStatement ->
+                        cases += when {
+                            statement.isDefaultCase -> JKJavaDefaultSwitchCase(emptyList())
+                            else -> JKJavaClassicLabelSwitchCase(
                                 with(expressionTreeMapper) {
                                     statement.caseLabelElementList?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
                                 },
-                                listOf(body),
+                                emptyList()
+                            )
+                        }.withFormattingFrom(statement)
+
+                    is PsiSwitchLabeledRuleStatement -> {
+                        val body = statement.body.toJK(immutableVariables)
+                        cases += when {
+                            statement.isDefaultCase -> JKJavaDefaultSwitchCase(listOf(body))
+                            else -> {
+                                JKJavaArrowSwitchLabelCase(
+                                    with(expressionTreeMapper) {
+                                        statement.caseLabelElementList?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty()
+                                    },
+                                    listOf(body),
+                                )
+                            }
+                        }.withFormattingFrom(statement)
+                    }
+
+                    else ->
+                        cases.lastOrNull()?.also { it.statements += statement.toJK(immutableVariables) } ?: run {
+                            cases += JKJavaClassicLabelSwitchCase(
+                                listOf(JKStubExpression()),
+                                listOf(statement.toJK(immutableVariables))
                             )
                         }
-                    }.withFormattingFrom(statement)
                 }
-
-                else ->
-                    cases.lastOrNull()?.also { it.statements += statement.toJK() } ?: run {
-                        cases += JKJavaClassicLabelSwitchCase(
-                            listOf(JKStubExpression()),
-                            listOf(statement.toJK())
-                        )
-                    }
             }
+            return cases
         }
-        return cases
-    }
 
     private fun PsiElement.createErrorExpression(message: String? = null): JKExpression =
         JKErrorExpression(this, message)

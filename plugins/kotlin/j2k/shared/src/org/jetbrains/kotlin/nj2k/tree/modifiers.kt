@@ -172,7 +172,6 @@ internal fun JKModifierElement.isRedundant(languageVersionSettings: LanguageVers
                 || redundantOnConstructor || (hasInnerModifier && parentIsPrivate)
 
         OPEN, ABSTRACT -> isOpenAndAbstractByDefault
-
         else -> false
     }
 }

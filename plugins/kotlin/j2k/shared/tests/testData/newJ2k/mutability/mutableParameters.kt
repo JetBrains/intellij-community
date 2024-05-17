@@ -1,6 +1,6 @@
 class SomeClass {
-    private class Item private constructor(private val module: String, var option: String) {
-        constructor(module: String) : this(module, "")
+    private class Item(private val module: String?, var option: String) {
+        constructor(module: String?) : this(module, "")
     }
 
     private val myItems: List<Item> = ArrayList()

@@ -32,7 +32,7 @@ class Test {
     }
 
     fun test6() {
-        myProp!!.compareTo(myProp, ignoreCase = true)
+        myProp!!.compareTo(myProp!!, ignoreCase = true)
     }
 
     fun test7() {

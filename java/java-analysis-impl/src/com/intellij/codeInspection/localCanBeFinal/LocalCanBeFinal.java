@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -372,7 +373,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
   }
 
   @Nullable
-  public List<ProblemDescriptor> checkCodeBlockForImmutability(final PsiCodeBlock body, final InspectionManager manager) {
+  public Set<PsiVariable> getImmutableLocalVariablesInBlock(final PsiCodeBlock body) {
     if (body == null) return null;
     final ControlFlow flow = getControlFlow(body);
     if (flow == null) {
@@ -384,13 +385,13 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
 
     final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end, false);
 
-    final List<ProblemDescriptor> problems = new ArrayList<>();
+    final List<PsiVariable> problems = new ArrayList<>();
     final HashSet<PsiVariable> result = new HashSet<>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitCodeBlock(@NotNull PsiCodeBlock block) {
         if (block.getParent() instanceof PsiLambdaExpression && block != body) {
-          final List<ProblemDescriptor> descriptors = checkCodeBlockForImmutability(block, manager);
+          final Set<PsiVariable> descriptors = getImmutableLocalVariablesInBlock(block);
           if (descriptors != null) {
             problems.addAll(descriptors);
           }
@@ -420,7 +421,6 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         int from = flow.getStartOffset(anchor);
         int end = flow.getEndOffset(anchor);
         List<PsiVariable> ssa = ControlFlowUtil.getSSAVariables(flow, from, end, true);
-
         for (PsiVariable psiVariable : ssa) {
           if (declared.contains(psiVariable) &&
               (!psiVariable.hasInitializer() || !VariableAccessUtils.variableIsAssigned(psiVariable, block))) {
@@ -529,7 +529,9 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
             public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
               PsiElement[] declaredElements = statement.getDeclaredElements();
               for (PsiElement declaredElement : declaredElements) {
-                if (declaredElement instanceof PsiVariable) result.add((PsiVariable)declaredElement);
+                if (declaredElement instanceof PsiVariable) {
+                  result.add((PsiVariable)declaredElement);
+                }
               }
             }
 
@@ -549,7 +551,6 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
             }
           });
         }
-
         return result;
       }
 
@@ -567,13 +568,11 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       }
     }
 
-    if (result.isEmpty() && problems.isEmpty()) return problems;
+    if (result.isEmpty() && problems.isEmpty()) return new HashSet<>(problems);
 
-    for (PsiVariable variable : result) {
-      getProblemsFromResults(problems, variable, false, manager, myQuickFix);
-    }
+    problems.addAll(result);
 
-    return problems;
+    return new HashSet<>(problems);
   }
 
 

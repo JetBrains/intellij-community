@@ -84,9 +84,9 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversi
         removeStaticModifierFromAnonymousClassMember()
         val hasMutableAnnotation = annotationList.annotations.any { MUTABLE_ANNOTATIONS.contains(it.classSymbol.fqName) }
         mutability = when {
+            modality == FINAL -> IMMUTABLE
             hasMutableAnnotation -> MUTABLE
             mutability != UNKNOWN -> mutability
-            modality == FINAL -> IMMUTABLE
             else -> UNKNOWN
         }
         modality = FINAL
