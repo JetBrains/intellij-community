@@ -752,6 +752,10 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun reloadPerClientState(componentClass: Class<out PersistentStateComponent<*>>,
                                    info: ComponentInfo,
                                    changedStorages: Set<StateStorage>) {
+    if (ClientId.isCurrentlyUnderLocalId) {
+      throw AssertionError("This method must be called under remote client id")
+    }
+
     val perClientComponent = (storageManager.componentManager ?: application).getService(componentClass)
     if (perClientComponent == null || perClientComponent === info.component) {
       LOG.error("Failed to reload per-client component '${info.stateSpec?.name ?: componentClass.simpleName}: " +
@@ -768,7 +772,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
-      if (stateSpec.perClient) {
+      if (stateSpec.perClient && !ClientId.isCurrentlyUnderLocalId) {
         reloadPerClientState(it.javaClass, info, emptySet())
         return
       }
@@ -784,7 +788,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       return false
     }
 
-    if (info.stateSpec?.perClient == true) {
+    if (info.stateSpec?.perClient == true && !ClientId.isCurrentlyUnderLocalId) {
       reloadPerClientState(component.javaClass, info, changedStorages)
       return true
     }
