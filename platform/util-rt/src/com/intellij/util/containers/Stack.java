@@ -23,7 +23,9 @@ public class Stack<T> extends ArrayList<T> {
     super(init);
   }
 
+  @SafeVarargs
   public Stack(@NotNull T... items) {
+    super(items.length);
     for (T item : items) {
       push(item);
     }
