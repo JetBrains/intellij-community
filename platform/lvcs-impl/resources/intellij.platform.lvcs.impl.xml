@@ -6,6 +6,8 @@
   <actions resource-bundle="messages.LocalHistoryBundle">
     <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction">
       <override-text place="GoToAction"/>
+      <override-text place="ActionPlace.VcsQuickListPopupAction"/>
+      <add-to-group group-id="Vcs.Operations.Popup" anchor="after" relative-to-action="ShowAnnotateOperationsPopupGroup"/>
     </action>
     <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction">
       <synonym key="action.synonym.LocalHistory.ShowSelectionHistory.method.text"/>
@@ -38,13 +40,6 @@
       <reference ref="LocalHistory"/>
       <separator/>
       <add-to-group group-id="FileMenu" relative-to-action="SaveAll" anchor="before"/>
-    </group>
-
-    <group id="LocalHistory.Vcs.Operations.Popup.Group">
-      <separator key="separator.Local.History.text"/>
-      <reference id="LocalHistory.ShowHistory"/>
-      <reference id="LocalHistory.PutLabel"/>
-      <add-to-group group-id="Vcs.Operations.Popup" anchor="after" relative-to-action="ShowAnnotateOperationsPopupGroup"/>
     </group>
 
     <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction">
