@@ -89,6 +89,11 @@ public class YAMLBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     });
   }
 
+  @Override
+  public boolean isShownByDefault() {
+    return false;
+  }
+
   private static @NotNull String getIndexOf(@NotNull List<?> list, Object o) {
     return String.valueOf(1 + list.indexOf(o)) + '/' + list.size();
   }
