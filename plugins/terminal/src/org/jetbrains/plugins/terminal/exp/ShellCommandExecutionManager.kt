@@ -265,8 +265,6 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
    * to gain some data from shell.
    * Usually, generators are implemented as shell functions reporting
    * back to IDE information wrapped in a custom OSC escape sequence.
-   *
-   * @see org.jetbrains.plugins.terminal.exp.completion.DataProviderCommand
    */
   private inner class Generator(private val shellCommand: String) {
     val requestId: Int = NEXT_REQUEST_ID.incrementAndGet()
