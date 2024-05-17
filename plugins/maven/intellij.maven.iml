@@ -40,19 +40,19 @@
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module-library">
       <library name="plexus-archiver" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.codehaus.plexus:plexus-archiver:3.0.3">
+        <properties include-transitive-deps="false" maven-id="org.codehaus.plexus:plexus-archiver:4.8.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/3.0.3/plexus-archiver-3.0.3.jar">
-              <sha256sum>779d4a6878026fdaae6786683e33883d58f77df245fe38a7b444da12772190fc</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4.8.0/plexus-archiver-4.8.0.jar">
+              <sha256sum>24513c9bc6d52716f5a22f7ef03e26c310f62ebcde309de9833deac6a4ac32e3</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/3.0.3/plexus-archiver-3.0.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4.8.0/plexus-archiver-4.8.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/3.0.3/plexus-archiver-3.0.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4.8.0/plexus-archiver-4.8.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
