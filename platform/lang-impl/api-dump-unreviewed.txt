@@ -14389,8 +14389,6 @@ f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 - s:wrapIfNecessary(com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor):com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 f:com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper$PsiItemWithPresentation
 - com.intellij.openapi.util.Pair
-- getItem():com.intellij.psi.PsiElement
-- getPresentation():com.intellij.platform.backend.presentation.TargetPresentation
 f:com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - <init>(java.util.List,com.intellij.ide.util.TypeVisibilityStateHolder,java.util.function.Function,java.util.function.Function):V
 - <init>(java.util.List,com.intellij.ide.util.gotoByName.ChooseByNameFilterConfiguration,java.util.function.Function,java.util.function.Function):V

@@ -101,29 +101,39 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     return elementDescriptor;
   }
 
-  private static Object getItem(Object value) {
+  @ApiStatus.Internal
+  public static Object getItem(Object value) {
     if (value instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
       return getItem(itemWithSimilarity.getValue());
     }
-    return value instanceof PsiItemWithPresentation ? ((PsiItemWithPresentation)value).getItem() : value;
+    return value instanceof ItemWithPresentation<?> it ? it.getItem() : value;
   }
 
-  public static final class PsiItemWithPresentation extends Pair<PsiElement, TargetPresentation> {
+  @ApiStatus.Internal
+  public static class ItemWithPresentation<T> extends Pair<T, TargetPresentation> {
     /**
      * @see #create(Object, Object)
      */
-    @ApiStatus.Internal
-    public PsiItemWithPresentation(PsiElement first, TargetPresentation second) {
+    public ItemWithPresentation(T first, TargetPresentation second) {
       super(first, second);
     }
 
-    public PsiElement getItem() {
+    public T getItem() {
       return first;
     }
 
     public TargetPresentation getPresentation() {
       return second;
     }
+  }
+
+  public static final class PsiItemWithPresentation extends ItemWithPresentation<PsiElement> {
+
+    @ApiStatus.Internal
+    public PsiItemWithPresentation(PsiElement first, TargetPresentation second) {
+      super(first, second);
+    }
+
   }
 
   private static final class WrapperRenderer extends JPanel implements ListCellRenderer<Object> {
@@ -139,7 +149,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
       if (value instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
         return getListCellRendererComponent(list, itemWithSimilarity.getValue(), index, isSelected, cellHasFocus);
       }
-      if (!(value instanceof PsiItemWithPresentation itemAndPresentation)) {
+      if (!(value instanceof ItemWithPresentation<?> itemAndPresentation)) {
         return delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
 
@@ -198,7 +208,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
       return this;
     }
 
-    private PsiElementListCellRenderer.ItemMatchers getItemMatchers(@NotNull JList<?> list, @Nullable PsiItemWithPresentation value) {
+    private PsiElementListCellRenderer.ItemMatchers getItemMatchers(@NotNull JList<?> list, @Nullable ItemWithPresentation<?> value) {
       if (value == null) return new PsiElementListCellRenderer.ItemMatchers(null, null);
       return delegateRenderer.getItemMatchers(list, value.getItem());
     }
@@ -317,8 +327,8 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   public static @Nullable PsiElement toPsi(Object o) {
     if (o instanceof PsiItemWithSimilarity<?> itemWithSimilarity) return toPsi(itemWithSimilarity.getValue());
     if (o instanceof PsiElement) return (PsiElement)o;
-    if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
-    if (o instanceof PsiElementNavigationItem) return ((PsiElementNavigationItem)o).getTargetElement();
+    if (o instanceof ItemWithPresentation<?> wp) return toPsi(wp.getItem());
+    if (o instanceof PsiElementNavigationItem en) return en.getTargetElement();
     return null;
   }
 

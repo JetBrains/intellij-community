@@ -2,7 +2,10 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.actions.*;
+import com.intellij.ide.actions.GotoActionBase;
+import com.intellij.ide.actions.OpenInRightSplitAction;
+import com.intellij.ide.actions.QualifiedNameProviderUtil;
+import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.EditSourceUtil;
