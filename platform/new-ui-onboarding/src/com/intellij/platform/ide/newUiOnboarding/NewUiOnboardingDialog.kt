@@ -72,7 +72,7 @@ class NewUiOnboardingDialog(private val project: Project)
           text(NewUiOnboardingBundle.message("dialog.text", ApplicationNamesInfo.getInstance().fullProductName), maxLineLength) { event ->
             if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
               ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) { c ->
-                c.openMarketplaceTab(NewUiOnboardingBundle.message("classic.ui.plugin.name"))
+                c.openMarketplaceTab("Classic UI")
               }
             }
           }.customize(UnscaledGaps(top = 8))
