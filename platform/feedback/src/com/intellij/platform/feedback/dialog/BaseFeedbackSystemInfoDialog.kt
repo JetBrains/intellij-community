@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.platform.feedback.localization.bundle.LocalizationFeedbackBundle
+import com.intellij.platform.feedback.localization.LocalizationFeedbackBundle
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel

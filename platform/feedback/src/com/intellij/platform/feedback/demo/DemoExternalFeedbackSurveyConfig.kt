@@ -4,7 +4,6 @@ package com.intellij.platform.feedback.demo
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.ExternalFeedbackSurveyConfig
-import com.intellij.platform.feedback.demo.bundle.DemoFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
