@@ -17,6 +17,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.StorageUtilKt;
@@ -1311,12 +1312,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     PsiFile use = createFile("Use.java", "public class Use { { <caret>X.ffffffffffffff(); } }");
     configureByExistingFile(use.getVirtualFile());
 
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME,
-                                                                           UnusedDeclarationInspectionBase.getDisplayNameText(), UnusedDeclarationInspectionBase.SHORT_NAME);
-    UnusedDeclarationInspectionBase myDeadCodeInspection = new UnusedDeclarationInspectionBase(true);
-    enableInspectionTool(myDeadCodeInspection);
-    assert profile.isToolEnabled(myDeadCodeKey, myFile);
+    enableDeadCodeInspection();
 
     Editor xEditor = createEditor(x.getVirtualFile());
     List<HighlightInfo> xInfos = filter(CodeInsightTestFixtureImpl.instantiateAndRun(x, xEditor, new int[0], false),
@@ -1337,6 +1333,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertNotNull(xInfos.toString(), info);
   }
 
+  private void enableDeadCodeInspection() {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME,
+                                                                           UnusedDeclarationInspectionBase.getDisplayNameText(), UnusedDeclarationInspectionBase.SHORT_NAME);
+    UnusedDeclarationInspectionBase myDeadCodeInspection = new UnusedDeclarationInspectionBase(true);
+    enableInspectionTool(myDeadCodeInspection);
+    assert profile.isToolEnabled(myDeadCodeKey, myFile);
+  }
 
   public void testErrorDisappearsRightAfterTypingInsideVisibleAreaWhileDaemonContinuesToChugAlong() {
     String text = "class X{\nint xxx;\n{\nint i = <selection>null</selection><caret>;\n" + StringUtil.repeat("{ this.hashCode(); }\n\n\n", 10000) + "}}";
@@ -2192,5 +2196,22 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.ERROR, getProject());
     assertNotEmpty(errors);
     assertTrue(errors.toString().contains("'class' or 'interface' expected"));
+  }
+
+  public void testTypingInsideCodeBlockCanAffectUnusedDeclarationInTheOtherClass() {
+    enableInspectionTool(new UnusedSymbolLocalInspection());
+    enableDeadCodeInspection();
+    configureByFiles(null, BASE_PATH+getTestName(true)+"/p2/A2222.java", BASE_PATH+getTestName(true)+"/p1/A1111.java");
+    assertEquals("A2222.java", getFile().getName());
+    makeEditorWindowVisible(new Point(0, 1000), myEditor);
+    HighlightInfo info = assertOneElement(doHighlighting(HighlightSeverity.WARNING));
+    assertEquals("Class 'A2222' is never used", info.getDescription());
+
+    Document document1111 = getFile().getParent().findFile("A1111.java").getFileDocument();
+    // uncomment (inside codeblock) the reference to A2222
+    WriteCommandAction.writeCommandAction(myProject).run(()->document1111.deleteString(document1111.getText().indexOf("//"), document1111.getText().indexOf("//")+2));
+
+    // now A2222 is no longer unused
+    assertEmpty(doHighlighting(HighlightSeverity.WARNING));
   }
 }
