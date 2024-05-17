@@ -78,7 +78,12 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
     val mapTo: String,
     val variants: List<VariantInfo> = emptyList(),
     val value: Any? = null
-  )
+  ) {
+    fun getMappedValue(): String? =
+      (value as? String)?.let { str ->
+        variants.find { it.value == str }?.mapTo ?: value
+      }
+  }
 
   @Serializable
   data class VariantInfo (
