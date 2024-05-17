@@ -6,15 +6,6 @@ c:com.intellij.execution.ExecutionException
 a:com.intellij.execution.ExecutionExceptionWithAttachments
 - com.intellij.execution.ExecutionException
 - com.intellij.openapi.diagnostic.ExceptionWithAttachments
-- sf:Companion:com.intellij.execution.ExecutionExceptionWithAttachments$Companion
-- <init>(java.lang.String,java.lang.String,java.lang.String):V
-- <init>(java.lang.String,java.lang.Throwable,java.lang.String,java.lang.String):V
-- <init>(java.lang.String,java.lang.Throwable,B[],B[]):V
-- <init>(java.lang.String,B[],B[]):V
-- getAttachments():com.intellij.openapi.diagnostic.Attachment[]
-- f:getStderr():java.lang.String
-- f:getStdout():java.lang.String
-f:com.intellij.execution.ExecutionExceptionWithAttachments$Companion
 c:com.intellij.execution.IllegalEnvVarException
 - com.intellij.execution.ExecutionException
 - <init>(java.lang.String):V
