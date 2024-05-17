@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.actions
 
 import com.intellij.history.core.LocalHistoryFacade
@@ -27,8 +27,12 @@ abstract class ChangeSetSelectionAction : DumbAwareAction() {
       return
     }
     e.presentation.isVisible = true
-    e.presentation.isEnabled = activitySelection.toChangeSetSelection() != null
+
+    val changeSetSelection = activitySelection.toChangeSetSelection()
+    e.presentation.isEnabled = changeSetSelection != null && isEnabled(changeSetSelection)
   }
+
+  protected open fun isEnabled(changeSetSelection: ChangeSetSelection): Boolean = true
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
