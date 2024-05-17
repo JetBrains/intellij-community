@@ -12,7 +12,6 @@ import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
@@ -33,12 +32,13 @@ import java.awt.*;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Consent>> {
-  final Collection<Pair<JCheckBox, Consent>> consentMapping = new ArrayList<>();
+  final Collection<ConsentStateSupplier> consentMapping = new ArrayList<>();
   private final boolean myPreferencesMode;
 
   public ConsentSettingsUi(boolean preferencesMode) {
@@ -116,18 +116,22 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         }
       }
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
+      ConsentStateSupplier stateSupplier = new ConsentStateSupplier(consent, () -> cb.isSelected());
       if (dataSharingDisabledExternally) {
         cb.setEnabled(false);
+        cb.setSelected(false);
+        stateSupplier = new ConsentStateSupplier(consent, () -> consent.isAccepted());
       }
       else if (dataSharingEnabledByFreeLicense) {
         cb.setEnabled(false);
-        //cb.setSelected(true);
+        cb.setSelected(true);
+        stateSupplier = new ConsentStateSupplier(consent, () -> consent.isAccepted());
       }
       //noinspection HardCodedStringLiteral
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
       cb.setOpaque(false);
-      consentMapping.add(Pair.create(cb, consent));
+      consentMapping.add(stateSupplier);
     } else {
       pane = new JPanel(new BorderLayout());
       final JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
@@ -158,7 +162,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       styleSheet.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED) + ";}");
       viewer.setCaretPosition(0);
       pane.add(viewer, BorderLayout.CENTER);
-      consentMapping.add(Pair.create(null, consent));
+      consentMapping.add(new ConsentStateSupplier(consent, () -> true));
     }
     pane.setOpaque(false);
 
@@ -186,9 +190,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
 
   private @NotNull List<Consent> getState() {
     final List<Consent> result = new ArrayList<>();
-    for (Pair<JCheckBox, Consent> pair : consentMapping) {
-      JCheckBox checkBox = pair.first;
-      result.add(pair.second.derive(checkBox == null || checkBox.isSelected()));
+    for (ConsentStateSupplier supplier : consentMapping) {
+      result.add(supplier.consent.derive(supplier.getState()));
     }
     return result;
   }
@@ -217,5 +220,12 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   @Override
   public @NotNull JComponent getComponent() {
     return this;
+  }
+
+  private record ConsentStateSupplier(Consent consent, Supplier<Boolean> getter) {
+
+    boolean getState() {
+      return getter.get();
+    }
   }
 }
