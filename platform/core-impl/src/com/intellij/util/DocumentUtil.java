@@ -157,15 +157,16 @@ public final class DocumentUtil {
   }
 
   private static int getIndentLengthAtLineStart(@NotNull Document document, int lineOffset) {
+    CharSequence content = document.getImmutableCharSequence();
     int result = 0;
-    while (lineOffset + result < document.getTextLength() &&
-           Character.isWhitespace(document.getCharsSequence().charAt(lineOffset + result))) {
+    while (lineOffset + result < content.length()) {
+      char ch = content.charAt(lineOffset + result);
+      if (!Character.isWhitespace(ch) || ch == '\n' || ch == '\r') {
+        break;
+      }
       result++;
     }
-    if (result + lineOffset > document.getTextLength()) {
-      result--;
-    }
-    return Math.max(result, 0);
+    return result;
   }
 
   /**
