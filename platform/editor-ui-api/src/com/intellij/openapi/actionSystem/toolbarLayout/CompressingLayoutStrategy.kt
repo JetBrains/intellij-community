@@ -136,26 +136,28 @@ open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
   }
 
   private fun calculateComponentWidths(availableWidth: Double, components: List<Component>): Map<Component, Int> {
-    val preferredWidths = components.map { it.preferredSize.width }
-    if (availableWidth >= preferredWidths.sum()) {
-      return components.associateWith { it.preferredSize.width }
+    val componentToPreferredWidthMap = components.associateWith { it.preferredSize.width }
+    if (availableWidth >= componentToPreferredWidthMap.values.sum()) {
+      return componentToPreferredWidthMap
     }
 
     val componentWidths = components.associateWith { it.minimumSize.width }.toMutableMap()
     var currentWidthSum = componentWidths.values.sum()
-
     // Create a priority queue that polls the smallest width component
     val minWidthQueue: PriorityQueue<Component> = PriorityQueue(
-      compareBy({ componentWidths[it]!! }, { -(it.preferredSize.width) })
+      compareBy({ componentWidths[it]!! }, { -(componentToPreferredWidthMap[it]!!) })
     )
-    minWidthQueue.addAll(componentWidths.keys)
+    val compressibleComponents = components.filter { componentWidths[it]!! < componentToPreferredWidthMap[it]!! }
+    minWidthQueue.addAll(compressibleComponents)
 
     while (availableWidth > currentWidthSum && !minWidthQueue.isEmpty()) {
       val minWidthComponent =  minWidthQueue.poll()
-      if (minWidthComponent != null && componentWidths[minWidthComponent]!! < minWidthComponent.preferredSize.width) {
+      if (minWidthComponent != null && componentWidths[minWidthComponent]!! < componentToPreferredWidthMap[minWidthComponent]!!) {
         currentWidthSum++
         componentWidths[minWidthComponent] = componentWidths[minWidthComponent]!! + 1
-        minWidthQueue.add(minWidthComponent)
+        if (componentWidths[minWidthComponent] != componentToPreferredWidthMap[minWidthComponent]) {
+          minWidthQueue.add(minWidthComponent)
+        }
       }
     }
     return componentWidths
