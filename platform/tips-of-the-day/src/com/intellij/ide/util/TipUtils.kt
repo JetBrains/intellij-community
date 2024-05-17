@@ -22,8 +22,8 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil.scale
 import com.intellij.util.ImageLoader.loadFromUrl
-import com.intellij.util.LocalizationUtil
 import com.intellij.util.ResourceUtil
+import com.intellij.util.l10n.LocalizationUtil
 import com.intellij.util.ui.JBImageIcon
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly

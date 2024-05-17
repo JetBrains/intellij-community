@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.text.Strings
 import com.intellij.reference.SoftReference
-import com.intellij.util.LocalizationUtil
+import com.intellij.util.l10n.LocalizationUtil
 import java.io.IOException
 import java.lang.ref.Reference
 import java.nio.file.Path

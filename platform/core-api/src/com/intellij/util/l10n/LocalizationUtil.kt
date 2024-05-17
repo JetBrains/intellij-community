@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util
+package com.intellij.util.l10n
 
 import com.intellij.DynamicBundle
-import com.intellij.DynamicBundle.getLocale
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.nio.file.Path
@@ -82,7 +82,7 @@ object LocalizationUtil {
     }
 
   fun getLocalizationSuffixes(specialLocale: Locale? = null): List<String> {
-    val locale = specialLocale ?: getLocaleFromPlugin() ?: return emptyList()
+    val locale = specialLocale ?: getLocaleOrNullForDefault() ?: return emptyList()
     val result = mutableListOf<String>()
     if (locale.language.isNotEmpty()) {
       if (locale.country.isNotEmpty()) {
@@ -95,7 +95,7 @@ object LocalizationUtil {
 
     @JvmOverloads
     fun getFolderLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
-      val locale = specialLocale ?: getLocaleFromPlugin() ?: return emptyList()
+      val locale = specialLocale ?: getLocaleOrNullForDefault() ?: return emptyList()
       return listOf(
       //localizations/zh/CN/inspectionDescriptions/name.html
       path.convertToLocalizationFolderUsage(locale, true),
@@ -103,6 +103,21 @@ object LocalizationUtil {
       //localizations/zh/inspectionDescriptions/name.html
       path.convertToLocalizationFolderUsage(locale, false)).distinct()
     }
+
+  fun getLocaleOrNullForDefault(): Locale? {
+    val languageTag = Registry.get("i18n.locale").asString()
+    val locale = Locale.forLanguageTag(languageTag)
+    if (Locale.ENGLISH.language == locale.language) {
+      return null
+    }
+    return locale
+  }
+
+  fun getLocale(): Locale {
+    val languageTag = Registry.get("i18n.locale").asString()
+    val locale = Locale.forLanguageTag(languageTag)
+    return locale
+  }
 
   fun getLocaleFromPlugin(): Locale? {
     return DynamicBundle.findLanguageBundle()?.locale?.let { Locale.forLanguageTag(it) }

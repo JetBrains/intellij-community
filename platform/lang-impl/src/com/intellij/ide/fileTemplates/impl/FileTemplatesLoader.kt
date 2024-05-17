@@ -21,11 +21,11 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.project.stateStore
-import com.intellij.util.LocalizationUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.URLUtil
+import com.intellij.util.l10n.LocalizationUtil
 import com.intellij.util.lang.UrlClassLoader
 import org.apache.velocity.runtime.ParserPool
 import org.apache.velocity.runtime.RuntimeSingleton

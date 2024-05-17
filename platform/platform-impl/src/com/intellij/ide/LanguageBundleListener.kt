@@ -5,7 +5,7 @@ import com.intellij.DynamicBundle
 import com.intellij.DynamicBundle.LanguageBundleEP
 import com.intellij.UtilBundle
 import com.intellij.ui.UtilUiBundle
-import com.intellij.util.LocalizationUtil
+import com.intellij.util.l10n.LocalizationUtil
 import com.intellij.util.text.DateTimeFormatManager
 import kotlinx.coroutines.CoroutineScope
 

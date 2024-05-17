@@ -3,8 +3,8 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.LocalizationUtil;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.l10n.LocalizationUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
