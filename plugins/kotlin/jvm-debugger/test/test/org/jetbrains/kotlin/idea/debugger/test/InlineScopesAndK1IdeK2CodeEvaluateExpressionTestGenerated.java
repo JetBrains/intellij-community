@@ -878,6 +878,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/singleBreakpoint/frame/hideSyntheticThis.kt");
             }
 
+            @TestMetadata("idea352803.kt")
+            public void testIdea352803() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/idea352803.kt");
+            }
+
             @TestMetadata("inlineFunThisKotlinVariables.kt")
             public void testInlineFunThisKotlinVariables() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/inlineFunThisKotlinVariables.kt");
