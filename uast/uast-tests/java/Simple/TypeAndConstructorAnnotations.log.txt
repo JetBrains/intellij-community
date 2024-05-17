@@ -24,6 +24,7 @@ UFile (package = test.pkg)
     UClass (name = Foo)
         UAnnotation (fqName = test.pkg.A)
         UMethod (name = Foo)
+            UAnnotation (fqName = test.pkg.A)
             UBlockExpression
         UMethod (name = foo1)
             UBlockExpression
