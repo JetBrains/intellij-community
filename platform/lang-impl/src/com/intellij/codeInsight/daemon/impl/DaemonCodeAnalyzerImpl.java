@@ -1219,10 +1219,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return session;
   }
 
-  private static PsiFile findFileToHighlight(@NotNull Project project, @Nullable VirtualFile virtualFile) {
-    PsiFile psiFile = virtualFile == null || !virtualFile.isValid() ? null : ((FileManagerImpl)PsiManagerEx.getInstanceEx(project)
-      .getFileManager()).getFastCachedPsiFile(virtualFile);
-    psiFile = psiFile instanceof PsiCompiledFile compiled ? compiled.getDecompiledPsiFile() : psiFile;
+  private static PsiFile findFileToHighlight(@NotNull Project project,
+                                             @Nullable VirtualFile virtualFile) {
+    if (virtualFile == null || !virtualFile.isValid()) {
+      return null;
+    }
+
+    FileManagerImpl fileManagerImpl = (FileManagerImpl)PsiManagerEx.getInstanceEx(project).getFileManager();
+    PsiFile psiFile = fileManagerImpl.getFastCachedPsiFile(virtualFile);
+
+    if (psiFile instanceof PsiCompiledFile compiled) {
+      return compiled.getDecompiledPsiFile();
+    }
+
     return psiFile;
   }
 
