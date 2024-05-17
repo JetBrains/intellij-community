@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.kotlin
 
+import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
@@ -10,8 +11,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.uast.testFramework.env.AbstractCoreEnvironment
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiNameHelper
+import com.intellij.psi.impl.PsiNameHelperImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.URLUtil
+import junit.framework.TestCase
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -34,22 +39,33 @@ import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UastContext
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
+import org.jetbrains.uast.java.JavaUastLanguagePlugin
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension
 import org.jetbrains.uast.kotlin.internal.CliKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.UastAnalysisHandlerExtension
-import org.jetbrains.uast.test.kotlin.env.AbstractTestWithCoreEnvironment
 import java.io.File
 
-abstract class AbstractKotlinUastTest : AbstractTestWithCoreEnvironment() {
+abstract class AbstractKotlinUastTest : TestCase() {
 
     private lateinit var compilerConfiguration: CompilerConfiguration
-    private var kotlinCoreEnvironment: KotlinCoreEnvironment? = null
+    private lateinit var kotlinCoreEnvironment: KotlinCoreEnvironment
+    private lateinit var myEnvironment: AbstractCoreEnvironment
+
+    protected val project: MockProject
+        get() = myEnvironment.project
+
+    protected val uastContext: UastContext
+        get() = project.getService(UastContext::class.java)
+
+    protected val psiManager: PsiManager
+        get() = PsiManager.getInstance(project)
 
     open var testDataDir: File = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 
@@ -72,65 +88,92 @@ abstract class AbstractKotlinUastTest : AbstractTestWithCoreEnvironment() {
     protected fun getVirtualFile(testName: String): VirtualFile {
         val testFile = testDataDir.listFiles { pathname -> pathname.nameWithoutExtension == testName }.first()
 
-        super.initializeEnvironment(testFile)
+        myEnvironment = createEnvironment(testFile)
 
+        initializeCoreEnvironment()
         initializeKotlinEnvironment()
 
         val trace = NoScopeRecordCliBindingTrace(project)
 
-        val environment = kotlinCoreEnvironment!!
         TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
-            project, environment.getSourceFiles(), trace, compilerConfiguration, environment::createPackagePartProvider
+            project = project,
+            files = kotlinCoreEnvironment.getSourceFiles(),
+            trace = trace,
+            configuration = compilerConfiguration,
+            packagePartProvider = kotlinCoreEnvironment::createPackagePartProvider,
         )
 
         val vfs = VirtualFileManager.getInstance().getFileSystem(URLUtil.FILE_PROTOCOL)
 
-        val ideaProject = project
-        ideaProject.baseDir = vfs.findFileByPath(TEST_KOTLIN_MODEL_DIR.canonicalPath)
+        project.baseDir = vfs.findFileByPath(TEST_KOTLIN_MODEL_DIR.canonicalPath)
 
         return vfs.findFileByPath(testFile.canonicalPath)!!
     }
 
+    private fun initializeCoreEnvironment() {
+        CoreApplicationEnvironment.registerApplicationExtensionPoint(
+            UastLanguagePlugin.extensionPointName,
+            UastLanguagePlugin::class.java,
+        )
+
+        CoreApplicationEnvironment.registerApplicationExtensionPoint(
+            UEvaluatorExtension.EXTENSION_POINT_NAME,
+            UEvaluatorExtension::class.java,
+        )
+
+        project.registerService(
+            PsiNameHelper::class.java,
+            PsiNameHelperImpl(project),
+        )
+        project.registerService(UastContext::class.java)
+
+        Extensions.getRootArea().getExtensionPoint(UastLanguagePlugin.extensionPointName)
+            .registerExtension(JavaUastLanguagePlugin())
+
+        AnalysisHandlerExtension.registerExtension(
+            project,
+            UastAnalysisHandlerExtension(),
+        )
+    }
+
     private fun initializeKotlinEnvironment() {
         val area = Extensions.getRootArea()
-        area.getExtensionPoint(UastLanguagePlugin.extensionPointName).registerExtension(KotlinUastLanguagePlugin(), project)
-        area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME).registerExtension(KotlinEvaluatorExtension(), project)
+        area.getExtensionPoint(UastLanguagePlugin.extensionPointName)
+            .registerExtension(KotlinUastLanguagePlugin(), project)
+        area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME)
+            .registerExtension(KotlinEvaluatorExtension(), project)
 
         val application = ApplicationManager.getApplication() as MockComponentManager
         application.registerService(
             BaseKotlinUastResolveProviderService::class.java,
-            CliKotlinUastResolveProviderService::class.java
+            CliKotlinUastResolveProviderService::class.java,
         )
         project.registerService(
             KotlinUastResolveProviderService::class.java,
-            CliKotlinUastResolveProviderService::class.java
+            CliKotlinUastResolveProviderService::class.java,
         )
     }
 
-    override fun createEnvironment(source: File): AbstractCoreEnvironment {
+    private fun createEnvironment(source: File): AbstractCoreEnvironment {
         val appWasNull = ApplicationManager.getApplication() == null
         compilerConfiguration = createKotlinCompilerConfiguration(source)
         compilerConfiguration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
         compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.kotlinCompiler)
 
         val parentDisposable = Disposer.newDisposable()
-        val kotlinCoreEnvironment =
-            KotlinCoreEnvironment.createForTests(parentDisposable, compilerConfiguration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
-
-        this.kotlinCoreEnvironment = kotlinCoreEnvironment
-
-        AnalysisHandlerExtension.registerExtension(
-            kotlinCoreEnvironment.project, UastAnalysisHandlerExtension()
+        kotlinCoreEnvironment = KotlinCoreEnvironment.createForTests(
+            parentDisposable = parentDisposable,
+            initialConfiguration = compilerConfiguration,
+            extensionConfigs = EnvironmentConfigFiles.JVM_CONFIG_FILES,
         )
 
         return KotlinCoreEnvironmentWrapper(kotlinCoreEnvironment, parentDisposable, appWasNull)
     }
 
     override fun tearDown() {
-        kotlinCoreEnvironment = null
         ApplicationManager.getApplication().invokeAndWait {
             ApplicationManager.getApplication().runWriteAction {
-                super.tearDown()
+                myEnvironment.dispose()
             }
         }
     }
