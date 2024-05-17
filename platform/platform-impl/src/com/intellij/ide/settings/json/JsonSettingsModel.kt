@@ -56,7 +56,9 @@ class JsonSettingsModel(val propertyMap: Map<String, PropertyDescriptor>) {
     val properties: List<ComponentPropertyInfo> = emptyList()
   ) {
     fun getKey(): String? =
-      if (name != null && pluginId != null) "${pluginId}:${scope}:${name}" else null
+      getNormalizedName()?.let { normalized-> pluginId?.let { "${pluginId}:${scope}:${normalized}" }}
+
+    fun getNormalizedName() = name?.replace('.', '-')
   }
 
   @VisibleForTesting

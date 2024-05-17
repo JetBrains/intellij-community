@@ -8,7 +8,7 @@
     "com.intellij.css:app:JsxEmmetOptions.*",
     "Docker:app:DockerSettings.dockerComposePath",
     "Docker:app:DockerSettings.dockerPath",
-    "Git4Idea:app:Git.Application.Settings.*",
+    "Git4Idea:app:Git-Application-Settings.*",
     "Pythonid:app:PyCondaPackageService.*"
   ]
 }
