@@ -31,23 +31,14 @@ class IntellijPerfJsonReportGenerator(
     try {
       val buildInfo = helper.createBuildInfo()
 
-      val perfMetrics = globalMetrics.map {
-        it.toPerfMetric()
-      }.toMutableList()
-        .also { list ->
-          metricPerFile.forEach { file, metrics ->
-            metrics.forEach {
-              it.name
-              list.add(it.toPerfMetric("${file}_"))
-            }
-          }
-        }
+      val perfMetrics = globalMetrics.map { it.toPerfMetric() }
+
 
       val metricsDto = PerformanceMetricsDto
-        .create(projectName = "TODO_projectName",
-                projectURL = "TODO_projectURL",
-                projectDescription = "TODO_projectDescription",
-                methodName = "TODO_methodName",
+        .create(projectName = "completion_#lang#_#model#_#os#", //#**# will be used in TC builds, pls don't change it
+                projectURL = "",
+                projectDescription = "",
+                methodName = "",
                 buildNumber = BuildNumber.currentVersion(),
                 metrics = perfMetrics,
                 buildInfo = buildInfo)
