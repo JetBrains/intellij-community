@@ -4458,6 +4458,7 @@ c:com.intellij.psi.templateLanguages.TemplateDataHighlighterWrapper
 - <init>(java.lang.String):V
 - <init>(java.lang.String,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
 - <init>(java.util.List):V
+- equals(java.lang.Object):Z
 - f:findIndexOfInKnown(java.lang.String):I
 - f:findIndexOfInKnown(java.lang.String,I):I
 - bs:findIndexOfInKnown$default(com.intellij.psi.util.PartiallyKnownString,java.lang.String,I,I,java.lang.Object):I
@@ -4466,6 +4467,7 @@ c:com.intellij.psi.templateLanguages.TemplateDataHighlighterWrapper
 - f:getRangeOfTheHostContent(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 - f:getSegments():java.util.List
 - f:getValueIfKnown():java.lang.String
+- hashCode():I
 - f:mapRangeToHostRange(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange
 - f:split(java.lang.String,kotlin.jvm.functions.Function2):java.util.List
 - bs:split$default(com.intellij.psi.util.PartiallyKnownString,java.lang.String,kotlin.jvm.functions.Function2,I,java.lang.Object):java.util.List
@@ -4529,17 +4531,21 @@ a:com.intellij.psi.util.ReferenceSetBase
 *f:com.intellij.psi.util.StringEntry$Known
 - com.intellij.psi.util.StringEntry
 - <init>(java.lang.String,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
+- equals(java.lang.Object):Z
 - getRange():com.intellij.openapi.util.TextRange
 - getSourcePsi():com.intellij.psi.PsiElement
 - f:getValue():java.lang.String
+- hashCode():I
 - toString():java.lang.String
 *f:com.intellij.psi.util.StringEntry$Unknown
 - com.intellij.psi.util.StringEntry
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
 - <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.Iterable):V
 - b:<init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.Iterable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
 - getRange():com.intellij.openapi.util.TextRange
 - getSourcePsi():com.intellij.psi.PsiElement
+- hashCode():I
 - toString():java.lang.String
 com.intellij.refactoring.Refactoring
 - a:doRefactoring(com.intellij.usageView.UsageInfo[]):V
