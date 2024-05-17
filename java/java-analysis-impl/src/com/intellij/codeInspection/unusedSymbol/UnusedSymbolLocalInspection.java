@@ -117,7 +117,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
 
       private void registerProblem(@NotNull PsiElement element,
                                    @NotNull @InspectionMessage String message,
-                                   @NotNull List<IntentionAction> fixes) {
+                                   @NotNull List<? extends IntentionAction> fixes) {
         // Synthetic elements in JSP like JspHolderMethod may arrive here
         if (element instanceof SyntheticElement) return;
         if (element instanceof PsiNameIdentifierOwner owner) {
@@ -273,7 +273,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
                method.hasModifierProperty(PsiModifier.PRIVATE) ||
                method.hasModifierProperty(PsiModifier.STATIC) ||
                !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
-               (!isOverriddenOrOverrides(method) || checkParameterExcludingHierarchy())) &&
+               (!isOverriddenOrOverrides(method) || shouldCheckParameterExcludingHierarchy())) &&
               !method.hasModifierProperty(PsiModifier.NATIVE) &&
               !JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
               !isUsedMainOrPremainMethod(method)) {
@@ -286,7 +286,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
                   getFixesForUnusedParameter(method, parameter),
                   quickFixFactory.createRenameToIgnoredFix(parameter, true),
                   PriorityIntentionActionWrapper.highPriority(quickFixFactory.createSafeDeleteUnusedParameterInHierarchyFix(
-                    parameter, checkParameterExcludingHierarchy() && isOverriddenOrOverrides(method)))));
+                    parameter, shouldCheckParameterExcludingHierarchy() && isOverriddenOrOverrides(method)))));
             }
           }
         }
@@ -321,7 +321,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
             registerProblem(parameter, message, ContainerUtil.createMaybeSingletonList(action));
           }
         }
-        else if ((checkParameterExcludingHierarchy() ||
+        else if ((shouldCheckParameterExcludingHierarchy() ||
                   PsiUtil.isAvailable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES, declarationScope))
                  && declarationScope instanceof PsiLambdaExpression) {
           String message = checkUnusedParameter(parameter);
@@ -461,7 +461,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
     return myParameterVisibility;
   }
 
-  public boolean checkParameterExcludingHierarchy() {
+  private boolean shouldCheckParameterExcludingHierarchy() {
     return myCheckParameterExcludingHierarchy;
   }
 

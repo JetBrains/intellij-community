@@ -25,7 +25,7 @@ import java.util.Map;
  * @author max
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-@SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr"})
+@SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr", "TestInProductSource"})
 @RunWith(JUnit38AssumeSupportRunner.class)
 public class _LastInSuiteTest extends TestCase {
 
