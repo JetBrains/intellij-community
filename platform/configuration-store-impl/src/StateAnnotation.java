@@ -91,6 +91,11 @@ class StateAnnotation implements State {
   }
 
   @Override
+  public boolean perClient() {
+    return false;
+  }
+
+  @Override
   public Class<? extends Annotation> annotationType() {
     throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
   }
