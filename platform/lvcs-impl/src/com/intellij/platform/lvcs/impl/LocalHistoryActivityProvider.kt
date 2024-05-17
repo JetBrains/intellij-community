@@ -6,6 +6,7 @@ import com.intellij.history.ActivityPresentationProvider
 import com.intellij.history.core.*
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.PutLabelChange
+import com.intellij.history.integration.CommonActivity
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -64,17 +65,25 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
 
   private fun doLoadPathActivityList(projectId: String, scope: ActivityScope, path: String, scopeFilter: String?,
                                      affectedPaths: MutableSet<String>, activityItems: MutableList<ActivityItem>) {
-    var lastLabel: ChangeSet? = null
+    var lastEventLabel: ChangeSet? = null
+    val userLabels = mutableListOf<ChangeSet>()
     facade.collectChanges(path, ChangeAndPathProcessor(projectId, scopeFilter, affectedPaths::add) { changeSet ->
       if (changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
       if (changeSet.isLabelOnly) {
-        lastLabel = changeSet
+        if (changeSet.activityId == CommonActivity.UserLabel) {
+          userLabels.add(changeSet)
+          lastEventLabel = null
+        } else {
+          lastEventLabel = changeSet
+        }
       }
       else {
-        if (lastLabel != null) {
-          activityItems.add(lastLabel!!.toActivityItem(scope))
-          lastLabel = null
-        }
+        if (userLabels.isNotEmpty()) activityItems.addAll(userLabels.map { it.toActivityItem(scope) })
+        if (lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
+
+        userLabels.clear()
+        lastEventLabel = null
+
         activityItems.add(changeSet.toActivityItem(scope))
       }
     })

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
+import com.intellij.history.ActivityId
 import com.intellij.history.LocalHistory
 import com.intellij.history.integration.IntegrationTestCase
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -59,6 +60,41 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
 
     TestCase.assertTrue(labelNames.containsAll(listOf(userLabel, visibleUserLabel)))
     TestCase.assertTrue(labelNames.intersect(listOf(systemLabel, hiddenUserLabel1, hiddenUserLabel2)).isEmpty())
+  }
+
+  fun `test multiple event and user labels`() {
+    val file = createFile("file.txt")
+
+    val activityId = ActivityId("dummyProvider", "dummyActivity")
+    val localHistory = LocalHistory.getInstance()
+
+    setContent(file, "initial")
+    val visibleEventLabel1 = "visible event label 1"
+    localHistory.putEventLabel(project, visibleEventLabel1, activityId)
+    val userLabel1 = "user label 1"
+    localHistory.putUserLabel(project, userLabel1)
+    localHistory.putEventLabel(project, "event label 1", activityId)
+    val userLabel2 = "user label 2"
+    localHistory.putUserLabel(project, userLabel2)
+
+    setContent(file, "content1")
+    val visibleEventLabel2 = "visible event label 2"
+    localHistory.putEventLabel(project, visibleEventLabel2, activityId)
+    localHistory.putEventLabel(project, "hidden event label 1", activityId)
+
+    setContent(file, "content2")
+    val userLabel3 = "user label 3"
+    localHistory.putUserLabel(project, userLabel3)
+    localHistory.putEventLabel(project, "hidden event label 2", activityId)
+    localHistory.putEventLabel(project, "hidden event label 3", activityId)
+
+    val provider = LocalHistoryActivityProvider(project, gateway)
+    val scope = ActivityScope.fromFile(file)
+
+    val activityList = provider.loadActivityList(scope, null)
+    val labelNames = activityList.getLabelNameSet()
+
+    TestCase.assertEquals(listOf(userLabel1, userLabel2, userLabel3, visibleEventLabel1, visibleEventLabel2), labelNames.toList().sorted())
   }
 
   fun `test directory`() {
