@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
@@ -10,9 +10,9 @@ import com.jediterm.core.input.InputEvent.CTRL_MASK
 import com.jediterm.core.input.KeyEvent.VK_HOME
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.exp.ShellCommandManager.Companion.LOG
+import org.jetbrains.plugins.terminal.exp.ShellCommandManager.Companion.debug
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * Prevents sending shell generator concurrently with other generator or other shell command.
  */
 internal class ShellCommandExecutionManager(private val session: BlockTerminalSession, commandManager: ShellCommandManager) {
+
+  private val listeners: CopyOnWriteArrayList<ShellCommandSentListener> = CopyOnWriteArrayList()
 
   /**
    * Used to synchronize access to several private fields of this object.
@@ -44,8 +46,6 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
   /** Access to this field is synchronized using `lock` */
   private var isCommandRunning: Boolean = false
-
-  private val commandSentListeners: MutableList<(String) -> Unit> = CopyOnWriteArrayList()
 
   init {
     commandManager.addListener(object : ShellCommandListener {
@@ -159,11 +159,6 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     return generator.deferred
   }
 
-  @TestOnly
-  fun addCommandSentListener(disposable: Disposable, listener: (String) -> Unit) {
-    TerminalUtil.addItem(commandSentListeners, listener, disposable)
-  }
-
   /**
    * Should be called without [lock].
    *
@@ -193,12 +188,12 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
       scheduledCommands.poll()?.let { command ->
         cancelGenerators(registrar, "user command is ready to execute")
         isCommandRunning = true
-        doSendCommandToExecute(command)
+        doSendCommandToExecute(command, false)
         return@withLock // `commandFinished` event will resume queue processing
       }
       pollNextGeneratorToRun()?.let {
         runningGenerator = it
-        doSendCommandToExecute(it.shellCommand())
+        doSendCommandToExecute(it.shellCommand(), true)
         // `generatorFinished` event will resume queue processing
       }
     }
@@ -222,8 +217,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }
   }
 
-  private fun doSendCommandToExecute(shellCommand: String) {
-    commandSentListeners.forEach { it(shellCommand) }
+  private fun doSendCommandToExecute(shellCommand: String, isGenerator: Boolean) {
     session.terminalStarterFuture.thenAccept { starter ->
       starter ?: return@thenAccept
       val clearPrompt: String = when (session.shellIntegration.shellType) {
@@ -236,7 +230,32 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
         else -> "\u0015"
       }
       TerminalUtil.sendCommandToExecute(clearPrompt + shellCommand, starter)
+
+      if (isGenerator) {
+        fireGeneratorCommandSent(shellCommand)
+      }
+      else {
+        fireUserCommandSent(shellCommand)
+      }
     }
+  }
+
+  fun addListener(listener: ShellCommandSentListener, parentDisposable: Disposable = session) {
+    TerminalUtil.addItem(listeners, listener, parentDisposable)
+  }
+
+  private fun fireUserCommandSent(userCommand: String) {
+    for (listener in listeners) {
+      listener.userCommandSent(userCommand)
+    }
+    debug { "User command sent: $userCommand" }
+  }
+
+  private fun fireGeneratorCommandSent(generatorCommand: String) {
+    for (listener in listeners) {
+      listener.generatorCommandSent(generatorCommand)
+    }
+    debug { "Generator command sent: $generatorCommand" }
   }
 
   /**
@@ -321,4 +340,22 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
 private interface AfterLockActionRegistrar {
   fun afterLock(block: () -> Unit)
+}
+
+internal interface ShellCommandSentListener {
+  /**
+   * Called when a user command has been sent for execution in shell.
+   * Might be called in the background or in the UI thread.
+   *
+   * Please note this call may happen prior to actual writing bytes to TTY.
+   */
+  fun userCommandSent(userCommand: String) {}
+
+  /**
+   * Called when a generator command has been sent for execution in shell.
+   * Might be called in the background or in the UI thread.
+   *
+   * Please note this call may happen prior to actual writing bytes to TTY.
+   */
+  fun generatorCommandSent(generatorCommand: String) {}
 }

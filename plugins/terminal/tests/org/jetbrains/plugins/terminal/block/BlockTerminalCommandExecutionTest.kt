@@ -54,7 +54,7 @@ class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
       CommandResult(listOf("echo", message).toCommandLine(session), message)
     }
     expected.forEach {
-      view.sendCommandToExecute(it.command)
+      session.commandManager.sendCommandToExecute(it.command)
     }
     awaitBlocksFinalized(view.outputView.controller.outputModel, count)
     val actual = view.outputView.controller.outputModel.collectCommandResults()

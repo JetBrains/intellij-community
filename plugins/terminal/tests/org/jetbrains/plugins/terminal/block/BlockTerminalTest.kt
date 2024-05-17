@@ -15,6 +15,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCachingGen
 import org.jetbrains.plugins.terminal.block.testApps.MoveCursorToLineEndAndPrint
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
+import org.jetbrains.plugins.terminal.exp.ShellCommandSentListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.exp.util.CommandResult
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
@@ -176,12 +177,13 @@ class BlockTerminalTest(private val shellPath: Path) {
 
   private fun createCommandSentDeferred(session: BlockTerminalSession): CompletableDeferred<Unit> {
     val generatorCommandSent = CompletableDeferred<Unit>()
-    val generatorCommandSentDisposable = Disposer.newDisposable().also { disposable ->
-      generatorCommandSent.invokeOnCompletion { Disposer.dispose(disposable) }
-    }
-    session.commandManager.commandExecutionManager.addCommandSentListener(generatorCommandSentDisposable) {
-      generatorCommandSent.complete(Unit)
-    }
+    val generatorCommandSentDisposable = Disposer.newDisposable(session)
+    session.commandManager.commandExecutionManager.addListener(object : ShellCommandSentListener {
+      override fun generatorCommandSent(generatorCommand: String) {
+        generatorCommandSent.complete(Unit)
+        Disposer.dispose(generatorCommandSentDisposable)
+      }
+    }, generatorCommandSentDisposable)
     return generatorCommandSent
   }
 

@@ -54,6 +54,18 @@ internal class BlockTerminalController(
         TerminalUsageTriggerCollector.triggerCommandFinished(project, event.command, event.exitCode, event.duration)
       }
     })
+    session.commandManager.commandExecutionManager.addListener(object : ShellCommandSentListener {
+      override fun userCommandSent(userCommand: String) {
+        invokeLaterIfNeeded(getDisposed(), ModalityState.any()) {
+          // Since `commandFinished` event leads to sending the next user command and
+          // finishing the previous command block, and these actions occur in an unspecified order,
+          // we need `doWhenNextBlockCanBeStarted` to ensure that the previous block is finished.
+          outputController.doWhenNextBlockCanBeStarted {
+            startCommandBlock(userCommand)
+          }
+        }
+      }
+    })
 
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
@@ -73,10 +85,7 @@ internal class BlockTerminalController(
       outputController.insertEmptyLine()
     }
     else {
-      session.commandManager.sendCommandToExecute(command)
-      outputController.doWhenNextBlockCanBeStarted {
-        startCommandBlock(command)
-      }
+      session.commandManager.sendCommandToExecute(command) // will trigger `userCommandSent`
     }
     // report event even if it is an empty command, because it will be reported as a separate command type
     TerminalUsageTriggerCollector.triggerCommandStarted(project, command, isBlockTerminal = true)
