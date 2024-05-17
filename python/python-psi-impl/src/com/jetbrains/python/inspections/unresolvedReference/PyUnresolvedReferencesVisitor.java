@@ -251,7 +251,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   private void registerUnresolvedReferenceProblem(@NotNull PyElement node, @NotNull final PsiReference reference,
-                                                @NotNull HighlightSeverity severity) {
+                                                  @NotNull HighlightSeverity severity) {
     if (reference instanceof DocStringTypeReference) {
       return;
     }
@@ -398,13 +398,13 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
   private boolean isDeclaredInSlots(@NotNull PyType type, @NotNull String attrName) {
     return PyTypeUtil.toStream(type)
-                     .select(PyClassType.class)
-                     .map(PyClassType::getPyClass)
-                     .flatMap(cls -> StreamEx.of(cls).append(cls.getAncestorClasses(myTypeEvalContext)))
-                     .nonNull()
-                     .filter(c -> c.isNewStyleClass(myTypeEvalContext))
-                     .flatCollection(PyClass::getOwnSlots)
-                     .anyMatch(attrName::equals);
+      .select(PyClassType.class)
+      .map(PyClassType::getPyClass)
+      .flatMap(cls -> StreamEx.of(cls).append(cls.getAncestorClasses(myTypeEvalContext)))
+      .nonNull()
+      .filter(c -> c.isNewStyleClass(myTypeEvalContext))
+      .flatCollection(PyClass::getOwnSlots)
+      .anyMatch(attrName::equals);
   }
 
   private boolean ignoreUnresolvedMemberForType(@NotNull PyType type, PsiReference reference, String name) {
@@ -887,30 +887,20 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return null;
   }
 
-  private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType type,
-                                                  PsiReference reference,
-                                                  @NotNull final String name, TypeEvalContext typeEvalContext) {
-
-    final List<PyClassType> types = new ArrayList<>(Collections.singletonList(type));
-    types.addAll(FluentIterable.from(type.getAncestorTypes(typeEvalContext)).filter(PyClassType.class).toList());
-
-
-    for (final PyClassType typeToCheck : types) {
-      for (PyClassMembersProvider provider : PyClassMembersProvider.EP_NAME.getExtensionList()) {
-        final Collection<PyCustomMember> resolveResult = provider.getMembers(typeToCheck, reference.getElement(), typeEvalContext);
-        for (PyCustomMember member : resolveResult) {
-          if (member.getName().equals(name)) return true;
-        }
-      }
-    }
-
-    return false;
+  protected Iterable<LocalQuickFix> getInstallPackageQuickFixes(@NotNull PyElement node,
+                                                                @NotNull PsiReference reference,
+                                                                String refName) {
+    return Collections.emptyList();
   }
 
-  Iterable<LocalQuickFix> getInstallPackageQuickFixes(@NotNull PyElement node,
-                                                      @NotNull PsiReference reference,
-                                                      String refName) {
-    return Collections.emptyList();
+  @Nullable
+  LocalQuickFix getCreateFunctionQuickFix(@NotNull PyReferenceExpression expr) {
+    PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(expr);
+    if (callExpression != null && (!(callExpression.getCallee() instanceof PyQualifiedExpression) ||
+                                   ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
+      return new UnresolvedRefCreateFunctionQuickFix(expr);
+    }
+    return null;
   }
 
   Iterable<LocalQuickFix> getAddIgnoredIdentifierQuickFixes(List<QualifiedName> qualifiedNames) {
@@ -932,18 +922,40 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return null;
   }
 
-  @Nullable LocalQuickFix getCreateFunctionQuickFix(@NotNull PyReferenceExpression expr) {
-    PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(expr);
-    if (callExpression != null && (!(callExpression.getCallee() instanceof PyQualifiedExpression) ||
-                                   ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
-      return new UnresolvedRefCreateFunctionQuickFix(expr);
+  @Nullable
+  LocalQuickFix getTrueFalseQuickFix(@NotNull String refText) {
+    if (refText.equals("true") || refText.equals("false")) {
+      return new UnresolvedRefTrueFalseQuickFix(refText);
     }
     return null;
   }
 
-  @Nullable LocalQuickFix getTrueFalseQuickFix(@NotNull String refText) {
-    if (refText.equals("true") || refText.equals("false")) {
-      return new UnresolvedRefTrueFalseQuickFix(refText);
+  @Nullable
+  LocalQuickFix getCreateClassFix(@NonNls String refText, PsiElement element) {
+    if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !StringUtil.toUpperCase(refText).equals(refText)) {
+      if (element instanceof PyQualifiedExpression) {
+        PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
+        if (qualifier == null) {
+          final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);
+          if (fromImport != null) qualifier = fromImport.getImportSource();
+        }
+        PsiFile destination = null;
+        if (qualifier != null) {
+          final PyType type = myTypeEvalContext.getType(qualifier);
+          if (type instanceof PyModuleType) {
+            destination = ((PyModuleType)type).getModule();
+          }
+          else {
+            return null;
+          }
+        }
+        if (destination == null) {
+          InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
+          PsiLanguageInjectionHost injectionHost = injectionManager.getInjectionHost(element);
+          destination = ObjectUtils.chooseNotNull(injectionHost, element).getContainingFile();
+        }
+        return new CreateClassQuickFix(refText, destination);
+      }
     }
     return null;
   }
@@ -1028,33 +1040,24 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return Collections.emptyList();
   }
 
-  @Nullable LocalQuickFix getCreateClassFix(@NonNls String refText, PsiElement element) {
-    if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !StringUtil.toUpperCase(refText).equals(refText)) {
-      if (element instanceof PyQualifiedExpression) {
-        PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
-        if (qualifier == null) {
-          final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);
-          if (fromImport != null) qualifier = fromImport.getImportSource();
+  private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType type,
+                                                    PsiReference reference,
+                                                    @NotNull final String name, TypeEvalContext typeEvalContext) {
+
+    final List<PyClassType> types = new ArrayList<>(Collections.singletonList(type));
+    types.addAll(FluentIterable.from(type.getAncestorTypes(typeEvalContext)).filter(PyClassType.class).toList());
+
+
+    for (final PyClassType typeToCheck : types) {
+      for (PyClassMembersProvider provider : PyClassMembersProvider.EP_NAME.getExtensionList()) {
+        final Collection<PyCustomMember> resolveResult = provider.getMembers(typeToCheck, reference.getElement(), typeEvalContext);
+        for (PyCustomMember member : resolveResult) {
+          if (member.getName().equals(name)) return true;
         }
-        PsiFile destination = null;
-        if (qualifier != null) {
-          final PyType type = myTypeEvalContext.getType(qualifier);
-          if (type instanceof PyModuleType) {
-            destination = ((PyModuleType)type).getModule();
-          }
-          else {
-            return null;
-          }
-        }
-        if (destination == null) {
-          InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
-          PsiLanguageInjectionHost injectionHost = injectionManager.getInjectionHost(element);
-          destination = ObjectUtils.chooseNotNull(injectionHost, element).getContainingFile();
-        }
-        return new CreateClassQuickFix(refText, destination);
       }
     }
-    return null;
+
+    return false;
   }
 
   void getPluginQuickFixes(List<LocalQuickFix> fixes, PsiReference reference) {
