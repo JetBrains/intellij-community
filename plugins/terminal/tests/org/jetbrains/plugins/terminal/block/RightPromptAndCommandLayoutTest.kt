@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.block
 import com.intellij.openapi.editor.markup.TextAttributes
 import junit.framework.TestCase.assertEquals
 import org.jetbrains.plugins.terminal.exp.*
-import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptRenderingInfo
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -142,8 +142,8 @@ internal class RightPromptAndCommandLayoutTest {
   }
 
   private fun createCommandAndRightPrompt(command: String, prompt: String, rightPrompt: String, width: Int): TextWithHighlightings {
-    val promptInfo = PromptRenderingInfo(prompt, listOf(HighlightingInfo(0, prompt.length, promptAttributes)),
-                                         rightPrompt, listOf(HighlightingInfo(0, rightPrompt.length, rightPromptAttributes)))
+    val promptInfo = TerminalPromptRenderingInfo(prompt, listOf(HighlightingInfo(0, prompt.length, promptAttributes)),
+                                                 rightPrompt, listOf(HighlightingInfo(0, rightPrompt.length, rightPromptAttributes)))
     return TerminalOutputModel.createCommandAndRightPromptText(command, promptInfo, commandAttributes, width)
   }
 

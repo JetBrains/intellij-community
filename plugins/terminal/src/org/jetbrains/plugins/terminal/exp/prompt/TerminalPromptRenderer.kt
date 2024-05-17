@@ -2,5 +2,5 @@
 package org.jetbrains.plugins.terminal.exp.prompt
 
 internal interface TerminalPromptRenderer {
-  fun calculateRenderingInfo(state: TerminalPromptState): PromptRenderingInfo
+  fun calculateRenderingInfo(state: TerminalPromptState): TerminalPromptRenderingInfo
 }

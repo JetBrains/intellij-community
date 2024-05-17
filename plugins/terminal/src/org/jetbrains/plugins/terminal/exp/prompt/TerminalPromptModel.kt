@@ -43,7 +43,7 @@ internal class TerminalPromptModel(private val editor: EditorEx, private val ses
 
   private var curPromptState: TerminalPromptState = TerminalPromptState(currentDirectory = "")
 
-  var promptRenderingInfo: PromptRenderingInfo = PromptRenderingInfo("", emptyList())
+  var promptRenderingInfo: TerminalPromptRenderingInfo = TerminalPromptRenderingInfo("", emptyList())
     @RequiresEdt
     get
     private set
@@ -91,7 +91,7 @@ internal class TerminalPromptModel(private val editor: EditorEx, private val ses
   }
 
   @RequiresEdt
-  private fun doUpdatePrompt(renderingInfo: PromptRenderingInfo) {
+  private fun doUpdatePrompt(renderingInfo: TerminalPromptRenderingInfo) {
     DocumentUtil.writeInRunUndoTransparentAction {
       document.guardedBlocks.clear()
       document.replaceString(0, commandStartOffset, renderingInfo.text)
@@ -162,7 +162,7 @@ internal class TerminalPromptModel(private val editor: EditorEx, private val ses
   }
 }
 
-internal data class PromptRenderingInfo(
+internal data class TerminalPromptRenderingInfo(
   val text: @NlsSafe String,
   val highlightings: List<HighlightingInfo>,
   val rightText: @NlsSafe String = "",

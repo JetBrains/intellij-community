@@ -15,7 +15,7 @@ import org.jetbrains.plugins.terminal.exp.prompt.*
 internal class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo) : TerminalPromptRenderer {
   private val fallbackRenderer: TerminalPromptRenderer = BuiltInPromptRenderer(sessionInfo)
 
-  override fun calculateRenderingInfo(state: TerminalPromptState): PromptRenderingInfo {
+  override fun calculateRenderingInfo(state: TerminalPromptState): TerminalPromptRenderingInfo {
     val escapedPrompt = state.originalPrompt
     val escapedRightPrompt = state.originalRightPrompt
     if (escapedPrompt == null) {
@@ -45,8 +45,8 @@ internal class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo)
         promptInfo.content to TextWithHighlightings("", emptyList())
       }
     }
-    return PromptRenderingInfo(prompt.text, prompt.highlightings,
-                               rightPrompt.text, rightPrompt.highlightings)
+    return TerminalPromptRenderingInfo(prompt.text, prompt.highlightings,
+                                       rightPrompt.text, rightPrompt.highlightings)
   }
 
   private fun expandPrompt(escapedPrompt: String): ExpandedPromptInfo {

@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptRenderingInfo
 import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -44,7 +44,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
    * @param terminalWidth number of columns at the moment of block creation. It is used to properly position the right prompt.
    */
   @RequiresEdt
-  fun createBlock(command: String?, prompt: PromptRenderingInfo?, terminalWidth: Int): CommandBlock {
+  fun createBlock(command: String?, prompt: TerminalPromptRenderingInfo?, terminalWidth: Int): CommandBlock {
     // Execute document insertions in bulk to make sure that EditorHighlighter
     // is not requesting the highlightings before we set them.
     val block = document.executeInBulk {
@@ -296,7 +296,7 @@ internal class TerminalOutputModel(val editor: EditorEx) {
   companion object {
     @VisibleForTesting
     internal fun createCommandAndRightPromptText(command: String?,
-                                                 prompt: PromptRenderingInfo?,
+                                                 prompt: TerminalPromptRenderingInfo?,
                                                  commandAttributes: TextAttributesProvider,
                                                  terminalWidth: Int): TextWithHighlightings {
       val commandText = command ?: ""

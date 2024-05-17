@@ -15,7 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighter
-import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptRenderingInfo
 import java.util.*
 
 /**
@@ -69,7 +69,7 @@ internal class TerminalOutputController(
   }
 
   @RequiresEdt
-  fun startCommandBlock(command: String?, prompt: PromptRenderingInfo?) {
+  fun startCommandBlock(command: String?, prompt: TerminalPromptRenderingInfo?) {
     scrollToBottom()
     installRunningCommandInteractivity(command)
     runningCommandContext = RunningCommandContext(command, prompt)
@@ -262,7 +262,7 @@ internal class TerminalOutputController(
 
   private data class TerminalOutputSnapshot(val width: Int, val output: StyledCommandOutput)
 
-  private data class RunningCommandContext(val command: String?, val prompt: PromptRenderingInfo?)
+  private data class RunningCommandContext(val command: String?, val prompt: TerminalPromptRenderingInfo?)
 
   private inner class RunningCommandInteractivity(command: String?) {
     val disposable: Disposable = Disposer.newDisposable(session, "command $command")
