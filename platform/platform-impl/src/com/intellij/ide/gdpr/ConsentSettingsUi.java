@@ -121,7 +121,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       }
       else if (dataSharingEnabledByFreeLicense) {
         cb.setEnabled(false);
-        cb.setSelected(true);
+        //cb.setSelected(true);
       }
       //noinspection HardCodedStringLiteral
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
