@@ -4933,6 +4933,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/nullability/NullableMethodDotAccess.java");
         }
 
+        @TestMetadata("NullableParameterWithUnsafeCastAsCallReceiver.java")
+        public void testNullableParameterWithUnsafeCastAsCallReceiver() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/NullableParameterWithUnsafeCastAsCallReceiver.java");
+        }
+
         @TestMetadata("NullableVariableDotAccess.java")
         public void testNullableVariableDotAccess() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/NullableVariableDotAccess.java");
