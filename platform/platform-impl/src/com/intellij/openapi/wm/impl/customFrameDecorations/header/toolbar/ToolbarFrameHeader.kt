@@ -197,7 +197,6 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     else {
       buttonPanes?.let { add(wrap(it.getContent()), gb.nextLine().next().anchor(WEST)) }
       add(headerContent, gb.next().fillCell().anchor(GridBagConstraints.CENTER).weightx(1.0).weighty(1.0))
-      add(productIcon, gb.next().anchor(GridBagConstraints.EAST).insets(0, H, 0, H))
     }
   }
 
