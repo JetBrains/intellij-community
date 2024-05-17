@@ -18,12 +18,12 @@
     <dependency>
       <groupId>com.github.luben</groupId>
       <artifactId>zstd-jni</artifactId>
-      <version>1.5.6-2</version>
+      <version>1.5.6-3</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.1.0-jre</version>
+      <version>33.2.1-jre</version>
     </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
@@ -68,7 +68,7 @@
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-extension-kotlin</artifactId>
-      <version>1.37.0</version>
+      <version>1.38.0</version>
     </dependency>
     <dependency>
       <groupId>com.jetbrains.intellij.platform</groupId>

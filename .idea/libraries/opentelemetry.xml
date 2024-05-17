@@ -1,53 +1,53 @@
 <component name="libraryTable">
   <library name="opentelemetry" type="repository">
-    <properties maven-id="io.opentelemetry:opentelemetry-sdk:1.37.0">
+    <properties maven-id="io.opentelemetry:opentelemetry-sdk:1.38.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.37.0/opentelemetry-sdk-1.37.0.jar">
-          <sha256sum>937c7cb743dab7aa566949166462493323683c188e2201a66aa6c2c59bf7dc23</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.38.0/opentelemetry-sdk-1.38.0.jar">
+          <sha256sum>b226ebfde98a545efda110b4d49c97855788da35a3e23ae58b1c03642276d502</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.37.0/opentelemetry-api-1.37.0.jar">
-          <sha256sum>35976d45acb98fb3fb527c3aced3e3398443e8664fccd069ea4bd2eca0c294ed</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.38.0/opentelemetry-api-1.38.0.jar">
+          <sha256sum>9ad8961eafe71ec50917fb80afecfa55f1e59b263363dc8083279b05be59f04f</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.37.0/opentelemetry-context-1.37.0.jar">
-          <sha256sum>98071a718fdb48a493460685660ba92074e0dcea01c545109894d3137df3b6f0</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.38.0/opentelemetry-context-1.38.0.jar">
+          <sha256sum>f49c2f9d02adf163ad940113b7aefdd8b9e7528a06eb56ec27a9db38d672e37b</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.37.0/opentelemetry-sdk-common-1.37.0.jar">
-          <sha256sum>1f28165898fecdba9ff9534b86a4ac6da2faa731bc0a59f1e40c116b72c90bd7</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.38.0/opentelemetry-sdk-common-1.38.0.jar">
+          <sha256sum>d1f78bfbe3d2ad2a340eac3de9613c17fde778fa92ac0d07506b4e1d06b7b72e</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.37.0/opentelemetry-sdk-trace-1.37.0.jar">
-          <sha256sum>5743bc33f9f046a86c8d827e4c4e321c2224ec69f72e09153232148186f2c77b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.38.0/opentelemetry-sdk-trace-1.38.0.jar">
+          <sha256sum>e8e8a398ec7569e5d8b4a72cb3c676ac9bb507f01b95f80d69c00753ca3b0210</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.37.0/opentelemetry-sdk-metrics-1.37.0.jar">
-          <sha256sum>50d129d9a15b691f806533f8edaf6c01f2e1e1e1825c93984ad75006aea2522f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.38.0/opentelemetry-sdk-metrics-1.38.0.jar">
+          <sha256sum>6f4b3c993d01223d47fad3dfbe430f314338ea54eed2e39104da1358be2c63dd</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-incubator/1.37.0-alpha/opentelemetry-api-incubator-1.37.0-alpha.jar">
-          <sha256sum>037cdd200d917190e6774029676017fa5ec27e5a5af938dcb97adc75132eda48</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-incubator/1.38.0-alpha/opentelemetry-api-incubator-1.38.0-alpha.jar">
+          <sha256sum>8123710d899fbd5b4a87e4ccbd0782239895883c2aeedb345a6c0b80bef2b44b</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.37.0/opentelemetry-sdk-logs-1.37.0.jar">
-          <sha256sum>d3490b686b64528ffb0ef345ada0a25af68dba658810ada25e7b127ceb98cf5c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.38.0/opentelemetry-sdk-logs-1.38.0.jar">
+          <sha256sum>1994538ab817b7712946b53ed6b74ee26e62b0810495f173e083b435d1e13662</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.37.0/opentelemetry-sdk-1.37.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.37.0/opentelemetry-api-1.37.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.37.0/opentelemetry-context-1.37.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.37.0/opentelemetry-sdk-common-1.37.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.37.0/opentelemetry-sdk-trace-1.37.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.37.0/opentelemetry-sdk-metrics-1.37.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-incubator/1.37.0-alpha/opentelemetry-api-incubator-1.37.0-alpha.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.37.0/opentelemetry-sdk-logs-1.37.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.38.0/opentelemetry-sdk-1.38.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.38.0/opentelemetry-api-1.38.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.38.0/opentelemetry-context-1.38.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.38.0/opentelemetry-sdk-common-1.38.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.38.0/opentelemetry-sdk-trace-1.38.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.38.0/opentelemetry-sdk-metrics-1.38.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-incubator/1.38.0-alpha/opentelemetry-api-incubator-1.38.0-alpha.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.38.0/opentelemetry-sdk-logs-1.38.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.37.0/opentelemetry-sdk-1.37.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.37.0/opentelemetry-api-1.37.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.37.0/opentelemetry-context-1.37.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.37.0/opentelemetry-sdk-common-1.37.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.37.0/opentelemetry-sdk-trace-1.37.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.37.0/opentelemetry-sdk-metrics-1.37.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-incubator/1.37.0-alpha/opentelemetry-api-incubator-1.37.0-alpha-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.37.0/opentelemetry-sdk-logs-1.37.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk/1.38.0/opentelemetry-sdk-1.38.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api/1.38.0/opentelemetry-api-1.38.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-context/1.38.0/opentelemetry-context-1.38.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-common/1.38.0/opentelemetry-sdk-common-1.38.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-trace/1.38.0/opentelemetry-sdk-trace-1.38.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-metrics/1.38.0/opentelemetry-sdk-metrics-1.38.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-api-incubator/1.38.0-alpha/opentelemetry-api-incubator-1.38.0-alpha-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-sdk-logs/1.38.0/opentelemetry-sdk-logs-1.38.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
