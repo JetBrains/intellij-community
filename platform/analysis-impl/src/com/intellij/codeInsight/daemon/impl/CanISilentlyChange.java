@@ -51,13 +51,12 @@ final class CanISilentlyChange {
   }
 
   enum Result {
-    YES, NO, ONLY_WHEN_IN_CONTENT;
-
+    UH_HUH, UH_UH, ONLY_WHEN_IN_CONTENT;
     // can call from any thread
     boolean canIReally(boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
       return switch (this) {
-        case YES -> extensionsAllowToChangeFileSilently != ThreeState.NO;
-        case NO -> false;
+        case UH_HUH -> extensionsAllowToChangeFileSilently != ThreeState.NO;
+        case UH_UH -> false;
         case ONLY_WHEN_IN_CONTENT -> extensionsAllowToChangeFileSilently != ThreeState.NO && isInContent;
       };
     }
@@ -68,14 +67,14 @@ final class CanISilentlyChange {
     Project project = file.getProject();
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
-      return Result.NO;
+      return Result.UH_UH;
     }
     if (file instanceof PsiCodeFragment) {
-      return Result.YES;
+      return Result.UH_HUH;
     }
     if (ScratchUtil.isScratch(virtualFile)) {
-      return canUndo(virtualFile, project) ? Result.YES : Result.NO;
+      return canUndo(virtualFile, project) ? Result.UH_HUH : Result.UH_UH;
     }
-    return canUndo(virtualFile, project) ? Result.ONLY_WHEN_IN_CONTENT : Result.NO;
+    return canUndo(virtualFile, project) ? Result.ONLY_WHEN_IN_CONTENT : Result.UH_UH;
   }
 }
