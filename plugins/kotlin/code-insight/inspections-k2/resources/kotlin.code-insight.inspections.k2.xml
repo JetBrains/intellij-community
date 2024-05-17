@@ -280,6 +280,14 @@
                      enabledByDefault="true"
                      level="WEAK WARNING"
                      language="kotlin" key="inspection.move.lambda.outside.parentheses.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NoActualForExpectInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.kotlin"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     language="kotlin" key="inspection.no.actual.for.expect.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.PackageDirectoryMismatchInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"

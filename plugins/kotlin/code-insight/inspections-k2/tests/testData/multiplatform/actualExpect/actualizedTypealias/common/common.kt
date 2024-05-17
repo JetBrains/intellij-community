@@ -1,0 +1,1 @@
+<caret>expect class Test

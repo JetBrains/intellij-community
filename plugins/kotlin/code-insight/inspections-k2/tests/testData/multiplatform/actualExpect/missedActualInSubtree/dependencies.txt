@@ -1,0 +1,10 @@
+MODULE jvmCommon { platform=[JVM] }
+MODULE jvmA { platform=[JVM] }
+MODULE jvmB { platform=[JVM] }
+MODULE jvmC { platform=[JVM] }
+MODULE common { platform=[JVM] }
+
+jvmCommon -> common { kind=DEPENDS_ON }
+jvmA -> jvmCommon { kind=DEPENDS_ON }
+jvmB -> jvmCommon { kind=DEPENDS_ON }
+jvmC -> common { kind=DEPENDS_ON }
