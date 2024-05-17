@@ -7,7 +7,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.classes.KtLightClassBase
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacadeBase
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.findMain
@@ -23,7 +23,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
     override fun hasMainMethod(clazz: PsiClass): Boolean {
         val lightClassBase = clazz as? KtLightClassBase
         val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
-        if (lightClassBase is KtLightClassForFacadeBase) {
+        if (lightClassBase is KtLightClassForFacade) {
             return runReadAction { lightClassBase.files.any { mainFunctionDetector.hasMain(it) } }
         }
         val classOrObject = lightClassBase?.kotlinOrigin ?: return false
@@ -34,7 +34,7 @@ class KotlinMainMethodProvider : JavaMainMethodProvider {
         runReadAction {
             val lightClassBase = clazz as? KtLightClassBase
             val mainFunctionDetector = KotlinMainFunctionDetector.getInstanceDumbAware(clazz.project)
-            if (lightClassBase is KtLightClassForFacadeBase) {
+            if (lightClassBase is KtLightClassForFacade) {
                 return@runReadAction lightClassBase.files
                     .asSequence()
                     .flatMap { it.declarations }
