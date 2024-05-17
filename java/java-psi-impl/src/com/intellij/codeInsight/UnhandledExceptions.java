@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,8 @@ public class UnhandledExceptions {
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
       unhandledExceptions = ExceptionUtil.getUnhandledExceptions(expression, topElement, callFilter);
-      if (expression.resolveMethodGenerics() == JavaResolveResult.EMPTY && !isNonMethodNewExpression(expression)) {
+      if (!MethodCandidateInfo.isOverloadCheck() && 
+          expression.resolveMethodGenerics() == JavaResolveResult.EMPTY && !isNonMethodNewExpression(expression)) {
         hasUnresolvedCalls = true;
       }
     }
