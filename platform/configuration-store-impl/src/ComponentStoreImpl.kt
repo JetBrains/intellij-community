@@ -465,8 +465,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo {
     val existing = components.putIfAbsent(name, info)
     if (existing != null && existing.component !== info.component) {
-      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} " +
-                "(componentManager=${storageManager.componentManager})")
+      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} (componentManager=${storageManager.componentManager})")
       return existing
     }
     else {
@@ -478,9 +477,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     @Suppress("UNCHECKED_CAST")
     val component = info.component as PersistentStateComponent<Any>
     if (info.stateSpec == null) {
-      val configurationSchemaKey = info.configurationSchemaKey
-                                   ?: throw UnsupportedOperationException(
-                                     "configurationSchemaKey must be specified for ${component.javaClass.name}")
+      val configurationSchemaKey = info.configurationSchemaKey ?: throw UnsupportedOperationException("configurationSchemaKey must be specified for ${component.javaClass.name}")
       return initComponentWithoutStateSpec(component = component, configurationSchemaKey = configurationSchemaKey, pluginId = info.pluginId)
     }
     else {
