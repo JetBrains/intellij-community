@@ -30,7 +30,7 @@ internal class TerminalPromptController(
   private val commandHistoryManager: CommandHistoryManager
   private val listeners: MutableList<PromptStateListener> = CopyOnWriteArrayList()
 
-  val model: TerminalPromptModel = TerminalPromptModel(editor, TerminalSessionInfoImpl(session))
+  val model: TerminalPromptModel = TerminalPromptModelImpl(editor, TerminalSessionInfoImpl(session))
 
   val commandHistory: List<String>
     get() = commandHistoryManager.history

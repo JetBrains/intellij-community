@@ -22,6 +22,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeCon
 import org.jetbrains.plugins.terminal.block.util.TestTerminalSessionInfo
 import org.jetbrains.plugins.terminal.exp.completion.powershell.PowerShellCompletionContributor
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModelImpl
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.junit.Assume
 import org.junit.Test
@@ -160,7 +161,7 @@ internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtu
   private fun getCompletionsForCommand(command: String): List<String>? {
     myFixture.configureByText(PlainTextFileType.INSTANCE, command)
     editor.putUserData(BlockTerminalSession.KEY, session)
-    editor.putUserData(TerminalPromptModel.KEY, TerminalPromptModel(editor as EditorEx, TestTerminalSessionInfo()))
+    editor.putUserData(TerminalPromptModel.KEY, TerminalPromptModelImpl(editor as EditorEx, TestTerminalSessionInfo()))
     editor.putUserData(ShellRuntimeContextProviderImpl.KEY, ShellRuntimeContextProviderImpl(project, session))
     editor.putUserData(ShellDataGeneratorsExecutorImpl.KEY, ShellDataGeneratorsExecutorImpl(session))
 
@@ -191,3 +192,4 @@ internal class PowerShellCompletionTest : CodeInsightFixtureTestCase<ModuleFixtu
     }
   }
 }
+

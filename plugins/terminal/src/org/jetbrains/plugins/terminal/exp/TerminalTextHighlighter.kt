@@ -11,9 +11,11 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.tree.IElementType
 import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.terminal.TextStyle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 
-internal data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributesProvider: TextAttributesProvider) {
+@ApiStatus.Internal
+data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributesProvider: TextAttributesProvider) {
   init {
     check(startOffset <= endOffset)
   }
@@ -25,7 +27,8 @@ internal data class TextWithHighlightings(val text: String, val highlightings: L
 
 internal data class TextWithAttributes(val text: String, val attributes: TextAttributesProvider)
 
-internal interface TextAttributesProvider {
+@ApiStatus.Internal
+interface TextAttributesProvider {
   fun getTextAttributes(): TextAttributes
 }
 

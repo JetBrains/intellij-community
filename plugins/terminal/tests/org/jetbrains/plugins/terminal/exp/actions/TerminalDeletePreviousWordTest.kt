@@ -9,6 +9,7 @@ import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.util.TestTerminalSessionInfo
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModelImpl
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptState
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.Test
@@ -88,7 +89,7 @@ internal class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase
   override fun createSaveAndOpenFile(relativePath: String, fileText: String): Editor {
     val editor = super.createSaveAndOpenFile(relativePath, fileText)
 
-    promptModel = TerminalPromptModel(editor as EditorEx, TestTerminalSessionInfo())
+    promptModel = TerminalPromptModelImpl(editor as EditorEx, TestTerminalSessionInfo())
     // Used in terminal actions
     editor.putUserData(TerminalPromptModel.KEY, promptModel)
     editor.putUserData(IS_PROMPT_EDITOR_KEY, true)
