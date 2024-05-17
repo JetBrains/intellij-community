@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-
+@ApiStatus.Internal
 public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable.Default {
   private final Project myProject;
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -50,12 +51,10 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   private boolean myIsProjectClosing = false;
 
-
-
   public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
 
-    CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
+    CoverageSuiteListener coverageViewListener = createCoverageViewListener();
     if (coverageViewListener != null) {
       addSuiteListener(coverageViewListener, this);
     }
@@ -132,7 +131,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Nullable
-  protected CoverageViewSuiteListener createCoverageViewListener() {
+  protected CoverageSuiteListener createCoverageViewListener() {
     return new CoverageViewSuiteListener(myProject);
   }
 
@@ -284,7 +283,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void coverageGathered(@NotNull CoverageSuite suite) {
+  void coverageGathered(@NotNull CoverageSuite suite) {
     fireCoverageGathered(suite);
     CoverageSuitesBundle bundle = myActiveBundles.get(suite.getCoverageEngine());
     if (bundle == null) {
@@ -428,7 +427,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void coverageDataCalculated(@NotNull CoverageSuitesBundle suitesBundle) {
+  void coverageDataCalculated(@NotNull CoverageSuitesBundle suitesBundle) {
     fireCoverageDataCalculated(suitesBundle);
   }
 

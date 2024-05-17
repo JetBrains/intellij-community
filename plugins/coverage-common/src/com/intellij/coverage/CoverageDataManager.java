@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,9 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class CoverageDataManager {
+
+  CoverageDataManager() {}
+
   public static CoverageDataManager getInstance(@NotNull Project project) {
     return project.getService(CoverageDataManagerImpl.class);
   }
@@ -82,12 +86,12 @@ public abstract class CoverageDataManager {
 
   public abstract void closeSuitesBundle(@NotNull CoverageSuitesBundle suite);
 
-  public abstract void coverageGathered(@NotNull CoverageSuite suite);
+  abstract void coverageGathered(@NotNull CoverageSuite suite);
 
   /**
    * Called each time after a coverage suite is completely processed: data is loaded and accumulated
    */
-  public void coverageDataCalculated(@NotNull CoverageSuitesBundle suite) {}
+  void coverageDataCalculated(@NotNull CoverageSuitesBundle suite) {}
 
   /**
    * Remove suite
@@ -113,11 +117,18 @@ public abstract class CoverageDataManager {
   @Nullable
   public abstract <T> T doInReadActionIfProjectOpen(Computable<T> computation);
 
-  public abstract boolean isSubCoverageActive();
+  @ApiStatus.Internal
+  public boolean isSubCoverageActive() {
+    return false;
+  }
 
-  public abstract void selectSubCoverage(@NotNull final CoverageSuitesBundle suite, final List<String> methodNames);
+  @ApiStatus.Internal
+  public void selectSubCoverage(@NotNull final CoverageSuitesBundle suite, final List<String> methodNames) {
+  }
 
-  public abstract void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite);
+  @ApiStatus.Internal
+  public void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite) {
+  }
 
   public abstract void addSuiteListener(@NotNull CoverageSuiteListener listener, @NotNull Disposable parentDisposable);
 

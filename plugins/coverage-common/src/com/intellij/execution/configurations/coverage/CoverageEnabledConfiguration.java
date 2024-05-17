@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,11 +27,12 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
 
   public static final Key<CoverageEnabledConfiguration> COVERAGE_KEY = Key.create("com.intellij.coverage");
 
-  protected static final @NonNls String COVERAGE_ENABLED_ATTRIBUTE_NAME = "enabled";
+  private static final @NonNls String COVERAGE_ENABLED_ATTRIBUTE_NAME = "enabled";
+  @ApiStatus.Internal
   protected static final @NonNls String COVERAGE_RUNNER = "runner";
-  protected static final @NonNls String TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME = "per_test_coverage_enabled";
-  protected static final @NonNls String COVERAGE_TYPE_ATTRIBUTE_NAME = "sample_coverage";
-  protected static final @NonNls String TRACK_TEST_FOLDERS = "track_test_folders";
+  private static final @NonNls String TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME = "per_test_coverage_enabled";
+  private static final @NonNls String COVERAGE_TYPE_ATTRIBUTE_NAME = "sample_coverage";
+  private static final @NonNls String TRACK_TEST_FOLDERS = "track_test_folders";
 
   private final RunConfigurationBase<?> myConfiguration;
 
@@ -41,7 +43,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
 
   private boolean myBranchCoverage = false;
   private boolean myTrackPerTestCoverage = false;
-
+  @ApiStatus.Internal
   protected @NonNls String myCoverageFilePath;
   private CoverageSuite myCurrentCoverageSuite;
 
@@ -67,6 +69,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     return myConfiguration.getName();
   }
 
+  @ApiStatus.Internal
   public @Nullable CoverageRunner getCoverageRunner() {
     if (myCachedRunner == null && myRunnerId != null) {
       myCachedRunner = CoverageRunner.getInstanceById(myRunnerId);
@@ -104,32 +107,51 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   // These getter/setter methods are not used in platform code,
   // as these settings are stored in project level settings.
   // However, other implementations can reuse these methods.
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated Moved to coverage settings.
+   */
+  @Deprecated
   public boolean isCoverageEnabled() {
     return myIsCoverageEnabled;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated Moved to coverage settings.
+   */
+  @Deprecated
   public void setCoverageEnabled(final boolean isCoverageEnabled) {
     myIsCoverageEnabled = isCoverageEnabled;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated Moved to coverage settings.
+   */
+  @Deprecated
   public boolean isBranchCoverageEnabled() {
     return myBranchCoverage;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated Moved to coverage settings.
+   */
+  @Deprecated
   public void setBranchCoverage(final boolean branchCoverage) {
     myBranchCoverage = branchCoverage;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated Moved to coverage settings.
+   */
+  @Deprecated
   public boolean isTrackPerTestCoverage() {
     return myTrackPerTestCoverage;
   }
 
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated Moved to coverage settings.
+   */
+  @ApiStatus.Internal
+  @Deprecated
   public void setTrackPerTestCoverage(final boolean testTracking) {
     myTrackPerTestCoverage = testTracking;
   }
@@ -146,7 +168,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     return new Date().getTime();
   }
 
-
+  @ApiStatus.Internal
   public void coverageRunnerExtensionRemoved(@NotNull CoverageRunner runner) {
     if (runner.getId().equals(myRunnerId)) {
       myConfiguration.putCopyableUserData(COVERAGE_KEY, null);
@@ -214,7 +236,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   }
 
   @NonNls
-  protected @Nullable String createCoverageFile() {
+  private @Nullable String createCoverageFile() {
     CoverageRunner runner = getCoverageRunner();
     if (runner == null) {
       return null;
@@ -240,6 +262,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     return getOrNull(runConfiguration) != null || getSuitableEngine(runConfiguration) != null;
   }
 
+  @ApiStatus.Internal
   public static @Nullable CoverageEnabledConfiguration getOrNull(@NotNull RunConfigurationBase<?> runConfiguration) {
     return runConfiguration.getCopyableUserData(COVERAGE_KEY);
   }

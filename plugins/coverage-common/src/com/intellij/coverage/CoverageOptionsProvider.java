@@ -6,6 +6,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @State(
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
     @Storage(StoragePathMacros.WORKSPACE_FILE)
   }
 )
+@ApiStatus.Internal
 public class CoverageOptionsProvider implements PersistentStateComponent<CoverageOptionsProvider.State> {
   private final State myState = new State();
 

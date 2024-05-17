@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 
 @Service(Service.Level.PROJECT)
-class ExternalReportImportManager(private val project: Project) {
+internal class ExternalReportImportManager(private val project: Project) {
   enum class Source {
     DIALOG, ACTION, EMPTY_TOOLWINDOW, UNKNOWN
   }

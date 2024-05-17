@@ -18,6 +18,7 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +75,7 @@ public class CoverageSuitesBundle {
     return max;
   }
 
+  @ApiStatus.Internal
   public boolean isCoverageByTestApplicable() {
     for (CoverageSuite suite : mySuites) {
       if (suite.isCoverageByTestApplicable()) return true;
@@ -81,6 +83,7 @@ public class CoverageSuitesBundle {
     return false;
   }
 
+  @ApiStatus.Internal
   public boolean isCoverageByTestEnabled() {
     for (CoverageSuite suite : mySuites) {
       if (suite.isCoverageByTestEnabled()) return true;
@@ -133,6 +136,7 @@ public class CoverageSuitesBundle {
     return myEngine;
   }
 
+  @ApiStatus.Internal
   public LineMarkerRendererWithErrorStripe getLineMarkerRenderer(int lineNumber,
                                                                  @Nullable final String className,
                                                                  @NotNull final TreeMap<Integer, LineData> lines,
@@ -170,10 +174,12 @@ public class CoverageSuitesBundle {
     return StringUtil.join(mySuites, coverageSuite -> coverageSuite.getPresentableName(), ", ");
   }
 
+  @ApiStatus.Internal
   public boolean isModuleChecked(final Module module) {
     return myProcessedModules != null && myProcessedModules.contains(module);
   }
 
+  @ApiStatus.Internal
   public void checkModule(final Module module) {
     if (myProcessedModules == null) {
       myProcessedModules = new HashSet<>();
@@ -194,6 +200,7 @@ public class CoverageSuitesBundle {
     return null;
   }
 
+  @ApiStatus.Internal
   public GlobalSearchScope getSearchScope(final Project project) {
     if (myCachedValue == null) {
       myCachedValue = CachedValuesManager.getManager(project).createCachedValue(

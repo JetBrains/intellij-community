@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +111,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
     return children;
   }
 
+  @ApiStatus.Internal
   @Override
   public boolean hasVCSFilteredNodes() {
     if (myAnnotator instanceof BaseCoverageAnnotator baseCoverageAnnotator) {

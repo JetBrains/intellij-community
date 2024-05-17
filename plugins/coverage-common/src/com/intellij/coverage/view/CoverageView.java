@@ -66,8 +66,8 @@ import java.util.List;
 
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
-  @NonNls public static final String HELP_ID = "reference.toolWindows.Coverage";
-  public static final Icon FILTER_ICON = AllIcons.General.Filter;
+  @NonNls static final String HELP_ID = "reference.toolWindows.Coverage";
+  private static final Icon FILTER_ICON = AllIcons.General.Filter;
 
   private final CoverageTableModel myModel;
   private final JBTreeTable myTable;
@@ -298,7 +298,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
   }
 
-  public void saveSize() {
+  void saveSize() {
     final int columns = myTable.getTable().getColumnCount();
     final List<Integer> widths = new ArrayList<>();
     final TableColumnModel columnModel = myTable.getTable().getColumnModel();
@@ -463,11 +463,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     return getLast(getSelectedPath());
   }
 
-  public boolean canSelect(VirtualFile file) {
+  boolean canSelect(VirtualFile file) {
     return myViewExtension.canSelectInCoverageView(file);
   }
 
-  public void select(VirtualFile file) {
+  void select(VirtualFile file) {
     select(myViewExtension.getElementToSelect(file));
   }
 

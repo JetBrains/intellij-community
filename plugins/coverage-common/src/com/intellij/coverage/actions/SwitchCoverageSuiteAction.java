@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
-public class SwitchCoverageSuiteAction extends AnAction {
+class SwitchCoverageSuiteAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

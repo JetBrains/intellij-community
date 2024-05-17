@@ -33,7 +33,7 @@ import java.util.concurrent.Future;
  * This class stores the data annotations for coverage information in the editor.
  */
 @Service(Service.Level.PROJECT)
-public final class CoverageDataAnnotationsManager implements Disposable {
+final class CoverageDataAnnotationsManager implements Disposable {
   private final Project myProject;
   private final Object myAnnotationsLock = new Object();
   private final ExecutorService myExecutor;
@@ -41,7 +41,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
   private final Map<Editor, Future<?>> myRequests = new ConcurrentHashMap<>();
   private volatile CompletableFuture<?> myUpdateRequest = null;
 
-  public CoverageDataAnnotationsManager(Project project) {
+  CoverageDataAnnotationsManager(Project project) {
     myProject = project;
     myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("CoverageDataAnnotationsManager Pool", 1);
   }
@@ -142,7 +142,7 @@ public final class CoverageDataAnnotationsManager implements Disposable {
   }
 
 
-  public static class CoverageEditorFactoryListener implements EditorFactoryListener {
+  static final class CoverageEditorFactoryListener implements EditorFactoryListener {
     @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {
       Editor editor = event.getEditor();

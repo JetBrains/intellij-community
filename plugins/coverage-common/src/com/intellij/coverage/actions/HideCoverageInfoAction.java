@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.ui.components.labels.LinkLabel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class HideCoverageInfoAction extends IconWithTextAction {
   @Nullable private final CoverageSuitesBundle myCoverageSuite;
 

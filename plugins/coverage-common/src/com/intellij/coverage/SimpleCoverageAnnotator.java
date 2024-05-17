@@ -15,6 +15,7 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -285,6 +286,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                           Collections.unmodifiableMap(normalizedFiles2Files));
   }
 
+  @ApiStatus.Internal
   protected Map<String, String> getNormalizedFiles2FilesMapping(ProjectData data) {
     final Map<String, String> normalizedFiles2Files = new HashMap<>();
     final Set<String> files = data.getClasses().keySet();
@@ -396,6 +398,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     };
   }
 
+  @ApiStatus.Internal
   protected VirtualFile[] getRoots(Project project,
                                    @NotNull CoverageDataManager dataManager,
                                    CoverageSuitesBundle suite) {
@@ -410,10 +413,11 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return CoverageBundle.message("coverage.view.text.lines.covered", calcCoveragePercentage(info));
   }
 
-  protected static int calcCoveragePercentage(FileCoverageInfo info) {
+  protected static int calcCoveragePercentage(@NotNull FileCoverageInfo info) {
     return calcPercent(info.coveredLineCount, info.totalLineCount);
   }
 
+  @ApiStatus.Internal
   protected static int calcPercent(final int covered, final int total) {
     return total != 0 ? (int)((double)covered / total * 100) : 100;
   }

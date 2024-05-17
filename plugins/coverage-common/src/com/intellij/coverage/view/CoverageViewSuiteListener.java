@@ -20,8 +20,10 @@ import com.intellij.coverage.CoverageSuiteListener;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class CoverageViewSuiteListener implements CoverageSuiteListener {
   private final Project myProject;
 

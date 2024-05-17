@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public final class SelectInCoverageView implements SelectInTarget {
+final class SelectInCoverageView implements SelectInTarget {
   private final Project myProject;
 
   private SelectInCoverageView(@NotNull Project project) {

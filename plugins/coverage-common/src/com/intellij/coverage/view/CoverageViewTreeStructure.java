@@ -12,13 +12,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CoverageViewTreeStructure extends AbstractTreeStructure {
+class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   private final AtomicReference<Object> myRootNode = new AtomicReference<>(null);
   final CoverageSuitesBundle myData;
   final CoverageViewManager.StateBean myStateBean;
 
-  public CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
+  CoverageViewTreeStructure(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
     myProject = project;
     myData = bundle;
     myStateBean = stateBean;

@@ -48,14 +48,17 @@ public abstract class CoverageViewExtension {
   @NotNull
   public abstract AbstractTreeNode<?> createRootNode();
 
+  @ApiStatus.Internal
   public boolean hasChildren(AbstractTreeNode<?> node) {
     return !getChildrenNodes(node).isEmpty();
   }
 
+  @ApiStatus.Internal
   public boolean hasVCSFilteredNodes() {
     return false;
   }
 
+  @ApiStatus.Internal
   public boolean hasFullyCoveredNodes() {
     return false;
   }
@@ -64,14 +67,16 @@ public abstract class CoverageViewExtension {
     return object instanceof VirtualFile && PsiManager.getInstance(myProject).findFile((VirtualFile)object) != null;
   }
 
+  @ApiStatus.Internal
   @Nullable
   public PsiElement getElementToSelect(Object object) {
     if (object instanceof PsiElement) return (PsiElement)object;
     return object instanceof VirtualFile ? PsiManager.getInstance(myProject).findFile((VirtualFile)object) : null;
   }
 
+  @ApiStatus.Internal
   @Nullable
-  public VirtualFile getVirtualFile(Object object) {
+  protected VirtualFile getVirtualFile(Object object) {
     if (object instanceof PsiElement) {
       if (object instanceof PsiDirectory) return ((PsiDirectory)object).getVirtualFile();
       final PsiFile containingFile = ((PsiElement)object).getContainingFile();
@@ -83,6 +88,7 @@ public abstract class CoverageViewExtension {
     return object instanceof VirtualFile ? (VirtualFile)object : null;
   }
 
+  @ApiStatus.Internal
   public boolean supportFlattenPackages() {
     return false;
   }
@@ -134,6 +140,7 @@ public abstract class CoverageViewExtension {
   }
 
 
+  @ApiStatus.Internal
   public static boolean isModified(FileStatus status) {
     return status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
   }

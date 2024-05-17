@@ -4,6 +4,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +26,9 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
   @Override
   public void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite) { }
 
+  @ApiStatus.Internal
   @Override
-  public void renewCoverageData(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
+  public final void renewCoverageData(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
     final Runnable request = createRenewRequest(suite, dataManager);
     if (request != null) {
       if (myProject.isDisposed()) return;
@@ -57,10 +59,12 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
     return myProject;
   }
 
+  @ApiStatus.Internal
   public boolean hasVcsFilteredChildren() {
     return myHasVcsFilteredChildren;
   }
 
+  @ApiStatus.Internal
   public void setVcsFilteredChildren(boolean hasVcsFilteredChildren) {
     myHasVcsFilteredChildren = hasVcsFilteredChildren;
   }
