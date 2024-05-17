@@ -56,6 +56,8 @@ class EditorCellInput(
     })
   }
 
+  private val runCellButton = EditorCellRunButton(editor)
+
   val component: EditorCellViewComponent
     get() = _component
 
@@ -107,6 +109,7 @@ class EditorCellInput(
 
   fun dispose() {
     folding.dispose()
+    runCellButton.dispose()
     _component.dispose()
   }
 
@@ -138,6 +141,14 @@ class EditorCellInput(
 
   fun showFolding() {
     folding.show()
+  }
+
+  fun showRunButton() {
+    runCellButton.showRunButton(interval, interval.type)
+  }
+
+  fun hideRunButton() {
+    runCellButton.hideRunButton()
   }
 
   fun addViewComponentListener(listener: EditorCellViewComponentListener) {

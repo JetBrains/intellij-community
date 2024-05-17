@@ -203,11 +203,13 @@ class EditorCellView(
   fun mouseExited() {
     mouseOver = false
     updateFolding()
+    updateRunButton()
   }
 
   fun mouseEntered() {
     mouseOver = true
     updateFolding()
+    updateRunButton()
   }
 
   inline fun <reified T : Any> getExtension(): T? {
@@ -293,6 +295,14 @@ class EditorCellView(
     else {
       input.hideFolding()
       outputs?.hideFolding()
+    }
+  }
+
+  private fun updateRunButton() {
+    if (mouseOver || selected) {
+      input.showRunButton()
+    } else {
+      input.hideRunButton()
     }
   }
 
