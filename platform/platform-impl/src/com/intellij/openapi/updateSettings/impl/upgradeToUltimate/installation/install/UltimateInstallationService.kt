@@ -75,7 +75,7 @@ class UltimateInstallationService(
             val build = productData?.channels?.firstOrNull { it.status == status }?.builds?.first() ?: return@withBackgroundProgress
 
             disableTryUltimate(project)
-            val isInstalled = tryToInstallIfChosen(suggestedIde, build, pluginId, productData.name)
+            val isInstalled = tryToInstall(suggestedIde, build, pluginId, productData.name)
             if (!isInstalled) {
               enableTryUltimate(project)
             }
@@ -93,21 +93,7 @@ class UltimateInstallationService(
     }
   }
 
-  private suspend fun tryToInstallIfChosen(suggestedIde: SuggestedIde, build: BuildInfo, pluginId: PluginId?, currentIdeName: String): Boolean {
-    val suggestedIdeName = suggestedIde.name
-    val message = IdeBundle.message("plugins.advertiser.try.ultimate.dialog", suggestedIdeName, currentIdeName)
-
-    val dialogResult = withContext(Dispatchers.EDT) {
-      messageDialog(
-        message,
-        suggestedIdeName,
-        listOf(IdeBundle.message("plugins.advertiser.try.ultimate.dialog.trial.button"), cancelButton),
-        Messages.getInformationIcon()
-      )
-    }
-
-    if (dialogResult != 0) return false
-
+  private suspend fun tryToInstall(suggestedIde: SuggestedIde, build: BuildInfo, pluginId: PluginId?, currentIdeName: String): Boolean {
     if (Registry.`is`("ide.try.ultimate.automatic.installation.use.toolbox")) {
       val result = tryToInstallViaToolbox(build)
       if (result) {
@@ -248,4 +234,3 @@ private fun SuggestedIde.canBeAutoInstalled(): Boolean {
 
 internal fun SuggestedIde.isIdeUltimate() = productCode == "IU"
 internal fun SuggestedIde.isPycharmProfessional() = productCode == "PY"
-
