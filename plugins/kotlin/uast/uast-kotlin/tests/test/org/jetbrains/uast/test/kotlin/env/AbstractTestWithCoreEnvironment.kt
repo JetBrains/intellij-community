@@ -17,6 +17,7 @@ import org.jetbrains.uast.java.JavaUastLanguagePlugin
 import java.io.File
 
 abstract class AbstractTestWithCoreEnvironment : TestCase() {
+
     private var myEnvironment: AbstractCoreEnvironment? = null
 
     protected val environment: AbstractCoreEnvironment
@@ -25,16 +26,15 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
     protected val project: MockProject
         get() = environment.project
 
-    protected val uastContext: org.jetbrains.uast.UastContext by lazy {
-        project.getService(org.jetbrains.uast.UastContext::class.java)
-    }
+    protected val uastContext: UastContext
+        get() = project.getService(UastContext::class.java)
 
-    protected val psiManager: PsiManager by lazy {
-        PsiManager.getInstance(project)
-    }
+    protected val psiManager: PsiManager
+        get() = PsiManager.getInstance(project)
 
     override fun tearDown() {
-        disposeEnvironment()
+        myEnvironment?.dispose()
+        myEnvironment = null
     }
 
     protected abstract fun createEnvironment(source: File): AbstractCoreEnvironment
@@ -47,25 +47,20 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
         myEnvironment = createEnvironment(source)
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
             UastLanguagePlugin.extensionPointName,
-            UastLanguagePlugin::class.java
+            UastLanguagePlugin::class.java,
         )
 
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
             UEvaluatorExtension.EXTENSION_POINT_NAME,
-            UEvaluatorExtension::class.java
+            UEvaluatorExtension::class.java,
         )
 
-        project.registerService(PsiNameHelper::class.java, PsiNameHelperImpl(project))
+        project.registerService(
+            PsiNameHelper::class.java,
+            PsiNameHelperImpl(project),
+        )
         project.registerService(UastContext::class.java)
-        registerUastLanguagePlugins()
-    }
-
-    private fun registerUastLanguagePlugins() {
-        Extensions.getRootArea().getExtensionPoint(UastLanguagePlugin.extensionPointName).registerExtension(JavaUastLanguagePlugin())
-    }
-
-    protected fun disposeEnvironment() {
-        myEnvironment?.dispose()
-        myEnvironment = null
+        Extensions.getRootArea().getExtensionPoint(UastLanguagePlugin.extensionPointName)
+            .registerExtension(JavaUastLanguagePlugin())
     }
 }
