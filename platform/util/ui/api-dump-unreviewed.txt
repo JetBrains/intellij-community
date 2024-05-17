@@ -380,6 +380,8 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Archive:javax.swing.Icon
 - sf:Aspectj:javax.swing.Icon
 - sf:Config:javax.swing.Icon
+- sf:Contexts:javax.swing.Icon
+- sf:ContextsModifier:javax.swing.Icon
 - sf:Css:javax.swing.Icon
 - sf:Custom:javax.swing.Icon
 - sf:Diagram:javax.swing.Icon
@@ -1017,6 +1019,7 @@ f:com.intellij.icons.AllIcons$Providers
 - sf:Couchbase:javax.swing.Icon
 - sf:DB2:javax.swing.Icon
 - sf:Databricks:javax.swing.Icon
+- sf:Denodo:javax.swing.Icon
 - sf:DocumentDB:javax.swing.Icon
 - sf:DuckDB:javax.swing.Icon
 - sf:DynamoDB:javax.swing.Icon
