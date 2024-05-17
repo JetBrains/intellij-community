@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -39,6 +40,7 @@ internal class BreakpointVariantPriorityTracker(private val coroutineScope: Coro
   private val cleanUpRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private fun isEnabled(): Boolean =
+    Registry.`is`("debugger.report.non.default.inline.breakpoint") &&
     ApplicationManager.getApplication().let { it.isInternal && !it.isUnitTestMode }
 
   init {
