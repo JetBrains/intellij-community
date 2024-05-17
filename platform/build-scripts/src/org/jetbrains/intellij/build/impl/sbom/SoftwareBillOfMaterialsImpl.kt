@@ -508,7 +508,7 @@ internal class SoftwareBillOfMaterialsImpl(
       .takeIf { it.exists() }
       ?.bufferedReader()?.use {
         MavenXpp3Reader().read(it, false)
-      }
+      } ?: MetaInf(libraryFile).pomXmlModel
     return MavenLibrary(
       coordinates = coordinates,
       repositoryUrl = repositoryUrl,
@@ -521,40 +521,47 @@ internal class SoftwareBillOfMaterialsImpl(
     )
   }
 
-  private val ByteBuffer.reader: Reader
-    get() = ByteArray(remaining())
-      .also(::get)
-      .inputStream()
-      .bufferedReader()
+  private class MetaInf(jarFile: Path) {
+    var coordinates: MavenCoordinates? = null
+    var pomXmlModel: Model? = null
+
+    val ByteBuffer.reader: Reader
+      get() = ByteArray(remaining())
+        .also(::get)
+        .inputStream()
+        .bufferedReader()
+
+    init {
+      readZipFile(jarFile) { name, data ->
+        when {
+          !name.startsWith("META-INF/") -> return@readZipFile
+          name.endsWith("/pom.xml") -> data().reader.use {
+            pomXmlModel = MavenXpp3Reader().read(it, false)
+          }
+          name.endsWith("/pom.properties") -> {
+            val pom = Properties()
+            data().reader.use(pom::load)
+            coordinates = MavenCoordinates(
+              groupId = pom.getProperty("groupId"),
+              artifactId = pom.getProperty("artifactId"),
+              version = pom.getProperty("version")
+            )
+          }
+        }
+      }
+    }
+  }
 
   private fun anonymousMavenLibrary(libraryFile: Path,
                                     libraryEntry: LibraryFileEntry,
                                     libraryLicense: LibraryLicense): MavenLibrary? {
-    var coordinates: MavenCoordinates? = null
-    var pomXmlModel: Model? = null
-    readZipFile(libraryFile) { name, data ->
-      when {
-        !name.startsWith("META-INF/") -> return@readZipFile
-        name.endsWith("/pom.xml") -> data().reader.use {
-          pomXmlModel = MavenXpp3Reader().read(it, false)
-        }
-        name.endsWith("/pom.properties") -> {
-          val pom = Properties()
-          data().reader.use(pom::load)
-          coordinates = MavenCoordinates(
-            groupId = pom.getProperty("groupId"),
-            artifactId = pom.getProperty("artifactId"),
-            version = pom.getProperty("version")
-          )
-        }
-      }
-    }
+    val metaInf = MetaInf(libraryFile)
     return MavenLibrary(
-      coordinates = coordinates ?: return null,
+      coordinates = metaInf.coordinates ?: return null,
       license = libraryLicense,
       entry = libraryEntry,
       sha256Checksum = sha256Hex(libraryFile),
-      pomXmlModel = pomXmlModel
+      pomXmlModel = metaInf.pomXmlModel
     )
   }
 
