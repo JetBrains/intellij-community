@@ -282,6 +282,8 @@ public final class AboutDialog extends DialogWrapper {
 
     myInfo.forEach(s -> text.append(s).append('\n'));
 
+    text.append("Toolkit: ").append(Toolkit.getDefaultToolkit().getClass().getName()).append("\n");
+
     text.append(SystemInfo.getOsNameAndVersion()).append('\n');
 
     for (var aboutInfoProvider : EP_NAME.getExtensionList()) {
