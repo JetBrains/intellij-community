@@ -6,8 +6,7 @@ public interface MyTestClass {
 }
 
 public class MyRealTestClass implements MyTestClass {
-  @NotNull
-  String implementMe(String arg) {
+  @NotNull String implementMe(String arg) {
 
   }
 }
