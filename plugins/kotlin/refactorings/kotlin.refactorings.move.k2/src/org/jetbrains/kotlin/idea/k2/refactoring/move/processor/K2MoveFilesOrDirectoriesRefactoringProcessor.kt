@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
@@ -38,7 +39,17 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveDescriptor.
     descriptor.searchForText,
     MoveCallback { },
     Runnable { }
-)
+) {
+    override fun preprocessUsages(refUsages: Ref<Array<out UsageInfo?>?>): Boolean {
+        val toContinue = super.preprocessUsages(refUsages)
+        if (!toContinue) return false
+        // after conflict checking, we don't need non-updatable usages anymore
+        unMarkNonUpdatableUsages(myElementsToMove.filterIsInstance<KtElement>().toSet())
+        val usages = refUsages.get()?.filterNotNull() ?: return false
+        refUsages.set(usages.filterUpdatable().toTypedArray())
+        return true
+    }
+}
 
 class K2MoveFilesHandler : MoveFileHandler() {
     override fun canProcessElement(element: PsiFile): Boolean {
@@ -72,8 +83,6 @@ class K2MoveFilesHandler : MoveFileHandler() {
             targetPkgFqn,
             usages.filterIsInstance<MoveRenameUsageInfo>()
         ))
-        // after conflict checking, we don't need non-updatable usages anymore
-        unMarkNonUpdatableUsages(elementsToMove.filterIsInstance<KtElement>().toSet())
     }
 
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
@@ -97,6 +106,6 @@ class K2MoveFilesHandler : MoveFileHandler() {
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>): Unit = allowAnalysisOnEdt {
         @Suppress("UNCHECKED_CAST")
-        retargetUsagesAfterMove(usageInfos, oldToNewMap as Map<KtNamedDeclaration, KtNamedDeclaration>)
+        retargetUsagesAfterMove(usageInfos.toList(), oldToNewMap as Map<KtNamedDeclaration, KtNamedDeclaration>)
     }
 }

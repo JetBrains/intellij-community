@@ -28,6 +28,13 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor = descriptor.usageViewDescriptor()
 
+    override fun findUsages(): Array<UsageInfo> {
+        if (!descriptor.searchReferences) return emptyArray()
+        return descriptor.source.elements.flatMap {
+            it.findUsages(descriptor.searchInComments, descriptor.searchForText, descriptor.target.pkgName)
+        }.toTypedArray()
+    }
+
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()
         val conflicts = ActionUtil.underModalProgress(
@@ -43,20 +50,16 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
                 usages = usages.filterIsInstance<MoveRenameUsageInfo>()
             )
         }
-        return showConflicts(conflicts, usages)
-    }
-
-    override fun findUsages(): Array<UsageInfo> {
-        if (!descriptor.searchReferences) return emptyArray()
-        return descriptor.source.elements.flatMap {
-            it.findUsages(descriptor.searchInComments, descriptor.searchForText, descriptor.target.pkgName)
-        }.toTypedArray()
+        val toContinue = showConflicts(conflicts, usages)
+        if (!toContinue) return false
+        unMarkNonUpdatableUsages(descriptor.source.elements)
+        refUsages.set(usages?.filterNotNull()?.filterUpdatable()?.toTypedArray() ?: return false)
+        return true
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
         val elementsToMove = descriptor.source.elements
-        unMarkNonUpdatableUsages(elementsToMove)
         val targetFile = descriptor.target.getOrCreateTarget()
         val sourceFiles = elementsToMove.map { it.containingKtFile }.distinct()
         val oldToNewMap = elementsToMove.moveInto(targetFile)

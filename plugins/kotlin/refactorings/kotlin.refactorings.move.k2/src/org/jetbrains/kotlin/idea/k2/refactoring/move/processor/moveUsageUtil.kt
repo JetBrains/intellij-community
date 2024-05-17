@@ -154,10 +154,16 @@ private fun KtNamedDeclaration.findNonCodeUsages(
 }
 
 /**
+ * Filters out usages that are not updatable, such usages might be needed for conflict checking but don't need to be touched during the
+ * retargeting process.
+ */
+internal fun List<UsageInfo>.filterUpdatable() = filter { if (it is K2MoveRenameUsageInfo) it.isUpdatable() else true }
+
+/**
  * Retargets [usages] to the moved elements stored in [oldToNewMap].
  */
 internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
-    K2MoveRenameUsageInfo.retargetUsages(usages, oldToNewMap)
+    K2MoveRenameUsageInfo.retargetUsages(usages.filterIsInstance<K2MoveRenameUsageInfo>(), oldToNewMap)
     val project = oldToNewMap.values.firstOrNull()?.project ?: return
     RenameUtil.renameNonCodeUsages(project, usages.filterIsInstance<NonCodeUsageInfo>().toTypedArray())
 }
