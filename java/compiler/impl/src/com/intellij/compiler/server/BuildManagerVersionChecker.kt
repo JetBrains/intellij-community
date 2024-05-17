@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.SdkEntity
@@ -52,22 +51,16 @@ internal class BuildManagerVersionChecker(val project: Project, val scope: Corou
   }
 
   private suspend fun updateVersionStrings(home: String, versionInfo: JdkVersionDetector.JdkVersionInfo) {
-    ProjectJdkTable.getInstance().allJdks.filter { it.homePath == home }.forEach { jdk ->
-      val versionString = versionInfo.displayVersionString()
-      if (jdk.versionString != versionString) {
+    val versionString = versionInfo.displayVersionString()
 
-        val sdkEntity = (project.workspaceModel.currentSnapshot.entities(SdkEntity::class.java)
-                           .firstOrNull { it.name == jdk.name && it.type == jdk.sdkType.name }
-                         ?: error("SDK entity for `${jdk.name}` `${jdk.sdkType.name}` doesn't exist"))
-
-        project.workspaceModel.update("Updating JDK versions string") {
-          it.modifyEntity(sdkEntity) {
-            this.apply {
-              version = versionString
-            }
+    project.workspaceModel.currentSnapshot.entities(SdkEntity::class.java)
+      .filter { it.homePath?.url == home && it.version != versionString }
+      .forEach { sdkEntity ->
+        project.workspaceModel.update("Updating JDK versions string") { storage ->
+          storage.modifyEntity(sdkEntity) {
+            this.version = versionString
           }
         }
       }
-    }
   }
 }
