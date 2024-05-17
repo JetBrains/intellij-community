@@ -19,8 +19,8 @@ import javax.swing.plaf.basic.BasicButtonUI
 
 internal class LinuxFrameButton(action: Action, private val type: Type) : JButton(action) {
 
-  enum class Type(val accessibleName: @Nls String) {
-    MINIMIZE(IdeBundle.message("window.titleButton.iconify")),
+  enum class Type(val text: @Nls String) {
+    MINIMIZE(IdeBundle.message("window.titleButton.minimize")),
     MAXIMIZE(IdeBundle.message("window.titleButton.maximize")),
     RESTORE(IdeBundle.message("window.titleButton.restore")),
     CLOSE(IdeBundle.message("window.titleButton.close"))
@@ -88,7 +88,8 @@ internal class LinuxFrameButton(action: Action, private val type: Type) : JButto
     isFocusable = false
     text = null
     isOpaque = false
-    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, type.accessibleName)
+    toolTipText = type.text
+    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, type.text)
     addMouseListener(listener)
     initIconPack()
   }
