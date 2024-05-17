@@ -20,23 +20,28 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
+import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.descriptors.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
-public final class ConfigFileFactoryImpl extends ConfigFileFactory {
+public final class ConfigFileFactoryImpl extends ConfigFileFactory implements Disposable {
   private static final Logger LOG = Logger.getInstance(ConfigFileFactoryImpl.class);
+  private final DisposableWrapperList<ConfigFileContainerImpl> containers = new DisposableWrapperList<>();
+
+  public ConfigFileFactoryImpl() {
+    VirtualFileManager.getInstance().addAsyncFileListener(new ConfigFileVfsListener(), this);
+  }
 
   @Override
   public ConfigFileMetaDataProvider createMetaDataProvider(final ConfigFileMetaData... metaData) {
@@ -56,7 +61,22 @@ public final class ConfigFileFactoryImpl extends ConfigFileFactory {
   @Override
   public ConfigFileContainer createConfigFileContainer(final Project project, final ConfigFileMetaDataProvider metaDataProvider,
                                                        final ConfigFileInfoSet configuration) {
-    return new ConfigFileContainerImpl(project, metaDataProvider, configuration);
+    var container = new ConfigFileContainerImpl(project, metaDataProvider, configuration);
+    containers.add(container, container); // container will remove itself from the list on container disposal
+    return container;
+  }
+
+  @Override
+  public void dispose() {
+    containers.clear();
+  }
+
+  void handleFileChanges(List<VirtualFile> filesToUpdate) {
+    for (VirtualFile file : filesToUpdate) {
+      for (ConfigFileContainerImpl container : containers) {
+        container.fileChanged(file);
+      }
+    }
   }
 
   private static String getText(final String templateName, @Nullable Project project) throws IOException {
