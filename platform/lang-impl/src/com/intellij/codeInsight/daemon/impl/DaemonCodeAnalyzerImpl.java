@@ -1155,14 +1155,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   private static VirtualFile getVirtualFile(@NotNull FileEditor fileEditor) {
     VirtualFile virtualFile = fileEditor.getFile();
-    for (BackedVirtualFileProvider provider : BackedVirtualFileProvider.EP_NAME.getExtensionList()) {
-      VirtualFile replacedVirtualFile = provider.getReplacedVirtualFile(virtualFile);
-      if (replacedVirtualFile != null) {
-        virtualFile = replacedVirtualFile;
-        break;
-      }
-    }
-    return virtualFile;
+    VirtualFile replacedVirtualFile = BackedVirtualFileProvider.EP_NAME.computeSafeIfAny(provider -> {
+      return provider.getReplacedVirtualFile(virtualFile);
+    });
+    return replacedVirtualFile != null ? replacedVirtualFile : virtualFile;
   }
 
   /**
