@@ -749,24 +749,27 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun tryReloadPerClientState(componentClass: Class<out PersistentStateComponent<*>>,
-                                      info: ComponentInfo,
-                                      changedStorages: Set<StateStorage>): Boolean {
+  private fun reloadPerClientState(componentClass: Class<out PersistentStateComponent<*>>,
+                                   info: ComponentInfo,
+                                   changedStorages: Set<StateStorage>) {
     val perClientComponent = (storageManager.componentManager ?: application).getService(componentClass)
     if (perClientComponent == null || perClientComponent === info.component) {
-      return false
+      LOG.error("Failed to reload per-client component '${info.stateSpec?.name ?: componentClass.simpleName}: " +
+                "looks like it is not registered as a per-client service " +
+                "(componentManager=${storageManager.componentManager})")
+      return
     }
 
     val newInfo = ComponentInfoImpl(info.pluginId, perClientComponent, info.stateSpec)
     initComponent(info = newInfo, changedStorages = changedStorages.ifEmpty { null }, reloadData = ThreeState.YES)
-    return true
   }
 
   final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
-      if (tryReloadPerClientState(it.javaClass, info, emptySet())) {
+      if (stateSpec.perClient) {
+        reloadPerClientState(it.javaClass, info, emptySet())
         return
       }
 
@@ -781,7 +784,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       return false
     }
 
-    if (tryReloadPerClientState(component.javaClass, info, changedStorages)) {
+    if (info.stateSpec?.perClient == true) {
+      reloadPerClientState(component.javaClass, info, changedStorages)
       return true
     }
     
