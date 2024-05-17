@@ -6,11 +6,11 @@ import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.uast.testFramework.env.AbstractCoreEnvironment
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.impl.PsiNameHelperImpl
@@ -54,12 +54,12 @@ import java.io.File
 
 abstract class AbstractKotlinUastTest : TestCase() {
 
+    private lateinit var testRootDisposable: Disposable
     private lateinit var compilerConfiguration: CompilerConfiguration
     private lateinit var kotlinCoreEnvironment: KotlinCoreEnvironment
-    private lateinit var myEnvironment: AbstractCoreEnvironment
 
     protected val project: MockProject
-        get() = myEnvironment.project
+        get() = kotlinCoreEnvironment.project as MockProject
 
     protected val uastContext: UastContext
         get() = project.getService(UastContext::class.java)
@@ -88,7 +88,13 @@ abstract class AbstractKotlinUastTest : TestCase() {
     protected fun getVirtualFile(testName: String): VirtualFile {
         val testFile = testDataDir.listFiles { pathname -> pathname.nameWithoutExtension == testName }.first()
 
-        myEnvironment = createEnvironment(testFile)
+        if (ApplicationManager.getApplication() == null) {
+            Disposer.register(testRootDisposable) {
+                resetApplicationToNull()
+            }
+        }
+
+        createEnvironment(testFile)
 
         initializeCoreEnvironment()
         initializeKotlinEnvironment()
@@ -154,27 +160,29 @@ abstract class AbstractKotlinUastTest : TestCase() {
         )
     }
 
-    private fun createEnvironment(source: File): AbstractCoreEnvironment {
-        val appWasNull = ApplicationManager.getApplication() == null
+    private fun createEnvironment(source: File) {
         compilerConfiguration = createKotlinCompilerConfiguration(source)
         compilerConfiguration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
         compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.kotlinCompiler)
 
-        val parentDisposable = Disposer.newDisposable()
         kotlinCoreEnvironment = KotlinCoreEnvironment.createForTests(
-            parentDisposable = parentDisposable,
+            parentDisposable = testRootDisposable,
             initialConfiguration = compilerConfiguration,
             extensionConfigs = EnvironmentConfigFiles.JVM_CONFIG_FILES,
         )
-
-        return KotlinCoreEnvironmentWrapper(kotlinCoreEnvironment, parentDisposable, appWasNull)
     }
 
+    override fun setUp() {
+        testRootDisposable = Disposer.newDisposable()
+        super.setUp()
+    }
+
+    @Suppress("SSBasedInspection")
     override fun tearDown() {
-        ApplicationManager.getApplication().invokeAndWait {
-            ApplicationManager.getApplication().runWriteAction {
-                myEnvironment.dispose()
-            }
+        try {
+            runWriteActionAndWait { Disposer.dispose(testRootDisposable) }
+        } finally {
+            super.tearDown()
         }
     }
 
@@ -189,30 +197,6 @@ abstract class AbstractKotlinUastTest : TestCase() {
             if (sourceFile.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
                 put(CommonConfigurationKeys.ALLOW_ANY_SCRIPTS_IN_SOURCE_ROOTS, true)
                 loadScriptingPlugin(this)
-            }
-        }
-    }
-
-    private class KotlinCoreEnvironmentWrapper(
-        val environment: KotlinCoreEnvironment,
-        val parentDisposable: Disposable,
-        val appWasNull: Boolean
-    ) : AbstractCoreEnvironment() {
-        override fun addJavaSourceRoot(root: File) {
-            TODO("not implemented")
-        }
-
-        override fun addJar(root: File) {
-            TODO("not implemented")
-        }
-
-        override val project: MockProject
-            get() = environment.project as MockProject
-
-        override fun dispose() {
-            Disposer.dispose(parentDisposable)
-            if (appWasNull) {
-                resetApplicationToNull()
             }
         }
     }
