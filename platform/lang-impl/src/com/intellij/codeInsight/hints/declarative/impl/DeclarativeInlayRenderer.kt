@@ -101,5 +101,5 @@ class DeclarativeInlayRenderer(
     return presentationList.toInlayData(pos, providerId)
   }
 
-  fun getPassClass(): Class<*> = presentationList.passClass
+  internal fun getSourceId(): String = presentationList.sourceId
 }

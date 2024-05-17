@@ -31,7 +31,7 @@ class DeclarativeInlayHintsPass(
     val sharedCollectors = ArrayList<CollectionInfo<SharedBypassCollector>>()
     for (providerInfo in providerInfos) {
       val provider = providerInfo.provider
-      val sink = InlayTreeSinkImpl(providerInfo.providerId, providerInfo.optionToEnabled, isPreview, isProviderDisabled, provider.javaClass, DeclarativeInlayHintsPass::class.java)
+      val sink = InlayTreeSinkImpl(providerInfo.providerId, providerInfo.optionToEnabled, isPreview, isProviderDisabled, provider.javaClass, passSourceId)
       sinks.add(sink)
       when (val collector = createCollector(provider)) {
         is OwnBypassCollector -> ownCollectors.add(CollectionInfo(sink, collector))
@@ -56,21 +56,24 @@ class DeclarativeInlayHintsPass(
   )
 
   override fun doApplyInformationToEditor() {
-    applyInlayData(editor, myFile, inlayDatas = sinks.flatMap { it.finish() }, DeclarativeInlayHintsPass::class.java)
+    applyInlayData(editor, myFile, inlayDatas = sinks.flatMap { it.finish() }, passSourceId)
   }
 
   companion object {
+    @ApiStatus.Internal
+    val passSourceId: String = DeclarativeInlayHintsPass::class.java.name
+
     @RequiresEdt
     @ApiStatus.Internal
-    fun applyInlayData(editor: Editor, file: PsiFile, inlayDatas: List<InlayData>, passClass: Class<*>) {
+    fun applyInlayData(editor: Editor, file: PsiFile, inlayDatas: List<InlayData>, sourceId: String) {
       val inlayModel = editor.inlayModel
       val document = editor.document
       val existingInlineElements = inlayModel
         .getInlineElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
-        .filter { passClass.name == it.renderer.getPassClass().name }
+        .filter { sourceId == it.renderer.getSourceId() }
       val existingEolElements = inlayModel
         .getAfterLineEndElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
-        .filter { passClass.name == it.renderer.getPassClass().name }
+        .filter { sourceId == it.renderer.getSourceId() }
       val offsetToExistingInlineElements = Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>() // either inlay or list of inlays
       val offsetToExistingEolElements = Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>() // either inlay or list of inlays
       for (inlineElement in existingInlineElements) {
@@ -83,8 +86,8 @@ class DeclarativeInlayHintsPass(
       }
       val storage = InlayHintsUtils.getTextMetricStorage(editor)
       for (inlayData in inlayDatas) {
-        if (inlayData.passClass.name != passClass.name) {
-          throw IllegalStateException("Inconsistent passClass=${passClass.name}, inlayData=$inlayData")
+        if (inlayData.sourceId != sourceId) {
+          throw IllegalStateException("Inconsistent sourceId=$sourceId, inlayData=$inlayData")
         }
         when (val position = inlayData.position) {
           is EndOfLinePosition -> {
@@ -92,7 +95,7 @@ class DeclarativeInlayHintsPass(
             val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingEolElements, inlayData, lineEndOffset)
             if (!updated) {
               val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled,
-                                                           createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip, inlayData.passClass)
+                                                           createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip, inlayData.sourceId)
               val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId, position)
               val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, true, renderer)
               if (inlay != null) {
@@ -104,7 +107,7 @@ class DeclarativeInlayHintsPass(
             val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingInlineElements, inlayData, position.offset)
             if (!updated) {
               val presentationList = InlayPresentationList(inlayData.tree, inlayData.hasBackground, inlayData.disabled,
-                                                           createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip, inlayData.passClass)
+                                                           createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip, inlayData.sourceId)
               val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId, position)
               val inlay = inlayModel.addInlineElement(position.offset, position.relatedToPrevious, position.priority, renderer)
               if (inlay != null) {

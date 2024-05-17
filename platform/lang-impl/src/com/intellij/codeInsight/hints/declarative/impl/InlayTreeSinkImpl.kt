@@ -22,7 +22,7 @@ class InlayTreeSinkImpl(
   private val isInPreview: Boolean,
   private val providerIsDisabled: Boolean,
   private val providerClass: Class<*>,
-  private val passClass: Class<*>,
+  private val sourceId: String,
 ) : InlayTreeSink {
   private val inlayDataToPresentation = ArrayList<InlayData>()
 
@@ -47,7 +47,7 @@ class InlayTreeSinkImpl(
     else {
       false
     }
-    inlayDataToPresentation.add(InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass, passClass))
+    inlayDataToPresentation.add(InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass, sourceId))
   }
 
   override fun whenOptionEnabled(optionId: String, block: () -> Unit) {
