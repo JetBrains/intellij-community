@@ -168,6 +168,8 @@
       <reference ref="Terminal.SwitchPromptStyle"/>
     </group>
 
+    <group id="Terminal.PromptToolbar"/>
+
     <action id="Terminal.ShowFeedbackNotification" internal="true"
             class="org.jetbrains.plugins.terminal.exp.feedback.ShowBlockTerminalFeedbackNotificationAction"/>
   </actions>

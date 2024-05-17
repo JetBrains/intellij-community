@@ -3,6 +3,8 @@ package org.jetbrains.plugins.terminal.exp.prompt
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.CaretVisualAttributes
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -13,7 +15,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.border.CustomLineBorder
-import com.intellij.ui.components.panels.ListLayout
+import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
@@ -27,12 +29,15 @@ import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController.Prompt
 import org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptLanguage
 import java.awt.Color
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.Graphics
+import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.JLayeredPane
 import javax.swing.JScrollPane
+import kotlin.math.min
 
 internal class TerminalPromptView(
   private val project: Project,
@@ -41,7 +46,7 @@ internal class TerminalPromptView(
   commandExecutor: TerminalCommandExecutor
 ) : PromptStateListener, Disposable {
   val controller: TerminalPromptController
-  val component: JComponent = JPanel()
+  val component: JComponent
 
   val preferredFocusableComponent: JComponent
     get() = editor.contentComponent
@@ -59,6 +64,9 @@ internal class TerminalPromptView(
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, controller.model, commandExecutor)
     commandSearchPresenter = CommandSearchPresenter(project, editor, controller.model)
 
+    val toolbarComponent = createToolbarComponent(targetComponent = editor.contentComponent)
+    component = TerminalPromptPanel(editorTextField, toolbarComponent)
+
     val innerBorder = JBUI.Borders.empty(TerminalUi.promptTopInset,
                                          TerminalUi.blockLeftInset + TerminalUi.cornerToBlockInset,
                                          TerminalUi.promptBottomInset,
@@ -73,10 +81,6 @@ internal class TerminalPromptView(
       }
     }
     component.border = JBUI.Borders.compound(outerBorder, innerBorder)
-
-    component.background = TerminalUi.defaultBackground(editor)
-    component.layout = ListLayout.vertical(TerminalUi.promptToCommandInset)
-    component.add(editorTextField)
 
     // move focus to the prompt text field on mouse click in the area of the prompt
     component.addMouseListener(object : MouseAdapter() {
@@ -148,5 +152,56 @@ internal class TerminalPromptView(
     return textField
   }
 
+  private fun createToolbarComponent(targetComponent: JComponent): JComponent {
+    val actionManager = ActionManager.getInstance()
+    val toolbarGroup = actionManager.getAction("Terminal.PromptToolbar") as ActionGroup
+    val toolbar = actionManager.createActionToolbar("TerminalPrompt", toolbarGroup, true)
+    toolbar.targetComponent = targetComponent
+    toolbar.component.isOpaque = false
+    toolbar.component.border = JBUI.Borders.emptyRight(10)
+    return toolbar.component
+  }
+
   override fun dispose() {}
+
+  private class TerminalPromptPanel(
+    private val mainComponent: JComponent,
+    private val sideComponent: JComponent
+  ) : JBLayeredPane() {
+    init {
+      isOpaque = false
+      // cast to Any needed to call right method overload
+      add(mainComponent, JLayeredPane.DEFAULT_LAYER as Any)
+      add(sideComponent, JLayeredPane.POPUP_LAYER as Any)
+    }
+
+    override fun getPreferredSize(): Dimension {
+      return mainComponent.preferredSize.also {
+        JBInsets.addTo(it, insets)
+      }
+    }
+
+    override fun doLayout() {
+      val rect = Rectangle(0, 0, width, height)
+      JBInsets.removeFrom(rect, insets)
+      for (component in components) {
+        when (component) {
+          mainComponent -> layoutMainComponent(component, rect)
+          sideComponent -> layoutSideComponent(component, rect)
+        }
+      }
+    }
+
+    private fun layoutMainComponent(component: Component, rect: Rectangle) {
+      val prefHeight = component.preferredSize.height
+      val compHeight = min(rect.height, prefHeight)
+      component.setBounds(rect.x, rect.y, rect.width, compHeight)
+    }
+
+    private fun layoutSideComponent(component: Component, rect: Rectangle) {
+      val prefSize = component.preferredSize
+      val compWidth = min(rect.width, prefSize.width)
+      component.setBounds(rect.x + rect.width - compWidth, rect.y, compWidth, prefSize.height)
+    }
+  }
 }
