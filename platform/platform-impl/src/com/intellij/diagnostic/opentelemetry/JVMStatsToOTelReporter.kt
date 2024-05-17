@@ -199,7 +199,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
    * Uses [sun.management.HotspotRuntimeMBean] got from [sun.management.ManagementFactoryHelper].
    * Thanks to Vadim Salavatov
    *
-   * Requires
+   * Requires (see OpenedPackages.txt)
    * ```
    * --add-exports=java.management/sun.management=ALL-UNNAMED
    * --add-opens=java.management/sun.management=ALL-UNNAMED
